@@ -2,8 +2,9 @@
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+import { ImageGalleryModal } from './PaymentComponents/PaymentModal/index.js';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -19,6 +20,10 @@ defineProps({
   inslyId: String,
   sendPolicy: Boolean,
   bookPolicyDetails: Array,
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -261,7 +266,38 @@ const isIssuingDocumentsTabDisabled = key => {
 
   return false;
 };
-const { openTempUrl } = useDocumentTempUrl();
+const { openTempUrl, getTempUrl } = useDocumentTempUrl();
+
+const isGalleryModelOpen = ref(false);
+const galleryFiles = ref([]);
+const galleryInitialIndex = ref(0);
+const currentFileURL = ref('');
+
+const filteredQuoteDocuments = computed(() =>
+  (props.quoteDocuments || []).filter(
+    d => d.document_type_code !== documentTypeCodeEnum.BOR_SIGN,
+  ),
+);
+
+const openDocumentGallery = async item => {
+  const files = filteredQuoteDocuments.value.map(d => ({
+    ...d,
+    doc_url: d.watermarked_doc_url || d.doc_url,
+  }));
+  const index = files.findIndex(f => f.id === item.id);
+  if (index === -1) return;
+  galleryFiles.value = files;
+  galleryInitialIndex.value = index;
+  const documentUrl = await getTempUrl(files[index].doc_url);
+  if (documentUrl) {
+    currentFileURL.value = documentUrl;
+    isGalleryModelOpen.value = true;
+  }
+};
+
+const closeGallery = () => {
+  isGalleryModelOpen.value = false;
+};
 </script>
 
 <template>
@@ -360,11 +396,7 @@ const { openTempUrl } = useDocumentTempUrl();
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="
-            quoteDocuments.filter(
-              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
-            ) || []
-          "
+          :items="filteredQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -372,11 +404,8 @@ const { openTempUrl } = useDocumentTempUrl();
         >
           <template #item-original_name="item">
             <a
-              target="_blank"
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.watermarked_doc_url || item.doc_url)
-              "
+              @click.prevent="openDocumentGallery(item)"
             >
               {{ item.original_name }}
             </a>
@@ -506,13 +535,7 @@ const { openTempUrl } = useDocumentTempUrl();
                 :key="quoteDocument.id"
               >
                 <a
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.watermarked_doc_url ||
-                        quoteDocument.doc_url,
-                    )
-                  "
-                  target="_blank"
+                  @click.prevent="openDocumentGallery(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
@@ -546,5 +569,17 @@ const { openTempUrl } = useDocumentTempUrl();
         </div>
       </template>
     </x-modal>
+
+    <!-- Image Gallery Modal -->
+    <ImageGalleryModal
+      v-model="isGalleryModelOpen"
+      :files="galleryFiles"
+      :initial-index="galleryInitialIndex"
+      :storage-url="storageUrl"
+      :currentFileURL="currentFileURL"
+      class="max-w-6xl mx-auto"
+      @update:model-value="val => val === false && closeGallery()"
+      @update:currentFileURL="currentFileURL = $event"
+    />
   </div>
 </template>
