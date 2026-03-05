@@ -249,7 +249,8 @@ class ManagementReport
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
 
-        if ($request['lob'] && in_array(quoteTypeCode::Health, $request['lob']) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+        $lob = isset($request['lob']) ? (is_array($request['lob']) ? $request['lob'] : [$request['lob']]) : [];
+        if (! empty($lob) && in_array(quoteTypeCode::Health, $lob) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
             if ($request['pec_flag'] == '1') {
                 $query->whereExists(function ($subQuery) {
                     $subQuery->select(DB::raw(1))
