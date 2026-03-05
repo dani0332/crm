@@ -304,7 +304,11 @@ class SavingsQuoteController extends Controller
 
     public function updateExchangeRate(Request $request)
     {
-        $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+        $quote = $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
+        if (! $quote) {
+            return response()->json(['message' => 'Quote not found'], 404);
+        }
 
         return response()->json(['message' => 'Exchange rate updated successfully']);
     }

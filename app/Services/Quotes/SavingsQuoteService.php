@@ -872,6 +872,13 @@ class SavingsQuoteService extends BaseQuoteService
         ]);
 
         $quote = SavingsQuote::where('uuid', $quoteUID)->first();
+
+        if (! $quote) {
+            LoggerService::error('fn: updateExchangeRate - Quote not found', extra: ['quoteUID' => $quoteUID]);
+
+            return null;
+        }
+
         $quote->exchange_rate = $exchangeRate;
         if ($quote->save()) {
             LoggerService::info('fn: updateExchangeRate - Exchange rate updated successfully');

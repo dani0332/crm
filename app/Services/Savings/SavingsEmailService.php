@@ -97,12 +97,12 @@ class SavingsEmailService
                         ->where('quote_type_id', QuoteTypeId::Savings)
                         ->update($updates);
                 }
+
+                LoggerService::info("$logPrefix Bird flow triggered successfully - Email sent to customer", extra: [
+                    'email' => $emailData->customerEmail,
+                ]);
             }
-
-            LoggerService::info("$logPrefix Bird flow triggered successfully - Email sent to customer", extra: [
-                'email' => $emailData->customerEmail,
-            ]);
-
+            
             return $response ?? null;
         } catch (\Exception $e) {
             LoggerService::error("$logPrefix Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
