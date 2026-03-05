@@ -8,7 +8,7 @@ const props = defineProps({
 const toDate = ref('2099-12-31'); // As suggested by the business
 const fromDate = ref(props.nationalityPoolConfigurations[0]?.effective_from);
 const nationalityGroups = ref([]);
-const selectedNationalityGroups = ref(props.nationalityPoolConfigurations[0]?.health_nationality_group_ids?.split(','));
+const selectedNationalityGroups = ref(props.nationalityPoolConfigurations[0]?.health_nationality_group_ids?.split(',') || []);
 const loading = ref(false);
 const gbpNationalities = ref([]);
 const selectedNationalities = ref(props.nationalityPoolConfigurations[0]?.canonical_nationality_codes?.split(','));
@@ -57,11 +57,11 @@ function getSelectedGroupNationalities() {
 }
 
 const toggleGroup = (id) => {
-  if (selectedNationalityGroups.value.includes(id)) {
+  if (selectedNationalityGroups.value?.includes(id)) {
     selectedNationalityGroups.value =
       selectedNationalityGroups.value.filter(g => g !== id)
   } else {
-    selectedNationalityGroups.value.push(id)
+    selectedNationalityGroups.value?.push(id)
   }
 
   // If no groups are selected, clear the selected nationalities
@@ -81,10 +81,12 @@ function onSubmit() {
   loading.value = true;
   axios.post(route('admin.nationality-pool-config.save'), {
     effective_from: fromDate.value,
+    health_nationality_group_ids: selectedNationalityGroups.value,
     canonical_nationality_codes: selectedNationalities.value,
   }).then(response => {
     notification.success({
       title: 'Nationality pool configuration saved successfully',
+      position: 'top',
     });
   }).catch(error => {
     notification.error({
@@ -169,7 +171,7 @@ onMounted(() => {
                     :key="group.id"
                     :value="group.id"
                     :label="group.group_name"
-                    :model-value="selectedNationalityGroups.includes(group.id)"
+                    :model-value="selectedNationalityGroups?.includes(String(group.id))"
                      @update:modelValue="toggleGroup(group.id)"
                     class="!mb-0"
                 />

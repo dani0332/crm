@@ -12,7 +12,7 @@ class NationalityGroupController extends Controller
     public function get(): JsonResponse
     {
         try {
-            $groups = HealthNationalityGroup::all();
+            $groups = HealthNationalityGroup::select('id', 'group_name')->get()->toArray();
 
             return response()->json([
                 'success' => true,

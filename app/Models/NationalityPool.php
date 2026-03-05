@@ -10,6 +10,17 @@ class NationalityPool extends Model
     protected $fillable = [
         'effective_from',
         'effective_to',
-        'canonical_nationality_code',
+        'canonical_nationality_codes',
+        'health_nationality_group_ids',
+        'is_active',
     ];
+
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 }

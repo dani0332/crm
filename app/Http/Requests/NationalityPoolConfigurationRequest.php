@@ -11,6 +11,7 @@ class NationalityPoolConfigurationRequest extends FormRequest
         return [
             'effective_from' => 'required|date',
             'canonical_nationality_codes' => 'required|array',
+            'health_nationality_group_ids' => 'nullable|array',
         ];
     }
 }
