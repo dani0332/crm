@@ -11,7 +11,9 @@ const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref(props.nationalityPoolConfigurations[0]?.health_nationality_group_ids?.split(',') || []);
 const loading = ref(false);
 const gbpNationalities = ref([]);
-const selectedNationalities = ref(props.nationalityPoolConfigurations[0]?.canonical_nationality_codes?.split(','));
+const selectedNationalities = ref(props.nationalityPoolConfigurations[0]?.canonical_nationality_codes?.split(',') || []);
+const previousNationalities = ref([]);
+const individualNationalities = ref([]);
 const notification = useToast();
 
 // Custom function
@@ -31,25 +33,15 @@ function getNationalityGroups() {
   });
 }
 
-/*function getGbpNationalities() {
-  axios.get(route('admin.gbp-nationalities')).then(response => {
-    gbpNationalities.value = response.data.data;
-  }).catch(error => {
-    notification.error({
-      title: 'Error fetching gbp nationalities',
-      position: 'top',
-    });
-  });
-}*/
-
 function getSelectedGroupNationalities() {
   loading.value = true;
 
   axios.post('group-nationalities', { group_ids: selectedNationalityGroups.value }).then(response => {
-    selectedNationalities.value = response.data.data;
+     selectedNationalities.value = [...new Set([...individualNationalities.value, ...response.data.data])];
   }).catch(error => {
     notification.error({
       title: 'Error fetching selected group nationalities',
+      position: 'top',
     });
   }).finally(() => {
     loading.value = false;
@@ -57,20 +49,29 @@ function getSelectedGroupNationalities() {
 }
 
 const toggleGroup = (id) => {
-  if (selectedNationalityGroups.value?.includes(id)) {
+  if (selectedNationalityGroups.value?.includes(String(id))) {
     selectedNationalityGroups.value =
-      selectedNationalityGroups.value.filter(g => g !== id)
+      selectedNationalityGroups.value.filter(g => g !== String(id));
   } else {
-    selectedNationalityGroups.value?.push(id)
+    selectedNationalityGroups.value?.push(String(id))
   }
 
-  // If no groups are selected, clear the selected nationalities
+  // If no groups are selected, remoeve group nationalities
   if (selectedNationalityGroups.value.length == 0) {
-    selectedNationalities.value = [];
+    selectedNationalities.value = individualNationalities.value;
     return;
   }
+
   // Get selected group nationalities
   getSelectedGroupNationalities();
+}
+
+const addNationality = (newValues) => {
+  // Store individually selected nationalities
+  individualNationalities.value.push(newValues[newValues.length - 1]);
+
+  const set = new Set(individualNationalities.value);
+  individualNationalities.value = newValues.filter(v => set.has(v));
 }
 
 function onSubmit() {
@@ -118,17 +119,8 @@ function validateForm() {
   return true;
 }
 
-// Computed properties to render dropdown
-/*const formattedNationalities = computed(() =>
-  props.gbpNationalities.map(n => ({
-    label: n.canonical_nationality_name,
-    value: n.canonical_nationality_code
-  }))
-)*/
-
 onMounted(() => {
   getNationalityGroups();
- // getGbpNationalities();
 });
 </script>
 
@@ -187,6 +179,7 @@ onMounted(() => {
           filterable
           multiple
           v-model="selectedNationalities"
+          @update:modelValue="addNationality"
         />
       </x-field>
     </div>
