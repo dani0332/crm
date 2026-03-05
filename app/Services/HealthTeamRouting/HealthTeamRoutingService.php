@@ -74,11 +74,14 @@ class HealthTeamRoutingService
 
         // Check if GBP qualified
         if ($this->isGBPQualified($lead)) {
-            LoggerService::info('GBP team qualified, assigning to GBP team', ['source' => $source]);
+            $lead->health_team_type = HealthTeamType::GBP;
+            $lead->save();
+
+            LoggerService::info('GBP team qualified, assigned GBP team', ['source' => $source]);
             $this->healthTeamRoutingLogService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'GBP team qualified, assigning to GBP team',
+                    'message' => 'GBP team qualified, assigned to GBP team',
                     'step' => 'GBP team check',
                     'is_gbp' => true,
                     'quote_type' => $quoteType,
@@ -89,10 +92,8 @@ class HealthTeamRoutingService
                 null,
                 $source
             );
-            $lead->health_team_type = HealthTeamType::GBP;
-            $lead->save();
 
-            return true;
+            return;
         }
 
         // Check if PEC team qualified
@@ -116,10 +117,13 @@ class HealthTeamRoutingService
         }
 
         // Assign AUH team
+        LoggerService::info('Assigning AUH team', ['source' => $source]);
     }
     public function isGBPQualified(HealthQuote $lead): bool
     {
         $gbpMinPrice = $this->getGbpTeamMinPrice();
+        LoggerService::info('GBP team min price', ['gbp_min_price' => $gbpMinPrice]);
+
         // Return if not fall under price
         if ($gbpMinPrice !== null && ! empty($lead->price_starting_from) && $lead->price_starting_from < $gbpMinPrice) {
             return false;

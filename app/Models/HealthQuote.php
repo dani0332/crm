@@ -14,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
@@ -531,7 +532,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function isSIC1(): bool
     {
-        return ! $this->lead->health_plan_type_id;
+        return ! $this->health_plan_type_id;
     }
 
     public function isSIC2(): bool
@@ -543,18 +544,19 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         // Calculate age
-        $age = Carbon::parse($this->dob)->diffInYears(Carbon::now());
+        $age = Carbon::parse($this->dob)->age;
+        LoggerService::info('Lead applicant age', ['age' => $age]);
 
-        // If age does not fall within range, terminate
-        if ($age < $sicConfig->min_age || $age > $sicConfig->max_age) {
-            return false;
+        // If age falls within range
+        if ($age >= $sicConfig->min_age && $age <= $sicConfig->max_age) {
+            return true;
         }
 
-        if ($this->price_starting_from > $sicConfig->price_starting_from) {
-            return false;
+        if ($this->price_starting_from < $sicConfig->price_starting_from) {
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     public function isEcommerce(): bool

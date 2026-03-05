@@ -120,11 +120,11 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         // AUH path
         if ($isAUHLead) {
-            LoggerService::info('Lead is AUH lead', ['source' => $this->source]);
+            LoggerService::info('Lead is AUH lead, triggering AUH tier routing', ['source' => $this->source]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'Lead is AUH lead',
+                    'message' => 'Lead is AUH lead, triggering AUH tier routing',
                     'step' => 'AUH check',
                     'is_auh' => true,
                     'quote_type' => $this->allocationRequest->getQuoteType(),
@@ -138,15 +138,10 @@ class AssignTeamPipe extends BaseAllocationPipe
             app(HealthTeamRoutingService::class, ['source' => $this->source])
                 ->triggerAUHTierRouting($this->lead, $this->allocationRequest->getQuoteType(), $this->source);
 
-            return $next($request);
+            // return $next($request);
         }
 
         // Non AUH path
-
-        if (! $this->lead->health_team_type) {
-            LoggerService::warning('No health team found');
-            $this->throw('No health team found', self::NOT_FOUND);
-        }
 
         $this->lead->refresh();
         $this->allocationRequest->setLead($this->lead);
