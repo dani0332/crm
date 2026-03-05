@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
@@ -319,16 +320,16 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
+        // temporary disable non advisor email for savings quote
         if (! $this->lead->isSuppressIntroEmail()) {
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-                $this->lead,
-                $this->quoteType->value,
-                isNonAdvisorEmail: true,
-            );
+            SendSavingsOCAEmailJob::dispatch($this->lead->uuid)->delay(now()->addSeconds(10));
+            // app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            //     $this->lead,
+            //     $this->quoteType->value,
+            //     isNonAdvisorEmail: true,
+            // );
+            LoggerService::info(self::class.' - Non Advisor Email job dispatched');
         }
-
-        $this->lead->touch('non_advisor_email_sent_at');
-        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
     protected function getAdvisorsByEmailsOrIds(int $onlineStatus, array $roles, ?array $emails = null, ?array $advisorIds = null)

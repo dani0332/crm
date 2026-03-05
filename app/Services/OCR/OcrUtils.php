@@ -532,15 +532,22 @@ trait OcrUtils
 
     protected function getNationalityId(?string $nationality): ?int
     {
-        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
         if (empty($nationality)) {
             return null;
         }
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
 
-        $query = Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality);
+        $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
+        $nationalityModel = cache()->remember(
+            $cacheKey,
+            now()->addDay(),
+            fn () => Nationality::where(function ($query) use ($nationality) {
+                $query->where('text', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('code', $nationality);
+            })->first(['id'])
+        );
 
-        return $query->value('id');
+        return $nationalityModel?->id;
     }
 }

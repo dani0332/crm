@@ -78,7 +78,7 @@ class LifeAllocation extends BaseAllocation
     {
         LoggerService::info(self::class.'::getFicRulesUsers - Fetching FIC rule user IDs');
 
-        $usersIds = app(RuleService::class)->getFicRulesUsers();
+        $usersIds = app(RuleService::class)->getFicRulesUsers(QuoteTypes::LIFE);
 
         LoggerService::info(self::class.'::getFicRulesUsers - FIC rule user IDs retrieved', [
             'user_id_count' => count($usersIds),
