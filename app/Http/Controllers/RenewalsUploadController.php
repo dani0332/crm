@@ -17,6 +17,7 @@ use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\CQF\ProcessNonMotorCQFOrchestratorJob;
 use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
@@ -618,5 +619,15 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect()->route('renewals-uploaded-leads-list')->with('error', 'Failed to retry renewal processes');
+    }
+
+    /**
+     * Manually trigger the non-motor CQF renewal process (orchestrator job).
+     */
+    public function retriggerNonCQFProcess()
+    {
+        ProcessNonMotorCQFOrchestratorJob::dispatch();
+
+        return redirect()->route('renewals-upload-create')->with('success', 'Non-motor CQF renewal process has been queued.');
     }
 }

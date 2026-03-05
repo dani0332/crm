@@ -19,6 +19,13 @@ function handleFileUpload(event) {
   file = event[0].file;
   uploadForm.csvFile = event[0];
 }
+
+function onRetriggerNonCQF() {
+  router.post(route('renewals-non-motor-retrigger'), {}, {
+    preserveScroll: true,
+  });
+}
+
 function onSubmit(isValid) {
   if (isValid) {
     let formData = new FormData();
@@ -62,6 +69,7 @@ function onSubmit(isValid) {
 }
 
 const can = permission => useCan(permission);
+const permissionsEnum = { RenewalsRetrigger: 'renewals-retrigger' };
 </script>
 
 <template>
@@ -131,6 +139,15 @@ const can = permission => useCan(permission);
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
+        <x-button
+          v-if="can(permissionsEnum.RenewalsRetrigger)"
+          size="sm"
+          color="secondary"
+          type="button"
+          @click="onRetriggerNonCQF"
+        >
+          Retrigger Non-Motor CQF Process
+        </x-button>
         <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
       </div>
       <div class="flex items-center my-4">
