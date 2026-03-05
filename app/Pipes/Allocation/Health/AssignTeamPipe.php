@@ -98,14 +98,13 @@ class AssignTeamPipe extends BaseAllocationPipe
         // Check if lead source ! ecom
         if (! $this->lead->isEcommerce()) {
             // Terminate
-            LoggerService::info('Lead source is not ecom, health team routing is applicable', ['source' => $this->source]);
+            LoggerService::info('Lead source is not ecom, health team routing is not applicable', ['source' => $this->source]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'Lead source is not ecom, health team routing is applicable',
+                    'message' => 'Lead source is not ecom, health team routing is not applicable',
                     'step' => 'ecom source check',
                     'lead_source' => $this->source,
-                    'quote_type' => $this->allocationRequest->getQuoteType(),
                 ],
                 $this->lead->id,
                 $this->lead->uuid,
@@ -127,7 +126,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                     'message' => 'Lead is AUH lead, triggering AUH tier routing',
                     'step' => 'AUH check',
                     'is_auh' => true,
-                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                    'source' => $this->source,
                 ],
                 $this->lead->id,
                 $this->lead->uuid,
@@ -136,12 +135,26 @@ class AssignTeamPipe extends BaseAllocationPipe
             );
 
             app(HealthTeamRoutingService::class, ['source' => $this->source])
-                ->triggerAUHTierRouting($this->lead, $this->allocationRequest->getQuoteType(), $this->source);
+                ->triggerAUHTierRouting($this->lead);
+        } else {
+            LoggerService::info('Lead is Non AUH lead, triggering Non AUH tier routing', ['source' => $this->source]);
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Lead is Non AUH lead, triggering Non AUH tier routing',
+                    'step' => 'Non AUH check',
+                    'is_auh' => false,
+                    'source' => $this->source,
+                ],
+                $this->lead->id,
+                $this->lead->uuid,
+                null,
+                $this->source
+            );
 
-            // return $next($request);
+            app(HealthTeamRoutingService::class, [$this->source])
+                ->triggerNonAUHTierRouting($this->lead);
         }
-
-        // Non AUH path
 
         $this->lead->refresh();
         $this->allocationRequest->setLead($this->lead);
