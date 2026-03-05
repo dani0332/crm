@@ -48,6 +48,7 @@ class AMLLookupsService
     {
         // If insurance provider ID and lookup keys are provided, get provider-specific lookups
         if ($insuranceProviderId && ! empty($lookupsKeys)) {
+            $lookupsKeys = array_map(fn (LookupsEnum $enum): string => $enum->value, $lookupsKeys);
             $cacheKey = 'aml_lookups_provider_'.$insuranceProviderId.'_'.md5(implode(',', $lookupsKeys));
 
             return Cache::remember($cacheKey, now()->addHour(), function () use ($lookupsKeys, $insuranceProviderId) {
@@ -62,20 +63,20 @@ class AMLLookupsService
         // Get standard AML lookups with caching
         return Cache::remember('aml_lookups_standard', now()->addHour(), function () {
             $lookupsForAML = [
-                LookupsEnum::RESIDENT_STATUS,
-                LookupsEnum::DOCUMENT_ID_TYPE,
-                LookupsEnum::ENTITY_DOCUMENT_TYPE,
-                LookupsEnum::MODE_OF_CONTACT,
-                LookupsEnum::MODE_OF_DELIVERY,
-                LookupsEnum::EMPLOYMENT_SECTOR,
-                LookupsEnum::LEGAL_STRUCTURE,
-                LookupsEnum::ISSUANCE_PLACE,
-                LookupsEnum::ISSUING_AUTHORITY,
-                LookupsEnum::COMPANY_POSITION,
-                LookupsEnum::PROFESSIONAL_TITLE,
-                LookupsEnum::UBO_RELATION,
-                LookupsEnum::COMPANY_TYPE,
-                LookupsEnum::MEMBER_RELATION,
+                LookupsEnum::RESIDENT_STATUS->value,
+                LookupsEnum::DOCUMENT_ID_TYPE->value,
+                LookupsEnum::ENTITY_DOCUMENT_TYPE->value,
+                LookupsEnum::MODE_OF_CONTACT->value,
+                LookupsEnum::MODE_OF_DELIVERY->value,
+                LookupsEnum::EMPLOYMENT_SECTOR->value,
+                LookupsEnum::LEGAL_STRUCTURE->value,
+                LookupsEnum::ISSUANCE_PLACE->value,
+                LookupsEnum::ISSUING_AUTHORITY->value,
+                LookupsEnum::COMPANY_POSITION->value,
+                LookupsEnum::PROFESSIONAL_TITLE->value,
+                LookupsEnum::UBO_RELATION->value,
+                LookupsEnum::COMPANY_TYPE->value,
+                LookupsEnum::MEMBER_RELATION->value,
             ];
 
             return Lookup::whereIn('key', $lookupsForAML)
