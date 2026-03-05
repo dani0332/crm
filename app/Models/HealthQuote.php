@@ -524,6 +524,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 
+    public function isPECLead(): bool
+    {
+        return ! empty($this->has_pec_tag);
+    }
+
     public function isSIC1(): bool
     {
         return ! $this->lead->health_plan_type_id;
