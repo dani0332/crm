@@ -11,7 +11,9 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\HealthQuote;
 use App\Models\Team;
+use App\Services\CanonicalNationalityService;
 use App\Services\Logger\LoggerService;
+use App\Services\NationalityPoolService;
 use Carbon\Carbon;
 
 class HealthTeamRoutingService
@@ -36,7 +38,8 @@ class HealthTeamRoutingService
         $canonicalNationality = $this->canonicalNationalityService->getByNationalityId($lead->nationality_id);
         $nationalityPoolCodes = $this->nationalityPoolService->getNationalityCodes();
 
-        if (! collect(explode(',', $nationalityPoolCodes))->contains($canonicalNationality->canonical_nationality_code)) {
+        if (! collect(explode(',', $nationalityPoolCodes->canonical_nationality_codes))
+            ->contains($canonicalNationality->canonical_nationality_code)) {
             return false;
         }
 
