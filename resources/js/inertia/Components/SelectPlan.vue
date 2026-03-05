@@ -191,9 +191,13 @@ const validateSavingsPlanSelection = (isUpdating = false) => {
     return true;
   }
 
-  const isCurrentPlanSelected = String(selectedPlanId) === String(props.plan.id);
+  const isCurrentPlanSelected =
+    String(selectedPlanId) === String(props.plan.id);
 
-  if ((isUpdating && isCurrentPlanSelected) || (!isUpdating && !isCurrentPlanSelected)) {
+  if (
+    (isUpdating && isCurrentPlanSelected) ||
+    (!isUpdating && !isCurrentPlanSelected)
+  ) {
     notification.error({
       title: 'Plan is already selected and payment has been added.',
       position: 'top',
