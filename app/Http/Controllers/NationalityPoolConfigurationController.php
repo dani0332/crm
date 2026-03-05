@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\NationalityPoolConfigurationRequest;
 use App\Models\CanonicalNationality;
-use App\Models\NationalityPool;
+use App\Services\NationalityPoolConfigurationService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Response;
 
 class NationalityPoolConfigurationController extends Controller
 {
-    public function __construct()
+    public function __construct(private NationalityPoolConfigurationService $nationalityPoolConfigurationService)
     {
         $this->middleware('permission:'.PermissionsEnum::NATIONALITY_POOL_CONFIG);
     }
@@ -24,9 +24,7 @@ class NationalityPoolConfigurationController extends Controller
             ->orderBy('canonical_nationality_name')->get();
 
         // Fetch nationality pool configurations
-        $nationalityPoolConfigurations = NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes')
-            ->get()
-            ->toArray();
+        $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData();
 
         return inertia('Admin/AllocationConfig/NationalityPool/Index', [
             'gbpNationalities' => $nationalities,
@@ -37,12 +35,7 @@ class NationalityPoolConfigurationController extends Controller
     public function save(NationalityPoolConfigurationRequest $request): JsonResponse
     {
         try {
-            $codes = collect($request->canonical_nationality_codes)->implode(',');
-
-            NationalityPool::create([
-                'effective_from' => $request->effective_from,
-                'canonical_nationality_codes' => $codes,
-            ]);
+            $this->nationalityPoolConfigurationService->saveData($request->all());
 
             return response()->json(['message' => 'Nationality pool configuration saved successfully']);
         } catch (\Exception $e) {
