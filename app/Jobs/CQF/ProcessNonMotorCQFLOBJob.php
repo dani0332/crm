@@ -54,7 +54,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
     protected function lobBatchName(): string
     {
-        return 'Non Motor CQF Renewal - ' . $this->quoteType->value;
+        return 'Non Motor CQF Renewal - '.$this->quoteType->value;
     }
 
     public function handle(): void

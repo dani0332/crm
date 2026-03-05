@@ -58,7 +58,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
             ]);
         }
 
-        if (!empty($lobJobs) && count($lobJobs) > 0) {
+        if (! empty($lobJobs) && count($lobJobs) > 0) {
             Bus::batch($lobJobs)
                 ->name(self::BATCH_NAME)
                 ->allowFailures()

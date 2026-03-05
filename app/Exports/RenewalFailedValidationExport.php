@@ -91,6 +91,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->{$key} = $column['title'];
         }
         $firstRow->errors = 'Error Message(s)';
+
         return $firstRow;
     }
 
@@ -153,6 +154,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         foreach ($headers as $key => $title) {
             $firstRow->{$key} = $title;
         }
+
         return $firstRow;
     }
 
@@ -167,6 +169,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         if (is_array($errors)) {
             return implode('; ', $errors);
         }
+
         return 'No errors';
     }
 

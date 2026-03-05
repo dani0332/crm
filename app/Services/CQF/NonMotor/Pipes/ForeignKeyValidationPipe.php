@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\Pipes;
 
-use App\Enums\LookupsEnum;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
@@ -58,7 +57,7 @@ class ForeignKeyValidationPipe
             'customer_id',
             Customer::class,
             'Customer id is required for renewal quote.',
-            fn($id) => "Customer with id {$id} does not exist.",
+            fn ($id) => "Customer with id {$id} does not exist.",
             $errors,
             $checkExists
         );
@@ -68,7 +67,7 @@ class ForeignKeyValidationPipe
             'insurance_provider_id',
             InsuranceProvider::class,
             'Insurance provider id is required for renewal quote.',
-            fn($id) => "Insurance provider with id {$id} does not exist.",
+            fn ($id) => "Insurance provider with id {$id} does not exist.",
             $errors,
             $checkExists
         );
@@ -77,11 +76,11 @@ class ForeignKeyValidationPipe
         $optionalFks = [
             'nationality_id' => [
                 'model' => Nationality::class,
-                'not_found_msg' => fn($id) => "Nationality with id {$id} does not exist."
+                'not_found_msg' => fn ($id) => "Nationality with id {$id} does not exist.",
             ],
             'currently_insured_with_id' => [
                 'model' => InsuranceProvider::class,
-                'not_found_msg' => fn($id) => "Currently insured with (insurance provider) id {$id} does not exist."
+                'not_found_msg' => fn ($id) => "Currently insured with (insurance provider) id {$id} does not exist.",
             ],
         ];
 
@@ -109,15 +108,6 @@ class ForeignKeyValidationPipe
 
     /**
      * Validate a required foreign key field and populate $errors if needed.
-     *
-     * @param PersonalQuote $quote
-     * @param string $field
-     * @param string $model
-     * @param string $requiredMsg
-     * @param callable $notFoundMsg
-     * @param array $errors
-     * @param callable $checkExists
-     * @return void
      */
     private function validateRequiredFk(
         PersonalQuote $quote,
