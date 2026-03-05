@@ -141,6 +141,12 @@ class CourtesyEmailService extends BaseService
                 $emailStatus->email_address = $quote->email;
                 $emailStatus->email_subject = 'Courtesy Email';
                 $emailStatus->customer_id = is_object($customer) && isset($customer->id) ? $customer->id : null;
+
+                // Add Health AUH flag to reason field for tracking
+                if ($quoteTypeId === QuoteTypeId::Health && isset($quote->emirate_of_your_visa_id) && $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI) {
+                    $emailStatus->reason = 'isHealthAUH:true';
+                }
+
                 $emailStatus->save();
             }
 
