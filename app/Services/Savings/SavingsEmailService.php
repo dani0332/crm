@@ -47,17 +47,20 @@ class SavingsEmailService
             return null;
         }
 
-        // Check if OCA email flow already executed to prevent duplicates
-        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
-            $lead->uuid,
-            QuoteTypeId::Savings,
-            QuoteFlowType::SAVINGS_OCA_EMAIL->value
-        );
+        // Check if OCA email flow already executed to prevent duplicates (bypass when force_send from manual button)
+        $forceSend = $data['force_send'] ?? false;
+        if (! $forceSend) {
+            $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
+                $lead->uuid,
+                QuoteTypeId::Savings,
+                QuoteFlowType::SAVINGS_OCA_EMAIL->value
+            );
 
-        if ($isFlowExecuted) {
-            LoggerService::info("$logPrefix OCA email flow already executed for quote: {$lead->uuid}");
+            if ($isFlowExecuted) {
+                LoggerService::info("$logPrefix OCA email flow already executed for quote: {$lead->uuid}");
 
-            return null;
+                return null;
+            }
         }
 
         // Map data for bird service
