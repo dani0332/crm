@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
@@ -12,9 +13,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\ApplicationStorageService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -519,6 +522,44 @@ class HealthQuote extends Model implements AuditableContract
     public function isAUHLead(bool $shouldCheckSource = true)
     {
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
+    }
+
+    public function isSIC1(): bool
+    {
+        return ! $this->lead->health_plan_type_id;
+    }
+
+    public function isSIC2(): bool
+    {
+        $sicConfig = SICConfig::where('quote_type_id', QuoteTypeId::Health)->first();
+
+        if (! $sicConfig) {
+            return false;
+        }
+
+        // Calculate age
+        $age = Carbon::parse($this->dob)->diffInYears(Carbon::now());
+
+        // If age does not fall within range, terminate
+        if ($age < $sicConfig->min_age || $age > $sicConfig->max_age) {
+            return false;
+        }
+
+        if ($this->price_starting_from > $sicConfig->price_starting_from) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function isEcommerce(): bool
+    {
+        $appStorageValue = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE);
+        if (! $appStorageValue) {
+            return false;
+        }
+
+        return strpos($this->source, $appStorageValue) !== false;
     }
 
     public function hasPecTag(): Attribute
