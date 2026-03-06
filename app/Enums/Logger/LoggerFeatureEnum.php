@@ -63,4 +63,5 @@ enum LoggerFeatureEnum: string
     case API_QUOTE_DOCUMENT_UPLOAD = 'api-quote-document-upload';
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case PARTNER_POLICY_DOCUMENT = 'partner-policy-document';
+    case CSV_EXPORT = 'csv-export';
 }

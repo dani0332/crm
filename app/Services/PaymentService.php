@@ -23,12 +23,14 @@ class PaymentService extends BaseService
      */
     public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
-        $priceWithVat = round($quoteObject->price_with_vat, 2);
+        $priceWithVat = round((float) ($quoteObject->price_with_vat ?? 0), 2);
         $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment);
 
         $payment->total_price = $priceWithVat;
-        $payment->price_vat_applicable = $quoteObject->price_vat_applicable + $quoteObject->price_vat_not_applicable;
-        $payment->price_vat = $quoteObject->vat ?? $quoteObject->total_vat_amount ?? 0;
+        $priceVatApplicable = (float) ($quoteObject->price_vat_applicable ?? 0);
+        $priceVatNotApplicable = (float) ($quoteObject->price_vat_not_applicable ?? 0);
+        $payment->price_vat_applicable = $priceVatApplicable + $priceVatNotApplicable;
+        $payment->price_vat = (float) ($quoteObject->vat ?? $quoteObject->total_vat_amount ?? 0);
 
         $this->setTotalAmount(payment: $payment);
 
@@ -50,7 +52,7 @@ class PaymentService extends BaseService
     public function setPaymentStatusBasedOnPrice($priceWithVat, $payment): void
     {
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
-            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
+            $captureAndDiscount = round((float) ($payment->captured_amount ?? 0) + (float) ($payment->discount_value ?? 0), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($captureAndDiscount < $priceWithVat && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
@@ -67,8 +69,8 @@ class PaymentService extends BaseService
     {
         LoggerService::info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
-            $totalPrice = $payment->total_price;
-            $discountValue = $payment->discount_value;
+            $totalPrice = (float) ($payment->total_price ?? 0);
+            $discountValue = (float) ($payment->discount_value ?? 0);
             $totalAmount = $totalPrice - $discountValue;
             info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;

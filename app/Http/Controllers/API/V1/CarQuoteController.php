@@ -11,7 +11,6 @@ use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Models\CarQuote;
 use App\Models\QuoteStatus;
-use App\Models\Team;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
@@ -37,7 +36,7 @@ class CarQuoteController extends Controller
 
     public function getFollowupLeads()
     {
-        $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->value('id') ?? null;
+        $pcpTeamId = getTeamId(TeamNameEnum::PCP);
         $quotes = CarQuoteRepository::select(['id', 'code', 'uuid', 'advisor_id', 'renewal_batch', 'quote_batch_id'])
             ->whereHas('carQuoteRequestDetail', function ($q) {
                 $q->whereNotNull('ocb_sent_date');
