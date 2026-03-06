@@ -20,7 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class PartnerPolicyDocumentJob/*  implements ShouldQueue */
+class PartnerPolicyDocumentJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
 
