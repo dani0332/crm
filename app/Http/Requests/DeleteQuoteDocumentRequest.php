@@ -47,13 +47,19 @@ class DeleteQuoteDocumentRequest extends FormRequest
             // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
+
+                return;
             }
 
             $metLifeValidator = new MetLifeValidationService;
 
-            // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled & also skip for Health quotes
-            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)
-                && strtolower(request()->quoteType) != strtolower(QuoteTypes::HEALTH->value)) {
+            // Resolve quote type from request so we support all quote models (PersonalQuote has quote_type_id;
+            // CarQuote, HealthQuote, etc. do not). Skip payment validation for Savings and Health.
+            $requestQuoteType = QuoteTypes::tryFrom(ucfirst(strtolower(request()->quoteType ?? '')));
+            $skipPaymentValidation = $requestQuoteType
+                && in_array($requestQuoteType, [QuoteTypes::SAVINGS, QuoteTypes::HEALTH], true);
+
+            if ($metLifeValidator->shouldValidatePayment(request()->provider_code) && ! $skipPaymentValidation) {
                 // validate if payment is authorized
                 if (empty($quote->payment) ||
                     ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
