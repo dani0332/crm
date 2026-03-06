@@ -88,10 +88,10 @@ class FetchTierUsersPipe extends BaseAllocationPipe
     {
         $lead = $this->allocationRequest->getLead();
 
-        // Skip team filter for PUA leads with REVIVAL_PAID or RENEWAL_UPLOAD source if ORGANIC team is assigned
+        // Skip team filter for PUA leads with revival sources (REVIVAL_REPLIED, REVIVAL_PAID) or RENEWAL_UPLOAD source if ORGANIC team is assigned
         // This handles normal allocation flow where EvaluateTeamPipe sets teamId = ORGANIC
         $organicTeamId = getTeamId(TeamNameEnum::ORGANIC);
-        if (in_array($leadSource, [LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::RENEWAL_UPLOAD]) && $lead->isPUA() && $teamId == $organicTeamId) {
+        if (in_array($leadSource, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::RENEWAL_UPLOAD]) && $lead->isPUA() && $teamId == $organicTeamId) {
             LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping team filter for PUA lead', [
                 'leadSource' => $leadSource,
                 'isPUA' => true,
@@ -108,7 +108,7 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         $teamMap = [
             LeadSourceEnum::REVIVAL_REPLIED => TeamNameEnum::ORGANIC,
             LeadSourceEnum::RENEWAL_UPLOAD => $teamId == 0 ? TeamNameEnum::ORGANIC : null,
-            LeadSourceEnum::REVIVAL_PAID => TeamNameEnum::SIC_UNASSISTED,
+            LeadSourceEnum::REVIVAL_PAID => TeamNameEnum::ORGANIC,
         ];
 
         if (isset($teamMap[$leadSource])) {
@@ -120,7 +120,7 @@ class FetchTierUsersPipe extends BaseAllocationPipe
             ]);
 
             // Retrieve team IDs for the relevant team
-            $teamIds = Team::where('name', $mappedTeam)->pluck('id')->toArray();
+            $teamIds = Team::where('code', $mappedTeam)->active()->pluck('id')->toArray();
 
             // Retrieve user IDs associated with the relevant team
             $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();

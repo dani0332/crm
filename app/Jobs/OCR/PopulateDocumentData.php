@@ -209,6 +209,16 @@ class PopulateDocumentData implements ShouldQueue
         // Send OCR fail notification for supported document types
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
 
+        if (! $docType) {
+            LoggerService::info(self::class.' - OCR failure notification not required for this document type', extra: [
+                'quote_code' => $this->quote?->code ?? null,
+                'document_type' => $this->documentType?->code ?? null,
+                'ocr_doc_type' => $docType?->value ?? null,
+            ]);
+
+            return;
+        }
+
         if (app(OCRService::class)->requiresOcrNotifications($docType)) {
             try {
                 event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));

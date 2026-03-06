@@ -1,5 +1,6 @@
 <script setup>
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+import { ImageGalleryModal } from '@/inertia/Components/PaymentComponents/PaymentModal/index.js';
 
 const props = defineProps({
   quote: Object,
@@ -31,6 +32,10 @@ const props = defineProps({
   isEndorsementBooked: {
     type: Boolean,
     required: false,
+  },
+  storageUrl: {
+    type: String,
+    default: '',
   },
 });
 
@@ -329,7 +334,36 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
-const { openTempUrl } = useDocumentTempUrl();
+const { openTempUrl, getTempUrl } = useDocumentTempUrl();
+
+const sortedQuoteDocuments = computed(() =>
+  [...(props.quoteDocuments || [])].sort((a, b) => b.id - a.id),
+);
+
+const isGalleryModelOpen = ref(false);
+const galleryFiles = ref([]);
+const galleryInitialIndex = ref(0);
+const currentFileURL = ref('');
+
+const openDocumentGallery = async item => {
+  const files = sortedQuoteDocuments.value.map(d => ({
+    ...d,
+    doc_url: d.watermarked_doc_url || d.doc_url,
+  }));
+  const index = files.findIndex(f => f.id === item.id);
+  if (index === -1) return;
+  galleryFiles.value = files;
+  galleryInitialIndex.value = index;
+  const documentUrl = await getTempUrl(files[index].doc_url);
+  if (documentUrl) {
+    currentFileURL.value = documentUrl;
+    isGalleryModelOpen.value = true;
+  }
+};
+
+const closeGallery = () => {
+  isGalleryModelOpen.value = false;
+};
 </script>
 
 <template>
@@ -390,7 +424,7 @@ const { openTempUrl } = useDocumentTempUrl();
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
+          :items="sortedQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -399,9 +433,7 @@ const { openTempUrl } = useDocumentTempUrl();
           <template #item-original_name="item">
             <a
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.doc_url || item.watermarked_doc_url)
-              "
+              @click.prevent="openDocumentGallery(item)"
             >
               {{ item.original_name }}
             </a>
@@ -539,12 +571,7 @@ const { openTempUrl } = useDocumentTempUrl();
                   )"
                   :key="quoteDocument.id"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
-                  "
+                  @click.prevent="openDocumentGallery(quoteDocument)"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
@@ -555,12 +582,7 @@ const { openTempUrl } = useDocumentTempUrl();
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
-                  "
+                  @click.prevent="openDocumentGallery(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
@@ -651,5 +673,16 @@ const { openTempUrl } = useDocumentTempUrl();
         </div>
       </template>
     </x-modal>
+
+    <ImageGalleryModal
+      v-model="isGalleryModelOpen"
+      :files="galleryFiles"
+      :initial-index="galleryInitialIndex"
+      :storage-url="storageUrl"
+      :currentFileURL="currentFileURL"
+      @update:model-value="val => val === false && closeGallery()"
+      class="max-w-6xl mx-auto"
+      @update:currentFileURL="currentFileURL = $event"
+    />
   </div>
 </template>
