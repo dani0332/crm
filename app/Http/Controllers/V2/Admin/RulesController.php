@@ -185,7 +185,12 @@ class RulesController extends Controller
                     );
                 }
             } else {
-                $rule->ruleDetail()->delete();
+                $rule->ruleDetail()->update([
+                    'lead_source_id' => null,
+                    'utm_source' => null,
+                    'utm_campaign' => null,
+                    'utm_medium' => null,
+                ]);
                 $rule->leadSources()->delete();
             }
 
