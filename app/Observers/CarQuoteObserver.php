@@ -21,7 +21,6 @@ use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\CarQuote;
-use App\Models\QuoteType;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;

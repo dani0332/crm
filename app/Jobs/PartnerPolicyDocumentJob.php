@@ -3,22 +3,12 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\EnvEnum;
-use App\Enums\InsuranceProvidersEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\UserNameEnum;
 use App\Services\BirdService;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\Quotes\CyberQuoteService;
-use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Queue\SerializesModels;
 
 class PartnerPolicyDocumentJob implements ShouldQueue
 {
@@ -44,7 +34,7 @@ class PartnerPolicyDocumentJob implements ShouldQueue
 
         $emailData = (object) [
             'partnerEmail' => $this->partnerEmail,
-            ...$this->documents
+            ...$this->documents,
         ];
 
         $birdUrlKey = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL);

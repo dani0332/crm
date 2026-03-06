@@ -2,7 +2,6 @@
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
-use App\Jobs\PartnerPolicyDocumentJob;
 use App\Models\CarQuote;
 use App\Models\Partner;
 use App\Services\PartnerService;
@@ -10,8 +9,6 @@ use App\Services\QuoteDocumentService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
