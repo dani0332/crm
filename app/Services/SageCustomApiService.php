@@ -306,14 +306,14 @@ class SageCustomApiService
 
                         if ($aPInvoicePaymentsScheduleResponse['status']) {
                             $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
-                            $apBookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format('Y-m-d');
+                            $apBookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format(config('constants.DATE_FORMAT_ONLY'));
                             foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
                                 // add discount amount to amount due for the first child payment in sage for balancing the amount
                                 $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
                                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                     $dueDate = $apBookingDateFormatted;
                                 } else {
-                                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $apBookingDateFormatted : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $apBookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
                                 }
 
                                 $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
