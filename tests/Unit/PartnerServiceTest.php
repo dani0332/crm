@@ -174,8 +174,10 @@ describe('validatePartnerQuote', function () {
 
         $result = $service->validatePartnerQuote($carQuote->uuid, 'car');
 
-        expect($result)->toBeInstanceOf(CarQuote::class)
-            ->and($result->uuid)->toBe($carQuote->uuid);
+        expect($result)->toBeArray()
+            ->and($result['quote'])->toBeInstanceOf(CarQuote::class)
+            ->and($result['quote']->uuid)->toBe($carQuote->uuid)
+            ->and($result)->toHaveKeys(['quote', 'insuranceProvider', 'partnerEmail']);
     });
 
     it('returns false when quote does not exist', function () {

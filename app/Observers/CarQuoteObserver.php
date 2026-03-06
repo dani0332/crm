@@ -116,12 +116,19 @@ class CarQuoteObserver
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
-                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR->value);
             } catch (Exception $e) {
                 Log::error('CarQuoteObserver - update personal quote failed', [
                     'error' => $e->getMessage(),
                     'uuid' => $lead->uuid,
                 ]);
+            }
+
+            try {
+                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR->value);
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - send partner policy documents failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
             }
 
             try {

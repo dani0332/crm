@@ -15,9 +15,6 @@ class PartnerService
 {
     use GenericQueriesAllLobs;
 
-    private object $insuranceProvider;
-    private ?string $partnerEmail = '';
-
     public function __construct(
         private readonly QuoteDocumentService $quoteDocumentService
     ) {}
@@ -31,7 +28,7 @@ class PartnerService
         return $partner ?? false;
     }
 
-    public function validatePartnerQuote($uuid, $quoteType)
+    public function validatePartnerQuote($uuid, $quoteType): array|false
     {
         $quote = $this->getQuoteObject($quoteType, $uuid);
 
@@ -53,10 +50,11 @@ class PartnerService
             return false;
         }
 
-        $this->insuranceProvider = $insuranceProvider;
-        $this->partnerEmail = $partner->email;
-
-        return $quote;
+        return [
+            'quote' => $quote,
+            'insuranceProvider' => $insuranceProvider,
+            'partnerEmail' => $partner->email,
+        ];
     }
 
     private function logValidationFailure($payment, $insuranceProvider, $partner, $quote): void
@@ -72,16 +70,20 @@ class PartnerService
 
     public function sendPolicyDocumentsToPartner($uuid, $quoteType): void
     {
-        $quote = $this->validatePartnerQuote($uuid, $quoteType);
+        $validation = $this->validatePartnerQuote($uuid, $quoteType);
 
-        if (! $quote) {
+        if (! $validation) {
             return;
         }
+
+        $quote = $validation['quote'];
+        $insuranceProvider = $validation['insuranceProvider'];
+        $partnerEmail = $validation['partnerEmail'];
 
         $providerDocuments = [];
 
         // will update as new provider added
-        if ($this->insuranceProvider->code == InsuranceProviderEnum::AXA->value) {
+        if ($insuranceProvider->code == InsuranceProviderEnum::AXA->value) {
             $providerDocuments = [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS];
         }
 
@@ -110,7 +112,7 @@ class PartnerService
 
         $emailPayload = $this->partnerPolicyDocumentsEmailPayload($filterDocuments);
 
-        PartnerPolicyDocumentJob::dispatch($emailPayload, $this->partnerEmail);
+        PartnerPolicyDocumentJob::dispatch($emailPayload, $partnerEmail);
     }
 
     public function partnerPolicyDocumentsEmailPayload($documents)
