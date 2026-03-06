@@ -44,34 +44,33 @@ class PartnerService
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::PARTNER_POLICY_DOCUMENT);
 
         $payment = Payment::where('code', $quote->code)->first();
-        if (! $payment) {
-            LoggerService::info('PartnerService - Payment not found');
+        $insuranceProvider = $payment ? getInsuranceProvider($payment, $quoteType, $quote) : null;
+        $partner = $insuranceProvider ? $this->isPartnerActive($quote->source, $insuranceProvider->id) : null;
 
-            return false;
-        }
-
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
-        if (! $insuranceProvider) {
-            LoggerService::info('PartnerService - Insurance provider not found');
+        if (! $payment || ! $insuranceProvider || ! $partner) {
+            $this->logValidationFailure($payment, $insuranceProvider, $partner, $quote);
 
             return false;
         }
 
         $this->insuranceProvider = $insuranceProvider;
-        $partner = $this->isPartnerActive($quote->source, $insuranceProvider->id);
-
-        if (! $partner) {
-            LoggerService::info('PartnerService - Partner not active', extra: ['partner' => $quote->source]);
-
-            return false;
-        }
-
         $this->partnerEmail = $partner->email;
 
         return $quote;
     }
 
-    public function sendPolicyDocumentsToPartner($uuid, $quoteType)
+    private function logValidationFailure($payment, $insuranceProvider, $partner, $quote): void
+    {
+        if (! $payment) {
+            LoggerService::info('PartnerService - Payment not found');
+        } elseif (! $insuranceProvider) {
+            LoggerService::info('PartnerService - Insurance provider not found');
+        } elseif (! $partner) {
+            LoggerService::info('PartnerService - Partner not active', extra: ['partner' => $quote->source]);
+        }
+    }
+
+    public function sendPolicyDocumentsToPartner($uuid, $quoteType): void
     {
         $quote = $this->validatePartnerQuote($uuid, $quoteType);
 
@@ -106,7 +105,7 @@ class PartnerService
         if (! empty($missingDocuments)) {
             LoggerService::info('PartnerService - Missing required documents', extra: ['missing_documents' => $missingDocuments]);
 
-            return false;
+            return;
         }
 
         $emailPayload = $this->partnerPolicyDocumentsEmailPayload($filterDocuments);
