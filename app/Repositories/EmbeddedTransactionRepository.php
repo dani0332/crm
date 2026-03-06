@@ -56,12 +56,12 @@ class EmbeddedTransactionRepository extends BaseRepository
             'product.embeddedProduct:id,short_code',
         ];
 
-        if($withDetails) {
+        if ($withDetails) {
             $withQuoteRequest = 'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name';
 
-            if($quoteTypeId == QuoteTypes::CAR->id()) {
+            if ($quoteTypeId == QuoteTypes::CAR->id()) {
                 $withQuoteRequest .= ',advisor_id,plan_id,vehicle_use,is_modified,car_make_id,car_model_id';
-                $with = array_merge($with, [                
+                $with = array_merge($with, [
                     'quoteRequest.carMake:id,text,code',
                     'quoteRequest.carModel:id,text,code',
                     'quoteRequest.advisor:id,email',
