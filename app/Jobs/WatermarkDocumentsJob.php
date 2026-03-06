@@ -163,7 +163,7 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
 
             // For Azure private storage paths
-            if (Storage::disk(name 'azureIMPrivate')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 
