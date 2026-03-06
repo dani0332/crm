@@ -201,6 +201,11 @@ class CentralService extends BaseService
                 ])) {
                     $lifeDataArr = $this->prepareLifeQuoteDuplicateData($parentRecord);
                     $response = app(LifeQuoteService::class)->saveLifeQuote($lifeDataArr);
+                } elseif (in_array($lob, [
+                    quoteTypeCode::Home,
+                ])) {
+                    $homeDataArr = $this->prepareHomeQuoteDuplicateData($parentRecord);
+                    $response = app(HomeQuoteService::class)->saveHomeQuote($homeDataArr);
                 } else {
                     $repository = $this->getRepositoryObject(ucfirst($lob));
 
@@ -214,7 +219,7 @@ class CentralService extends BaseService
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
-                    if (in_array($lob, [quoteTypeCode::Life])) {
+                    if (in_array($lob, [quoteTypeCode::Life, quoteTypeCode::Home])) {
                         $record = PersonalQuote::where('uuid', $response->quoteUID)->first();
                     } else {
                         $record = $repository::where('uuid', $response->quoteUID)->first();
@@ -2501,4 +2506,58 @@ class CentralService extends BaseService
 
         return $lifeDataArr;
     }
+
+    private function prepareHomeQuoteDuplicateData($parentRecord): array
+    {
+        $homeDataArr = [
+            'first_name' => $parentRecord->first_name,
+            'last_name' => $parentRecord->last_name,
+            'email' => $parentRecord->email,
+            'mobile_no' => $parentRecord->mobile_no,
+        ];
+
+        if ($parentRecord instanceof PersonalQuote && $parentRecord->quote_type_id == QuoteTypeId::Home && $parentRecord->homeQuote) {
+            $homeQuote = $parentRecord->homeQuote;
+            $homeDataArr['has_contents'] = $homeQuote->has_contents ?? 0;
+            $homeDataArr['has_building'] = $homeQuote->has_building ?? 0;
+            $homeDataArr['have_claimed_losses'] = $homeQuote->has_claimed_losses ?? 0;
+            $homeDataArr['building_aed'] = $homeQuote->building_value ?? null;
+            $homeDataArr['has_personal_belongings'] = $homeQuote->has_personal_belongings ?? 0;
+            $homeDataArr['owner_occupancy_type_id'] = $homeQuote->owner_occupancy_type_id ?? null;
+            $homeDataArr['ilivein_accommodation_type_id'] = $homeQuote->ilivein_accommodation_type_id ?? null;
+            $homeDataArr['iam_possesion_type_id'] = $homeQuote->iam_possesion_type_id ?? null;
+            $homeDataArr['sub_area_id'] = $homeQuote->sub_area_id ?? null;
+            $homeDataArr['contents_aed'] = $homeQuote->contents_value_id ?? null;
+            $homeDataArr['personal_belongings_aed'] = $homeQuote->personal_belongings_value_id ?? null;
+            $homeDataArr['type_of_coverage_you_need'] = $homeQuote->coverage_type_id ?? null;
+            $homeDataArr['address'] = $homeQuote->address ?? $parentRecord->address ?? null;
+            $homeDataArr['dob'] = $homeQuote->dob ?? $parentRecord->dob ?? null;
+            $homeDataArr['nationality_id'] = $homeQuote->nationality_id ?? $parentRecord->nationality_id ?? null;
+            $homeDataArr['gender'] = $homeQuote->gender ?? $parentRecord->gender ?? null;
+            $homeDataArr['company_name'] = $homeQuote->company_name ?? null;
+            $homeDataArr['company_address'] = $homeQuote->company_address ?? null;
+        } else {
+            $homeDataArr['has_contents'] = 0;
+            $homeDataArr['has_building'] = 0;
+            $homeDataArr['have_claimed_losses'] = 0;
+            $homeDataArr['building_aed'] = null;
+            $homeDataArr['has_personal_belongings'] = 0;
+            $homeDataArr['owner_occupancy_type_id'] = null;
+            $homeDataArr['ilivein_accommodation_type_id'] = null;
+            $homeDataArr['iam_possesion_type_id'] = null;
+            $homeDataArr['sub_area_id'] = null;
+            $homeDataArr['contents_aed'] = null;
+            $homeDataArr['personal_belongings_aed'] = null;
+            $homeDataArr['type_of_coverage_you_need'] = null;
+            $homeDataArr['address'] = $parentRecord->address ?? null;
+            $homeDataArr['dob'] = $parentRecord->dob ?? null;
+            $homeDataArr['nationality_id'] = $parentRecord->nationality_id ?? null;
+            $homeDataArr['gender'] = $parentRecord->gender ?? null;
+            $homeDataArr['company_name'] = null;
+            $homeDataArr['company_address'] = null;
+        }
+
+        return $homeDataArr;
+    }
+
 }
