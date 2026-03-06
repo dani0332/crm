@@ -21,12 +21,14 @@ use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\CarQuote;
+use App\Models\QuoteType;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PartnerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -115,6 +117,7 @@ class CarQuoteObserver
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
+                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR->value);
             } catch (Exception $e) {
                 Log::error('CarQuoteObserver - update personal quote failed', [
                     'error' => $e->getMessage(),

@@ -80,6 +80,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCarOcbEmailTemplatesUpdate();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
+        $this->seedPartnerAutomationCompletedWorkflowUrl();
     }
 
     private function livaCarAutomationSeed()
@@ -1448,5 +1449,23 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         // endregion
+    }
+
+    private function seedPartnerAutomationCompletedWorkflowUrl()
+    {
+        $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $birdWorkflowUrl = '';
+        }
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL],
+            [
+                'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
     }
 }
