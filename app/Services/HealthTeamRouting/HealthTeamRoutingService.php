@@ -289,7 +289,10 @@ class HealthTeamRoutingService
             $lead->health_team_type = TeamNameEnum::PEC;
             $lead->save();
 
-            LoggerService::info('PEC lead identified, assigned Non AUH PEC team', ['source' => $this->source]);
+            LoggerService::info('PEC lead identified, assigned Non AUH PEC team', [
+                'source' => $this->source,
+                'team_name' => TeamNameEnum::PEC,
+            ]);
             $this->healthTeamRoutingLogService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
@@ -297,6 +300,7 @@ class HealthTeamRoutingService
                     'step' => 'PEC lead check',
                     'is_pec' => true,
                     'source' => $this->source,
+                    'team_name' => TeamNameEnum::PEC,
                 ],
                 $lead->id,
                 $lead->uuid,
