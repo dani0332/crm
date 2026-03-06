@@ -1,6 +1,5 @@
 <script setup>
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
-import { ImageGalleryModal } from '@/inertia/Components/PaymentComponents/PaymentModal/index.js';
 
 const props = defineProps({
   quote: Object,
@@ -334,35 +333,17 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
-const { openTempUrl, getTempUrl } = useDocumentTempUrl();
+const { openTempUrl } = useDocumentTempUrl();
 
 const sortedQuoteDocuments = computed(() =>
   [...(props.quoteDocuments || [])].sort((a, b) => b.id - a.id),
 );
 
-const isGalleryModelOpen = ref(false);
-const galleryFiles = ref([]);
-const galleryInitialIndex = ref(0);
-const currentFileURL = ref('');
-
-const openDocumentGallery = async item => {
-  const files = sortedQuoteDocuments.value.map(d => ({
-    ...d,
-    doc_url: d.watermarked_doc_url || d.doc_url,
-  }));
-  const index = files.findIndex(f => f.id === item.id);
-  if (index === -1) return;
-  galleryFiles.value = files;
-  galleryInitialIndex.value = index;
-  const documentUrl = await getTempUrl(files[index].doc_url);
-  if (documentUrl) {
-    currentFileURL.value = documentUrl;
-    isGalleryModelOpen.value = true;
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
   }
-};
-
-const closeGallery = () => {
-  isGalleryModelOpen.value = false;
 };
 </script>
 
@@ -433,7 +414,7 @@ const closeGallery = () => {
           <template #item-original_name="item">
             <a
               class="text-primary-600 cursor-pointer"
-              @click.prevent="openDocumentGallery(item)"
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
@@ -571,7 +552,7 @@ const closeGallery = () => {
                   )"
                   :key="quoteDocument.id"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                  @click.prevent="openDocumentGallery(quoteDocument)"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
@@ -582,7 +563,7 @@ const closeGallery = () => {
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  @click.prevent="openDocumentGallery(quoteDocument)"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
@@ -674,15 +655,5 @@ const closeGallery = () => {
       </template>
     </x-modal>
 
-    <ImageGalleryModal
-      v-model="isGalleryModelOpen"
-      :files="galleryFiles"
-      :initial-index="galleryInitialIndex"
-      :storage-url="storageUrl"
-      :currentFileURL="currentFileURL"
-      @update:model-value="val => val === false && closeGallery()"
-      class="max-w-6xl mx-auto"
-      @update:currentFileURL="currentFileURL = $event"
-    />
   </div>
 </template>
