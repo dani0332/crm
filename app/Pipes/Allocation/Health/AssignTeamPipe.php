@@ -66,7 +66,7 @@ class AssignTeamPipe extends BaseAllocationPipe
             return $next($request);
         }
 
-        LoggerService::info('-----------Health team routing starts--------------', ['source' => $this->source]);
+        LoggerService::info('------ Health team routing starts ------', ['source' => $this->source]);
         $isAUHLead = $this->lead->isAUHLead(false);
 
         // AUH path
