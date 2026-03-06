@@ -29,13 +29,15 @@ class AssignTeamPipe extends BaseAllocationPipe
         // Check if lead source ! ecom
         if (! $this->lead->isEcommerce()) {
             // Terminate
-            LoggerService::info('Lead source is not ecom, health team routing is not applicable', ['source' => $this->source]);
+            LoggerService::info('Lead source is not ecom, health team routing is not applicable', [
+                'source' => $this->source,
+                'lead_source' => $this->lead->source]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'Lead source is not ecom, health team routing is not applicable',
                     'step' => 'ecom source check',
-                    'lead_source' => $this->source,
+                    'lead_source' => $this->lead->source,
                 ],
                 $this->lead->id,
                 $this->lead->uuid,
