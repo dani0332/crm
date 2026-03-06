@@ -683,7 +683,7 @@ class SageApiEmbeddedProductService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $embeddedTransaction, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -863,7 +863,7 @@ class SageApiEmbeddedProductService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (! empty($postedResponse['BatchNumber'])) {
+        if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
             LoggerService::info('EP AP Invoice Premium batch number - '.$postedResponse['BatchNumber']);
             if ($isLiveApiCallStep5) {
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $embeddedTransaction, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -1042,7 +1042,7 @@ class SageApiEmbeddedProductService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -1228,7 +1228,7 @@ class SageApiEmbeddedProductService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (! empty($postedResponse['BatchNumber'])) {
+        if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AP Invoice Premium batch number - '.$postedResponse['BatchNumber'], extra: [
                 'SendUpdateCode' => $sendUpdateLog->code,
             ]);
@@ -1431,7 +1431,7 @@ class SageApiEmbeddedProductService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createPaymentReceiptOneInvoice failed';
 
@@ -2368,7 +2368,7 @@ class SageApiEmbeddedProductService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createAPPaymentReceiptOneInvoice failed';
 
