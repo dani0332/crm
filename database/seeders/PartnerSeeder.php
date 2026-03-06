@@ -18,13 +18,9 @@ class PartnerSeeder extends Seeder
             $partnerEmail = '';
         }
 
-        Partner::updateOrCreate(
-            [
-                'name' => 'Cars 24',
-                'code' => 'cars24',
-                'email' => $partnerEmail,
-                'is_active' => true,
-            ]
+        Partner::firstOrCreate(
+            ['name' => 'Cars 24', 'code' => 'cars24'],
+            ['email' => $partnerEmail, 'is_active' => true],
         );
     }
 }
