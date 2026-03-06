@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\HealthTeamRouting;
 
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\HealthTeamType;
@@ -93,15 +94,15 @@ class HealthTeamRoutingService
             return;
         }
 
-        // Check if PEC team qualified
+        // Check if PEC lead identified
         if ($lead->isPECLead()) {
             // Do not terminate just add logs
-            LoggerService::info('PEC team qualified', ['source' => $this->source]);
-            $$this->healthTeamRoutingLogService->log(
+            LoggerService::info('PEC lead identified', ['source' => $this->source]);
+            $this->healthTeamRoutingLogService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'PEC team qualified',
-                    'step' => 'PEC team check',
+                    'message' => 'PEC lead identified',
+                    'step' => 'PEC lead check',
                     'is_pec' => true,
                     'source' => $this->source,
                 ],
@@ -223,7 +224,100 @@ class HealthTeamRoutingService
                 null,
                 $this->source
             );
+
+            // Check if NOT PEC lead
+            if (! $lead->isPECLead()) {
+                // Terminate with logs about storing national team
+                LoggerService::info('PEC lead identified, storing national team', ['source' => $this->source]);
+                $this->healthTeamRoutingLogService->log(
+                    HealthRoutingLogTypeEnum::ROUTING,
+                    [
+                        'message' => 'PEC lead identified, storing national team',
+                        'step' => 'PEC lead check',
+                        'is_pec' => true,
+                        'source' => $this->source,
+                    ],
+                    $lead->id,
+                    $lead->uuid,
+                    null,
+                    $this->source
+                );
+
+                return;
+            }
         }
+
+        // Check if GBP qualified
+        if ($lead->isGBPQualified()) {
+            $lead->health_team_type = HealthTeamType::GBP;
+            $lead->save();
+
+            LoggerService::info('GBP team qualified, assigned GBP team', ['source' => $this->source]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'GBP team qualified, assigned GBP team',
+                    'step' => 'GBP team check',
+                    'is_gbp' => true,
+                    'source' => $this->source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $this->source
+            );
+
+            return;
+        }
+
+        // Check if PEC lead identified
+        if ($lead->isPECLead()) {
+            // Assign Non AUH PEC Team
+            $lead->health_team_type = TeamNameEnum::PEC;
+            $lead->save();
+
+            LoggerService::info('PEC lead identified, assigned Non AUH PEC team', ['source' => $this->source]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'PEC lead identified, assigned Non AUH PEC team',
+                    'step' => 'PEC lead check',
+                    'is_pec' => true,
+                    'source' => $this->source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $this->source
+            );
+
+            return;
+        }
+
+        // Assign based on intent (health plan type)
+        $team = HealthPlanTypeEnum::toTeamNameEnum($lead->health_plan_type_id);
+        $lead->health_team_type = $team;
+        $lead->save();
+
+        LoggerService::info("{$team} team assigned based on plan type", [
+            'source' => $this->source,
+            'health_plan_type' => $lead->health_plan_type_id,
+            'team_name' => $team,
+        ]);
+        $this->healthTeamRoutingLogService->log(
+            HealthRoutingLogTypeEnum::ROUTING,
+            [
+                'message' => "{$team} team assigned based on plan type",
+                'step' => 'health_plan_type_check',
+                'health_plan_type' => $lead->health_plan_type_id,
+                'team_name' => $team,
+                'source' => $this->source,
+            ],
+            $lead->id,
+            $lead->uuid,
+            null,
+            $this->source
+        );
     }
 
     /*
