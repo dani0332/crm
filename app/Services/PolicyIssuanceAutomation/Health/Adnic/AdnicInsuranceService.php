@@ -7,6 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Services\ApplicationStorageService;
@@ -313,5 +314,23 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         return $this->bookPolicyService->getStepsLockingStatus($quote, $throughAutomation);
+    }
+
+    public function retryPolicyIssuance($policyIssuance)
+    {
+        LoggerService::info('Retry Policy Issuance', extra: [
+            'policyIssuance' => $policyIssuance,
+        ]);
+
+        if (
+            in_array($policyIssuance->status, [
+                PolicyIssuanceEnum::FAILED_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS,
+            ]) &&
+            is_null($policyIssuance->completed_step) // it means first step document upload.
+        ) {
+            $policyIssuance->update([
+                'status' => PolicyIssuanceEnum::PENDING_STATUS,
+            ]);
+        }
     }
 }
