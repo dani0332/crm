@@ -189,11 +189,15 @@ class EmbeddedTransaction extends Model
             );
     }
 
+    /**
+     * Scope by quote request status. Applies to Car, Home, Bike, Travel, Cyber (EmbeddedProductRepository::ALLOWED_LOBS).
+     * Morphs: CarQuote→car_quote_request, TravelQuote→travel_quote_request, PersonalQuote→personal_quotes (Home/Bike/Cyber). All have quote_status_id.
+     */
     public function scopeQuoteRequestStatusId($query, int $quoteStatusId)
     {
         return $query->whereHasMorph(
             'quoteRequest',
-            [CarQuote::class, TravelQuote::class, HealthQuote::class],
+            [CarQuote::class, TravelQuote::class, PersonalQuote::class],
             fn ($q) => $q->where('quote_status_id', $quoteStatusId)
         );
     }
