@@ -550,6 +550,5 @@ const openDocumentInNewTab = async item => {
         </div>
       </template>
     </x-modal>
-
   </div>
 </template>

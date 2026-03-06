@@ -576,6 +576,5 @@ const signedMedicalApplicationDocs = computed(() => {
         </div>
       </template>
     </x-modal>
-
   </div>
 </template>
