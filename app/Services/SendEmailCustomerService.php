@@ -312,9 +312,10 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    if (! empty(trim($additionalContact->value ?? ''))) {
+                    $value = trim($additionalContact->value ?? '');
+                    if (! empty($value)) {
                         $ccAdditional[] = [
-                            'email' => trim($additionalContact->value),
+                            'email' => $value,
                             'name' => $emailData->customerName,
                         ];
                     }
