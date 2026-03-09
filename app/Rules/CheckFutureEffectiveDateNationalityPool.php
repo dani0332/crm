@@ -17,7 +17,13 @@ class CheckFutureEffectiveDateNationalityPool implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $value = Carbon::parse($value)->toDateString();
-        $nationalityPoolScheduled = NationalityPool::whereDate('effective_from', '>', today())
+        $today = Carbon::today()->toDateString();
+
+        if ($value == $today) {
+            return;
+        }
+
+        $nationalityPoolScheduled = NationalityPool::whereDate('effective_from', '>', $today)
             ->whereDate('effective_from', '!=', $value)
             ->exists();
 
