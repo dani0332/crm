@@ -23,7 +23,14 @@ class PartnerService
     {
         $partner = Partner::with(['partnerPlans' => function ($query) use ($insuranceProviderId) {
             return $query->where('provider_id', $insuranceProviderId);
-        }])->where('code', $partnerCode)->whereNotNull('email')->where('is_active', true)->first();
+        }])
+            ->whereHas('partnerPlans', function ($query) use ($insuranceProviderId) {
+                $query->where('provider_id', $insuranceProviderId);
+            })
+            ->where('code', $partnerCode)
+            ->whereNotNull('email')
+            ->where('is_active', true)
+            ->first();
 
         return $partner ?? false;
     }

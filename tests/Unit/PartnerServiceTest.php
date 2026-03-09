@@ -6,10 +6,8 @@ use App\Models\CarQuote;
 use App\Models\Partner;
 use App\Services\PartnerService;
 use App\Services\QuoteDocumentService;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -17,39 +15,15 @@ use function Pest\Laravel\mock;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
+    (new Tests\Support\Schema\PartnerSchema)->register();
+    DB::setDefaultConnection('sqlite');
 
     $adminUser = TestDataSeeder::createAdminUser([
         'email' => 'admin@example.com',
     ]);
     Auth::guard('web')->login($adminUser);
 
-    // Create partners and partner_plans tables
-    Schema::connection('sqlite')->create('partners', function (Blueprint $table) {
-        $table->id();
-        $table->string('code')->unique();
-        $table->string('email')->nullable();
-        $table->boolean('is_active')->default(true);
-        $table->timestamps();
-    });
-
-    Schema::connection('sqlite')->create('partner_plans', function (Blueprint $table) {
-        $table->id();
-        $table->unsignedBigInteger('partner_id');
-        $table->unsignedBigInteger('provider_id');
-        $table->timestamps();
-    });
-
-    Schema::connection('sqlite')->create('vehicle_type', function (Blueprint $table) {
-        $table->id();
-        $table->string('text')->nullable();
-        $table->string('text_ar')->nullable();
-        $table->boolean('is_active')->default(1);
-        $table->timestamps();
-        $table->softDeletes();
-    });
-
-    // Create test partner and insurance provider data
-    $this->insuranceProviderId = DB::connection('sqlite')->table('insurance_provider')->insertGetId([
+    $this->insuranceProviderId = DB::table('insurance_provider')->insertGetId([
         'code' => InsuranceProviderEnum::AXA->value,
         'text' => 'AXA Insurance',
         'is_active' => 1,
@@ -57,7 +31,7 @@ beforeEach(function () {
         'updated_at' => now(),
     ]);
 
-    $this->partnerId = DB::connection('sqlite')->table('partners')->insertGetId([
+    $this->partnerId = DB::table('partners')->insertGetId([
         'code' => 'TEST_PARTNER',
         'email' => 'partner@example.com',
         'is_active' => true,
@@ -65,19 +39,17 @@ beforeEach(function () {
         'updated_at' => now(),
     ]);
 
-    DB::connection('sqlite')->table('partner_plans')->insert([
+    DB::table('partner_plans')->insert([
         'partner_id' => $this->partnerId,
         'provider_id' => $this->insuranceProviderId,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    // Set up application storage for Bird service
     TestDataSeeder::seedApplicationStorage([
         \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
     ]);
 
-    // Mock QuoteDocumentService and bind to container
     $this->quoteDocumentServiceMock = mock(QuoteDocumentService::class);
     $this->app->instance(QuoteDocumentService::class, $this->quoteDocumentServiceMock);
 });
@@ -99,7 +71,7 @@ describe('isPartnerActive', function () {
     });
 
     it('returns false when partner is inactive', function () {
-        DB::connection('sqlite')->table('partners')
+        DB::table('partners')
             ->where('id', $this->partnerId)
             ->update(['is_active' => false]);
 
@@ -111,7 +83,7 @@ describe('isPartnerActive', function () {
     });
 
     it('returns false when partner has no email', function () {
-        DB::connection('sqlite')->table('partners')
+        DB::table('partners')
             ->where('id', $this->partnerId)
             ->update(['email' => null]);
 
@@ -130,8 +102,8 @@ describe('isPartnerActive', function () {
         expect($result)->toBeFalse();
     });
 
-    it('returns partner but with empty partner plans when partner has no plan for the insurance provider', function () {
-        $differentProviderId = DB::connection('sqlite')->table('insurance_provider')->insertGetId([
+    it('returns false when partner has no plan for the insurance provider', function () {
+        $differentProviderId = DB::table('insurance_provider')->insertGetId([
             'code' => 'RSA',
             'text' => 'RSA Insurance',
             'is_active' => 1,
@@ -143,8 +115,7 @@ describe('isPartnerActive', function () {
 
         $result = $service->isPartnerActive('TEST_PARTNER', $differentProviderId);
 
-        expect($result)->not->toBeFalse()
-            ->and($result->partnerPlans)->toBeEmpty();
+        expect($result)->toBeFalse();
     });
 });
 
@@ -152,13 +123,21 @@ describe('validatePartnerQuote', function () {
     it('returns quote when all validations pass', function () {
         $lookups = TestDataSeeder::seedCarQuoteLookups();
 
+        // Add a partner_plan for the RSA provider that seedCarQuoteLookups creates
+        DB::table('partner_plans')->insert([
+            'partner_id' => $this->partnerId,
+            'provider_id' => $lookups['insurance_provider_id'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $carQuote = TestDataSeeder::createCarQuote([
             'source' => 'TEST_PARTNER',
             'insurance_provider_id' => $this->insuranceProviderId,
             'plan_id' => $lookups['plan_id'],
         ]);
 
-        DB::connection('sqlite')->table('payments')->insert([
+        DB::table('payments')->insert([
             'code' => $carQuote->code,
             'plan_id' => $lookups['plan_id'],
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -209,7 +188,7 @@ describe('validatePartnerQuote', function () {
             'plan_id' => $lookups['plan_id'],
         ]);
 
-        DB::connection('sqlite')->table('payments')->insert([
+        DB::table('payments')->insert([
             'code' => $carQuote->code,
             'plan_id' => $lookups['plan_id'],
             'insurance_provider_id' => $this->insuranceProviderId,
