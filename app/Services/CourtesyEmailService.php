@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmailStatusEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\ApplicationStorage;
@@ -122,47 +123,17 @@ class CourtesyEmailService extends BaseService
                 'quoteUID' => $quoteUID,
             ]);
 
-            // Check/create track email record
-            // Using a custom identifier to track courtesy email processing
-            $trackEmail = EmailStatus::where('quote_type_id', $quoteTypeId)
-                ->where('quote_id', $quote->id)
-                ->where('email_subject', 'LIKE', '%Courtesy Email%')
-                ->first();
-
-            // Check if already processed by looking for existing email status with customer_replied = false
-            // This mimics the CAPI logic where isCeProcessed prevents reprocessing
-            $isCeProcessed = $trackEmail && $trackEmail->email_status !== null;
-
-            if (! $trackEmail) {
-                // Create email tracking record (will be updated after successful send)
-                $emailStatus = new EmailStatus;
-                $emailStatus->quote_type_id = $quoteTypeId;
-                $emailStatus->quote_id = $quote->id;
-                $emailStatus->email_address = $quote->email;
-                $emailStatus->email_subject = 'Courtesy Email';
-                $emailStatus->customer_id = is_object($customer) && isset($customer->id) ? $customer->id : null;
-
-                // Add Health AUH flag to reason field for tracking
-                if ($quoteTypeId === QuoteTypeId::Health && isset($quote->emirate_of_your_visa_id) && $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI) {
-                    $emailStatus->reason = 'isHealthAUH:true';
-                }
-
-                $emailStatus->save();
-            }
-
             // Validate quote type is allowed
             $hasAllowed = in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES);
-            $processAllowed = $hasAllowed && ! $isCeProcessed;
 
             LoggerService::info('CourtesyEmailService - validation check', [
                 'quoteStatusId' => $quote->quote_status_id ?? null,
                 'quoteTypeAllowed' => $hasAllowed,
-                'processAllowed' => $processAllowed,
                 'quoteTypeId' => $quoteTypeId,
                 'quoteUID' => $quoteUID,
             ]);
 
-            if (! $processAllowed) {
+            if (! $hasAllowed) {
                 return [
                     'message' => 'quote status or quote type is not valid to process workflow',
                     'success' => false,
@@ -193,7 +164,6 @@ class CourtesyEmailService extends BaseService
                 ];
             }
 
-            // Trigger Bird workflow
             $response = $this->birdService->triggerWebHookRequest($workflowUrl, $eventPayload);
 
             LoggerService::info('CourtesyEmailService - Bird workflow triggered', [
@@ -202,23 +172,8 @@ class CourtesyEmailService extends BaseService
                 'response_status' => $response->status_code ?? null,
             ]);
 
-            // Update track email to mark as processed
-            if ($trackEmail) {
-                // Mark as processed (email_status will be updated by Bird webhook callback)
-                $trackEmail->save();
-            } else {
-                // Update the newly created email status
-                $emailStatus = EmailStatus::where('quote_type_id', $quoteTypeId)
-                    ->where('quote_id', $quote->id)
-                    ->where('email_subject', 'LIKE', '%Courtesy Email%')
-                    ->first();
-                if ($emailStatus) {
-                    $emailStatus->save();
-                }
-            }
-
             return [
-                'message' => 'processed workflow successfully',
+                'message' => 'Processed workflow successfully',
                 'success' => true,
             ];
         } catch (\Exception $e) {
