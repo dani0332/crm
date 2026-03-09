@@ -69,7 +69,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $parentTeamId = Team::where('name', TeamNameEnum::HEALTH)->active()->where('type', TeamTypeEnum::PRODUCT)->value('id');
         $teamId = Team::where('name', $this->lead->health_team_type)->active()->where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $parentTeamId)->value('id');
-
+        LoggerService::info("inside getTeamId function",["parentTeamId" => $parentTeamId ?? 'null', "teamId" => $teamId ?? 'null']);
         return $teamId;
     }
     protected function fetchAvailableAdvisor()
