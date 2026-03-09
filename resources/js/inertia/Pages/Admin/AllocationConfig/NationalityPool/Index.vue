@@ -15,6 +15,8 @@ const gbpNationalities = ref([]);
 const selectedNationalities = ref(props.nationalityPoolConfigurations?.canonical_nationality_codes?.split(',') || []);
 const previousNationalities = ref([]);
 const individualNationalities = ref([]);
+const scheduledConfigurationsRef = ref(null);
+const auditLogsRef = ref(null);
 const notification = useToast();
 
 // Custom function
@@ -90,6 +92,10 @@ function onSubmit() {
       title: 'Nationality pool configuration saved successfully',
       position: 'top',
     });
+    
+    // Reload logs
+    scheduledConfigurationsRef.value?.loadData();
+    auditLogsRef.value?.loadData();
   }).catch(error => {
     notification.error({
       title: error.response.data.error,
@@ -197,6 +203,6 @@ onMounted(() => {
     </div>
   </x-form>
 
-<NationalityPoolScheduledConfigurations />
-<NationalityPoolAuditLogs />
+<NationalityPoolScheduledConfigurations ref="scheduledConfigurationsRef" />
+<NationalityPoolAuditLogs ref="auditLogsRef" />
 </template>
