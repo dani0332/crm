@@ -56,4 +56,15 @@ class NationalityPoolConfigurationController extends Controller
             return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function deleteAuditLog(int $id): JsonResponse
+    {
+        try {
+            $this->nationalityPoolConfigurationService->deleteAuditLog($id);
+
+            return response()->json(['message' => 'Scheduled configuration deleted successfully']);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
