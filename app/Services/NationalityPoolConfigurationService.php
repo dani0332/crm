@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\NationalityPool;
+use Illuminate\Support\Facades\Auth;
 
 class NationalityPoolConfigurationService
 {
@@ -16,16 +17,16 @@ class NationalityPoolConfigurationService
 
     public function saveData(array $data): void
     {
-        // Deactivate other records
-        NationalityPool::where('is_active', true)->update(['is_active' => false]);
-
         $codes = collect($data['canonical_nationality_codes'])->implode(',');
         $groupIds = collect($data['health_nationality_group_ids'])->implode(',');
 
-        NationalityPool::create([
+        NationalityPool::updateOrCreate([
             'effective_from' => $data['effective_from'],
+        ], [
             'health_nationality_group_ids' => $groupIds,
             'canonical_nationality_codes' => $codes,
+            'is_active' => true,
+            'logged_by' => Auth::id(),
         ]);
     }
 }

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-
+import NationalityPoolScheduledConfigurations from './NationalityPoolScheduledConfigurations.vue';
+import NationalityPoolAuditLogs from './NationalityPoolAuditLogs.vue';
 const props = defineProps({
     gbpNationalities: Array,
     nationalityPoolConfigurations: Array,
@@ -91,7 +92,7 @@ function onSubmit() {
     });
   }).catch(error => {
     notification.error({
-      title: 'Error saving nationality pool configuration',
+      title: error.response.data.error,
       position: 'top',
     });
   }).finally(() => {
@@ -195,4 +196,7 @@ onMounted(() => {
       </x-button>
     </div>
   </x-form>
+
+<NationalityPoolScheduledConfigurations />
+<NationalityPoolAuditLogs />
 </template>
