@@ -21,19 +21,26 @@ class NationalityPoolConfigurationController extends Controller
 
     public function index(): Response
     {
-        // Fetch all nationalities
-        $nationalities = CanonicalNationality::where('nationality_synonym', 0)
-            ->select('canonical_nationality_code as value', 'canonical_nationality_name as label')
-            ->orderBy('canonical_nationality_name')->get();
-
-        // Fetch nationality pool configurations
-        $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData();
-
-        return inertia('Admin/AllocationConfig/NationalityPool/Index', [
-            'gbpNationalities' => $nationalities,
-            'nationalityPoolConfigurations' => $nationalityPoolConfigurations,
-        ]);
+        return inertia('Admin/AllocationConfig/NationalityPool/Index');
     }
+
+    public function getData(): JsonResponse
+    {
+        try {
+            // Fetch all nationalities
+            $nationalities = CanonicalNationality::where('nationality_synonym', 0)
+                ->select('canonical_nationality_code as value', 'canonical_nationality_name as label')
+                ->orderBy('canonical_nationality_name')->get();
+
+            // Fetch nationality pool configurations
+            $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData();
+
+            return response()->json(['nationalities' => $nationalities, 'nationalityPoolConfigurations' => $nationalityPoolConfigurations]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function getAuditLogs(string $type): JsonResponse
     {
         try {
