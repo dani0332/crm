@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 
 class NationalityPoolConfigurationService
 {
+    public function __construct(public CanonicalNationalityService $canonicalNationalityService) {}
+
     public function getData(): array
     {
         return NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes')
@@ -19,17 +21,24 @@ class NationalityPoolConfigurationService
 
     public function getAuditLogs(string $type): array
     {
+        $today = Carbon::today()->toDateString();
         $logs = NationalityPool::query();
 
         if ($type == 'audit') {
-            $logs->whereDate('effective_from', '<', Carbon::today()->toDateString());
+            $logs->whereDate('effective_from', '<', $today);
+        } else {
+            $logs->whereDate('effective_from', '>=', $today);
         }
         $data = $logs->get();
 
         $data = $data->map(function ($item) {
-            $item->user = $item->user->name;
+            $canonicalNationalities = $this->canonicalNationalityService->getByCodes($item->canonical_nationality_codes);
+            $visibleNationalities = collect($canonicalNationalities)->take(8);
+            $remainingNationalities = collect($canonicalNationalities)->count() - 8;
 
-            // $item->nationalities = collect($item[canonical_nationality_codes'])->implode(',');
+            $item->user = $item->user->name;
+            $item->nationalities = implode(', ', $visibleNationalities->toArray()).($remainingNationalities > 0 ? ' +'.$remainingNationalities.' more' : '');
+
             return $item;
         });
 
