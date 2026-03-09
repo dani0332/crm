@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, computed, watch } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -25,10 +25,6 @@ const routingLogs = reactive({
   ],
 });
 
-const eligibleProviders = computed(
-  () => page.props.eligibleOcrProviders?.providers || {},
-);
-
 const dynamicQuoteTypeNames = computed(
   () => page.props.eligibleOcrProviders?.quoteTypeNames || {},
 );
@@ -43,60 +39,20 @@ const selectLog = item => {
   modals.log = true;
 };
 
-const onLoadLogData = async () => {
+const loadData = async () => {
   routingLogs.loading = true;
-  try {
-    const response = await axios.post('/health-routing-logs', {
-      type: props.type,
-      team_category: props.teamCategory,
-      quote_request_id: props.quoteRequestId,
-    });
-
-    if (response.data.success) {
-      routingLogs.data = response.data.data;
-    } else {
-      console.error('Failed to load OCR logs:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Error loading OCR logs:', error);
-  } finally {
+  
+  axios.get(route('admin.nationality-pool-audit-logs', 'scheduled')).then(response => {
+    routingLogs.data = response.data.data;
+  }).catch(error => {
+    console.error('Error loading scheduled configurations:', error);
+  }).finally(() => {
     routingLogs.loading = false;
-  }
+  });
 };
 
-// Format the providers data for display in the tooltip
-const formattedProviders = computed(() => {
-  const formatted = [];
-
-  // Group providers by name
-  const providerMap = {};
-
-  Object.entries(eligibleProviders.value).forEach(([quoteType, providers]) => {
-    const quoteTypeName = dynamicQuoteTypeNames.value[quoteType] || quoteType;
-
-    providers.forEach(provider => {
-      if (!providerMap[provider.name]) {
-        providerMap[provider.name] = [];
-      }
-
-      if (!providerMap[provider.name].includes(quoteTypeName)) {
-        providerMap[provider.name].push(quoteTypeName);
-      }
-    });
-  });
-
-  // Convert to array format for display
-  Object.entries(providerMap).forEach(([providerName, quoteTypes]) => {
-    // Replace underscores with spaces in provider names
-    const formattedName = providerName.replace(/_/g, ' ');
-
-    formatted.push({
-      name: formattedName,
-      types: quoteTypes.join(', '),
-    });
-  });
-
-  return formatted.sort((a, b) => a.name.localeCompare(b.name));
+onMounted(() => {
+  loadData();
 });
 </script>
 
