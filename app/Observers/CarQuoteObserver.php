@@ -137,7 +137,7 @@ class CarQuoteObserver
             }
 
             try {
-                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR->value);
+                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR);
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - send partner policy documents failed', [
                     'uuid' => $lead->uuid,

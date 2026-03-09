@@ -78,7 +78,7 @@ class PartnerService
 
     public function sendPolicyDocumentsToPartner($uuid, $quoteType): void
     {
-        $validation = $this->validatePartnerQuote($uuid, $quoteType);
+        $validation = $this->validatePartnerQuote($uuid, $quoteType->value);
 
         if (! $validation) {
             return;
@@ -104,7 +104,7 @@ class PartnerService
             return;
         }
 
-        $documents = $this->getProviderPolicyDocuments($quote, $quoteType, $providerDocuments);
+        $documents = $this->getProviderPolicyDocuments($quote, $quoteType->value, $providerDocuments);
 
         $filterDocuments = collect($documents)->filter(function ($document) use ($providerDocuments) {
             return in_array($document['document_type_code'], $providerDocuments);
@@ -122,7 +122,7 @@ class PartnerService
 
         $emailPayload = $this->partnerPolicyDocumentsEmailPayload($filterDocuments);
 
-        PartnerPolicyDocumentJob::dispatch($emailPayload, $partnerEmail);
+        PartnerPolicyDocumentJob::dispatch($emailPayload, $partnerEmail, $quote->uuid, $quoteType->id());
     }
 
     public function partnerPolicyDocumentsEmailPayload($documents)

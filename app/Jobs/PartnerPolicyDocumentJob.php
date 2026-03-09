@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTagEnums;
+use App\Models\QuoteTag;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -18,11 +20,15 @@ class PartnerPolicyDocumentJob implements ShouldQueue
     public int $tries = 3;
     private array $documents;
     private string $partnerEmail;
+    private string $quoteUuid;
+    private int $quoteTypeId;
 
-    public function __construct($documents, $partnerEmail)
+    public function __construct($documents, $partnerEmail, $quoteUuid, $quoteTypeId)
     {
         $this->documents = $documents;
         $this->partnerEmail = $partnerEmail;
+        $this->quoteUuid = $quoteUuid;
+        $this->quoteTypeId = $quoteTypeId;
     }
 
     /**
@@ -51,6 +57,13 @@ class PartnerPolicyDocumentJob implements ShouldQueue
         }
 
         LoggerService::info('PartnerPolicyDocumentJob - email sent successfully');
+
+        QuoteTag::create([
+            'quote_type_id' => $this->quoteTypeId,
+            'quote_uuid' => $this->quoteUuid,
+            'name' => QuoteTagEnums::PARTNER_POLICY_DOCUMENT_SENT,
+            'value' => 1,
+        ]);
     }
 
     public function failed(Exception $ex)
