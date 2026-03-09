@@ -19,7 +19,7 @@ class NationalityPoolConfigurationService
             ->toArray();
     }
 
-    public function getAuditLogs(string $type): array
+    public function getAuditLogs(string $type)
     {
         $today = Carbon::today()->toDateString();
         $logs = NationalityPool::query();
@@ -29,20 +29,8 @@ class NationalityPoolConfigurationService
         } else {
             $logs->whereDate('effective_from', '>=', $today);
         }
-        $data = $logs->get();
 
-        $data = $data->map(function ($item) {
-            $canonicalNationalities = $this->canonicalNationalityService->getByCodes($item->canonical_nationality_codes);
-            $visibleNationalities = collect($canonicalNationalities)->take(8);
-            $remainingNationalities = collect($canonicalNationalities)->count() - 8;
-
-            $item->user = $item->user->name;
-            $item->nationalities = implode(', ', $visibleNationalities->toArray()).($remainingNationalities > 0 ? ' +'.$remainingNationalities.' more' : '');
-
-            return $item;
-        });
-
-        return $data->toArray();
+        return $logs->with('user')->get();
     }
 
     public function saveData(array $data): void
