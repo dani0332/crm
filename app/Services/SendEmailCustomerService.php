@@ -322,7 +322,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
-            
+
             LoggerService::info('OCB Email CC Additional Contacts: ', extra: [
                 'ccAdditional' => $ccAdditional,
                 'ccAdvisor' => $ccAdvisor,
