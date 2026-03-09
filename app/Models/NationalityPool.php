@@ -13,6 +13,7 @@ class NationalityPool extends Model
         'canonical_nationality_codes',
         'health_nationality_group_ids',
         'is_active',
+        'logged_by',
     ];
 
     protected $attributes = [
