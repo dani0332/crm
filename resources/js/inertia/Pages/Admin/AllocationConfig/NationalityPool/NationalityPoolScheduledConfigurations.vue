@@ -15,8 +15,8 @@ const routingLogs = reactive({
   loading: false,
   data: null,
   table: [
-    { text: 'Created Date', value: 'user.name' },
-    { text: 'User', value: 'log_data' },
+    { text: 'Created Date', value: 'created_at' },
+    { text: 'User', value: 'user.name' },
     { text: 'Event', value: 'event' },
     { text: 'Effective From', value: 'effective_from' },
     { text: 'Effective To', value: 'effective_to' },
@@ -78,12 +78,6 @@ onMounted(() => {
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
           >
-            <template #item-created_at="{ created_at }">
-              {{ new Date(created_at).toLocaleString() }}
-            </template>
-            <template #item-log_data="{ log_data }">
-              {{ JSON.stringify(log_data) }}
-            </template>
             <template #item-action="item">
               <div style="width: 60px">
                 <x-button
