@@ -363,6 +363,7 @@ export function useSavingsPlans(options = {}) {
         actualPremium: plan.actualPremium || 0,
         insuranceProviderId: plan.providerId || plan.insuranceProviderId,
         providerCode: plan.providerCode,
+        instantPolicy: plan.instantPolicy ?? false,
       }));
 
       availablePlansTable.data = processedPlans;

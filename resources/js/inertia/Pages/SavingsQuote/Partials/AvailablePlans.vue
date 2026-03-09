@@ -256,6 +256,21 @@ const copyPlanURL = item => {
     });
 };
 
+// Sukoon Purple Investment (instant policy) - same logic as MetLife for Life, without questionnaire
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
+
+const isSukoonPurpleInvestment = item =>
+  item?.providerCode === insuranceProviderCodeEnum?.OIC &&
+  item?.instantPolicy === true &&
+  item?.name?.trim() === 'Purple Investment';
+
+const canSelectSukoonPurplePlan = computed(() => {
+  const q = props.quote;
+  if (!q) return false;
+  return q.quote_status_id === quoteStatusEnum?.ApplicationPending;
+});
+
 // Open Savings Calculator
 const openSavingsCalculator = () => {
   modals.savingsCalculator = true;
@@ -776,6 +791,7 @@ onMounted(() => {
                   View
                 </x-button>
                 <x-button
+                  v-if="!isSukoonPurpleInvestment(item)"
                   size="xs"
                   color="emerald"
                   outlined
@@ -784,8 +800,29 @@ onMounted(() => {
                   Copy
                 </x-button>
                 <span>
-                  <SelectPlan
+                  <x-tooltip
                     v-if="
+                      isSukoonPurpleInvestment(item) &&
+                      !canSelectSukoonPurplePlan
+                    "
+                    placement="top"
+                  >
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      :disabled="true"
+                    >
+                      Select
+                    </x-button>
+                    <template #tooltip>
+                      This plan cannot be manually selected. To proceed, you can
+                      guide the client to click 'Buy Now'.
+                    </template>
+                  </x-tooltip>
+
+                  <SelectPlan
+                    v-else-if="
                       !selectedProviderPlan?.id ||
                       String(selectedProviderPlan.id) !== String(item.id)
                     "
