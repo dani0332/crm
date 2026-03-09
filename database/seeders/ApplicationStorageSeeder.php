@@ -1471,7 +1471,7 @@ class ApplicationStorageSeeder extends Seeder
             $birdWorkflowUrl = '';
         }
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL],
             [
                 'value' => $birdWorkflowUrl,
@@ -1481,7 +1481,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS],
             [
                 'value' => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
