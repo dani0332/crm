@@ -321,6 +321,11 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            LoggerService::info('OCB Email CC Additional Contacts: ', extra: [
+                'ccAdditional' => $ccAdditional,
+                'ccAdvisor' => $ccAdvisor,
+            ]);
+
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
