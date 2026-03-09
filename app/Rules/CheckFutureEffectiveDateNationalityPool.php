@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use App\Models\NationalityPool;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -15,8 +16,9 @@ class CheckFutureEffectiveDateNationalityPool implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $nationalityPoolScheduled = NationalityPool::where('effective_from', '>', now())
-            ->where('effective_from', '!=', $value)
+        $value = Carbon::parse($value)->toDateString();
+        $nationalityPoolScheduled = NationalityPool::whereDate('effective_from', '>', today())
+            ->whereDate('effective_from', '!=', $value)
             ->exists();
 
         if ($nationalityPoolScheduled) {
