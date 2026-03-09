@@ -3,19 +3,20 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\EmailStatusEnum;
 use App\Enums\EmirateEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\CarQuote;
 use App\Models\Customer;
-use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteFlowDetails;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -25,9 +26,6 @@ class CourtesyEmailService extends BaseService
 {
     private BirdService $birdService;
 
-    /**
-     * Allowed quote types for courtesy email
-     */
     private const ALLOWED_QUOTE_TYPES = [
         QuoteTypeId::Bike,
         QuoteTypeId::Car,
@@ -40,6 +38,7 @@ class CourtesyEmailService extends BaseService
         QuoteTypeId::Jetski,
         QuoteTypeId::Cycle,
         QuoteTypeId::Cyber,
+        QuoteTypeId::Savings,
     ];
 
     public function __construct(BirdService $birdService)
@@ -47,37 +46,21 @@ class CourtesyEmailService extends BaseService
         $this->birdService = $birdService;
     }
 
-    /**
-     * Process courtesy email workflow
-     *
-     * @return array{message: string, success: bool}
-     */
     public function processCourtesyEmailWorkflow(string $quoteUID, int $quoteTypeId): array
     {
         try {
-            LoggerService::info('CourtesyEmailService - Execute', [
-                'quoteTypeId' => $quoteTypeId,
-                'quoteUID' => $quoteUID,
-            ]);
-
-            // Fetch quote by quoteTypeId
             $quote = $this->getQuoteByQuoteType($quoteTypeId, $quoteUID);
 
-            if (! $quote || ! $quote->email) {
-                LoggerService::warning('CourtesyEmailService - quote not found or missing email', [
+            if (! $quote?->email) {
+                LoggerService::warning('CourtesyEmailService - Quote not found or missing email', [
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
                 ]);
 
-                return [
-                    'message' => 'quote not found or missing email',
-                    'success' => false,
-                ];
+                return ['message' => 'Quote not found or missing email', 'success' => false];
             }
 
-            // Get customer by email or create from quote firstName/lastName
             $customer = Customer::where('email', strtolower(trim($quote->email)))->first();
-
             if (! $customer && ($quote->first_name || $quote->last_name)) {
                 $customer = (object) [
                     'first_name' => $quote->first_name ?? '',
@@ -86,117 +69,108 @@ class CourtesyEmailService extends BaseService
             }
 
             if (! $customer) {
-                LoggerService::warning('CourtesyEmailService - customer not found', [
+                LoggerService::warning('CourtesyEmailService - Customer not found', [
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
                 ]);
 
-                return [
-                    'message' => 'customer not found',
-                    'success' => false,
-                ];
+                return ['message' => 'Customer not found', 'success' => false];
             }
 
-            // Get advisor by advisorId
-            $advisor = null;
-            if ($quote->advisor_id) {
-                $advisor = User::find($quote->advisor_id);
-            }
-
+            $advisor = $quote->advisor_id ? User::find($quote->advisor_id) : null;
             if (! $advisor) {
-                LoggerService::warning('CourtesyEmailService - advisor not found', [
+                LoggerService::warning('CourtesyEmailService - Advisor not assigned', [
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
-                    'advisor_id' => $quote->advisor_id ?? null,
+                    'advisor_id' => $quote->advisor_id,
                 ]);
 
-                return [
-                    'message' => 'advisor not assigned',
-                    'success' => false,
-                ];
+                return ['message' => 'Advisor not assigned', 'success' => false];
             }
 
-            LoggerService::info('CourtesyEmailService - customer and advisor found', [
-                'customer_name' => ($customer->first_name ?? '').' '.($customer->last_name ?? ''),
-                'advisor_name' => $advisor->name,
-                'quoteTypeId' => $quoteTypeId,
-                'quoteUID' => $quoteUID,
-            ]);
-
-            // Validate quote type is allowed
-            $hasAllowed = in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES);
-
-            LoggerService::info('CourtesyEmailService - validation check', [
-                'quoteStatusId' => $quote->quote_status_id ?? null,
-                'quoteTypeAllowed' => $hasAllowed,
-                'quoteTypeId' => $quoteTypeId,
-                'quoteUID' => $quoteUID,
-            ]);
-
-            if (! $hasAllowed) {
-                return [
-                    'message' => 'quote status or quote type is not valid to process workflow',
-                    'success' => false,
-                ];
+            if (! in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES)) {
+                return ['message' => 'Quote type not allowed for courtesy email', 'success' => false];
             }
 
-            // Build Bird payload
-            $eventPayload = $this->buildBirdPayload($advisor, $customer, $quoteTypeId, $quote);
-
-            LoggerService::info('CourtesyEmailService - eventPayload', [
-                'payload' => $eventPayload,
-                'quoteTypeId' => $quoteTypeId,
-                'quoteUID' => $quoteUID,
-            ]);
-
-            // Get Bird workflow URL
-            $workflowUrl = $this->getBirdWorkflowUrl();
-
+            $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_COURTESY_EMAIL_WORKFLOW_URL)->value('value');
             if (! $workflowUrl) {
                 LoggerService::error('CourtesyEmailService - Bird workflow URL not configured', [
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
                 ]);
 
-                return [
-                    'message' => 'Bird workflow URL not configured',
-                    'success' => false,
-                ];
+                return ['message' => 'Bird workflow URL not configured', 'success' => false];
             }
 
-            $response = $this->birdService->triggerWebHookRequest($workflowUrl, $eventPayload);
-
-            LoggerService::info('CourtesyEmailService - Bird workflow triggered', [
+            $payload = [
+                'quoteUID' => $quote->uuid,
+                'uuid' => $quote->uuid,
+                'refId' => $quote->code ?? $quote->uuid,
                 'quoteTypeId' => $quoteTypeId,
-                'quoteUID' => $quoteUID,
-                'response_status' => $response->status_code ?? null,
-            ]);
-
-            return [
-                'message' => 'Processed workflow successfully',
-                'success' => true,
+                'workflowType' => WorkflowTypeEnum::COURTESY_EMAIL,
+                'customer' => [
+                    'email' => $quote->email,
+                    'firstName' => is_object($customer) && isset($customer->first_name) ? $customer->first_name : ($customer->first_name ?? ''),
+                    'lastName' => is_object($customer) && isset($customer->last_name) ? $customer->last_name : ($customer->last_name ?? ''),
+                ],
+                'advisor' => [
+                    'id' => $advisor->id,
+                    'name' => $advisor->name,
+                    'email' => $advisor->email,
+                ],
             ];
+
+            if ($quoteTypeId === QuoteTypeId::Health && $quote->emirate_of_your_visa_id) {
+                $payload['emirateOfYourVisaId'] = $quote->emirate_of_your_visa_id;
+                $payload['isHealthAUH'] = $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+            }
+
+            $response = $this->birdService->triggerWebHookRequest($workflowUrl, $payload);
+
+            try {
+                $headers = $response->headers ?? [];
+                $runId = null;
+
+                if (isset($headers['Run-Id'])) {
+                    $runId = is_array($headers['Run-Id']) ? collect($headers['Run-Id'])->first() : $headers['Run-Id'];
+                } elseif (isset($headers['run-id'])) {
+                    $runId = is_array($headers['run-id']) ? collect($headers['run-id'])->first() : $headers['run-id'];
+                }
+
+                if ($runId) {
+                    QuoteFlowDetails::create([
+                        'quote_uuid' => $quote->uuid,
+                        'quote_type_id' => $quoteTypeId,
+                        'flow_type' => QuoteFlowType::COURTESY_EMAIL->value,
+                        'flow_id' => $runId,
+                        'started_at' => now(),
+                    ]);
+                } else {
+                    LoggerService::warning('CourtesyEmailService - Run-Id not found in response headers', [
+                        'quoteUID' => $quote->uuid,
+                        'quoteTypeId' => $quoteTypeId,
+                    ]);
+                }
+            } catch (\Throwable $th) {
+                LoggerService::error('CourtesyEmailService - Error saving quote flow details', [
+                    'quoteUID' => $quote->uuid,
+                    'quoteTypeId' => $quoteTypeId,
+                    'error' => $th->getMessage(),
+                ], $th);
+            }
+
+            return ['message' => 'Processed workflow successfully', 'success' => true];
         } catch (\Exception $e) {
             LoggerService::error('CourtesyEmailService - Error processing workflow', [
                 'quoteTypeId' => $quoteTypeId,
                 'quoteUID' => $quoteUID,
                 'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
             ], $e);
 
-            return [
-                'message' => 'Error processing workflow: '.$e->getMessage(),
-                'success' => false,
-            ];
+            return ['message' => 'Error processing workflow: '.$e->getMessage(), 'success' => false];
         }
     }
 
-    /**
-     * Get quote by quoteTypeId and UUID
-     *
-     * @return mixed
-     */
     private function getQuoteByQuoteType(int $quoteTypeId, string $quoteUID)
     {
         return match ($quoteTypeId) {
@@ -211,48 +185,8 @@ class CourtesyEmailService extends BaseService
             QuoteTypeId::Jetski => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Jetski)->first(),
             QuoteTypeId::Cycle => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cycle)->first(),
             QuoteTypeId::Cyber => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cyber)->first(),
+            QuoteTypeId::Savings => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Savings)->first(),
             default => null,
         };
-    }
-
-    /**
-     * Build Bird payload for courtesy email
-     */
-    private function buildBirdPayload(User $advisor, $customer, int $quoteTypeId, $quote): array
-    {
-        $payload = [
-            'quoteUID' => $quote->uuid,
-            'uuid' => $quote->uuid,
-            'refId' => $quote->code ?? $quote->uuid,
-            'quoteTypeId' => $quoteTypeId,
-            'customer' => [
-                'email' => $quote->email,
-                'firstName' => is_object($customer) && isset($customer->first_name) ? $customer->first_name : ($customer->first_name ?? ''),
-                'lastName' => is_object($customer) && isset($customer->last_name) ? $customer->last_name : ($customer->last_name ?? ''),
-            ],
-            'advisor' => [
-                'id' => $advisor->id,
-                'name' => $advisor->name,
-                'email' => $advisor->email,
-            ],
-        ];
-
-        // Add emirateOfYourVisaId for Health quotes
-        if ($quoteTypeId === QuoteTypeId::Health && isset($quote->emirate_of_your_visa_id)) {
-            $payload['emirateOfYourVisaId'] = $quote->emirate_of_your_visa_id;
-            $payload['isHealthAUH'] = $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
-        }
-
-        return $payload;
-    }
-
-    /**
-     * Get Bird workflow URL from ApplicationStorage
-     */
-    private function getBirdWorkflowUrl(): ?string
-    {
-        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_COURTESY_EMAIL_WORKFLOW_URL)->first();
-
-        return $workflowConfig ? $workflowConfig->value : null;
     }
 }

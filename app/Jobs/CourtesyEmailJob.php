@@ -19,23 +19,13 @@ class CourtesyEmailJob implements ShouldQueue
     public $backoff = 360;
     private $quoteData;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($quoteData)
     {
         $this->quoteData = $quoteData;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(CourtesyEmailService $courtesyEmailService): void
     {
-        if (isset($this->quoteData['quoteUID'])) {
-            LoggerService::startQuoteLogging($this->quoteData['quoteUID']);
-        }
-
         $quoteUID = $this->quoteData['quoteUID'] ?? null;
         $quoteTypeId = $this->quoteData['quoteTypeId'] ?? null;
 
@@ -47,12 +37,8 @@ class CourtesyEmailJob implements ShouldQueue
             return;
         }
 
-        $result = $courtesyEmailService->processCourtesyEmailWorkflow($quoteUID, $quoteTypeId);
+        LoggerService::startQuoteLogging($quoteUID);
 
-        LoggerService::info('Courtesy Email Job - Result', [
-            'quoteUID' => $quoteUID,
-            'quoteTypeId' => $quoteTypeId,
-            'result' => $result,
-        ]);
+        $courtesyEmailService->processCourtesyEmailWorkflow($quoteUID, $quoteTypeId);
     }
 }
