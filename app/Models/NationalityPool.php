@@ -19,11 +19,6 @@ class NationalityPool extends Model
     protected $attributes = [
         'is_active' => true,
     ];
-    protected $casts = [
-        'effective_from' => 'date:d/m/Y',
-        'effective_to' => 'date:d/m/Y',
-        'created_at' => 'date:d/m/Y',
-    ];
 
     public function user(): BelongsTo
     {
