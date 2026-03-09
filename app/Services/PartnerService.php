@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -87,12 +88,14 @@ class PartnerService
         $insuranceProvider = $validation['insuranceProvider'];
         $partnerEmail = $validation['partnerEmail'];
 
-        $providerDocuments = [];
+        $providerDocumentKeys = [
+            InsuranceProviderEnum::AXA->value => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS,
+        ];
 
-        // will update as new provider added
-        if ($insuranceProvider->code == InsuranceProviderEnum::AXA->value) {
-            $providerDocuments = [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS];
-        }
+        $storageKey = $providerDocumentKeys[$insuranceProvider->code] ?? null;
+        $providerDocuments = $storageKey
+            ? json_decode(getAppStorageValueByKey($storageKey), true) ?? []
+            : [];
 
         // If no documents are required for this provider, return early
         if (empty($providerDocuments)) {

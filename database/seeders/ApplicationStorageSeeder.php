@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
@@ -80,7 +81,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCarOcbEmailTemplatesUpdate();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
-        $this->seedPartnerAutomationCompletedWorkflowUrl();
+        $this->seedPartnerAutomation();
     }
 
     private function livaCarAutomationSeed()
@@ -1451,7 +1452,7 @@ class ApplicationStorageSeeder extends Seeder
         // endregion
     }
 
-    private function seedPartnerAutomationCompletedWorkflowUrl()
+    private function seedPartnerAutomation()
     {
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
@@ -1462,6 +1463,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL],
             [
                 'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS],
+            [
+                'value' => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => true,

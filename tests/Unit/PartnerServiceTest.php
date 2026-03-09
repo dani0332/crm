@@ -48,6 +48,7 @@ beforeEach(function () {
 
     TestDataSeeder::seedApplicationStorage([
         \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+        \App\Enums\ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
     ]);
 
     $this->quoteDocumentServiceMock = mock(QuoteDocumentService::class);
