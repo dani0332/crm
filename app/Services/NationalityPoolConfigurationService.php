@@ -47,4 +47,9 @@ class NationalityPoolConfigurationService
             'logged_by' => Auth::id(),
         ]);
     }
+
+    public function deleteAuditLog(int $id): void
+    {
+        NationalityPool::destroy($id);
+    }
 }

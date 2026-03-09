@@ -10,6 +10,9 @@ const props = defineProps({
     default: true,
   },
 });
+const selectedItemId = ref(null);
+const showDeleteModal = ref(false);
+const deleting = ref(false);
 
 const routingLogs = reactive({
   loading: false,
@@ -25,19 +28,28 @@ const routingLogs = reactive({
   ],
 });
 
-const dynamicQuoteTypeNames = computed(
-  () => page.props.eligibleOcrProviders?.quoteTypeNames || {},
-);
+function deleteLog(item) {
+  selectedItemId.value = item.id;
+  showDeleteModal.value = true;
+}
 
-const selectedLog = ref({});
-const modals = reactive({
-  ocrLog: false,
-});
+function confirmDelete() {
+  axios.delete(route('admin.nationality-pool-audit-logs.destroy', selectedItemId.value)).then(response => {
+    notification.success({
+      title: 'Scheduled configuration deleted successfully',
+      position: 'top',
+    });
 
-const selectLog = item => {
-  selectedLog.value = item;
-  modals.log = true;
-};
+    showDeleteModal.value = false;
+    window.location.reload();
+  }).catch(error => {
+    showDeleteModal.value = false;
+      notification.error({
+        title: 'Error deleting scheduled configuration',
+        position: 'top',
+      });
+  });
+}
 
 const loadData = async () => {
   routingLogs.loading = true;
@@ -118,7 +130,7 @@ onMounted(() => {
                 <x-button size="xs" color="primary" outlined style="flex:1;">
                   Edit
                 </x-button>
-                <x-button size="xs" color="error" outlined style="flex:1;">
+                <x-button size="xs" color="error" outlined style="flex:1;" @click.prevent="deleteLog(item)">
                   Delete
                 </x-button>
               </div>
@@ -128,62 +140,35 @@ onMounted(() => {
       </template>
     </Collapsible>
 
-    <!-- Modal for log details -->
+    <!-- Modal for delete confirmation -->
     <x-modal
-      v-model="modals.log"
+      v-model="showDeleteModal"
       size="lg"
-      :title="`Health Routing Log Details${selectedLog.type == 'ROUTING' ? ': ' + selectedLog.uuid : ''}`"
+      title="Confirm Delete Scheduled Configuration"
       show-close
       backdrop
-    >
-      <div v-if="selectedLog">
-        <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">User:</dt>
-            <dd>{{ selectedLog.user.name }}</dd>
-          </div>
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="selectedLog.type == 'CONFIGURATION'"
-          >
-            <dt class="font-medium">Team Category:</dt>
-            <dd>{{ selectedLog.team_category }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Created At:</dt>
-            <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2" v-if="selectedLog.type == 'ROUTING'">
-            <dt class="font-medium">Source:</dt>
-            <dd>{{ selectedLog.source }}</dd>
-          </div>
-        </dl>
-        <x-divider class="my-5" />
-
-        <!-- Log Data -->
-        <div>
-          <dl class="">
-            <dt class="font-medium mb-2">Log Data:</dt>
-            <div
-              class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
+    >  
+        <p>Are you sure you want to delete this scheduled configuration?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              tabindex="-1"
+              @click.prevent="showDeleteModal = false"
             >
-              <pre class="whitespace-pre-wrap">{{ selectedLog.log_data }}</pre>
-            </div>
-          </dl>
-        </div>
-      </div>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            tabindex="-1"
-            @click.prevent="modals.log = false"
-          >
-            Close
-          </x-button>
-        </div>
-      </template>
+              Close
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              tabindex="-1"
+              @click.prevent="confirmDelete"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
     </x-modal>
   </div>
 </template>
