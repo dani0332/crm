@@ -42,15 +42,15 @@ class PartnerPolicyDocumentJob implements ShouldQueue
 
         LoggerService::info('PartnerPolicyDocumentJob - Job Response ', extra: ['response' => json_encode($response)]);
 
-        if ($response?->status_code == 200) {
-            LoggerService::info('PartnerPolicyDocumentJob - email sent successfully');
-        } else {
+        if ($response?->status_code != 200) {
             LoggerService::info('PartnerPolicyDocumentJob - Job failed', extra: [
                 'response' => json_encode($response),
             ]);
+
+            return;
         }
 
-        LoggerService::info('PartnerPolicyDocumentJob - Job completed');
+        LoggerService::info('PartnerPolicyDocumentJob - email sent successfully');
     }
 
     public function failed(Exception $ex)
