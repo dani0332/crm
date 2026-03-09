@@ -312,9 +312,10 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    if (! empty($additionalContact->value)) {
+                    $value = trim($additionalContact->value ?? '');
+                    if (! empty($value)) {
                         $ccAdditional[] = [
-                            'email' => $additionalContact->value,
+                            'email' => $value,
                             'name' => $emailData->customerName,
                         ];
                     }
@@ -322,6 +323,12 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+
+            LoggerService::info('OCB Email CC Additional Contacts: ', extra: [
+                'ccAdditional' => $ccAdditional,
+                'ccAdvisor' => $ccAdvisor,
+                'cc' => $body['cc'],
+            ]);
 
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
