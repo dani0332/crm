@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\NationalityPool;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class NationalityPoolConfigurationService
@@ -10,9 +11,29 @@ class NationalityPoolConfigurationService
     public function getData(): array
     {
         return NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes')
-            ->active()
-            ->get()
+            ->whereDate('effective_from', '>=', Carbon::today()->toDateString())
+            ->orderBy('effective_from', 'asc')
+            ->first()
             ->toArray();
+    }
+
+    public function getAuditLogs(string $type): array
+    {
+        $logs = NationalityPool::query();
+
+        if ($type == 'audit') {
+            $logs->whereDate('effective_from', '<', Carbon::today()->toDateString());
+        }
+        $data = $logs->get();
+
+        $data = $data->map(function ($item) {
+            $item->user = $item->user->name;
+
+            // $item->nationalities = collect($item[canonical_nationality_codes'])->implode(',');
+            return $item;
+        });
+
+        return $data->toArray();
     }
 
     public function saveData(array $data): void

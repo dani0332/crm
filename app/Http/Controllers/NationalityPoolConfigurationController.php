@@ -6,7 +6,9 @@ use App\Enums\PermissionsEnum;
 use App\Http\Requests\NationalityPoolConfigurationRequest;
 use App\Models\CanonicalNationality;
 use App\Services\NationalityPoolConfigurationService;
+use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Response;
 
 class NationalityPoolConfigurationController extends Controller
@@ -31,6 +33,16 @@ class NationalityPoolConfigurationController extends Controller
             'nationalityPoolConfigurations' => $nationalityPoolConfigurations,
         ]);
     }
+    public function getAuditLogs(string $type): JsonResponse
+    {
+        try {
+            $auditLogs = $this->nationalityPoolConfigurationService->getAuditLogs($type);
+
+            return response()->json(['data' => $auditLogs]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
     public function save(NationalityPoolConfigurationRequest $request): JsonResponse
     {
@@ -38,8 +50,8 @@ class NationalityPoolConfigurationController extends Controller
             $this->nationalityPoolConfigurationService->saveData($request->all());
 
             return response()->json(['message' => 'Nationality pool configuration saved successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
