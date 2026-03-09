@@ -30,6 +30,7 @@ class PartnerService
             })
             ->where('code', $partnerCode)
             ->whereNotNull('email')
+            ->where('email', '!=', '')
             ->where('is_active', true)
             ->first();
 

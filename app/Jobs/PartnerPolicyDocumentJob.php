@@ -7,7 +7,6 @@ use App\Enums\QuoteTagEnums;
 use App\Models\QuoteTag;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -66,7 +65,7 @@ class PartnerPolicyDocumentJob implements ShouldQueue
         ]);
     }
 
-    public function failed(Exception $ex)
+    public function failed(\Throwable $ex)
     {
         LoggerService::error('PartnerPolicyDocumentJob - Failed', exception: $ex);
     }

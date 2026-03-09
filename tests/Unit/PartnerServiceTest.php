@@ -95,6 +95,18 @@ describe('isPartnerActive', function () {
         expect($result)->toBeFalse();
     });
 
+    it('returns false when partner has an empty string email', function () {
+        DB::table('partners')
+            ->where('id', $this->partnerId)
+            ->update(['email' => '']);
+
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->insuranceProviderId);
+
+        expect($result)->toBeFalse();
+    });
+
     it('returns false when partner does not exist', function () {
         $service = app(PartnerService::class);
 
