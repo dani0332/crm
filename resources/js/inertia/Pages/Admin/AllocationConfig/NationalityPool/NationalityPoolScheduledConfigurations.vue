@@ -15,7 +15,7 @@ const routingLogs = reactive({
   data: null,
   table: [
     { text: 'Created Date', value: 'created_at' },
-    { text: 'User', value: 'user.name' },
+    { text: 'User', value: 'user' },
     { text: 'Event', value: 'event' },
     { text: 'Effective From', value: 'effective_from' },
     { text: 'Effective To', value: 'effective_to' },
