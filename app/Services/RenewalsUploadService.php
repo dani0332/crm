@@ -2038,7 +2038,7 @@ class RenewalsUploadService
      */
     private function attachPdfIfNeeded($carQuote, $listQuotePlans, &$emailData)
     {
-        if (count($listQuotePlans) > 0) {
+        if (is_countable($listQuotePlans) && count($listQuotePlans) > 0) {
             $pdfData = [
                 'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $carQuote->uuid,

@@ -169,11 +169,13 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         } catch (UnableToCheckExistence $e) {
             $previous = $e->getPrevious();
-            LoggerService::error(
+            LoggerService::warning(
                 "Unable to check file existence (Azure transient failure): {$path}",
                 [
                     'previous_exception_class' => $previous ? $previous::class : null,
                     'previous_exception_message' => $previous?->getMessage(),
+                    'quote_uuid' => $this->uuid,
+                    'quote_document_id' => $this->quoteDocumentId,
                 ],
                 $e
             );

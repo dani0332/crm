@@ -26,6 +26,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmbeddedTransactionService;
 use App\Services\Logger\LoggerService;
 use App\Services\PartnerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -121,6 +122,18 @@ class CarQuoteObserver
                     'error' => $e->getMessage(),
                     'uuid' => $lead->uuid,
                 ]);
+            }
+
+            $embeddedTransactionService = app(EmbeddedTransactionService::class);
+            if ($embeddedTransactionService->isRetargetingEpReminderEnabled()) {
+                try {
+                    $response = $embeddedTransactionService->retargetEpReminder($lead, QuoteTypeId::Car);
+                    LoggerService::info('CarQuoteObserver - retarget ep reminder triggered', ['uuid' => $lead->uuid, 'response' => $response]);
+                } catch (Exception $e) {
+                    LoggerService::error('CarQuoteObserver - retarget ep reminder failed', [
+                        'uuid' => $lead->uuid,
+                    ], exception: $e);
+                }
             }
 
             try {
