@@ -39,21 +39,18 @@ class AdnicQuoteUpdaterService
 
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void
     {
-        /*
         $data = [
-             'commission_vat_applicable' => $issuePolicyResult?->PolicyInfo?->commissionPayableAmt,
-             'commission' => $issuePolicyResult?->PolicyInfo?->CommissionAmount,
-             'commission_vat' => $issuePolicyResult?->PolicyInfo?->commissionVatAmt,
-             'commmission_percentage' => $issuePolicyResult?->PolicyInfo?->CommissionPercentage ?? 0,
-             'insurer_tax_number' => $issuePolicyResult?->PolicyInfo?->invoiceNo ?? null,
-             'insurer_invoice_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate ?? null,
+            //  'commission_vat_applicable' => $issuePolicyResult?->PolicyInfo?->commissionPayableAmt,
+            //  'commission' => $issuePolicyResult?->PolicyInfo?->CommissionAmount,
+            //  'commission_vat' => $issuePolicyResult?->PolicyInfo?->commissionVatAmt,
+            //  'commmission_percentage' => $issuePolicyResult?->PolicyInfo?->CommissionPercentage ?? 0,
+             'insurer_tax_number' => $issuePolicyResult?->PolicyInfo?->DebitNoteNo ?? null,
+            //  'insurer_invoice_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate ?? null,
              'insurer_commmission_invoice_number' => $issuePolicyResult?->PolicyInfo?->creditNoteNo ?? null,
          ];
           // Filter out null values to avoid overwriting existing data
          $data = array_filter($data, fn ($value) => $value !== null);
 
          Payment::where('code', $quoteCode)->update($data);
-
-         */
     }
 }
