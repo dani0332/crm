@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\NationalityPoolConfigurationRequest;
+use App\Http\Resources\NationalityPoolAuditResource;
 use App\Models\CanonicalNationality;
 use App\Services\NationalityPoolConfigurationService;
 use Exception;
@@ -37,6 +38,7 @@ class NationalityPoolConfigurationController extends Controller
     {
         try {
             $auditLogs = $this->nationalityPoolConfigurationService->getAuditLogs($type);
+            $auditLogs = NationalityPoolAuditResource::collection($auditLogs);
 
             return response()->json(['data' => $auditLogs]);
         } catch (Exception $e) {
