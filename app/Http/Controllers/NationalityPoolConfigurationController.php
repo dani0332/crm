@@ -24,7 +24,7 @@ class NationalityPoolConfigurationController extends Controller
         return inertia('Admin/AllocationConfig/NationalityPool/Index');
     }
 
-    public function getData(): JsonResponse
+    public function getData(?int $id = null): JsonResponse
     {
         try {
             // Fetch all nationalities
@@ -33,7 +33,7 @@ class NationalityPoolConfigurationController extends Controller
                 ->orderBy('canonical_nationality_name')->get();
 
             // Fetch nationality pool configurations
-            $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData();
+            $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData($id);
 
             return response()->json(['nationalities' => $nationalities, 'nationalityPoolConfigurations' => $nationalityPoolConfigurations]);
         } catch (Exception $e) {

@@ -10,13 +10,18 @@ class NationalityPoolConfigurationService
 {
     public function __construct(public CanonicalNationalityService $canonicalNationalityService) {}
 
-    public function getData(): array
+    public function getData(?int $id = null): array
     {
-        return NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes')
-            ->whereDate('effective_from', '>=', Carbon::today()->toDateString())
-            ->orderBy('effective_from', 'asc')
-            ->first()
-            ->toArray();
+        $data = NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes');
+
+        if ($id) {
+            $data->where('id', $id);
+        } else {
+            $data->whereDate('effective_from', '>=', Carbon::today()->toDateString())
+                ->orderBy('effective_from', 'asc');
+        }
+
+        return $data->first()->toArray();
     }
 
     public function getAuditLogs(string $type)
