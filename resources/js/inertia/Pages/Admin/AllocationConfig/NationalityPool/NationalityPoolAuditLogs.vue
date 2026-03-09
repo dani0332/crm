@@ -7,9 +7,9 @@ const props = defineProps({
     default: true,
   },
 });
+const notification = useToast();
 
 const routingLogs = reactive({
-  loading: false,
   data: null,
   table: [
     { text: 'Created Date', value: 'created_at' },
@@ -20,15 +20,14 @@ const routingLogs = reactive({
   ],
 });
 
-const loadData = async () => {
-  routingLogs.loading = true;
- 
+const loadData = async () => { 
   axios.get(route('admin.nationality-pool-audit-logs', 'audit')).then(response => {
     routingLogs.data = response.data.data;
   }).catch(error => {
-    console.error('Error loading audit logs:', error);
-  }).finally(() => {
-    routingLogs.loading = false;
+    notification.error({
+      title: 'Error loading audit logs',
+      position: 'top',
+    });
   });
 };
 

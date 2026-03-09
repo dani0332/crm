@@ -1,8 +1,8 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-
 const page = usePage();
+const notification = useToast();
 
 const props = defineProps({
   expanded: {
@@ -12,7 +12,6 @@ const props = defineProps({
 });
 
 const routingLogs = reactive({
-  loading: false,
   data: null,
   table: [
     { text: 'Created Date', value: 'created_at' },
@@ -40,14 +39,13 @@ const selectLog = item => {
 };
 
 const loadData = async () => {
-  routingLogs.loading = true;
-  
   axios.get(route('admin.nationality-pool-audit-logs', 'scheduled')).then(response => {
     routingLogs.data = response.data.data;
   }).catch(error => {
-    console.error('Error loading scheduled configurations:', error);
-  }).finally(() => {
-    routingLogs.loading = false;
+   notification.error({
+    title: 'Error loading scheduled configurations',
+    position: 'top',
+   });
   });
 };
 
