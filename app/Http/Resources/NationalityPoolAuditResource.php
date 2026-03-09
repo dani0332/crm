@@ -11,8 +11,8 @@ class NationalityPoolAuditResource extends JsonResource
     {
         $canonicalNationalities = app()->make(\App\Services\CanonicalNationalityService::class)
             ->getByCodes($this->canonical_nationality_codes);
-        $visible = collect($canonicalNationalities)->take(8);
-        $remaining = collect($canonicalNationalities)->count() - 8;
+        $visible = collect($canonicalNationalities)->take(7);
+        $remaining = collect($canonicalNationalities)->count() - 7;
 
         return [
             'id' => $this->id,
