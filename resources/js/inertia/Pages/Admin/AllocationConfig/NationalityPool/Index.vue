@@ -7,12 +7,12 @@ const props = defineProps({
     nationalityPoolConfigurations: Array,
 });
 const toDate = ref('2099-12-31'); // As suggested by the business
-const fromDate = ref(props.nationalityPoolConfigurations[0]?.effective_from);
+const fromDate = ref(props.nationalityPoolConfigurations?.effective_from);
 const nationalityGroups = ref([]);
-const selectedNationalityGroups = ref(props.nationalityPoolConfigurations[0]?.health_nationality_group_ids?.split(',') || []);
+const selectedNationalityGroups = ref(props.nationalityPoolConfigurations?.health_nationality_group_ids?.split(',') || []);
 const loading = ref(false);
 const gbpNationalities = ref([]);
-const selectedNationalities = ref(props.nationalityPoolConfigurations[0]?.canonical_nationality_codes?.split(',') || []);
+const selectedNationalities = ref(props.nationalityPoolConfigurations?.canonical_nationality_codes?.split(',') || []);
 const previousNationalities = ref([]);
 const individualNationalities = ref([]);
 const notification = useToast();
