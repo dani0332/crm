@@ -4,6 +4,7 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -449,5 +450,22 @@ class EmbeddedProduct
         })->toArray();
 
         return $docs;
+    }
+
+    protected function isCriteriaMatched($quote): bool
+    {
+        return true;
+    }
+
+    public function isDisabled(EmbeddedTransaction $epTransaction): bool
+    {
+        return $this->preCheckEpTransactionIsDisabled($epTransaction);
+    }
+
+    protected function preCheckEpTransactionIsDisabled(EmbeddedTransaction $epTransaction): bool
+    {
+        $isPaymentPaid = in_array($epTransaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+
+        return ! $epTransaction->is_active || $isPaymentPaid;
     }
 }
