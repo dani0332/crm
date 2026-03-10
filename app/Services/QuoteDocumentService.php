@@ -957,7 +957,7 @@ class QuoteDocumentService extends BaseService
             unset($phpWord, $objWriter);
 
             // Check for successful atomic replacement, handle failure
-            if (!@rename($tempOutputFile, $tempFile)) {
+            if (! @rename($tempOutputFile, $tempFile)) {
                 // Clean up orphaned temp output file if present
                 if (file_exists($tempOutputFile)) {
                     @unlink($tempOutputFile);
