@@ -15,34 +15,27 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
-    protected string $quoteUID;
-    protected array $data;
-    public $uniqueFor = 300;
-    
-    public function __construct(string $quoteUID, array $data = [])
-    {
-        $this->quoteUID = $quoteUID;
-        $this->data = $data;
+    public int $uniqueFor = 300;
+
+    protected ?string $uniqueIdOverride = null;
+
+    public function __construct(
+        protected string $quoteUID,
+        protected array $data = []
+    ) {
+        if ($this->data['force_send'] ?? false) {
+            $this->uniqueIdOverride = "savings-oca-email-{$this->quoteUID}-force-".uniqid('', true);
+        }
     }
 
     public function uniqueId(): string
     {
-        $forceSend = $this->data['force_send'] ?? false;
-
-        if ($forceSend) {
-            return "savings-oca-email-{$this->quoteUID}-force-".uniqid('', true);
-        }
-
-        return "savings-oca-email-{$this->quoteUID}";
+        return $this->uniqueIdOverride ?? "savings-oca-email-{$this->quoteUID}";
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         LoggerService::startQuoteLogging($this->quoteUID);
-
         LoggerService::info('Savings OCA email job started');
 
         app(SavingsEmailService::class)->sendOCAEmail($this->quoteUID, $this->data);
@@ -50,14 +43,10 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
         LoggerService::info('Savings OCA email sent');
     }
 
-    /**
-     * Handle a job failure.
-     */
     public function failed(Throwable $exception): void
     {
         LoggerService::startQuoteLogging($this->quoteUID);
-
-        $exceptionDetails = [
+        LoggerService::error('Savings OCA email failed', [
             'quote_uuid' => $this->quoteUID,
             'exception_class' => get_class($exception),
             'exception_message' => $exception->getMessage(),
@@ -65,8 +54,6 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
             'exception_line' => $exception->getLine(),
             'exception_code' => $exception->getCode(),
             'exception_trace' => $exception->getTraceAsString(),
-        ];
-
-        LoggerService::error('Savings OCA email failed', $exceptionDetails, $exception);
+        ], $exception);
     }
 }
