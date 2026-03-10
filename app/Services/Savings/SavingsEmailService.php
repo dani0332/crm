@@ -102,7 +102,7 @@ class SavingsEmailService
                     'email' => $emailData->customerEmail,
                 ]);
             }
-            
+
             return $response ?? null;
         } catch (\Exception $e) {
             LoggerService::error("$logPrefix Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");

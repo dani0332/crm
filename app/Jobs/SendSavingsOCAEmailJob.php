@@ -16,7 +16,6 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
     use Queueable;
 
     public int $uniqueFor = 300;
-
     protected ?string $uniqueIdOverride = null;
 
     public function __construct(
