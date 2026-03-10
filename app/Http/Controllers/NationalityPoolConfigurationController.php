@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Http\Requests\NationalityPoolConfigurationRequest;
 use App\Http\Resources\NationalityPoolAuditResource;
 use App\Models\CanonicalNationality;
+use App\Models\HealthNationalityGroup;
 use App\Services\NationalityPoolConfigurationService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,9 @@ class NationalityPoolConfigurationController extends Controller
     public function getData(?int $id = null): JsonResponse
     {
         try {
+            // Fetch groups
+            $groups = HealthNationalityGroup::select('id', 'group_name')->get()->toArray();
+
             // Fetch all nationalities
             $nationalities = CanonicalNationality::where('nationality_synonym', 0)
                 ->select('canonical_nationality_code as value', 'canonical_nationality_name as label')
@@ -35,7 +39,7 @@ class NationalityPoolConfigurationController extends Controller
             // Fetch nationality pool configurations
             $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData($id);
 
-            return response()->json(['nationalities' => $nationalities, 'nationalityPoolConfigurations' => $nationalityPoolConfigurations]);
+            return response()->json(['groups' => $groups, 'nationalities' => $nationalities, 'nationalityPoolConfigurations' => $nationalityPoolConfigurations]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
