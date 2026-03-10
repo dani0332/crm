@@ -19,7 +19,7 @@ class CheckFutureEffectiveDateNationalityPool implements ValidationRule
         $value = Carbon::parse($value)->toDateString();
         $today = Carbon::today()->toDateString();
 
-        if ($value == $today) {
+        if ($value <= $today) {
             return;
         }
 

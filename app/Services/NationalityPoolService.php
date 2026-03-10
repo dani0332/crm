@@ -13,7 +13,7 @@ class NationalityPoolService
 
         return NationalityPool::select('canonical_nationality_codes')
             ->whereDate('effective_from', '<=', $today)
-            ->orderByDesc('id')
+            ->orderByDesc('effective_from')
             ->first();
     }
 }
