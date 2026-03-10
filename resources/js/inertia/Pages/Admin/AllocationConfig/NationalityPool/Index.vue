@@ -1,16 +1,15 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, nextTick } from 'vue';
 import NationalityPoolScheduledConfigurations from './NationalityPoolScheduledConfigurations.vue';
 import NationalityPoolAuditLogs from './NationalityPoolAuditLogs.vue';
 const nationalityPoolConfigurations = ref([]);
 const toDate = ref('2099-12-31'); // As suggested by the business
 const fromDate = ref();
 const nationalityGroups = ref([]);
-const selectedNationalityGroups = ref();
+const selectedNationalityGroups = ref([]);
 const loading = ref(false);
 const gbpNationalities = ref([]);
 const selectedNationalities = ref();
-const previousNationalities = ref([]);
 const individualNationalities = ref([]);
 const scheduledConfigurationsRef = ref(null);
 const auditLogsRef = ref(null);
@@ -39,6 +38,7 @@ function getData(id = null) {
       title: 'Error fetching data',
       position: 'top',
     });
+    console.log(error);
   }).finally(() => {
     loading.value = false;
   });
@@ -57,26 +57,6 @@ function getSelectedGroupNationalities() {
   }).finally(() => {
     loading.value = false;
   });
-}
-
-const toggleGroup = (id) => {
-  if (selectedNationalityGroups.value?.includes(id)) {
-    selectedNationalityGroups.value =
-      selectedNationalityGroups.value.filter(g => g !== id);
-  } else {
-    selectedNationalityGroups.value?.push((id))
-  }
-
-  // If no groups are selected, remoeve group nationalities
-  if (selectedNationalityGroups.value.length == 0) {
-    selectedNationalities.value = individualNationalities.value;
-    return;
-  }
-
-  console.log('------------');
-  console.log(selectedNationalityGroups.value);
-  // Get selected group nationalities
-  //getSelectedGroupNationalities();
 }
 
 const addNationality = (newValues) => {
@@ -139,6 +119,10 @@ function validateForm() {
 onMounted(() => {
   getData();
 });
+
+watch(selectedNationalityGroups, (newVal) => {
+  getSelectedGroupNationalities();
+});
 </script>
 
 <template>
@@ -175,15 +159,16 @@ onMounted(() => {
     <div class="grid sm:grid-cols-2 gap-4 mb-4">
         <x-field label="Predefined Group Selection">
             <div class="flex flex-col gap-1">
-                <x-checkbox
-                    v-for="group in nationalityGroups"
-                    :key="group.id"
-                    :value="group.id"
-                    :label="group.group_name"
-                      :model-value="selectedNationalityGroups.includes(group.id)"
-                    @update:modelValue="toggleGroup(group.id)"
-                    class="!mb-0"
+              <label v-for="group in nationalityGroups" :key="group.id" class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  :value="group.id"
+                 style="accent-color:rgb(29 131 188 / 1)"
+                  v-model="selectedNationalityGroups"
+                  @change="toggleGroup"
                 />
+                {{ group.group_name }}
+            </label>
             </div>
         </x-field>
     </div>
