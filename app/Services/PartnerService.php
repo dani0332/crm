@@ -42,7 +42,7 @@ class PartnerService
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::PARTNER_POLICY_DOCUMENT);
 
-        $payment = Payment::where('code', $quote->code)->first();
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
         $insuranceProvider = $payment ? getInsuranceProvider($payment, $quoteType->value, $quote) : null;
         $partner = $insuranceProvider ? $this->isPartnerActive($quote->source, $quoteType->id(), $insuranceProvider->id, $payment?->plan_id) : null;
 
