@@ -108,6 +108,7 @@ beforeEach(function () {
             $table->date('effective_to');
             $table->boolean('is_active');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         $db->table('nationality_pool')->insert([
