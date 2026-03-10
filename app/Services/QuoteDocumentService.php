@@ -947,7 +947,7 @@ class QuoteDocumentService extends BaseService
         // Save to a separate temp path first — writing to the same path that IOFactory::load()
         // opened (an internal ZipArchive read handle) causes a "Invalid or uninitialized Zip object"
         // ValueError because PHP can't open the same file for writing while it's still referenced.
-        $tempOutputFile = $tempFile . '_watermarked.docx';
+        $tempOutputFile = $tempFile.'_watermarked.docx';
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
         $objWriter->save($tempOutputFile);
 
@@ -955,7 +955,7 @@ class QuoteDocumentService extends BaseService
         unset($phpWord, $objWriter);
 
         // Check for successful atomic replacement, handle failure
-        if (!@rename($tempOutputFile, $tempFile)) {
+        if (! @rename($tempOutputFile, $tempFile)) {
             // Clean up orphaned temp output file if present
             if (file_exists($tempOutputFile)) {
                 @unlink($tempOutputFile);
