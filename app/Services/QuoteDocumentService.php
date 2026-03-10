@@ -953,7 +953,20 @@ class QuoteDocumentService extends BaseService
 
         // Release the source handle by unsetting, then atomically replace the original temp file
         unset($phpWord, $objWriter);
-        rename($tempOutputFile, $tempFile);
+
+        // Check for successful atomic replacement, handle failure
+        if (!@rename($tempOutputFile, $tempFile)) {
+            // Clean up orphaned temp output file if present
+            if (file_exists($tempOutputFile)) {
+                @unlink($tempOutputFile);
+            }
+            LoggerService::error("Failed to atomically replace temp file with watermarked docx during watermarking of $docName", extra: [
+                'uuid' => $uuid,
+                'tempFile' => $tempFile,
+                'tempOutputFile' => $tempOutputFile,
+            ]);
+            throw new \RuntimeException("Failed to replace unwatermarked temp file with watermarked version for $docName");
+        }
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
