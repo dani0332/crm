@@ -937,7 +937,7 @@ class QuoteDocumentService extends BaseService
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
-        $tempOutputFile = $tempFile . '_watermarked.docx';
+        $tempOutputFile = $tempFile.'_watermarked.docx';
 
         $result = null;
         try {
