@@ -6,8 +6,8 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\Kyc;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\Insured;
@@ -36,7 +36,6 @@ class AMLEntityService
         ])->first();
     }
 
-    
     public function linkEntityToQuote(int $quoteTypeId, int $quoteRequestId, int $entityId, ?string $triggeredFrom = null): array
     {
         $quoteTypeCode = QuoteTypes::getName($quoteTypeId)?->value;
