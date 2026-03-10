@@ -2,33 +2,41 @@
 import { onMounted, ref } from 'vue';
 import NationalityPoolScheduledConfigurations from './NationalityPoolScheduledConfigurations.vue';
 import NationalityPoolAuditLogs from './NationalityPoolAuditLogs.vue';
-const props = defineProps({
-    gbpNationalities: Array,
-    nationalityPoolConfigurations: Array,
-});
+const nationalityPoolConfigurations = ref([]);
 const toDate = ref('2099-12-31'); // As suggested by the business
-const fromDate = ref(props.nationalityPoolConfigurations?.effective_from);
+const fromDate = ref();
 const nationalityGroups = ref([]);
-const selectedNationalityGroups = ref(props.nationalityPoolConfigurations?.health_nationality_group_ids?.split(',') || []);
+const selectedNationalityGroups = ref();
 const loading = ref(false);
 const gbpNationalities = ref([]);
-const selectedNationalities = ref(props.nationalityPoolConfigurations?.canonical_nationality_codes?.split(',') || []);
+const selectedNationalities = ref();
 const previousNationalities = ref([]);
 const individualNationalities = ref([]);
 const scheduledConfigurationsRef = ref(null);
 const auditLogsRef = ref(null);
 const notification = useToast();
 
-// Custom function
-function getNationalityGroups() {
+// Custom functions
+function getData(id = null) {
   loading.value = true;
 
-  axios.get(route('admin.nationality-groups')).then(response => {
-    nationalityGroups.value = response.data.data;
+  axios.get(route('admin.nationality-pool-config.data', { id })).then(response => {
+    // Assign only forst time, avoid reassigning on edit
+    if (nationalityGroups.value.length == 0) {
+      nationalityGroups.value = response.data.groups;
+    }
+    if (gbpNationalities.value.length == 0) {
+      gbpNationalities.value = response.data.nationalities;
+    }
+    nationalityPoolConfigurations.value = response.data.nationalityPoolConfigurations;
 
+    // Populate form fields
+    fromDate.value = new Date(nationalityPoolConfigurations.value?.effective_from);
+    selectedNationalityGroups.value = nationalityPoolConfigurations.value?.health_nationality_group_ids?.split(',').map(Number) || [];
+    selectedNationalities.value = nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(',') || [];
   }).catch(error => {
     notification.error({
-      title: 'Error fetching nationality groups',
+      title: 'Error fetching data',
       position: 'top',
     });
   }).finally(() => {
@@ -52,11 +60,11 @@ function getSelectedGroupNationalities() {
 }
 
 const toggleGroup = (id) => {
-  if (selectedNationalityGroups.value?.includes(String(id))) {
+  if (selectedNationalityGroups.value?.includes(id)) {
     selectedNationalityGroups.value =
-      selectedNationalityGroups.value.filter(g => g !== String(id));
+      selectedNationalityGroups.value.filter(g => g !== id);
   } else {
-    selectedNationalityGroups.value?.push(String(id))
+    selectedNationalityGroups.value?.push((id))
   }
 
   // If no groups are selected, remoeve group nationalities
@@ -65,8 +73,10 @@ const toggleGroup = (id) => {
     return;
   }
 
+  console.log('------------');
+  console.log(selectedNationalityGroups.value);
   // Get selected group nationalities
-  getSelectedGroupNationalities();
+  //getSelectedGroupNationalities();
 }
 
 const addNationality = (newValues) => {
@@ -127,7 +137,7 @@ function validateForm() {
 }
 
 onMounted(() => {
-  getNationalityGroups();
+  getData();
 });
 </script>
 
@@ -170,8 +180,8 @@ onMounted(() => {
                     :key="group.id"
                     :value="group.id"
                     :label="group.group_name"
-                    :model-value="selectedNationalityGroups?.includes(String(group.id))"
-                     @update:modelValue="toggleGroup(group.id)"
+                      :model-value="selectedNationalityGroups.includes(group.id)"
+                    @update:modelValue="toggleGroup(group.id)"
                     class="!mb-0"
                 />
             </div>
@@ -180,7 +190,7 @@ onMounted(() => {
     <div class="">
       <x-field label="GBP Nationality">
         <x-select
-          :options="props.gbpNationalities"
+          :options="gbpNationalities"
           class="w-100"
           placeholder="Select Nationality"
           filterable
@@ -203,6 +213,6 @@ onMounted(() => {
     </div>
   </x-form>
 
-<NationalityPoolScheduledConfigurations ref="scheduledConfigurationsRef" />
+<NationalityPoolScheduledConfigurations ref="scheduledConfigurationsRef" @edit-config="getData" />
 <NationalityPoolAuditLogs ref="auditLogsRef" />
 </template>
