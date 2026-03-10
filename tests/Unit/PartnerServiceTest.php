@@ -3,7 +3,6 @@
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Models\CarQuote;
-use App\Models\Partner;
 use App\Services\PartnerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Auth;
