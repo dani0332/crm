@@ -82,7 +82,7 @@ class CanonicalNationalitySeeder extends Seeder
             ['Dominica', 'Dominican', 'CN0048', true, true],
             ['Dominican', 'Dominican', 'CN0048', false, true],
             ['Dutch', 'Dutch', 'CN0059', false, true],
-            ['Ecuadorean', 'Ecuadorian', 'CN0060', true, true],
+            ['Ecuadorean', 'Ecuadorian', 'CN0060', false, true],
             ['Egyptian', 'Egyptian', 'CN0061', false, true],
             ['Emarat', 'Emirati', 'CN0062', true, true],
             ['Emirati', 'Emirati', 'CN0062', false, true],
