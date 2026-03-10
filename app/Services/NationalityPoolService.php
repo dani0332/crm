@@ -8,8 +8,7 @@ class NationalityPoolService
 {
     public function getNationalityCodes(): ?NationalityPool
     {
-        return NationalityPool::active()
-            ->select('canonical_nationality_codes')
+        return NationalityPool::select('canonical_nationality_codes')
             ->first();
     }
 }
