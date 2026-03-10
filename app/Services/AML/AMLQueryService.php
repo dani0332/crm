@@ -200,17 +200,18 @@ class AMLQueryService
 
     public function getAMLScreeningType(int $quoteTypeId, int $quoteRequestId): string
     {
-        $customerCodePrefix = KycLog::withTrashed()
-            ->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
+        $customerCode = KycLog::withTrashed()
             ->where([
                 'quote_request_id' => $quoteRequestId,
                 'quote_type_id' => $quoteTypeId,
             ])
             ->standardAmlFilters()
             ->orderBy('id', 'desc')
-            ->value('splitted_customer_code');
+            ->value('customer_code');
 
-        if ($customerCodePrefix !== null) {
+        $customerCodePrefix = $customerCode !== null ? substr($customerCode, 0, 3) : null;
+
+        if ($customerCodePrefix !== null && $customerCodePrefix !== '') {
             return $customerCodePrefix;
         }
 
