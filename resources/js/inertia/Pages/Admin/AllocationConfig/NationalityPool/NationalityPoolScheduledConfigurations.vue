@@ -74,10 +74,6 @@ const loadData = async () => {
 defineExpose({
   loadData
 });
-
-onMounted(() => {
-  loadData();
-});
 </script>
 
 <template>
@@ -92,7 +88,18 @@ onMounted(() => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div class="relative">
+        <div class="text-center py-3" v-if="routingLogs.data === null">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="loadData"
+            :loading="routingLogs.loading"
+          >
+            Load Logs
+          </x-button>
+        </div>
+        <div v-else class="relative">
            <!-- Loading Overlay -->
            <div
             v-if="routingLogs.loading"
