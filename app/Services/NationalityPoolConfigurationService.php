@@ -12,13 +12,15 @@ class NationalityPoolConfigurationService
 
     public function getData(?int $id = null): array
     {
-        $data = NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes');
+        $data = NationalityPool::selectRaw("DATE_FORMAT(effective_from, '%Y-%m-%d') as effective_from,
+                health_nationality_group_ids,
+                canonical_nationality_codes");
 
         if ($id) {
             $data->where('id', $id);
         } else {
-            $data->whereDate('effective_from', '>=', Carbon::today()->toDateString())
-                ->orderBy('effective_from', 'asc');
+            $data->whereDate('effective_from', '<=', Carbon::today()->toDateString())
+                ->orderByDesc('effective_from');
         }
 
         return $data->first()->toArray();
