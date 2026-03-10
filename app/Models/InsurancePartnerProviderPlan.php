@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class InsurancePartnerProviderPlan extends Model
 {
-    public function scopeActiveForPlan(Builder $query, int $planId): Builder
+    public function scopeActiveForPlan(Builder $query, ?int $planId): Builder
     {
+        if ($planId === null) {
+            return $query->whereNull('id');
+        }
+
         return $query->where('plan_id', $planId)
             ->where('is_active', true);
     }

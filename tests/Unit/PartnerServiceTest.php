@@ -197,6 +197,14 @@ describe('isPartnerActive', function () {
 
         expect($result)->toBeFalse();
     });
+
+    it('returns false when plan_id is null', function () {
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, null);
+
+        expect($result)->toBeFalse();
+    });
 });
 
 describe('validatePartnerQuote', function () {
