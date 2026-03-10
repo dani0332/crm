@@ -2,6 +2,7 @@
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Services\PartnerService;
 use App\Services\QuoteDocumentService;
@@ -30,7 +31,9 @@ beforeEach(function () {
         'updated_at' => now(),
     ]);
 
-    $this->partnerId = DB::table('partners')->insertGetId([
+    $this->quoteTypeId = QuoteTypes::CAR->id();
+
+    $this->partnerId = DB::table('insurance_partners')->insertGetId([
         'code' => 'TEST_PARTNER',
         'email' => 'partner@example.com',
         'is_active' => true,
@@ -38,9 +41,22 @@ beforeEach(function () {
         'updated_at' => now(),
     ]);
 
-    DB::table('partner_plans')->insert([
+    $this->partnerProviderId = DB::table('insurance_partner_providers')->insertGetId([
         'partner_id' => $this->partnerId,
         'provider_id' => $this->insuranceProviderId,
+        'quote_type_id' => $this->quoteTypeId,
+        'auto_issuance_enabled' => true,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->planId = 1;
+
+    DB::table('insurance_partner_provider_plans')->insert([
+        'partner_provider_id' => $this->partnerProviderId,
+        'plan_id' => $this->planId,
+        'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -62,7 +78,7 @@ describe('isPartnerActive', function () {
     it('returns active partner when conditions are met', function () {
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('TEST_PARTNER', $this->insuranceProviderId);
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
 
         expect($result)->not->toBeFalse()
             ->and($result->code)->toBe('TEST_PARTNER')
@@ -71,37 +87,37 @@ describe('isPartnerActive', function () {
     });
 
     it('returns false when partner is inactive', function () {
-        DB::table('partners')
+        DB::table('insurance_partners')
             ->where('id', $this->partnerId)
             ->update(['is_active' => false]);
 
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('TEST_PARTNER', $this->insuranceProviderId);
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
 
         expect($result)->toBeFalse();
     });
 
     it('returns false when partner has no email', function () {
-        DB::table('partners')
+        DB::table('insurance_partners')
             ->where('id', $this->partnerId)
             ->update(['email' => null]);
 
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('TEST_PARTNER', $this->insuranceProviderId);
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
 
         expect($result)->toBeFalse();
     });
 
     it('returns false when partner has an empty string email', function () {
-        DB::table('partners')
+        DB::table('insurance_partners')
             ->where('id', $this->partnerId)
             ->update(['email' => '']);
 
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('TEST_PARTNER', $this->insuranceProviderId);
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
 
         expect($result)->toBeFalse();
     });
@@ -109,12 +125,12 @@ describe('isPartnerActive', function () {
     it('returns false when partner does not exist', function () {
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('NON_EXISTENT', $this->insuranceProviderId);
+        $result = $service->isPartnerActive('NON_EXISTENT', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
 
         expect($result)->toBeFalse();
     });
 
-    it('returns false when partner has no plan for the insurance provider', function () {
+    it('returns false when partner has no provider for the given insurance provider', function () {
         $differentProviderId = DB::table('insurance_provider')->insertGetId([
             'code' => 'RSA',
             'text' => 'RSA Insurance',
@@ -125,7 +141,59 @@ describe('isPartnerActive', function () {
 
         $service = app(PartnerService::class);
 
-        $result = $service->isPartnerActive('TEST_PARTNER', $differentProviderId);
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $differentProviderId, $this->planId);
+
+        expect($result)->toBeFalse();
+    });
+
+    it('returns false when partner provider has auto_issuance_enabled set to false', function () {
+        DB::table('insurance_partner_providers')
+            ->where('id', $this->partnerProviderId)
+            ->update(['auto_issuance_enabled' => false]);
+
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
+
+        expect($result)->toBeFalse();
+    });
+
+    it('returns false when partner provider is inactive', function () {
+        DB::table('insurance_partner_providers')
+            ->where('id', $this->partnerProviderId)
+            ->update(['is_active' => false]);
+
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
+
+        expect($result)->toBeFalse();
+    });
+
+    it('returns false when quote_type_id does not match', function () {
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', QuoteTypes::HEALTH->id(), $this->insuranceProviderId, $this->planId);
+
+        expect($result)->toBeFalse();
+    });
+
+    it('returns false when plan is inactive', function () {
+        DB::table('insurance_partner_provider_plans')
+            ->where('partner_provider_id', $this->partnerProviderId)
+            ->update(['is_active' => false]);
+
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, $this->planId);
+
+        expect($result)->toBeFalse();
+    });
+
+    it('returns false when plan_id does not match', function () {
+        $service = app(PartnerService::class);
+
+        $result = $service->isPartnerActive('TEST_PARTNER', $this->quoteTypeId, $this->insuranceProviderId, 999);
 
         expect($result)->toBeFalse();
     });
@@ -135,10 +203,20 @@ describe('validatePartnerQuote', function () {
     it('returns quote when all validations pass', function () {
         $lookups = TestDataSeeder::seedCarQuoteLookups();
 
-        // Add a partner_plan for the RSA provider that seedCarQuoteLookups creates
-        DB::table('partner_plans')->insert([
+        $rsaPartnerProviderId = DB::table('insurance_partner_providers')->insertGetId([
             'partner_id' => $this->partnerId,
             'provider_id' => $lookups['insurance_provider_id'],
+            'quote_type_id' => $this->quoteTypeId,
+            'auto_issuance_enabled' => true,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('insurance_partner_provider_plans')->insert([
+            'partner_provider_id' => $rsaPartnerProviderId,
+            'plan_id' => $lookups['plan_id'],
+            'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -152,7 +230,7 @@ describe('validatePartnerQuote', function () {
         DB::table('payments')->insert([
             'code' => $carQuote->code,
             'plan_id' => $lookups['plan_id'],
-            'insurance_provider_id' => $this->insuranceProviderId,
+            'insurance_provider_id' => $lookups['insurance_provider_id'],
             'paymentable_id' => $carQuote->id,
             'paymentable_type' => CarQuote::class,
             'total_price' => 1000,
@@ -163,7 +241,7 @@ describe('validatePartnerQuote', function () {
 
         $service = app(PartnerService::class);
 
-        $result = $service->validatePartnerQuote($carQuote->uuid, 'car');
+        $result = $service->validatePartnerQuote($carQuote->uuid, QuoteTypes::CAR);
 
         expect($result)->toBeArray()
             ->and($result['quote'])->toBeInstanceOf(CarQuote::class)
@@ -174,7 +252,7 @@ describe('validatePartnerQuote', function () {
     it('returns false when quote does not exist', function () {
         $service = app(PartnerService::class);
 
-        $result = $service->validatePartnerQuote('non-existent-uuid', 'car');
+        $result = $service->validatePartnerQuote('non-existent-uuid', QuoteTypes::CAR);
 
         expect($result)->toBeFalse();
     });
@@ -186,7 +264,7 @@ describe('validatePartnerQuote', function () {
 
         $service = app(PartnerService::class);
 
-        $result = $service->validatePartnerQuote($carQuote->uuid, 'car');
+        $result = $service->validatePartnerQuote($carQuote->uuid, QuoteTypes::CAR);
 
         expect($result)->toBeFalse();
     });
@@ -203,7 +281,7 @@ describe('validatePartnerQuote', function () {
         DB::table('payments')->insert([
             'code' => $carQuote->code,
             'plan_id' => $lookups['plan_id'],
-            'insurance_provider_id' => $this->insuranceProviderId,
+            'insurance_provider_id' => $lookups['insurance_provider_id'],
             'paymentable_id' => $carQuote->id,
             'paymentable_type' => CarQuote::class,
             'total_price' => 1000,
@@ -214,7 +292,7 @@ describe('validatePartnerQuote', function () {
 
         $service = app(PartnerService::class);
 
-        $result = $service->validatePartnerQuote($carQuote->uuid, 'car');
+        $result = $service->validatePartnerQuote($carQuote->uuid, QuoteTypes::CAR);
 
         expect($result)->toBeFalse();
     });
