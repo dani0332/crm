@@ -32,7 +32,7 @@ class NationalityPoolConfigurationService
         if ($type == 'audit') {
             $logs->whereDate('effective_from', '<', $today);
         } else {
-            $logs->whereDate('effective_from', '>=', $today);
+            $logs->whereDate('effective_from', '>=', $today)->withTrashed();
         }
 
         return $logs->with('user')->get();

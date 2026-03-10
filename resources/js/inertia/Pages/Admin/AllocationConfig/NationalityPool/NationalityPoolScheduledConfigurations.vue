@@ -13,7 +13,6 @@ const props = defineProps({
 const selectedItemId = ref(null);
 const showDeleteModal = ref(false);
 const deleting = ref(false);
-
 const routingLogs = reactive({
   loading: false,
   data: null,
@@ -24,9 +23,11 @@ const routingLogs = reactive({
     { text: 'Effective From', value: 'effective_from' },
     { text: 'Effective To', value: 'effective_to' },
     { text: 'Nationalities', value: 'nationalities' },
+    { text: 'Status', value: 'status' },
     { text: 'Action', value: 'action' },
   ],
 });
+const emit = defineEmits(['edit-config'])
 
 function deleteLog(item) {
   selectedItemId.value = item.id;
@@ -49,6 +50,10 @@ function confirmDelete() {
         position: 'top',
       });
   });
+}
+
+function editLog(item) {
+  emit('edit-config', item.id);
 }
 
 const loadData = async () => {
@@ -125,9 +130,14 @@ onMounted(() => {
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
           >
+          <template #item-status="{ deleted_at }">
+            <x-tag size="sm" :color="deleted_at ? 'error' : 'success'">
+              {{ deleted_at ? 'Deleted' : 'Scheduled' }}
+            </x-tag>
+          </template>
             <template #item-action="item">
-              <div style="display:flex; gap:4px; width:120px;">
-                <x-button size="xs" color="primary" outlined style="flex:1;">
+              <div style="display:flex; gap:4px; width:120px;" v-if="!item.deleted_at">
+                <x-button size="xs" color="primary" outlined style="flex:1;" @click.prevent="editLog(item)">
                   Edit
                 </x-button>
                 <x-button size="xs" color="error" outlined style="flex:1;" @click.prevent="deleteLog(item)">

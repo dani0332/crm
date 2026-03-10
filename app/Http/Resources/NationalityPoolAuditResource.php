@@ -23,6 +23,7 @@ class NationalityPoolAuditResource extends JsonResource
             'effective_from' => Carbon::parse($this->effective_from)->format('d-m-Y'),
             'effective_to' => Carbon::parse($this->effective_to)->format('d-m-Y'),
             'event' => $this->created_at != $this->updated_at ? 'Updated' : 'Created',
+            'deleted_at' => $this->deleted_at
         ];
     }
 }
