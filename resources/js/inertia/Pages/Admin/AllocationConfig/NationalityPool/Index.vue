@@ -17,6 +17,14 @@ const notification = useToast();
 
 // Custom functions
 function getData(id = null) {
+  // Scroll to top in case of edit
+  if (id) {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
+
   loading.value = true;
 
   axios.get(route('admin.nationality-pool-config.data', { id })).then(response => {
