@@ -173,7 +173,6 @@ watch(selectedNationalityGroups, (newVal) => {
                   :value="group.id"
                  style="accent-color:rgb(29 131 188 / 1)"
                   v-model="selectedNationalityGroups"
-                  @change="toggleGroup"
                 />
                 {{ group.group_name }}
             </label>
