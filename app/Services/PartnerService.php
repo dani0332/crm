@@ -3,11 +3,10 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Jobs\PartnerPolicyDocumentJob;
-use App\Models\Partner;
+use App\Models\InsurancePartner;
 use App\Models\Payment;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -20,18 +19,12 @@ class PartnerService
         private readonly QuoteDocumentService $quoteDocumentService
     ) {}
 
-    public function isPartnerActive($partnerCode, $insuranceProviderId)
+    public function isPartnerActive($partnerCode, $quoteTypeId, $providerId, $planId)
     {
-        $partner = Partner::with(['partnerPlans' => function ($query) use ($insuranceProviderId) {
-            return $query->where('provider_id', $insuranceProviderId);
-        }])
-            ->whereHas('partnerPlans', function ($query) use ($insuranceProviderId) {
-                $query->where('provider_id', $insuranceProviderId);
-            })
-            ->where('code', $partnerCode)
-            ->whereNotNull('email')
-            ->where('email', '!=', '')
-            ->where('is_active', true)
+        $partner = InsurancePartner::active()
+            ->forCode($partnerCode)
+            ->hasActiveProvider($providerId, $quoteTypeId)
+            ->hasActivePlan($planId)
             ->first();
 
         return $partner ?? false;
@@ -39,7 +32,7 @@ class PartnerService
 
     public function validatePartnerQuote($uuid, $quoteType): array|false
     {
-        $quote = $this->getQuoteObject($quoteType, $uuid);
+        $quote = $this->getQuoteObject($quoteType->value, $uuid);
 
         if (! $quote) {
             LoggerService::info('PartnerService - Quote not found', extra: ['uuid' => $uuid, 'quoteType' => $quoteType]);
@@ -50,8 +43,8 @@ class PartnerService
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::PARTNER_POLICY_DOCUMENT);
 
         $payment = Payment::where('code', $quote->code)->first();
-        $insuranceProvider = $payment ? getInsuranceProvider($payment, $quoteType, $quote) : null;
-        $partner = $insuranceProvider ? $this->isPartnerActive($quote->source, $insuranceProvider->id) : null;
+        $insuranceProvider = $payment ? getInsuranceProvider($payment, $quoteType->value, $quote) : null;
+        $partner = $insuranceProvider ? $this->isPartnerActive($quote->source, $quoteType->id(), $insuranceProvider->id, $payment?->plan_id) : null;
 
         if (! $payment || ! $insuranceProvider || ! $partner) {
             $this->logValidationFailure($payment, $insuranceProvider, $partner, $quote);
@@ -79,7 +72,7 @@ class PartnerService
 
     public function sendPolicyDocumentsToPartner($uuid, $quoteType): void
     {
-        $validation = $this->validatePartnerQuote($uuid, $quoteType->value);
+        $validation = $this->validatePartnerQuote($uuid, $quoteType);
 
         if (! $validation) {
             return;

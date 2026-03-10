@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\EnvEnum;
-use App\Models\Partner;
+use App\Models\InsurancePartner;
 use Illuminate\Database\Seeder;
 
 class PartnerSeeder extends Seeder
@@ -18,7 +18,7 @@ class PartnerSeeder extends Seeder
             $partnerEmail = '';
         }
 
-        Partner::firstOrCreate(
+        InsurancePartner::firstOrCreate(
             ['name' => 'Cars 24', 'code' => 'cars24'],
             ['email' => $partnerEmail, 'is_active' => true],
         );
