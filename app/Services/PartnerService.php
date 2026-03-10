@@ -100,12 +100,12 @@ class PartnerService
 
         $documents = $this->getProviderPolicyDocuments($quote, $quoteType->value, $providerDocuments);
 
-        $filterDocuments = collect($documents)->filter(function ($document) use ($providerDocuments) {
+        $filteredDocuments = collect($documents)->filter(function ($document) use ($providerDocuments) {
             return in_array($document['document_type_code'], $providerDocuments);
-        })->toArray();
+        })->values()->toArray();
 
         // Check if any required document is missing
-        $foundDocumentCodes = collect($filterDocuments)->pluck('document_type_code')->toArray();
+        $foundDocumentCodes = collect($filteredDocuments)->pluck('document_type_code')->toArray();
         $missingDocuments = array_diff($providerDocuments, $foundDocumentCodes);
 
         if (! empty($missingDocuments)) {
@@ -114,21 +114,7 @@ class PartnerService
             return;
         }
 
-        $emailPayload = $this->partnerPolicyDocumentsEmailPayload($filterDocuments);
-
-        PartnerPolicyDocumentJob::dispatch($emailPayload, $partnerEmail, $quote->uuid, $quoteType->id());
-    }
-
-    public function partnerPolicyDocumentsEmailPayload($documents)
-    {
-        $emailPayload = [];
-        foreach ($documents as $document) {
-            $docUrl = $document['watermarked_doc_url'] ?? $document['doc_url'];
-            $emailPayload[$document['document_type_code']] = $this->quoteDocumentService->getDocumentUrl($docUrl, 'azureIMPrivate') ?? '';
-            $emailPayload['EXT_'.$document['document_type_code']] = $this->quoteDocumentService->getDocumentExtension($docUrl) ?? '';
-        }
-
-        return $emailPayload;
+        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $partnerEmail, $quote->uuid, $quoteType->id());
     }
 
     public function getProviderPolicyDocuments($quote, $quoteType, $providerDocuments)
