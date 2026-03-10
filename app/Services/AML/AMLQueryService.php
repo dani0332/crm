@@ -9,6 +9,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\SearchTypeEnum;
 use App\Models\AML;
 use App\Models\KycLog;
 use App\Models\PersonalQuote;
@@ -107,24 +108,47 @@ class AMLQueryService
     private function buildBaseQuery(string $quoteRequestTable, object $request, int $quoteTypeId): Builder
     {
         $dataAml = DB::table($quoteRequestTable);
-
-        // Special handling for Pet quote request
-        if ($quoteRequestTable === strtolower(quoteTypeCode::Pet).'_quote_request') {
-            return $dataAml->select(
-                $quoteRequestTable.'.*',
-                $quoteRequestTable.'.personal_quote_id as id',
-                DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text'),
-                DB::raw('"'.$quoteTypeId.'" as quote_type_id'),
-                $quoteRequestTable.'.code as cdb_id'
-            );
-        }
-
-        return $dataAml->select(
-            $quoteRequestTable.'.*',
+        $baseColumns = $this->getRequiredBaseColumns($quoteRequestTable);
+        $computedColumns = [
             DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text'),
             DB::raw('"'.$quoteTypeId.'" as quote_type_id'),
-            $quoteRequestTable.'.code as cdb_id'
-        );
+            $quoteRequestTable.'.code as cdb_id',
+        ];
+
+        // Special handling for Pet quote request: use personal_quote_id as id
+        if ($quoteRequestTable === strtolower(quoteTypeCode::Pet).'_quote_request') {
+            return $dataAml->select(array_merge(
+                array_map(fn ($col) => $quoteRequestTable.'.'.$col, $baseColumns),
+                [$quoteRequestTable.'.personal_quote_id as id'],
+                $computedColumns
+            ));
+        }
+
+        return $dataAml->select(array_merge(
+            array_map(fn ($col) => $quoteRequestTable.'.'.$col, $baseColumns),
+            $computedColumns
+        ));
+    }
+
+    /**
+     * Required columns from quote request tables for AML list (no select *).
+     *
+     * @return array<int, string>
+     */
+    private function getRequiredBaseColumns(string $quoteRequestTable): array
+    {
+        $common = ['id', 'code', 'created_at', 'updated_at'];
+
+        if ($quoteRequestTable === 'personal_quotes') {
+            return [...$common, 'quote_type_id'];
+        }
+
+        // Pet: id is added as alias of personal_quote_id in buildBaseQuery
+        if ($quoteRequestTable === strtolower(quoteTypeCode::Pet).'_quote_request') {
+            return ['code', 'created_at', 'updated_at'];
+        }
+
+        return $common;
     }
 
     private function applyFilters(Builder $dataAml, string $quoteRequestTable, object $request): Builder
@@ -140,11 +164,11 @@ class AMLQueryService
         if (isset($request->searchType) && ! empty($request->searchType) &&
             isset($request->searchField) && ! empty($request->searchField)
         ) {
-            if ($request->searchType === 'cdbId') {
+            if ($request->searchType === SearchTypeEnum::CdbId->value) {
                 $dataAml->where($quoteRequestTable.'.code', $request->searchField);
             }
 
-            if ($request->searchType === 'customerEmail') {
+            if ($request->searchType === SearchTypeEnum::CustomerEmail->value) {
                 $dataAml->where($quoteRequestTable.'.email', $request->searchField);
             }
         }
