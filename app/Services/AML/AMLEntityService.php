@@ -6,12 +6,12 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\Kyc;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeId;
 use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\Insured;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteType;
 use App\Repositories\CarQuoteRepository;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
@@ -36,16 +36,18 @@ class AMLEntityService
         ])->first();
     }
 
-    /**
-     * Link entity details to a quote
-     * Handles both new structure and legacy structure migration
-     *
-     * @return array{status: bool, response: mixed, message: string}
-     */
+    
     public function linkEntityToQuote(int $quoteTypeId, int $quoteRequestId, int $entityId, ?string $triggeredFrom = null): array
     {
-        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
-        $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+        $quoteTypeCode = QuoteTypes::getName($quoteTypeId)?->value;
+        if (! $quoteTypeCode) {
+            return [
+                'status' => false,
+                'response' => null,
+                'message' => 'Invalid quote type',
+            ];
+        }
+        $quoteObject = $this->getQuoteObject($quoteTypeCode, $quoteRequestId);
 
         LoggerService::startQuoteLogging($quoteObject);
         LoggerService::info('Link Entity to Quote Process Start');
@@ -64,7 +66,7 @@ class AMLEntityService
         }
 
         try {
-            return DB::transaction(function () use ($quoteTypeId, $quoteRequestId, $quoteObject, $insured, $triggeredFrom) {
+            $result = DB::transaction(function () use ($quoteTypeId, $quoteRequestId, $quoteObject, $insured, $triggeredFrom) {
                 // Update insured in personal quote (new structure)
                 $this->amlService->updateInsuredInPersonalQuote($quoteTypeId, $quoteObject, $insured);
 
@@ -96,12 +98,14 @@ class AMLEntityService
                 ];
             });
         } catch (RuntimeException $e) {
-            return [
+            $result = [
                 'status' => false,
                 'response' => null,
                 'message' => $e->getMessage(),
             ];
         }
+
+        return $result;
     }
 
     private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, $quoteObject, int $insuredId): void
