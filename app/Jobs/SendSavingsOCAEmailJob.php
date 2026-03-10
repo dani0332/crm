@@ -17,28 +17,22 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 
     protected string $quoteUID;
     protected array $data;
-
-    /**
-     * The number of seconds after which the job's unique lock will be released.
-     *
-     * @var int
-     */
-    public $uniqueFor = 300; // 5 minutes
-
-    /**
-     * Create a new job instance.
-     */
+    public $uniqueFor = 300;
+    
     public function __construct(string $quoteUID, array $data = [])
     {
         $this->quoteUID = $quoteUID;
         $this->data = $data;
     }
 
-    /**
-     * The unique ID of the job.
-     */
     public function uniqueId(): string
     {
+        $forceSend = $this->data['force_send'] ?? false;
+
+        if ($forceSend) {
+            return "savings-oca-email-{$this->quoteUID}-force-".uniqid('', true);
+        }
+
         return "savings-oca-email-{$this->quoteUID}";
     }
 

@@ -311,7 +311,7 @@ const confirmSendOCAEmail = () => {
     )
     .then(response => {
       notification.success({
-        title: response.data.success || 'OCA email sent successfully',
+        title: 'OCA email sent successfully',
         position: 'top',
       });
       isOcaButtonDisabled.value = true;
