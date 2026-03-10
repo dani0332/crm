@@ -944,9 +944,16 @@ class QuoteDocumentService extends BaseService
         $header = $section->addHeader();
         $header->addWatermark(public_path('images/watermark1.png'));
 
-        // Save the modified document
+        // Save to a separate temp path first — writing to the same path that IOFactory::load()
+        // opened (an internal ZipArchive read handle) causes a "Invalid or uninitialized Zip object"
+        // ValueError because PHP can't open the same file for writing while it's still referenced.
+        $tempOutputFile = $tempFile . '_watermarked.docx';
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($tempFile);
+        $objWriter->save($tempOutputFile);
+
+        // Release the source handle by unsetting, then atomically replace the original temp file
+        unset($phpWord, $objWriter);
+        rename($tempOutputFile, $tempFile);
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
