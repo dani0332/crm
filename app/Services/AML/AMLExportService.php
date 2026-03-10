@@ -2,6 +2,7 @@
 
 namespace App\Services\AML;
 
+use App\Enums\ExportTypeEnum;
 use App\Exports\KycLogsExport;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -21,7 +22,7 @@ class AMLExportService
 
         try {
             LoggerService::info('AML Export requested', extra: [
-                'export_type' => $request->exportType ?? 'download',
+                'export_type' => $request->exportType ?? ExportTypeEnum::Download->value,
                 'date_range' => [
                     'start' => $request->amlCreatedStartDate,
                     'end' => $request->amlCreatedEndDate,
@@ -32,7 +33,7 @@ class AMLExportService
             $reportDateRange = $this->formatDateRange($request->amlCreatedStartDate, $request->amlCreatedEndDate);
             $exportParams = $this->prepareExportParams($request, $reportDateRange);
 
-            $response = $request->exportType === 'email'
+            $response = $request->exportType === ExportTypeEnum::Email->value
                 ? $this->emailExport($reportDateRange, $exportParams)
                 : $this->downloadExport($reportDateRange, $exportParams);
         } catch (\InvalidArgumentException $e) {
