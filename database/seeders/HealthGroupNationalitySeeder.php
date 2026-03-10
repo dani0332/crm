@@ -46,8 +46,7 @@ class HealthGroupNationalitySeeder extends Seeder
                     $data = $this->prepareData($group->id, $data, $canonicalCodes);
                     break;
                 case 'SAM':
-                    $canonicalCodes = ['CN0010
-                    ', 'CN0028', 'CN0031', 'CN0045', 'CN0049', 'CN0060', 'CN0082', 'CN0143', 'CN0144', 'CN0183', 'CN0185'];
+                    $canonicalCodes = ['CN0010', 'CN0028', 'CN0031', 'CN0045', 'CN0049', 'CN0060', 'CN0082', 'CN0143', 'CN0144', 'CN0183', 'CN0185'];
                     $data = $this->prepareData($group->id, $data, $canonicalCodes);
                 default:
                     break;
