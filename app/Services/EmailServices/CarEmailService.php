@@ -367,7 +367,9 @@ class CarEmailService extends BaseService
 
     public function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
     {
-        if (count($plans) == 0) {
+        $planCount = is_countable($plans) ? count($plans) : 0;
+
+        if ($planCount < 1) {
             // No plans with available ratings, build email data for the specific case
             return $this->buildNoPlansEmailData($lead, $previousAdvisor, $tierRId);
         } else {
