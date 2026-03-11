@@ -314,6 +314,14 @@ class CoreSchema
                 $table->string('insurer_aml_status')->nullable();
                 $table->timestamps();
             },
+            'quote_journey' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('text');
+                $table->string('status');
+                $table->timestamps();
+            },
             'life_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');
@@ -485,6 +493,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_quote_id')->nullable();
