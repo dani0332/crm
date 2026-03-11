@@ -644,14 +644,18 @@ class UserController extends Controller
         $user = User::find($request->id);
 
         if ($user && $user->is_active != $request->status) {
-            $user->is_active = $request->status;
-            $user->save();
+            DB::transaction(function () use ($request, $user) {
+                $user->is_active = $request->status;
+                $user->save();
 
-            if ($request->status == false) {
-                $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
-            }
+                if ($request->status == false) {
+                    $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
+                }
+            });
+
+            return response()->json(['success' => true, 'message' => 'User status updated successfully']);
         }
 
-        return response()->json(['success' => true, 'message' => 'User status updated successfully']);
+        return response()->json(['success' => false, 'message' => 'User status not updated'], 400);
     }
 }
