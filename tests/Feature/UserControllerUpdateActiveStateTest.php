@@ -54,7 +54,7 @@ describe('UserController - Update Active State', function () {
             ['created_at' => now(), 'updated_at' => now()]
         );
         $authUser->givePermissionTo($permission);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
         $authUser->refresh();
 
         $this->actingAs($authUser);
@@ -66,7 +66,7 @@ describe('UserController - Update Active State', function () {
         $this->mock(UserService::class, function ($mock) {
             $mock->shouldReceive('sendManagerDeactivationEmail')
                 ->once()
-                ->andThrow(new \RuntimeException('Simulated getSubordinates failure'));
+                ->andThrow(new RuntimeException('Simulated getSubordinates failure'));
         });
 
         $response = $this->postJson('/admin/update-user-state', [
