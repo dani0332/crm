@@ -3,11 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InsurancePartnerProvider extends Model
 {
+    use HasFactory;
+
+    protected $guarded = [];
+
     public function providerPlans(): HasMany
     {
         return $this->hasMany(InsurancePartnerProviderPlan::class, 'partner_provider_id');
