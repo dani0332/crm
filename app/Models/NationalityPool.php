@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\NationalityPoolCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,6 +23,13 @@ class NationalityPool extends Model
     protected $attributes = [
         'is_active' => true,
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function (NationalityPool $pool): void {
+            event(new NationalityPoolCreated($pool));
+        });
+    }
 
     public function user(): BelongsTo
     {
