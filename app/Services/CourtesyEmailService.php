@@ -6,9 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
-use App\Enums\WorkflowTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
@@ -29,16 +30,14 @@ class CourtesyEmailService extends BaseService
     private const ALLOWED_QUOTE_TYPES = [
         QuoteTypeId::Bike,
         QuoteTypeId::Car,
+        QuoteTypeId::Cycle,
+        QuoteTypeId::Corpline,
         QuoteTypeId::Health,
         QuoteTypeId::Home,
         QuoteTypeId::Life,
         QuoteTypeId::Pet,
         QuoteTypeId::Travel,
         QuoteTypeId::Yacht,
-        QuoteTypeId::Jetski,
-        QuoteTypeId::Cycle,
-        QuoteTypeId::Cyber,
-        QuoteTypeId::Savings,
     ];
 
     public function __construct(BirdService $birdService)
@@ -102,16 +101,27 @@ class CourtesyEmailService extends BaseService
                 return ['message' => 'Bird workflow URL not configured', 'success' => false];
             }
 
+            $quoteType = QuoteTypes::getName($quoteTypeId);
+            $firstName = is_object($customer) && isset($customer->first_name) ? $customer->first_name : ($customer->first_name ?? '');
+            $lastName = is_object($customer) && isset($customer->last_name) ? $customer->last_name : ($customer->last_name ?? '');
+            $customerName = trim("{$firstName} {$lastName}");
+            $refId = $quote->code ?? ($quoteType ? $quoteType->refId($quote->uuid) : $quote->uuid);
+
             $payload = [
                 'quoteUID' => $quote->uuid,
                 'uuid' => $quote->uuid,
-                'refId' => $quote->code ?? $quote->uuid,
+                'refId' => $refId,
                 'quoteTypeId' => $quoteTypeId,
-                'workflowType' => WorkflowTypeEnum::COURTESY_EMAIL,
+                'workflowType' => 'courtesy_workflow_email',
+                'line_of_business' => $quoteType ? strtolower($quoteType->value) : '',
+                'advisorName' => $advisor->name,
+                'customerName' => $customerName,
+                'whatsAppconsent' => $quoteType ? getWhatsappConsent($quoteType, $quote->uuid) : false,
                 'customer' => [
                     'email' => $quote->email,
-                    'firstName' => is_object($customer) && isset($customer->first_name) ? $customer->first_name : ($customer->first_name ?? ''),
-                    'lastName' => is_object($customer) && isset($customer->last_name) ? $customer->last_name : ($customer->last_name ?? ''),
+                    'firstName' => $firstName,
+                    'lastName' => $lastName,
+                    'WhatsAppNumber' => ! empty($quote->mobile_no) ? formatMobileNoWithoutPlus($quote->mobile_no) : '',
                 ],
                 'advisor' => [
                     'id' => $advisor->id,
@@ -120,9 +130,8 @@ class CourtesyEmailService extends BaseService
                 ],
             ];
 
-            if ($quoteTypeId === QuoteTypeId::Health && $quote->emirate_of_your_visa_id) {
-                $payload['emirateOfYourVisaId'] = $quote->emirate_of_your_visa_id;
-                $payload['isHealthAUH'] = $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+            if ($quoteTypeId === QuoteTypeId::Health) {
+                $payload['isAUH'] = isset($quote->emirate_of_your_visa_id) && $quote->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
             }
 
             $response = $this->birdService->triggerWebHookRequest($workflowUrl, $payload);
@@ -182,10 +191,8 @@ class CourtesyEmailService extends BaseService
             QuoteTypeId::Pet => PetQuote::where('uuid', $quoteUID)->first(),
             QuoteTypeId::Travel => TravelQuote::where('uuid', $quoteUID)->first(),
             QuoteTypeId::Yacht => YachtQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Jetski => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Jetski)->first(),
             QuoteTypeId::Cycle => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cycle)->first(),
-            QuoteTypeId::Cyber => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cyber)->first(),
-            QuoteTypeId::Savings => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Savings)->first(),
+            QuoteTypeId::Corpline => BusinessQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Corpline)->first(),
             default => null,
         };
     }
