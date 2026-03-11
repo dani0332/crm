@@ -9,15 +9,17 @@ use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class PartnerPolicyDocumentJob implements ShouldQueue
+class PartnerPolicyDocumentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, Queueable;
 
     public int $timeout = 100;
     public int $tries = 3;
+    public int $uniqueFor = 3600;
 
     /** @var array<int, array<string, mixed>> Raw document records with doc_url / watermarked_doc_url */
     private array $rawDocuments;
@@ -32,6 +34,14 @@ class PartnerPolicyDocumentJob implements ShouldQueue
         $this->partnerEmail = $partnerEmail;
         $this->quoteUuid = $quoteUuid;
         $this->quoteTypeId = $quoteTypeId;
+    }
+
+    /**
+     * Get the unique ID for the job to prevent duplicate processing.
+     */
+    public function uniqueId(): string
+    {
+        return "partner-policy-document-job-{$this->quoteUuid}-{$this->quoteTypeId}";
     }
 
     /**
