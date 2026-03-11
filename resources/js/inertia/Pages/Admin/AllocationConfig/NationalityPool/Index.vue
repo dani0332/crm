@@ -130,6 +130,8 @@ onMounted(() => {
 
 watch(selectedNationalityGroups, (newVal) => {
   if (newVal.length == 0) {
+    selectedNationalities.value = [];
+    individualNationalities.value = [];
     return;
   }
 
