@@ -35,13 +35,14 @@ function deleteLog(item) {
 }
 
 function confirmDelete() {
+  deleting.value = true;
+
   axios.delete(route('admin.nationality-pool-audit-logs.destroy', selectedItemId.value)).then(response => {
     notification.success({
       title: 'Scheduled configuration deleted successfully',
       position: 'top',
     });
 
-    showDeleteModal.value = false;
     window.location.reload();
   }).catch(error => {
     showDeleteModal.value = false;
@@ -161,7 +162,7 @@ defineExpose({
     <x-modal
       v-model="showDeleteModal"
       size="lg"
-      title="Confirm Delete Scheduled Configuration"
+      title="Confirm Delete"
       show-close
       backdrop
     >  
@@ -169,6 +170,7 @@ defineExpose({
         <template #actions>
           <div class="text-right space-x-4">
             <x-button
+              v-if="!deleting"
               size="sm"
               ghost
               tabindex="-1"
@@ -180,6 +182,7 @@ defineExpose({
               size="sm"
               color="error"
               tabindex="-1"
+              :loading="deleting"
               @click.prevent="confirmDelete"
             >
               Delete

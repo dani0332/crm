@@ -129,6 +129,10 @@ onMounted(() => {
 });
 
 watch(selectedNationalityGroups, (newVal) => {
+  if (newVal.length == 0) {
+    return;
+  }
+
   getSelectedGroupNationalities();
 });
 </script>
