@@ -3,6 +3,7 @@
 use App\Enums\PermissionsEnum;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -19,7 +20,7 @@ describe('UserController - Update Active State', function () {
             ['created_at' => now(), 'updated_at' => now()]
         );
         $authUser->givePermissionTo($permission);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
         $authUser->refresh();
 
         $this->actingAs($authUser);
