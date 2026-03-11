@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTagEnums;
 use App\Jobs\PartnerPolicyDocumentJob;
 use App\Models\InsurancePartner;
 use App\Models\Payment;
+use App\Models\QuoteTag;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -110,6 +112,19 @@ class PartnerService
 
         if (! empty($missingDocuments)) {
             LoggerService::info('PartnerService - Missing required documents', extra: ['missing_documents' => $missingDocuments]);
+
+            return;
+        }
+
+        $alreadySent = QuoteTag::where([
+            'quote_type_id' => $quoteType->id(),
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteTagEnums::PARTNER_POLICY_DOCUMENT_SENT,
+            'value' => 1,
+        ])->exists();
+
+        if ($alreadySent) {
+            LoggerService::info('PartnerService - Partner policy document already sent, skipping', extra: ['uuid' => $quote->uuid]);
 
             return;
         }

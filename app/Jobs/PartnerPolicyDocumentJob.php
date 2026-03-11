@@ -66,7 +66,7 @@ class PartnerPolicyDocumentJob implements ShouldQueue
 
         LoggerService::info('PartnerPolicyDocumentJob - email sent successfully');
 
-        QuoteTag::create([
+        QuoteTag::firstOrCreate([
             'quote_type_id' => $this->quoteTypeId,
             'quote_uuid' => $this->quoteUuid,
             'name' => QuoteTagEnums::PARTNER_POLICY_DOCUMENT_SENT,

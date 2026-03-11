@@ -40,7 +40,7 @@ class InsurancePartner extends Model
     public function scopeHasActivePlan(Builder $query, ?int $planId): Builder
     {
         if ($planId === null) {
-            return $query->whereNull('id');
+            return $query;
         }
 
         return $query->whereHas('partnerProviders.providerPlans', fn (Builder $q) => $q->activeForPlan($planId));
