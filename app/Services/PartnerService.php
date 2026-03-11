@@ -81,38 +81,9 @@ class PartnerService
         }
 
         $quote = $validation['quote'];
-        $insuranceProvider = $validation['insuranceProvider'];
-        $partnerEmail = $validation['partnerEmail'];
+        $filteredDocuments = $this->resolveFilteredDocuments($quote, $quoteType, $validation['insuranceProvider']);
 
-        $providerDocumentKeys = [
-            InsuranceProviderEnum::AXA->value => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS,
-        ];
-
-        $storageKey = $providerDocumentKeys[$insuranceProvider->code] ?? null;
-        $providerDocuments = $storageKey
-            ? json_decode(getAppStorageValueByKey($storageKey), true) ?? []
-            : [];
-
-        // If no documents are required for this provider, return early
-        if (empty($providerDocuments)) {
-            LoggerService::info('PartnerService - No documents required for this provider');
-
-            return;
-        }
-
-        $documents = $this->getProviderPolicyDocuments($quote, $quoteType->value, $providerDocuments);
-
-        $filteredDocuments = collect($documents)->filter(function ($document) use ($providerDocuments) {
-            return in_array($document['document_type_code'], $providerDocuments);
-        })->values()->toArray();
-
-        // Check if any required document is missing
-        $foundDocumentCodes = collect($filteredDocuments)->pluck('document_type_code')->toArray();
-        $missingDocuments = array_diff($providerDocuments, $foundDocumentCodes);
-
-        if (! empty($missingDocuments)) {
-            LoggerService::info('PartnerService - Missing required documents', extra: ['missing_documents' => $missingDocuments]);
-
+        if ($filteredDocuments === null) {
             return;
         }
 
@@ -129,7 +100,43 @@ class PartnerService
             return;
         }
 
-        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $partnerEmail, $quote->uuid, $quoteType->id());
+        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $validation['partnerEmail'], $quote->uuid, $quoteType->id());
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>|null Returns the filtered documents, or null if dispatch should be aborted.
+     */
+    private function resolveFilteredDocuments($quote, $quoteType, $insuranceProvider): ?array
+    {
+        $providerDocumentKeys = [
+            InsuranceProviderEnum::AXA->value => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS,
+        ];
+
+        $storageKey = $providerDocumentKeys[$insuranceProvider->code] ?? null;
+        $providerDocuments = $storageKey
+            ? json_decode(getAppStorageValueByKey($storageKey), true) ?? []
+            : [];
+
+        if (empty($providerDocuments)) {
+            LoggerService::info('PartnerService - No documents required for this provider');
+
+            return null;
+        }
+
+        $filteredDocuments = collect($this->getProviderPolicyDocuments($quote, $quoteType->value, $providerDocuments))
+            ->filter(fn ($document) => in_array($document['document_type_code'], $providerDocuments))
+            ->values()
+            ->toArray();
+
+        $missingDocuments = array_diff($providerDocuments, collect($filteredDocuments)->pluck('document_type_code')->toArray());
+
+        if (! empty($missingDocuments)) {
+            LoggerService::info('PartnerService - Missing required documents', extra: ['missing_documents' => $missingDocuments]);
+
+            return null;
+        }
+
+        return $filteredDocuments;
     }
 
     public function getProviderPolicyDocuments($quote, $quoteType, $providerDocuments)
