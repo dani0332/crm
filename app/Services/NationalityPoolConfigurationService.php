@@ -10,7 +10,7 @@ class NationalityPoolConfigurationService
 {
     public function __construct(public CanonicalNationalityService $canonicalNationalityService) {}
 
-    public function getData(?int $id = null): array
+    public function getData(?int $id = null): ?array
     {
         $data = NationalityPool::selectRaw("DATE_FORMAT(effective_from, '%Y-%m-%d') as effective_from,
                 health_nationality_group_ids,
@@ -23,7 +23,7 @@ class NationalityPoolConfigurationService
                 ->orderByDesc('effective_from');
         }
 
-        return $data->first()->toArray();
+        return $data->first()?->toArray();
     }
 
     public function getAuditLogs(string $type)
