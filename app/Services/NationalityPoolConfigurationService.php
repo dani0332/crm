@@ -13,6 +13,7 @@ class NationalityPoolConfigurationService
     public function getData(?int $id = null): ?array
     {
         $data = NationalityPool::selectRaw("DATE_FORMAT(effective_from, '%Y-%m-%d') as effective_from,
+                DATE_FORMAT(effective_to, '%Y-%m-%d') as effective_to,
                 health_nationality_group_ids,
                 canonical_nationality_codes");
 
