@@ -43,6 +43,13 @@ class CarQuoteObserver
 
     public function updating(CarQuote $quote): void
     {
+        LoggerService::info('CarQuoteObserver - updating event', [
+            'uuid' => $quote->uuid, 
+            'old_quote_status_id' => $quote->getOriginal('quote_status_id'), 
+            'new_quote_status_id' => $quote->quote_status_id,
+            'dirty' => $quote->getChanges()
+        ]);
+        
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -66,6 +73,13 @@ class CarQuoteObserver
      */
     public function updated(CarQuote $lead)
     {
+        LoggerService::info('CarQuoteObserver - updated event', [
+            'uuid' => $lead->uuid, 
+            'old_quote_status_id' => $lead->getOriginal('quote_status_id'), 
+            'new_quote_status_id' => $lead->quote_status_id,
+            'dirty' => $lead->getChanges()
+        ]);
+
         $dirty = $lead->getChanges();
         $changes = [];
 
