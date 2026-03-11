@@ -35,17 +35,17 @@ class InsurancePartner extends Model
         return $query->where('code', $code);
     }
 
-    public function scopeHasActiveProvider(Builder $query, int $providerId, int $quoteTypeId): Builder
+    public function scopeHasActiveProviderWithPlan(Builder $query, int $providerId, int $quoteTypeId, ?int $planId): Builder
     {
-        return $query->whereHas('partnerProviders', fn (Builder $q) => $q->activeForProvider($providerId, $quoteTypeId));
-    }
+        return $query->whereHas('partnerProviders', function (Builder $q) use ($providerId, $quoteTypeId, $planId) {
+            $q->where('provider_id', $providerId)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('auto_issuance_enabled', true)
+                ->where('is_active', true);
 
-    public function scopeHasActivePlan(Builder $query, ?int $planId): Builder
-    {
-        if ($planId === null) {
-            return $query;
-        }
-
-        return $query->whereHas('partnerProviders.providerPlans', fn (Builder $q) => $q->activeForPlan($planId));
+            if ($planId !== null) {
+                $q->whereHas('providerPlans', fn (Builder $planQuery) => $planQuery->where('plan_id', $planId)->where('is_active', true));
+            }
+        });
     }
 }

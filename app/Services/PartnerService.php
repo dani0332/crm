@@ -25,8 +25,7 @@ class PartnerService
     {
         $partner = InsurancePartner::active()
             ->forCode($partnerCode)
-            ->hasActiveProvider($providerId, $quoteTypeId)
-            ->hasActivePlan($planId)
+            ->hasActiveProviderWithPlan($providerId, $quoteTypeId, $planId)
             ->first();
 
         return $partner ?? false;
