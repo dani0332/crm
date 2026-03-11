@@ -14,7 +14,7 @@ it('does not apply the fake quote exclusion when a quote status filter is provid
     $authUser->shouldReceive('can')->andReturn(false);
     Auth::shouldReceive('user')->andReturn($authUser);
 
-    $queryBuilder = new HealthQuoteQueryBuilder();
+    $queryBuilder = new HealthQuoteQueryBuilder;
     $query = $queryBuilder->buildGrid();
     $queryBuilder->applyFilters($query, ['quote_status' => [QuoteStatusEnum::Quoted]]);
 
