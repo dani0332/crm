@@ -44,8 +44,8 @@ class CarQuoteObserver
     public function updating(CarQuote $quote): void
     {
         LoggerService::info('CarQuoteObserver - updating event', [
-            'uuid' => $quote->uuid, 
-            'old_quote_status_id' => $quote->getOriginal('quote_status_id'), 
+            'uuid' => $quote->uuid,
+            'old_quote_status_id' => $quote->getOriginal('quote_status_id'),
             'new_quote_status_id' => $quote->quote_status_id,
         ]);
 
@@ -73,10 +73,10 @@ class CarQuoteObserver
     public function updated(CarQuote $lead)
     {
         LoggerService::info('CarQuoteObserver - updated event', [
-            'uuid' => $lead->uuid, 
-            'old_quote_status_id' => $lead->getOriginal('quote_status_id'), 
+            'uuid' => $lead->uuid,
+            'old_quote_status_id' => $lead->getOriginal('quote_status_id'),
             'new_quote_status_id' => $lead->quote_status_id,
-            'dirty' => $lead->getChanges()
+            'dirty' => $lead->getChanges(),
         ]);
 
         $dirty = $lead->getChanges();
@@ -125,8 +125,16 @@ class CarQuoteObserver
                 $dirty = [...$dirty, 'transaction_approved_at' => $lead->transaction_approved_at];
             }
         }
+        LoggerService::info('CarQuoteObserver - reached before policy booked check', [
+            'uuid' => $lead->uuid,
+            'dirty' => $dirty,
+        ]);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            LoggerService::info('CarQuoteObserver - reached inside policy booked check', [
+                'uuid' => $lead->uuid,
+                'dirty' => $dirty,
+            ]);
             try {
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
             } catch (Exception $e) {
@@ -138,6 +146,10 @@ class CarQuoteObserver
 
             $embeddedTransactionService = app(EmbeddedTransactionService::class);
             if ($embeddedTransactionService->isRetargetingEpReminderEnabled()) {
+                LoggerService::info('CarQuoteObserver - reached inside retarget ep reminder check', [
+                    'uuid' => $lead->uuid,
+                    'dirty' => $dirty,
+                ]);
                 try {
                     $response = $embeddedTransactionService->retargetEpReminder($lead, QuoteTypeId::Car);
                     LoggerService::info('CarQuoteObserver - retarget ep reminder triggered', ['uuid' => $lead->uuid, 'response' => $response]);
