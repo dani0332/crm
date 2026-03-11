@@ -72,14 +72,14 @@ class CarQuoteObserver
      */
     public function updated(CarQuote $lead)
     {
+        $dirty = $lead->getChanges();
+
         LoggerService::info('CarQuoteObserver - updated event', [
             'uuid' => $lead->uuid,
             'old_quote_status_id' => $lead->getOriginal('quote_status_id'),
             'new_quote_status_id' => $lead->quote_status_id,
-            'dirty' => $lead->getChanges(),
+            'dirty' => $dirty,
         ]);
-
-        $dirty = $lead->getChanges();
         $changes = [];
 
         if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
