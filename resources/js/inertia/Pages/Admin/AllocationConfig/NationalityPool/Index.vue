@@ -3,7 +3,7 @@ import { onMounted, ref, nextTick } from 'vue';
 import NationalityPoolScheduledConfigurations from './NationalityPoolScheduledConfigurations.vue';
 import NationalityPoolAuditLogs from './NationalityPoolAuditLogs.vue';
 const nationalityPoolConfigurations = ref([]);
-const toDate = ref('2099-12-31'); // As suggested by the business
+const toDate = ref('2099-12-31'); // Default as per business
 const fromDate = ref();
 const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref([]);
@@ -38,6 +38,9 @@ function getData(id = null) {
     nationalityPoolConfigurations.value = response.data.nationalityPoolConfigurations;
 
     // Populate form fields
+    if (nationalityPoolConfigurations.value?.effective_to) {
+      toDate.value =  new Date(nationalityPoolConfigurations.value?.effective_to);
+    }
     fromDate.value = new Date(nationalityPoolConfigurations.value?.effective_from);
     selectedNationalityGroups.value = nationalityPoolConfigurations.value?.health_nationality_group_ids?.split(',').map(Number) || [];
     selectedNationalities.value = nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(',') || [];
@@ -130,8 +133,7 @@ onMounted(() => {
 
 watch(selectedNationalityGroups, (newVal) => {
   if (newVal.length == 0) {
-    selectedNationalities.value = [];
-    individualNationalities.value = [];
+    selectedNationalities.value = individualNationalities.value;
     return;
   }
 
