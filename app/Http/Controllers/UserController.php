@@ -646,6 +646,8 @@ class UserController extends Controller
         if ($user && $user->is_active != $request->status) {
             $user->is_active = $request->status;
             $user->save();
+
+            $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
         }
 
         return response()->json(['success' => true, 'message' => 'User status updated successfully']);
