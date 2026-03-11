@@ -47,9 +47,8 @@ class CarQuoteObserver
             'uuid' => $quote->uuid, 
             'old_quote_status_id' => $quote->getOriginal('quote_status_id'), 
             'new_quote_status_id' => $quote->quote_status_id,
-            'dirty' => $quote->getChanges()
         ]);
-        
+
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
