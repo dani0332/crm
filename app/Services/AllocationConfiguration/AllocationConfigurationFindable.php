@@ -251,16 +251,16 @@ trait AllocationConfigurationFindable
         $config = $configuration->config ?? [];
 
         $emirateOfRegistrationId = $lead->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
-        $regionKey = $emirateOfRegistrationId == EmirateEnum::ABU_DHABI
+
+        //if emirates of registration is not null and is abu dhabi then return auh else non auh
+        $regionKey = ($emirateOfRegistrationId !== null && $emirateOfRegistrationId == EmirateEnum::ABU_DHABI)
             ? GroupMedicalRegionEnum::AUH
             : GroupMedicalRegionEnum::NON_AUH;
 
         if (isset($config[$regionKey]) && is_array($config[$regionKey])) {
             return $config[$regionKey];
-        } else {
-            return [];
-
         }
 
+        return [];
     }
 }
