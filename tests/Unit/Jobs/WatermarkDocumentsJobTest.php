@@ -142,12 +142,12 @@ test('handle rethrows exception when watermark service throws', function () {
     $this->mock(QuoteDocumentService::class, function ($mock) {
         $mock->shouldReceive('watermarkPdf')
             ->once()
-            ->andThrow(new \Exception('Watermark failed'));
+            ->andThrow(new Exception('Watermark failed'));
     });
 
     $job = new WatermarkDocumentsJob($quoteDocument->id, 'TEST-UUID', $documentType->id);
 
-    expect(fn () => $job->handle())->toThrow(\Exception::class, 'Watermark failed');
+    expect(fn () => $job->handle())->toThrow(Exception::class, 'Watermark failed');
 
     $quoteDocument->refresh();
     expect($quoteDocument->watermarked_doc_name)->toBeNull();
