@@ -6,7 +6,6 @@ use App\Models\PersonalQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\DeviceAllocation;
 use Closure;
 
 class EvaluateTeamPipe extends BaseAllocationPipe
@@ -51,13 +50,22 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'deviceQuoteExists' => $deviceQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
-       
+        
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
-        if ($sicAdvisorRequested || $hasRetryFlag || $lead->isPaymentAuthorized() || $isPaymentAuthorizedOrDeclined) {
-            $reason = $sicAdvisorRequested
-                ? 'SIC advisor explicitly requested'
-                : 'Lead has retry flag (lead_allocation_failed_at)';
-          
+        if ($sicAdvisorRequested || $hasRetryFlag || $lead->isPaymentAuthorized() || $isPaymentAuthorizedOrDeclined || $lead->hasRemainedUnauthorizedFor12Hours()) {
+            $reason = '';
+            if ($sicAdvisorRequested) {
+                $reason = 'SIC advisor explicitly requested';
+            } elseif ($lead->isPaymentAuthorized()) {
+                $reason = 'Lead has authorized payment';
+            } elseif ($isPaymentAuthorizedOrDeclined) {
+                $reason = 'Lead payment is authorized or declined';
+            } elseif ($lead->hasRemainedUnauthorizedFor12Hours()) {
+                $reason = 'Lead has remained unauthorized for 12 hours';
+            } elseif ($hasRetryFlag) {
+                $reason = 'Lead has retry flag (lead_allocation_failed_at)';
+            }
+
             LoggerService::info(self::class.' - Device lead will be assigned to hardcoded advisors', extra: [
                 'teamId' => $defaultTeamId,
                 'reason' => $reason,
@@ -68,11 +76,11 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             return $defaultTeamId;
         }
       
-        // Lead doesn't meet allocation criteria - stop allocation
-        LoggerService::info(self::class.' - sic advisor requested is false and no retry flag - Stopping allocation', extra: [
-            'reason' => 'Unpaid lead without SIC advisor request or retry flag',
+        // Lead doesn't meet allocation criteria - stop allocation (expected, not an error)
+        LoggerService::info(self::class.' - Device lead does not require SIC advisor allocation - stopping', extra: [
+            'reason' => 'Unpaid lead without SIC advisor request or retry flag or remained unauthorized for 12 hours',
         ]);
 
-        $this->stop('sic advisor requested is false for device lead', self::OK);
+        $this->stop('Device lead does not require SIC advisor allocation', self::OK);
     }
 }

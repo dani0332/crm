@@ -1,11 +1,19 @@
 <?php
 
+/**
+ * Device quote request validation tests. Any mocking uses Mockery only.
+ */
+
 use App\Http\Requests\DeviceQuoteRequest;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
+use Mockery;
 
 beforeEach(function () {
     $this->rules = (new DeviceQuoteRequest)->rules();
+});
+
+afterEach(function () {
+    Mockery::close();
 });
 
 test('device quote request passes with valid data', function () {
