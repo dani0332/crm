@@ -51,26 +51,19 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         LoggerService::info('WatermarkDocumentsJob started for');
 
-        // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
             LoggerService::info('File is already being processed.');
-            $this->release(30); // Release the job to be retried in 30 seconds
+            $this->release(30);
 
             return;
         }
 
-        try {
-            $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
-            $documentType = DocumentType::findOrFail($this->documentTypeId);
-        } catch (ModelNotFoundException $e) {
-            cache()->forget("processing_{$this->lockKey}");
-            LoggerService::warning('QuoteDocument or DocumentType not found; failing job.', [
-                'document_type_id' => $this->documentTypeId,
-            ], $e);
-            $this->fail($e);
-
+        $quoteDocumentAndType = $this->resolveQuoteDocumentAndDocumentType($refId);
+        if (!$quoteDocumentAndType) {
             return;
         }
+
+        [$quoteDocument, $documentType] = $quoteDocumentAndType;
 
         try {
             // Check if the source file exists
@@ -94,7 +87,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
 
-            LoggerService::info("Watermark starting for document ID", [
+            LoggerService::info('Watermark starting for document ID', [
                 'doc_name' => $docName,
                 'fileMimeType' => $fileMimeType,
                 'documentType' => $documentType->code,
@@ -118,8 +111,29 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
         } catch (\Exception $e) {
             cache()->forget("processing_{$this->lockKey}");
-            LoggerService::error("Error processing watermark. Error: ".$e->getMessage(), [], $e);
+            LoggerService::error('Error processing watermark. Error: '.$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
+        }
+    }
+
+    /**
+     * Resolve QuoteDocument and DocumentType by ID. Fails the job and returns null if either is not found.
+     *
+     * @return array{0: QuoteDocument, 1: DocumentType}|null
+     */
+    private function resolveQuoteDocumentAndDocumentType(string $refId): bool|array
+    {
+        try {
+            $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
+            $documentType = DocumentType::findOrFail($this->documentTypeId);
+
+            return [$quoteDocument, $documentType];
+        } catch (ModelNotFoundException $e) {
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::warning("QuoteDocument or DocumentType not found for document type id: {$this->documentTypeId}", [], $e);
+            $this->fail($e);
+
+            return false;
         }
     }
 
