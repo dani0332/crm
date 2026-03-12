@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Models\BikeQuote;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
@@ -45,8 +47,14 @@ class EmailStatusService extends BaseService
     public function addBirdEmailStatus($request)
     {
         switch (request('quoteTypeId')) {
+            case QuoteTypeId::Bike:
+                $quote = BikeQuote::where('uuid', $request->uuid)->first();
+                break;
             case QuoteTypeId::Car:
                 $quote = CarQuote::where('uuid', $request->uuid)->first();
+                break;
+            case QuoteTypeId::Corpline:
+                $quote = BusinessQuote::where('uuid', $request->uuid)->where('quote_type_id', QuoteTypeId::Corpline)->first();
                 break;
             case QuoteTypeId::Health:
                 $quote = HealthQuote::where('uuid', $request->uuid)->first();
@@ -56,6 +64,11 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Life:
             case QuoteTypeId::Cyber:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
+                break;
+            case QuoteTypeId::Pet:
+            case QuoteTypeId::Cycle:
+            case QuoteTypeId::Yacht:
+                $quote = PersonalQuote::where('uuid', $request->uuid)->where('quote_type_id', request('quoteTypeId'))->first();
                 break;
             case QuoteTypeId::Travel:
                 $quote = TravelQuote::where('uuid', $request->uuid)->first();
