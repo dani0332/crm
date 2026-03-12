@@ -24,10 +24,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isEmirateOfRegistrationLocked :{
+  isEmirateOfRegistrationLocked: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
