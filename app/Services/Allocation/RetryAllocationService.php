@@ -375,13 +375,20 @@ class RetryAllocationService
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->when($quoteType === QuoteTypes::CYBER, function ($q) {
-                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
+                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
+                    ->where(function ($sq) {
+                        $sq->ILAEligibleForAllocationCyber();
+                    });
             })
             ->take($chunkSize);
 
         $leads->logRawSql();
 
+        // echo '<pre>'; print_r($leads->toSql()); die;
         $leads = $leads->get();
+        echo '<pre>';
+        print_r($leads->pluck('uuid')->toArray());
+        exit;
         LoggerService::info(self::class.':executeAllocation: Found '.count($leads).' leads to process');
 
         foreach ($leads as $lead) {

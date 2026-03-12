@@ -300,6 +300,22 @@ trait QuoteAllocatable
         })->orWhere->leadAllocationFailed();
     }
 
+    public function scopeILAEligibleForAllocationCyber(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('documents', function ($sq) {
+            $sq->whereExists(function ($paymentQuery) {
+                $paymentQuery->selectRaw('1')->from('payments')
+                    ->wherenotnull('authorized_at')
+                    ->whereColumn('payments.paymentable_id', 'quote_documents.quote_documentable_id')
+                    ->whereRaw('(                         
+                        SELECT MIN(d.created_at)
+                        FROM quote_documents d
+                        WHERE d.quote_documentable_id = payments.paymentable_id
+                    ) <= DATE_ADD(payments.authorized_at, INTERVAL 24 HOUR)'); // Pick earliest doucment since there can be multiple documents
+            });
+        });
+    }
+
     public function isAllocationFailed(): bool
     {
         return filled($this->lead_allocation_failed_at);
