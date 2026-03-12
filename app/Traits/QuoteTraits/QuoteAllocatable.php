@@ -307,6 +307,7 @@ trait QuoteAllocatable
                 $paymentQuery->selectRaw('1')->from('payments')
                     ->wherenotnull('authorized_at')
                     ->whereColumn('payments.paymentable_id', 'quote_documents.quote_documentable_id')
+                    ->whereColumn('payments.paymentable_type', 'quote_documents.quote_documentable_type')
                     ->whereRaw('(                         
                         SELECT MIN(d.created_at)
                         FROM quote_documents d
