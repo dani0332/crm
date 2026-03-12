@@ -124,8 +124,8 @@ enum QuoteTypes: string
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
-            20 => QuoteTypes::DEVICE,
             19 => QuoteTypes::CYBER,
+            20 => QuoteTypes::DEVICE,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -263,6 +263,7 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
+            'SP' => self::DEVICE,
             'DEV' => self::DEVICE,
             'CYB' => self::CYBER,
         ];

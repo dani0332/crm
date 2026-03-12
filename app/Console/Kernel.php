@@ -180,6 +180,7 @@ class Kernel extends ConsoleKernel
                 'uat' => function ($event) {
                     $environment = app()->environment();
                     LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
+
                     return $event->skip(fn () => true);
                 },
             ]

@@ -408,7 +408,11 @@ class PolicyIssuanceService
             return false;
         }
 
-        return $quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProvidersEnum::NGI;
+        return match ($quoteType) {
+            QuoteTypes::DEVICE->value => $insuranceProvider->code === InsuranceProvidersEnum::NGI,
+            QuoteTypes::CYBER->value => $insuranceProvider->code === InsuranceProvidersEnum::AWNI,
+            default => false,
+        };
     }
 
     public function updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $newInsurerApiStatus = null, $newApiIssuanceStatus = null, $processInvolved = null)
@@ -446,6 +450,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
+
         if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
@@ -558,32 +563,30 @@ class PolicyIssuanceService
             }
         }
     }
-    
+
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
     {
-        $isDevice = $quoteType === QuoteTypes::DEVICE->value;
-        $isCyber = $quoteType === QuoteTypes::CYBER->value;
+        $paUser = UserNameEnum::PA_USER;
+        $isBookPolicy = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
 
-        // Determine quote type ID based on quote type
-        if ($isDevice) {
-            $quoteTypeId = QuoteTypeId::Device;
-            $workflowType = WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED;
-        } elseif ($isCyber) {
-            $quoteTypeId = QuoteTypeId::Cyber;
-            $workflowType = WorkflowTypeEnum::CYBER_AUTOMATION_FAILED;
-        } else {
-            $quoteTypeId = QuoteTypeId::Car;
-            $workflowType = WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
-        }
-
-        $recipientUser = UserNameEnum::PA_USER;
-
-        // For Device/Cyber non-booking failures, notify the assigned SIC advisor directly.
-        if (($isDevice || $isCyber) && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
-            $recipientUser = null;
-        }
-
-        return [$quoteTypeId, $workflowType, $recipientUser];
+        // Non-booking failures for Device/Cyber notify the assigned SIC advisor directly (recipientUser null).
+        return match ($quoteType) {
+            QuoteTypes::DEVICE->value => [
+                QuoteTypeId::Device,
+                WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED,
+                $isBookPolicy ? $paUser : null,
+            ],
+            QuoteTypes::CYBER->value => [
+                QuoteTypeId::Cyber,
+                WorkflowTypeEnum::CYBER_AUTOMATION_FAILED,
+                $isBookPolicy ? $paUser : null,
+            ],
+            default => [
+                QuoteTypeId::Car,
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                $paUser,
+            ],
+        };
     }
 
     private function attemptAdvisorAllocation(string $quoteType, string $uuid): array

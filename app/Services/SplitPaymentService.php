@@ -637,6 +637,7 @@ class SplitPaymentService
         if (ucfirst($modelType) === QuoteTypes::DEVICE->value) {
             $urlIdentifier = 'smartphone';
         }
+
         return $urlIdentifier;
     }
 

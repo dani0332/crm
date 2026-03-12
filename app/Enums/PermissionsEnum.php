@@ -468,6 +468,7 @@ final class PermissionsEnum extends Enum
     public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
     public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
     public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
+
     // Cyber Permissions
     public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
     public const CYBER_QUOTES_CREATE = 'cyber-quotes-create';
@@ -483,6 +484,7 @@ final class PermissionsEnum extends Enum
     // End of Cyber Permissions
     public const DEVICE_LEAD_ALLOCATION_DASHBOARD = 'device-lead-allocation-dashboard';
     public const DEVICE_LEADPOOL = 'device-leadpool';
+
 
     public static function getAdvisorConversionReportPermissions()
     {

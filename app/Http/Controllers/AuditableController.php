@@ -93,7 +93,6 @@ class AuditableController extends Controller
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
         if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && ( $quoteType !== QuoteTypes::CYBER->value ||  $quoteType !== QuoteTypes::DEVICE->value))) {
-        // TODO::RECHECK THIS LOGIC
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',

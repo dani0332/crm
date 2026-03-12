@@ -5,12 +5,26 @@ declare(strict_types=1);
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
+use App\Enums\UserNameEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
 use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    $this->service = new PolicyIssuanceService;
+    $reflection = new ReflectionMethod(PolicyIssuanceService::class, 'resolvePolicyIssuanceLogResponse');
+    $reflection->setAccessible(true);
+    $this->resolve = fn (mixed $payload) => $reflection->invoke($this->service, $payload);
+});
+
+afterEach(function () {
+    unset($this->service, $this->resolve);
+});
 
 beforeEach(function () {
     $this->service = new PolicyIssuanceService;
@@ -109,3 +123,73 @@ it('normalizes policy issuance log responses', function ($payload, $expected) {
 
     expect($resolve($payload))->toBe($expected);
 })->with('policyIssuanceLogResponses');
+
+it('resolves automation failure routing for device with book policy using PA user', function () {
+    $m = new ReflectionMethod(PolicyIssuanceService::class, 'resolveAutomationFailureRouting');
+    $m->setAccessible(true);
+    [$quoteTypeId, $workflowType, $recipientUser] = $m->invoke(
+        $this->service,
+        QuoteTypes::DEVICE->value,
+        PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
+    );
+
+    expect($quoteTypeId)->toBe(QuoteTypeId::Device)
+        ->and($workflowType)->toBe(WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED)
+        ->and($recipientUser)->toBe(UserNameEnum::PA_USER);
+});
+
+it('resolves automation failure routing for device without book policy with null recipient', function () {
+    $m = new ReflectionMethod(PolicyIssuanceService::class, 'resolveAutomationFailureRouting');
+    $m->setAccessible(true);
+    [$quoteTypeId, $workflowType, $recipientUser] = $m->invoke(
+        $this->service,
+        QuoteTypes::DEVICE->value,
+        'Some other process'
+    );
+
+    expect($quoteTypeId)->toBe(QuoteTypeId::Device)
+        ->and($workflowType)->toBe(WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED)
+        ->and($recipientUser)->toBeNull();
+});
+
+it('resolves automation failure routing for cyber with book policy using PA user', function () {
+    $m = new ReflectionMethod(PolicyIssuanceService::class, 'resolveAutomationFailureRouting');
+    $m->setAccessible(true);
+    [$quoteTypeId, $workflowType, $recipientUser] = $m->invoke(
+        $this->service,
+        QuoteTypes::CYBER->value,
+        PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
+    );
+
+    expect($quoteTypeId)->toBe(QuoteTypeId::Cyber)
+        ->and($workflowType)->toBe(WorkflowTypeEnum::CYBER_AUTOMATION_FAILED)
+        ->and($recipientUser)->toBe(UserNameEnum::PA_USER);
+});
+
+it('resolves automation failure routing for cyber without book policy with null recipient', function () {
+    $m = new ReflectionMethod(PolicyIssuanceService::class, 'resolveAutomationFailureRouting');
+    $m->setAccessible(true);
+    [$quoteTypeId, $workflowType, $recipientUser] = $m->invoke(
+        $this->service,
+        QuoteTypes::CYBER->value,
+        'capture failed'
+    );
+
+    expect($quoteTypeId)->toBe(QuoteTypeId::Cyber)
+        ->and($workflowType)->toBe(WorkflowTypeEnum::CYBER_AUTOMATION_FAILED)
+        ->and($recipientUser)->toBeNull();
+});
+
+it('resolves automation failure routing for car default', function () {
+    $m = new ReflectionMethod(PolicyIssuanceService::class, 'resolveAutomationFailureRouting');
+    $m->setAccessible(true);
+    [$quoteTypeId, $workflowType, $recipientUser] = $m->invoke(
+        $this->service,
+        QuoteTypes::CAR->value,
+        PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
+    );
+
+    expect($quoteTypeId)->toBe(QuoteTypeId::Car)
+        ->and($workflowType)->toBe(WorkflowTypeEnum::CAR_AUTOMATION_FAILED)
+        ->and($recipientUser)->toBe(UserNameEnum::PA_USER);
+});

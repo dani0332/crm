@@ -775,13 +775,6 @@ class CoreSchema
                 $table->unsignedBigInteger('business_type_of_insurance_id');
                 $table->timestamps();
             },
-            // Used in update() (sync via inserts)
-            'user_products' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('user_id');
-                $table->unsignedBigInteger('product_id');
-                $table->timestamps();
-            },
         ]);
     }
 
@@ -1062,15 +1055,6 @@ class CoreSchema
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();
-            },
-            'insured_kyc' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('insured_id');
-                $table->string('first_name')->nullable();
-                $table->string('last_name')->nullable();
-                $table->string('id_type')->nullable();
-                $table->string('id_number')->nullable();
-                $table->timestamps();
             },
         ]);
     }

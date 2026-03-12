@@ -78,6 +78,7 @@ class quoteTypeCode extends Enum
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
             DeviceQuote::class => self::Device,
+            CyberQuote::class => self::CYBER,
         };
     }
 
@@ -85,6 +86,7 @@ class quoteTypeCode extends Enum
     {
         return match ($quoteTypeCode) {
             self::CYBER => TeamNameEnum::CYBER,
+            self::DEVICE => TeamNameEnum::DEVICE,
             default => $quoteTypeCode,
         };
     }
@@ -93,6 +95,7 @@ class quoteTypeCode extends Enum
     {
         return match ($productName) {
             TeamNameEnum::CYBER => self::CYBER,
+            TeamNameEnum::DEVICE => self::DEVICE,
             default => $productName,
         };
     }

@@ -911,7 +911,7 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_customer' => null,
                 'registration_type' => CarRegistrationType::COMPANY,
                 'vehicle_use' => CarVehicleUse::PRIVATE,
-            ]
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

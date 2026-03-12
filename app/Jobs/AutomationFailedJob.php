@@ -162,7 +162,6 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
-
     private function getLobEscalationLink($quoteType)
     {
         switch ($quoteType) {
@@ -175,7 +174,7 @@ class AutomationFailedJob implements ShouldQueue
         }
     }
 
-   
+
     private function addLobViseDataForMail($quoteType, $quote, $cc)
     {
         switch ($quoteType) {

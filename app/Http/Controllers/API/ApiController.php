@@ -657,7 +657,7 @@ class ApiController extends Controller
             'message' => 'Device quote OCB email sent successfully',
         ], Response::HTTP_OK);
     }
-    
+
     /**
      * Dispatch job to check document upload after 24 hours of payment authorization.
      * Prevents duplicate job dispatch for the same payment code.

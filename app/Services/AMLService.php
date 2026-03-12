@@ -297,20 +297,18 @@ class AMLService
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
-        } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
-                'cyberQuote',
+        } elseif ($quoteTypeId == QuoteTypes::DEVICE->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::DEVICE->id())->with([
+                'deviceQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-        }
-        elseif ($quoteTypeId == QuoteTypes::DEVICE->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::DEVICE->id())->with([
-                'deviceQuote',
+        } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
+                'cyberQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',

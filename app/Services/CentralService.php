@@ -1717,8 +1717,7 @@ class CentralService extends BaseService
         $quote->load('latestInsured');
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1783,20 +1782,17 @@ class CentralService extends BaseService
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
-
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if ($quoteTypeId == QuoteTypeId::Device) {
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
             $insuranceProviderCompanyText = $quote?->insuranceProvider?->text ?? '';
             $insuranceProviderCompanyCode = $quote?->insuranceProvider?->code ?? '';
-            if (!empty($insuranceProviderCompanyText) && !empty($insuranceProviderCompanyCode)) {
-                $emailData->insuranceCompany = $insuranceProviderCompanyText . ' (' . $insuranceProviderCompanyCode . ')';
+            if (! empty($insuranceProviderCompanyText) && ! empty($insuranceProviderCompanyCode)) {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText.' ('.$insuranceProviderCompanyCode.')';
             } else {
                 $emailData->insuranceCompany = $insuranceProviderCompanyText;
             }
-        }
-
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
-        if ($quoteTypeId == QuoteTypeId::Cyber) {
+        } elseif ($quoteTypeId == QuoteTypeId::Cyber) {
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
                 ? number_format($quote->cyberPlanDetail->coverage)
                 : '-';
@@ -1812,7 +1808,6 @@ class CentralService extends BaseService
                 ? app(QuoteDocumentService::class)->getDocumentUrl($taxInvoicePath, 'azureIMPrivate', 60) ?? ''
                 : '';
         }
-
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1976,14 +1971,13 @@ class CentralService extends BaseService
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
                 return in_array($document['document_type_code'], [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE, DocumentTypeCode::CYB_PS,
                 ]);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && $quoteTypeId == QuoteTypeId::Cyber
-                ? $emailData->policySchedule->watermarked_doc_url ?? ''
-                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
+                ? $emailData->policySchedule->watermarked_doc_url
+                : ($emailData?->policySchedule?->doc_url ?? '');
 
             LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 

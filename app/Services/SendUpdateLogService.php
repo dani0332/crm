@@ -684,11 +684,10 @@ class SendUpdateLogService
     {
         LoggerService::info('fn:getPayments - Start - SendUpdateLogService');
         if (checkPersonalQuotes($quoteType)) {
-            if ($quoteType == QuoteTypes::CYBER->value) {
+            if ($quoteType == quoteTypeCode::Device) {
+                $quote = app(DeviceQuoteService::class)->getOne($quoteUuid);
+            } elseif ($quoteType == quoteTypeCode::Cyber) {
                 $quote = app(CyberQuoteService::class)->getOne($quoteUuid);
-            } elseif ($quoteType == quoteTypeCode::Device) {
-                $deviceQuoteService = new DeviceQuoteService;
-                $quote = $deviceQuoteService->getOne($quoteUuid);
             } else {
                 $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
                 $quote = $repository::getBy('uuid', $quoteUuid);
@@ -1345,11 +1344,11 @@ class SendUpdateLogService
         $documents = collect([]);
         $documentTypeCodes = [];
 
-        if(! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device, QuoteTypeId::Cyber])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
             $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
         } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
-            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
+            $documentTypeCodes = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
             $documentTypeCodes = [

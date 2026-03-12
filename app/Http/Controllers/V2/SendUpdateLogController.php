@@ -174,11 +174,10 @@ class SendUpdateLogController extends Controller
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
-            if ($quoteType == QuoteTypes::CYBER->value) {
+            if ($quoteType == quoteTypeCode::Device) {
+                $realQuote = app(DeviceQuoteService::class)->getOne($quote->uuid);
+            } elseif ($quoteType == QuoteTypes::CYBER->value) {
                 $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
-            } elseif ($quoteType == quoteTypeCode::Device) {
-                $deviceQuoteService = new DeviceQuoteService;
-                $realQuote = $deviceQuoteService->getOne($quote->uuid);
             } else {
                 $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
                 $realQuote = $repository::getBy('uuid', $quote->uuid);

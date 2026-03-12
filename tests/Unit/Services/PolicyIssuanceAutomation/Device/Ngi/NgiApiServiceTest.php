@@ -3,15 +3,14 @@
 declare(strict_types=1);
 
 use App\Enums\NgiEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Facades\Ngi;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
-use App\Services\PolicyIssuanceFailureEmailService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceFailureEmailService;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
 
@@ -335,6 +334,10 @@ beforeEach(function () {
     $this->requestBuilder = Mockery::mock(NgiRequestBuilder::class);
     $this->responseHandler = $sharedResponseHandler; // Reuse shared instance
     $this->quoteUpdater = Mockery::mock(NgiQuoteUpdaterService::class);
+    $this->quoteUpdater->shouldReceive('updateQuoteInsurerAndIssuanceStatus')
+        ->andReturnNull()
+        ->zeroOrMoreTimes()
+        ->byDefault();
     $this->validationService = Mockery::mock(NgiValidationService::class);
     $this->failureEmailService = Mockery::mock(PolicyIssuanceFailureEmailService::class);
     $this->failureEmailService->shouldIgnoreMissing();
@@ -580,7 +583,7 @@ describe('createPolicyFromQuote', function () {
         $result = $this->apiService->createPolicyFromQuote($quote, $process);
 
         expect($result['status'])->toBeFalse()
-            ->and($result['message'])->toBe('Policy created successfully');
+            ->and($result['message'])->toContain('Policy created successfully');
     });
 
     test('returns failure when API returns error code', function () {

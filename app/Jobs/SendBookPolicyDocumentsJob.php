@@ -194,6 +194,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $emailData->isHealthAUH = $isAUHHealthLead;
         $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
+            // For Bird
             $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
             if (! empty($emailData)) {
                 $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
