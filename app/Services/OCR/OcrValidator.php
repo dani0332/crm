@@ -59,6 +59,9 @@ trait OcrValidator
         // Health only
         InsuranceProviderEnum::ADNIC->value => [QuoteTypes::HEALTH],
     ];
+    private const QUOTE_TYPE_PROVIDER_SKIP_OCR = [
+        QuoteTypes::SAVINGS,
+    ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
@@ -94,6 +97,11 @@ trait OcrValidator
 
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
+        // Check if no provider required for this quote type
+        if (in_array($quoteType, self::QUOTE_TYPE_PROVIDER_SKIP_OCR)) {
+            return true;
+        }
+
         $providerCode = $this->extractProviderCode($quote);
 
         if (! $providerCode) {

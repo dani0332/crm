@@ -179,7 +179,6 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\TelescopeServiceProvider::class,
         App\Providers\NgiServiceProvider::class,
         App\Providers\AwnicServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,

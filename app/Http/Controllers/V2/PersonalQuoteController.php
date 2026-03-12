@@ -131,7 +131,9 @@ class PersonalQuoteController extends Controller
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
         $quoteObject = PersonalQuoteRepository::findOrFail($quoteId);
-        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
+
+        $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
+        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, (bool) $keepExistingPrimaryEmail);
 
         return back();
     }

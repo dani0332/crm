@@ -63,10 +63,10 @@ class EpSendDocumentJob implements ShouldQueue
         ]);
     }
 
-    private function getEpConfigurations()
+    private function getEpConfigurations(): void
     {
         $epEcbAppStorageKeys = [
-            ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL,
+            ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL,
             ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC,
             ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT,
             ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE,
@@ -77,6 +77,7 @@ class EpSendDocumentJob implements ShouldQueue
             ->whereIn('key_name', $epEcbAppStorageKeys)
             ->whereNotNull('value')
             ->get();
+
         $missingAppStorageKeys = array_diff($epEcbAppStorageKeys, $appStorageRecords->pluck('key_name')->toArray());
 
         $this->storageBaseUrl = storageUrl();
@@ -182,7 +183,12 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
-        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL] ?? '';
+        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL] ?? '';
+
+        if (empty($birdWorkflowUrl)) {
+            throw new \Exception('Bird EP workflow URL is not configured');
+        }
+
         LoggerService::info("{$this->logPrefix} triggerBirdWorkflow: ", extra: ['data' => $birdEmailData]);
 
         app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);

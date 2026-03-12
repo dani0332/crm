@@ -436,7 +436,7 @@ class CustomerVerificationService
 
         try {
             DB::beginTransaction();
-            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
@@ -448,11 +448,6 @@ class CustomerVerificationService
             ]);
 
             DB::rollBack();
-        }
-
-        // Update customer verification status
-        if ($customerVerificationDetailsUpdated) {
-            $this->updateCustomerVerificationStatus($quote);
         }
     }
 
@@ -499,7 +494,7 @@ class CustomerVerificationService
 
         try {
             DB::beginTransaction();
-            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
@@ -511,11 +506,6 @@ class CustomerVerificationService
             ]);
 
             DB::rollBack();
-        }
-
-        // Update customer verification status
-        if ($customerVerificationDetailsUpdated) {
-            $this->updateCustomerVerificationStatus($quote);
         }
     }
 
@@ -552,6 +542,8 @@ class CustomerVerificationService
             'updated_fields' => array_keys($verificationData),
         ]);
 
+        // Update customer verification status
+        $this->updateCustomerVerificationStatus($quote);
         return true;
     }
 
@@ -563,6 +555,7 @@ class CustomerVerificationService
 
     private function updateCustomerVerificationStatus(Model $quote): void
     {
+        $quoteType = $this->getQuoteType($quote);
         $requestData = ['quoteUuid' => $quote->uuid,
             'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
@@ -580,12 +573,12 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => get_class($quote),
+            'quote_type' => $quoteType,
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
 
-        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $this->getQuoteType($quote)));
+        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $quoteType));
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
@@ -606,17 +599,6 @@ class CustomerVerificationService
             default => null,
         };
     }
-
-    /*private function getQuoteTypeId(Model $quote): ?int
-    {
-        return match (true) {
-            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
-            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
-            $quote instanceof PersonalQuote => $quote->quote_type_id,
-            // Add other quote types here as needed
-            default => null,
-        };
-    }*/
 
     public function isCustomerVerificationEnabled(): bool
     {
@@ -661,6 +643,7 @@ class CustomerVerificationService
             }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
+                'quote_type_id' => $this->getQuoteTypeId($quote),
                 'quote_uuid' => $quote->uuid,
                 'quote_class' => get_class($quote),
                 'document_type' => $this->documentTypeCode,

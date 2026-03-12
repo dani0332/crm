@@ -31,6 +31,7 @@ enum OCRDocumentTypeEnum: string
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
             DocumentTypeCode::DEVICE_SMARTPHONE_EMIRATES_ID => self::ID_CARD,
+            'SAV_EID' => self::ID_CARD,
             'CYB_EID' => self::ID_CARD,
             'MEEID' => self::ID_CARD,
             'MEPP' => self::PASSPORT,
@@ -88,6 +89,9 @@ enum OCRDocumentTypeEnum: string
                 self::ID_CARD,
             ],
             QuoteTypes::CYBER => [
+                self::ID_CARD,
+            ],
+            QuoteTypes::SAVINGS => [
                 self::ID_CARD,
             ],
             QuoteTypes::HEALTH => [

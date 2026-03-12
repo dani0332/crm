@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
+            AwnicNationalitySeeder::class,
         ]);
     }
 }

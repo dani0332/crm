@@ -19,6 +19,7 @@ use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Jobs\SendOCAEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -52,7 +53,7 @@ trait PersonalQuoteObservable
 
             // For now PolicyCancelled Handling is only for Bike
             if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled &&
-            ($personalQuote->isBike() || $personalQuote->isHome())) {
+            ($personalQuote->isBike() || $personalQuote->isHome() || $personalQuote->isCyber())) {
                 $this->handleBikePolicyCancelled($personalQuote);
             }
         }
@@ -126,7 +127,23 @@ trait PersonalQuoteObservable
             }
         }
 
-        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle() || $personalQuote->isSavings()) {
+        if ($personalQuote->isSavings()) {
+
+            if (empty($oldAdvisorId) && ! $personalQuote->isNonAdvisorEmailSent()) {
+                SendSavingsOCAEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+                LoggerService::info(self::class." - OCA email job dispatched for savings quote {$personalQuote->uuid} (first assignment)");
+            } else {
+                LoggerService::info(self::class." - Sending reassignment email for savings quote {$personalQuote->uuid} (reassignment from advisor {$oldAdvisorId})");
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+                    $personalQuote,
+                    QuoteTypes::SAVINGS->value,
+                    $oldAdvisorId
+                );
+                LoggerService::info(self::class." - Reassignment email sent to customer for savings quote {$personalQuote->uuid}");
+            }
+        }
+
+        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle()) {
             $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
         }
         if ($personalQuote->isLife()) {
@@ -199,7 +216,7 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isDevice()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+        if ($personalQuote->isHome() || (($personalQuote->isBike() || ($personalQuote->isCyber() || $personalQuote->isDevice())) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {

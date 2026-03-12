@@ -39,6 +39,7 @@ enum QuoteFlowType: int
     case DEVICE_UPDATE_POLICY = 38;
     case CAR_AI_ADVISOR_OCB = 39;
     case DEVICE_NEW_POLICY = 47;
+    case SAVINGS_OCA_EMAIL = 45;
     case CYBER_OCB_INTRO_EMAIL = 41;
     case CYBER_AUTOMATED_FOLLOWUPS = 42;
     case CYBER_NEW_POLICY = 43;
@@ -85,6 +86,7 @@ enum QuoteFlowType: int
             QuoteFlowType::DEVICE_UPDATE_POLICY => 'device_update_policy',
             QuoteFlowType::DEVICE_NEW_POLICY => 'device_new_policy',
             QuoteFlowType::CAR_AI_ADVISOR_OCB => 'car_ai_advisor_ocb',
+            QuoteFlowType::SAVINGS_OCA_EMAIL => 'savings_oca_email',
             QuoteFlowType::CYBER_OCB_INTRO_EMAIL => 'cyber_ocb_intro_email',
             QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS => 'cyber_automated_followups',
             QuoteFlowType::CYBER_NEW_POLICY => 'cyber_new_policy',
@@ -138,6 +140,7 @@ enum QuoteFlowType: int
             50 => QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS,
             51 => QuoteFlowType::DEVICE_OCB_INTRO_EMAIL,
             40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
+            45 => QuoteFlowType::SAVINGS_OCA_EMAIL,
             41 => QuoteFlowType::CYBER_OCB_INTRO_EMAIL,
             42 => QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS,
             43 => QuoteFlowType::CYBER_NEW_POLICY,

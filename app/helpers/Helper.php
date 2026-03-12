@@ -851,19 +851,19 @@ if (! function_exists('apiResponse')) {
             'status' => $statusCode,
         ], $statusCode);
     }
+}
 
-    if (! function_exists('generateQuoteMemberCode')) {
-        function generateQuoteMemberCode($customerType, $customerEntityID)
-        {
-            $quoteMemberCount = CustomerMembers::where([
-                'customer_type' => $customerType,
-                'customer_entity_id' => $customerEntityID,
-            ])->count();
+if (! function_exists('generateQuoteMemberCode')) {
+    function generateQuoteMemberCode($customerType, $customerEntityID)
+    {
+        $quoteMemberCount = CustomerMembers::where([
+            'customer_type' => $customerType,
+            'customer_entity_id' => $customerEntityID,
+        ])->count();
 
-            return ($customerType == CustomerTypeEnum::Individual) ?
-                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
-                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
-        }
+        return ($customerType == CustomerTypeEnum::Individual) ?
+            CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+            CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
     }
 }
 
@@ -1486,7 +1486,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Cyber]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1495,6 +1495,17 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Cyber]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('cyber_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('cyber_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('emirates', function (JoinClause $sub) {
+                                $sub->on('emirates.id', '=', 'cyber_quote_request.emirate_of_registration_id');
+                            });
+                    });
                 })
                 ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
                     $q->addSelect([
@@ -1603,6 +1614,52 @@ if (! function_exists('getCourierQuote')) {
     }
 }
 
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name or code.
+     */
+    function getTeamId(string $teamNameOrCode, $additionalWhere = [], $ignoreActive = false): int
+    {
+        try {
+            $cacheKey = 'getTeamId_'.md5($teamNameOrCode.'|'.json_encode($additionalWhere).'|'.($ignoreActive ? '1' : '0'));
+
+            return Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
+                return Team::whereAny(['name', 'code'], $teamNameOrCode)
+                    ->when(! empty($additionalWhere), function ($query) use ($additionalWhere) {
+                        $query->where($additionalWhere);
+                    })
+                    ->when(! $ignoreActive, function ($query) {
+                        $query->active();
+                    })
+                    ->value('id') ?? 0;
+            });
+        } catch (\Exception $e) {
+            Log::error("Error retrieving team ID for team name or code: {$teamNameOrCode}", ['exception' => $e]);
+
+            return 0;
+        }
+    }
+}
+
+if (! function_exists('getTeamIdByTeamType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByTeamType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::TEAM]);
+    }
+}
+if (! function_exists('getTeamIdByProductType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByProductType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::PRODUCT]);
+    }
+}
+
 if (! function_exists('isVatApplied')) {
     function isVatApplied($modelType): bool
     {
@@ -1618,24 +1675,6 @@ if (! function_exists('isVatApplied')) {
         }
 
         return false;
-    }
-}
-
-if (! function_exists('getTeamId')) {
-    /**
-     * Get the ID of a team by its name.
-     */
-    function getTeamId(string $teamName): int
-    {
-        try {
-            $team = Team::where('name', $teamName)->first();
-
-            return optional($team)->id ?? 0;
-        } catch (Exception $e) {
-            LoggerService::error("Error retrieving team ID for team name: {$teamName}", exception: $e);
-
-            return 0;
-        }
     }
 }
 
@@ -1773,7 +1812,7 @@ if (! function_exists('userHasProduct')) {
 
         $productIds = $user->products->pluck('id');
 
-        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+        return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->active()->whereAny(['name', 'code'], $product)->exists();
     }
 }
 
