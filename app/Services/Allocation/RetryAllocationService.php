@@ -384,7 +384,6 @@ class RetryAllocationService
 
         $leads->logRawSql();
 
-        // echo '<pre>'; print_r($leads->toSql()); die;
         $leads = $leads->get();
         LoggerService::info(self::class.':executeAllocation: Found '.count($leads).' leads to process');
 
