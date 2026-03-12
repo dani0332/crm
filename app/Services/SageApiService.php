@@ -855,6 +855,10 @@ class SageApiService
     public function checkRequiredSageIds($sageRequest): array
     {
         $missingFields = [];
+        if (! $sageRequest->isEmirateOfVisaIdSelected && $sageRequest->quoteType == QuoteTypes::GROUP_MEDICAL) {
+            $missingFields[] = 'Emirate of Registration ID';
+        }
+
         if (empty($sageRequest->customerId)) {
             $missingFields[] = 'Customer Sage ID';
         }
