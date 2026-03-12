@@ -196,11 +196,7 @@ class CarQuoteController extends Controller
         }
         $message = 'Car Plan has not been updated '.$responseMessage;
 
-        if ($request->expectsJson()) {
-            return $message;
-        }
-
-        return redirect()->back()->with('message', $message);
+        return  $request->expectsJson() ? $message : redirect()->back()->with('message', $message);
     }
 
     public function carPlansByInsuranceProvider(Request $request)
