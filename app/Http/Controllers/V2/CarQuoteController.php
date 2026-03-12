@@ -200,7 +200,7 @@ class CarQuoteController extends Controller
             return $message;
         }
 
-        return redirect()->back()->with('error', $message);
+        return redirect()->back()->with('message', $message);
     }
 
     public function carPlansByInsuranceProvider(Request $request)
