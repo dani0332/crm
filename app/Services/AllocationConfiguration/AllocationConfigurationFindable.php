@@ -250,7 +250,8 @@ trait AllocationConfigurationFindable
     {
         $config = $configuration->config ?? [];
 
-        $regionKey = ($lead->emirate_of_registration_id ?? null) == EmirateEnum::ABU_DHABI
+        $emirateOfRegistrationId = $lead->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
+        $regionKey = $emirateOfRegistrationId == EmirateEnum::ABU_DHABI
             ? GroupMedicalRegionEnum::AUH
             : GroupMedicalRegionEnum::NON_AUH;
 

@@ -43,7 +43,7 @@ class BusinessQuoteRepository extends BaseRepository
             request()->merge($requestParams);
         }
 
-        $query = $this->with([
+        $with = [
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
@@ -52,7 +52,11 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
-        ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
+        ];
+        if ($quoteType == quoteTypeCode::GroupMedical) {
+            $with[] = 'quoteRequestEntityMapping.entity.emirate';
+        }
+        $query = $this->with($with)->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
             });
@@ -82,6 +86,14 @@ class BusinessQuoteRepository extends BaseRepository
         if (! empty($requestParams['sub_source_id'])) {
             $values = (array) $requestParams['sub_source_id'];
             $query->whereIn('business_quote_request.sub_source_id', $values);
+        }
+
+        if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
+            $query->whereHas('quoteRequestEntityMapping', function ($q) use ($requestParams) {
+                $q->whereHas('entity', function ($q2) use ($requestParams) {
+                    $q2->where('emirate_of_registration_id', $requestParams['emirate_of_registration_id']);
+                });
+            });
         }
 
         if ($forTotalLeadsCount) {

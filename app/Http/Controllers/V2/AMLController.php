@@ -14,6 +14,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -300,9 +301,13 @@ class AMLController extends Controller
             $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType->code, $insuranceProvider->code);
             $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
         }
-
+        $isEmirateOfRegistrationLocked = false;
+        if($quoteType->code == quoteTypeCode::Business && $quoteRequest?->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)){
+            $isEmirateOfRegistrationLocked = $quoteRequest->isPolicyBooked();
+        }
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
+            'isEmirateOfRegistrationLocked' => $isEmirateOfRegistrationLocked,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
             'amlStatusCode' => AMLStatusCode::asArray(),

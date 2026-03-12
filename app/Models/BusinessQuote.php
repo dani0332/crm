@@ -345,4 +345,8 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
+    public function isPolicyBooked(): bool
+    {
+        return in_array($this->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelledReissued, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled]);
+    }
 }

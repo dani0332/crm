@@ -37,6 +37,7 @@ const props = defineProps({
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  isEmirateOfRegistrationLocked: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
@@ -1131,6 +1132,7 @@ function handleOcrNotification(event) {
                       class="w-full"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       filterable
+                      :disabled="props.isEmirateOfRegistrationLocked"
                     />
                   </dd>
                 </div>

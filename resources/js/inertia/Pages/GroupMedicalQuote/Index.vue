@@ -15,6 +15,7 @@ defineProps({
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
+  emirates: Array,
   assignmentTypes: Array,
 });
 
@@ -88,12 +89,20 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   assignment_type: '',
+  emirate_of_registration_id: '',
 });
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
+  }));
+});
+
+const emiratesOptions = computed(() => {
+  return (page.props.emirates || []).map(emirate => ({
+    value: emirate.id,
+    label: emirate.text,
   }));
 });
 
@@ -164,6 +173,7 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
+  { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
 ];
 
 function resetFilters() {
@@ -724,6 +734,16 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           filterable
           label="Assignment Type"
+        />
+
+        <x-select
+          v-model="filters.emirate_of_registration_id"
+          name="emirate_of_registration_id"
+          placeholder="Search by Emirate of Registration"
+          :options="emiratesOptions"
+          class="w-full"
+          filterable
+          label="Emirate of Registration"
         />
 
         <x-input

@@ -29,6 +29,7 @@ const props = defineProps({
   screeningType: String,
   gigInsurerDefaultEmail: String,
   permissionsEnum: Object,
+  isEmirateOfRegistrationLocked: Boolean,
   // RTA Configuration (only available for Car quotes)
   rta_transaction_types: {
     type: Object,
@@ -720,6 +721,7 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
     :rta_field_configurations="rta_field_configurations"
     :rta_validation_summaries="rta_validation_summaries"
     :isAddionalFieldsEnabled="props.isAddionalFieldsEnabled"
+    :isEmirateOfRegistrationLocked="props.isEmirateOfRegistrationLocked"
   />
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

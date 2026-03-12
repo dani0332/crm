@@ -87,6 +87,12 @@ class AmtController extends Controller
                     ->where('ub.is_primary', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($join) {
+                $join->on('qrem.quote_request_id', '=', 'bqr.id')
+                    ->where('qrem.quote_type_id', '=', QuoteTypeId::Business);
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('emirates as e', 'ent.emirate_of_registration_id', '=', 'e.id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -136,6 +142,7 @@ class AmtController extends Controller
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'bqr.is_branch_applicable',
+                'e.text as emirate_of_registration_text',
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -169,7 +176,7 @@ class AmtController extends Controller
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->emirate_of_registration_id)) {
             $data->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (isset($request->company_name)) {
@@ -272,6 +279,10 @@ class AmtController extends Controller
             $data->where('bqr.assignment_type', $request->assignment_type);
         }
 
+        if (isset($request->emirate_of_registration_id) && $request->emirate_of_registration_id !== '') {
+            $data->where('ent.emirate_of_registration_id', $request->emirate_of_registration_id);
+        }
+
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateArray = $request->advisor_assigned_date;
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
@@ -329,10 +340,10 @@ class AmtController extends Controller
         $this->postProcessAmtQuotes($quotes);
 
         $subSources = app(LookupService::class)->getSubSource();
-
+        $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'assignmentTypes'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
     }
 
     /**
@@ -378,11 +389,13 @@ class AmtController extends Controller
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
 
         $subSources = app(LookupService::class)->getSubSource();
+        $emirates = Emirate::getActiveEmirates();
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => new BusinessQuote,
             'subSources' => $subSources,
+            'emirates' => $emirates,
             'leadSourceParams' => [
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
@@ -407,6 +420,7 @@ class AmtController extends Controller
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
+            'emirate_of_registration_id' => 'required|exists:emirates,id',
         ]);
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -515,6 +529,11 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
+        $isEmirateOfRegistrationLocked = false;
+        if($record?->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)){
+            $isEmirateOfRegistrationLocked = $record->isPolicyBooked();
+        }
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'quote_request_id' => $record->id,
@@ -569,6 +588,7 @@ class AmtController extends Controller
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record?->payments,
+            'isEmirateOfRegistrationLocked' => $isEmirateOfRegistrationLocked,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
@@ -587,7 +607,11 @@ class AmtController extends Controller
     public function edit($id)
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
+            ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
+            ->first();
+        $record->emirate_of_registration_id = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
+
         $gmTypes = GroupMedicalType::select('id', 'text', 'description')->get();
         $GMType = DB::table('business_quote_request')
             ->join('group_medical_types as gmt', 'business_quote_request.group_medical_type_id', '=', 'gmt.id')
@@ -600,6 +624,7 @@ class AmtController extends Controller
         }
 
         $subSources = app(LookupService::class)->getSubSource();
+        $emirates = Emirate::getActiveEmirates();
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
@@ -607,6 +632,8 @@ class AmtController extends Controller
             'gmTypes' => $gmTypes,
             'selectedGmType' => $selectedGmType,
             'subSources' => $subSources,
+            'emirates' => $emirates,
+            'isEmirateDisabled' => true,
             'leadSourceParams' => [],
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomerTypeEnum;
+use App\Models\Emirate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,5 +29,10 @@ class Entity extends Model
     public function corporationCountry()
     {
         return $this->belongsTo(Nationality::class, 'country_of_corporation', 'id');
+    }
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
 }

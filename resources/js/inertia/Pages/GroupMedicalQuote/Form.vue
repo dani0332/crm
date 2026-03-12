@@ -6,6 +6,8 @@ const props = defineProps({
   gmTypes: Object,
   selectedGmType: Object,
   subSources: { type: Array, default: () => [] },
+  emirates: { type: Array, default: () => [] },
+  isEmirateDisabled: { type: Boolean, default: false },
   leadSourceParams: { type: Object, default: () => ({}) },
 });
 
@@ -44,6 +46,7 @@ const quoteForm = useForm({
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType ?? '',
+  emirate_of_registration_id: props.quote?.emirate_of_registration_id ?? null,
   brief_details: props.quote.brief_details,
   // Additional notes
   additional_notes: props.quote?.additional_notes || '',
@@ -286,6 +289,22 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.business_type_of_insurance_id"
           label="Business Insurance Type"
           required
+        />
+
+        <x-select
+          v-model="quoteForm.emirate_of_registration_id"
+          :options="
+            (props.emirates || []).map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          :rules="props.isEmirateDisabled ? [] : [isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.emirate_of_registration_id"
+          label="EMIRATE OF REGISTRATION"
+          :required="!props.isEmirateDisabled"
+          :disabled="props.isEmirateDisabled"
         />
 
         <x-textarea

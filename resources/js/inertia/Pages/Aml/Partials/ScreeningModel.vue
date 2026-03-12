@@ -24,6 +24,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isEmirateOfRegistrationLocked :{
+    type: Boolean,
+    default: false,
+  }
 });
 const page = usePage();
 const { isRequired } = useRules();
@@ -1026,6 +1030,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             v-model="screeningFormDetails.emirate_of_registration_id"
             :options="emiratesOfRegistrationOptions"
             placeholder="Emirates of Registration"
+            :disabled="isEmirateOfRegistrationLocked"
             type="text"
             class="w-full"
             :rules="[isRequired]"

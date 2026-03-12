@@ -20,6 +20,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -1974,6 +1975,15 @@ class AMLService
             'industry_type_code' => $request->industry_type_code,
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
+
+        
+        if ($quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {   
+                if ($quote->isPolicyBooked()) {
+                    unset($entityData['emirate_of_registration_id']);
+                }
+            }
+        }
 
         LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
