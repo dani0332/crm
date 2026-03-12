@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -55,10 +56,13 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class AmtController extends Controller
 {
@@ -350,8 +354,8 @@ class AmtController extends Controller
      * Post-process AMT quotes to add branch name information.
      * Uses eager loading to avoid N+1 query issues.
      *
-     * @param  \Illuminate\Contracts\Pagination\Paginator  $quotes
-     * @return \Illuminate\Contracts\Pagination\Paginator
+     * @param  Paginator  $quotes
+     * @return Paginator
      */
     private function postProcessAmtQuotes($quotes)
     {
@@ -382,7 +386,7 @@ class AmtController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -436,7 +440,7 @@ class AmtController extends Controller
 
     /**
      * @param  $uuid
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
@@ -530,7 +534,7 @@ class AmtController extends Controller
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         $isEmirateOfRegistrationLocked = false;
-        if($record?->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)){
+        if ($record?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
             $isEmirateOfRegistrationLocked = $record->isPolicyBooked();
         }
 
@@ -688,7 +692,7 @@ class AmtController extends Controller
             'totalCount' => 0,
             'areBothTeamsPresent' => false,
             'is_renewal' => null,
-            'business_type_of_insurance_id' => \App\Enums\BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
+            'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
     }
 }

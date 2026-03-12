@@ -77,6 +77,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
@@ -910,7 +911,7 @@ class AMLService
                         $screeningResponse['is_get_quote_api_failed'] = true;
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 LoggerService::info('Exception while calling getQuote API for renewal upload', extra: [
                     'quote_type_id' => $quoteTypeId,
                     'customer_type' => $customerType,
@@ -1574,7 +1575,7 @@ class AMLService
             LoggerService::info('Quote Kyc Decision updated Successfully');
 
             return true;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::error($ex->getMessage());
         }
 
@@ -1613,7 +1614,7 @@ class AMLService
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
 
             $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
@@ -1976,9 +1977,8 @@ class AMLService
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        
         if ($quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
-            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {   
+            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 if ($quote->isPolicyBooked()) {
                     unset($entityData['emirate_of_registration_id']);
                 }
@@ -2044,11 +2044,11 @@ class AMLService
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
         // Debug: Log the received parameters
-        \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
+        Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
         // Create request object from parameters or use global request as fallback
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2058,7 +2058,7 @@ class AMLService
         $endDate = $request->get('amlCreatedEndDate');
 
         // Debug: Log the extracted dates and other filters
-        \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
+        Log::info('AMLService Extracted Filters:', [
             'startDate' => $startDate,
             'endDate' => $endDate,
             'searchType' => $request->get('searchType'),
@@ -2530,7 +2530,7 @@ class AMLService
                 $response['is_insured_driver_same'] = $vehicleDriverDetails['is_insured_and_driver_same'];
             }
             LoggerService::info(__FUNCTION__.' - '.$message);
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
@@ -2607,7 +2607,7 @@ class AMLService
 
             return match (ucfirst($quoteType)) {
                 QuoteTypes::CAR->value => match ($insurerCode->code) {
-                    InsuranceProvidersEnum::RSA => app(LIVAInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
+                    InsuranceProvidersEnum::RSA => app(LivaInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
                     InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
 
                     default => [
@@ -2622,7 +2622,7 @@ class AMLService
                     'data' => null,
                 ],
             };
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception: '.$e->getMessage().' - QuoteUID: '.$quoteUID);
 
             return [
