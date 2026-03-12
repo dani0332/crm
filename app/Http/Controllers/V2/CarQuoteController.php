@@ -183,17 +183,22 @@ class CarQuoteController extends Controller
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             $message = 'Plan has been updated';
 
-            return redirect()->back()->with('message', $message);
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
+            if ($request->expectsJson()) {
+                return $message;
             }
-            $message = 'Car Plan has not been updated '.$responseMessage;
+            return redirect()->back()->with('message', $message);
         }
 
-        return redirect()->back()->with('error', $message);
+        if (isset($response->message)) {
+            $responseMessage = $response->message;
+        } else {
+            $responseMessage = $response;
+        }
+        $message = 'Car Plan has not been updated '.$responseMessage;
+     
+        return $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest'
+            ? $message
+            : redirect()->back()->with('message', $message);
     }
 
     public function carPlansByInsuranceProvider(Request $request)
