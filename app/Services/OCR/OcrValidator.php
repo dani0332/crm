@@ -32,10 +32,13 @@ trait OcrValidator
         InsuranceProviderEnum::MTL->value,   // METLIFE_INSURANCE
         InsuranceProviderEnum::CIG->value,   // CIGNA_INSURANCE
     ];
+
+    // We might consider this to move to database
     private const PROVIDER_QUOTE_TYPE_MAPPING = [
         // Multi-LOB: CAR, HOME, GROUP_MEDICAL
         InsuranceProviderEnum::AXA->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::OIC->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
+
         // Car-only
         InsuranceProviderEnum::QIC->value => [QuoteTypes::CAR],
         InsuranceProviderEnum::RSA->value => [QuoteTypes::CAR],
@@ -51,8 +54,13 @@ trait OcrValidator
         InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
 
+        // Cyber-only
+        InsuranceProviderEnum::AWNI->value => [QuoteTypes::CYBER],
         // Health only
         InsuranceProviderEnum::ADNIC->value => [QuoteTypes::HEALTH],
+    ];
+    private const QUOTE_TYPE_PROVIDER_SKIP_OCR = [
+        QuoteTypes::SAVINGS,
     ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
@@ -89,6 +97,11 @@ trait OcrValidator
 
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
+        // Check if no provider required for this quote type
+        if (in_array($quoteType, self::QUOTE_TYPE_PROVIDER_SKIP_OCR)) {
+            return true;
+        }
+
         $providerCode = $this->extractProviderCode($quote);
 
         if (! $providerCode) {

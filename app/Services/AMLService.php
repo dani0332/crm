@@ -38,6 +38,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
+use App\Models\CyberQuote;
 use App\Models\CycleQuote;
 use App\Models\DeviceQuote;
 use App\Models\Entity;
@@ -106,6 +107,7 @@ class AMLService
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::DEVICE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
         return Carbon::createFromFormat(
@@ -126,6 +128,7 @@ class AMLService
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
             QuoteTypes::DEVICE->id() => $quoteRequestId,
+            QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
 
@@ -146,6 +149,7 @@ class AMLService
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::DEVICE->id() => DeviceQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::CYBER->id() => CyberQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
@@ -296,6 +300,15 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::DEVICE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::DEVICE->id())->with([
                 'deviceQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+        } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
+                'cyberQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
@@ -1837,9 +1850,9 @@ class AMLService
     {
         $isCustomerInsuredAssociationUpdated = false;
 
-        // Handle orphaned record within transaction with proper locking to prevent race conditions
+        // Consolidate all customer-insured mapping logic in a single transaction to reduce lock contention
         DB::transaction(function () use ($request, $quoteTypeId, $quote, $insured, &$isCustomerInsuredAssociationUpdated) {
-            // Lock and find orphaned record within transaction to prevent concurrent updates
+            // First, check for orphaned record with lock
             $orphanedRecord = CustomerInsured::where([
                 'customer_id' => $request->customer_id,
                 'insured_id' => $insured->id,
@@ -1852,14 +1865,11 @@ class AMLService
                 // Update the existing orphaned record instead of deleting and creating new
                 $isCustomerInsuredAssociationUpdated = true;
 
-                // Deactivate existing records for this quote first with row-level locking
-                // This prevents race conditions where concurrent requests could create multiple active records
+                // Deactivate existing records for this quote first
+                // MySQL UPDATE queries inherently acquire exclusive row locks, ensuring atomic deactivation.
                 CustomerInsured::forQuote($quoteTypeId, $quote->id)
-                    ->lockForUpdate()->get()->each(function ($record) {
-                        $record->update(['is_active' => false]);
-                    });
+                    ->update(['is_active' => false]);
 
-                // Activate the orphaned record
                 $orphanedRecord->update([
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
@@ -1874,29 +1884,31 @@ class AMLService
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
                 ]);
-            }
-        });
 
-        // If no orphaned record was found, check for existing quote mapping
-        if (! $isCustomerInsuredAssociationUpdated) {
-            // Check existing quote mapping
+                return;
+            }
+
+            // If no orphaned record was found, check for existing quote mapping
             $existingQuoteMapping = CustomerInsured::active()
                 ->where([
                     'customer_id' => $request->customer_id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ])->first();
+                ])
+                ->lockForUpdate()
+                ->first();
 
             if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
-                // Create new record or update existing quote mapping
+                // Insured changed for this quote
                 $isCustomerInsuredAssociationUpdated = true;
 
+                // Use createOrUpdateActive to handle deactivation and update atomically
                 CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ]);
+                ], [], true);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1911,19 +1923,20 @@ class AMLService
                 // This is a completely new quote-insured association
                 $isCustomerInsuredAssociationUpdated = true;
 
+                // Use createOrUpdateActive to handle deactivation and creation atomically
                 CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ]);
+                ], [], true);
 
                 LoggerService::info('New insured association created for quote', extra: [
                     'insured_id' => $insured->id,
                     'quote_id' => $quote->id,
                 ]);
             }
-        }
+        });
 
         return $isCustomerInsuredAssociationUpdated;
     }

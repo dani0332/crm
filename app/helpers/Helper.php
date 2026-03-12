@@ -44,7 +44,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -548,6 +547,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::HOME->value,
             QuoteTypes::LIFE->value,
             QuoteTypes::DEVICE->value,
+            QuoteTypes::CYBER->value,
         ]);
     }
 }
@@ -565,6 +565,7 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
             QuoteTypeId::Jetski,
             QuoteTypeId::Savings,
             QuoteTypeId::Device,
+            QuoteTypeId::Cyber,
         ];
     }
 }
@@ -850,19 +851,19 @@ if (! function_exists('apiResponse')) {
             'status' => $statusCode,
         ], $statusCode);
     }
+}
 
-    if (! function_exists('generateQuoteMemberCode')) {
-        function generateQuoteMemberCode($customerType, $customerEntityID)
-        {
-            $quoteMemberCount = CustomerMembers::where([
-                'customer_type' => $customerType,
-                'customer_entity_id' => $customerEntityID,
-            ])->count();
+if (! function_exists('generateQuoteMemberCode')) {
+    function generateQuoteMemberCode($customerType, $customerEntityID)
+    {
+        $quoteMemberCount = CustomerMembers::where([
+            'customer_type' => $customerType,
+            'customer_entity_id' => $customerEntityID,
+        ])->count();
 
-            return ($customerType == CustomerTypeEnum::Individual) ?
-                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
-                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
-        }
+        return ($customerType == CustomerTypeEnum::Individual) ?
+            CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+            CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
     }
 }
 
@@ -1084,7 +1085,7 @@ if (! function_exists('getMyAlfredCampaign')) {
                     }
                 }
             } catch (Exception $e) {
-                Log::error('getMyAlfredCampaign Error: '.$e->getMessage().$e->getTraceAsString());
+                LoggerService::error('getMyAlfredCampaign Error', exception: $e);
             }
 
             return null;
@@ -1160,7 +1161,7 @@ if (! function_exists('getAlfredEligibleCustomers')) {
                 }
             }
         } catch (Exception $e) {
-            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+            LoggerService::error('getAlfredEligibleCustomers Error', exception: $e);
         }
 
         return null;
@@ -1485,7 +1486,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Cyber]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1494,6 +1495,17 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Cyber]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('cyber_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('cyber_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('emirates', function (JoinClause $sub) {
+                                $sub->on('emirates.id', '=', 'cyber_quote_request.emirate_of_registration_id');
+                            });
+                    });
                 })
                 ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
                     $q->addSelect([
@@ -1595,10 +1607,56 @@ if (! function_exists('getCourierQuote')) {
 
             return null;
         } catch (Exception $e) {
-            Log::error('getCourierQuote: Error retrieving quote: '.$e->getMessage());
+            LoggerService::error('getCourierQuote: Error retrieving quote', exception: $e);
 
             return null;
         }
+    }
+}
+
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name or code.
+     */
+    function getTeamId(string $teamNameOrCode, $additionalWhere = [], $ignoreActive = false): int
+    {
+        try {
+            $cacheKey = 'getTeamId_'.md5($teamNameOrCode.'|'.json_encode($additionalWhere).'|'.($ignoreActive ? '1' : '0'));
+
+            return Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
+                return Team::whereAny(['name', 'code'], $teamNameOrCode)
+                    ->when(! empty($additionalWhere), function ($query) use ($additionalWhere) {
+                        $query->where($additionalWhere);
+                    })
+                    ->when(! $ignoreActive, function ($query) {
+                        $query->active();
+                    })
+                    ->value('id') ?? 0;
+            });
+        } catch (\Exception $e) {
+            Log::error("Error retrieving team ID for team name or code: {$teamNameOrCode}", ['exception' => $e]);
+
+            return 0;
+        }
+    }
+}
+
+if (! function_exists('getTeamIdByTeamType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByTeamType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::TEAM]);
+    }
+}
+if (! function_exists('getTeamIdByProductType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByProductType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::PRODUCT]);
     }
 }
 
@@ -1620,24 +1678,6 @@ if (! function_exists('isVatApplied')) {
     }
 }
 
-if (! function_exists('getTeamId')) {
-    /**
-     * Get the ID of a team by its name.
-     */
-    function getTeamId(string $teamName): int
-    {
-        try {
-            $team = Team::where('name', $teamName)->first();
-
-            return optional($team)->id ?? 0;
-        } catch (Exception $e) {
-            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
-
-            return 0;
-        }
-    }
-}
-
 if (! function_exists('isLeadSic')) {
     function isLeadSic(string $uuid): bool
     {
@@ -1646,7 +1686,7 @@ if (! function_exists('isLeadSic')) {
 
             return $isSic;
         } catch (Exception $e) {
-            Log::error("Failed to check SIC status for quote_uuid: {$uuid}. Error: ".$e->getMessage());
+            LoggerService::error('Failed to check SIC status for quote_uuid', extra: ['quote_uuid' => $uuid], exception: $e);
 
             return false;
         }
@@ -1660,13 +1700,11 @@ if (! function_exists('getCarQuoteByUuid')) {
             // Fetch the CarQuote model using the provided UUID
             return CarQuote::where('uuid', $uuid)->firstOrFail();
         } catch (ModelNotFoundException $e) {
-            // Log if the CarQuote was not found
-            Log::warning("CarQuote not found for UUID: {$uuid}");
+            LoggerService::warning('CarQuote not found for UUID', extra: ['uuid' => $uuid]);
 
             return null;
         } catch (Exception $e) {
-            // Log any other unexpected errors
-            Log::error("Error retrieving CarQuote for UUID: {$uuid}. Error: {$e->getMessage()}");
+            LoggerService::error('Error retrieving CarQuote for UUID', extra: ['uuid' => $uuid], exception: $e);
 
             return null;
         }
@@ -1764,11 +1802,17 @@ if (! function_exists('isTapEnabled')) {
 }
 
 if (! function_exists('userHasProduct')) {
-    function userHasProduct($product)
+    function userHasProduct($product, $user = null)
     {
-        $productIds = auth()->user()->products->pluck('id');
+        $user = $user ?? auth()->user();
 
-        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+        if (! $user) {
+            return false;
+        }
+
+        $productIds = $user->products->pluck('id');
+
+        return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->active()->whereAny(['name', 'code'], $product)->exists();
     }
 }
 

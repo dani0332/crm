@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -56,7 +57,7 @@ class PersonalQuote extends Model implements AuditableContract
         'is_renewal_tier_email_sent' => FilterTypes::EXACT,
         'is_early_renewal' => FilterTypes::EXACT,
     ];
-    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted'];
+    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -178,7 +179,7 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(LifeQuote::class);
     }
 
-    public function vehicleDriverDetail()
+    public function vehicleDriverDetail(): MorphOne
     {
         return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
@@ -576,9 +577,31 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
     }
 
+    // *********************** Cyber Quote ***********************
+
+    public function cyberQuote()
+    {
+        return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
+    }
+
+    public function cyberPlanDetail()
+    {
+        return $this->hasOne(CyberQuotePlanDetail::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
+    }
+
+    public function cyberPolicyWording()
+    {
+        return $this->hasOne(PolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    /**
+     * Check if booking has failed
+     *
+     * @return bool
+     */
     public function isBookingFailed()
     {
-        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+        return $this->insurer_api_status_id === \App\Enums\PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
     }
 
     /**
@@ -598,7 +621,27 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+        return in_array($this->insurer_api_status_id, app(abstract: PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    /**
+     * Get the API issuance status for this quote
+     *
+     * @return string|null
+     */
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    /**
+     * Get the insurer API status for this quote
+     *
+     * @return string|null
+     */
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function subSource()
@@ -619,5 +662,15 @@ class PersonalQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function amlAutomation()
+    {
+        return $this->hasOne(AmlAutomation::class, 'code', 'code');
+    }
+
+    public function isAutomationCompleted()
+    {
+        return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 }

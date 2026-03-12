@@ -16,6 +16,14 @@ const props = defineProps({
   },
   insuranceProviderId: Number,
   code: String,
+  buttonSize: {
+    type: String,
+    default: 'xs',
+  },
+  buttonClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const page = usePage();
@@ -171,8 +179,44 @@ const validatePayments = selectedPlanObj => {
   });
 };
 
+const validateSavingsPlanSelection = (isUpdating = false) => {
+  if (props.quoteType.toLocaleLowerCase() !== 'savings') {
+    return true;
+  }
+
+  const selectedPlanId = props.extraDetails?.selectedPlansIds?.[0];
+  const hasPayments = props.payments?.length > 0;
+
+  if (!selectedPlanId || !hasPayments) {
+    return true;
+  }
+
+  const isCurrentPlanSelected =
+    String(selectedPlanId) === String(props.plan.id);
+
+  if (
+    (isUpdating && isCurrentPlanSelected) ||
+    (!isUpdating && !isCurrentPlanSelected)
+  ) {
+    notification.error({
+      title: 'Plan is already selected and payment has been added.',
+      position: 'top',
+      timeout: 3000,
+    });
+    return false;
+  }
+
+  return true;
+};
+
 const checkAndUpdateSelectedPlan = async () => {
   isLoading.value = true;
+
+  // Validation for Savings quotes
+  if (!validateSavingsPlanSelection(false)) {
+    isLoading.value = false;
+    return;
+  }
 
   let data = {
     plan_id: props.plan.id,
@@ -259,6 +303,13 @@ const handleCancelConfirmationModal = () => {
 const updateSelectedPlan = () => {
   isLoading.value = true;
   showSelectPlanConfirm.value = false;
+
+  // Validation for Savings quotes
+  if (!validateSavingsPlanSelection(true)) {
+    isLoading.value = false;
+    return;
+  }
+
   let data = {
     plan_id: props.plan.id,
     provider_code: props.plan?.providerCode ?? null,
@@ -388,7 +439,7 @@ const updateSelectedPlan = () => {
     });
 };
 
-watch(() => {
+watchEffect(() => {
   const quoteType = props.quoteType?.toLowerCase();
 
   if (quoteType == quoteTypeCodeEnum?.Health?.toLowerCase()) {
@@ -414,12 +465,13 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
   <SelectPlanButtonTemplate v-slot="{ isDisabled }">
     <x-button
       v-if="isPlanSelectionEnable"
-      size="xs"
+      :size="buttonSize"
       color="success"
       outlined
       :loading="isLoading"
       :disabled="isDisabled || isPlanSelectionDisable || isLocked"
       @click.prevent="checkAndUpdateSelectedPlan()"
+      :class="[buttonSize === 'sm' ? 'min-w-[100px]' : '', buttonClass]"
     >
       Select
     </x-button>

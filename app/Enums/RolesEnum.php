@@ -106,4 +106,8 @@ final class RolesEnum extends Enum
     public const CLIENTSUPPORTLEAD = 'OE_AE_CLIENT_SUPPORT_LEAD';
     public const DeviceManager = 'DEVICE_MANAGER';
     public const DeviceAdvisor = 'DEVICE_ADVISOR';
+
+    /* Cyber Roles */
+    public const CyberAdvisor = 'CYBER_ADVISOR';
+    public const CyberManager = 'CYBER_MANAGER';
 }

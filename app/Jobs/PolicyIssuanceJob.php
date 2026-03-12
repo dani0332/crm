@@ -2,11 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Enums\EnvEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
-use App\Services\ServerEnvironmentGuard;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
@@ -289,6 +287,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
 
             $this->fail(new \RuntimeException($errorMessage));
+
             return;
         } else {
             if (isset($response['documents_pending']) && $response['documents_pending']) {

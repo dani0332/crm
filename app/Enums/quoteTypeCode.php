@@ -60,6 +60,7 @@ class quoteTypeCode extends Enum
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
     const Device = 'Device';
+    const CYBER = 'Cyber';
 
     public static function getName($value)
     {
@@ -77,6 +78,22 @@ class quoteTypeCode extends Enum
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
             DeviceQuote::class => self::Device,
+        };
+    }
+
+    public static function getProductNameFromQuoteTypeCode(string $quoteTypeCode): string
+    {
+        return match ($quoteTypeCode) {
+            self::CYBER => TeamNameEnum::CYBER,
+            default => $quoteTypeCode,
+        };
+    }
+
+    public static function getQuoteTypeCodeFromProductName(string $productName): string
+    {
+        return match ($productName) {
+            TeamNameEnum::CYBER => self::CYBER,
+            default => $productName,
         };
     }
 }

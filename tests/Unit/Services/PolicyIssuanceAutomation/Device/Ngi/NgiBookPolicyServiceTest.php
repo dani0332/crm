@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiBookPolicyService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use Database\Factories\DeviceQuoteFactory;
+
 // Global variables for shared instances (Pest compatible)
 $sharedResponseHandler = null;
 
@@ -24,10 +26,11 @@ beforeEach(function () {
     // Create real dependencies where appropriate, mock others
     $this->validationService = Mockery::mock(NgiValidationService::class);
     $this->responseHandler = $sharedResponseHandler; // Reuse shared instance
-
+    $this->quoteUpdater = Mockery::mock(NgiQuoteUpdaterService::class);
     $this->bookPolicyService = new NgiBookPolicyService(
         $this->validationService,
-        $this->responseHandler
+        $this->responseHandler,
+        $this->quoteUpdater
     );
 });
 

@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -89,10 +90,6 @@ class AutomationFailedJob implements ShouldQueue
             if ($quote?->advisor) {
                 $this->recipientEmail = $quote->advisor->email;
                 $this->recipientName = $quote->advisor->name;
-            } else {
-                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
-
-                return;
             }
         }
 
@@ -170,6 +167,8 @@ class AutomationFailedJob implements ShouldQueue
         switch ($quoteType) {
             case QuoteTypes::DEVICE->value:
                 return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK, '');
+            case QuoteTypes::CYBER->value:
+                return getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
             default:
                 return '';
         }
@@ -182,7 +181,15 @@ class AutomationFailedJob implements ShouldQueue
                 return app(DeviceQuoteService::class)
                     ->determineDeviceNgiRecipient(
                         $quote,
-                        $this->processInvolved
+                        $this->processInvolved);
+            case QuoteTypes::CYBER->value:
+                return app(CyberQuoteService::class)
+                    ->applyAutomationFailureNotificationRules(
+                        $quote,
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
                     );
             default:
                 return [

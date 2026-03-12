@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             SavingsQuoteDataSeeder::class,
+            CyberQuoteDataSeeder::class,
+            CyberLeadAllocationSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
@@ -48,9 +50,11 @@ class DatabaseSeeder extends Seeder
             QICTokioLookupSeeder::class,
             DeviceQuoteSeeder::class,
             DocRequiredForPolicySendSeeder::class,
+            SendUpdateSeederForCyber::class,
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
+            AwnicNationalitySeeder::class,
         ]);
     }
 }

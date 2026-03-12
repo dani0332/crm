@@ -38,6 +38,7 @@ use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\DeviceQuoteService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
@@ -175,9 +176,11 @@ class SendUpdateLogController extends Controller
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
             if ($quoteType == quoteTypeCode::Device) {
-                $deviceQuoteService = new DeviceQuoteService;
-                $realQuote = $deviceQuoteService->getOne($quote->uuid);
+                $realQuote = app(DeviceQuoteService::class)->getOne($quote->uuid);
+            } elseif ($quoteType == QuoteTypes::CYBER->value) {
+                $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
             } else {
+                $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
                 $realQuote = $repository::getBy('uuid', $quote->uuid);
             }
         } else {
