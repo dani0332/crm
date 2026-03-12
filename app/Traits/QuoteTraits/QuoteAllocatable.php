@@ -312,6 +312,7 @@ trait QuoteAllocatable
                         SELECT MIN(d.created_at)
                         FROM quote_documents d
                         WHERE d.quote_documentable_id = payments.paymentable_id
+                        and d.quote_documentable_type = payments.paymentable_type
                     ) <= DATE_ADD(payments.authorized_at, INTERVAL 24 HOUR)'); // Pick earliest doucment since there can be multiple documents
             });
         });
