@@ -18,21 +18,22 @@ trait RenewalsImportTrait
 
         $quoteData = [];
         foreach ($columns as $key => $column) {
-
-            if ($row[$column['index']] == '') {
+            $index = $column['index'];
+            if (! array_key_exists($index, $row) || $row[$index] === '' || $row[$index] === null) {
                 $quoteData[$key] = null;
 
                 continue;
             }
 
+            $value = $row[$index];
             if (! empty($column['type']) && $column['type'] == 'date') {
-                if (strpos($row[$column['index']], '/')) {
-                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
+                if (strpos($value, '/')) {
+                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $value)->format('d/m/Y');
                 } else {
-                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $row[$column['index']]))->format('d/m/Y');
+                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $value))->format('d/m/Y');
                 }
             } else {
-                $quoteData[$key] = $row[$column['index']];
+                $quoteData[$key] = $value;
             }
         }
 
