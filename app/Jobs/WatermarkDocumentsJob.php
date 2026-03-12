@@ -56,7 +56,6 @@ class WatermarkDocumentsJob implements ShouldQueue
         }
 
         [$quoteDocument, $documentType] = $quoteDocumentAndType;
-
         $sourcePath = $quoteDocument->doc_url;
 
         try {
