@@ -864,11 +864,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         ]);
 
         if ($newDocument->exists) {
-            WatermarkDocumentsJob::dispatch(
-                $newDocument->id,
-                $quote->uuid,
-                $documentType->id
-            );
+            // Delay 1 minute so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addMinute())->afterCommit();
         }
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
