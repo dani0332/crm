@@ -15,7 +15,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
-use League\Flysystem\UnableToCheckExistence;
 use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
@@ -150,16 +149,13 @@ class WatermarkDocumentsJob implements ShouldQueue
     }
 
     /**
-     * Check if a file exists
+     * Check if a file exists (remote URL or Azure storage). Returns false on any error.
      */
     private function fileExists(string $path): bool
     {
         try {
-            // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
-
-                // Parse HTTP status code from the first header line and treat 2xx-3xx as reachable.
                 if (! empty($headers) && is_array($headers) && preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
                     $status = (int) $matches[1];
 
@@ -169,42 +165,10 @@ class WatermarkDocumentsJob implements ShouldQueue
                 return false;
             }
 
-            // For Azure private storage paths
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
-
-        } catch (UnableToCheckExistence $e) {
-            $previous = $e->getPrevious();
-            LoggerService::warning(
-                "Unable to check file existence (Azure transient failure): {$path}",
-                [
-                    'previous_exception_class' => $previous ? $previous::class : null,
-                    'previous_exception_message' => $previous?->getMessage(),
-                ],
-                $e
-            );
-
-            // Let the job retry - this is not a "missing file" case.
-            throw $e;
-        } catch (Throwable $e) {
-            $previous = $e->getPrevious();
-            LoggerService::error(
-                "Error checking file existence: {$path}",
-                [
-                    'exception_class' => $e::class,
-                    'previous_exception_class' => $previous ? $previous::class : null,
-                    'previous_exception_message' => $previous?->getMessage(),
-                ],
-                $e
-            );
-
-            // Do not convert runtime/storage failures into "missing file".
-            // Let the job fail so it can be retried.
-            throw $e;
+            return Storage::disk('azureIMPrivate')->exists($path);
+        } catch (Throwable) {
+            return false;
         }
-
-        return false;
     }
 
     public function middleware()
