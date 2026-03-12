@@ -195,10 +195,12 @@ class CarQuoteController extends Controller
             $responseMessage = $response;
         }
         $message = 'Car Plan has not been updated '.$responseMessage;
-     
-        return $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest'
-            ? $message
-            : redirect()->back()->with('message', $message);
+
+        if ($request->expectsJson()) {
+            return $message;
+        }
+
+        return redirect()->back()->with('error', $message);
     }
 
     public function carPlansByInsuranceProvider(Request $request)
