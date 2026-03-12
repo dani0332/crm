@@ -48,10 +48,14 @@ class WatermarkDocumentsJob implements ShouldQueue
         $refId = "{$this->uuid} - {$this->quoteDocumentId}";
         LoggerService::startQuoteLogging($refId, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
-        LoggerService::info('WatermarkDocumentsJob started for');
+        LoggerService::info('WatermarkDocumentsJob started');
+
+        if ($this->isFileBeingProcessed()) {
+            return;
+        }
 
         $quoteDocumentAndType = $this->resolveQuoteDocumentAndDocumentType();
-        if ($this->isFileBeingProcessed() || !$quoteDocumentAndType) {
+        if ($quoteDocumentAndType === null) {
             return;
         }
 
@@ -60,13 +64,14 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         try {
             if (! $this->fileExists($sourcePath)) {
+                cache()->forget("processing_{$this->lockKey}");
                 LoggerService::warning("Source file does not exist: {$sourcePath}");
 
                 return;
             }
 
             // Perform watermarking based on file type
-            $watermarkService = app()->make(QuoteDocumentService::class);
+            $watermarkService = app(QuoteDocumentService::class);
             $fileMimeType = $quoteDocument->doc_mime_type;
             $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
@@ -87,12 +92,13 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
 
             // Update the document with watermark data
-            if (isset($watermarkData['watermarked_doc_name']) && isset($watermarkData['watermarked_doc_url'])) {
+            if (isset($watermarkData['watermarked_doc_name'], $watermarkData['watermarked_doc_url'])) {
                 $quoteDocument->update([
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                LoggerService::info('watermark job completed for '.$this->uuid);
+                cache()->forget("processing_{$this->lockKey}");
+                LoggerService::info('Watermark job completed');
             }
         } catch (\Exception $e) {
             cache()->forget("processing_{$this->lockKey}");
@@ -106,7 +112,7 @@ class WatermarkDocumentsJob implements ShouldQueue
      *
      * @return array{0: QuoteDocument, 1: DocumentType}|null
      */
-    private function resolveQuoteDocumentAndDocumentType(): bool|array
+    private function resolveQuoteDocumentAndDocumentType(): ?array
     {
         try {
             $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
@@ -116,16 +122,16 @@ class WatermarkDocumentsJob implements ShouldQueue
             if ($sourcePath === '') {
                 LoggerService::warning('Source file path is empty');
 
-                return false;
+                return null;
             }
 
             return [$quoteDocument, $documentType];
         } catch (ModelNotFoundException $e) {
             cache()->forget("processing_{$this->lockKey}");
-            LoggerService::warning('QuoteDocument or DocumentType not found; failing job.' .$this->documentTypeId, [], $e);
+            LoggerService::warning('QuoteDocument or DocumentType not found; failing job.', [], $e);
             $this->fail($e);
 
-            return false;
+            return null;
         }
     }
 
@@ -138,6 +144,7 @@ class WatermarkDocumentsJob implements ShouldQueue
         $cacheKey = "processing_{$this->lockKey}";
         if (cache()->has($cacheKey)) {
             LoggerService::info('File is already being processed; skipping this attempt.');
+
             return true;
         }
 
