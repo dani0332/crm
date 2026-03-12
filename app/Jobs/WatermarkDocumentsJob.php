@@ -9,6 +9,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
@@ -45,24 +46,28 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
+        $refId = "{$this->uuid} - {$this->quoteDocumentId}";
+        LoggerService::startQuoteLogging($refId, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
-        LoggerService::info("WatermarkDocumentsJob started for Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+        LoggerService::info('WatermarkDocumentsJob started for');
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
-            LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+            LoggerService::info('File is already being processed.');
             $this->release(30); // Release the job to be retried in 30 seconds
 
             return;
         }
 
-        $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
-        $documentType = DocumentType::find($this->documentTypeId);
-
-        // Ensure the quoteDocument and documentType exist
-        if (! $quoteDocument || ! $documentType) {
-            LoggerService::warning('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
+        try {
+            $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
+            $documentType = DocumentType::findOrFail($this->documentTypeId);
+        } catch (ModelNotFoundException $e) {
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::warning('QuoteDocument or DocumentType not found; failing job.', [
+                'document_type_id' => $this->documentTypeId,
+            ], $e);
+            $this->fail($e);
 
             return;
         }
@@ -89,7 +94,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
 
-            LoggerService::info("Watermark starting for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}", [
+            LoggerService::info("Watermark starting for document ID", [
                 'doc_name' => $docName,
                 'fileMimeType' => $fileMimeType,
                 'documentType' => $documentType->code,
@@ -113,15 +118,8 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
         } catch (\Exception $e) {
             cache()->forget("processing_{$this->lockKey}");
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage(), [], $e);
+            LoggerService::error("Error processing watermark. Error: ".$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
-        } catch (Throwable $t) {
-            // Ensure the processing lock is always cleared for non-Exception Throwables (e.g., TypeError, Error)
-            cache()->forget("processing_{$this->lockKey}");
-            LoggerService::error("throwable: Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$t->getMessage(), [
-                'throwable_class' => $t::class,
-            ], $t);
-            throw $t; // Re-throw to trigger job retry
         }
     }
 
@@ -174,8 +172,6 @@ class WatermarkDocumentsJob implements ShouldQueue
                 [
                     'previous_exception_class' => $previous ? $previous::class : null,
                     'previous_exception_message' => $previous?->getMessage(),
-                    'quote_uuid' => $this->uuid,
-                    'quote_document_id' => $this->quoteDocumentId,
                 ],
                 $e
             );
