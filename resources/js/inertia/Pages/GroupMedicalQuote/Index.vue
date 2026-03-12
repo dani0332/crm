@@ -152,7 +152,7 @@ const tableHeader = [
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
-  { text: 'ASSIGNED AT', value: 'advisor_assigned_date' },
+  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
