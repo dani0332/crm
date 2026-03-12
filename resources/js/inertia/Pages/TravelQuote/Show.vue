@@ -3843,7 +3843,7 @@ const fullAddress = computed(() => {
       v-if="isAllianceProvider"
       :type="modelClass"
       :quoteTypeId="$page.props.quoteTypeId"
-      :id="$page.props.record.id"
+      :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
 
