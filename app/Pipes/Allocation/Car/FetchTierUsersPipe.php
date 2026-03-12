@@ -120,7 +120,7 @@ class FetchTierUsersPipe extends BaseAllocationPipe
             ]);
 
             // Retrieve team IDs for the relevant team
-            $teamIds = Team::where('name', $mappedTeam)->pluck('id')->toArray();
+            $teamIds = Team::where('code', $mappedTeam)->active()->pluck('id')->toArray();
 
             // Retrieve user IDs associated with the relevant team
             $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();

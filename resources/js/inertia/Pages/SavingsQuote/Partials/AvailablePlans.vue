@@ -454,7 +454,7 @@ onMounted(() => {
           <!-- Right side buttons -->
           <div class="flex gap-3">
             <!-- Send OCA Email Button -->
-            <x-tooltip placement="top" align="left">
+            <x-tooltip v-if="false" placement="top" align="left">
               <x-button
                 @click.prevent="modals.sendConfirm = true"
                 size="sm"
@@ -826,10 +826,12 @@ onMounted(() => {
           :lockLeadSectionsDetails="lockLeadSectionsDetails"
           :lookUpData="lookUpData"
           :localLookups="localLookups"
+          :payments="payments"
         />
 
         <!-- Send OCA Email Confirmation Modal -->
         <x-modal
+          v-if="false"
           v-model="modals.sendConfirm"
           title="Send OCA Email"
           show-close
