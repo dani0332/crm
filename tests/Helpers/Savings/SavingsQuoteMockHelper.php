@@ -5,14 +5,17 @@ namespace Tests\Helpers\Savings;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
+use App\Services\HttpRequestService;
+use App\Services\Quotes\SavingsQuoteService;
 use Illuminate\Support\Facades\DB;
 use Mockery;
+use Mockery\MockInterface;
 
 class SavingsQuoteMockHelper
 {
-    public static function mockHttpRequestService(int $statusCode = 200): \Mockery\MockInterface
+    public static function mockHttpRequestService(int $statusCode = 200): MockInterface
     {
-        $mockService = Mockery::mock(\App\Services\HttpRequestService::class);
+        $mockService = Mockery::mock(HttpRequestService::class);
         $mockService->shouldReceive('processRequest')->andReturn($statusCode);
 
         return $mockService;
@@ -73,9 +76,9 @@ class SavingsQuoteMockHelper
         return (object) array_merge($defaults, $overrides);
     }
 
-    public static function mockSavingsQuoteService($httpService, $plansResponse): \Mockery\MockInterface
+    public static function mockSavingsQuoteService($httpService, $plansResponse): MockInterface
     {
-        $mockService = Mockery::mock(\App\Services\Quotes\SavingsQuoteService::class, [$httpService])->makePartial();
+        $mockService = Mockery::mock(SavingsQuoteService::class, [$httpService])->makePartial();
         $mockService->shouldReceive('getQuotePlans')->andReturn($plansResponse);
 
         return $mockService;

@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Services\HttpRequestService;
 use App\Services\Quotes\SavingsQuoteService;
+use Illuminate\Http\Request;
 use Tests\Helpers\Savings\SavingsQuoteMockHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -49,7 +52,7 @@ test('can retrieve available plans for valid quote UUID', function () {
     $plans = $service->getAvailablePlans($quote->uuid);
 
     expect($plans)->not->toBeNull()
-        ->and($plans)->toBeInstanceOf(\stdClass::class)
+        ->and($plans)->toBeInstanceOf(stdClass::class)
         ->and(isset($plans->regular) || isset($plans->lumpsum))->toBeTrue();
 });
 
@@ -67,7 +70,7 @@ test('retrieving available plans handles empty plan list gracefully', function (
     $plans = $service->getAvailablePlans($quote->uuid);
 
     expect($plans)->not->toBeNull()
-        ->and($plans)->toBeInstanceOf(\stdClass::class);
+        ->and($plans)->toBeInstanceOf(stdClass::class);
 });
 
 test('retrieving available plans for non-existent quote handles API error', function () {
@@ -101,7 +104,7 @@ test('retrieving available plans includes required fields', function () {
     $plans = $service->getAvailablePlans($quote->uuid);
 
     expect($plans)->not->toBeNull()
-        ->and($plans)->toBeInstanceOf(\stdClass::class);
+        ->and($plans)->toBeInstanceOf(stdClass::class);
 
     if (isset($plans->regular) && count($plans->regular) > 0) {
         $firstPlan = $plans->regular[0];
@@ -287,18 +290,18 @@ test('can update plan with valid data', function () {
 
 test('plan update checks permission based on payment status', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote([
-        'payment_status_id' => \App\Enums\PaymentStatusEnum::CAPTURED,
+        'payment_status_id' => PaymentStatusEnum::CAPTURED,
     ]);
 
-    \App\Models\Payment::create([
+    Payment::create([
         'code' => $quote->code,
         'paymentable_id' => $quote->id,
         'paymentable_type' => PersonalQuote::class,
-        'payment_status_id' => \App\Enums\PaymentStatusEnum::CAPTURED,
+        'payment_status_id' => PaymentStatusEnum::CAPTURED,
         'captured_at' => now()->subDays(15),
     ]);
 
-    $request = new \Illuminate\Http\Request([
+    $request = new Request([
         'quote_uuid' => $quote->uuid,
         'plan_id' => 1,
         'provider_name' => 'Test Provider',
