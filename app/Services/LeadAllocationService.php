@@ -82,7 +82,7 @@ class LeadAllocationService extends BaseService
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
-                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::GBP])
                 ->where('lead_allocation.quote_type_id', QuoteTypes::HEALTH->id())
                 ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);

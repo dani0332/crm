@@ -544,6 +544,8 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->string('health_team_type')->nullable();
@@ -592,6 +594,7 @@ class CoreSchema
                 $table->timestamp('pec_marked_at')->nullable();
                 $table->unsignedBigInteger('branch_id')->nullable();
                 $table->boolean('is_branch_applicable')->default(0);
+                $table->boolean('is_error_email_sent')->default(0);
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -638,6 +641,13 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
+            'quote_tags' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->string('name');
+                $table->unsignedBigInteger('quote_type_id');
                 $table->timestamps();
             },
         ]);
@@ -1001,6 +1011,23 @@ class CoreSchema
                 $table->unsignedBigInteger('insured_id');
                 $table->unsignedBigInteger('customer_id');
                 $table->boolean('is_active')->default(1);
+                $table->timestamps();
+                $table->softDeletes();
+            },
+            'customer_members' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_type'); // Polymorphic: model class name
+                $table->unsignedBigInteger('quote_id'); // Polymorphic: model ID
+                $table->string('customer_type')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->string('gender')->nullable();
+                $table->string('relation_code')->nullable();
+                $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
+                $table->unsignedBigInteger('member_category_id')->nullable();
+                $table->unsignedBigInteger('salary_band_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             },
