@@ -52,6 +52,9 @@ class WatermarkDocumentsJob implements ShouldQueue
         LoggerService::info('WatermarkDocumentsJob started');
 
         if ($this->isFileBeingProcessed()) {
+            // Release the job to be retried in 30 seconds so a legitimate second attempt (e.g. after a stale cache lock) is not permanently lost.
+            $this->release(30);
+
             return;
         }
 
