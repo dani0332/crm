@@ -88,7 +88,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     {
         return $this->belongsToMany(
             InsuranceProvider::class,
-            'insurance_provider_transitions',
+            'renewal_insurance_provider_transitions',
             'source_provider_id',
             'target_provider_id'
         );

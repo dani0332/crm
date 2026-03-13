@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
 class InsuranceProviderTransitionsSeeder extends Seeder
 {
     /**
-     * Seed insurance_provider_transitions (e.g. RSA and TM → GIG AXA for Genesis-style leads).
+     * Seed renewal_insurance_provider_transitions (e.g. RSA and TM → GIG AXA for Genesis-style leads).
      * Skips seeding for a source provider if it already has an active transition.
      */
     public function run(): void

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InsuranceProviderTransition extends Model
 {
-    protected $table = 'insurance_provider_transitions';
+    protected $table = 'renewal_insurance_provider_transitions';
 
     protected $fillable = ['source_provider_id', 'target_provider_id', 'description' ,'is_active','created_by','updated_by'] ;
 

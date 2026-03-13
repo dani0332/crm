@@ -45,7 +45,7 @@ class RenewalsSchema
                 $table->softDeletes();
                 $table->timestamps();
             },
-            'insurance_provider_transitions' => function (Blueprint $table) {
+            'renewal_insurance_provider_transitions' => function (Blueprint $table) {
                 $table->id();
                 $table->integer('source_provider_id');
                 $table->integer('target_provider_id');
