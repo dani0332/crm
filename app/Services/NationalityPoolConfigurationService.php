@@ -45,9 +45,10 @@ class NationalityPoolConfigurationService
     {
         $codes = collect($data['canonical_nationality_codes'])->implode(',');
         $groupIds = collect($data['health_nationality_group_ids'])->implode(',');
+        $effectiveFrom = Carbon::parse($data['effective_from'])->startOfDay();
 
         NationalityPool::updateOrCreate([
-            'effective_from' => $data['effective_from'],
+            'effective_from' => $effectiveFrom,
         ], [
             'health_nationality_group_ids' => $groupIds,
             'canonical_nationality_codes' => $codes,
