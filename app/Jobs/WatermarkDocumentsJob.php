@@ -121,6 +121,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             $sourcePath = (string) ($quoteDocument->doc_url ?? '');
             if ($sourcePath === '') {
+                cache()->forget("processing_{$this->lockKey}");
                 LoggerService::warning('Source file path is empty');
 
                 return null;
