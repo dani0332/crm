@@ -330,12 +330,12 @@ class QuoteDocumentService extends BaseService
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 LoggerService::info('Dispatching WatermarkDocumentsJob');
-                // Delay 1 minute so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+                // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $quoteUUID,
                     $documentType->id
-                )->delay(now()->addMinute())->afterCommit();
+                )->delay(now()->addSeconds(10))->afterCommit();
             }
 
             LoggerService::info('Document uploaded successfully');

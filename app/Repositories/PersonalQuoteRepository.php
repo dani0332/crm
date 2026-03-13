@@ -203,10 +203,10 @@ class PersonalQuoteRepository extends BaseRepository
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     LoggerService::info(self::class.' - Dispatching WatermarkDocumentsJob - Quote UUID: '.$quoteUUID);
-                    // Delay 1 minute so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+                    // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $quoteUUID, $documentType->id
-                    )->delay(now()->addMinute())->afterCommit();
+                    )->delay(now()->addSeconds(10))->afterCommit();
                 }
 
                 if (! $insuranceProviderId && $isSendUpdate) {
