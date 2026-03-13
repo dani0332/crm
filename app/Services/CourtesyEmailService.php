@@ -7,20 +7,17 @@ use App\Enums\EmirateEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
-use App\Models\PetQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Models\YachtQuote;
 use App\Services\Logger\LoggerService;
 
 class CourtesyEmailService extends BaseService
@@ -112,7 +109,7 @@ class CourtesyEmailService extends BaseService
                 'uuid' => $quote->uuid,
                 'refId' => $refId,
                 'quoteTypeId' => $quoteTypeId,
-                'workflowType' => 'courtesy_workflow_email',
+                'workflowType' => WorkflowTypeEnum::COURTESY_EMAIL_WORKFLOW,
                 'line_of_business' => $quoteType ? strtolower($quoteType->value) : '',
                 'advisorName' => $advisor->name,
                 'customerName' => $customerName,
@@ -186,11 +183,11 @@ class CourtesyEmailService extends BaseService
             QuoteTypeId::Bike => BikeQuote::where('uuid', $quoteUID)->first(),
             QuoteTypeId::Car => CarQuote::where('uuid', $quoteUID)->first(),
             QuoteTypeId::Health => HealthQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Home => HomeQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Life => LifeQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Pet => PetQuote::where('uuid', $quoteUID)->first(),
+            QuoteTypeId::Home => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Home)->first(),
+            QuoteTypeId::Life => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Life)->first(),
+            QuoteTypeId::Pet => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Pet)->first(),
             QuoteTypeId::Travel => TravelQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Yacht => YachtQuote::where('uuid', $quoteUID)->first(),
+            QuoteTypeId::Yacht => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Yacht)->first(),
             QuoteTypeId::Cycle => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cycle)->first(),
             QuoteTypeId::Corpline => BusinessQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Corpline)->first(),
             default => null,

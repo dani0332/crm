@@ -88,5 +88,5 @@ final class WorkflowTypeEnum extends Enum
     public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
 
     // Courtesy Email
-    public const COURTESY_EMAIL = 'courtesy_email';
+    public const COURTESY_EMAIL_WORKFLOW = 'courtesy_email_workflow';
 }
