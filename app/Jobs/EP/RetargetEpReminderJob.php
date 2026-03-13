@@ -31,17 +31,6 @@ class RetargetEpReminderJob implements ShouldQueue
         $this->afterCommit();
     }
 
-    public function middleware(): array
-    {
-        $lockKey = "retarget-ep-reminder-{$this->quoteUuid}-{$this->quoteTypeId}";
-
-        return [
-            (new WithoutOverlapping($lockKey))
-                ->dontRelease()
-                ->expireAfter($this->timeout),
-        ];
-    }
-
     public function handle(EmbeddedTransactionService $embeddedTransactionService): void
     {
         LoggerService::startQuoteLogging($this->quoteUuid, LoggerFeatureEnum::EP_RETARGET_REMINDER);
@@ -61,6 +50,17 @@ class RetargetEpReminderJob implements ShouldQueue
 
         $response = $embeddedTransactionService->retargetEpReminder($lead, $this->quoteTypeId);
         LoggerService::info('RetargetEpReminderJob - retarget ep reminder triggered', ['uuid' => $this->quoteUuid, 'response' => $response]);
+    }
+
+    public function middleware(): array
+    {
+        $lockKey = "retarget-ep-reminder-{$this->quoteUuid}-{$this->quoteTypeId}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter($this->timeout),
+        ];
     }
 
     public function failed(Throwable $exception): void
