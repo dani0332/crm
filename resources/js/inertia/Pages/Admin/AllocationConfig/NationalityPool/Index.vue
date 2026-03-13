@@ -13,6 +13,7 @@ const selectedNationalities = ref();
 const individualNationalities = ref([]);
 const scheduledConfigurationsRef = ref(null);
 const auditLogsRef = ref(null);
+const isInitializing = ref(true);
 const notification = useToast();
 
 // Custom functions
@@ -41,7 +42,7 @@ function getData(id = null) {
     if (nationalityPoolConfigurations.value?.effective_to) {
       toDate.value =  new Date(nationalityPoolConfigurations.value?.effective_to);
     }
-    fromDate.value = new Date(nationalityPoolConfigurations.value?.effective_from);
+    fromDate.value = nationalityPoolConfigurations.value?.effective_from ? new Date(nationalityPoolConfigurations.value?.effective_from) : null;
     selectedNationalityGroups.value = nationalityPoolConfigurations.value?.health_nationality_group_ids?.split(',').map(Number) || [];
     selectedNationalities.value = nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(',') || [];
   }).catch(error => {
@@ -52,6 +53,7 @@ function getData(id = null) {
     console.log(error);
   }).finally(() => {
     loading.value = false;
+    isInitializing.value = false;
   });
 }
 
@@ -132,6 +134,7 @@ onMounted(() => {
 });
 
 watch(selectedNationalityGroups, (newVal) => {
+  if (isInitializing.value) return;
   if (newVal.length == 0) {
     selectedNationalities.value = individualNationalities.value;
     return;
@@ -208,7 +211,7 @@ watch(selectedNationalityGroups, (newVal) => {
         :loading="isSearching"
         :disabled="isSearching"
       >
-        Update
+       {{ fromDate ? 'Update' : 'Create' }}
       </x-button>
     </div>
   </x-form>
