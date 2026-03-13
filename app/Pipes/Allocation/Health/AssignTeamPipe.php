@@ -26,6 +26,11 @@ class AssignTeamPipe extends BaseAllocationPipe
         $this->setRequest($request);
         $logService = app(HealthTeamRoutingLogService::class);
 
+        // Skip team assignment if already assigned (Duplicate lead case)
+        if ($this->lead->health_team_type) {
+            return next($request);
+        }
+
         // Check if lead source ! ecom
         if (! $this->lead->isEcommerce()) {
             // Terminate
