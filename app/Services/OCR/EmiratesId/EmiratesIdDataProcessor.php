@@ -363,20 +363,6 @@ class EmiratesIdDataProcessor
         }
     }
 
-    private function getNationalityId(?string $nationality): ?int
-    {
-        if (empty($nationality)) {
-            return null;
-        }
-
-        $nationalityRecord = Nationality::where('text', $nationality)
-            ->orWhere('code', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->first();
-
-        return $nationalityRecord?->id;
-    }
-
     private function getNationalityName(?int $nationalityId): ?string
     {
         if (empty($nationalityId)) {
