@@ -42,7 +42,7 @@ class AllocationThresholdController extends Controller
 
         return inertia('Admin/AllocationConfig/AllocationThreshold', [
             'teams' => $teams,
-
+            'roles' => auth()->user()->roles->pluck('name')->toArray(),
         ]);
     }
 

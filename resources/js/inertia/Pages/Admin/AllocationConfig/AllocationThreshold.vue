@@ -4,6 +4,7 @@ import { onMounted } from 'vue';
 
 const props = defineProps({
   teams: Object,
+  roles: Array,
 });
 
 const notification = useToast();
@@ -191,7 +192,7 @@ onMounted(() => {
                 class="w-full"
                 v-model="team.min_price"
                 label="Min Price"
-                :disabled = "team.name != 'GBP'"
+                :disabled = "team.name != 'GBP' && !roles.includes('ADMIN')"
               />
               <p class="text-xs -mt-4">
                 Minimum annual premium (AED) required for this
@@ -203,7 +204,7 @@ onMounted(() => {
               class="w-full"
               v-model="team.max_price"
               label="Max Price"
-              :disabled = "team.name != 'GBP'"
+              :disabled = "team.name != 'GBP' && !roles.includes('ADMIN')"
             />
           </div>
         </x-form>
