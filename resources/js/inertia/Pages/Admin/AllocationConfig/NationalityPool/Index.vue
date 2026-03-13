@@ -56,7 +56,6 @@ function getData(id = null) {
       title: 'Error fetching data',
       position: 'top',
     });
-    console.log(error);
   }).finally(() => {
     loading.value = false;
     isInitializing.value = false;
@@ -91,8 +90,6 @@ function getDateOnly(date) {
 }
 
 const checkEffectiveDate = (newDate) => {
-  console.log('newDate:----------------',newDate);
-  console.log('effectiveFromDates:----------------',effectiveFromDates.value);
   if (effectiveFromDates.value.some(d => getDateOnly(d) === getDateOnly(newDate))) {
     buttonLabel.value = 'Update';
   } else {
