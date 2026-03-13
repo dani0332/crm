@@ -77,8 +77,8 @@ class DeviceQuoteService extends BaseQuoteService
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
-
-                $q->with([
+                $q->leftJoin('lookups as lu', 'lu.id', '=', 'device_quote_request.transaction_type_id')
+                ->with([
                     'quoteStatus',
                     'advisor',
                     'paymentStatus',
@@ -124,7 +124,7 @@ class DeviceQuoteService extends BaseQuoteService
                         AND quote_request_id = personal_quotes.id
                     ), '{$entityCustomerType}', '{$individualCustomerType}'
                 ) AS customer_type
-            ");
+            ")->addSelect('lu.text as transaction_type_text');
             })
             ->where('uuid', $uuid)->firstOrFail();
     }
