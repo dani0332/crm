@@ -39,7 +39,15 @@ class NationalityPoolConfigurationController extends Controller
             // Fetch nationality pool configurations
             $nationalityPoolConfigurations = $this->nationalityPoolConfigurationService->getData($id);
 
-            return response()->json(['groups' => $groups, 'nationalities' => $nationalities, 'nationalityPoolConfigurations' => $nationalityPoolConfigurations]);
+            // Fetch this to handle create/update button label
+            $effectiveFromDates = $this->nationalityPoolConfigurationService->getAllEffetiveFromDates();
+
+            return response()->json([
+                'groups' => $groups,
+                'nationalities' => $nationalities,
+                'nationalityPoolConfigurations' => $nationalityPoolConfigurations,
+                'effectiveFromDates' => $effectiveFromDates,
+            ]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
         }

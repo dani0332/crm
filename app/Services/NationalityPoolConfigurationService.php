@@ -62,4 +62,12 @@ class NationalityPoolConfigurationService
     {
         NationalityPool::destroy($id);
     }
+
+    public function getAllEffetiveFromDates(): ?array
+    {
+        return NationalityPool::select('effective_from')
+            ->get()
+            ->pluck('effective_from')
+            ->toArray();
+    }
 }

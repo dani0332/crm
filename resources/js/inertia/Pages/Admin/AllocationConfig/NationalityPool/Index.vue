@@ -3,6 +3,7 @@ import { onMounted, ref, nextTick } from 'vue';
 import NationalityPoolScheduledConfigurations from './NationalityPoolScheduledConfigurations.vue';
 import NationalityPoolAuditLogs from './NationalityPoolAuditLogs.vue';
 const nationalityPoolConfigurations = ref([]);
+const effectiveFromDates = ref([]);
 const toDate = ref('2099-12-31'); // Default as per business
 const fromDate = ref();
 const nationalityGroups = ref([]);
@@ -14,6 +15,7 @@ const individualNationalities = ref([]);
 const scheduledConfigurationsRef = ref(null);
 const auditLogsRef = ref(null);
 const isInitializing = ref(true);
+const buttonLabel = ref('Create');
 const notification = useToast();
 
 // Custom functions
@@ -29,6 +31,9 @@ function getData(id = null) {
   loading.value = true;
 
   axios.get(route('admin.nationality-pool-config.data', { id })).then(response => {
+    nationalityPoolConfigurations.value = response.data.nationalityPoolConfigurations;
+    effectiveFromDates.value = response.data.effectiveFromDates;
+    
     // Assign only forst time, avoid reassigning on edit
     if (nationalityGroups.value.length == 0) {
       nationalityGroups.value = response.data.groups;
@@ -36,13 +41,14 @@ function getData(id = null) {
     if (gbpNationalities.value.length == 0) {
       gbpNationalities.value = response.data.nationalities;
     }
-    nationalityPoolConfigurations.value = response.data.nationalityPoolConfigurations;
 
     // Populate form fields
-    if (nationalityPoolConfigurations.value?.effective_to) {
-      toDate.value =  new Date(nationalityPoolConfigurations.value?.effective_to);
+    if (nationalityPoolConfigurations.value?.effective_from) {
+      fromDate.value = new Date(nationalityPoolConfigurations.value?.effective_from);
+      toDate.value = new Date(nationalityPoolConfigurations.value?.effective_to);
+      checkEffectiveDate(nationalityPoolConfigurations.value?.effective_from);
     }
-    fromDate.value = nationalityPoolConfigurations.value?.effective_from ? new Date(nationalityPoolConfigurations.value?.effective_from) : null;
+  
     selectedNationalityGroups.value = nationalityPoolConfigurations.value?.health_nationality_group_ids?.split(',').map(Number) || [];
     selectedNationalities.value = nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(',') || [];
   }).catch(error => {
@@ -78,6 +84,20 @@ const addNationality = (newValues) => {
 
   const set = new Set(individualNationalities.value);
   individualNationalities.value = newValues.filter(v => set.has(v));
+}
+
+function getDateOnly(date) {
+  return date.split('T')[0].split(' ')[0]
+}
+
+const checkEffectiveDate = (newDate) => {
+  console.log('newDate:----------------',newDate);
+  console.log('effectiveFromDates:----------------',effectiveFromDates.value);
+  if (effectiveFromDates.value.some(d => getDateOnly(d) === getDateOnly(newDate))) {
+    buttonLabel.value = 'Update';
+  } else {
+    buttonLabel.value = 'Create';
+  }
 }
 
 function onSubmit() {
@@ -165,6 +185,7 @@ watch(selectedNationalityGroups, (newVal) => {
                     label="From"
                     v-model="fromDate"
                     :min-date="new Date()"
+                    @update:modelValue="checkEffectiveDate"
                 />
                 <DatePicker
                     name="to"
@@ -211,7 +232,7 @@ watch(selectedNationalityGroups, (newVal) => {
         :loading="isSearching"
         :disabled="isSearching"
       >
-       {{ fromDate ? 'Update' : 'Create' }}
+       {{ buttonLabel }}
       </x-button>
     </div>
   </x-form>
