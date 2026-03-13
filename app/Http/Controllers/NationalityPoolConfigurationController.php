@@ -68,7 +68,7 @@ class NationalityPoolConfigurationController extends Controller
     public function save(NationalityPoolConfigurationRequest $request): JsonResponse
     {
         try {
-            $this->nationalityPoolConfigurationService->saveData($request->all());
+            $this->nationalityPoolConfigurationService->saveData($request->validated());
 
             return response()->json(['message' => 'Nationality pool configuration saved successfully']);
         } catch (Exception $e) {
