@@ -75,6 +75,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
                 Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
+                LoggerService::info('Request parameters after merge:', [
+                    'request_params' => request()->all(),
+                ]);
             }
 
             // Process CSV and send email
