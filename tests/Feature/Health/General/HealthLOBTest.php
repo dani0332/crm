@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    \Mockery::close();
+    Mockery::close();
 });
 
 // ============================================================================

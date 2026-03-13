@@ -3,6 +3,7 @@
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypes;
+use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\QuoteTag;
@@ -21,7 +22,7 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    \Mockery::close();
+    Mockery::close();
 });
 
 // ============================================================================
@@ -1046,7 +1047,7 @@ test('assign team pipe sends error email when no team found for price range', fu
 
     // Note: is_error_email_sent flag is set before exception, but transaction rollback
     // may prevent us from seeing it. However, the email should still be sent.
-    Mail::assertSent(\App\Mail\HealthAssignmentIssueEmail::class);
+    Mail::assertSent(HealthAssignmentIssueEmail::class);
 });
 
 test('assign team pipe sends error email when price starting from is null', function () {
@@ -1081,5 +1082,5 @@ test('assign team pipe sends error email when price starting from is null', func
 
     // Note: is_error_email_sent flag is set before exception, but transaction rollback
     // may prevent us from seeing it. However, the email should still be sent.
-    Mail::assertSent(\App\Mail\HealthAssignmentIssueEmail::class);
+    Mail::assertSent(HealthAssignmentIssueEmail::class);
 });
