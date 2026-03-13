@@ -1782,7 +1782,7 @@ class CentralService extends BaseService
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+
         if ($quoteTypeId == QuoteTypeId::Device) {
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
             $insuranceProviderCompanyText = $quote?->insuranceProvider?->text ?? '';
