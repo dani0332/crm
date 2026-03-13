@@ -1349,8 +1349,8 @@ class SendUpdateLogService
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
             $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
         } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
-            $documentTypeCodes = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
             $documentTypeCodes = [
