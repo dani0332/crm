@@ -1620,20 +1620,23 @@ if (! function_exists('getTeamId')) {
     {
         try {
             $cacheKey = 'getTeamId_'.md5($teamNameOrCode.'|'.json_encode($additionalWhere).'|'.($ignoreActive ? '1' : '0'));
-
-            return Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
-                return Team::whereAny(['name', 'code'], $teamNameOrCode)
+            $teamId = Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
+                $id =  Team::whereAny(['name', 'code'], $teamNameOrCode)
                     ->when(! empty($additionalWhere), function ($query) use ($additionalWhere) {
                         $query->where($additionalWhere);
                     })
                     ->when(! $ignoreActive, function ($query) {
                         $query->active();
                     })
-                    ->value('id') ?? 0;
+                    ->value('id') ;
+                return $id ?: null;
             });
+            return $teamId ?? 0;
         } catch (\Exception $e) {
-            Log::error("Error retrieving team ID for team name or code: {$teamNameOrCode}", ['exception' => $e]);
-
+            LoggerService::error(
+                "Error retrieving team ID for team name or code: {$teamNameOrCode}",
+                exception: $e
+            );
             return 0;
         }
     }
