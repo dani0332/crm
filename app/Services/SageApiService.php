@@ -775,6 +775,10 @@ class SageApiService
         ) {
             $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+
+            if (! $emirate) {
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical quotes'];
+            }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
 
@@ -855,10 +859,6 @@ class SageApiService
     public function checkRequiredSageIds($sageRequest): array
     {
         $missingFields = [];
-        if (! $sageRequest->isEmirateOfVisaIdSelected && $sageRequest->quoteType == QuoteTypes::GROUP_MEDICAL) {
-            $missingFields[] = 'Emirate of Registration ID';
-        }
-
         if (empty($sageRequest->customerId)) {
             $missingFields[] = 'Customer Sage ID';
         }

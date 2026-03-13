@@ -1311,10 +1311,6 @@ class SagePayloadFactory
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
         $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
-        // if quote type is group medical, then emirate of visa id is selected
-        if ($modelType == QuoteTypes::GROUP_MEDICAL) {
-            $sageRequest->isEmirateOfVisaIdSelected = $quote?->emirate_of_your_visa_id ? true : false;
-        }
 
         return $sageRequest;
     }
