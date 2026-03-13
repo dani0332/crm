@@ -3,6 +3,8 @@
 use App\Enums\RolesEnum;
 use App\Http\Controllers\TmLeadController;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Services\TMLeadsService;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -26,7 +28,7 @@ beforeEach(function () {
 function ensureTmLeadsTableExists(): void
 {
     SchemaUtils::ensureTables([
-        'tm_leads' => function (\Illuminate\Database\Schema\Blueprint $table) {
+        'tm_leads' => function (Blueprint $table) {
             $table->id();
             $table->timestamps();
         },
@@ -37,7 +39,7 @@ function ensureTmLeadsTableExists(): void
 }
 
 it('registers telemarketing permission middleware on show action to prevent IDOR', function () {
-    $controller = new TmLeadController(app(\App\Services\TMLeadsService::class));
+    $controller = new TmLeadController(app(TMLeadsService::class));
     $middleware = $controller->getMiddleware();
 
     $showMiddleware = collect($middleware)->first(function ($m) {
