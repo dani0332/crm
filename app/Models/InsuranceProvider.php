@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -72,7 +74,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     /**
      * Transitions where this provider is the source (lead insurer).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function transitionsAsSource()
     {
@@ -82,7 +84,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     /**
      * Allowed target providers this source can transition to.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function allowedTransitionTargets()
     {

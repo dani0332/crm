@@ -112,7 +112,9 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Bus\Batch;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -296,7 +298,7 @@ class RenewalsUploadService
     /**
      * @return void
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -527,7 +529,7 @@ class RenewalsUploadService
         }
 
         if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-        $isTransitionableLead = $this->isTransitionableLeadForProcess($renewalQuoteProcess );
+            $isTransitionableLead = $this->isTransitionableLeadForProcess($renewalQuoteProcess);
             $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isTransitionableLead, $isRenewalHistorical);
 
             if (is_int($planResponse) && $planResponse == 200) {
@@ -1028,7 +1030,7 @@ class RenewalsUploadService
     /**
      * ignore fields having empty/null.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getNonEmptyValues($values)
     {
@@ -1376,7 +1378,7 @@ class RenewalsUploadService
             }
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1514,7 +1516,7 @@ class RenewalsUploadService
                 LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
                 $this->updateBasePricePlan($quote, $data, $renewalQuoteProcess);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1571,7 +1573,7 @@ class RenewalsUploadService
             }
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1650,7 +1652,7 @@ class RenewalsUploadService
             $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1978,7 +1980,7 @@ class RenewalsUploadService
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
             RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             LoggerService::error('Renewals OCB Email failed for  CAR-'.$carQuote->uuid.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
         }
     }
@@ -2342,7 +2344,7 @@ class RenewalsUploadService
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
-                              $isTransitionableLeadForProcess = $this->isTransitionableLeadForProcess($lead);
+                                $isTransitionableLeadForProcess = $this->isTransitionableLeadForProcess($lead);
 
                                 if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isTransitionableLeadForProcess['insuranceProvider'] != null) {
                                     // transitionable lead: plan type and plan name validated in isTransitionableLead
@@ -3380,7 +3382,7 @@ class RenewalsUploadService
             ]);
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -3489,7 +3491,7 @@ class RenewalsUploadService
             return $provider;
         }
         // Normalize © (U+00A9) to (C) so upload "Gulf Insurance Group (Gulf) B.S.C. ©" matches DB "Gulf Insurance Group (Gulf) B.S.C. (C)"
-        $normalized = str_replace(["©", "\u{00A9}"], '(C)', $trimmed);
+        $normalized = str_replace(['©', "\u{00A9}"], '(C)', $trimmed);
         $normalized = trim($normalized);
 
         return $normalized !== $trimmed ? InsuranceProvider::where('text', $normalized)->first() : null;
@@ -3508,8 +3510,7 @@ class RenewalsUploadService
      * Returns same shape as legacy isGenesisLead for drop-in use.
      *
      * @param  object  $leadData  Must have insurer (code), provider_name (text), plan_name, plan_type
-     * @param  \Illuminate\Support\Collection  $leadValidationErrors
-     * @return bool
+     * @param  Collection  $leadValidationErrors
      */
     public function isTransitionableLead(RenewalQuoteProcess $lead, &$leadValidationErrors): bool
     {
@@ -3545,6 +3546,7 @@ class RenewalsUploadService
             }
         }
         LoggerService::info('isTransitionableLead - transition match: false, status: '.($status ? 'true' : 'false'));
+
         return $status;
 
     }
@@ -3554,10 +3556,10 @@ class RenewalsUploadService
      * Does not run isTransitionableLead; use that only during validation and persist transition_id there.
      * If process has no transition_id, returns non-transitionable config (status false, provider/plan from leadData).
      *
-     * @param  \App\Models\RenewalQuoteProcess|null  $process
+     * @param  RenewalQuoteProcess|null  $process
      * @param  object  $leadData
-     * @param  \Illuminate\Support\Collection  $leadValidationErrors
-     * @return array{status: bool, carPlan: \App\Models\CarPlan|null, insuranceProvider: \App\Models\InsuranceProvider|null, transitionId: int|null}
+     * @param  Collection  $leadValidationErrors
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: int|null}
      */
     public function isTransitionableLeadForProcess(RenewalQuoteProcess $lead): array
     {
@@ -3569,10 +3571,11 @@ class RenewalsUploadService
             if ($transition && $target = $transition->targetProvider) {
                 LoggerService::info('isTransitionableLeadForProcess inside function - target:'.json_encode($target));
                 $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
-                    ->where('repair_type',  $leadData->plan_type ?? null)
+                    ->where('repair_type', $leadData->plan_type ?? null)
                     ->where('provider_id', $target->id)
                     ->first();
                 LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
+
                 return [
                     'status' => true,
                     'carPlan' => $carPlan,
@@ -3588,7 +3591,7 @@ class RenewalsUploadService
     /**
      * Resolve provider and plan from leadData only (no transition logic). Use when process has no transition_id.
      *
-     * @return array{status: bool, carPlan: \App\Models\CarPlan|null, insuranceProvider: \App\Models\InsuranceProvider|null, transitionId: null}
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: null}
      */
     private function getNonTransitionableLeadConfig($leadData): array
     {
@@ -3603,20 +3606,22 @@ class RenewalsUploadService
                 ->first();
         }
         LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
+
         return [
-        'status' => false,
-        'carPlan' => $carPlan,
-        'insuranceProvider' => $insuranceProvider,
-        'transitionId' => null,
-    ];
-    LoggerService::info('isTransitionableLeadForProcess inside function - return:'.json_encode($return));
-    return $return;
+            'status' => false,
+            'carPlan' => $carPlan,
+            'insuranceProvider' => $insuranceProvider,
+            'transitionId' => null,
+        ];
+        LoggerService::info('isTransitionableLeadForProcess inside function - return:'.json_encode($return));
+
+        return $return;
     }
 
     /**
      * Criteria to identify if the lead is a Genesis lead: insurance provider is LIVA(RSA) and plan is related to GIG(AXA).
      *
-     * @return array{status: bool, carPlan: \App\Models\CarPlan|null, insuranceProvider: \App\Models\InsuranceProvider|null}
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null}
      */
     public function isGenesisLead($leadData, &$leadValidationErrors): array
     {
@@ -3710,7 +3715,7 @@ class RenewalsUploadService
      *
      * @return void
      *
-     * @throws \Illuminate\Database\QueryException
+     * @throws QueryException
      * @throws FetchPlansUpdateException
      */
     public function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
@@ -3726,7 +3731,7 @@ class RenewalsUploadService
                     ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 return;
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false
                     || strpos($e->getMessage(), 'Lock wait timeout') !== false
                     || $e->getCode() === '40001'; // SQLSTATE 40001 is serialization failure
