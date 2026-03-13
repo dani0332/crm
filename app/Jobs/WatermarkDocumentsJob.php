@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
 use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
@@ -155,7 +156,9 @@ class WatermarkDocumentsJob implements ShouldQueue
     }
 
     /**
-     * Check if a file exists (remote URL or Azure storage). Returns false on any error.
+     * Check if a file exists (remote URL or Azure storage).
+     * Returns false only when existence was successfully checked and the file is missing.
+     * Re-throws UnableToCheckExistence and other exceptions so the job retries on transient failures.
      */
     private function fileExists(string $path): bool
     {
@@ -172,8 +175,29 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
 
             return Storage::disk('azureIMPrivate')->exists($path);
-        } catch (Throwable) {
-            return false;
+        } catch (UnableToCheckExistence $e) {
+            $previous = $e->getPrevious();
+            LoggerService::warning(
+                'Unable to check file existence (Azure transient failure): '.$path,
+                [
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+            throw $e;
+        } catch (Throwable $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                'Error checking file existence: '.$path,
+                [
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+            throw $e;
         }
     }
 
