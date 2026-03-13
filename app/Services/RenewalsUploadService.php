@@ -1890,10 +1890,7 @@ class RenewalsUploadService
                     'callSource' => 'imcrm',
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
-
-                $leadValidationErrors = collect();
-                $leadData = (object) $renewalQuoteProcess->data ?? [];
-                $isTransitionableLead = $this->isTransitionableLeadForProcess($renewalQuoteProcess, $leadData, $leadValidationErrors);
+                LoggerService::info('renewals-ocb-whatsapp- isTransitionableLeadForProcess inside function - renewalQuoteProcess:'.json_encode($renewalQuoteProcess));
 
                 $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
                     'quote_id' => $carQuote->id,
@@ -1902,7 +1899,7 @@ class RenewalsUploadService
                     'type' => RenewalsUploadType::UPDATE_LEADS,
                     'email_sent' => true,
                     'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-                ])->exists() && $renewalQuoteProcess->check;
+                ])->exists() && $renewalQuoteProcess->checkIsTransitionableLead();
 
                 $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -1932,7 +1929,7 @@ class RenewalsUploadService
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
                 // if the lead is a transitionable lead (e.g. Genesis), set the current insurer to empty in email
-                if ($renewalQuoteProcess->check) {
+                if ($renewalQuoteProcess->checkIsTransitionableLead()) {
                     $emailData->currentInsurer = '';
                 }
 
@@ -3554,7 +3551,7 @@ class RenewalsUploadService
     /**
      * Get transitionable provider config from stored transition on process only.
      * Does not run isTransitionableLead; use that only during validation and persist transition_id there.
-     * If process has no transition_id, returns non-transitionable config (status false, provider/plan from leadData).
+     * If process has no transition_id, returns non-transitionable config (status false, provider/plan from lead data).
      *
      * @param  RenewalQuoteProcess|null  $process
      * @param  object  $leadData
