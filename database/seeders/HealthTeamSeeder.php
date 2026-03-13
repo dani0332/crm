@@ -61,7 +61,7 @@ class HealthTeamSeeder extends Seeder
                     'category' => TeamCategoryEnum::AUH,
                     'allocation_threshold_enabled' => true,
                     'min_price' => 0,
-                    'max_price' => 1000000,
+                    'max_price' => 2000,
                 ]
             );
         }
