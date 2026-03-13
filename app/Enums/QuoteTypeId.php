@@ -45,7 +45,7 @@ final class QuoteTypeId extends Enum
      */
     public static function quoteTypesUsingWatermarkedPolicyCertificate(): array
     {
-        return [self::Device];
+        return []; // no LOBs using watermarked policy certificate water marked doc url yet
     }
 
     public static function getOptions()
