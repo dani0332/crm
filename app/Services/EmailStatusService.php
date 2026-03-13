@@ -4,13 +4,9 @@ namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
-use App\Models\BikeQuote;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
 use App\Models\EmailStatus;
-use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
-use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
 
@@ -46,58 +42,47 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-        switch (request('quoteTypeId')) {
-            case QuoteTypeId::Bike:
-                $quote = BikeQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Car:
-                $quote = CarQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Corpline:
-                $quote = BusinessQuote::where('uuid', $request->uuid)->where('quote_type_id', QuoteTypeId::Corpline)->first();
-                break;
-            case QuoteTypeId::Health:
-                $quote = HealthQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Home:
-            case QuoteTypeId::Savings:
-            case QuoteTypeId::Life:
-            case QuoteTypeId::Cyber:
-                $quote = PersonalQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Pet:
-            case QuoteTypeId::Cycle:
-            case QuoteTypeId::Yacht:
-                $quote = PersonalQuote::where('uuid', $request->uuid)->where('quote_type_id', request('quoteTypeId'))->first();
-                break;
-            case QuoteTypeId::Travel:
-                $quote = TravelQuote::where('uuid', $request->uuid)->first();
-                break;
+        $quoteTypeId = request('quoteTypeId');
+        $quoteType = QuoteTypes::getName($quoteTypeId);
 
-            default:
-                $quote = null;
-                break;
-        }
-        if (! $quote) {
+        if (! $quoteType) {
             LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
                 'uuid' => $request->uuid,
-                'quoteTypeId' => request('quoteTypeId'),
+                'quoteTypeId' => $quoteTypeId,
             ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
-        if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
+
+        $model = $quoteType->model();
+        $query = $model::where('uuid', $request->uuid);
+
+        if ($model instanceof PersonalQuote || $quoteTypeId === QuoteTypeId::Corpline) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        $quote = $query->first();
+
+        if (! $quote) {
+            LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
+                'uuid' => $request->uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return (object) ['message' => 'lead not found', 'status' => false];
+        }
+
+        if (EmailStatus::where('email_status', ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
             ->where('quote_id', $quote->id)->exists()) {
-            $request->quoteId = $quote->id;
-            $request->customerEmail = $request->customer_email;
-            $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
-
-            return (object) ['message' => 'Email event logged successfully', 'status' => true];
-        } else {
-
             return (object) ['message' => 'Email event already logged', 'status' => true];
         }
+
+        $request->quoteId = $quote->id;
+        $request->customerEmail = $request->customer_email;
+        $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
+
+        return (object) ['message' => 'Email event logged successfully', 'status' => true];
     }
 
     public function updateEmailStatus($emailData, $status)
