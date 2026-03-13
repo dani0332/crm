@@ -66,7 +66,6 @@ class NationalityPoolConfigurationService
     public function getAllEffetiveFromDates(): ?array
     {
         return NationalityPool::select('effective_from')
-            ->get()
             ->pluck('effective_from')
             ->toArray();
     }
