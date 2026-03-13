@@ -68,4 +68,29 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     {
         return $this->code === $code;
     }
+
+    /**
+     * Transitions where this provider is the source (lead insurer).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transitionsAsSource()
+    {
+        return $this->hasMany(InsuranceProviderTransition::class, 'source_provider_id');
+    }
+
+    /**
+     * Allowed target providers this source can transition to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function allowedTransitionTargets()
+    {
+        return $this->belongsToMany(
+            InsuranceProvider::class,
+            'insurance_provider_transitions',
+            'source_provider_id',
+            'target_provider_id'
+        );
+    }
 }
