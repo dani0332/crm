@@ -28,7 +28,7 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         // Skip team assignment if already assigned (Duplicate lead case)
         if ($this->lead->health_team_type) {
-            return next($request);
+            return $next($request);
         }
 
         // Check if lead source ! ecom
