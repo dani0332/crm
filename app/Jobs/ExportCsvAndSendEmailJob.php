@@ -14,6 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
@@ -75,8 +76,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
                 Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
-                LoggerService::info('Request parameters after merge:', [
-                    'request_params' => request()->all(),
+                LoggerService::info('Request parameters after merge (excluding user):', [
+                    'request_params' => Arr::except(request()->all(), ['user']),
                 ]);
             }
 
