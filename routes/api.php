@@ -58,7 +58,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
     Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
-    Route::post('/imcrm/device/send-ocb', [ApiController::class, 'deviceQuoteSendOCB'])->name('deviceQuoteSendOCBEmail');
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
 
