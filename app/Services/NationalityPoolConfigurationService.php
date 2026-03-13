@@ -35,10 +35,10 @@ class NationalityPoolConfigurationService
         if ($type == 'audit') {
             $logs->whereDate('effective_from', '<', $today);
         } else {
-            $logs->whereDate('effective_from', '>=', $today)->withTrashed();
+            $logs->whereDate('effective_from', '>', $today)->withTrashed();
         }
 
-        return $logs->with('user')->get();
+        return $logs->with('user')->orderByDesc('created_at')->get();
     }
 
     public function saveData(array $data): void
