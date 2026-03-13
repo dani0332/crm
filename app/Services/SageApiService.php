@@ -777,7 +777,7 @@ class SageApiService
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
 
             if (! $emirate) {
-                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical quotes'];
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical'];
             }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
