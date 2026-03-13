@@ -9,14 +9,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
-use App\Models\CarQuote;
 use App\Models\Customer;
-use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
-use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 
@@ -179,18 +175,18 @@ class CourtesyEmailService extends BaseService
 
     private function getQuoteByQuoteType(int $quoteTypeId, string $quoteUID)
     {
-        return match ($quoteTypeId) {
-            QuoteTypeId::Bike => BikeQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Car => CarQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Health => HealthQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Home => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Home)->first(),
-            QuoteTypeId::Life => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Life)->first(),
-            QuoteTypeId::Pet => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Pet)->first(),
-            QuoteTypeId::Travel => TravelQuote::where('uuid', $quoteUID)->first(),
-            QuoteTypeId::Yacht => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Yacht)->first(),
-            QuoteTypeId::Cycle => PersonalQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Cycle)->first(),
-            QuoteTypeId::Corpline => BusinessQuote::where('uuid', $quoteUID)->where('quote_type_id', QuoteTypeId::Corpline)->first(),
-            default => null,
-        };
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if (! $quoteType) {
+            return null;
+        }
+
+        $model = $quoteType->model();
+        $query = $model::where('uuid', $quoteUID);
+
+        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        return $query->first();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\EmailStatus;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -42,7 +43,7 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-        $quoteTypeId = request('quoteTypeId');
+        $quoteTypeId = (int) request('quoteTypeId');
         $quoteType = QuoteTypes::getName($quoteTypeId);
 
         if (! $quoteType) {
@@ -57,7 +58,7 @@ class EmailStatusService extends BaseService
         $model = $quoteType->model();
         $query = $model::where('uuid', $request->uuid);
 
-        if ($model instanceof PersonalQuote || $quoteTypeId === QuoteTypeId::Corpline) {
+        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
             $query->where('quote_type_id', $quoteTypeId);
         }
 
