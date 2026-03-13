@@ -311,6 +311,7 @@ class CoreSchema
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('insurer_aml_status')->nullable();
                 $table->timestamps();
             },
@@ -643,6 +644,18 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
+            'savings_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('tenure_id')->nullable();
+                $table->unsignedBigInteger('purpose_id')->nullable();
+                $table->unsignedBigInteger('currency_id')->nullable();
+                $table->decimal('investment_amount', 15, 2)->nullable();
+                $table->unsignedBigInteger('investment_criteria_id')->nullable();
+                $table->text('additional_notes')->nullable();
                 $table->timestamps();
             },
         ]);
