@@ -1293,7 +1293,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                 return $_returnResponse;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' - Error: '.$e->getMessage());
 
             return [

@@ -26,6 +26,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\PolicyIssuance;
 use App\Models\UAELicenseHeldFor;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
@@ -812,7 +813,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ];
 
                 LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document processed: '.$document['document_type_text']);
-            } catch (\Exception $ex) {
+            } catch (Exception $ex) {
                 LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error processing document', exception: $ex);
 
                 continue;
@@ -1086,7 +1087,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'isGetQuoteAPIFailed' => true,
                 ];
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Failed', extra: [
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
@@ -1360,7 +1361,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     /**
      * Check if policy issuance timed out and update status accordingly
      *
-     * @param  \App\Models\PolicyIssuance  $policyIssuance
+     * @param  PolicyIssuance  $policyIssuance
      */
     public function handleTimeoutStatusUpdate($policyIssuance): void
     {
@@ -1379,7 +1380,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                 'errorMessage' => $ex->getMessage(),
             ]);

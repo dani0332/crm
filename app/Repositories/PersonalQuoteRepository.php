@@ -27,6 +27,7 @@ use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -324,7 +325,7 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function fetchGetAuditHistory($leadId)
     {
