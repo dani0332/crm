@@ -775,6 +775,10 @@ class SageApiService
         ) {
             $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+
+            if (! $emirate) {
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical'];
+            }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
 
@@ -3760,7 +3764,7 @@ class SageApiService
             $response['message'] = 'AR and AP Prepayments are posted to Sage';
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__." - Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra : [
                 'error' => $e->getMessage(),
             ]);

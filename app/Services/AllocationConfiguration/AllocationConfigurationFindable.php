@@ -252,7 +252,7 @@ trait AllocationConfigurationFindable
 
         $emirateOfRegistrationId = $lead->emirate_of_registration_id ?? null;
 
-        //if emirates of registration is not null and is abu dhabi then return auh else non auh
+        // if emirates of registration is not null and is abu dhabi then return auh else non auh
         $regionKey = ($emirateOfRegistrationId !== null && $emirateOfRegistrationId == EmirateEnum::ABU_DHABI)
             ? GroupMedicalRegionEnum::AUH
             : GroupMedicalRegionEnum::NON_AUH;
