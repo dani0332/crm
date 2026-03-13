@@ -30,6 +30,15 @@ final class QuoteTypeId extends Enum
     const Cyber = 19;
     const Device = 20;
 
+    /**
+     * Quote type IDs that use watermarked policy schedule document URL when available.
+     * Add new LOBs here when they support watermarked policy schedule (e.g. cyber/device-style).
+     */
+    public static function quoteTypesUsingWatermarkedPolicySchedule(): array
+    {
+        return [self::Cyber, self::Device];
+    }
+
     public static function getOptions()
     {
         $oClass = new ReflectionClass(__CLASS__);

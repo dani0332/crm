@@ -1871,9 +1871,9 @@ class CentralService extends BaseService
                     ]);
                 })->first();
 
-                $emailData->policyCertificate = ! empty($emailData?->policyCertificate?->watermarked_doc_url)
-                    ? $emailData->policyCertificate->watermarked_doc_url
-                    : ($emailData->policyCertificate?->doc_url ?? '');
+                $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+                    ? ($emailData->policySchedule->watermarked_doc_url ?? '')
+                    : ($emailData?->policySchedule?->doc_url ?? '');
 
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
