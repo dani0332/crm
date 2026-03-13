@@ -687,8 +687,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ]);
 
         if ($newDocument->exists) {
-            // Delay 1 minute so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
-            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addMinute())->afterCommit();
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
