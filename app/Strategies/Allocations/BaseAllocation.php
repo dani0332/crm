@@ -102,7 +102,6 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     {
         return $this->quoteType->model()
             ->with('quoteDetail')
-            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, fn ($q) => $q->with('quoteRequestEntityMapping.entity'))
             ->where('uuid', $this->uuid)
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());

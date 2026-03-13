@@ -87,12 +87,7 @@ class AmtController extends Controller
                     ->where('ub.is_primary', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function ($join) {
-                $join->on('qrem.quote_request_id', '=', 'bqr.id')
-                    ->where('qrem.quote_type_id', '=', QuoteTypeId::Business);
-            })
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('emirates as e', 'ent.emirate_of_registration_id', '=', 'e.id')
+            ->leftJoin('emirates as e', 'bqr.emirate_of_registration_id', '=', 'e.id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -280,7 +275,7 @@ class AmtController extends Controller
         }
 
         if (isset($request->emirate_of_registration_id) && $request->emirate_of_registration_id !== '') {
-            $data->where('ent.emirate_of_registration_id', $request->emirate_of_registration_id);
+            $data->where('bqr.emirate_of_registration_id', $request->emirate_of_registration_id);
         }
 
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
@@ -609,9 +604,12 @@ class AmtController extends Controller
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
-            ->first();
-        $record->emirate_of_registration_id = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
-
+            ->first();   
+        $entityEmirateOfRegistrationId = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
+        if(!($entityEmirateOfRegistrationId)){
+            $record->emirate_of_registration_id = $entityEmirateOfRegistrationId;
+        }
+  
         $gmTypes = GroupMedicalType::select('id', 'text', 'description')->get();
         $GMType = DB::table('business_quote_request')
             ->join('group_medical_types as gmt', 'business_quote_request.group_medical_type_id', '=', 'gmt.id')

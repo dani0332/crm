@@ -349,4 +349,9 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return in_array($this->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelledReissued, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled]);
     }
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
 }

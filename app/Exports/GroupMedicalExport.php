@@ -81,7 +81,7 @@ class GroupMedicalExport implements CsvExportableInterface
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
             optional($quote->subSource)->text,
-            $quote->quoteRequestEntityMapping?->entity?->emirate?->text ?? '',
+            $quote?->emirate?->text ?? '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->renewal_batch,

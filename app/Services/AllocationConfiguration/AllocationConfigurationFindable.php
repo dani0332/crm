@@ -250,7 +250,7 @@ trait AllocationConfigurationFindable
     {
         $config = $configuration->config ?? [];
 
-        $emirateOfRegistrationId = $lead->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $lead->emirate_of_registration_id ?? null;
 
         //if emirates of registration is not null and is abu dhabi then return auh else non auh
         $regionKey = ($emirateOfRegistrationId !== null && $emirateOfRegistrationId == EmirateEnum::ABU_DHABI)
