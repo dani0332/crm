@@ -39,6 +39,15 @@ final class QuoteTypeId extends Enum
         return [self::Cyber, self::Device];
     }
 
+    /**
+     * Quote type IDs that use watermarked policy certificate document URL when available.
+     * Add new LOBs here when they support watermarked policy certificate (e.g. cyber/device-style).
+     */
+    public static function quoteTypesUsingWatermarkedPolicyCertificate(): array
+    {
+        return [self::Device];
+    }
+
     public static function getOptions()
     {
         $oClass = new ReflectionClass(__CLASS__);

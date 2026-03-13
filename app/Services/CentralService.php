@@ -1871,14 +1871,13 @@ class CentralService extends BaseService
                     ]);
                 })->first();
 
-                $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
-                    ? ($emailData->policySchedule->watermarked_doc_url ?? '')
-                    : ($emailData?->policySchedule?->doc_url ?? '');
-
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policyCertificate, 'azureIMPrivate') ?? '';
+                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url')) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicyCertificate(), true)
+                        ? (data_get($emailData->policyCertificate, 'watermarked_doc_url') ?? '')
+                        : (data_get($emailData->policyCertificate, 'doc_url') ?? '');
+                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($certificatePath, 'azureIMPrivate') ?? '';
                     $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo(parse_url($emailData->policyCertificate, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
@@ -1975,8 +1974,8 @@ class CentralService extends BaseService
                 ]);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
-                ? $emailData->policySchedule->watermarked_doc_url
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+                ? ($emailData->policySchedule->watermarked_doc_url ?? '')
                 : ($emailData?->policySchedule?->doc_url ?? '');
 
             LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
