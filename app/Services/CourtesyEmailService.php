@@ -94,6 +94,23 @@ class CourtesyEmailService extends BaseService
                 return ['message' => 'Bird workflow URL not configured', 'success' => false];
             }
 
+            $normalizedEmail = strtolower(trim($quote->email));
+
+            if ($this->hasRecentCourtesyFlowForCustomer($normalizedEmail, $quoteTypeId)) {
+                LoggerService::info('CourtesyEmailService - Flow suppressed: same customer and LoB within last 7 days', [
+                    'suppressed_at' => now()->toIso8601String(),
+                    'email' => $normalizedEmail,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_uuid' => $quote->uuid,
+                ]);
+
+                return [
+                    'message' => 'Courtesy email flow suppressed: same customer and line of business already had a flow in the last 7 days',
+                    'success' => false,
+                    'suppressed' => true,
+                ];
+            }
+
             $quoteType = QuoteTypes::getName($quoteTypeId);
             $firstName = is_object($customer) && isset($customer->first_name) ? $customer->first_name : ($customer->first_name ?? '');
             $lastName = is_object($customer) && isset($customer->last_name) ? $customer->last_name : ($customer->last_name ?? '');
@@ -188,5 +205,33 @@ class CourtesyEmailService extends BaseService
         }
 
         return $query->first();
+    }
+
+    private function hasRecentCourtesyFlowForCustomer(string $normalizedEmail, int $quoteTypeId): bool
+    {
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if (! $quoteType) {
+            return false;
+        }
+
+        $model = $quoteType->model();
+        $query = $model::query()->where('email', $normalizedEmail);
+
+        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        $quoteUuids = $query->pluck('uuid');
+
+        if ($quoteUuids->isEmpty()) {
+            return false;
+        }
+
+        return QuoteFlowDetails::query()
+            ->whereIn('quote_uuid', $quoteUuids->toArray())
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL)
+            ->where('started_at', '>=', now()->subDays(7))
+            ->exists();
     }
 }
