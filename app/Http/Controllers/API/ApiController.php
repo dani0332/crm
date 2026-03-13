@@ -650,14 +650,6 @@ class ApiController extends Controller
         }
     }
 
-    public function deviceQuoteSendOCB(Request $request)
-    {
-        return response()->json([
-            'success' => true,
-            'message' => 'Device quote OCB email sent successfully',
-        ], Response::HTTP_OK);
-    }
-
     /**
      * Dispatch job to check document upload after 24 hours of payment authorization.
      * Prevents duplicate job dispatch for the same payment code.
