@@ -114,8 +114,8 @@ class RewatermarkQuoteDocumentsService
 
             $watermarkRefId = $this->resolveWatermarkRefId($quote);
 
-            // Delay 1 minute so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
-            WatermarkDocumentsJob::dispatch($document->id, $watermarkRefId, $documentType->id)->delay(now()->addMinute())->afterCommit();
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($document->id, $watermarkRefId, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
             // Keep `afterCommit()` for safety and consistency: it matches `QuoteDocumentService::uploadQuoteDocument()` and ensures the job won't run before a surrounding DB transaction commits (it behaves like a normal dispatch when no transaction exists).
             $dispatched++;
         }
