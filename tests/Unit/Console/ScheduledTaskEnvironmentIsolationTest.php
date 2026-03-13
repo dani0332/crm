@@ -266,7 +266,8 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
                 ->with('policy-issuance-automation:run')
                 ->andReturn($mockEvent);
 
-            $kernel = new class(app(), app('events')) extends Kernel {
+            $kernel = new class(app(), app('events')) extends Kernel
+            {
                 public function schedule($schedule): void
                 {
                     parent::schedule($schedule);

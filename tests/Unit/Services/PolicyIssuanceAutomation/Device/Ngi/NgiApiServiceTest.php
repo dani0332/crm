@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\NgiEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Facades\Ngi;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
@@ -45,7 +46,7 @@ beforeAll(function () {
     getSharedProcess();
 
     // Swap the facade with our shared mock
-    \App\Facades\Ngi::swap($sharedNgiFacadeMock);
+    Ngi::swap($sharedNgiFacadeMock);
 });
 
 /**
@@ -263,7 +264,7 @@ function buildProcessPrototype(): object
 {
     return (object) [
         'id' => 1,
-        'status' => \App\Enums\PolicyIssuanceEnum::PROCESSING_STATUS,
+        'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
         'completed_step' => null,
     ];
 }
@@ -319,7 +320,7 @@ afterAll(function () {
 
     // Clean up shared facade mock
     if ($sharedNgiFacadeMock) {
-        \App\Facades\Ngi::swap(null); // Remove the mock
+        Ngi::swap(null); // Remove the mock
     }
 
     // Clean up response objects (globals will be cleaned up automatically)
@@ -365,7 +366,7 @@ afterEach(function () {
     // Note: $this->responseHandler is a shared static instance, don't unset it
 
     // Clear service container bindings
-    app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
+    app()->forgetInstance(PolicyIssuanceService::class);
 
     // Reset Ngi facade expectations but keep the shared mock
     global $sharedNgiFacadeMock;
@@ -421,8 +422,8 @@ describe('createPolicyFromQuote', function () {
         );
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($errorPolicyResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($errorPolicyResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -457,8 +458,8 @@ describe('createPolicyFromQuote', function () {
         $httpResponse = new Response($psr7Response);
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')
@@ -469,7 +470,7 @@ describe('createPolicyFromQuote', function () {
                 $httpResponse,
                 Mockery::type('string'),
                 NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
-                \App\Enums\PolicyIssuanceEnum::SUCCESS_STATUS,
+                PolicyIssuanceEnum::SUCCESS_STATUS,
                 $process
             );
         app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
@@ -502,8 +503,8 @@ describe('createPolicyFromQuote', function () {
         $httpResponse = new Response($psr7Response);
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -533,8 +534,8 @@ describe('createPolicyFromQuote', function () {
         $httpResponse = $successPolicyResponse;
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         // Mock PolicyIssuanceService
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
@@ -565,8 +566,8 @@ describe('createPolicyFromQuote', function () {
 
         $httpResponse = $successPolicyResponse;
 
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -600,8 +601,8 @@ describe('createPolicyFromQuote', function () {
         global $expiredPolicyResponse;
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($expiredPolicyResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('post')->once()->andReturn($expiredPolicyResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -637,8 +638,8 @@ describe('getPolicyDocuments', function () {
         $httpResponse = new Response($psr7Response);
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -674,8 +675,8 @@ describe('getPolicyDocuments', function () {
         $psr7Response = new Psr7Response(200, [], json_encode($responseData));
         $httpResponse = new Response($psr7Response);
 
-        \App\Facades\Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -733,8 +734,8 @@ describe('getPolicyDocuments', function () {
         $httpResponse = new Response($psr7Response);
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
@@ -764,8 +765,8 @@ describe('getPolicyDocuments', function () {
         $httpResponse = new Response($psr7Response);
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+        Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
+        Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
         $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();

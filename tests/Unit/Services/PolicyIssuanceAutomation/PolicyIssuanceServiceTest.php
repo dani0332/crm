@@ -96,7 +96,7 @@ dataset('policyIssuanceLogResponses', function () {
             ['foo' => 'bar'],
         ],
         'json serializable object' => [
-            new class implements \JsonSerializable
+            new class implements JsonSerializable
             {
                 public function jsonSerialize(): array
                 {

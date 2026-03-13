@@ -68,10 +68,14 @@ use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class AMLController extends Controller
 {
@@ -205,7 +209,7 @@ class AMLController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
@@ -418,7 +422,7 @@ class AMLController extends Controller
                 ], $updateQuote);
 
                 LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate');
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if ($e->getCode() == '40001' || str_contains($e->getMessage(), 'Lock wait timeout')) {
                     LoggerService::warning('Lock timeout during AML screening process', [
                         'quote_id' => $quoteRequestId,
@@ -773,7 +777,7 @@ class AMLController extends Controller
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
     }
 
-    public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request): JsonResponse
     {
         LoggerService::startQuoteLogging($request->code, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
@@ -1147,7 +1151,7 @@ class AMLController extends Controller
     /**
      * Toggle policy issuance automation enabled status for a car quote
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
     {

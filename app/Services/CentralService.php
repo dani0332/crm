@@ -63,6 +63,7 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -80,6 +81,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -1146,7 +1149,7 @@ class CentralService extends BaseService
             }
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -1171,7 +1174,7 @@ class CentralService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -2640,11 +2643,11 @@ class CentralService extends BaseService
     /**
      * Find renewal batch by expiry date for non-motor LOBs
      */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
     {
-        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+        $expiryDate = Carbon::parse($expiryDate);
 
-        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();

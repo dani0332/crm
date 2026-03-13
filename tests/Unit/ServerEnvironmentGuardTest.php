@@ -30,7 +30,7 @@ it('throws when invalid environment values are supplied', function () {
     setApplicationEnvironment('testing');
 
     ServerEnvironmentGuard::isAllowed(['non-existent-env']);
-})->throws(\InvalidArgumentException::class);
+})->throws(InvalidArgumentException::class);
 
 function setApplicationEnvironment(string $environment): void
 {

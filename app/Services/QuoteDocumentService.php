@@ -33,6 +33,8 @@ use App\Services\OCR\OCRService;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\File;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -124,7 +126,7 @@ class QuoteDocumentService extends BaseService
 
     /**
      * @param  $data  doc_name, doc_uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deleteQuoteDocument($quoteType, $data)
     {
@@ -154,7 +156,7 @@ class QuoteDocumentService extends BaseService
 
     /**
      * @param  $data  doc_name, doc_uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deleteBorDocument($quote, $data)
     {
@@ -185,7 +187,7 @@ class QuoteDocumentService extends BaseService
      *
      * @param  $documentTypeCode
      * @param  $uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false, $isHealthQuestionnaire = false)
     {
@@ -904,7 +906,7 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $uuid, $documentType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(storage_path('temp/'.$docName));
+        $watermarkedFile = new File(storage_path('temp/'.$docName));
 
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;

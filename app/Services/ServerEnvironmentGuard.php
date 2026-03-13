@@ -13,11 +13,10 @@ class ServerEnvironmentGuard
      * Determine if the current environment is allowed.
      *
      * @param  array<string>  $allowedEnvironments
-     * @return bool
      */
     public static function isAllowed(array $allowedEnvironments = []): bool
     {
-        return self::handleValidation(function () use ($allowedEnvironments) : bool {
+        return self::handleValidation(function () use ($allowedEnvironments): bool {
             $defaultEnvironments = [
                 EnvEnum::PRODUCTION,
                 EnvEnum::STAGING,
@@ -52,7 +51,6 @@ class ServerEnvironmentGuard
      * Ensure every requested environment exists on EnvEnum.
      *
      * @param  array<string>  $environments
-     * @return void
      */
     private static function validateEnvironments(array $environments): void
     {
@@ -74,9 +72,6 @@ class ServerEnvironmentGuard
 
     /**
      * Wraps execute to log failures.
-     *
-     * @param  callable  $callback
-     * @return bool
      */
     private static function handleValidation(callable $callback): bool
     {

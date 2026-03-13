@@ -3760,7 +3760,7 @@ class SageApiService
             $response['message'] = 'AR and AP Prepayments are posted to Sage';
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__." - Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra : [
                 'error' => $e->getMessage(),
             ]);

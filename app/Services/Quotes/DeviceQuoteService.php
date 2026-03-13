@@ -14,6 +14,10 @@ use App\Facades\Capi;
 use App\Models\DeviceMake;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -78,42 +82,42 @@ class DeviceQuoteService extends BaseQuoteService
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
                 $q->leftJoin('lookups as lu', 'lu.id', '=', 'personal_quotes.transaction_type_id')
-                ->with([
-                    'quoteStatus',
-                    'advisor',
-                    'paymentStatus',
-                    'quoteDetail',
-                    'quoteDetail.lostReason',
-                    'renewalBatchModel',
-                    'nationality',
-                    'customer',
-                    'customer.additionalContactInfo',
-                    'insuranceProvider:id,text,code',
-                    'insuranceProviderPlan.insuranceProvider',
-                    'payments' => function ($q) {
-                        $q->with([
-                            'paymentStatus',
-                            'personalPlan',
-                            'paymentMethod',
-                            'paymentStatusLogs',
-                            'insuranceProvider',
-                            'paymentSplits' => function ($q) {
-                                $q->with([
-                                    'paymentStatus',
-                                    'paymentMethod',
-                                    'documents',
-                                    'verifiedByUser',
-                                    'paymentCharges',
-                                    'processJob',
-                                ])
-                                    ->orderBy('sr_no', 'asc');
-                            },
-                        ]);
-                    },
-                    'documents' => function ($q) {
-                        $q->with('createdBy')->orderBy('created_at', 'desc');
-                    },
-                ])->select([
+                    ->with([
+                        'quoteStatus',
+                        'advisor',
+                        'paymentStatus',
+                        'quoteDetail',
+                        'quoteDetail.lostReason',
+                        'renewalBatchModel',
+                        'nationality',
+                        'customer',
+                        'customer.additionalContactInfo',
+                        'insuranceProvider:id,text,code',
+                        'insuranceProviderPlan.insuranceProvider',
+                        'payments' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'personalPlan',
+                                'paymentMethod',
+                                'paymentStatusLogs',
+                                'insuranceProvider',
+                                'paymentSplits' => function ($q) {
+                                    $q->with([
+                                        'paymentStatus',
+                                        'paymentMethod',
+                                        'documents',
+                                        'verifiedByUser',
+                                        'paymentCharges',
+                                        'processJob',
+                                    ])
+                                        ->orderBy('sr_no', 'asc');
+                                },
+                            ]);
+                        },
+                        'documents' => function ($q) {
+                            $q->with('createdBy')->orderBy('created_at', 'desc');
+                        },
+                    ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
                 IF(
@@ -182,7 +186,7 @@ class DeviceQuoteService extends BaseQuoteService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         try {
             $kenRequest = $client->post(
                 $plansApiEndPoint,
@@ -206,7 +210,7 @@ class DeviceQuoteService extends BaseQuoteService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -220,11 +224,11 @@ class DeviceQuoteService extends BaseQuoteService
             }
 
             return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        } catch (ConnectException $e) {
             $responseBodyAsString = 'Connection error occurred.';
 
             return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             $responseBodyAsString = 'Request error occurred.';
 
             return $responseBodyAsString;
@@ -326,14 +330,15 @@ class DeviceQuoteService extends BaseQuoteService
         $payload = [];
         if ($isBookingFailure) {
             $payload = $this->getProductionApprovalTeamRecipient();
-        }elseif ($quote?->advisor) {
+        } elseif ($quote?->advisor) {
             $payload = ['recipientEmail' => $quote?->advisor?->email, 'recipientName' => $quote?->advisor?->name];
-        }else{
+        } else {
             $payload = $this->getDeviceNgiFallbackRecipient();
         }
         $ccEmails = $this->parseCommaSeparatedEmails(
             getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
         );
+
         return array_merge($payload, ['cc' => $ccEmails, 'processInvolved' => $processInvolved]);
     }
 

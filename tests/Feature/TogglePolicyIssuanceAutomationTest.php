@@ -7,6 +7,7 @@ use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Helpers\TestDataSeeder;
 
 beforeEach(function () {
@@ -20,7 +21,7 @@ beforeEach(function () {
     $this->user->givePermissionTo($permission);
 
     // Clear permission cache to ensure permissions are available immediately
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $this->user->refresh();
 
     $this->actingAs($this->user);
@@ -242,7 +243,7 @@ test('handles exceptions and returns 500', function () {
     $mockService = Mockery::mock(PolicyIssuanceService::class);
     $mockService->shouldReceive('togglePolicyIssuanceAutomation')
         ->once()
-        ->andThrow(new \Exception('Something went wrong'));
+        ->andThrow(new Exception('Something went wrong'));
 
     $this->app->instance(PolicyIssuanceService::class, $mockService);
 

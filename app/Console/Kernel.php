@@ -13,6 +13,7 @@ use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Stringable;
@@ -225,7 +226,7 @@ class Kernel extends ConsoleKernel
      * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
      * @param  \Closure  $default  Default schedule configuration callback
      * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
-     * @return \Illuminate\Console\Scheduling\Event
+     * @return Event
      */
     protected function scheduleWithEnvironment(
         Schedule $schedule,

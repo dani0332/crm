@@ -44,6 +44,7 @@ use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -417,7 +418,7 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($sendUpdateCustomerValidationRequest->code);
         LoggerService::info('fn:sendUpdateCustomerValidation - Start - SendUpdateLogController');
@@ -436,7 +437,7 @@ class SendUpdateLogController extends Controller
         return response()->json($response);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($updateToCustomerRequest->code);
         LoggerService::info('fn:sendUpdateToCustomer - Start - SendUpdateLogController');
@@ -473,7 +474,7 @@ class SendUpdateLogController extends Controller
         }
     }
 
-    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($sendUpdateRequest->code);
         LoggerService::info('fn:sendUpdate - Start - SendUpdateLogController');

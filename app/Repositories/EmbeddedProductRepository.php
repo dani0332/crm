@@ -951,7 +951,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  mixed  $modelType
      * @return mixed
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function getPDF(
         $short_code,

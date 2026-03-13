@@ -58,6 +58,7 @@ use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -392,7 +393,7 @@ class SendUpdateLogService
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
                 // Check if relationObject is a Collection
-                if ($relationObject instanceof \Illuminate\Database\Eloquent\Collection) {
+                if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
                     if ($relation == 'travelDestinations') {
                         $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
@@ -887,7 +888,7 @@ class SendUpdateLogService
 
             info('Book Update - Payment Details Updated');
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
@@ -1281,7 +1282,7 @@ class SendUpdateLogService
 
             DB::commit();
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             DB::rollBack();
             info('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
@@ -1350,7 +1351,7 @@ class SendUpdateLogService
             $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
         } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
             $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
             $documentTypeCodes = [

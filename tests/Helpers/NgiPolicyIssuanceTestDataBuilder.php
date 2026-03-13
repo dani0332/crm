@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 
 /**
@@ -138,7 +139,7 @@ class NgiPolicyIssuanceTestDataBuilder
     {
         $defaults = [
             'quote_type' => QuoteTypes::DEVICE->value,
-            'status' => \App\Enums\PolicyIssuanceEnum::PENDING_STATUS,
+            'status' => PolicyIssuanceEnum::PENDING_STATUS,
             'completed_step' => null,
             'message' => null,
         ];

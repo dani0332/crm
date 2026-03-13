@@ -7,13 +7,14 @@ use App\Models\DeviceQuote;
 use App\Models\PersonalQuote;
 use App\Services\CapiService;
 use Mockery;
+use Mockery\MockInterface;
 
 class DeviceQuoteMockHelper
 {
     /**
      * Mock CapiService to simulate external API behavior.
      */
-    public static function mockCapiService(string $testUuid): \Mockery\MockInterface
+    public static function mockCapiService(string $testUuid): MockInterface
     {
         $mock = Mockery::mock(CapiService::class);
         $mock->shouldReceive('request')

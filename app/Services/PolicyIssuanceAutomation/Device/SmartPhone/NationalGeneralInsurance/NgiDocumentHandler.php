@@ -13,6 +13,7 @@ use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Http\Client\Response;
 
 class NgiDocumentHandler
 {
@@ -68,7 +69,7 @@ class NgiDocumentHandler
     /**
      * Get error message for download response, or null if successful
      *
-     * @param  \Illuminate\Http\Client\Response  $response
+     * @param  Response  $response
      */
     private function getDownloadErrorMessage($response): ?string
     {

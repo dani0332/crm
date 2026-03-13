@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
@@ -465,7 +466,7 @@ class SendEmailCustomerService extends BaseService
     public function getEmailSubjectFromSib($messageId)
     {
         try {
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $response = $client->request(
                 'GET',
                 $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
@@ -998,7 +999,7 @@ class SendEmailCustomerService extends BaseService
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             LoggerService::info('Policy documents email payload for quote code: '.$emailData->code.' ---- body '.$body);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientResponse = $client->post(
                 config('constants.SIB_URL'),
                 [
@@ -1243,7 +1244,7 @@ class SendEmailCustomerService extends BaseService
 
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1337,7 +1338,7 @@ class SendEmailCustomerService extends BaseService
                 'templateId' => intval($emailTemplateId),
                 'params' => $params,
             ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1597,7 +1598,7 @@ class SendEmailCustomerService extends BaseService
             try {
                 $carbonDate = Carbon::parse($healthQuote->previous_policy_expiry_date);
                 $renewalDueDate = $carbonDate->format('jS F Y');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $renewalDueDate = '';
             }
         }
@@ -1821,7 +1822,7 @@ class SendEmailCustomerService extends BaseService
             'refID' => $quote->code,
             'CarMake' => $quote->carMake->text ?? null,
             'CarModel' => $quote->carModel->text ?? null,
-            'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
+            'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
         if (! empty($customerWANotificationWorkflow)) {

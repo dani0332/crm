@@ -15,6 +15,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiStepExecutor;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\NgiPolicyIssuanceTestDataBuilder;
 
 beforeEach(function () {
@@ -316,7 +317,7 @@ describe('NgiInsuranceService Steps Locking Status', function () {
 
 function seedNgiDeviceLookups(): array
 {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Nationality
     $nationalityId = $db->table('nationality')->where('text', 'UAE')->value('id');
@@ -356,7 +357,7 @@ function createDeviceQuoteWithDependencies()
     $deviceSubQuoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceSubQuoteData();
     $paymentData = NgiPolicyIssuanceTestDataBuilder::buildPaymentData();
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Customer
     $customerId = $db->table('customer')->insertGetId([
@@ -431,7 +432,7 @@ function createDeviceQuoteWithoutCustomer()
     $lookups = seedNgiDeviceLookups();
     $quoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceQuoteData([], $lookups);
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Personal Quote without customer
     $quoteId = $db->table('personal_quotes')->insertGetId([
@@ -455,7 +456,7 @@ function createDeviceQuoteWithoutDeviceDetails()
     $quoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceQuoteData([], $lookups);
     $customerData = NgiPolicyIssuanceTestDataBuilder::buildCustomerData();
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Customer
     $customerId = $db->table('customer')->insertGetId([
@@ -494,7 +495,7 @@ function createDeviceQuoteWithoutImei()
     $deviceSubQuoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceSubQuoteData();
     $paymentData = NgiPolicyIssuanceTestDataBuilder::buildPaymentData();
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Customer
     $customerId = $db->table('customer')->insertGetId([
@@ -572,7 +573,7 @@ function createDeviceQuoteWithoutInsurerQuoteNumber()
     $deviceSubQuoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceSubQuoteData();
     $paymentData = NgiPolicyIssuanceTestDataBuilder::buildPaymentData();
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Customer
     $customerId = $db->table('customer')->insertGetId([
@@ -631,7 +632,7 @@ function createDeviceQuoteWithCustomerMissingEmiratesId()
     $deviceSubQuoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceSubQuoteData();
     $paymentData = NgiPolicyIssuanceTestDataBuilder::buildPaymentData();
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create Customer without Emirates ID
     $customerId = $db->table('customer')->insertGetId([
@@ -685,7 +686,7 @@ function createDeviceQuoteWithCustomerMissingEmiratesId()
 function createDevicePolicyIssuanceProcess($quote)
 {
     $lookups = seedNgiDeviceLookups();
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     $processId = $db->table('policy_issuance')->insertGetId([
         'insurance_provider_id' => $lookups['insurance_provider_id'],
@@ -710,7 +711,7 @@ function getNgiInsuranceProvider()
 
 function enableNgiDeviceAutomation()
 {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $db->table('application_storage')->updateOrInsert(
         ['key_name' => ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE],
         ['value' => '1', 'created_at' => now(), 'updated_at' => now()]
@@ -719,7 +720,7 @@ function enableNgiDeviceAutomation()
 
 function disableNgiDeviceAutomation()
 {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $db->table('application_storage')->updateOrInsert(
         ['key_name' => ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE],
         ['value' => '0', 'created_at' => now(), 'updated_at' => now()]
