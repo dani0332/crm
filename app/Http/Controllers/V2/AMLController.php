@@ -258,7 +258,13 @@ class AMLController extends Controller
         $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
-        $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
+        $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled(
+            quoteTypeCode: $quoteType->code,
+            insuranceProviderId: $insuranceProvider?->id,
+            vehicleRegistrationType: $quoteRequest?->registration_type,
+            source: $quoteRequest?->source,
+        );
+
         if ($isAddionalFieldsEnabled) {
             $additionalLookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($quoteType->code, $insuranceProvider?->id, $quoteRequest?->source);
             $lookups = array_merge($lookups->toArray(), $additionalLookups);

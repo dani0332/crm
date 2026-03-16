@@ -2623,13 +2623,13 @@ class AMLService
         }
     }
 
-    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
+    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false, $source = '')
     {
-        if (! ($quoteTypeCode == quoteTypeCode::Car && $vehicleRegistrationType == CarRegistrationType::PERSONAL)) {
+        if (! ($quoteTypeCode == quoteTypeCode::Car && strtolower($vehicleRegistrationType) == CarRegistrationType::PERSONAL)) {
             return false;
         }
 
-        if ($detailPage) {
+        if ($detailPage || $source == LeadSourceEnum::CARS24) {
             return true;
         }
 
