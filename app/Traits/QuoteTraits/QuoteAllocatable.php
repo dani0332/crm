@@ -300,7 +300,7 @@ trait QuoteAllocatable
         })->orWhere->leadAllocationFailed();
     }
 
-    public function scopeILAEligibleForAllocationCyber(Builder $query): Builder
+    public function scopeIsEligibleForAllocationCyber(Builder $query): Builder
     {
         return $query->whereDoesntHave('documents', function ($sq) {
             $sq->whereExists(function ($paymentQuery) {

@@ -377,7 +377,7 @@ class RetryAllocationService
             ->when($quoteType === QuoteTypes::CYBER, function ($q) {
                 $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
                     ->where(function ($sq) {
-                        $sq->ILAEligibleForAllocationCyber();
+                        $sq->isEligibleForAllocationCyber();
                     });
             })
             ->take($chunkSize);
