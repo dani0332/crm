@@ -3537,6 +3537,8 @@ class RenewalsUploadService
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
                 }
                 $status = $carPlan !== null;
+                $lead->insurance_provider_transition_id = $status ? $transition->id : null;
+                $lead->save();
                 LoggerService::info('isTransitionableLead - transition match: true, status: '.($status ? 'true' : 'false'));
                 $lead->insurance_provider_transition_id = $transition->id;
                 $lead->save();
