@@ -57,7 +57,6 @@ return [
     'excluded_paths' => [
         '/health',
         '/horizon',
-        '/telescope',
         '/activity-log',
         '/activity-logs',
         '/admin/activity',

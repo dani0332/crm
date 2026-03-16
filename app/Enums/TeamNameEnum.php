@@ -18,6 +18,7 @@ final class TeamNameEnum extends Enum
     public const AFFINITY = 'Affinity';
     public const ORGANIC = 'Organic';
     public const PCP = 'PCP';
+    public const TPL = 'TPL';
     public const EBP = 'Entry-Level';
     public const RM_NB = 'Best';
     public const RM_SPEED = 'Good';

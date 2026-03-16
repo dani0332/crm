@@ -122,7 +122,11 @@ class RetryAllocationService
             ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
-            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+            $revivalSources = [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
+            $currentTeamId = false;
+            if ($lead->payment_status_id == PaymentStatusEnum::AUTHORISED && ! in_array($lead->source, $revivalSources)) {
+                $currentTeamId = $teamId;
+            }
 
             QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
@@ -163,8 +167,7 @@ class RetryAllocationService
 
         $leads->logRawSql();
 
-        // Get the teamId once before the loop
-        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        $teamId = getTeamId(TeamNameEnum::ORGANIC);
 
         $leads = $leads->get();
         LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' leads to process');
@@ -188,6 +191,7 @@ class RetryAllocationService
                 'quote_status_id' => $lead->quote_status_id,
             ]);
 
+            // All revival sources should be assigned to ORGANIC team
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 

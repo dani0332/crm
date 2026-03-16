@@ -232,7 +232,7 @@ class UserService extends BaseService
             if (! empty($productCodes)) {
                 $query->whereHas('products', function ($q) use ($productCodes) {
                     $q->where('type', TeamTypeEnum::PRODUCT)
-                        ->whereIn('teams.name', $productCodes);
+                        ->whereIn('teams.code', $productCodes);
                 });
             }
         }

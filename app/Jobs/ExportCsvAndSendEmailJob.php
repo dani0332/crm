@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,7 +21,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
     public $timeout = 600; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
-    public $backoff = 30;
+    public $backoff = 120;
     private $exportClass;
     private $recipientEmail;
     private $requestParams;
@@ -40,7 +42,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
 
-        $this->onQueue('renewals');
+        $this->onQueue('ocr_dedicated');
     }
 
     /**
@@ -48,6 +50,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
      */
     public function handle()
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CSV_EXPORT);
 
         $jobId = $this->job->getJobId() ?? 'unknown';
         $startTime = microtime(true);
@@ -61,6 +64,17 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             if (empty($this->requestParams['user']) && ! empty($this->requestParams['user_id'])) {
                 $this->requestParams['user'] = User::with(['permissions', 'roles.permissions'])->findOrFail($this->requestParams['user_id']);
+            }
+
+            // Login on the write connection before CsvExportService::generateCsvFileWithCount switches to mysql_read.
+            // has already been downgraded to the read replica, causing a read-only error.
+            if (! Auth::check()) {
+                if (empty($this->requestParams['user'])) {
+                    throw new \RuntimeException('Export job cannot proceed: no user resolved for auth context (user_id: '.($this->requestParams['user_id'] ?? 'null').')');
+                }
+
+                Auth::login($this->requestParams['user']);
+                request()->merge($this->requestParams);
             }
 
             // Process CSV and send email
@@ -160,8 +174,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping($lockKey))
-                ->dontRelease() // Don't release back to queue if locked
-                ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
+                ->dontRelease()
+                ->expireAfter($this->timeout),
         ];
     }
 }
