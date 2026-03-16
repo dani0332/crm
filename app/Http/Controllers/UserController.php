@@ -645,6 +645,13 @@ class UserController extends Controller
     {
         $user = User::find($request->id);
 
+        if ($user && (int) $user->id === (int) Auth::id() && $request->status === false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot deactivate your own account.',
+            ], 403);
+        }
+
         if ($user && $user->is_active != $request->status) {
             DB::transaction(function () use ($request, $user) {
                 $user->is_active = $request->status;
