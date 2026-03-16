@@ -31,7 +31,7 @@ const activeStateByUserId = reactive({});
 
 watch(
   () => props.users?.data,
-  (data) => {
+  data => {
     if (data) {
       data.forEach(u => {
         activeStateByUserId[u.id] = u.is_active;
