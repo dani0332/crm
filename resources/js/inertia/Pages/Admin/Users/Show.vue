@@ -59,7 +59,7 @@ const deleteAdvisor = index => {
 // Function to handle form submission
 function onSubmit(isValid) {
   if (isValid) {
-    form.processing = true; 
+    form.processing = true;
     form.advisors = [];
 
     advisors.value.forEach(advisor => {
@@ -102,7 +102,8 @@ function onSubmit(isValid) {
 function updateUserStatus(status) {
   loading.value = true;
 
-  axios.post(`/admin/update-user-state`, { id: props.user.id, status })
+  axios
+    .post(`/admin/update-user-state`, { id: props.user.id, status })
     .then(res => {
       notification.success({
         title: res.data.message,
@@ -251,7 +252,7 @@ function updateUserStatus(status) {
               size="lg"
               @update:model-value="updateUserStatus"
             />
-          </dd>         
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
@@ -326,9 +327,14 @@ function updateUserStatus(status) {
       </dl>
     </div>
 
-      <!-- Page Loader -->
-    <div v-if="loading" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-        <div class="h-6 w-6 border-4 border-blue-200 border-t-transparent rounded-full animate-spin"></div>
+    <!-- Page Loader -->
+    <div
+      v-if="loading"
+      class="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+    >
+      <div
+        class="h-6 w-6 border-4 border-blue-200 border-t-transparent rounded-full animate-spin"
+      ></div>
     </div>
   </div>
 
