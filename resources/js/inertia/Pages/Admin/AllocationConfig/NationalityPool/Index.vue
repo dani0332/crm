@@ -22,6 +22,7 @@ const notification = useToast();
 function getData(id = null) {
   // Scroll to top in case of edit
   if (id) {
+    isInitializing.value = true;
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
