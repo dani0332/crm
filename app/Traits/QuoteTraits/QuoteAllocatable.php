@@ -300,23 +300,25 @@ trait QuoteAllocatable
         })->orWhere->leadAllocationFailed();
     }
 
+    /**
+     * Include quotes eligible for Cyber allocation.
+     *
+     * Business Rule: Assign advisor if 24+ hours have passed since payment authorization
+     * AND no documents have been uploaded at all.
+     *
+     * This scope includes leads where:
+     * - Payment was authorized 24+ hours ago
+     * - No documents exist for the quote (regardless of upload time)
+     *
+     * Excludes leads where any document exists (even if uploaded after 24 hours).
+     */
     public function scopeIsEligibleForAllocationCyber(Builder $query): Builder
     {
-        return $query->whereDoesntHave('documents', function ($sq) {
-            $sq->whereExists(function ($paymentQuery) {
-                $paymentQuery->selectRaw('1')->from('payments')
-                    ->wherenotnull('authorized_at')
-                    ->whereColumn('payments.paymentable_id', 'quote_documents.quote_documentable_id')
-                    ->whereColumn('payments.paymentable_type', 'quote_documents.quote_documentable_type')
-                    ->whereRaw('(                         
-                        SELECT MIN(d.created_at)
-                        FROM quote_documents d
-                        WHERE d.quote_documentable_id = payments.paymentable_id
-                        and d.quote_documentable_type = payments.paymentable_type
-                        and d.deleted_at is null
-                    ) <= DATE_ADD(payments.authorized_at, INTERVAL 10 MINUTE)'); // Pick earliest document since there can be multiple documents
-            });
-        });
+        return $query->whereHas('payments', function ($paymentQuery) {
+            // Payment was authorized 24+ hours ago
+            $paymentQuery->whereNotNull('authorized_at')
+                ->where('authorized_at', '<=', now()->subHours(24));
+        })->whereDoesntHave('documents'); // Exclude if any documents exist
     }
 
     public function isAllocationFailed(): bool
