@@ -13,6 +13,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\AlfredChat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -114,7 +115,7 @@ class InstantAlfredReportService
      *
      * @param  array<\stdClass>  $sqlRecords
      */
-    public function processConsolidatedChunk(array $sqlRecords, array $params): \Illuminate\Support\Collection
+    public function processConsolidatedChunk(array $sqlRecords, array $params): Collection
     {
         if (empty($sqlRecords)) {
             return collect();
