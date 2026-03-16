@@ -19,7 +19,9 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class AllocationService extends BaseService
 {
@@ -98,13 +100,42 @@ class AllocationService extends BaseService
 
     public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteModel::updateOrCreate(
-            [$keyColumn => $leadId],
-            [
-                'advisor_assigned_date' => now(),
-                'advisor_assigned_by_id' => auth()->id(),
-            ]
-        );
+        $attemptUpsert = function () use ($leadId, $quoteModel, $keyColumn) {
+            try {
+                $quoteModel::updateOrCreate(
+                    [$keyColumn => $leadId],
+                    [
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->id(),
+                    ]
+                );
+            } catch (QueryException $exception) {
+
+                LoggerService::info("QueryException: " . $exception->getMessage(), [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'getCode' => $exception->getCode() === 23000,
+                ]);
+
+                if ($exception->getCode() === 23000) {
+                    LoggerService::info("Re-attempting to update QuoteDetails");
+                    $quoteModel::where($keyColumn, $leadId)->update([
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->id(),
+                        'updated_at' => now(),
+                    ]);
+
+                    return;
+                }
+            }
+        };
+
+        if (DB::transactionLevel() === 0) {
+            DB::transaction($attemptUpsert);
+        } else {
+            /*If we're alreacy in a open transaction */
+            $attemptUpsert();
+        }
     }
 
     public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
