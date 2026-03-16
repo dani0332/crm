@@ -3561,17 +3561,17 @@ class RenewalsUploadService
      * @param  RenewalQuoteProcess|null  $process
      * @param  object  $leadData
      * @param  Collection  $leadValidationErrors
-     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: int|null}
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: int|null, tags: string}
      */
     public function isTransitionableLeadForProcess(RenewalQuoteProcess $lead): array
     {
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         if ($lead && $lead->insurance_provider_transition_id) {
-            $transition = InsuranceProviderTransition::with('targetProvider','sourceProvider')->find($lead->insurance_provider_transition_id);
+            $transition = InsuranceProviderTransition::with('targetProvider', 'sourceProvider')->find($lead->insurance_provider_transition_id);
             $target = $transition->targetProvider;
             $source = $transition->sourceProvider;
-            if ($transition && $transition->is_active && $target ) {
+            if ($transition && $transition->is_active && $target) {
                 $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
                     ->where('repair_type', $leadData->plan_type ?? null)
                     ->where('provider_id', $target->id)
@@ -3594,7 +3594,7 @@ class RenewalsUploadService
     /**
      * Resolve provider and plan from leadData only (no transition logic). Use when process has no transition_id.
      *
-     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: null}
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: null, tags: string}
      */
     private function getNonTransitionableLeadConfig($leadData): array
     {
@@ -3615,10 +3615,8 @@ class RenewalsUploadService
             'carPlan' => $carPlan,
             'insuranceProvider' => $insuranceProvider,
             'transitionId' => null,
+            'tags' => '',
         ];
-        LoggerService::info('isTransitionableLeadForProcess inside function - return:'.json_encode($return));
-
-        return $return;
     }
 
     /**
