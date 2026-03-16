@@ -44,6 +44,7 @@ enum LoggerFeatureEnum: string
     case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
+    case EP_RETARGET_REMINDER = 'ep-retarget-reminder';
     case SLA_TRACKING = 'sla-tracking';
     case MA_WELCOME_JOB = 'ma-welcome-job';
     case SEND_MA_WELCOME_EMAIL = 'send-ma-welcome-email';
@@ -62,4 +63,5 @@ enum LoggerFeatureEnum: string
     case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';
     case API_QUOTE_DOCUMENT_UPLOAD = 'api-quote-document-upload';
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
+    case CSV_EXPORT = 'csv-export';
 }

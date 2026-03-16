@@ -82,7 +82,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
 
     private function getExcludedUserIds($teamId = null)
     {
-        // Define a list of excluded team names.
+        // Define a list of excluded team codes.
         $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // If team is not available, it should not be assigned.
@@ -91,7 +91,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         }
 
         // Retrieve the IDs of excluded teams.
-        $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
+        $excludedTeamIds = Team::whereIn('code', $excludedTeams)->active()->select('id')->get();
 
         // Retrieve the user IDs associated with excluded teams.
         return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->pluck('user_id')->toArray();

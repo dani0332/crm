@@ -185,7 +185,9 @@ class RulesController extends Controller
                     );
                 }
             } else {
-                $rule->ruleDetail()->delete();
+                $rule->ruleDetail()->update([
+                    'lead_source_id' => null,
+                ]);
                 $rule->leadSources()->delete();
             }
 
