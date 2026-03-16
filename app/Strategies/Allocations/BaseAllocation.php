@@ -17,7 +17,6 @@ use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
-use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -323,11 +322,6 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         // temporary disable non advisor email for savings quote
         if (! $this->lead->isSuppressIntroEmail()) {
             SendSavingsOCAEmailJob::dispatch($this->lead->uuid)->delay(now()->addSeconds(10));
-            // app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-            //     $this->lead,
-            //     $this->quoteType->value,
-            //     isNonAdvisorEmail: true,
-            // );
             LoggerService::info(self::class.' - Non Advisor Email job dispatched');
         }
     }
