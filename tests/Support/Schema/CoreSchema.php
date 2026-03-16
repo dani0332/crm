@@ -1080,6 +1080,9 @@ class CoreSchema
                 $table->string('registration_type')->nullable();
                 $table->string('vehicle_use')->nullable();
                 $table->integer('sort_order')->nullable();
+                $table->string('accepted_files')->nullable();
+                $table->unsignedInteger('max_size')->nullable();
+                $table->unsignedInteger('max_files')->nullable();
                 $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
