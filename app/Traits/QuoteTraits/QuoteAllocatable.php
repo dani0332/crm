@@ -314,7 +314,7 @@ trait QuoteAllocatable
                         WHERE d.quote_documentable_id = payments.paymentable_id
                         and d.quote_documentable_type = payments.paymentable_type
                         and d.deleted_at is null
-                    ) <= DATE_ADD(payments.authorized_at, INTERVAL 24 HOUR)'); // Pick earliest doucment since there can be multiple documents
+                    ) <= DATE_ADD(payments.authorized_at, INTERVAL 10 MINUTE)'); // Pick earliest document since there can be multiple documents
             });
         });
     }
