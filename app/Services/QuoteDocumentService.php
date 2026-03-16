@@ -61,13 +61,16 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null, $documentTypeCategory = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+        ->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
+            $query->where('category', $documentTypeCategory);
+        })
             ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
                 $query->where(function ($query) use ($registrationType) {
                     $query->whereNull('registration_type')
