@@ -78,7 +78,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
      */
     public function transitionsAsSource()
     {
-        return $this->hasMany(InsuranceProviderTransition::class, 'source_provider_id');
+        return $this->hasMany(InsuranceProviderTransition::class, 'source_insurance_provider_id');
     }
 
     /**
@@ -91,8 +91,8 @@ class InsuranceProvider extends BaseModel implements AuditableContract
         return $this->belongsToMany(
             InsuranceProvider::class,
             'renewal_insurance_provider_transitions',
-            'source_provider_id',
-            'target_provider_id'
+            'source_insurance_provider_id',
+            'target_insurance_provider_id'
         );
     }
 }

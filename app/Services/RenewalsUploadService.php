@@ -3523,8 +3523,8 @@ class RenewalsUploadService
         LoggerService::info('isTransitionableLead inside function - targetProvider:'.json_encode($targetProvider));
         if ($sourceProvider && $targetProvider) {
             LoggerService::info('isTransitionableLead inside function - sourceProvider and targetProvider found');
-            $transition = InsuranceProviderTransition::where('source_provider_id', $sourceProvider->id)
-                ->where('target_provider_id', $targetProvider->id)
+            $transition = InsuranceProviderTransition::where('source_insurance_provider_id', $sourceProvider->id)
+                ->where('target_insurance_provider_id', $targetProvider->id)
                 ->first();
             LoggerService::info('isTransitionableLead inside function - transition:'.json_encode($transition));
             if ($transition) {

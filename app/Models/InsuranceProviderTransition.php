@@ -21,7 +21,7 @@ class InsuranceProviderTransition extends Model
      */
     public function sourceProvider(): BelongsTo
     {
-        return $this->belongsTo(InsuranceProvider::class, 'source_provider_id');
+        return $this->belongsTo(InsuranceProvider::class, 'source_insurance_provider_id');
     }
 
     /**
@@ -29,6 +29,6 @@ class InsuranceProviderTransition extends Model
      */
     public function targetProvider(): BelongsTo
     {
-        return $this->belongsTo(InsuranceProvider::class, 'target_provider_id');
+        return $this->belongsTo(InsuranceProvider::class, 'target_insurance_provider_id');
     }
 }

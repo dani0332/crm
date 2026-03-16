@@ -47,8 +47,8 @@ class RenewalsSchema
             },
             'renewal_insurance_provider_transitions' => function (Blueprint $table) {
                 $table->id();
-                $table->integer('source_provider_id');
-                $table->integer('target_provider_id');
+                $table->integer('source_insurance_provider_id');
+                $table->integer('target_insurance_provider_id');
                 $table->string('description')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('created_by')->nullable();

@@ -27,14 +27,14 @@ class InsuranceProviderTransitionsSeeder extends Seeder
         }
 
         if ($rsa) {
-            $rsaHasActiveTransition = InsuranceProviderTransition::where('source_provider_id', $rsa->id)
+            $rsaHasActiveTransition = InsuranceProviderTransition::where('source_insurance_provider_id', $rsa->id)
                 ->whereHas('targetProvider', fn ($q) => $q->where('is_active', 1))
                 ->exists();
 
             if (! $rsaHasActiveTransition) {
                 InsuranceProviderTransition::create([
-                    'source_provider_id' => $rsa->id,
-                    'target_provider_id' => $axa->id,
+                    'source_insurance_provider_id' => $rsa->id,
+                    'target_insurance_provider_id' => $axa->id,
                 ]);
                 LoggerService::info('InsuranceProviderTransitionsSeeder: RSA → GIG AXA transition seeded.');
             } else {
@@ -45,14 +45,14 @@ class InsuranceProviderTransitionsSeeder extends Seeder
         }
 
         if ($tm) {
-            $tmHasActiveTransition = InsuranceProviderTransition::where('source_provider_id', $tm->id)
+            $tmHasActiveTransition = InsuranceProviderTransition::where('source_insurance_provider_id', $tm->id)
                 ->whereHas('targetProvider', fn ($q) => $q->where('is_active', 1))
                 ->exists();
 
             if (! $tmHasActiveTransition) {
                 InsuranceProviderTransition::create([
-                    'source_provider_id' => $tm->id,
-                    'target_provider_id' => $axa->id,
+                    'source_insurance_provider_id' => $tm->id,
+                    'target_insurance_provider_id' => $axa->id,
                 ]);
                 LoggerService::info('InsuranceProviderTransitionsSeeder: TM → GIG AXA transition seeded.');
             } else {
