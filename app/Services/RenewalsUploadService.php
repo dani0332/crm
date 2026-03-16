@@ -15,6 +15,7 @@ use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProvidersTransitionEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -1752,6 +1753,7 @@ class RenewalsUploadService
             'planId' => $carPlan->id,
             'isDisabled' => false,
             'isManualUpdate' => $isTransitionableLead['status'] ? true : false,
+            'tags' => $isTransitionableLead['status'] ? $isTransitionableLead['tags'] : '',
             'isGenesis' => $isTransitionableLead['status'] ? true : false,
             'actualPremium' => $data['premium'] ?? 0,
             'discountPremium' => $data['premium'] ?? 0,
@@ -3566,10 +3568,10 @@ class RenewalsUploadService
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         if ($lead && $lead->insurance_provider_transition_id) {
-            LoggerService::info('isTransitionableLeadForProcess inside function - lead->insurance_provider_transition_id:'.json_encode($lead->insurance_provider_transition_id));
-            $transition = InsuranceProviderTransition::with('targetProvider')->find($lead->insurance_provider_transition_id);
-            if ($transition && $transition->is_active && $target = $transition->targetProvider) {
-                LoggerService::info('isTransitionableLeadForProcess inside function - target:'.json_encode($target));
+            $transition = InsuranceProviderTransition::with('targetProvider','sourceProvider')->find($lead->insurance_provider_transition_id);
+            $target = $transition->targetProvider;
+            $source = $transition->sourceProvider;
+            if ($transition && $transition->is_active && $target ) {
                 $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
                     ->where('repair_type', $leadData->plan_type ?? null)
                     ->where('provider_id', $target->id)
@@ -3581,6 +3583,7 @@ class RenewalsUploadService
                     'carPlan' => $carPlan,
                     'insuranceProvider' => $target,
                     'transitionId' => $transition->id,
+                    'tags' => InsuranceProvidersTransitionEnum::tagForSourceCode($source->code),
                 ];
             }
         }
