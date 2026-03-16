@@ -211,7 +211,7 @@ onMounted(() => {
       </div>
 
       <div class="flex justify-end gap-3 mt-5">
-        <x-button size="sm" color="#ff5e00" @click="updateTeams()" :disabled="tabs[activeTab].label == 'AUH'">
+        <x-button size="sm" color="#ff5e00" @click="updateTeams()" :disabled="!roles.includes('ADMIN')">
           Update {{ tabs[activeTab].label }}
         </x-button>
       </div>
