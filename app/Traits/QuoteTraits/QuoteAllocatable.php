@@ -317,7 +317,7 @@ trait QuoteAllocatable
         return $query->whereHas('payments', function ($paymentQuery) {
             // Payment was authorized 24+ hours ago
             $paymentQuery->whereNotNull('authorized_at')
-                ->where('authorized_at', '<=', now()->subHours(24));
+                ->where('authorized_at', '<=', now()->subminutes(10));
         })->whereDoesntHave('documents'); // Exclude if any documents exist
     }
 
