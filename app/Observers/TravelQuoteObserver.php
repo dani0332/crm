@@ -120,6 +120,7 @@ class TravelQuoteObserver
             }
 
             try {
+                LoggerService::info('TravelQuoteObserver - completing quote journey entry for quote uuid: '.$travelQuote->uuid);
                 app(QuoteJourneyService::class)->completePolicyIssuanceEntry($travelQuote->uuid, QuoteTypeId::Travel);
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - complete quote journey entry failed', [
