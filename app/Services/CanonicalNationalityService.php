@@ -15,6 +15,7 @@ class CanonicalNationalityService
     public function getByCodes(string $codes): array
     {
         return CanonicalNationality::whereIn('canonical_nationality_code', explode(',', $codes))
+            ->where('nationality_synonym', 0)
             ->pluck('canonical_nationality_name')
             ->toArray();
     }
