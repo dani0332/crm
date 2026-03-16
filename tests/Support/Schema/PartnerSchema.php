@@ -40,14 +40,14 @@ class PartnerSchema
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             },
-            'quote_tags' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('quote_type_id');
-                $table->string('quote_uuid');
-                $table->string('name');
-                $table->string('value')->nullable();
-                $table->timestamps();
-            },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'quote_tags' => [
+                'value' => function (Blueprint $table) {
+                    $table->string('value')->nullable();
+                },
+            ],
         ]);
     }
 }
