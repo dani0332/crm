@@ -260,7 +260,7 @@ class AMLController extends Controller
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
         $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled(
             quoteTypeCode: $quoteType->code,
-            insuranceProviderId: $insuranceProvider?->id,
+            insuranceProviderId: $insuranceProvider?->code,
             vehicleRegistrationType: $quoteRequest?->registration_type,
             source: $quoteRequest?->source,
         );
