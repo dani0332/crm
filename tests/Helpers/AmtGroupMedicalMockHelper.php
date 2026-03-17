@@ -4,6 +4,7 @@ namespace Tests\Helpers;
 
 use App\Services\CapiRequestService;
 use Mockery;
+use Mockery\MockInterface;
 
 class AmtGroupMedicalMockHelper
 {
@@ -12,7 +13,7 @@ class AmtGroupMedicalMockHelper
      * Asserts the CAPI payload includes emirateOfRegistrationId and returns a response without quoteUID
      * so savePremium/selfAssign are not triggered (no local quote creation).
      */
-    public static function mockCapiRequestService(int $expectedEmirateOfRegistrationId): \Mockery\MockInterface
+    public static function mockCapiRequestService(int $expectedEmirateOfRegistrationId): MockInterface
     {
         $mock = Mockery::mock('alias:'.CapiRequestService::class);
         $mock->shouldReceive('sendCAPIRequest')
