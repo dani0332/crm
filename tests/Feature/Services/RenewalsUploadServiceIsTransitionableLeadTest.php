@@ -240,6 +240,35 @@ test('isTransitionableLeadForProcess returns transitionable config when active t
         ->and($result['transitionId'])->toBe($transition->id);
 });
 
+test('isTransitionableLeadForProcess handles scenario where source provider record is missing (deleted)', function () {
+    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
+    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    // Delete the source provider record but keep the transition referencing it
+    $sourceProvider->delete();
+
+    $lead = createMockLead([
+        'insurer' => 'RSA',
+        'provider_name' => 'GIG AXA',
+        'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
+        'plan_type' => 'AGENCY',
+    ], $transition->id);
+
+    $service = createServiceWithoutConstructor();
+
+    // Should NOT throw fatal error, but instead fall back to non-transitionable config
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['transitionId'])->toBeNull();
+});
+
 test('isTransitionableLeadForProcess returns non-transitionable when no transition_id', function () {
     $providerText = 'AXA Direct '.uniqid();
     $provider = InsuranceProvider::create(['code' => 'AXA', 'text' => $providerText]);
