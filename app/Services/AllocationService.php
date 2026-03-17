@@ -111,13 +111,13 @@ class AllocationService extends BaseService
                 );
             } catch (QueryException $exception) {
 
-                LoggerService::info("QueryException: " . $exception->getMessage(), [
+                LoggerService::error("QueryException: " . $exception->getMessage(), [
                     'message' => $exception->getMessage(),
                     'code' => $exception->getCode(),
                     'getCode' => $exception->getCode() === 23000,
                 ]);
 
-                if ($exception->getCode() === 23000) {
+                if ($exception->getCode() === 23000 || $exception->getCode() === '23000') {
                     LoggerService::info("Re-attempting to update QuoteDetails");
                     $quoteModel::where($keyColumn, $leadId)->update([
                         'advisor_assigned_date' => now(),
@@ -127,6 +127,8 @@ class AllocationService extends BaseService
 
                     return;
                 }
+
+                throw $exception;
             }
         };
 
