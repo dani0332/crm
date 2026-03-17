@@ -317,8 +317,14 @@ trait QuoteAllocatable
         return $query->whereHas('payments', function ($paymentQuery) {
             // Payment was authorized 24+ hours ago
             $paymentQuery->whereNotNull('authorized_at')
-                ->where('authorized_at', '<=', now()->subminutes(10));
+                ->where('authorized_at', '<=', now()->subMinutes(10));
         })->whereDoesntHave('documents'); // Exclude if any documents exist
+    }
+
+    // used in VerifyLeadPreChecksPipe to check if the lead is eligible for backup allocation as we cannot use the scope on the lead model directly
+    public function isEligibleForBackupAllocationCyber(): bool
+    {
+        return static::where('uuid', $this->uuid)->isEligibleForAllocationCyber()->exists();
     }
 
     public function isAllocationFailed(): bool
