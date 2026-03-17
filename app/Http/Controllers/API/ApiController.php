@@ -19,6 +19,9 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\BirdWhatsappInboundWebhookRequest;
+use App\Http\Requests\BirdWhatsappInteractionWebhookRequest;
+use App\Http\Requests\BirdWhatsappOutboundWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -63,6 +66,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\RewatermarkQuoteDocumentsService;
+use App\Services\WhatsAppHookService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -86,14 +90,16 @@ class ApiController extends Controller
     protected $emailStatusService;
     protected $quoteDocumentService;
     protected $ocrReponseStructure;
+    protected WhatsAppHookService $whatsAppHookService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService, WhatsAppHookService $whatsAppHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->whatsAppHookService = $whatsAppHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -306,6 +312,21 @@ class ApiController extends Controller
     public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
     {
         return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
+    }
+
+    public function birdWhatsappInboundHook(BirdWhatsappInboundWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleInbound($request);
+    }
+
+    public function birdWhatsappOutboundHook(BirdWhatsappOutboundWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleOutbound($request);
+    }
+
+    public function birdWhatsappInteractionHook(BirdWhatsappInteractionWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleInteraction($request);
     }
     public function duplicateEntries()
     {

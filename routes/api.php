@@ -102,6 +102,9 @@ Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuote
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutboundEmailsHook']);
+Route::post('/bird-whatsapp-inbound-hook', [ApiController::class, 'birdWhatsappInboundHook']);
+Route::post('/bird-whatsapp-outbound-hook', [ApiController::class, 'birdWhatsappOutboundHook']);
+Route::post('/bird-whatsapp-interaction-hook', [ApiController::class, 'birdWhatsappInteractionHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
