@@ -1136,7 +1136,9 @@ function handleOcrNotification(event) {
                       filterable
                       :disabled="props.isEmirateOfRegistrationLocked"
                       :rules="[isRequired]"
-                      :error="customerProfileForm.errors.emirate_of_registration_id"
+                      :error="
+                        customerProfileForm.errors.emirate_of_registration_id
+                      "
                       required
                     />
                   </dd>
