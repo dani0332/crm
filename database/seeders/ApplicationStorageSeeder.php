@@ -44,6 +44,18 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        $isProd = config('app.env') === 'production';
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
+            [
+                'value' => $isProd ? 0 : 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+
         $this->seedBirdWorkflowUrls();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
@@ -298,11 +310,11 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
+        $isProd = config('app.env') === 'production';
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL],
+            ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync',
+                'value' => $isProd ? 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/dc85dec3-4bc3-4030-9214-7a8909ecbc7b/invoke-sync' : 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/07d270c5-5121-441c-b048-9e4b1e2478f1/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1448,7 +1460,7 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedAdvisorPaymentNotificationWorkflowUrl()
     {
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR],
             [
                 'value' => true,
@@ -1463,7 +1475,7 @@ class ApplicationStorageSeeder extends Seeder
             $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/bdfeeeee-4101-4d9d-97b2-22f51b82ba26/invoke-sync';
         }
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL],
             [
                 'value' => $birdWorkflowUrl,
@@ -1473,7 +1485,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS],
             [
                 'value' => 30,

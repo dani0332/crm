@@ -44,6 +44,7 @@ enum LoggerFeatureEnum: string
     case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
+    case EP_RETARGET_REMINDER = 'ep-retarget-reminder';
     case SLA_TRACKING = 'sla-tracking';
     case MA_WELCOME_JOB = 'ma-welcome-job';
     case SEND_MA_WELCOME_EMAIL = 'send-ma-welcome-email';

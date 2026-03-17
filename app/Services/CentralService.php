@@ -143,6 +143,8 @@ class CentralService extends BaseService
             $model = $quoteType->model();
             if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
                 $parentRecord = $model::with('lifeQuote')->find($entityId);
+            } elseif (strtolower($parentType) == strtolower(quoteTypeCode::Home)) {
+                $parentRecord = $model::with('homeQuote')->find($entityId);
             } else {
                 $parentRecord = $model::find($entityId);
             }
@@ -153,6 +155,8 @@ class CentralService extends BaseService
             if ($repository) {
                 if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
                     $parentRecord = PersonalQuote::with('lifeQuote')->where('id', $entityId)->first();
+                } elseif (strtolower($parentType) == strtolower(quoteTypeCode::Home)) {
+                    $parentRecord = PersonalQuote::with('homeQuote')->where('id', $entityId)->first();
                 } else {
                     $parentRecord = $repository::where('id', $entityId)->first();
                 }
