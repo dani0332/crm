@@ -13,7 +13,6 @@ const props = defineProps({
 const selectedItemId = ref(null);
 const showDeleteModal = ref(false);
 const deleting = ref(false);
-const isExpanded = ref(false);
 const routingLogs = reactive({
   loading: false,
   data: null,

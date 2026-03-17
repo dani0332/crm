@@ -8,6 +8,12 @@ const props = defineProps({
   },
 });
 const notification = useToast();
+const tooltip = ref({
+  visible: false,
+  text: '',
+  x: 0,
+  y: 0
+})
 
 const routingLogs = reactive({
   loading: false,
@@ -35,6 +41,21 @@ const loadData = async () => {
     routingLogs.loading = false;
   });
 };
+
+const showTooltip = (event, nationalities) => {
+  const rect = event.target.getBoundingClientRect()
+
+  tooltip.value = {
+    visible: true,
+    text: nationalities.join(', '),
+    x: rect.left + rect.width / 2,
+    y: rect.top
+  }
+}
+
+const hideTooltip = () => {
+  tooltip.value.visible = false
+}
 
 defineExpose({
   loadData
@@ -102,8 +123,37 @@ defineExpose({
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
           >
+          <template #item-nationalities="{ nationalities }">
+            <span>
+              {{ nationalities.slice(0, 7).join(', ') }}
+            </span> 
+            <span
+              v-if="nationalities.length > 7"
+              class="text-primary cursor-pointer ml-1"
+              @mouseenter="showTooltip($event, nationalities)"
+              @mouseleave="hideTooltip"
+            >
+              +{{ nationalities.length - 7 }} more
+            </span>
+          </template>
           </DataTable>
         </div>
+
+        <!-- Tooltip -->
+        <Teleport to="body">
+          <div
+            v-if="tooltip.visible"
+            :style="{
+              position: 'fixed',
+              left: tooltip.x + 'px',
+              top: (tooltip.y - 10) + 'px',
+              transform: 'translate(-50%, -100%)'
+            }"
+            class="bg-black text-white text-xs rounded p-2 shadow-lg z-[9999] max-w-xs whitespace-normal break-words"
+          >
+            {{ tooltip.text }}
+          </div>
+       </Teleport>
       </template>
     </Collapsible>
   </div>
