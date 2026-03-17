@@ -43,7 +43,7 @@ class BusinessQuoteRepository extends BaseRepository
             request()->merge($requestParams);
         }
 
-        $query = $this->with([
+        $with = [
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
@@ -52,7 +52,11 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
-            ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
+        ];
+        if ($quoteType == quoteTypeCode::GroupMedical) {
+            $with[] = 'emirate';
+        }
+        $query = $this->with($with)->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
             });
