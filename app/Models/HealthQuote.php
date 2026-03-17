@@ -543,13 +543,14 @@ class HealthQuote extends Model implements AuditableContract
             return false;
         }
 
-        // Calculate age
-        $age = Carbon::parse($this->dob)->age;
-        LoggerService::info('Lead applicant age', ['age' => $age]);
+        // Only use age-based classification when DOB is present; null DOB must not be treated as age 0
+        if (! empty($this->dob)) {
+            $age = Carbon::parse($this->dob)->age;
+            LoggerService::info('Lead applicant age', ['age' => $age]);
 
-        // If age falls within range
-        if ($age >= $sicConfig->min_age && $age <= $sicConfig->max_age) {
-            return true;
+            if ($age >= $sicConfig->min_age && $age <= $sicConfig->max_age) {
+                return true;
+            }
         }
 
         if ($this->price_starting_from < $sicConfig->price_starting_from) {
