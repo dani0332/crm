@@ -13,6 +13,7 @@ const props = defineProps({
 const selectedItemId = ref(null);
 const showDeleteModal = ref(false);
 const deleting = ref(false);
+const isExpanded = ref(false);
 const routingLogs = reactive({
   loading: false,
   data: null,
@@ -27,6 +28,12 @@ const routingLogs = reactive({
     { text: 'Action', value: 'action' },
   ],
 });
+const tooltip = ref({
+  visible: false,
+  text: '',
+  x: 0,
+  y: 0
+})
 const emit = defineEmits(['edit-config'])
 
 function deleteLog(item) {
@@ -71,6 +78,21 @@ const loadData = async () => {
     routingLogs.loading = false;
   });
 };
+
+const showTooltip = (event, nationalities) => {
+  const rect = event.target.getBoundingClientRect()
+
+  tooltip.value = {
+    visible: true,
+    text: nationalities.join(', '),
+    x: rect.left + rect.width / 2,
+    y: rect.top
+  }
+}
+
+const hideTooltip = () => {
+  tooltip.value.visible = false
+}
 
 defineExpose({
   loadData
@@ -137,13 +159,27 @@ defineExpose({
             hide-rows-per-page
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
+            style="z-index:1"
           >
           <template #item-status="{ deleted_at }">
             <x-tag size="sm" :color="deleted_at ? 'error' : 'success'">
               {{ deleted_at ? 'Deleted' : 'Scheduled' }}
             </x-tag>
           </template>
-            <template #item-action="item">
+          <template #item-nationalities="{ nationalities }">
+            <span>
+              {{ nationalities.slice(0, 7).join(', ') }}
+            </span>
+            <span
+              v-if="nationalities.length > 7"
+              class="text-primary cursor-pointer ml-1"
+              @mouseenter="showTooltip($event, nationalities)"
+              @mouseleave="hideTooltip"
+            >
+              +{{ nationalities.length - 7 }} more
+            </span>
+          </template>
+          <template #item-action="item">
               <div style="display:flex; gap:4px; width:120px;" v-if="!item.deleted_at">
                 <x-button size="xs" color="primary" outlined style="flex:1;" @click.prevent="editLog(item)">
                   Edit
@@ -152,9 +188,25 @@ defineExpose({
                   Delete
                 </x-button>
               </div>
-            </template>
+          </template>
           </DataTable>
         </div>
+
+        <!-- Tooltip -->
+        <Teleport to="body">
+          <div
+            v-if="tooltip.visible"
+            :style="{
+              position: 'fixed',
+              left: tooltip.x + 'px',
+              top: (tooltip.y - 10) + 'px',
+              transform: 'translate(-50%, -100%)'
+            }"
+            class="bg-black text-white text-xs rounded p-2 shadow-lg z-[9999] max-w-xs whitespace-normal break-words"
+          >
+            {{ tooltip.text }}
+          </div>
+       </Teleport>
       </template>
     </Collapsible>
 
