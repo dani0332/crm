@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteFlowType;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -13,7 +12,6 @@ use App\Http\Requests\SavingsQuoteRequest;
 use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
@@ -208,26 +206,10 @@ class SavingsQuoteController extends Controller
                 'plan_ids' => $request->plan_ids ?? [],
             ]);
 
-            $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
-                $quoteUuId,
-                QuoteTypes::SAVINGS->id(),
-                QuoteFlowType::SAVINGS_OCA_EMAIL->value
-            );
-
-            if ($isFlowExecuted) {
-                LoggerService::info('SavingsQuoteController - sendOCAEmail flow already executed', [
-                    'quote_uuid' => $quoteUuId,
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'OCA email has already been sent for this quote',
-                ], 400);
-            }
-
-            // Prepare data for the email
+            // Bypass duplicate check when Send OCA email button is used (manual trigger)
             $emailData = [
                 'plan_ids' => $request->plan_ids ?? [],
+                'force_send' => true,
             ];
 
             // Dispatch the job to send OCA email
@@ -322,7 +304,11 @@ class SavingsQuoteController extends Controller
 
     public function updateExchangeRate(Request $request)
     {
-        $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+        $quote = $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
+        if (! $quote) {
+            return response()->json(['message' => 'Quote not found'], 404);
+        }
 
         return response()->json(['message' => 'Exchange rate updated successfully']);
     }
