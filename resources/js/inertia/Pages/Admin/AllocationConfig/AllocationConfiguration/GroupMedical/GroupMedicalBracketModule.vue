@@ -19,14 +19,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  advisorOptionsResolver: {
-    type: Function,
-    default: null,
-  },
-  departmentOptions: {
-    type: Array,
-    default: () => [],
-  },
   planTypeOptions: {
     type: Array,
     default: () => [],
@@ -42,7 +34,6 @@ const emit = defineEmits([
   'remove-bracket',
   'add-profile',
   'remove-profile',
-  'department-change',
 ]);
 
 const highlightedBracketIndex = ref(-1);
@@ -138,23 +129,6 @@ const createEmptyProfile = () => ({
   advisorIds: [],
   planTypeIds: [],
 });
-
-const getAdvisorOptions = bracketIndex => {
-  if (props.advisorOptionsResolver) {
-    return props.advisorOptionsResolver(bracketIndex);
-  }
-
-  return props.advisorOptions;
-};
-
-const handleDepartmentChange = (bracketIndex, departmentIds) => {
-  emit('department-change', { bracketIndex, departmentIds });
-};
-
-const updateDepartmentIds = (bracketIndex, value) => {
-  // ensure model updates
-  emit('department-change', { bracketIndex, departmentIds: value });
-};
 
 const addBracket = () => {
   emit('add-bracket');
@@ -325,52 +299,6 @@ const toggleModule = () => {
                 </div>
               </div>
 
-              <div class="border-b pb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-3">
-                  Departments
-                </h5>
-                <x-select
-                  v-model="bracket.departmentIds"
-                  :options="departmentOptions"
-                  placeholder="Select departments..."
-                  multiple
-                  filterable
-                  :disabled="viewMode"
-                  class="w-full min-h-[40px]"
-                  label="Departments"
-                  required
-                  @update:model-value="
-                    value => handleDepartmentChange(bracketIndex, value)
-                  "
-                  tooltip="Select one or more departments to filter advisors."
-                >
-                  <template
-                    #content-footer
-                    v-if="departmentOptions.length > 0 && !viewMode"
-                  >
-                    <ui-select-actions
-                      @select-all="
-                        (() => {
-                          bracket.departmentIds = departmentOptions.map(
-                            item => item.value,
-                          );
-                          updateDepartmentIds(
-                            bracketIndex,
-                            bracket.departmentIds,
-                          );
-                        })()
-                      "
-                      @clear="
-                        (() => {
-                          bracket.departmentIds = [];
-                          updateDepartmentIds(bracketIndex, []);
-                        })()
-                      "
-                    />
-                  </template>
-                </x-select>
-              </div>
-
               <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
@@ -475,7 +403,7 @@ const toggleModule = () => {
                       <div>
                         <x-select
                           v-model="profile.advisorIds"
-                          :options="getAdvisorOptions(bracketIndex)"
+                          :options="advisorOptions"
                           placeholder="Select advisors..."
                           multiple
                           filterable
@@ -487,16 +415,13 @@ const toggleModule = () => {
                         >
                           <template
                             #content-footer
-                            v-if="
-                              getAdvisorOptions(bracketIndex).length > 0 &&
-                              !viewMode
-                            "
+                            v-if="advisorOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.advisorIds = getAdvisorOptions(
-                                  bracketIndex,
-                                ).map(item => item.value)
+                                profile.advisorIds = advisorOptions.map(
+                                  item => item.value,
+                                )
                               "
                               @clear="profile.advisorIds = []"
                             />

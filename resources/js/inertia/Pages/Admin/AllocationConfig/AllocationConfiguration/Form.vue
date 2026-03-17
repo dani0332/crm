@@ -44,7 +44,6 @@ const {
   nationalityOptions,
   teamOptions,
   businessTypeOptions,
-  departmentOptions,
   planTypeOptions,
   locationOptions,
   currentConfiguration,
@@ -250,18 +249,8 @@ onMounted(() => {
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
             :plan-type-options="planTypeOptions"
-            :department-options="departmentOptions"
-            :quote-type="form.quote_type"
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
-            @request-save="
-              event =>
-                onSubmit(event?.isValid ?? true, event?.regionKey)?.finally(
-                  () => {
-                    groupMedicalTemplateRef?.clearSavingState?.();
-                  },
-                )
-            "
             ref="groupMedicalTemplateRef"
           />
         </div>
@@ -320,11 +309,7 @@ onMounted(() => {
         <div class="p-6 bg-white border-b border-gray-200">
           <!-- View Mode Buttons -->
           <div
-            v-if="
-              isViewMode &&
-              currentConfiguration &&
-              form.quote_type !== quoteTypeCodeEnum.GroupMedical
-            "
+            v-if="isViewMode && currentConfiguration"
             class="flex justify-end gap-3 mb-4"
           >
             <x-tooltip>

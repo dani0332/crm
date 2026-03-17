@@ -11,7 +11,6 @@ export function useAllocationForm(props, errorHandling) {
   const teamOptions = ref([]);
   const businessTypeOptions = ref([]);
   const planTypeOptions = ref([]);
-  const departmentOptions = ref([]);
   const locationOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
@@ -123,26 +122,6 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
-  const fetchDepartments = async () => {
-    departmentOptions.value = [];
-    try {
-      const response = await axios.get('/api/departments');
-
-      if (
-        response.data.success &&
-        response.data.data &&
-        response.data.data.length > 0
-      ) {
-        departmentOptions.value = response.data.data.map(department => ({
-          value: department.id,
-          label: department.name,
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching departments:', error);
-    }
-  };
-
   const fetchBusinessTypes = async () => {
     businessTypeOptions.value = [];
     try {
@@ -219,7 +198,6 @@ export function useAllocationForm(props, errorHandling) {
     businessTypeOptions.value = [];
     planTypeOptions.value = [];
     locationOptions.value = [];
-    departmentOptions.value = [];
     currentConfiguration.value = null;
     successMessage.value = '';
     clearAllErrors();
@@ -249,7 +227,6 @@ export function useAllocationForm(props, errorHandling) {
       // Fetch plan types for Group Medical
       if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
         fetchTasks.push(fetchPlanTypes());
-        fetchTasks.push(fetchDepartments());
       }
 
       // Fetch locations for Home
@@ -342,14 +319,11 @@ export function useAllocationForm(props, errorHandling) {
     });
   };
 
-  const onSubmit = async (isValid, regionKey = null) => {
+  const onSubmit = async isValid => {
     clearAllErrors();
 
     if (isValid) {
-      if (
-        advisorOptions.value.length === 0 &&
-        form.quote_type !== props.quoteTypeCodeEnum.GroupMedical
-      ) {
+      if (advisorOptions.value.length === 0) {
         addError(
           'No advisors available for this quote type. Please ensure advisors are configured.',
           'advisor',
@@ -440,8 +414,7 @@ export function useAllocationForm(props, errorHandling) {
         form.quote_type === props.quoteTypeCodeEnum.GroupMedical &&
         groupMedicalTemplateRef.value
       ) {
-        const templateValidation =
-          groupMedicalTemplateRef.value.validate(regionKey);
+        const templateValidation = groupMedicalTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
@@ -454,15 +427,9 @@ export function useAllocationForm(props, errorHandling) {
 
       isSubmitting.value = true;
 
-      // When saving a specific region, always include it (use empty if missing so clearing a region is persisted)
-      const emptyRegion = { micro_brackets: [], non_micro_brackets: [] };
-      const regionScopedData = regionKey
-        ? { [regionKey]: templateData.value?.[regionKey] ?? emptyRegion }
-        : templateData.value;
-
       const submitData = {
         ...form.data(),
-        ...regionScopedData,
+        ...templateData.value,
       };
 
       try {
@@ -589,7 +556,6 @@ export function useAllocationForm(props, errorHandling) {
     nationalityOptions,
     teamOptions,
     businessTypeOptions,
-    departmentOptions,
     planTypeOptions,
     locationOptions,
     currentConfiguration,

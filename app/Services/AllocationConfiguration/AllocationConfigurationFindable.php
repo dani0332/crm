@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\AllocationConfiguration;
 
-use App\Enums\EmirateEnum;
-use App\Enums\GroupMedicalRegionEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
@@ -84,10 +82,8 @@ trait AllocationConfigurationFindable
             return [];
         }
 
-        $regionConfig = $this->getGroupMedicalRegionConfig($configuration, $lead);
-
         foreach (['micro_brackets', 'non_micro_brackets'] as $bracketType) {
-            $brackets = isset($regionConfig[$bracketType]) ? $regionConfig[$bracketType] : [];
+            $brackets = $configuration?->{$bracketType};
             $advisorIds = $this->extractAdvisorIdsFromBrackets($brackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
             if (! empty($advisorIds)) {
                 return $advisorIds;
@@ -244,23 +240,5 @@ trait AllocationConfigurationFindable
         }
 
         return $profile['advisorIds'];
-    }
-
-    private function getGroupMedicalRegionConfig(AllocationConfiguration $configuration, BusinessQuote $lead): array
-    {
-        $config = $configuration->config ?? [];
-
-        $emirateOfRegistrationId = $lead->emirate_of_registration_id ?? null;
-
-        // if emirates of registration is not null and is abu dhabi then return auh else non auh
-        $regionKey = ($emirateOfRegistrationId !== null && $emirateOfRegistrationId == EmirateEnum::ABU_DHABI)
-            ? GroupMedicalRegionEnum::AUH
-            : GroupMedicalRegionEnum::NON_AUH;
-
-        if (isset($config[$regionKey]) && is_array($config[$regionKey])) {
-            return $config[$regionKey];
-        }
-
-        return [];
     }
 }

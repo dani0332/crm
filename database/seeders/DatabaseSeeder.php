@@ -54,7 +54,6 @@ class DatabaseSeeder extends Seeder
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
             AwnicNationalitySeeder::class,
-            ConverILAGroupMedicalConfigurationBranchWise::class,
         ]);
     }
 }
