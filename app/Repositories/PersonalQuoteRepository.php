@@ -116,6 +116,9 @@ class PersonalQuoteRepository extends BaseRepository
 
             if ($isSendUpdate) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+                if ($quote === null) {
+                    return ['status' => false, 'message' => 'Send Update Log not found'];
+                }
                 $quoteUUID = $quote->quote_uuid;
                 LoggerService::startQuoteLogging($quote);
                 LoggerService::info('fn: fetchUploadDocument start for Send Update Log');
