@@ -2,17 +2,19 @@
 
 declare(strict_types=1);
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
-use App\Enums\TeamTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\CanonicalNationality;
 use App\Models\HealthQuote;
+use App\Models\NationalityPool;
+use App\Models\QuoteType;
+use App\Models\Team;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Pipes\Allocation\Health\AssignTeamPipe;
 use Illuminate\Support\Facades\DB;
@@ -35,22 +37,8 @@ beforeEach(function () {
     }
 
     // Ensure LEAD_SOURCE_ECOMMERCE value exists in application_storage table (required for isEcommerce)
-    $db->table('application_storage')->insert([
-        [
-            'key_name' => ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE,
-            'value' => 'ecom.alfred.ae,testing.alfred.ae,staging.alfred.ae',
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ],
-        [
-            'key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED,
-            'value' => 1,
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ],
-    ]);
+    ApplicationStorage::factory()->createLeadSourceEcommerceForSqlite('ecom.alfred.ae,testing.alfred.ae,staging.alfred.ae');
+    ApplicationStorage::factory()->createHealthTeamRoutingEnabledForSqlite(1);
 
     // Ensure sic config table exists
     if (! $db->getSchemaBuilder()->hasTable('sic_configs')) {
@@ -67,14 +55,7 @@ beforeEach(function () {
     // Ensure Health quote type exists
     $healthQuoteTypeId = $db->table('quote_type')->where('code', QuoteTypes::HEALTH->value)->value('id');
     if (! $healthQuoteTypeId) {
-        $db->table('quote_type')->insert([
-            'id' => QuoteTypes::HEALTH->id(),
-            'code' => QuoteTypes::HEALTH->value,
-            'text' => QuoteTypes::HEALTH->value,
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        QuoteType::factory()->createHealthForSqlite();
     }
 
     // Ensure canonical_nationalities
@@ -88,14 +69,7 @@ beforeEach(function () {
             $table->timestamps();
         });
 
-        $db->table('canonical_nationalities')->insert([
-            'nationality_id' => 1,
-            'canonical_nationality_code' => 'CN0001',
-            'canonical_nationality_name' => 'Afghan',
-            'nationality_synonym' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        CanonicalNationality::factory()->createForSqlite();
     }
 
     // Ensure nationlity_pool table exists
@@ -111,15 +85,7 @@ beforeEach(function () {
             $table->softDeletes();
         });
 
-        $db->table('nationality_pool')->insert([
-            'health_nationality_group_ids' => '1,2,3',
-            'canonical_nationality_codes' => 'CN0001,CN0002',
-            'effective_from' => now(),
-            'effective_to' => '2099-12-31',
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        NationalityPool::factory()->createForSqlite();
     }
 
     // Ensure teams table has category column (required for fetchTeamByPriceAndCategory)
@@ -132,17 +98,7 @@ beforeEach(function () {
     }
 
     // Min GBP price
-    $db->table('teams')->insert([
-        'name' => TeamNameEnum::GBP,
-        'code' => TeamNameEnum::GBP,
-        'type' => TeamTypeEnum::TEAM,
-        'is_active' => 1,
-        'parent_team_id' => null,
-        'category' => TeamCategoryEnum::NON_AUH->value,
-        'allocation_threshold_enabled' => true,
-        'min_price' => 1000,
-        'max_price' => 1000000,
-    ]);
+    Team::factory()->createForSqlite();
 });
 
 test('assigns GBP team for AUH lead', function () {
