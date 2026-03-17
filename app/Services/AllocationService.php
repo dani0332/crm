@@ -119,14 +119,22 @@ class AllocationService extends BaseService
 
                 if ($exception->getCode() === 23000 || $exception->getCode() === '23000') {
                     LoggerService::info("Re-attempting to update QuoteDetails");
-                    $quoteModel::where($keyColumn, $leadId)->update([
+                    $updated = $quoteModel::where($keyColumn, $leadId)->update([
                         'advisor_assigned_date' => now(),
                         'advisor_assigned_by_id' => auth()->id(),
                         'updated_at' => now(),
                     ]);
 
-                    return;
+                    if ($updated) {
+                        return;
+                    }
                 }
+
+                LoggerService::error("QueryException in upsertQuoteDetail: " . $exception->getMessage(), [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'lead_id' => $leadId,
+                ]);
 
                 throw $exception;
             }
