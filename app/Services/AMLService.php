@@ -1986,7 +1986,7 @@ class AMLService
         }
 
 
-        if(isset($entityData['emirate_of_registration_id'])){
+        if(isset($entityData['emirate_of_registration_id']) && $quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote){
            $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
            $quote->save();
         }

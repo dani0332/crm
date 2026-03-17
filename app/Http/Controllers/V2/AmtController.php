@@ -610,7 +610,7 @@ class AmtController extends Controller
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
             ->first();   
         $entityEmirateOfRegistrationId = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
-        if(!($entityEmirateOfRegistrationId)){
+        if($entityEmirateOfRegistrationId){
             $record->emirate_of_registration_id = $entityEmirateOfRegistrationId;
         }
   
