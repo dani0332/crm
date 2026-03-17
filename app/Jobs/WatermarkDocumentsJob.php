@@ -68,9 +68,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         try {
             if (! $this->fileExists($sourcePath)) {
-                cache()->forget("processing_{$this->lockKey}");
                 LoggerService::warning("Source file does not exist: {$sourcePath}");
-
                 return;
             }
 
