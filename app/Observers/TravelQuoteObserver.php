@@ -25,6 +25,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteJourneyService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -108,7 +109,7 @@ class TravelQuoteObserver
             app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
         }
 
-        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+        if (($travelQuote->wasChanged('quote_status_id') || isset($dirty['quote_status_id'])) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
             } catch (Exception $e) {
@@ -116,6 +117,15 @@ class TravelQuoteObserver
                     'error' => $e->getMessage(),
                     'uuid' => $travelQuote->uuid,
                 ]);
+            }
+
+            try {
+                LoggerService::info('TravelQuoteObserver - completing quote journey entry for quote uuid: '.$travelQuote->uuid);
+                app(QuoteJourneyService::class)->completePolicyIssuanceEntry($travelQuote->uuid, QuoteTypeId::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - complete quote journey entry failed', [
+                    'uuid' => $travelQuote->uuid,
+                ], exception: $e);
             }
 
             try {

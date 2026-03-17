@@ -19,6 +19,10 @@ final class EmbeddedProductEnum extends Enum
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
+    const CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS = [
+        self::MDX,
+        self::ECB,
+    ];
 
     public static function getAlfredProtectCodes(): array
     {
