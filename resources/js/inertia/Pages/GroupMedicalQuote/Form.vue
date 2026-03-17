@@ -305,7 +305,18 @@ function onSubmit(isValid) {
           label="EMIRATE OF REGISTRATION"
           :required="!props.isEmirateDisabled"
           :disabled="props.isEmirateDisabled"
-        />
+          tooltip="Select the Emirate where the company is legally registered or primarily operates."
+        >
+          <template #suffix>
+            <x-tooltip placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip
+                >Select the Emirate where the company is legally registered or
+                primarily operates.</template
+              >
+            </x-tooltip>
+          </template>
+        </x-select>
 
         <x-textarea
           v-model="quoteForm.brief_details"

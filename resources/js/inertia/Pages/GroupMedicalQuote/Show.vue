@@ -297,7 +297,9 @@ const customerProfileForm = useForm({
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
     page.props.quote?.quote_request_entity_mapping?.entity
-      ?.emirate_of_registration_id ?? null,
+      ?.emirate_of_registration_id ??
+    page.props.quote?.emirate_of_registration_id ??
+    null,
 });
 
 const updateProfileDetails = isValid => {
@@ -1133,6 +1135,9 @@ function handleOcrNotification(event) {
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       filterable
                       :disabled="props.isEmirateOfRegistrationLocked"
+                      :rules="[isRequired]"
+                      :error="customerProfileForm.errors.emirate_of_registration_id"
+                      required
                     />
                   </dd>
                 </div>
