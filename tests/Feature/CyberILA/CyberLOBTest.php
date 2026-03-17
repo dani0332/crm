@@ -359,7 +359,7 @@ test('cyber allocation processes correct allocation request structure', function
 });
 
 // ============================================================================
-// SECTION 6: isPaymentAuthorizedWithNoDocuments ALLOCATION TESTS (3 tests)
+// SECTION 6: isPaymentAuthorizedWithNoDocuments ALLOCATION TESTS (4 tests)
 // ============================================================================
 // Tests for VerifyLeadPreChecksPipe: paid lead with payment authorized 24h ago + no documents
 // should pass pre-checks and proceed to advisor allocation (or fail at advisor fetch)
