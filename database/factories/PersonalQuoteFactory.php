@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Customer;
 use App\Models\CyberQuote;
@@ -104,6 +105,69 @@ class PersonalQuoteFactory extends Factory
                 'doc_url' => 'documents/eid.pdf',
                 'doc_mime_type' => 'application/pdf',
             ]);
+        });
+    }
+
+    /**
+     * Cyber quote with payment authorized 24+ hours ago and no documents.
+     * Used for testing isPaymentAuthorizedWithNoDocuments allocation flow.
+     *
+     * @param  \Carbon\Carbon|null  $authorizedAt  Override for testing (e.g. now()->subHours(12) for "less than 24h" case)
+     */
+    public function paymentAuthorizedWithNoDocuments(?\Carbon\Carbon $authorizedAt = null): static
+    {
+        $authorizedAt = $authorizedAt ?? now()->subHours(24);
+
+        return $this->cyberQuote()->afterCreating(function (PersonalQuote $quote) use ($authorizedAt) {
+            $nationality = Nationality::factory()->state([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => true,
+            ])->create();
+
+            $customer = Customer::withoutEvents(function () use ($quote, $nationality) {
+                return Customer::factory()->create([
+                    'first_name' => $quote->first_name,
+                    'last_name' => $quote->last_name,
+                    'email' => $quote->email,
+                    'mobile_no' => $quote->mobile_no,
+                    'dob' => '1990-01-01',
+                    'nationality_id' => $nationality->id,
+                ]);
+            });
+
+            $quote->update([
+                'customer_id' => $customer->id,
+                'nationality_id' => $nationality->id,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            $emirate = Emirate::factory()->state([
+                'text' => 'Dubai',
+                'is_active' => true,
+            ])->create();
+
+            CyberQuote::factory()->create([
+                'personal_quote_id' => $quote->id,
+                'emirate_of_registration_id' => $emirate->id,
+                'coverage_id' => 1,
+            ]);
+
+            $payment = Payment::factory()->cyberPayment($quote->code, $quote->id)->create([
+                'authorized_at' => $authorizedAt,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            PaymentSplits::factory()->cyberPaymentSplit($payment->code)->create([
+                'authorized_at' => $authorizedAt,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            $quote->setRelation('cyberPlanDetail', (object) [
+                'coverage' => 500000,
+                'planName' => 'Gold Plan',
+            ]);
+            // Intentionally no documents - tests isPaymentAuthorizedWithNoDocuments flow
         });
     }
 }

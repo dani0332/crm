@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\PersonalQuote;
 use Tests\Helpers\CyberILA\CyberQuoteMockHelper;
 use Tests\Helpers\CyberILA\CyberQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
@@ -354,4 +356,57 @@ test('cyber allocation processes correct allocation request structure', function
 
     // Should process with all allocation properties
     expect($response->status())->toBeInt();
+});
+
+// ============================================================================
+// SECTION 6: isPaymentAuthorizedWithNoDocuments ALLOCATION TESTS (3 tests)
+// ============================================================================
+// Tests for VerifyLeadPreChecksPipe: paid lead with payment authorized 24h ago + no documents
+// should pass pre-checks and proceed to advisor allocation (or fail at advisor fetch)
+
+test('cyber isPaymentAuthorizedWithNoDocuments returns true when payment authorized 24 hours ago and no documents', function () {
+    TestSchemaCreator::createCyberSchema();
+
+    $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments()->create();
+
+    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeTrue();
+});
+
+test('cyber isPaymentAuthorizedWithNoDocuments returns false when documents exist', function () {
+    TestSchemaCreator::createCyberSchema();
+
+    $quote = PersonalQuote::factory()->withCyberDependencies()->create();
+
+    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeFalse();
+});
+
+test('cyber isPaymentAuthorizedWithNoDocuments returns false when payment authorized less than 24 hours ago', function () {
+    TestSchemaCreator::createCyberSchema();
+
+    $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments(now()->subHours(12))->create();
+
+    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeFalse();
+});
+
+test('cyber paid lead with payment authorized and no documents passes pre-checks', function () {
+    TestSchemaCreator::createCyberSchema();
+    TestDataSeeder::seedApplicationStorage([
+        ApplicationStorageEnums::ENABLE_AWNI_CYBER_POLICY_ISSUANCE => '0', // Non-AWNI path for this test
+    ]);
+
+    $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments()->create([
+        'quote_status_id' => 28,
+        'source' => 'https://ecom.alfred.ae/cyber-insurance/get-quote/',
+    ]);
+
+    $response = $this->postJson(route('assign-leads'), [
+        'quoteUUID' => $quote->uuid,
+        'quoteTypeId' => 19,
+        'reAssignAdvisor' => true,
+    ]);
+
+    // Pre-checks should pass - allocation fails at "Advisor not found" (not at pre-checks)
+    // If pre-checks failed we would get "Lead does not meet pre-check criteria"
+    $message = $response->json('message') ?? '';
+    expect($message)->not->toContain('Lead does not meet pre-check criteria');
 });
