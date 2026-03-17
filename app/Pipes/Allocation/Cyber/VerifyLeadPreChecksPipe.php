@@ -72,9 +72,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $continueAssignment = true;
         } elseif ($lead->isPaid()) {
             // for cyber we do not assign if the lead is paid, as it was requested by business
-            // Exception: when backup criteria met (24h passed, no docs) - assign advisor anyway
-            if ($lead->isEligibleForBackupAllocationCyber()) {
-                LoggerService::info(self::class.' - Lead is paid but meets backup criteria (24h passed, no documents), continuing assignment');
+            // Exception: payment authorized 24h ago with no documents - assign advisor anyway
+            if ($lead->isPaymentAuthorizedWithNoDocuments()) {
+                LoggerService::info(self::class.' - Lead is paid but has payment authorized 24h ago with no documents, continuing assignment');
                 $continueAssignment = true;
             } else {
                 LoggerService::info(self::class.' - Lead is paid, skipping assignment');
@@ -132,9 +132,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $this->allocationRequest->set('isCHSAdvisor', true);
             LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed so proceed with allocation');
             $allowAllocation = true;
-        } elseif ($this->lead->isEligibleForBackupAllocationCyber()) {
-            $this->allocationRequest->set('isCHSAdvisor', true);
-            LoggerService::info(self::class.':fetchLead - it is AWNI and automation not completed, but lead meets backup criteria (24h passed, no documents), proceeding with allocation');
+        } elseif ($this->lead->isPaymentAuthorizedWithNoDocuments()) {
+            // Do NOT set isCHSAdvisor - it will assign to normal advisor, not to Hapex User
+            LoggerService::info(self::class.':fetchLead - it is AWNI and automation not completed, but lead has payment authorized 24h ago with no documents, proceeding with normal advisor allocation');
             $allowAllocation = true;
         } else {
             LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed, skipping allocation');

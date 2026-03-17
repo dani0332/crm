@@ -312,19 +312,22 @@ trait QuoteAllocatable
      *
      * Excludes leads where any document exists (even if uploaded after 24 hours).
      */
-    public function scopeIsEligibleForAllocationCyber(Builder $query): Builder
+    public function scopeIsPaymentAuthorizedWithNoDocuments(Builder $query): Builder
     {
         return $query->whereHas('payments', function ($paymentQuery) {
-            // Payment was authorized 24+ hours ago
             $paymentQuery->whereNotNull('authorized_at')
                 ->where('authorized_at', '<=', now()->subMinutes(10));
-        })->whereDoesntHave('documents'); // Exclude if any documents exist
+        })->whereDoesntHave('documents');
     }
 
-    // used in VerifyLeadPreChecksPipe to check if the lead is eligible for backup allocation as we cannot use the scope on the lead model directly
-    public function isEligibleForBackupAllocationCyber(): bool
+    /**
+     * Check if this quote has payment authorized with no documents.
+     * Instance-level wrapper for scopeIsPaymentAuthorizedWithNoDocuments.
+     * used in VerifyLeadPreChecksPipe for cyber to check if the lead is eligible for backup allocation as we cannot use the scope on the lead model directly
+     */
+    public function isPaymentAuthorizedWithNoDocuments(): bool
     {
-        return static::where('uuid', $this->uuid)->isEligibleForAllocationCyber()->exists();
+        return static::where('uuid', $this->uuid)->isPaymentAuthorizedWithNoDocuments()->exists();
     }
 
     public function isAllocationFailed(): bool
