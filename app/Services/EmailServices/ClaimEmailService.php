@@ -3,25 +3,26 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ClaimRequest;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Enums\QuoteTypes;
 
 class ClaimEmailService extends BaseService
 {
     public function sendIntroEmail($claim)
     {
-        $isEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CLAIM_INTRO_EMAIL_SWITCH,useCache: true);
+        $isEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CLAIM_INTRO_EMAIL_SWITCH, useCache: true);
         if (! $isEnabled) {
             LoggerService::info(self::class.' - Claim intro email is not enabled');
+
             return;
         }
         if (! $claim) {
             LoggerService::error(self::class.' - Claim not found');
+
             return;
         }
         LoggerService::startQuoteLogging($claim->uuid);
@@ -45,16 +46,17 @@ class ClaimEmailService extends BaseService
             'workflowType' => WorkflowTypeEnum::CLAIM_INTRODUCTORY_EMAIL_TO_CUSTOMER,
         ];
 
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::CLAIM_INTRO_EMAIL_WORKFLOW,useCache: true);
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::CLAIM_INTRO_EMAIL_WORKFLOW, useCache: true);
         if (! empty($customerNotificationWorkflow)) {
             $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
             LoggerService::info(self::class." - sendIntroEmail - Webhook request sent to: {$customerNotificationWorkflow} ");
             app(BirdService::class)->createQuoteWorkFlowDetails($claim, $response, WorkflowTypeEnum::CLAIM_INTRODUCTORY_EMAIL_TO_CUSTOMER);
-            LoggerService::info(self::class." - sendIntroEmail - Workflow details created for claim: ");
+            LoggerService::info(self::class.' - sendIntroEmail - Workflow details created for claim: ');
         } else {
             LoggerService::info(self::class.'- sendIntroEmail - Webhook URL not found in storage');
         }
         LoggerService::info(self::class.' - sendIntroEmail - Claim intro email sent for claim: ');
+
         return true;
     }
 }

@@ -391,7 +391,7 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function managers()
     {

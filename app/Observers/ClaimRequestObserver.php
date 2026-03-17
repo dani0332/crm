@@ -34,11 +34,11 @@ class ClaimRequestObserver
     {
         $dirty = $claimRequest->getDirty();
         if (isset($dirty['manager_id'])) {
-          
+
             try {
                 ClaimIntroEmail::dispatch($claimRequest->uuid)->delay(now()->addSeconds(10));
-                LoggerService::info("ClaimIntroEmail dispatched for claim: ".$claimRequest->uuid);
-                
+                LoggerService::info('ClaimIntroEmail dispatched for claim: '.$claimRequest->uuid);
+
             } catch (Exception $e) {
                 LoggerService::warning('ClaimRequestObserver - handle claim  update manager failed', [
                     'error' => $e->getMessage(),

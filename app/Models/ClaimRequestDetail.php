@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use Carbon\Carbon;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,8 +27,8 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property int|null $service_type_id
  * @property string|null $request_reference_number
  * @property string|null $user_ip
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class ClaimRequestDetail extends Model implements AuditableContract
 {

@@ -11,6 +11,7 @@ use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -82,7 +83,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
     /**
      * Get the base query for selecting eligible advisors for claim allocation.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     protected function getAdvisorBaseQuery(string $onlineStatus, array $roles)
     {

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\User;
+use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -150,7 +151,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             // Special handling for ClaimsExport which needs ClaimsService as first parameter
             if ($this->exportClass === 'App\\Exports\\ClaimsExport') {
                 return app($this->exportClass, [
-                    'claimsService' => app(\App\Services\ClaimsService::class),
+                    'claimsService' => app(ClaimsService::class),
                     'requestParams' => $this->requestParams,
                 ]);
             }

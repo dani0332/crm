@@ -10,6 +10,7 @@ use App\Models\DocumentType;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -99,7 +100,7 @@ class ClaimDocumentService extends BaseService
                 } else {
                     $errors[] = "Failed to upload document: {$file->getClientOriginalName()}";
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[] = "Error uploading {$file->getClientOriginalName()}: {$e->getMessage()}";
 
                 LoggerService::error(' Document upload failed', extra: [
@@ -216,7 +217,7 @@ class ClaimDocumentService extends BaseService
         }
 
         // If it's a collection, convert to array for processing
-        if ($documents instanceof \Illuminate\Support\Collection) {
+        if ($documents instanceof Collection) {
             $documents = $documents->toArray();
         }
 
@@ -264,7 +265,7 @@ class ClaimDocumentService extends BaseService
         $documentCounts = []; // Track duplicate names
 
         // Convert collection to array if needed
-        if ($documents instanceof \Illuminate\Support\Collection) {
+        if ($documents instanceof Collection) {
             $documents = $documents->toArray();
         }
 

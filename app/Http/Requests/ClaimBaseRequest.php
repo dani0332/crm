@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -88,7 +89,7 @@ abstract class ClaimBaseRequest extends FormRequest
             ],
             'incident_date' => [
                 'nullable',
-                'date'
+                'date',
             ],
             'incident_story' => [
                 'nullable',
@@ -310,7 +311,7 @@ abstract class ClaimBaseRequest extends FormRequest
     {
         $errors = $validator->errors();
 
-        \App\Services\Logger\LoggerService::info($this->validationFailedLogMessage(), extra: array_merge(
+        LoggerService::info($this->validationFailedLogMessage(), extra: array_merge(
             [
                 'errors' => $errors->toArray(),
                 'input' => $this->except(['password', 'password_confirmation']),

@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\ClaimsEnum;
 use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -73,7 +74,7 @@ class ClaimSendNotificationRequest extends FormRequest
     /**
      * Handle a failed validation attempt.
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): void
+    protected function failedValidation(Validator $validator): void
     {
         $errors = $validator->errors();
 

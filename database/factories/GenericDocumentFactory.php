@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -50,7 +51,7 @@ class GenericDocumentFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'business_type_of_insurance_id' => \App\Models\BusinessTypeOfInsurance::factory(),
+                'business_type_of_insurance_id' => BusinessTypeOfInsurance::factory(),
             ];
         });
     }

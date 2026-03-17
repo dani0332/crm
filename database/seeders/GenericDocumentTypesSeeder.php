@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\GenericDocumentTypeCode;
 use App\Models\GenericDocumentType;
 use Illuminate\Database\Seeder;
 
@@ -22,7 +23,7 @@ class GenericDocumentTypesSeeder extends Seeder
     {
         $genericDocumentTypes = [
             [
-                'code' => \App\Enums\GenericDocumentTypeCode::CLAIM_FORM->value,
+                'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
                 'text' => 'Claim form',
                 'description' => 'download and upload your signed and completed claim form.',
             ],

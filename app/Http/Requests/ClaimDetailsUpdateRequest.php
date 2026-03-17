@@ -7,6 +7,8 @@ namespace App\Http\Requests;
 use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Lookup;
+use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -227,12 +229,12 @@ class ClaimDetailsUpdateRequest extends FormRequest
     /**
      * Handle a failed validation attempt.
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): void
+    protected function failedValidation(Validator $validator): void
     {
         $errors = $validator->errors();
 
         // Log validation failures for debugging
-        \App\Services\Logger\LoggerService::info('Claim details update validation failed', extra: [
+        LoggerService::info('Claim details update validation failed', extra: [
             'errors' => $errors->toArray(),
             'user_id' => Auth::id(),
             'claim_uuid' => $this->route('claim')?->uuid,

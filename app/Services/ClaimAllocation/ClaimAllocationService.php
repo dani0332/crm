@@ -22,6 +22,7 @@ use App\Pipes\Allocation\Claim\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
@@ -108,10 +109,11 @@ class ClaimAllocationService
 
     public function syncClaimAllocationConfig(int $userId, object $data)
     {
-        if(isset($data->quoteTypeId) && !empty($data->quoteTypeId)){
+        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId)) {
             $isExists = ClaimsLeadAllocationConfig::where('user_id', $userId)->where('quote_type_id', $data->quoteTypeId)->first();
-            if($isExists){
+            if ($isExists) {
                 LoggerService::warning('Claim allocation config already exists for user: '.$userId.' and quote type: '.$data->quoteTypeId);
+
                 return true;
             }
             ClaimsLeadAllocationConfig::create([
@@ -121,12 +123,14 @@ class ClaimAllocationService
                 'allocation_count' => 0,
                 'auto_assignment_count' => 0,
                 'manual_assignment_count' => 0,
-                'last_allocated' =>null,
+                'last_allocated' => null,
                 'reset_cap' => 0,
             ]);
+
             return true;
         }
         LoggerService::warning('Quote type id is not set for user: '.$userId);
+
         return false;
     }
 
@@ -151,7 +155,7 @@ class ClaimAllocationService
     /**
      * Update claim manager availability and related config in a robust, optimized way.
      *
-     * @param  \Illuminate\Http\Request|array  $request
+     * @param  Request|array  $request
      * @param  int  $quoteTypeId
      */
     public function updateAvailability($request): void

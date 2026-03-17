@@ -3,13 +3,13 @@
 namespace App\Jobs\Claim;
 
 use App\Models\ClaimRequest;
+use App\Services\EmailServices\ClaimEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\EmailServices\ClaimEmailService;
 
 class ClaimIntroEmail implements ShouldQueue
 {

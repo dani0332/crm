@@ -30,21 +30,21 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
     public function run(): void
     {
         try {
-        $this->claimILADashboardManagers();
-       
-        $roles = $this->createClaimRoles();
+            $this->claimILADashboardManagers();
 
-        $this->claimAllocationConfigManagersForCar();
-        $this->claimAllocationConfigManagersForHealth();
-        $this->claimAllocationConfigManagersForGM();
-        $this->claimAllocationConfigManagersForLife();
-        $this->claimAllocationConfigManagersForTravel();
-        $this->claimAllocationConfigManagersForHome();
-        $this->claimAllocationConfigManagersForPet();
-        $this->claimAllocationConfigManagersForYacht();
-        $this->claimAllocationConfigManagersForCycle();
-        $this->claimAllocationConfigManagersForJetski();
-        $this->claimAllocationConfigManagersForCorpline();
+            $roles = $this->createClaimRoles();
+
+            $this->claimAllocationConfigManagersForCar();
+            $this->claimAllocationConfigManagersForHealth();
+            $this->claimAllocationConfigManagersForGM();
+            $this->claimAllocationConfigManagersForLife();
+            $this->claimAllocationConfigManagersForTravel();
+            $this->claimAllocationConfigManagersForHome();
+            $this->claimAllocationConfigManagersForPet();
+            $this->claimAllocationConfigManagersForYacht();
+            $this->claimAllocationConfigManagersForCycle();
+            $this->claimAllocationConfigManagersForJetski();
+            $this->claimAllocationConfigManagersForCorpline();
 
         } catch (\Exception $e) {
             LoggerService::error('Error creating claim ILADashboard managers: '.$e->getMessage());
@@ -52,7 +52,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
     }
     private function claimILADashboardManagers()
     {
-      
+
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD,
             'guard_name' => 'web',
@@ -115,7 +115,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'ashli.fernandez@insurancemarket.ae',
             'sarvjeet.singh@insurancemarket.ae',
             'ali.farzan@insurancemarket.ae',
-            
+
         ];
         $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::CAR->id(), RolesEnum::CarClaimManager);

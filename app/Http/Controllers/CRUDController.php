@@ -58,6 +58,7 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CarTypeInsurance;
+use App\Models\ClaimStatus;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -127,10 +128,12 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CRUDController extends Controller
@@ -322,8 +325,8 @@ class CRUDController extends Controller
             $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
             $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
 
-            $supportUsers = app(\App\Services\UserService::class)->getSupportUsers([
-                'product_filter' => \App\Enums\QuoteTypes::HEALTH,
+            $supportUsers = app(UserService::class)->getSupportUsers([
+                'product_filter' => QuoteTypes::HEALTH,
                 'include_role_in_name' => true,
                 'return_format' => 'collection',
             ]);
@@ -333,7 +336,7 @@ class CRUDController extends Controller
 
             $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
                 && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
-                && Auth::user()->hasProduct(\App\Enums\QuoteTypes::HEALTH->value);
+                && Auth::user()->hasProduct(QuoteTypes::HEALTH->value);
 
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
@@ -641,7 +644,7 @@ class CRUDController extends Controller
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
-     * @return \Inertia\Response
+     * @return Response
      */
     public function show($id, Request $request)
     {
@@ -2276,7 +2279,7 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function exportCarPdf($quoteType, ExportPlansPdfRequest $request)
     {
@@ -2295,7 +2298,7 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function exportHealthPdf($quoteType, ExportPlansPdfRequest $request)
     {
@@ -2507,7 +2510,7 @@ class CRUDController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\ClaimStatus  $claimsStatus
+     * @param  ClaimStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     private function getCarMakeDropdown()

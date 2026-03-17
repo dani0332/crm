@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Traits\QuoteTraits\QuoteAllocatable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 use Config;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -25,7 +25,6 @@ class ClaimRequest extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteAllocatable;
 
     protected $table = 'claim_requests';
-
     protected $fillable = [
         'incident',
         'claim_decline_reason',

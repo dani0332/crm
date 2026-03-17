@@ -7,6 +7,7 @@ use App\Http\Requests\ClaimDetailsUpdateRequest;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 // ── failedValidation claim_uuid context ───────────────────────────────────────
 
@@ -25,7 +26,7 @@ test('failedValidation logs claim_uuid from the bound route model', function () 
     try {
         (new ReflectionMethod($request, 'failedValidation'))
             ->invoke($request, $validator);
-    } catch (\Illuminate\Validation\ValidationException) {
+    } catch (ValidationException) {
         // failedValidation always throws; we only care about the log side-effect
     }
 
@@ -47,7 +48,7 @@ test('failedValidation logs null claim_uuid when no claim is bound to the route'
     try {
         (new ReflectionMethod($request, 'failedValidation'))
             ->invoke($request, $validator);
-    } catch (\Illuminate\Validation\ValidationException) {
+    } catch (ValidationException) {
         // Expected
     }
 

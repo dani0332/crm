@@ -6,6 +6,7 @@ use App\Jobs\Claim\TriggerBirdClaimsFlowJob;
 use App\Models\ClaimRequest;
 use App\Observers\ClaimRequestObserver;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -16,7 +17,7 @@ test('observer dispatches TriggerBirdClaimsFlowJob when policy_number changes fr
     Queue::fake();
 
     $claim = new ClaimRequest;
-    $claim->uuid = \Illuminate\Support\Str::uuid()->toString();
+    $claim->uuid = Str::uuid()->toString();
     $claim->quote_type_id = 1;
     $claim->manager_id = 1;
     $claim->insurance_provider_id = 1;
@@ -35,7 +36,7 @@ test('observer does not dispatch TriggerBirdClaimsFlowJob when policy_number is 
     Queue::fake();
 
     $claim = new ClaimRequest;
-    $claim->uuid = \Illuminate\Support\Str::uuid()->toString();
+    $claim->uuid = Str::uuid()->toString();
     $claim->quote_type_id = 1;
     $claim->manager_id = 1;
     $claim->insurance_provider_id = 1;
@@ -50,7 +51,7 @@ test('observer does not dispatch TriggerBirdClaimsFlowJob when policy_number is 
 });
 
 test('TriggerBirdClaimsFlowJob runs after transaction commit', function () {
-    $job = new TriggerBirdClaimsFlowJob(\Illuminate\Support\Str::uuid()->toString());
+    $job = new TriggerBirdClaimsFlowJob(Str::uuid()->toString());
 
     // afterCommit() sets this flag so the job is held until the transaction commits
     expect($job->afterCommit)->toBeTrue();

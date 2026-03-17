@@ -111,7 +111,7 @@ it('passes with a null export type', function () {
  *
  * @param  array<string, mixed>  $data
  */
-function makeExportValidator(array $data): \Illuminate\Validation\Validator
+function makeExportValidator(array $data): Illuminate\Validation\Validator
 {
     $request = new ClaimExportValidationRequest;
     $request->merge($data);
