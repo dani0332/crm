@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\AllocationConfiguration;
 
+use App\Enums\GroupMedicalRegionEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Models\Allocation\AllocationConfiguration;
@@ -16,7 +17,7 @@ class AllocationConfigurationService
 {
     use AllocationConfigurationFindable;
 
-    private function resolveConfig(QuoteTypes $quoteType, array $data): array
+    private function resolveConfig(QuoteTypes $quoteType, array $data, array $existingConfig = []): array
     {
         return match ($quoteType) {
             QuoteTypes::SAVINGS => [
@@ -41,8 +42,14 @@ class AllocationConfigurationService
                 'volume_profiles' => $data['volume_profiles'] ?? [],
             ],
             QuoteTypes::GROUP_MEDICAL => [
-                'micro_brackets' => $data['micro_brackets'] ?? [],
-                'non_micro_brackets' => $data['non_micro_brackets'] ?? [],
+                GroupMedicalRegionEnum::AUH => [
+                    'micro_brackets' => $data[GroupMedicalRegionEnum::AUH]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH]['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::AUH]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH]['non_micro_brackets'] ?? [],
+                ],
+                GroupMedicalRegionEnum::NON_AUH => [
+                    'micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH]['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH]['non_micro_brackets'] ?? [],
+                ],
             ],
             default => [],
         };
@@ -65,7 +72,8 @@ class AllocationConfigurationService
     public function updateConfiguration(AllocationConfiguration $configuration, QuoteTypes $quoteType, array $data, int $userId): AllocationConfiguration
     {
         return DB::transaction(function () use ($configuration, $quoteType, $data, $userId) {
-            $config = $this->resolveConfig($quoteType, $data);
+            $existingConfig = $configuration->config ?? [];
+            $config = $this->resolveConfig($quoteType, $data, $existingConfig);
 
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],
