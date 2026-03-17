@@ -8,7 +8,7 @@ use BenSampo\Enum\Enum;
  * @method static static GENESIS()
  * @method static static PHOENIX()
  */
-final class InsuranceProvidersTransitionEnum extends Enum
+class InsuranceProvidersTransitionEnum extends Enum
 {
     public const GENESIS = 'Genesis';
 
