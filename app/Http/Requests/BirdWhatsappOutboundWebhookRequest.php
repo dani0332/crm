@@ -28,6 +28,8 @@ class BirdWhatsappOutboundWebhookRequest extends FormRequest
             'payload.receiver.contacts.*.id' => 'required|string',
             'payload.receiver.contacts.*.identifierKey' => 'nullable|string',
             'payload.receiver.contacts.*.identifierValue' => ['required', 'string', 'regex:/^\+?[0-9\s\-]{10,20}$/'],
+            'payload.messageTags' => 'nullable|array',
+            'payload.messageTags.*' => 'string',
         ];
     }
 
