@@ -3,7 +3,7 @@ import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -19,6 +19,10 @@ defineProps({
   inslyId: String,
   sendPolicy: Boolean,
   bookPolicyDetails: Array,
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -250,9 +254,22 @@ onUnmounted(() => {
 
 const { openTempUrl } = useDocumentTempUrl();
 
+const filteredQuoteDocuments = computed(() =>
+  (props.quoteDocuments || []).filter(
+    d => d.document_type_code !== documentTypeCodeEnum.BOR_SIGN,
+  ),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
+  }
+};
+
 // Filter Quote signed medical application form documents to show under issuing tab
 const signedMedicalApplicationDocs = computed(() => {
-  return page.props.quoteDocuments.filter(doc => {
+  return (page.props.quoteDocuments || []).filter(doc => {
     if (doc.document_type_code !== 'MED_HLTH') return false;
 
     const name = (doc.original_name || doc.doc_name || '').toLowerCase();
@@ -357,11 +374,7 @@ const signedMedicalApplicationDocs = computed(() => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="
-            quoteDocuments.filter(
-              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
-            ) || []
-          "
+          :items="filteredQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -369,22 +382,8 @@ const signedMedicalApplicationDocs = computed(() => {
         >
           <template #item-original_name="item">
             <a
-              v-if="hasAnyRole([rolesEnum.BetaUser])"
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.watermarked_doc_url || item.doc_url)
-              "
-            >
-              {{ item.original_name }}
-            </a>
-
-            <a
-              v-else
-              target="_blank"
-              class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.watermarked_doc_url || item.doc_url)
-              "
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
@@ -527,12 +526,7 @@ const signedMedicalApplicationDocs = computed(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.watermarked_doc_url ||
-                        quoteDocument.doc_url,
-                    )
-                  "
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
@@ -548,9 +542,7 @@ const signedMedicalApplicationDocs = computed(() => {
                 <a
                   v-for="doc in signedMedicalApplicationDocs"
                   :key="doc.id"
-                  @click.prevent="
-                    openTempUrl(doc.watermarked_doc_url || doc.doc_url)
-                  "
+                  @click.prevent="openDocumentInNewTab(doc)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ doc.original_name || doc.doc_name }}

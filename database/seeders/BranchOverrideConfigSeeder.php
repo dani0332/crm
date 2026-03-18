@@ -30,6 +30,7 @@ class BranchOverrideConfigSeeder extends Seeder
             QuoteTypes::JETSKI,
             QuoteTypes::BUSINESS,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         foreach ($quoteTypes as $quoteType) {

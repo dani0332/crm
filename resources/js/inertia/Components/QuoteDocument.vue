@@ -3,7 +3,7 @@ import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -19,6 +19,10 @@ defineProps({
   inslyId: String,
   sendPolicy: Boolean,
   bookPolicyDetails: Array,
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -262,6 +266,19 @@ const isIssuingDocumentsTabDisabled = key => {
   return false;
 };
 const { openTempUrl } = useDocumentTempUrl();
+
+const filteredQuoteDocuments = computed(() =>
+  (props.quoteDocuments || []).filter(
+    d => d.document_type_code !== documentTypeCodeEnum.BOR_SIGN,
+  ),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
+  }
+};
 </script>
 
 <template>
@@ -360,11 +377,7 @@ const { openTempUrl } = useDocumentTempUrl();
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="
-            quoteDocuments.filter(
-              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
-            ) || []
-          "
+          :items="filteredQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -372,11 +385,8 @@ const { openTempUrl } = useDocumentTempUrl();
         >
           <template #item-original_name="item">
             <a
-              target="_blank"
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.watermarked_doc_url || item.doc_url)
-              "
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
@@ -506,13 +516,7 @@ const { openTempUrl } = useDocumentTempUrl();
                 :key="quoteDocument.id"
               >
                 <a
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
-                  "
-                  target="_blank"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}

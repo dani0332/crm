@@ -100,6 +100,8 @@ class EmailExportService
         $emailParams = $this->buildEmailParameters($attachmentFilePath, $requestParams);
 
         try {
+            Mail::mailer()->getSymfonyTransport()->stop();
+
             Mail::send(
                 ['html' => 'ExportCSVMail'],
                 $emailParams,

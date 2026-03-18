@@ -9,7 +9,9 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\GenericModel;
+use App\Models\PersonalQuote;
 use App\Models\QuoteViewCount;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -509,7 +511,12 @@ class BaseService
             LogAllocation::dispatch($lead, $quoteType);
 
             if (! $lead->isSuppressIntroEmail() && $sendAdvisorAssignedEmail) {
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
+                if ($lead instanceof PersonalQuote && $lead->isSavings()) {
+                    SendSavingsOCAEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
+                    LoggerService::info(self::class." - OCA email job dispatched for savings quote {$lead->uuid} (self-assigned)");
+                } else {
+                    app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
+                }
             }
         }
     }

@@ -38,6 +38,7 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const OTHER_BUSINESS_NEW_POLICY = 'other_business_new_policy';
+    public const CYBER_NEW_POLICY = 'cyber_new_policy';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
@@ -48,6 +49,7 @@ final class WorkflowTypeEnum extends Enum
     public const COMPANY_CAR_OCB = 'company_car_ocb';
     public const AIG_WORKFLOW = 'aig_workflow';
     public const LIFE_OCA_EMAIL = 'life_oca_email';
+    public const SAVINGS_OCA_EMAIL = 'savings_oca_email';
     public const CAR_COMMERCIAL_OCB = 'car_commercial_ocb';
     public const TRAVEL_AIG_WORKFLOW = 'travel_aig_workflow';
     public const CAR_INTRO_EMAIL = 'car_intro_email';
@@ -63,12 +65,19 @@ final class WorkflowTypeEnum extends Enum
     public const BOR_UPLOAD = 'bor_upload';
     public const BOR_INSURER_NOTIFICATION = 'bor_insurer_notification';
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
+    public const CYBER_AUTOMATION_FAILED = 'cyber_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
     public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'travel_renewal_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
+    public const CAR_EP_RETARGETING_REMINDER = 'car_ep_retargeting_reminder';
+
+    // Cyber workflow
+    public const CYBER_OCB_INTRO_EMAIL = 'cyber_ocb_intro_email';
+    public const CYBER_OCB_INTRO_WHATSAPP = 'sendOcbCyberWhatsapp';
+    public const CYBER_AUTOMATED_FOLLOWUPS = 'cyber_automated_followups';
 
     // Health STP Advisor Notification
     public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';

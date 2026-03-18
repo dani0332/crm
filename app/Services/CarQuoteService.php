@@ -1253,7 +1253,7 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false)
     {
         $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
@@ -1281,6 +1281,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            'isRenewalHistorical' => $isRenewalHistorical,
             'callProcess' => $process,
             'callSource' => 'imcrm',
         ];
@@ -1533,9 +1534,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
+    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false)
     {
-        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint, $isRenewalHistorical);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
@@ -2434,7 +2435,7 @@ class CarQuoteService extends BaseService
     {
         try {
             // Cache the PCP team ID for 24 hours since it rarely changes
-            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+            $pcpTeamId = getTeamId(TeamNameEnum::PCP);
 
             // If $pcpTeamId is null or empty, the function will return false
             return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();

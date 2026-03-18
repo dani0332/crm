@@ -24,7 +24,6 @@
     "laravel/horizon": "^5.29",
     "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.2",
-    "laravel/telescope": "^5.0",
     "laravel/tinker": "^2.5",
     "league/flysystem-aws-s3-v3": "^3.0",
     "maatwebsite/excel": "^3.1",
@@ -87,7 +86,8 @@
       "@php artisan key:generate --ansi"
     ],
     "serve": "composer install && doppler run -- php artisan serve",
-    "pint:fix": "vendor/bin/pint"
+    "pint:fix": "vendor/bin/pint",
+    "test": "vendor/bin/pest"
   },
   "extra": {
     "laravel": {

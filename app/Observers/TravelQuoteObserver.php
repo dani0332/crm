@@ -25,6 +25,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteJourneyService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -50,6 +51,12 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        LoggerService::info('TravelQuoteObserver - updated event with quote id : '.$travelQuote->id, [
+            'uuid' => $travelQuote->uuid,
+            'old_quote_status_id' => $travelQuote->getOriginal('quote_status_id'),
+            'new_quote_status_id' => $travelQuote->quote_status_id,
+        ]);
+
         $dirty = $travelQuote->getDirty();
         $changes = [];
 
@@ -108,7 +115,13 @@ class TravelQuoteObserver
             app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
         }
 
-        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+        if (($travelQuote->wasChanged('quote_status_id') || isset($dirty['quote_status_id'])) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            LoggerService::info('TravelQuoteObserver -  inside policy booked check with quote id : '.$travelQuote->id, [
+                'uuid' => $travelQuote->uuid,
+                'quote_status_id' => $travelQuote->quote_status_id,
+                'was_changed_quote_status_id' => $travelQuote->wasChanged('quote_status_id'),
+                'isset_quote_status_id' => isset($dirty['quote_status_id']),
+            ]);
             try {
                 $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
             } catch (Exception $e) {
@@ -116,6 +129,15 @@ class TravelQuoteObserver
                     'error' => $e->getMessage(),
                     'uuid' => $travelQuote->uuid,
                 ]);
+            }
+
+            try {
+                LoggerService::info('TravelQuoteObserver - completing quote journey entry for quote uuid: '.$travelQuote->uuid);
+                app(QuoteJourneyService::class)->completePolicyIssuanceEntry($travelQuote->uuid, QuoteTypeId::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - complete quote journey entry failed', [
+                    'uuid' => $travelQuote->uuid,
+                ], exception: $e);
             }
 
             try {

@@ -29,6 +29,7 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
+    Route::post('/instant-alfred/generate-export-url', [\App\Http\Controllers\V2\AlfredChatController::class, 'generateExportUrl'])->name('api.instant-alfred.generate-url');
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
     Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);
@@ -72,6 +73,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 
+    Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes
     Route::prefix('imcrm')->group(function () {
         Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
@@ -87,10 +89,12 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/tag-pc-qualified', [ApiController::class, 'tagPrivateClients']);
 
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
+
+    Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
 });
 
-Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
+Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 // Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
@@ -140,7 +144,6 @@ Route::prefix('v1')->group(function () {
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
-
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

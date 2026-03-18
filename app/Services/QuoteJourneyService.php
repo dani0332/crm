@@ -5,10 +5,29 @@ namespace App\Services;
 use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\QuoteJourney;
 use App\Services\Logger\LoggerService;
 
 class QuoteJourneyService
 {
+    public function completePolicyIssuanceEntry(string $quoteUUID, int $quoteTypeId): void
+    {
+        QuoteJourney::query()
+            ->where('quote_uuid', $quoteUUID)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('text', QuoteJourneyEnum::POLICY_ISSUANCE)
+            ->latest('id')
+            ->first()
+            ?->update([
+                'status' => QuoteJourneyEnum::COMPLETED,
+            ]);
+
+        LoggerService::info('QuoteJourneyService - completed quote journey entry for quote uuid: '.$quoteUUID, extra: [
+            'quote_uuid' => $quoteUUID,
+            'quote_type_id' => $quoteTypeId,
+        ]);
+    }
+
     /**
      * Policy Issued Quote Journey
      */
