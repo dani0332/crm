@@ -12,9 +12,11 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 
 class HandleCarAdvisorUpdated
@@ -90,7 +92,14 @@ class HandleCarAdvisorUpdated
         }
         // Only dispatch the job if either intro email should not be suppressed OR the source is RENEWAL_UPLOAD
         if (! $lead->isSuppressIntroEmail() || $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
-            SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+            if (Context::has("skipOCB-{$lead->uuid}") && Context::get("skipOCB-{$lead->uuid}")) {
+                LoggerService::info("HandleCarAdvisorUpdated - skipOCB-{$lead->uuid} is set to true, skipping OCB intro email job", extra: [
+                    'lead_uuid' => $lead->uuid,
+                ]);
+            } else {
+                LoggerService::info("HandleCarAdvisorUpdated - dispatching OCB intro email job for lead uuid : {$lead->uuid}");
+                SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+            }
         }
 
         info('SMS sending code reached');
