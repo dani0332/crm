@@ -36,6 +36,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_status = $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->reason = $reason;
+        $newEmailStatus->type = EmailStatusTypeEnum::Email;
         $newEmailStatus->save();
 
         Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
@@ -81,7 +82,11 @@ class EmailStatusService extends BaseService
 
         if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
-            ->where('quote_id', $quote->id)->exists()) {
+            ->where('quote_id', $quote->id)
+            ->where(function ($query): void {
+                $query->where('type', EmailStatusTypeEnum::Email);
+            })
+            ->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
             $this->addEmailStatus($request, $request->message_id, $request->subject ?? '', ProcessStatusCode::SENT);
@@ -98,7 +103,7 @@ class EmailStatusService extends BaseService
 
         $exists = EmailStatus::where('msg_id', $request->message_id)
             ->where('type', EmailStatusTypeEnum::WhatsApp)
-            ->where('mobile', $mobile)
+            ->where('mobile_no', $mobile)
             ->where('email_status', ProcessStatusCode::SENT)
             ->exists();
 
@@ -108,7 +113,7 @@ class EmailStatusService extends BaseService
 
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->type = EmailStatusTypeEnum::WhatsApp;
-        $newEmailStatus->mobile = $mobile;
+        $newEmailStatus->mobile_no = $mobile;
         $newEmailStatus->msg_id = $request->message_id;
         $newEmailStatus->email_status = ProcessStatusCode::SENT;
         $newEmailStatus->quote_type_id = $quoteTypeId;

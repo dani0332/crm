@@ -55,7 +55,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
             Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile): void {
                 $existingRecord = EmailStatus::where('msg_id', $messageId)
                     ->where('type', EmailStatusTypeEnum::WhatsApp)
-                    ->where('mobile', $mobile)
+                    ->where('mobile_no', $mobile)
                     ->where('email_status', $status)
                     ->first();
 
@@ -69,13 +69,13 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 
                 $baseRecord = EmailStatus::where('msg_id', $messageId)
                     ->where('type', EmailStatusTypeEnum::WhatsApp)
-                    ->where('mobile', $mobile)
+                    ->where('mobile_no', $mobile)
                     ->first();
 
                 if ($baseRecord) {
                     $newRecord = new EmailStatus;
                     $newRecord->type = EmailStatusTypeEnum::WhatsApp;
-                    $newRecord->mobile = $mobile;
+                    $newRecord->mobile_no = $mobile;
                     $newRecord->msg_id = $messageId;
                     $newRecord->email_status = $status;
                     $newRecord->reason = $this->messageData->reason ?? $baseRecord->reason;

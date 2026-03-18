@@ -24,7 +24,7 @@ class EmailStatus extends Model
         'customer_id',
         'customer_replied',
         'type',
-        'mobile',
+        'mobile_no',
     ];
     protected $casts = [
         'customer_replied' => 'boolean',
