@@ -111,7 +111,7 @@ class PersonalQuoteFactory extends Factory
 
     /**
      * Cyber quote with payment authorized 24+ hours ago and no documents.
-     * Used for testing isPaymentAuthorizedWithNoDocuments allocation flow.
+     * Used for testing hasPaymentAuthorizedWithNoDocuments allocation flow.
      *
      * @param  Carbon|null  $authorizedAt  Override for testing (e.g. now()->subHours(12) for "less than 24h" case)
      */
@@ -168,7 +168,7 @@ class PersonalQuoteFactory extends Factory
                 'coverage' => 500000,
                 'planName' => 'Gold Plan',
             ]);
-            // Intentionally no documents - tests isPaymentAuthorizedWithNoDocuments flow
+            // Intentionally no documents - tests hasPaymentAuthorizedWithNoDocuments flow
         });
     }
 }

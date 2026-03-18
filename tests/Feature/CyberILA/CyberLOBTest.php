@@ -360,33 +360,33 @@ test('cyber allocation processes correct allocation request structure', function
 });
 
 // ============================================================================
-// SECTION 6: isPaymentAuthorizedWithNoDocuments ALLOCATION TESTS (4 tests)
+// SECTION 6: hasPaymentAuthorizedWithNoDocuments ALLOCATION TESTS (4 tests)
 // ============================================================================
 // Tests for VerifyLeadPreChecksPipe: paid lead with payment authorized 24h ago + no documents
 // should pass pre-checks and proceed to advisor allocation (or fail at advisor fetch)
 
-test('cyber isPaymentAuthorizedWithNoDocuments returns true when payment authorized 24 hours ago and no documents', function () {
+test('cyber hasPaymentAuthorizedWithNoDocuments returns true when payment authorized 24 hours ago and no documents', function () {
     TestSchemaCreator::createCyberSchema();
 
     $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments()->create();
 
-    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeTrue();
+    expect($quote->hasPaymentAuthorizedWithNoDocuments())->toBeTrue();
 });
 
-test('cyber isPaymentAuthorizedWithNoDocuments returns false when documents exist', function () {
+test('cyber hasPaymentAuthorizedWithNoDocuments returns false when documents exist', function () {
     TestSchemaCreator::createCyberSchema();
 
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
 
-    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeFalse();
+    expect($quote->hasPaymentAuthorizedWithNoDocuments())->toBeFalse();
 });
 
-test('cyber isPaymentAuthorizedWithNoDocuments returns false when payment authorized less than 24 hours ago', function () {
+test('cyber hasPaymentAuthorizedWithNoDocuments returns false when payment authorized less than 24 hours ago', function () {
     TestSchemaCreator::createCyberSchema();
 
     $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments(now()->subHours(12))->create();
 
-    expect($quote->isPaymentAuthorizedWithNoDocuments())->toBeFalse();
+    expect($quote->hasPaymentAuthorizedWithNoDocuments())->toBeFalse();
 });
 
 test('cyber paid lead with payment authorized and no documents passes pre-checks', function () {

@@ -301,18 +301,12 @@ trait QuoteAllocatable
     }
 
     /**
-     * Include quotes eligible for Cyber allocation.
+     * Scope: quotes with payment authorized 24+ hours ago and no documents.
      *
      * Business Rule: Assign advisor if 24+ hours have passed since payment authorization
      * AND no documents have been uploaded at all.
-     *
-     * This scope includes leads where:
-     * - Payment was authorized 24+ hours ago
-     * - No documents exist for the quote (regardless of upload time)
-     *
-     * Excludes leads where any document exists (even if uploaded after 24 hours).
      */
-    public function scopeIsPaymentAuthorizedWithNoDocuments(Builder $query): Builder
+    public function scopeWherePaymentAuthorizedWithNoDocuments(Builder $query): Builder
     {
         return $query->whereHas('payments', function ($paymentQuery) {
             $paymentQuery->whereNotNull('authorized_at')
@@ -321,13 +315,13 @@ trait QuoteAllocatable
     }
 
     /**
-     * Check if this quote has payment authorized with no documents.
-     * Instance-level wrapper for scopeIsPaymentAuthorizedWithNoDocuments.
-     * used in VerifyLeadPreChecksPipe for cyber to check if the lead is eligible for backup allocation as we cannot use the scope on the lead model directly
+     * Check if this quote has payment authorized 24+ hours ago with no documents.
+     * Instance-level wrapper for scopeWherePaymentAuthorizedWithNoDocuments.
+     * Used in VerifyLeadPreChecksPipe for cyber backup allocation.
      */
-    public function isPaymentAuthorizedWithNoDocuments(): bool
+    public function hasPaymentAuthorizedWithNoDocuments(): bool
     {
-        return static::where('uuid', $this->uuid)->isPaymentAuthorizedWithNoDocuments()->exists();
+        return static::where('uuid', $this->uuid)->wherePaymentAuthorizedWithNoDocuments()->exists();
     }
 
     public function isAllocationFailed(): bool
@@ -341,7 +335,7 @@ trait QuoteAllocatable
             ->where(function ($sq) use ($allocationStartDate, $to) {
                 $sq->whereBetween('created_at', [$allocationStartDate, $to])
                     ->orWhere(function ($inner) use ($allocationStartDate, $to) {
-                        $inner->isPaymentAuthorizedWithNoDocuments()
+                        $inner->wherePaymentAuthorizedWithNoDocuments()
                             ->whereBetween('created_at', [$allocationStartDate, $to]);
                     });
             });
