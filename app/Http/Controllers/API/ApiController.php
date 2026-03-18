@@ -70,11 +70,13 @@ use App\Services\WhatsAppHookService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiController extends Controller
 {
@@ -519,7 +521,7 @@ class ApiController extends Controller
     /**
      * Export email status logs as Excel file for a specific quote
      *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     * @return StreamedResponse
      */
     public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
     {
@@ -631,7 +633,7 @@ class ApiController extends Controller
     /**
      * Update customer replied status in email_status table
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
