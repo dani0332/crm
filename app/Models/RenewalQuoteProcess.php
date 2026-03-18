@@ -59,11 +59,22 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * Whether this process is a transitionable lead (has a resolved provider transition).
+     * Whether this process is a transitionable lead (has a resolved and active provider transition).
      */
     public function checkIsTransitionableLead(): bool
     {
-        return $this->insurance_provider_transition_id !== null;
+        if ($this->insurance_provider_transition_id === null) {
+            return false;
+        }
+
+        // Ensure transition exists, is active, and both providers exist
+        // to maintain consistency with RenewalsUploadService::isTransitionableLeadForProcess
+        $transition = $this->insuranceProviderTransition;
+
+        return (bool) ($transition &&
+            $transition->is_active &&
+            $transition->targetProvider &&
+            $transition->sourceProvider);
     }
 
     /**

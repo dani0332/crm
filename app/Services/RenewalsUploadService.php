@@ -3578,25 +3578,26 @@ class RenewalsUploadService
     {
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
-        if ($lead && $lead->insurance_provider_transition_id) {
-            $transition = InsuranceProviderTransition::with('targetProvider', 'sourceProvider')->find($lead->insurance_provider_transition_id);
-            if ($transition && $transition->is_active && $transition->targetProvider && $transition->sourceProvider) {
-                $target = $transition->targetProvider;
-                $source = $transition->sourceProvider;
-                $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
-                    ->where('repair_type', $leadData->plan_type ?? null)
-                    ->where('provider_id', $target->id)
-                    ->first();
-                LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
 
-                return [
-                    'status' => true,
-                    'carPlan' => $carPlan,
-                    'insuranceProvider' => $target,
-                    'transitionId' => $transition->id,
-                    'tags' => InsuranceProvidersTransitionEnum::tagForSourceCode($source->code),
-                ];
-            }
+        if ($lead->checkIsTransitionableLead()) {
+            $transition = $lead->insuranceProviderTransition;
+            $target = $transition->targetProvider;
+            $source = $transition->sourceProvider;
+
+            $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
+                ->where('repair_type', $leadData->plan_type ?? null)
+                ->where('provider_id', $target->id)
+                ->first();
+
+            LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
+
+            return [
+                'status' => true,
+                'carPlan' => $carPlan,
+                'insuranceProvider' => $target,
+                'transitionId' => $transition->id,
+                'tags' => InsuranceProvidersTransitionEnum::tagForSourceCode($source->code),
+            ];
         }
 
         return $this->getNonTransitionableLeadConfig($leadData);
