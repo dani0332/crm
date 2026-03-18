@@ -51,8 +51,19 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        LoggerService::info('TravelQuoteObserver - updated event with quote id : '.$travelQuote->id, [
+            'uuid' => $travelQuote->uuid,
+            'old_quote_status_id' => $travelQuote->getOriginal('quote_status_id'),
+            'new_quote_status_id' => $travelQuote->quote_status_id,
+        ]);
+
         $dirty = $travelQuote->getDirty();
         $changes = [];
+        $quoteStatusChanged = isset($dirty['quote_status_id']);
+        $isPolicyBooked = $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $hasPolicyBookedStatusChange = ($travelQuote->wasChanged('quote_status_id') || $quoteStatusChanged) && $isPolicyBooked;
+        $hasPolicySentOrBookedStatusChange = $quoteStatusChanged
+            && in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked], true);
 
         foreach ($dirty as $attribute => $value) {
             $changes[$attribute] = [
@@ -95,21 +106,24 @@ class TravelQuoteObserver
             }
         }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
-        ) {
+        if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
             TravelQuote::withoutEvents(function () use ($travelQuote) {
                 $travelQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
         }
-        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted && $travelQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted && $travelQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
             LoggerService::info(self::class." - Sending automated travel followup for quote uuid: {$travelQuote->uuid}");
             app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
         }
 
-        if (($travelQuote->wasChanged('quote_status_id') || isset($dirty['quote_status_id'])) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+        if ($hasPolicyBookedStatusChange) {
+            LoggerService::info('TravelQuoteObserver -  inside policy booked check with quote id : '.$travelQuote->id, [
+                'uuid' => $travelQuote->uuid,
+                'quote_status_id' => $travelQuote->quote_status_id,
+                'was_changed_quote_status_id' => $travelQuote->wasChanged('quote_status_id'),
+                'isset_quote_status_id' => $quoteStatusChanged,
+            ]);
             try {
                 $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
             } catch (Exception $e) {
@@ -155,7 +169,7 @@ class TravelQuoteObserver
 
         $this->syncQuote($travelQuote, $dirty);
 
-        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+        if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($travelQuote->id, quoteTypeCode::Travel);
             } catch (Exception $e) {
@@ -163,10 +177,7 @@ class TravelQuoteObserver
             }
         }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
-        ) {
+        if ($hasPolicySentOrBookedStatusChange) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);
             ExtendCustomerSubscriptionViaSQS::dispatch(
                 $travelQuote->customer,
@@ -190,10 +201,7 @@ class TravelQuoteObserver
             }
         }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
-        ) {
+        if ($hasPolicyBookedStatusChange) {
             try {
                 QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);
             } catch (Exception $e) {
@@ -201,10 +209,7 @@ class TravelQuoteObserver
             }
         }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
+        if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);

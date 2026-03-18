@@ -300,8 +300,46 @@ trait QuoteAllocatable
         })->orWhere->leadAllocationFailed();
     }
 
+    /**
+     * Scope: quotes with payment authorized 24+ hours ago and no documents.
+     *
+     * Business Rule: Assign advisor if 24+ hours have passed since payment authorization
+     * AND no documents have been uploaded at all.
+     */
+    public function scopeWherePaymentAuthorizedWithNoDocuments(Builder $query): Builder
+    {
+        return $query->whereHas('payments', function ($paymentQuery) {
+            $paymentQuery->whereNotNull('authorized_at')
+                ->where('authorized_at', '<=', now()->subMinutes(10));
+        })->whereDoesntHave('documents');
+    }
+
+    /**
+     * Check if this quote has payment authorized 24+ hours ago with no documents.
+     * Instance-level wrapper for scopeWherePaymentAuthorizedWithNoDocuments.
+     * Used in VerifyLeadPreChecksPipe for cyber backup allocation.
+     */
+    public function hasPaymentAuthorizedWithNoDocuments(): bool
+    {
+        return static::where('uuid', $this->uuid)->wherePaymentAuthorizedWithNoDocuments()->exists();
+    }
+
     public function isAllocationFailed(): bool
     {
         return filled($this->lead_allocation_failed_at);
+    }
+
+    public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder
+    {
+        $extendedStartDate = now()->subDays(14)->toDateTimeString();
+
+        return $query->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
+            ->where(function ($sq) use ($allocationStartDate, $to, $extendedStartDate) {
+                $sq->whereBetween('created_at', [$allocationStartDate, $to])
+                    ->orWhere(function ($inner) use ($extendedStartDate, $to) {
+                        $inner->wherePaymentAuthorizedWithNoDocuments()
+                            ->whereBetween('created_at', [$extendedStartDate, $to]);
+                    });
+            });
     }
 }
