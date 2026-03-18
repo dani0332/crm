@@ -20,6 +20,7 @@ import EditPlan from './Partials/EditPlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import EmailStatus from '@/inertia/Components/EmailStatus.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -1149,57 +1150,6 @@ const totalAnnualPrice = computed(() => {
     displayPrice * (page.props.quote?.life_quote?.payment_term ?? 1);
 
   return totalPrice;
-});
-
-const emailStatusesTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Id',
-      value: 'id',
-    },
-    {
-      text: 'Email Subject',
-      value: 'email_subject',
-    },
-    {
-      text: 'Email Address',
-      value: 'email_address',
-    },
-    {
-      text: 'Status',
-      value: 'email_status',
-    },
-    {
-      text: 'Reason',
-      value: 'reason',
-    },
-    {
-      text: 'Template Id',
-      value: 'template_id',
-    },
-    {
-      text: 'Customer Id',
-      value: 'customer_id',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Updated At',
-      value: 'updated_at',
-    },
-  ],
-});
-
-const emailStatusesTableColumns = computed(() => {
-  return emailStatusesTable.columns.filter(column => {
-    if (!page.props.isAdmin) {
-      return column.value !== 'customer_id' && column.value !== 'template_id';
-    }
-    return column;
-  });
 });
 
 const updateExchangeRate = item => {
@@ -2719,34 +2669,12 @@ const getDisplayPriceInAED = item => {
       </Collapsible>
     </div>
 
+    <EmailStatus
+      :emailStatuses="emailStatuses"
+      :expanded="sectionExpanded"
+      paginate
+    />
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="emailStatusesTableColumns"
-            :items="emailStatuses || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="emailStatuses.length < 15"
-          >
-            <template #item-email_status="item">
-              <span class="text-primary-600 uppercase">{{
-                item.email_status
-              }}</span>
-            </template>
-            <template #item-reason="item">
-              <span class="text-primary-600 uppercase">{{ item.reason }}</span>
-            </template>
-          </DataTable>
-        </template>
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Documents
@@ -2878,7 +2806,6 @@ const getDisplayPriceInAED = item => {
             </div>
           </template>
         </x-modal>
-      </Collapsible>
     </div>
 
     <LazyCreatePlan

@@ -5,15 +5,63 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  /** Match legacy tables that used `show-index` */
+  showIndex: {
+    type: Boolean,
+    default: false,
+  },
+  /** Enable footer pagination when many rows (e.g. Life quote) */
+  paginate: {
+    type: Boolean,
+    default: false,
+  },
+  rowsPerPage: {
+    type: Number,
+    default: 15,
+  },
 });
 
 const page = usePage();
 
+function isWhatsAppRow(row) {
+  const t = row?.type;
+  return t === 'whatsApp' || t === 'WhatsApp';
+}
+
+function channelLabel(row) {
+  return isWhatsAppRow(row) ? 'WhatsApp' : 'Email';
+}
+
+function recipientDisplay(row) {
+  if (row?.mobile_no) {
+    const digits = String(row.mobile_no).replace(/\D/g, '');
+    return digits ? `+${digits}` : '—';
+  }
+  return row?.email_address?.trim() || '—';
+}
+
+function subjectDisplay(row) {
+  const s = row?.email_subject;
+  if (s != null && String(s).trim() !== '') {
+    return String(s).trim();
+  }
+  return '—';
+}
+
+const tableItems = computed(() =>
+  (props.emailStatuses || []).map(row => ({
+    ...row,
+    _channel: channelLabel(row),
+    _recipient: recipientDisplay(row),
+    _subject: subjectDisplay(row),
+  })),
+);
+
 const emailStatusTable = reactive({
   columns: [
-    { text: 'Id', value: 'id' },
-    { text: 'Email Subject', value: 'email_subject' },
-    { text: 'Email Address', value: 'email_address' },
+    { text: 'Channel', value: '_channel' },
+    { text: 'Subject', value: '_subject' },
+    { text: 'Recipient', value: '_recipient' },
     { text: 'Status', value: 'email_status' },
     { text: 'Reason', value: 'reason' },
     { text: 'Template Id', value: 'template_id' },
@@ -24,13 +72,22 @@ const emailStatusTable = reactive({
   ],
 });
 
-const emailStatusesTableColumns = computed(() => {
-  return emailStatusTable.columns.filter(column => {
+const emailStatusesTableColumns = computed(() =>
+  emailStatusTable.columns.filter(column => {
     if (!page.props.isAdmin) {
-      return column.value !== 'customer_id' && column.value !== 'template_id';
+      return (
+        column.value !== 'customer_id' && column.value !== 'template_id'
+      );
     }
-    return column;
-  });
+    return true;
+  }),
+);
+
+const hideFooter = computed(() => {
+  if (!props.paginate) {
+    return true;
+  }
+  return (props.emailStatuses || []).length < props.rowsPerPage;
 });
 </script>
 
@@ -38,8 +95,18 @@ const emailStatusesTableColumns = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
-        <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+        <div
+          class="flex justify-between items-center w-full gap-4 flex-wrap"
+        >
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Follow-up status
+            <span class="text-sm font-normal text-gray-500 ml-1"
+              >(Email & WhatsApp)</span
+            >
+          </h3>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <slot name="actions" />
+          </div>
         </div>
       </template>
       <template #body>
@@ -47,11 +114,35 @@ const emailStatusesTableColumns = computed(() => {
         <DataTable
           table-class-name="tablefixed compact"
           :headers="emailStatusesTableColumns"
-          :items="emailStatuses || []"
+          :items="tableItems"
           border-cell
           hide-rows-per-page
-          hide-footer
+          :hide-footer="hideFooter"
+          :rows-per-page="rowsPerPage"
+          :show-index="showIndex"
         >
+          <template #item-_channel="item">
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded"
+              :class="
+                item.type === 'whatsApp'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-slate-100 text-slate-700'
+              "
+            >
+              {{ item._channel }}
+            </span>
+          </template>
+          <template #item-email_status="item">
+            <span class="text-sm text-primary-600 uppercase">{{
+              item.email_status
+            }}</span>
+          </template>
+          <template #item-reason="item">
+            <span class="text-sm text-primary-600 uppercase">{{
+              item.reason || '—'
+            }}</span>
+          </template>
           <template #item-customer_replied="item">
             <span class="text-sm">{{
               item.customer_replied ? 'Yes' : 'No'

@@ -20,6 +20,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import EmailStatus from '@/inertia/Components/EmailStatus.vue';
 
 defineProps({
   quote: Object,
@@ -387,20 +388,6 @@ const leadActivities = reactive({
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
     { text: 'Action', value: 'action' },
-  ],
-});
-
-const emailStatusTable = reactive({
-  columns: [
-    { text: 'Id', value: 'id' },
-    { text: 'Email Subject', value: 'email_subject' },
-    { text: 'Email Address', value: 'email_address' },
-    { text: 'Status', value: 'email_status' },
-    { text: 'Reason', value: 'reason' },
-    { text: 'Template Id', value: 'template_id' },
-    { text: 'Customer Id', value: 'customer_id' },
-    { text: 'Created At', value: 'created_at' },
-    { text: 'Updated At', value: 'updated_at' },
   ],
 });
 
@@ -4330,74 +4317,35 @@ const { openTempUrl } = useDocumentTempUrl();
       @onAddUpdate="onAddUpdate"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-            <div>
-              <template
-                v-if="
-                  !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-                "
-              >
-                <template v-if="displaySendPolicyButton">
-                  <!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                                data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
-                </template>
-              </template>
-              <x-button
-                v-if="
-                  record.payment_status_id === permissionEnum.AUTHORISED &&
-                  !hasRole(rolesEnum.PA)
-                "
-                @click.prevent="onAddPaymentModal"
-                size="sm"
-                color="orange"
-                class="mr-2"
-              >
-                Copy upload Link
-              </x-button>
-            </div>
-          </div>
+    <EmailStatus
+      :emailStatuses="emailStatuses"
+      :expanded="sectionExpanded"
+      show-index
+    >
+      <template #actions>
+        <template
+          v-if="
+            !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
+          "
+        >
+          <template v-if="displaySendPolicyButton">
+            <!-- Send Policy placeholder -->
+          </template>
         </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="emailStatusTable.columns"
-            :items="emailStatuses || []"
-            show-index
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-action="item">
-              <div class="flex gap-2">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  @click.prevent="onEditMember(item)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="memberDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
+        <x-button
+          v-if="
+            record.payment_status_id === permissionEnum.AUTHORISED &&
+            !hasRole(rolesEnum.PA)
+          "
+          @click.prevent="onAddPaymentModal"
+          size="sm"
+          color="orange"
+          class="mr-2"
+        >
+          Copy upload Link
+        </x-button>
+      </template>
+    </EmailStatus>
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
