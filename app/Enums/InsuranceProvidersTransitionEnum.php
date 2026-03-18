@@ -2,16 +2,9 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-/**
- * @method static static GENESIS()
- * @method static static PHOENIX()
- */
-class InsuranceProvidersTransitionEnum extends Enum
+class InsuranceProvidersTransitionEnum
 {
     public const GENESIS = 'Genesis';
-
     public const PHOENIX = 'Phoenix';
 
     /**

@@ -1892,8 +1892,6 @@ class RenewalsUploadService
                     'callSource' => 'imcrm',
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
-                LoggerService::info('renewals-ocb-whatsapp- isTransitionableLeadForProcess inside function - renewalQuoteProcess:'.json_encode($renewalQuoteProcess));
-
                 $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
                     'quote_id' => $carQuote->id,
                     'quote_type' => QuoteTypeShortCode::CAR,
@@ -2317,8 +2315,7 @@ class RenewalsUploadService
 
                                 // Only place we run full transition resolution: during validation. Persist transition_id so fetch/email use stored value.
                                 $isTransitionableLead = $this->isTransitionableLead($lead, $leadValidationErrors);
-                                LoggerService::info('after function call isTransitionableLead:'.json_encode($isTransitionableLead));
-                                LoggerService::info('after function call checkIsTransitionableLead check if lead is updated value of transition_id:'.json_encode($lead->checkIsTransitionableLead()));
+                                LoggerService::info('after function call isTransitionableLead', ['isTransitionableLead' => $isTransitionableLead, 'checkIsTransitionableLead' => $lead->checkIsTransitionableLead()]);
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
                                 } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0 && ! $isTransitionableLead) {
@@ -3520,14 +3517,16 @@ class RenewalsUploadService
         $originalTransitionId = $lead->insurance_provider_transition_id;
         $newTransitionId = null;
 
-        LoggerService::info('isTransitionableLead inside function - leadData:'.json_encode($leadData));
         $sourceProvider = InsuranceProvider::where('code', $leadData->insurer ?? null)->first();
         $targetProvider = ! empty($leadData->provider_name)
             ? $this->resolveInsuranceProviderByText($leadData->provider_name)
             : null;
 
-        LoggerService::info('isTransitionableLead inside function - sourceProvider:'.json_encode($sourceProvider));
-        LoggerService::info('isTransitionableLead inside function - targetProvider:'.json_encode($targetProvider));
+        LoggerService::info('isTransitionableLead inside function', [
+            'leadData' => $leadData,
+            'sourceProvider' => $sourceProvider,
+            'targetProvider' => $targetProvider,
+        ]);
 
         if ($sourceProvider && $targetProvider) {
             LoggerService::info('isTransitionableLead inside function - sourceProvider and targetProvider found');
@@ -3536,7 +3535,7 @@ class RenewalsUploadService
                 ->where('is_active', true)
                 ->first();
 
-            LoggerService::info('isTransitionableLead inside function - transition:'.json_encode($transition));
+            LoggerService::info('isTransitionableLead inside function - transition', ['transition' => $transition]);
             if ($transition) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
                 $carPlan = CarPlan::where('text', $leadData->plan_name ?? '')
@@ -3589,7 +3588,7 @@ class RenewalsUploadService
                 ->where('provider_id', $target->id)
                 ->first();
 
-            LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
+            LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan' => $carPlan]);
 
             return [
                 'status' => true,
@@ -3611,7 +3610,7 @@ class RenewalsUploadService
     private function getNonTransitionableLeadConfig($leadData): array
     {
         $insuranceProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-        LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider:'.json_encode($insuranceProvider));
+        LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider', ['insuranceProvider' => $insuranceProvider]);
         $carPlan = null;
         if ($insuranceProvider && $insuranceProvider->code === ($leadData->insurer ?? null)) {
             LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider and insurer code match');
@@ -3620,7 +3619,7 @@ class RenewalsUploadService
                 ->where('provider_id', $insuranceProvider->id)
                 ->first();
         }
-        LoggerService::info('isTransitionableLeadForProcess inside function - carPlan:'.json_encode($carPlan));
+        LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan' => $carPlan]);
 
         return [
             'status' => false,

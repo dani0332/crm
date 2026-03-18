@@ -26,7 +26,6 @@ beforeEach(function () {
         test()->markTestSkipped('PDO SQLite driver is required for this test (no data written to application database).');
     }
 
-    app()['env'] = 'testing';
     config(['database.default' => 'sqlite']);
     Illuminate\Support\Facades\DB::setDefaultConnection('sqlite');
 
