@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\EmailStatusTypeEnum;
 use App\Models\EmailStatus;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -54,9 +55,11 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 
             $lockKey = "whatsapp_status:{$messageId}:{$mobile}:{$status}";
 
-            Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile): void {
+            $whatsAppType = EmailStatusTypeEnum::WhatsApp->value;
+
+            Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile, $whatsAppType): void {
                 $existingRecord = EmailStatus::where('msg_id', $messageId)
-                    ->where('type', 'whatsApp')
+                    ->where('type', $whatsAppType)
                     ->where('mobile', $mobile)
                     ->where('email_status', $status)
                     ->first();
@@ -70,13 +73,13 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                 }
 
                 $baseRecord = EmailStatus::where('msg_id', $messageId)
-                    ->where('type', 'whatsApp')
+                    ->where('type', $whatsAppType)
                     ->where('mobile', $mobile)
                     ->first();
 
                 if ($baseRecord) {
                     $newRecord = new EmailStatus;
-                    $newRecord->type = 'whatsApp';
+                    $newRecord->type = $whatsAppType;
                     $newRecord->mobile = $mobile;
                     $newRecord->msg_id = $messageId;
                     $newRecord->email_status = $status;

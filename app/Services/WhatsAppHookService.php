@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\EmailStatusTypeEnum;
 use App\Jobs\WhatsAppMessageStatusJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -179,7 +180,7 @@ class WhatsAppHookService
             'message_id' => $messageId,
             'status' => $status,
             'mobile' => $mobile,
-            'type' => 'whatsApp',
+            'type' => EmailStatusTypeEnum::WhatsApp->value,
             'reason' => $reason,
         ];
 
