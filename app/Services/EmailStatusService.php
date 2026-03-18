@@ -60,7 +60,6 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Travel:
                 $quote = TravelQuote::where('uuid', $request->uuid)->first();
                 break;
-
             default:
                 $quote = null;
                 break;
@@ -73,18 +72,49 @@ class EmailStatusService extends BaseService
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
+
+        $quoteTypeId = (int) request('quoteTypeId');
+        if (! empty($request->mobile)) {
+            return $this->addBirdWhatsAppStatus($request, $quote, $quoteTypeId);
+        }
+
         if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
             ->where('quote_id', $quote->id)->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
-            $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
+            $this->addEmailStatus($request, $request->message_id, $request->subject ?? '', ProcessStatusCode::SENT);
 
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
-        } else {
-
-            return (object) ['message' => 'Email event already logged', 'status' => true];
         }
+
+        return (object) ['message' => 'Email event already logged', 'status' => true];
+    }
+
+    private function addBirdWhatsAppStatus($request, $quote, int $quoteTypeId): object
+    {
+        $mobile = formatMobileNoWithoutPlus($request->mobile);
+
+        $exists = EmailStatus::where('msg_id', $request->message_id)
+            ->where('type', 'whatsApp')
+            ->where('mobile', $mobile)
+            ->where('email_status', ProcessStatusCode::SENT)
+            ->exists();
+
+        if ($exists) {
+            return (object) ['message' => 'WhatsApp event already logged', 'status' => true];
+        }
+
+        $newEmailStatus = new EmailStatus;
+        $newEmailStatus->type = 'whatsApp';
+        $newEmailStatus->mobile = $mobile;
+        $newEmailStatus->msg_id = $request->message_id;
+        $newEmailStatus->email_status = ProcessStatusCode::SENT;
+        $newEmailStatus->quote_type_id = $quoteTypeId;
+        $newEmailStatus->quote_id = $quote->id;
+        $newEmailStatus->save();
+
+        return (object) ['message' => 'WhatsApp event logged successfully', 'status' => true];
     }
 
     public function updateEmailStatus($emailData, $status)
@@ -100,9 +130,6 @@ class EmailStatusService extends BaseService
         info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
     }
 
-    /**
-     * Update customer replied status in email_status table
-     */
     public function updateCustomerRepliedStatus(string $quoteUuid, int $quoteTypeId, string $emailSubject): object
     {
         try {

@@ -22,9 +22,22 @@ class EmailEventsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message_id' => 'required',
-            'customer_email' => 'required',
-            'subject' => 'nullable',
+            'message_id' => 'required|string',
+            'customer_email' => 'required_without:mobile|nullable|string',
+            'mobile' => 'required_without:customer_email|nullable|string|regex:/^\+?[0-9\s\-]{10,20}$/',
+            'subject' => 'nullable|string',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'customer_email.required_without' => 'Either customer_email or mobile is required.',
+            'mobile.required_without' => 'Either customer_email or mobile is required.',
+            'mobile.regex' => 'The mobile number must be a valid phone number.',
         ];
     }
 }
