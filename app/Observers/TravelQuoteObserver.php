@@ -210,7 +210,7 @@ class TravelQuoteObserver
         }
 
         if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
-0            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
+            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
             try {
