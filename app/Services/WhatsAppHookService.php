@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Jobs\WhatsAppMessageStatusJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -14,7 +15,7 @@ class WhatsAppHookService
 {
     private const DELAY_SECONDS = 60;
 
-    public function handleInbound(Request $request): \Illuminate\Http\JsonResponse
+    public function handleInbound(Request $request): JsonResponse
     {
         try {
             LoggerService::info(self::class.' - handleInbound: WhatsApp inbound webhook received', [
@@ -59,7 +60,7 @@ class WhatsAppHookService
         }
     }
 
-    public function handleOutbound(Request $request): \Illuminate\Http\JsonResponse
+    public function handleOutbound(Request $request): JsonResponse
     {
         try {
             LoggerService::info(self::class.' - handleOutbound: WhatsApp outbound webhook received', [
@@ -105,7 +106,7 @@ class WhatsAppHookService
         }
     }
 
-    public function handleInteraction(Request $request): \Illuminate\Http\JsonResponse
+    public function handleInteraction(Request $request): JsonResponse
     {
         try {
             LoggerService::info(self::class.' - handleInteraction: WhatsApp interaction webhook received', [
