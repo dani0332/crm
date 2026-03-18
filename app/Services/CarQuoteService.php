@@ -1245,7 +1245,7 @@ class CarQuoteService extends BaseService
         }
 
         if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $carQuote->isGenesisLead = $carQuote->latestUpdateRenewalQuoteProcess->checkIsTransitionableLead();
+            $carQuote->isTransitionableLead = $carQuote->latestUpdateRenewalQuoteProcess->checkIsTransitionableLead();
         }
 
         $carQuote->plans = $plans;
@@ -1325,8 +1325,8 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if (strpos($contents, 'Genesis') !== false) {
-                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false || strpos($contents, 'Phoenix') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Transition Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             } else {
                 LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             }

@@ -1678,7 +1678,7 @@ class RenewalsUploadService
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
 
-        // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
+        // If the lead is a transitionable lead, then use the target insurance provider from transition config
         $provider = $isTransitionableLead['insuranceProvider'];
         if (! $provider) {
             LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', [
