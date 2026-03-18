@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class WhatsAppMessageStatusJob implements ShouldQueue
@@ -50,56 +51,53 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                 return;
             }
 
-            $existingRecord = EmailStatus::where('msg_id', $messageId)
-                ->where('type', 'whatsApp')
-                ->where('mobile', $mobile)
-                ->where('email_status', $status)
-                ->first();
+            $lockKey = "whatsapp_status:{$messageId}:{$mobile}:{$status}";
 
-            if ($existingRecord) {
-                info('WhatsAppMessageStatusJob - Record already exists', [
-                    'msg_id' => $messageId,
-                ]);
+            Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile): void {
+                $existingRecord = EmailStatus::where('msg_id', $messageId)
+                    ->where('type', 'whatsApp')
+                    ->where('mobile', $mobile)
+                    ->where('email_status', $status)
+                    ->first();
 
-                return;
-            }
+                if ($existingRecord) {
+                    info('WhatsAppMessageStatusJob - Record already exists', [
+                        'msg_id' => $messageId,
+                    ]);
 
-            $baseRecord = EmailStatus::where('msg_id', $messageId)
-                ->where('type', 'whatsApp')
-                ->where('mobile', $mobile)
-                ->first();
+                    return;
+                }
 
-            if ($baseRecord) {
-                $newRecord = new EmailStatus;
-                $newRecord->type = 'whatsApp';
-                $newRecord->mobile = $mobile;
-                $newRecord->msg_id = $messageId;
-                $newRecord->email_status = $status;
-                $newRecord->reason = $this->messageData->reason ?? $baseRecord->reason;
-                $newRecord->quote_type_id = $baseRecord->quote_type_id;
-                $newRecord->quote_id = $baseRecord->quote_id;
-                $newRecord->save();
+                $baseRecord = EmailStatus::where('msg_id', $messageId)
+                    ->where('type', 'whatsApp')
+                    ->where('mobile', $mobile)
+                    ->first();
 
-                info('WhatsAppMessageStatusJob - Status update created', [
-                    'msg_id' => $messageId,
-                    'status' => $status,
-                ]);
+                if ($baseRecord) {
+                    $newRecord = new EmailStatus;
+                    $newRecord->type = 'whatsApp';
+                    $newRecord->mobile = $mobile;
+                    $newRecord->msg_id = $messageId;
+                    $newRecord->email_status = $status;
+                    $newRecord->reason = $this->messageData->reason ?? $baseRecord->reason;
+                    $newRecord->quote_type_id = $baseRecord->quote_type_id;
+                    $newRecord->quote_id = $baseRecord->quote_id;
+                    $newRecord->save();
 
-                return;
-            }
+                    Cache::forget("email_statuses_{$newRecord->quote_type_id}_{$newRecord->quote_id}");
 
-            $newRecord = new EmailStatus;
-            $newRecord->type = 'whatsApp';
-            $newRecord->mobile = $mobile;
-            $newRecord->msg_id = $messageId;
-            $newRecord->email_status = $status;
-            $newRecord->reason = $this->messageData->reason ?? null;
-            $newRecord->save();
+                    info('WhatsAppMessageStatusJob - Status update created', [
+                        'msg_id' => $messageId,
+                        'status' => $status,
+                    ]);
 
-            info('WhatsAppMessageStatusJob - New record created', [
-                'msg_id' => $messageId,
-                'status' => $status,
-            ]);
+                    return;
+                }
+
+                throw new \RuntimeException(
+                    "WhatsAppMessageStatusJob: No base EmailStatus for msg_id={$messageId} mobile={$mobile}. Will retry."
+                );
+            });
         } catch (\Throwable $th) {
             info('WhatsAppMessageStatusJob - Error', [
                 'message' => $th->getMessage(),

@@ -19,15 +19,13 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
-use App\Http\Requests\BirdWhatsappInboundWebhookRequest;
-use App\Http\Requests\BirdWhatsappInteractionWebhookRequest;
-use App\Http\Requests\BirdWhatsappOutboundWebhookRequest;
+use App\Http\Requests\BirdWhatsappWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
-use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
+use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -191,7 +189,7 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook($request);
     }
 
-    public function logFollowUpEvent(EmailEventsRequest $request)
+    public function logFollowUpEvent(LogFollowUpEventRequest $request)
     {
         $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
 
@@ -316,17 +314,17 @@ class ApiController extends Controller
         return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
     }
 
-    public function birdWhatsappInboundHook(BirdWhatsappInboundWebhookRequest $request)
+    public function birdWhatsappInboundHook(BirdWhatsappWebhookRequest $request)
     {
         return $this->whatsAppHookService->handleInbound($request);
     }
 
-    public function birdWhatsappOutboundHook(BirdWhatsappOutboundWebhookRequest $request)
+    public function birdWhatsappOutboundHook(BirdWhatsappWebhookRequest $request)
     {
         return $this->whatsAppHookService->handleOutbound($request);
     }
 
-    public function birdWhatsappInteractionHook(BirdWhatsappInteractionWebhookRequest $request)
+    public function birdWhatsappInteractionHook(BirdWhatsappWebhookRequest $request)
     {
         return $this->whatsAppHookService->handleInteraction($request);
     }

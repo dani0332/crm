@@ -114,6 +114,8 @@ class EmailStatusService extends BaseService
         $newEmailStatus->quote_id = $quote->id;
         $newEmailStatus->save();
 
+        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+
         return (object) ['message' => 'WhatsApp event logged successfully', 'status' => true];
     }
 
