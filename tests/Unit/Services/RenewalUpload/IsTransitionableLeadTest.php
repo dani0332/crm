@@ -45,6 +45,7 @@ if (! function_exists('createMockLead')) {
 
         return new class($data, $state) extends RenewalQuoteProcess
         {
+            protected $table = 'renewal_quote_processes';
             private array $dataStorage;
             private object $state;
 
@@ -160,7 +161,7 @@ test('adds validation error when transitionable lead plan is missing', function 
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($status)->toBeFalse()
-        ->and($result['status'])->toBeFalse()
+        ->and($result['status'])->toBeTrue()
         ->and($result['carPlan'])->toBeNull()
         ->and($result['insuranceProvider']->is($targetProvider))->toBeTrue()
         ->and($leadValidationErrors)->toContain('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');

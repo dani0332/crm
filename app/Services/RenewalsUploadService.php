@@ -3535,6 +3535,7 @@ class RenewalsUploadService
             LoggerService::info('isTransitionableLead inside function - transition', ['transition' => $transition]);
             if ($transition) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
+                $newTransitionId = $transition->id;
                 $carPlan = CarPlan::where('text', $leadData->plan_name ?? '')
                     ->where('repair_type', $leadData->plan_type ?? '')
                     ->where('provider_id', $targetProvider->id)
@@ -3544,7 +3545,6 @@ class RenewalsUploadService
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
                 } else {
                     $status = true;
-                    $newTransitionId = $transition->id;
                 }
             }
         }
@@ -3608,6 +3608,7 @@ class RenewalsUploadService
     {
         $insuranceProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
         LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider', ['insuranceProvider' => $insuranceProvider]);
+
         $carPlan = null;
         if ($insuranceProvider && $insuranceProvider->code === ($leadData->insurer ?? null)) {
             LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider and insurer code match');
@@ -3615,7 +3616,12 @@ class RenewalsUploadService
                 ->where('text', $leadData->plan_name ?? '')
                 ->where('provider_id', $insuranceProvider->id)
                 ->first();
+        } else {
+            // If code mismatch and not a transition lead (which is handled by the caller),
+            // we should return null for provider so validation gives the correct error.
+            $insuranceProvider = null;
         }
+
         LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan' => $carPlan]);
 
         return [
