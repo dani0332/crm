@@ -1754,7 +1754,6 @@ class RenewalsUploadService
             'isDisabled' => false,
             'isManualUpdate' => $isTransitionableLead['status'] ? true : false,
             'tags' => $isTransitionableLead['status'] ? $isTransitionableLead['tags'] : '',
-            'isGenesis' => $isTransitionableLead['status'] ? true : false,
             'actualPremium' => $data['premium'] ?? 0,
             'discountPremium' => $data['premium'] ?? 0,
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
@@ -3503,10 +3502,8 @@ class RenewalsUploadService
 
     /**
      * Resolve transitionable provider config: check if lead's insurer can transition to provider_name and resolve plan.
-     * Returns same shape as legacy isGenesisLead for drop-in use.
      *
-     * @param  object  $leadData  Must have insurer (code), provider_name (text), plan_name, plan_type
-     * @param  Collection  $leadValidationErrors
+     * @param  RenewalQuoteProcess  $lead  Must have insurer (code), provider_name (text), plan_name, plan_type
      */
     public function isTransitionableLead(RenewalQuoteProcess $lead, &$leadValidationErrors): bool
     {
@@ -3628,41 +3625,6 @@ class RenewalsUploadService
             'transitionId' => null,
             'tags' => '',
         ];
-    }
-
-    /**
-     * Criteria to identify if the lead is a Genesis lead: insurance provider is LIVA(RSA) and plan is related to GIG(AXA).
-     *
-     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null}
-     */
-    public function isGenesisLead($leadData, &$leadValidationErrors): array
-    {
-        $currentInsuranceProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-        $status = false;
-        $carPlan = null;
-        $insuranceProvider = $currentInsuranceProvider ?? null;
-
-        // if insurance provider is GIG(AXA) and code is RSA then check if the plan is related to GIG(AXA)
-        if ($currentInsuranceProvider && $leadData->insurer == InsuranceProvidersEnum::RSA && $currentInsuranceProvider->code == InsuranceProvidersEnum::AXA) {
-            // check if the plan is related to GIG(AXA)
-            $isGigPlan = CarPlan::where('text', $leadData->plan_name ?? '')->where('repair_type', $leadData->plan_type ?? '')->where('provider_id', $currentInsuranceProvider->id)->first();
-            if (! $isGigPlan) {
-                $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Genesis Lead');
-            }
-            LoggerService::info('isGenesisLead - isGigPlan: '.($isGigPlan ? 'true' : 'false'));
-            $status = $isGigPlan ? true : false;
-            $carPlan = $isGigPlan ? $isGigPlan : null;
-        } else {
-            $currentInsuranceProvider = $currentInsuranceProvider?->code == $leadData->insurer ? $currentInsuranceProvider : null;
-            if ($currentInsuranceProvider != null) {
-                $carPlan = CarPlan::where('repair_type', $leadData->plan_type ?? '')->where('text', $leadData->plan_name ?? '')->where('provider_id', $currentInsuranceProvider->id)->first();
-            }
-        }
-
-        LoggerService::info('fn: isGenesisLead - status: '.$status);
-
-        // return the status
-        return ['status' => $status, 'carPlan' => $carPlan, 'insuranceProvider' => $insuranceProvider];
     }
 
     private function updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix)
