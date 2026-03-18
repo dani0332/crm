@@ -37,7 +37,7 @@ test('policy booked completes the policy issuance quote journey entry for travel
     $policyIssuanceEntry = QuoteJourney::create([
         'quote_uuid' => $travelQuote->uuid,
         'quote_type_id' => QuoteTypeId::Travel,
-        'text' => QuoteJourneyEnum::POLICY_ISSUANCE,
+        'text' => 'Travel '.QuoteJourneyEnum::POLICY_ISSUANCE.' completed',
         'status' => QuoteJourneyEnum::PENDING,
     ]);
 
