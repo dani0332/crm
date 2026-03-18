@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use Tests\Helpers\CyberILA\CyberQuoteMockHelper;
 use Tests\Helpers\CyberILA\CyberQuoteTestDataBuilder;
@@ -15,7 +16,7 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    \Mockery::close();
+    Mockery::close();
 });
 
 // ============================================================================
@@ -236,7 +237,7 @@ test('cyber ila validates required fields in allocation request', function () {
 
 test('cyber allocation pipeline initializes with correct quote type', function () {
     // Verify QuoteTypes::CYBER is used in allocation (line 35)
-    expect(\App\Enums\QuoteTypes::CYBER->value)->toBe('Cyber');
+    expect(QuoteTypes::CYBER->value)->toBe('Cyber');
 });
 
 test('cyber allocation pipeline includes fetch lead pipe', function () {

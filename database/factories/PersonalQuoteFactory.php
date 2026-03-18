@@ -12,6 +12,7 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -112,9 +113,9 @@ class PersonalQuoteFactory extends Factory
      * Cyber quote with payment authorized 24+ hours ago and no documents.
      * Used for testing isPaymentAuthorizedWithNoDocuments allocation flow.
      *
-     * @param  \Carbon\Carbon|null  $authorizedAt  Override for testing (e.g. now()->subHours(12) for "less than 24h" case)
+     * @param  Carbon|null  $authorizedAt  Override for testing (e.g. now()->subHours(12) for "less than 24h" case)
      */
-    public function paymentAuthorizedWithNoDocuments(?\Carbon\Carbon $authorizedAt = null): static
+    public function paymentAuthorizedWithNoDocuments(?Carbon $authorizedAt = null): static
     {
         $authorizedAt = $authorizedAt ?? now()->subHours(24);
 
