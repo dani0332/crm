@@ -1126,7 +1126,19 @@ function handleOcrNotification(event) {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dt class="font-medium">
+                    <x-tooltip placement="bottom">
+                      <span
+                        class="cursor-help underline decoration-dotted decoration-gray-400"
+                      >
+                        EMIRATES OF REGISTRATION
+                      </span>
+                      <template #tooltip>
+                        Defines the legal Emirate of registration of the entity
+                        and is required.
+                      </template>
+                    </x-tooltip>
+                  </dt>
                   <dd>
                     <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
