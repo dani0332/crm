@@ -1245,9 +1245,7 @@ class CarQuoteService extends BaseService
         }
 
         if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $
             $carQuote->isGenesisLead = $carQuote->latestUpdateRenewalQuoteProcess->checkIsTransitionableLead();
-
         }
 
         $carQuote->plans = $plans;
