@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmirateUpdateSourceEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -255,6 +256,8 @@ class CentralController extends Controller
                 ]);
             }
         }
+
+        \Illuminate\Support\Facades\Context::add('emirate_update_source', EmirateUpdateSourceEnum::ENTITY_PROFILE_UPDATE->value);
 
         app(AMLService::class)->processInsuredDataForScreening(
             $customerProfileRequest,

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Context;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -66,6 +67,21 @@ class BusinessQuote extends Model implements AuditableContract
         return [
             'auditable_type' => self::class,
         ];
+    }
+
+    /**
+     * Tag audit entry with source when emirate of registration is updated from Entity profile or AML screen.
+     * Stored as JSON in the audits.tags column so structure is preserved.
+     */
+    public function generateTags(): array
+    {
+        $source = Context::get('emirate_update_source');
+
+        if ($source === null) {
+            return [];
+        }
+
+        return [json_encode(['source' => $source])];
     }
 
     public function getCreatedAtAttribute($table)

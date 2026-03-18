@@ -8,6 +8,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateUpdateSourceEnum;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -415,6 +416,8 @@ class AMLController extends Controller
 
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
+
+            \Illuminate\Support\Facades\Context::add('emirate_update_source', EmirateUpdateSourceEnum::AML_SCREEN->value);
 
             try {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);

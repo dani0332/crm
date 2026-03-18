@@ -1598,6 +1598,7 @@ function handleOcrNotification(event) {
       :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
+      :showSourceColumn="true"
     />
 
     <AuditLogs
