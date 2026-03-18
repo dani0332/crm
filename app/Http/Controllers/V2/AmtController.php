@@ -608,12 +608,12 @@ class AmtController extends Controller
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
-            ->first();   
+            ->first();
         $entityEmirateOfRegistrationId = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
-        if($entityEmirateOfRegistrationId){
+        if ($entityEmirateOfRegistrationId) {
             $record->emirate_of_registration_id = $entityEmirateOfRegistrationId;
         }
-  
+
         $gmTypes = GroupMedicalType::select('id', 'text', 'description')->get();
         $GMType = DB::table('business_quote_request')
             ->join('group_medical_types as gmt', 'business_quote_request.group_medical_type_id', '=', 'gmt.id')

@@ -1985,10 +1985,9 @@ class AMLService
             }
         }
 
-
-        if(isset($entityData['emirate_of_registration_id']) && $quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote){
-           $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
-           $quote->save();
+        if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
+            $quote->save();
         }
 
         LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
