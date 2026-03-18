@@ -11,10 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
@@ -70,10 +70,10 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             // Login on the write connection before CsvExportService::generateCsvFileWithCount switches to mysql_read.
             // has already been downgraded to the read replica, causing a read-only error.
             if (! Auth::check()) {
-                if (!empty($this->requestParams['user'])) {
+                if (! empty($this->requestParams['user'])) {
                     Auth::login($this->requestParams['user']);
-                }else{
-                    LoggerService::warning("No user provided for logged in context.");
+                } else {
+                    LoggerService::warning('No user provided for logged in context.');
                 }
 
                 request()->merge($this->requestParams);
