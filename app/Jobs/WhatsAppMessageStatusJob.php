@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\EmailStatus;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -42,7 +43,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
             $mobile = $this->messageData->mobile ?? null;
 
             if (empty($messageId) || empty($status) || empty($mobile)) {
-                info('WhatsAppMessageStatusJob - Skipping: missing required fields', [
+                LoggerService::info(self::class.' - Skipping: missing required fields', [
                     'message_id' => $messageId,
                     'status' => $status,
                     'mobile' => $mobile,
@@ -61,7 +62,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     ->first();
 
                 if ($existingRecord) {
-                    info('WhatsAppMessageStatusJob - Record already exists', [
+                    LoggerService::info('WhatsAppMessageStatusJob - Record already exists', [
                         'msg_id' => $messageId,
                     ]);
 
@@ -86,7 +87,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 
                     Cache::forget("email_statuses_{$newRecord->quote_type_id}_{$newRecord->quote_id}");
 
-                    info('WhatsAppMessageStatusJob - Status update created', [
+                    LoggerService::info('WhatsAppMessageStatusJob - Status update created', [
                         'msg_id' => $messageId,
                         'status' => $status,
                     ]);
@@ -99,12 +100,15 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                 );
             });
         } catch (\Throwable $th) {
-            info('WhatsAppMessageStatusJob - Error', [
-                'message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
-                'trace' => $th->getTraceAsString(),
-            ]);
+            LoggerService::error(
+                'WhatsAppMessageStatusJob failed',
+                [
+                    'message_id' => $this->messageData->message_id ?? null,
+                    'status' => $this->messageData->status ?? null,
+                    'mobile' => $this->messageData->mobile ?? null,
+                ],
+                $th
+            );
             throw $th;
         }
     }
