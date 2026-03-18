@@ -51,6 +51,12 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        LoggerService::info('TravelQuoteObserver - updated event with quote id : '.$travelQuote->id, [
+            'uuid' => $travelQuote->uuid,
+            'old_quote_status_id' => $travelQuote->getOriginal('quote_status_id'),
+            'new_quote_status_id' => $travelQuote->quote_status_id,
+        ]);
+
         $dirty = $travelQuote->getDirty();
         $changes = [];
 
@@ -110,6 +116,12 @@ class TravelQuoteObserver
         }
 
         if (($travelQuote->wasChanged('quote_status_id') || isset($dirty['quote_status_id'])) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            LoggerService::info('TravelQuoteObserver -  inside policy booked check with quote id : '.$travelQuote->id, [
+                'uuid' => $travelQuote->uuid,
+                'quote_status_id' => $travelQuote->quote_status_id,
+                'was_changed_quote_status_id' => $travelQuote->wasChanged('quote_status_id'),
+                'isset_quote_status_id' => isset($dirty['quote_status_id']),
+            ]);
             try {
                 $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
             } catch (Exception $e) {
@@ -120,6 +132,7 @@ class TravelQuoteObserver
             }
 
             try {
+                LoggerService::info('TravelQuoteObserver - completing quote journey entry for quote uuid: '.$travelQuote->uuid);
                 app(QuoteJourneyService::class)->completePolicyIssuanceEntry($travelQuote->uuid, QuoteTypeId::Travel);
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - complete quote journey entry failed', [

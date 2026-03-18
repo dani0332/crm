@@ -21,6 +21,11 @@ class QuoteJourneyService
             ?->update([
                 'status' => QuoteJourneyEnum::COMPLETED,
             ]);
+
+        LoggerService::info('QuoteJourneyService - completed quote journey entry for quote uuid: '.$quoteUUID, extra: [
+            'quote_uuid' => $quoteUUID,
+            'quote_type_id' => $quoteTypeId,
+        ]);
     }
 
     /**
