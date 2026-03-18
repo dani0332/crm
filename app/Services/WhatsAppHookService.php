@@ -41,8 +41,7 @@ class WhatsAppHookService
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: messageId and mobile are required.');
             }
 
-            $messageTags = $payload['messageTags'] ?? [];
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null, $messageTags);
+            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
             LoggerService::info(self::class.' - handleInbound: Webhook processed successfully', [
                 'messageId' => $messageId,
                 'mobile' => $mobile,
@@ -88,8 +87,7 @@ class WhatsAppHookService
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: id, status and mobile are required.');
             }
 
-            $messageTags = $payload['messageTags'] ?? [];
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null, $messageTags);
+            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
             LoggerService::info(self::class.' - handleOutbound: Webhook processed successfully', [
                 'messageId' => $messageId,
                 'mobile' => $mobile,
@@ -135,8 +133,7 @@ class WhatsAppHookService
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: messageId, status, and mobile are required.');
             }
 
-            $messageTags = $payload['messageTags'] ?? [];
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null, $messageTags);
+            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
             LoggerService::info(self::class.' - handleInteraction: Webhook processed successfully', [
                 'messageId' => $messageId,
                 'mobile' => $mobile,
@@ -175,10 +172,7 @@ class WhatsAppHookService
         return formatMobileNoWithoutPlus($identifierValue);
     }
 
-    /**
-     * @param  array<int, string>  $messageTags
-     */
-    private function dispatchJob(string $messageId, string $status, string $mobile, ?string $reason = null, array $messageTags = []): void
+    private function dispatchJob(string $messageId, string $status, string $mobile, ?string $reason = null): void
     {
         $messageData = (object) [
             'message_id' => $messageId,
@@ -186,7 +180,6 @@ class WhatsAppHookService
             'mobile' => $mobile,
             'type' => 'whatsApp',
             'reason' => $reason,
-            'message_tags' => $messageTags,
         ];
 
         WhatsAppMessageStatusJob::dispatch($messageData)->delay(Carbon::now()->addSeconds(self::DELAY_SECONDS));
