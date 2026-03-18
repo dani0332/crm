@@ -334,4 +334,16 @@ trait QuoteAllocatable
     {
         return filled($this->lead_allocation_failed_at);
     }
+
+    public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder
+    {
+        return $query->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
+            ->where(function ($sq) use ($allocationStartDate, $to) {
+                $sq->whereBetween('created_at', [$allocationStartDate, $to])
+                    ->orWhere(function ($inner) use ($allocationStartDate, $to) {
+                        $inner->isPaymentAuthorizedWithNoDocuments()
+                            ->whereBetween('created_at', [$allocationStartDate, $to]);
+                    });
+            });
+    }
 }

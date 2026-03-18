@@ -374,14 +374,7 @@ class RetryAllocationService
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->when($quoteType === QuoteTypes::CYBER, function ($q) use ($allocationStartDate, $to) {
-                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
-                    ->where(function ($sq) use ($allocationStartDate, $to) {
-                        $sq->whereBetween('created_at', [$allocationStartDate, $to])
-                            ->orWhere(function ($inner) use ($allocationStartDate, $to) {
-                                $inner->isPaymentAuthorizedWithNoDocuments()
-                                    ->whereBetween('created_at', [$allocationStartDate, $to]);
-                            });
-                    });
+                $q->forRetryAllocationCyber($allocationStartDate, $to);
             }, function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to]);
             })
