@@ -180,7 +180,7 @@ class WhatsAppHookService
             'message_id' => $messageId,
             'status' => $status,
             'mobile' => $mobile,
-            'type' => EmailStatusTypeEnum::WhatsApp->value,
+            'type' => EmailStatusTypeEnum::WhatsApp,
             'reason' => $reason,
         ];
 

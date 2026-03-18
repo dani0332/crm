@@ -6,7 +6,5 @@ namespace App\Enums;
 
 enum EmailStatusTypeEnum: string
 {
-    use Enumable;
-
     case WhatsApp = 'whatsApp';
 }

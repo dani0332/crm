@@ -22,11 +22,8 @@ class WhatsAppMessageStatusJob implements ShouldQueue
     public int $tries = 3;
     public int $timeout = 15;
     public int $backoff = 300;
-
-    /** @var object{message_id?: string, status?: string, mobile?: string, type?: string, reason?: string|null} */
     private object $messageData;
 
-    /** @param  object{message_id: string, status: string, mobile: string, type: string, reason?: string|null}  $messageData */
     public function __construct(object $messageData)
     {
         $this->messageData = $messageData;
@@ -55,11 +52,9 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 
             $lockKey = "whatsapp_status:{$messageId}:{$mobile}:{$status}";
 
-            $whatsAppType = EmailStatusTypeEnum::WhatsApp->value;
-
-            Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile, $whatsAppType): void {
+            Cache::lock($lockKey, 15)->block(5, function () use ($messageId, $status, $mobile): void {
                 $existingRecord = EmailStatus::where('msg_id', $messageId)
-                    ->where('type', $whatsAppType)
+                    ->where('type', EmailStatusTypeEnum::WhatsApp)
                     ->where('mobile', $mobile)
                     ->where('email_status', $status)
                     ->first();
@@ -73,13 +68,13 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                 }
 
                 $baseRecord = EmailStatus::where('msg_id', $messageId)
-                    ->where('type', $whatsAppType)
+                    ->where('type', EmailStatusTypeEnum::WhatsApp)
                     ->where('mobile', $mobile)
                     ->first();
 
                 if ($baseRecord) {
                     $newRecord = new EmailStatus;
-                    $newRecord->type = $whatsAppType;
+                    $newRecord->type = EmailStatusTypeEnum::WhatsApp;
                     $newRecord->mobile = $mobile;
                     $newRecord->msg_id = $messageId;
                     $newRecord->email_status = $status;

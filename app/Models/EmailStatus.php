@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EmailStatusTypeEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ class EmailStatus extends Model
     ];
     protected $casts = [
         'customer_replied' => 'boolean',
+        'type' => EmailStatusTypeEnum::class,
     ];
 
     public function getCreatedAtAttribute($date)

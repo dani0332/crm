@@ -97,7 +97,7 @@ class EmailStatusService extends BaseService
         $mobile = formatMobileNoWithoutPlus($request->mobile);
 
         $exists = EmailStatus::where('msg_id', $request->message_id)
-            ->where('type', EmailStatusTypeEnum::WhatsApp->value)
+            ->where('type', EmailStatusTypeEnum::WhatsApp)
             ->where('mobile', $mobile)
             ->where('email_status', ProcessStatusCode::SENT)
             ->exists();
@@ -107,7 +107,7 @@ class EmailStatusService extends BaseService
         }
 
         $newEmailStatus = new EmailStatus;
-        $newEmailStatus->type = EmailStatusTypeEnum::WhatsApp->value;
+        $newEmailStatus->type = EmailStatusTypeEnum::WhatsApp;
         $newEmailStatus->mobile = $mobile;
         $newEmailStatus->msg_id = $request->message_id;
         $newEmailStatus->email_status = ProcessStatusCode::SENT;
