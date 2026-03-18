@@ -3584,8 +3584,8 @@ class RenewalsUploadService
             $target = $transition->targetProvider;
             $source = $transition->sourceProvider;
 
-            $carPlan = CarPlan::where('text', $leadData->plan_name ?? null)
-                ->where('repair_type', $leadData->plan_type ?? null)
+            $carPlan = CarPlan::where('text', $leadData->plan_name ?? '')
+                ->where('repair_type', $leadData->plan_type ?? '')
                 ->where('provider_id', $target->id)
                 ->first();
 
@@ -3646,7 +3646,7 @@ class RenewalsUploadService
         // if insurance provider is GIG(AXA) and code is RSA then check if the plan is related to GIG(AXA)
         if ($currentInsuranceProvider && $leadData->insurer == InsuranceProvidersEnum::RSA && $currentInsuranceProvider->code == InsuranceProvidersEnum::AXA) {
             // check if the plan is related to GIG(AXA)
-            $isGigPlan = CarPlan::where('text', $leadData->plan_name)->where('repair_type', $leadData->plan_type)->where('provider_id', $currentInsuranceProvider->id)->first();
+            $isGigPlan = CarPlan::where('text', $leadData->plan_name ?? '')->where('repair_type', $leadData->plan_type ?? '')->where('provider_id', $currentInsuranceProvider->id)->first();
             if (! $isGigPlan) {
                 $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Genesis Lead');
             }
@@ -3656,7 +3656,7 @@ class RenewalsUploadService
         } else {
             $currentInsuranceProvider = $currentInsuranceProvider?->code == $leadData->insurer ? $currentInsuranceProvider : null;
             if ($currentInsuranceProvider != null) {
-                $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $currentInsuranceProvider->id)->first();
+                $carPlan = CarPlan::where('repair_type', $leadData->plan_type ?? '')->where('text', $leadData->plan_name ?? '')->where('provider_id', $currentInsuranceProvider->id)->first();
             }
         }
 
