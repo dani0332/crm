@@ -331,12 +331,14 @@ trait QuoteAllocatable
 
     public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder
     {
+        $extendedStartDate = now()->subDays(14)->toDateTimeString();
+
         return $query->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
-            ->where(function ($sq) use ($allocationStartDate, $to) {
+            ->where(function ($sq) use ($allocationStartDate, $to, $extendedStartDate) {
                 $sq->whereBetween('created_at', [$allocationStartDate, $to])
-                    ->orWhere(function ($inner) use ($allocationStartDate, $to) {
+                    ->orWhere(function ($inner) use ($extendedStartDate, $to) {
                         $inner->wherePaymentAuthorizedWithNoDocuments()
-                            ->whereBetween('created_at', [$allocationStartDate, $to]);
+                            ->whereBetween('created_at', [$extendedStartDate, $to]);
                     });
             });
     }
