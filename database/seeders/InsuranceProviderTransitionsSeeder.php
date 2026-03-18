@@ -35,6 +35,7 @@ class InsuranceProviderTransitionsSeeder extends Seeder
                 InsuranceProviderTransition::create([
                     'source_insurance_provider_id' => $rsa->id,
                     'target_insurance_provider_id' => $axa->id,
+                    'is_active' => true,
                 ]);
                 LoggerService::info('InsuranceProviderTransitionsSeeder: RSA → GIG AXA transition seeded.');
             } else {
@@ -53,6 +54,7 @@ class InsuranceProviderTransitionsSeeder extends Seeder
                 InsuranceProviderTransition::create([
                     'source_insurance_provider_id' => $tm->id,
                     'target_insurance_provider_id' => $axa->id,
+                    'is_active' => true,
                 ]);
                 LoggerService::info('InsuranceProviderTransitionsSeeder: TM → GIG AXA transition seeded.');
             } else {

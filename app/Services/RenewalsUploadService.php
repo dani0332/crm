@@ -3490,7 +3490,7 @@ class RenewalsUploadService
             return $provider;
         }
         // Normalize © (U+00A9) to (C) so upload "Gulf Insurance Group (Gulf) B.S.C. ©" matches DB "Gulf Insurance Group (Gulf) B.S.C. (C)"
-        $normalized = str_replace(['©', "\u{00A9}"], '(C)', $trimmed);
+        $normalized = str_replace('©', '(C)', $trimmed);
         $normalized = trim($normalized);
 
         return $normalized !== $trimmed ? InsuranceProvider::where('text', $normalized)->first() : null;
