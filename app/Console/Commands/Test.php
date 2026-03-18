@@ -29,7 +29,7 @@ class Test extends Command
      */
     public function handle()
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_MOTOR_REVIVAL_OCB_WORKFLOW)->first();
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, []);
         if ($response && $response->status_code === 200) {
             LoggerService::info('Motor Revival OCB - Successfully triggered event');
