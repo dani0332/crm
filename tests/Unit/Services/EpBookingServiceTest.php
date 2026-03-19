@@ -23,12 +23,12 @@ test('watermark document rethrows transient existence failures so the job can re
         'document_type_code' => $documentType->code,
     ]);
 
-    $storageDisk = \Mockery::mock();
+    $storageDisk = Mockery::mock();
     $storageDisk->shouldReceive('exists')
         ->times(3)
         ->andThrow(UnableToCheckExistence::forLocation(
             $quoteDocument->doc_url,
-            new \RuntimeException('cURL error 6: Could not resolve host: azstorimprivateprd.blob.core.windows.net')
+            new RuntimeException('cURL error 6: Could not resolve host: azstorimprivateprd.blob.core.windows.net')
         ));
 
     Storage::shouldReceive('disk')
@@ -44,5 +44,5 @@ test('watermark document rethrows transient existence failures so the job can re
     $service->quote = (object) ['uuid' => 'TEST-UUID'];
 
     expect(fn () => $service->watermarkDocument($quoteDocument, $documentType))
-        ->toThrow(\RuntimeException::class, "Unable to check existence for: {$quoteDocument->doc_url}");
+        ->toThrow(RuntimeException::class, "Unable to check existence for: {$quoteDocument->doc_url}");
 });

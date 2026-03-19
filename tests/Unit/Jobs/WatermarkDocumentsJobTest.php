@@ -164,12 +164,12 @@ test('handle retries transient azure existence failures before watermarking', fu
         'document_type_code' => $documentType->code,
     ]);
 
-    $storageDisk = \Mockery::mock();
+    $storageDisk = Mockery::mock();
     $storageDisk->shouldReceive('exists')
         ->once()
         ->andThrow(UnableToCheckExistence::forLocation(
             $quoteDocument->doc_url,
-            new \RuntimeException('cURL error 6: Could not resolve host: azstorimprivateprd.blob.core.windows.net')
+            new RuntimeException('cURL error 6: Could not resolve host: azstorimprivateprd.blob.core.windows.net')
         ));
     $storageDisk->shouldReceive('exists')
         ->once()
