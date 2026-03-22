@@ -211,8 +211,25 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
+        if ($response === false) {
+            return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
+        }
+        $data = $this->formatStopFollowUpResponse($response->body ?? null);
 
-        return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
+        $status = ($data['runs'][0] ?? [])['status'] ?? null;
+
+        return apiResponse($data, Response::HTTP_OK, $status === 'cancelled' ? 'Email event stopped successfully' : 'Request processed');
+    }
+
+    private function formatStopFollowUpResponse(?string $body): array
+    {
+        $decoded = json_decode($body ?? '', true) ?? [];
+        $result = $decoded['result'] ?? [];
+
+        return [
+            'action' => $decoded['action'] ?? 'cancel',
+            'runs' => collect($result)->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all(),
+        ];
     }
 
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs

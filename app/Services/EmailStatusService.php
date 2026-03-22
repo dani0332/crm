@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
@@ -46,36 +48,36 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-        switch (request('quoteTypeId')) {
-            case QuoteTypeId::Car:
-                $quote = CarQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Health:
-                $quote = HealthQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Home:
-            case QuoteTypeId::Savings:
-            case QuoteTypeId::Life:
-            case QuoteTypeId::Cyber:
-                $quote = PersonalQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Travel:
-                $quote = TravelQuote::where('uuid', $request->uuid)->first();
-                break;
-            default:
-                $quote = null;
-                break;
-        }
-        if (! $quote) {
+        $quoteTypeId = (int) request('quoteTypeId');
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+
+        if (! $quoteType) {
             LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
                 'uuid' => $request->uuid,
-                'quoteTypeId' => request('quoteTypeId'),
+                'quoteTypeId' => $quoteTypeId,
             ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
 
-        $quoteTypeId = (int) request('quoteTypeId');
+        $model = $quoteType->model();
+        $query = $model::where('uuid', $request->uuid);
+
+        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        $quote = $query->first();
+
+        if (! $quote) {
+            LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
+                'uuid' => $request->uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return (object) ['message' => 'lead not found', 'status' => false];
+        }
+
         if (! empty($request->mobile)) {
             return $this->addBirdWhatsAppStatus($request, $quote, $quoteTypeId);
         }
