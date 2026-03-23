@@ -233,7 +233,8 @@ class BikeQuoteController extends Controller
             $quote->uuid,
             QuoteTypeId::Bike,
             $quote->id,
-            $quote->email ?? null
+            $quote->email ?? null,
+            $emailStatuses
         );
 
         $bikeQuotePlanAddons = BikeQuoteRepository::bikeQuotePlanAddons($uuid);

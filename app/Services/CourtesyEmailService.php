@@ -49,6 +49,20 @@ class CourtesyEmailService extends BaseService
     }
 
     /**
+     * When a queued job only has `quoteUID` (legacy payload), resolve LOB by scanning courtesy-allowed types.
+     */
+    public function resolveQuoteTypeIdForCourtesyWorkflow(string $quoteUID): ?int
+    {
+        foreach (self::allowedQuoteTypeIds() as $quoteTypeId) {
+            if ($this->getQuoteByQuoteType($quoteTypeId, $quoteUID) !== null) {
+                return $quoteTypeId;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array{review_flow_status: string, suppression_expires_at: string}
      *
      * `suppression_expires_at` is only a formatted datetime when status is `Suppressed`.

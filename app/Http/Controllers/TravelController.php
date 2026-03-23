@@ -291,11 +291,13 @@ class TravelController extends Controller
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
 
+        $emailStatuses = $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id);
         $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
             $record->uuid,
             QuoteTypeId::Travel,
             $record->id,
-            $record->email ?? null
+            $record->email ?? null,
+            $emailStatuses
         );
 
         return inertia('TravelQuote/Show', [
@@ -321,7 +323,7 @@ class TravelController extends Controller
             'documentTypes' => $documentTypes,
             'documentType' => $documentType,
             'memberCategories' => $this->lookupService->getMemberCategories(),
-            'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
+            'emailStatuses' => $emailStatuses,
             'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
             'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Travel),
             'activities' => $activities,

@@ -777,7 +777,8 @@ class CRUDController extends Controller
                 $record->uuid,
                 $quoteTypeId,
                 $record->id,
-                $record->email ?? null
+                $record->email ?? null,
+                $emailStatuses
             );
             $showGoogleReviewCommunicationLog = CourtesyEmailService::isCourtesyEmailQuoteType($quoteTypeId);
             $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);

@@ -193,11 +193,13 @@ class LifeQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $quote->id);
         $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
             $quote->uuid,
             QuoteTypeId::Life,
             $quote->id,
-            $quote->email ?? null
+            $quote->email ?? null,
+            $emailStatuses
         );
 
         return inertia('LifeQuote/Show', [
@@ -248,7 +250,7 @@ class LifeQuoteController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
-            'emailStatuses' => app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $quote->id),
+            'emailStatuses' => $emailStatuses,
             'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
             'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Life),
         ]);

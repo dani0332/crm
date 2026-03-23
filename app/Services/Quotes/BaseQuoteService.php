@@ -173,7 +173,8 @@ abstract class BaseQuoteService extends BaseService
             $quote->uuid,
             $quoteType->id(),
             $quote->id,
-            $quote->email ?? null
+            $quote->email ?? null,
+            $emailStatuses
         );
 
         $planURL = $this->getEcomQuoteLink($quoteType, $quote->uuid);

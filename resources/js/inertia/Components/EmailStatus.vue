@@ -23,9 +23,10 @@ const props = defineProps({
 
 const page = usePage();
 
+const isWhatsAppType = t => String(t ?? '').toLowerCase() === 'whatsapp';
+
 function isWhatsAppRow(row) {
-  const t = row?.type;
-  return t === 'whatsApp' || t === 'WhatsApp';
+  return isWhatsAppType(row?.type);
 }
 
 function channelLabel(row) {
@@ -125,7 +126,7 @@ const hideFooter = computed(() => {
             <span
               class="text-xs font-semibold px-2 py-0.5 rounded"
               :class="
-                item.type === 'whatsApp'
+                isWhatsAppType(item.type)
                   ? 'bg-green-100 text-green-800'
                   : 'bg-slate-100 text-slate-700'
               "

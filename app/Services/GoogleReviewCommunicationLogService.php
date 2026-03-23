@@ -9,6 +9,7 @@ use App\Enums\QuoteFlowType;
 use App\Models\EmailStatus;
 use App\Models\QuoteFlowDetails;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class GoogleReviewCommunicationLogService
 {
@@ -24,10 +25,16 @@ class GoogleReviewCommunicationLogService
      * `review_clicked_at`: each workflow row uses that flow’s `ended_at`; message rows use `max(ended_at)` from the same `$flows` query. `channel`: workflow rows use each flow’s `stopped_source`; message rows use first non-empty `stopped_source` from `$flows`, else Email/WhatsApp.
      * (`touchpoint` omitted until data source exists; restore with Vue column.)
      *
+     * @param  iterable<EmailStatus>|null  $emailStatuses  Prefer rows from {@see EmailStatusService::getEmailStatus()} (cached) to avoid a duplicate query on show pages.
      * @return list<array<string, mixed>>
      */
-    public function getForQuote(string $quoteUuid, int $quoteTypeId, int $quoteId, ?string $recipientEmail = null): array
-    {
+    public function getForQuote(
+        string $quoteUuid,
+        int $quoteTypeId,
+        int $quoteId,
+        ?string $recipientEmail = null,
+        ?iterable $emailStatuses = null,
+    ): array {
         if (! in_array($quoteTypeId, CourtesyEmailService::allowedQuoteTypeIds(), true)) {
             return [];
         }
@@ -71,11 +78,24 @@ class GoogleReviewCommunicationLogService
             ];
         }
 
-        $messages = EmailStatus::query()
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('quote_id', $quoteId)
-            ->orderByDesc('id')
-            ->get();
+        $messages = $emailStatuses !== null
+            ? Collection::make($emailStatuses)->sortByDesc('id')->values()
+            : EmailStatus::query()
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_id', $quoteId)
+                ->select([
+                    'id',
+                    'type',
+                    'mobile_no',
+                    'email_address',
+                    'email_subject',
+                    'template_id',
+                    'email_status',
+                    'reason',
+                    'created_at',
+                ])
+                ->orderByDesc('id')
+                ->get();
 
         $stoppedSourceForQuote = $flows->pluck('stopped_source')->filter()->first();
 

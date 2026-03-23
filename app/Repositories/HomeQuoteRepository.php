@@ -411,7 +411,8 @@ class HomeQuoteRepository extends BaseRepository
             $quote->uuid,
             QuoteTypeId::Home,
             $quote->id,
-            $quote->email ?? null
+            $quote->email ?? null,
+            $emailStatuses
         );
         $customerAddressData = $quote->customerAddressData ?: app(CustomerService::class)->getCustomerAddressData($quote);
         $lookUpData = $quote->lookUpData ?: app(LookupService::class)->getHomeLookUpData();

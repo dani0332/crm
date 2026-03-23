@@ -481,7 +481,8 @@ class LifeQuoteService extends BaseService
             $lifeQuote->uuid,
             QuoteTypeId::Life,
             $lifeQuote->id,
-            $lifeQuote->email ?? null
+            $lifeQuote->email ?? null,
+            $emailStatuses
         );
         $lifeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_CUT_OFF_DATE)->first()->value ?? null;
 

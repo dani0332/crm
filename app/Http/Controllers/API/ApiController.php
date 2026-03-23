@@ -215,26 +215,33 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
         }
 
+        $decoded = json_decode($response->body ?? '', true) ?? [];
+        $result = $decoded['result'] ?? [];
+        $c = collect($result);
+        // Avoid marking ended_at unless Bird’s result for this flow_id is actually cancelled.
+        $confirmed = $c->contains(fn ($s, $id) => (string) $id === (string) $workflow->flow_id && strtolower((string) $s) === 'cancelled');
+        $data = ['action' => $decoded['action'] ?? 'cancel', 'runs' => $c->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all()];
+
+        if (! $confirmed) {
+            LoggerService::warning('stopFollowUpEvent: Bird did not confirm workflow run as cancelled; skipping DB update', [
+                'quote_uuid' => $quoteUID,
+                'flow_type' => $flowType,
+                'flow_id' => $workflow->flow_id,
+                'parsed_response' => $data,
+            ]);
+
+            return apiResponse(
+                $data,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Cancellation was not confirmed for this workflow run'
+            );
+        }
+
         $workflow->ended_at = now();
         $workflow->stopped_source = $request->input('stop_source', 'api');
         $workflow->save();
 
-        $data = $this->formatStopFollowUpResponse($response->body ?? null);
-
-        $status = ($data['runs'][0] ?? [])['status'] ?? null;
-
-        return apiResponse($data, Response::HTTP_OK, $status === 'cancelled' ? 'Email event stopped successfully' : 'Request processed');
-    }
-
-    private function formatStopFollowUpResponse(?string $body): array
-    {
-        $decoded = json_decode($body ?? '', true) ?? [];
-        $result = $decoded['result'] ?? [];
-
-        return [
-            'action' => $decoded['action'] ?? 'cancel',
-            'runs' => collect($result)->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all(),
-        ];
+        return apiResponse($data, Response::HTTP_OK, 'Email event stopped successfully');
     }
 
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs

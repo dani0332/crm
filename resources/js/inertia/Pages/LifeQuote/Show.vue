@@ -2689,137 +2689,146 @@ const getDisplayPriceInAED = item => {
       :expanded="sectionExpanded"
     />
     <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Documents
-            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-          </h3>
-          <div class="flex gap-2">
-            <Link
-              v-if="
-                quote?.insly_id &&
-                canAny([
-                  permissionsEnum.VIEW_LEGACY_DETAILS,
-                  permissionsEnum.VIEW_ALL_LEADS,
-                ])
-              "
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-tooltip placement="top">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div
+            class="flex justify-between items-center w-full gap-4 flex-wrap"
+          >
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Documents
+              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+            </h3>
+            <div class="flex gap-2 flex-shrink-0">
+              <Link
+                v-if="
+                  quote?.insly_id &&
+                  canAny([
+                    permissionsEnum.VIEW_LEGACY_DETAILS,
+                    permissionsEnum.VIEW_ALL_LEADS,
+                  ])
+                "
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+              >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                  View Legacy policy
+                </x-button>
+              </Link>
+              <x-tooltip placement="top">
+                <x-button
+                  @click.prevent="getupdateDocumentValidate(true)"
+                  v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+                  size="sm"
+                  color="green"
+                >
+                  Verify Documents
+                </x-button>
+                <template #tooltip>
+                  Verify Documents: Clicking this button confirms that all
+                  submitted documents are accurate and valid.</template
+                >
+              </x-tooltip>
               <x-button
-                @click.prevent="getupdateDocumentValidate(true)"
-                v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+                @click.prevent="modals.doc = true"
                 size="sm"
-                color="green"
-              >
-                Verify Documents
-              </x-button>
-              <template #tooltip>
-                Verify Documents: Clicking this button confirms that all
-                submitted documents are accurate and valid.</template
-              >
-            </x-tooltip>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="primary"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-        </div>
-        <DataTable
-          table-class-name="compact"
-          :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="quoteDocuments.length < 15"
-        >
-          <template #item-original_name="item">
-            <a
-              :href="cdnPath + item.doc_url"
-              target="_blank"
-              class="text-primary-600"
-            >
-              {{ item.original_name }}
-            </a>
-          </template>
-          <template #item-action="{ doc_name }">
-            <div>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="onDocDelete(doc_name)"
+                color="primary"
                 v-if="readOnlyMode.isDisable === true"
               >
-                Delete
+                Upload Documents
+              </x-button>
+              <x-button
+                size="sm"
+                color="red"
+                v-if="
+                  displaySendPolicyButton &&
+                  permissions.notProductionApproval &&
+                  permissions.isQuoteDocumentEnabled
+                "
+                @click="sendPolicyToClient"
+              >
+                Send Policy
               </x-button>
             </div>
-          </template>
-        </DataTable>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="compact"
+            :headers="quoteDocumentsTable.columns"
+            :items="quoteDocuments || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="quoteDocuments.length < 15"
+          >
+            <template #item-original_name="item">
+              <a
+                :href="cdnPath + item.doc_url"
+                target="_blank"
+                class="text-primary-600"
+              >
+                {{ item.original_name }}
+              </a>
+            </template>
+            <template #item-action="{ doc_name }">
+              <div>
+                <x-button
+                  size="xs"
+                  color="error"
+                  outlined
+                  @click.prevent="onDocDelete(doc_name)"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
 
-        <x-modal
-          v-model="modals.doc"
-          size="xl"
-          title="Upload Documents"
-          show-close
-          backdrop
-        >
-          <LazyDocumentUploader
-            :members="memberDataDocs(travelers)"
-            :doc-types="documentTypes"
-            :docs="quoteDocuments || []"
-            :cdn="cdnPath"
-          />
-        </x-modal>
-        <x-modal
-          v-model="modals.docConfirm"
-          title="Delete Document"
-          show-close
-          backdrop
-        >
-          <p>Are you sure you want to delete this document?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.docConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                @click.prevent="confirmDeleteDoc"
-                :loading="quoteDocumentsTable.isLoading"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
+          <x-modal
+            v-model="modals.doc"
+            size="xl"
+            title="Upload Documents"
+            show-close
+            backdrop
+          >
+            <LazyDocumentUploader
+              :members="memberDataDocs(travelers)"
+              :doc-types="documentTypes"
+              :docs="quoteDocuments || []"
+              :cdn="cdnPath"
+            />
+          </x-modal>
+          <x-modal
+            v-model="modals.docConfirm"
+            title="Delete Document"
+            show-close
+            backdrop
+          >
+            <p>Are you sure you want to delete this document?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.docConfirm = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="confirmDeleteDoc"
+                  :loading="quoteDocumentsTable.isLoading"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+        </template>
+      </Collapsible>
     </div>
 
     <LazyCreatePlan
