@@ -82,6 +82,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     $newRecord->quote_type_id = $baseRecord->quote_type_id;
                     $newRecord->quote_id = $baseRecord->quote_id;
                     $newRecord->save();
+                    Cache::forget('email_statuses:'.today()->toDateString().":{$newRecord->quote_type_id}:{$newRecord->quote_id}");
 
                     LoggerService::info('WhatsAppMessageStatusJob - Status update created', [
                         'msg_id' => $messageId,
