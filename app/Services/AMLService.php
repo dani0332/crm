@@ -1754,7 +1754,7 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
 
-            $insuredData =  [
+            $insuredData = [
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
@@ -1782,7 +1782,7 @@ class AMLService
                 'customer_type' => CustomerTypeEnum::Entity,
                 'id_type' => $request->screening_id_type,
                 'id_number' => $request->screening_id_number,
-            ],$insuredData);
+            ], $insuredData);
         } else {
             // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)

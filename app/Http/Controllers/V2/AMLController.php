@@ -75,6 +75,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 use Inertia\ResponseFactory;
@@ -417,7 +418,7 @@ class AMLController extends Controller
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
-            \Illuminate\Support\Facades\Context::add('emirate_update_source', EmirateUpdateSourceEnum::AML_SCREEN->value);
+            Context::add('emirate_update_source', EmirateUpdateSourceEnum::AML_SCREEN->value);
 
             try {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);
