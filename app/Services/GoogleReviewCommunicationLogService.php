@@ -59,9 +59,16 @@ class GoogleReviewCommunicationLogService
             ? strtolower(trim($recipientEmail))
             : null;
 
+        // Query orders by started_at desc; first row is the most recent courtesy trigger.
+        $latestFlowStartedAt = $flows->first()?->started_at;
+
         foreach ($flows as $flow) {
             $started = $flow->started_at;
             $ended = $flow->ended_at;
+            // Per workflow row: 7-day cross-quote courtesy cooldown ends at trigger time + 7 days (not quote-level "Eligible" → —).
+            $suppressionExpiresForFlow = $started !== null
+                ? $this->formatDisplayDateTime($started->copy()->addDays(7))
+                : '—';
             $rows[] = [
                 'sort_at' => $started?->timestamp ?? 0,
                 'id' => $flow->id,
@@ -71,7 +78,7 @@ class GoogleReviewCommunicationLogService
                 'sent_at' => $this->formatDisplayDateTime($started),
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => '—',
-                'suppression_expires_at' => $flowContext['suppression_expires_at'],
+                'suppression_expires_at' => $suppressionExpiresForFlow,
                 'review_clicked_at' => $this->formatDisplayDateTime($ended),
                 'channel' => filled($flow->stopped_source) ? (string) $flow->stopped_source : '—',
                 // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)
@@ -99,6 +106,10 @@ class GoogleReviewCommunicationLogService
 
         $stoppedSourceForQuote = $flows->pluck('stopped_source')->filter()->first();
 
+        $suppressionExpiresForMessages = $latestFlowStartedAt !== null
+            ? $this->formatDisplayDateTime($latestFlowStartedAt->copy()->addDays(7))
+            : $flowContext['suppression_expires_at'];
+
         foreach ($messages as $msg) {
             $rawCreated = $msg->getRawOriginal('created_at');
             $sortAt = $rawCreated ? Carbon::parse($rawCreated)->timestamp : 0;
@@ -122,7 +133,7 @@ class GoogleReviewCommunicationLogService
                 'sent_at' => $msg->created_at,
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => $msg->reason !== null && trim((string) $msg->reason) !== '' ? (string) $msg->reason : '—',
-                'suppression_expires_at' => $flowContext['suppression_expires_at'],
+                'suppression_expires_at' => $suppressionExpiresForMessages,
                 'review_clicked_at' => $this->formatDisplayDateTime($flows->max('ended_at')),
                 'channel' => filled($stoppedSourceForQuote) ? (string) $stoppedSourceForQuote : $channel,
                 // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)

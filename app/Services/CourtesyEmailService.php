@@ -16,12 +16,11 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class CourtesyEmailService extends BaseService
 {
-    private BirdService $birdService;
-
     private const ALLOWED_QUOTE_TYPES = [
         QuoteTypeId::Bike,
         QuoteTypeId::Car,
@@ -102,13 +101,15 @@ class CourtesyEmailService extends BaseService
         ];
     }
 
-    public function __construct(BirdService $birdService)
-    {
-        $this->birdService = $birdService;
-    }
+    public function __construct(
+        private BirdService $birdService,
+        private EmailStatusService $emailStatusService,
+    ) {}
 
     public function processCourtesyEmailWorkflow(string $quoteUID, int $quoteTypeId): array
     {
+        $quote = null;
+
         try {
             if (! in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true)) {
                 LoggerService::warning('CourtesyEmailService - Quote type not allowed for courtesy email', [
@@ -143,6 +144,7 @@ class CourtesyEmailService extends BaseService
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
                 ]);
+                $this->logCourtesyNotDispatched($quote, $quoteTypeId, 'Customer not found in CRM');
 
                 return ['message' => 'Customer not found', 'success' => false];
             }
@@ -154,6 +156,7 @@ class CourtesyEmailService extends BaseService
                     'quoteUID' => $quoteUID,
                     'advisor_id' => $quote->advisor_id,
                 ]);
+                $this->logCourtesyNotDispatched($quote, $quoteTypeId, 'Advisor not assigned');
 
                 return ['message' => 'Advisor not assigned', 'success' => false];
             }
@@ -164,6 +167,7 @@ class CourtesyEmailService extends BaseService
                     'quoteTypeId' => $quoteTypeId,
                     'quoteUID' => $quoteUID,
                 ]);
+                $this->logCourtesyNotDispatched($quote, $quoteTypeId, 'Bird courtesy workflow URL not configured');
 
                 return ['message' => 'Bird workflow URL not configured', 'success' => false];
             }
@@ -177,6 +181,12 @@ class CourtesyEmailService extends BaseService
                     'quote_type_id' => $quoteTypeId,
                     'quote_uuid' => $quote->uuid,
                 ]);
+                $this->logCourtesyNotDispatched(
+                    $quote,
+                    $quoteTypeId,
+                    'Suppressed: same customer and line of business already had a courtesy flow in the last 7 days',
+                    $customer instanceof Customer ? $customer->id : null,
+                );
 
                 return [
                     'message' => 'Courtesy email flow suppressed: same customer and line of business already had a flow in the last 7 days',
@@ -243,6 +253,12 @@ class CourtesyEmailService extends BaseService
                         'quoteUID' => $quote->uuid,
                         'quoteTypeId' => $quoteTypeId,
                     ]);
+                    $this->logCourtesyNotDispatched(
+                        $quote,
+                        $quoteTypeId,
+                        'Bird webhook did not return Run-Id in response headers; workflow run not recorded',
+                        $customer instanceof Customer ? $customer->id : null,
+                    );
                 }
             } catch (\Throwable $th) {
                 LoggerService::error('CourtesyEmailService - Error saving quote flow details', [
@@ -259,9 +275,27 @@ class CourtesyEmailService extends BaseService
                 'quoteUID' => $quoteUID,
                 'error' => $e->getMessage(),
             ], $e);
+            if ($quote !== null && filled($quote->email)) {
+                $this->logCourtesyNotDispatched(
+                    $quote,
+                    $quoteTypeId,
+                    'Courtesy workflow error: '.$e->getMessage(),
+                );
+            }
 
             return ['message' => 'Error processing workflow: '.$e->getMessage(), 'success' => false];
         }
+    }
+
+    private function logCourtesyNotDispatched(Model $quote, int $quoteTypeId, string $reason, ?int $customerId = null): void
+    {
+        $this->emailStatusService->logCourtesyWorkflowNotDispatched(
+            $quoteTypeId,
+            (int) $quote->id,
+            strtolower(trim((string) $quote->email)),
+            $reason,
+            $customerId,
+        );
     }
 
     private function getQuoteByQuoteType(int $quoteTypeId, string $quoteUID)

@@ -11,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class EmailStatusEventJob implements ShouldQueue
@@ -52,7 +51,6 @@ class EmailStatusEventJob implements ShouldQueue
                     }
                     info('EmailStatusEventJob - update status for home quote : msg_id: '.$this->emailData->message_id.' - status: '.$this->emailData->status.' | Time: '.now());
                     app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
-                    Cache::forget("email_statuses_{$isEmailMessage->quote_type_id}_{$isEmailMessage->quote_id}");
 
                     return true;
                 }
@@ -79,7 +77,6 @@ class EmailStatusEventJob implements ShouldQueue
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                         $this->storeEmailStatusEvent($emailStatusData);
-                        Cache::forget("email_statuses_{$emailStatusData->quote_type_id}_{$emailStatusData->quote_id}");
                     } else {
                         info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                     }

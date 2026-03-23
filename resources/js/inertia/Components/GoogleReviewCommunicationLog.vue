@@ -65,8 +65,35 @@ const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
           hide-rows-per-page
           hide-footer
         >
+          <template #item-id="item">
+            <span class="text-sm">{{ item.id ?? '—' }}</span>
+          </template>
+          <template #item-email_template="item">
+            <span class="text-sm">{{ item.email_template || '—' }}</span>
+          </template>
+          <template #item-email_address="item">
+            <span class="text-sm">{{ item.email_address || '—' }}</span>
+          </template>
           <template #item-status="item">
             <span class="text-sm">{{ item.status || '—' }}</span>
+          </template>
+          <template #item-sent_at="item">
+            <span class="text-sm">{{ item.sent_at || '—' }}</span>
+          </template>
+          <template #item-review_flow_status="item">
+            <span class="text-sm">{{ item.review_flow_status || '—' }}</span>
+          </template>
+          <template #item-reason_non_dispatch="item">
+            <span class="text-sm">{{ item.reason_non_dispatch || '—' }}</span>
+          </template>
+          <template #item-suppression_expires_at="item">
+            <span class="text-sm">{{ item.suppression_expires_at || '—' }}</span>
+          </template>
+          <template #item-review_clicked_at="item">
+            <span class="text-sm">{{ item.review_clicked_at || '—' }}</span>
+          </template>
+          <template #item-channel="item">
+            <span class="text-sm">{{ item.channel || '—' }}</span>
           </template>
         </DataTable>
       </template>

@@ -13,17 +13,16 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class EmailStatusService extends BaseService
 {
+
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
-        return Cache::remember("email_statuses_{$quoteTypeId}_{$quoteId}", now()->endOfDay(), function () use ($quoteTypeId, $quoteId) {
-            return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-                ->orderBy('updated_at', 'desc')
-                ->get();
-        });
+        return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+            ->orderBy('updated_at', 'desc')
+            ->get();
     }
 
     public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS, $reason = null)
@@ -40,8 +39,6 @@ class EmailStatusService extends BaseService
         $newEmailStatus->reason = $reason;
         $newEmailStatus->type = EmailStatusTypeEnum::Email;
         $newEmailStatus->save();
-
-        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
 
         return $newEmailStatus->id;
     }
@@ -122,8 +119,6 @@ class EmailStatusService extends BaseService
         $newEmailStatus->quote_type_id = $quoteTypeId;
         $newEmailStatus->quote_id = $quote->id;
         $newEmailStatus->save();
-
-        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
 
         return (object) ['message' => 'WhatsApp event logged successfully', 'status' => true];
     }
@@ -211,11 +206,6 @@ class EmailStatusService extends BaseService
         }
     }
 
-    /**
-     * Get quote by UUID and type
-     *
-     * @return mixed
-     */
     private function getQuoteByUuidAndType(string $uuid, int $quoteTypeId)
     {
         return match ($quoteTypeId) {
@@ -225,6 +215,26 @@ class EmailStatusService extends BaseService
             QuoteTypeId::Travel => TravelQuote::where('uuid', $uuid)->first(),
             default => null,
         };
+    }
+
+    public function logCourtesyWorkflowNotDispatched(
+        int $quoteTypeId,
+        int $quoteId,
+        string $customerEmail,
+        string $reason,
+        ?int $customerId = null,
+    ): void {
+        $email = new EmailStatus;
+        $email->quote_type_id = $quoteTypeId;
+        $email->quote_id = $quoteId;
+        $email->email_address = $customerEmail;
+        $email->msg_id = 'courtesy-not-dispatched-'.Str::uuid()->toString();
+        $email->email_subject = 'Google review courtesy';
+        $email->email_status = ProcessStatusCode::COURTESY_NOT_DISPATCHED;
+        $email->reason = $reason;
+        $email->type = EmailStatusTypeEnum::Email;
+        $email->customer_id = $customerId;
+        $email->save();
     }
 
 }

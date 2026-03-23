@@ -22,4 +22,7 @@ final class ProcessStatusCode extends Enum
     public const FAILED = 'Failed';
     public const SENT = 'Sent';
     public const UNSUBSCRIBED = 'unsubscribe-request';
+
+    /** Courtesy / Google review workflow was not started (blocked, misconfiguration, etc.). */
+    public const COURTESY_NOT_DISPATCHED = 'Not triggered';
 }
