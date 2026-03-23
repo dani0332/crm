@@ -29,28 +29,12 @@ class CourtesyEmailJob implements ShouldQueue
         $quoteUID = $this->quoteData['quoteUID'] ?? null;
         $quoteTypeId = $this->quoteData['quoteTypeId'] ?? null;
 
-        if (! $quoteUID) {
-            LoggerService::error('CourtesyEmailJob - Missing quoteUID', [
+        if (! $quoteUID || ! $quoteTypeId) {
+            LoggerService::error('CourtesyEmailJob - Missing quoteUID or quoteTypeId', [
                 'quoteData' => $this->quoteData,
             ]);
 
             return;
-        }
-
-        if (! $quoteTypeId) {
-            $quoteTypeId = $courtesyEmailService->resolveQuoteTypeIdForCourtesyWorkflow($quoteUID);
-            if (! $quoteTypeId) {
-                LoggerService::error('CourtesyEmailJob - Missing quoteTypeId and could not resolve from quoteUID', [
-                    'quoteData' => $this->quoteData,
-                ]);
-
-                return;
-            }
-
-            LoggerService::info('CourtesyEmailJob - Resolved quoteTypeId for legacy payload', [
-                'quoteUID' => $quoteUID,
-                'quoteTypeId' => $quoteTypeId,
-            ]);
         }
 
         LoggerService::startQuoteLogging($quoteUID);
