@@ -2665,7 +2665,9 @@ class AMLService
             ? InsuranceProvider::find($insuranceProviderId)?->code
             : $insuranceProviderId;
 
-        return $this->getProviderLookups($insuranceProviderCode, $insuranceProviderId, $requireLookups, $leadSource);
+        return is_null($insuranceProviderCode)
+            ? []
+            : $this->getProviderLookups($insuranceProviderCode, $insuranceProviderId, $requireLookups, $leadSource);
     }
 
     protected function getCars24Lookups(array $requireLookups, string $leadSource): array
