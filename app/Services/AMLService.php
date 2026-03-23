@@ -2003,34 +2003,36 @@ class AMLService
             }
         }
 
-        if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
-            $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
-            $quote->save();
-        }
+        return DB::transaction(function () use ($request, $quoteTypeId, $quote, $entityData): int {
+            if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+                $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
+                $quote->save();
+            }
 
-        LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
+            LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
-        $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
-        $entity->fill($entityData);
+            $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
+            $entity->fill($entityData);
 
-        if (! $entity->exists) {
-            $entity->save();
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
-        } elseif ($entity->isDirty()) {
-            $entity->save();
-        }
+            if (! $entity->exists) {
+                $entity->save();
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            } elseif ($entity->isDirty()) {
+                $entity->save();
+            }
 
-        $entity->refresh();
+            $entity->refresh();
 
-        QuoteRequestEntityMapping::updateOrCreate([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ], [
-            'entity_id' => $entity->id,
-            'entity_type_code' => $request->entity_type_code,
-        ]);
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ], [
+                'entity_id' => $entity->id,
+                'entity_type_code' => $request->entity_type_code,
+            ]);
 
-        return $entity->id;
+            return $entity->id;
+        });
     }
 
     private function updateCustomerData($request): void
