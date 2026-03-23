@@ -1762,7 +1762,7 @@ class AMLService
                 'trade_license_no' => $request->screening_id_number,
             ];
 
-            if ($quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
                 if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                     if ($quote->isPolicyBooked()) {
                         unset($insuredData['emirate_of_registration_id']);
@@ -1995,7 +1995,7 @@ class AMLService
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        if ($quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+        if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
             if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 if ($quote->isPolicyBooked()) {
                     unset($entityData['emirate_of_registration_id']);
@@ -2003,7 +2003,7 @@ class AMLService
             }
         }
 
-        if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+        if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
             $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
             $quote->save();
         }
