@@ -259,10 +259,7 @@ const emirateOfRegistrationError = computed(() => {
   const value = customerProfileForm.emirate_of_registration_id;
   const isEmpty =
     value === null || value === undefined || value === '' || value === false;
-  if (
-    enabledCustomerType === page.props.customerTypeEnum.Entity &&
-    isEmpty
-  ) {
+  if (enabledCustomerType === page.props.customerTypeEnum.Entity && isEmpty) {
     return 'Please update Emirate of registration in Entity Profile.';
   }
   return null;
@@ -1151,8 +1148,8 @@ function handleOcrNotification(event) {
                       </span>
                       <template #tooltip>
                         Defines the legal Emirate of registration of the entity
-                        and is required.
-                        Editing this will update KYC/AML & may alter available plan options.
+                        and is required. Editing this will update KYC/AML & may
+                        alter available plan options.
                       </template>
                     </x-tooltip>
                   </dt>
