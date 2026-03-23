@@ -56,9 +56,14 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         if ($healthTeam) {
             LoggerService::info("Filtered team is: {$healthTeam->name}");
-            $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::GBP && $this->lead->members->count() > 2)
-                ? HealthTeamType::RM_NB
-                : $healthTeam->name;
+            $this->lead->health_team_type = $healthTeam->name;
+
+            if ($healthTeam->name === HealthTeamType::GBP) {
+                LoggerService::info('GBP team found, skipping nationality validation');
+
+                $this->allocationRequest->set('skipNationalityValidation', true);
+            }
+
         } else {
             LoggerService::warning('No team found for the given price range');
             $this->lead->is_error_email_sent = true;

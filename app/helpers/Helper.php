@@ -7,6 +7,7 @@ use App\Enums\DatabaseConnectionEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -31,14 +32,17 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Models\VehicleType;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Hidehalo\Nanoid\Client;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -86,7 +90,7 @@ if (! function_exists('vAbort')) {
 if (! function_exists('generateUuid')) {
     function generateUuid()
     {
-        $client = new Hidehalo\Nanoid\Client;
+        $client = new Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -1119,7 +1123,7 @@ if (! function_exists('getAppStorageValueByKey')) {
                 }
 
                 return $query->value;
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 // Handle missing table gracefully (e.g., during tests)
                 // This can happen when the application_storage table doesn't exist yet
                 if (str_contains($e->getMessage(), 'no such table')) {
@@ -1620,19 +1624,25 @@ if (! function_exists('getTeamId')) {
     {
         try {
             $cacheKey = 'getTeamId_'.md5($teamNameOrCode.'|'.json_encode($additionalWhere).'|'.($ignoreActive ? '1' : '0'));
-
-            return Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
-                return Team::whereAny(['name', 'code'], $teamNameOrCode)
+            $teamId = Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
+                $id = Team::whereAny(['name', 'code'], $teamNameOrCode)
                     ->when(! empty($additionalWhere), function ($query) use ($additionalWhere) {
                         $query->where($additionalWhere);
                     })
                     ->when(! $ignoreActive, function ($query) {
                         $query->active();
                     })
-                    ->value('id') ?? 0;
+                    ->value('id');
+
+                return $id ?: null;
             });
-        } catch (\Exception $e) {
-            Log::error("Error retrieving team ID for team name or code: {$teamNameOrCode}", ['exception' => $e]);
+
+            return $teamId ?? 0;
+        } catch (Exception $e) {
+            LoggerService::error(
+                "Error retrieving team ID for team name or code: {$teamNameOrCode}",
+                exception: $e
+            );
 
             return 0;
         }
@@ -1751,9 +1761,9 @@ if (! function_exists('getInsuranceProvider')) {
 
             if (! empty($quoteDetails)) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
-                $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
+                $vehicleType = VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
+                if ($quoteDetails?->source == LeadSourceEnum::RENEWAL_UPLOAD
                 && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
                 && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;

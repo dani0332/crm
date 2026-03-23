@@ -311,7 +311,16 @@ class CoreSchema
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('insurer_aml_status')->nullable();
+                $table->timestamps();
+            },
+            'quote_journey' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('text');
+                $table->string('status');
                 $table->timestamps();
             },
             'life_quote_request' => function (Blueprint $table) {
@@ -485,6 +494,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_quote_id')->nullable();
@@ -549,6 +559,8 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->string('health_team_type')->nullable();
@@ -597,6 +609,7 @@ class CoreSchema
                 $table->timestamp('pec_marked_at')->nullable();
                 $table->unsignedBigInteger('branch_id')->nullable();
                 $table->boolean('is_branch_applicable')->default(0);
+                $table->boolean('is_error_email_sent')->default(0);
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -643,6 +656,25 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
+            'quote_tags' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->string('name');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->timestamps();
+            },
+            'savings_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('tenure_id')->nullable();
+                $table->unsignedBigInteger('purpose_id')->nullable();
+                $table->unsignedBigInteger('currency_id')->nullable();
+                $table->decimal('investment_amount', 15, 2)->nullable();
+                $table->unsignedBigInteger('investment_criteria_id')->nullable();
+                $table->text('additional_notes')->nullable();
                 $table->timestamps();
             },
         ]);
@@ -1074,6 +1106,23 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+            'customer_members' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_type'); // Polymorphic: model class name
+                $table->unsignedBigInteger('quote_id'); // Polymorphic: model ID
+                $table->string('customer_type')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->string('gender')->nullable();
+                $table->string('relation_code')->nullable();
+                $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
+                $table->unsignedBigInteger('member_category_id')->nullable();
+                $table->unsignedBigInteger('salary_band_id')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            },
             'insured_kyc' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('insured_id');
@@ -1123,6 +1172,9 @@ class CoreSchema
                 $table->string('registration_type')->nullable();
                 $table->string('vehicle_use')->nullable();
                 $table->integer('sort_order')->nullable();
+                $table->string('accepted_files')->nullable();
+                $table->unsignedInteger('max_size')->nullable();
+                $table->unsignedInteger('max_files')->nullable();
                 $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
