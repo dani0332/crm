@@ -2652,36 +2652,43 @@ class AMLService
             LookupsEnum::BANK_NAME,
             LookupsEnum::PLATE_CODE,
         ];
-        
+
         if ($leadSource == LeadSourceEnum::CARS24) {
-            $isPartnerActive = InsurancePartner::active()->forCode($leadSource)->first();
-
-            if (! $isPartnerActive) {
-                LoggerService::info('Additional Vehicle and Driver Details are not enabled for the partner', [
-                    'partner' => $leadSource,
-                ]);
-                
-                return [];
-            }
-
-            return InsurancePartnerMapping::active()->whereIn('key', $requireLookups)
-                ->get()
-                ->groupBy('key')
-                ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item])
-                ->toArray();
+            return $this->getCars24Lookups($requireLookups, $leadSource);
         }
 
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
             return [];
         }
 
-        if (is_numeric($insuranceProviderId)) {
-            $insuranceProviderCode = InsuranceProvider::find($insuranceProviderId)?->code;
-        } else {
-            $insuranceProviderCode = $insuranceProviderId;
+        $insuranceProviderCode = is_numeric($insuranceProviderId)
+            ? InsuranceProvider::find($insuranceProviderId)?->code
+            : $insuranceProviderId;
+
+        return $this->getProviderLookups($insuranceProviderCode, $insuranceProviderId, $requireLookups, $leadSource);
+    }
+
+    protected function getCars24Lookups(array $requireLookups, string $leadSource): array
+    {
+        $isPartnerActive = InsurancePartner::active()->forCode($leadSource)->first();
+
+        if (! $isPartnerActive) {
+            LoggerService::info('Additional Vehicle and Driver Details are not enabled for the partner', [
+                'partner' => $leadSource,
+            ]);
+
+            return [];
         }
 
-        // for LIVA
+        return InsurancePartnerMapping::active()->whereIn('key', $requireLookups)
+            ->get()
+            ->groupBy('key')
+            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item])
+            ->toArray();
+    }
+
+    protected function getProviderLookups(string $insuranceProviderCode, mixed $insuranceProviderId, array $requireLookups, string $leadSource): array
+    {
         if ($insuranceProviderCode == InsuranceProvidersEnum::RSA) {
             return app(LivaInsuranceService::class)->getLIVALookups($leadSource);
         }
