@@ -70,6 +70,6 @@ class CustomerProfileRequest extends FormRequest
     {
         return [
             'customer_id.required' => 'Something went wrong. Customer not associated with this lead',
-         ];
+        ];
     }
 }
