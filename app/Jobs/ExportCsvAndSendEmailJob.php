@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -76,6 +77,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
                 Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
+                LoggerService::info('Request parameters after merge (excluding user):', [
+                    'request_params' => Arr::except(request()->all(), ['user']),
+                ]);
             }
 
             // Process CSV and send email

@@ -196,6 +196,9 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false, $isHealthQuestionnaire = false)
     {
+        // Get quote UUID from quote object or data array for main lead uuid and for send update log quote uuid and for other cases quote uuid.
+        $quoteUUID = $quote->uuid ?? $quote->quote_uuid ?? $data['quote_uuid'];
+
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
@@ -220,7 +223,7 @@ class QuoteDocumentService extends BaseService
                 }
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$data['document_type_code'].'.'.$extension);
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
@@ -233,7 +236,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -251,7 +254,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = $documentType->accepted_files;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -265,7 +268,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -279,7 +282,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -293,7 +296,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = $fileOrBase64->getClientMimeType();
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_original_'.$docName;
                 $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
             }
 
@@ -328,23 +331,24 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$quoteUUID);
             $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 LoggerService::info('Dispatching WatermarkDocumentsJob');
+                // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
-                    $data['quote_uuid'],
+                    $quoteUUID,
                     $documentType->id
-                )->afterCommit();
+                )->delay(now()->addSeconds(10))->afterCommit();
             }
 
             LoggerService::info('Document uploaded successfully');
 
             return $quoteDocument;
         } catch (\Exception $exception) {
-            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$quoteUUID, exception: $exception);
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
