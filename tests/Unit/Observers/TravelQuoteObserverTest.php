@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuoteEmailUpdated;
 use App\Events\QuotePolicyBooked;
+use App\Jobs\CourtesyEmailJob;
 use App\Models\QuoteJourney;
 use App\Models\TravelQuote;
 use Illuminate\Support\Facades\Event;
@@ -36,7 +37,7 @@ test('policy booked completes the policy issuance quote journey entry for travel
     $policyIssuanceEntry = QuoteJourney::create([
         'quote_uuid' => $travelQuote->uuid,
         'quote_type_id' => QuoteTypeId::Travel,
-        'text' => QuoteJourneyEnum::POLICY_ISSUANCE,
+        'text' => 'Travel '.QuoteJourneyEnum::POLICY_ISSUANCE.' completed',
         'status' => QuoteJourneyEnum::PENDING,
     ]);
 
@@ -53,4 +54,8 @@ test('policy booked completes the policy issuance quote journey entry for travel
 
     expect($policyIssuanceEntry->fresh()->status)->toBe(QuoteJourneyEnum::COMPLETED)
         ->and($unrelatedEntry->fresh()->status)->toBe(QuoteJourneyEnum::PENDING);
+
+    Event::assertDispatched(PrivateClientUpdatedEvent::class);
+    Event::assertDispatched(QuotePolicyBooked::class);
+    Queue::assertPushed(CourtesyEmailJob::class);
 });

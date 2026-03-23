@@ -90,7 +90,7 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value];
 
         if (empty($quote) || empty($quoteType) || ! in_array($quoteType, $allowedQuoteTypes)) {
             return response()->json([
