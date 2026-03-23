@@ -214,6 +214,11 @@ class ApiController extends Controller
         if ($response === false) {
             return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
         }
+
+        $workflow->ended_at = now();
+        $workflow->stopped_source = $request->input('stop_source', 'api');
+        $workflow->save();
+
         $data = $this->formatStopFollowUpResponse($response->body ?? null);
 
         $status = ($data['runs'][0] ?? [])['status'] ?? null;

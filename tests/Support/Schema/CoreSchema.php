@@ -399,6 +399,7 @@ class CoreSchema
                 $table->string('flow_id');
                 $table->timestamp('started_at')->nullable();
                 $table->timestamp('ended_at')->nullable();
+                $table->string('stopped_source', 64)->nullable();
                 $table->timestamps();
             },
             'device_quote' => function (Blueprint $table) {

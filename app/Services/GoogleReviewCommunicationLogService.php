@@ -21,6 +21,7 @@ class GoogleReviewCommunicationLogService
     /**
      * Rows for the Google Review communication log UI (schema-aligned keys only).
      * `status` is the single delivery/state column: courtesy workflow label, or `email_status.email_status` for rows from that table.
+     * `review_clicked_at`: each workflow row uses that flow’s `ended_at`; message rows use `max(ended_at)` from the same `$flows` query. `channel`: workflow rows use each flow’s `stopped_source`; message rows use first non-empty `stopped_source` from `$flows`, else Email/WhatsApp.
      * (`touchpoint` omitted until data source exists; restore with Vue column.)
      *
      * @return list<array<string, mixed>>
@@ -51,12 +52,6 @@ class GoogleReviewCommunicationLogService
             ? strtolower(trim($recipientEmail))
             : null;
 
-        $latestCourtesyEndedAt = $flows
-            ->map(fn (QuoteFlowDetails $f) => $f->ended_at)
-            ->filter()
-            ->sortByDesc(fn (Carbon $dt): int => $dt->timestamp)
-            ->first();
-
         foreach ($flows as $flow) {
             $started = $flow->started_at;
             $ended = $flow->ended_at;
@@ -71,7 +66,7 @@ class GoogleReviewCommunicationLogService
                 'reason_non_dispatch' => '—',
                 'suppression_expires_at' => $flowContext['suppression_expires_at'],
                 'review_clicked_at' => $this->formatDisplayDateTime($ended),
-                'channel' => '—',
+                'channel' => filled($flow->stopped_source) ? (string) $flow->stopped_source : '—',
                 // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)
             ];
         }
@@ -81,6 +76,8 @@ class GoogleReviewCommunicationLogService
             ->where('quote_id', $quoteId)
             ->orderByDesc('id')
             ->get();
+
+        $stoppedSourceForQuote = $flows->pluck('stopped_source')->filter()->first();
 
         foreach ($messages as $msg) {
             $rawCreated = $msg->getRawOriginal('created_at');
@@ -106,8 +103,8 @@ class GoogleReviewCommunicationLogService
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => $msg->reason !== null && trim((string) $msg->reason) !== '' ? (string) $msg->reason : '—',
                 'suppression_expires_at' => $flowContext['suppression_expires_at'],
-                'review_clicked_at' => $this->formatDisplayDateTime($latestCourtesyEndedAt),
-                'channel' => $channel,
+                'review_clicked_at' => $this->formatDisplayDateTime($flows->max('ended_at')),
+                'channel' => filled($stoppedSourceForQuote) ? (string) $stoppedSourceForQuote : $channel,
                 // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)
             ];
         }
