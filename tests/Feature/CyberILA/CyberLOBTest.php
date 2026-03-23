@@ -365,7 +365,7 @@ test('cyber allocation processes correct allocation request structure', function
 // Tests for VerifyLeadPreChecksPipe: paid lead with payment authorized 24h ago + no documents
 // should pass pre-checks and proceed to advisor allocation (or fail at advisor fetch)
 
-test('cyber hasPaymentAuthorizedWithNoDocuments returns true when payment authorized 10+ minutes ago and no documents', function () {
+test('cyber hasPaymentAuthorizedWithNoDocuments returns true when payment authorized 24 hours ago and no documents', function () {
     TestSchemaCreator::createCyberSchema();
 
     $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments()->create();
@@ -381,10 +381,10 @@ test('cyber hasPaymentAuthorizedWithNoDocuments returns false when documents exi
     expect($quote->hasPaymentAuthorizedWithNoDocuments())->toBeFalse();
 });
 
-test('cyber hasPaymentAuthorizedWithNoDocuments returns false when payment authorized less than threshold (10 min)', function () {
+test('cyber hasPaymentAuthorizedWithNoDocuments returns false when payment authorized less than 24 hours ago', function () {
     TestSchemaCreator::createCyberSchema();
 
-    $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments(now()->subMinutes(5))->create();
+    $quote = PersonalQuote::factory()->paymentAuthorizedWithNoDocuments(now()->subHours(12))->create();
 
     expect($quote->hasPaymentAuthorizedWithNoDocuments())->toBeFalse();
 });
