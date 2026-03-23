@@ -78,8 +78,9 @@ class EmailStatusService extends BaseService
             return (object) ['message' => 'lead not found', 'status' => false];
         }
 
-        if (! empty($request->mobile)) {
-            return $this->addBirdWhatsAppStatus($request, $quote, $quoteTypeId);
+        $mobileRaw = $request->input('mobile_no');
+        if (filled($mobileRaw) && is_string($mobileRaw) && trim($mobileRaw) !== '') {
+            return $this->addBirdWhatsAppStatus($request, $quote, $quoteTypeId, $mobileRaw);
         }
 
         if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
@@ -99,9 +100,9 @@ class EmailStatusService extends BaseService
         return (object) ['message' => 'Email event already logged', 'status' => true];
     }
 
-    private function addBirdWhatsAppStatus($request, $quote, int $quoteTypeId): object
+    private function addBirdWhatsAppStatus($request, $quote, int $quoteTypeId, string $mobileInput): object
     {
-        $mobile = formatMobileNoWithoutPlus($request->mobile);
+        $mobile = formatMobileNoWithoutPlus($mobileInput);
 
         $exists = EmailStatus::where('msg_id', $request->message_id)
             ->where('type', EmailStatusTypeEnum::WhatsApp)

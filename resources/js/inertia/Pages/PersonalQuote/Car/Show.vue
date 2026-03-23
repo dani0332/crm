@@ -21,6 +21,7 @@ import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import EmailStatus from '@/inertia/Components/EmailStatus.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 defineProps({
   quote: Object,
@@ -65,6 +66,14 @@ defineProps({
   displaySendPolicyButton: { Boolean, Number },
   isRenewalUser: Boolean,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   carQuotePlanAddons: Array,
   notesForCustomers: Object,
   websiteURL: String,
@@ -4346,6 +4355,12 @@ const { openTempUrl } = useDocumentTempUrl();
         </x-button>
       </template>
     </EmailStatus>
+
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class LogFollowUpEventRequest extends FormRequest
 {
@@ -14,28 +14,33 @@ class LogFollowUpEventRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
             'message_id' => 'required|string',
-            'customer_email' => 'required_without:mobile|nullable|string',
-            'mobile' => 'required_without:customer_email|nullable|string|regex:/^\+?[0-9]{10,20}$/',
+            'customer_email' => 'nullable|string|email',
+            'mobile_no' => ['nullable', 'string', 'regex:/^\+?[0-9]{10,20}$/'],
             'subject' => 'nullable|string',
         ];
     }
 
-    /**
-     * @return array<string, string>
-     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v): void {
+            $data = $v->getData();
+            $hasEmail = isset($data['customer_email']) && trim((string) $data['customer_email']) !== '';
+            $hasMobile = isset($data['mobile_no']) && trim((string) $data['mobile_no']) !== '';
+
+            if (! $hasEmail && ! $hasMobile) {
+                $v->errors()->add('customer_email', 'Either customer_email or mobile_no is required.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [
-            'customer_email.required_without' => 'Either customer_email or mobile is required.',
-            'mobile.required_without' => 'Either customer_email or mobile is required.',
-            'mobile.regex' => 'The mobile number must be digits only (optional leading +), 10–20 characters.',
+            'mobile_no.regex' => 'The mobile number must be digits only (optional leading +), 10–20 characters.',
         ];
     }
 }

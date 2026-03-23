@@ -21,6 +21,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import EmailStatus from '@/inertia/Components/EmailStatus.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -69,6 +70,14 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   isBetaUser: Boolean,
   lifeCutOffDate: String,
 });
@@ -2673,6 +2682,11 @@ const getDisplayPriceInAED = item => {
       :emailStatuses="emailStatuses"
       :expanded="sectionExpanded"
       paginate
+    />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
     />
     <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">

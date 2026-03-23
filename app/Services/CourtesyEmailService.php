@@ -15,6 +15,8 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class CourtesyEmailService extends BaseService
 {
@@ -33,6 +35,73 @@ class CourtesyEmailService extends BaseService
         QuoteTypeId::Yacht,
     ];
 
+    /**
+     * @return list<int>
+     */
+    public static function allowedQuoteTypeIds(): array
+    {
+        return self::ALLOWED_QUOTE_TYPES;
+    }
+
+    public static function isCourtesyEmailQuoteType(int $quoteTypeId): bool
+    {
+        return in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true);
+    }
+
+    /**
+     * @return array{review_flow_status: string, suppression_expires_at: string}
+     *
+     * `suppression_expires_at` is only a formatted datetime when status is `Suppressed`.
+     * Otherwise `—`: fixed log shape; no suppression expiry to show when eligible / not triggered / N/A.
+     */
+    public function getGoogleReviewFlowLogContext(string $quoteUuid, int $quoteTypeId, ?string $recipientEmail): array
+    {
+        if (! self::isCourtesyEmailQuoteType($quoteTypeId)) {
+            return [
+                'review_flow_status' => 'Not applicable',
+                'suppression_expires_at' => '—',
+            ];
+        }
+
+        $hasFlowForQuote = QuoteFlowDetails::query()
+            ->where('quote_uuid', $quoteUuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
+            ->exists();
+
+        if ($hasFlowForQuote) {
+            return [
+                'review_flow_status' => 'Eligible',
+                'suppression_expires_at' => '—',
+            ];
+        }
+
+        $normalizedEmail = $recipientEmail !== null && $recipientEmail !== ''
+            ? strtolower(trim($recipientEmail))
+            : null;
+
+        if ($normalizedEmail === null || $normalizedEmail === '') {
+            return [
+                'review_flow_status' => 'Not applicable',
+                'suppression_expires_at' => '—',
+            ];
+        }
+
+        if ($this->hasRecentCourtesyFlowForCustomer($normalizedEmail, $quoteTypeId)) {
+            return [
+                'review_flow_status' => 'Suppressed',
+                'suppression_expires_at' => $this->formatLogDateTime(
+                    $this->courtesyCooldownExpiresAt($normalizedEmail, $quoteTypeId)
+                ),
+            ];
+        }
+
+        return [
+            'review_flow_status' => 'Not triggered',
+            'suppression_expires_at' => '—',
+        ];
+    }
+
     public function __construct(BirdService $birdService)
     {
         $this->birdService = $birdService;
@@ -41,6 +110,15 @@ class CourtesyEmailService extends BaseService
     public function processCourtesyEmailWorkflow(string $quoteUID, int $quoteTypeId): array
     {
         try {
+            if (! in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true)) {
+                LoggerService::warning('CourtesyEmailService - Quote type not allowed for courtesy email', [
+                    'quoteTypeId' => $quoteTypeId,
+                    'quoteUID' => $quoteUID,
+                ]);
+
+                return ['message' => 'Quote type not allowed for courtesy email', 'success' => false];
+            }
+
             $quote = $this->getQuoteByQuoteType($quoteTypeId, $quoteUID);
 
             if (! $quote?->email) {
@@ -78,10 +156,6 @@ class CourtesyEmailService extends BaseService
                 ]);
 
                 return ['message' => 'Advisor not assigned', 'success' => false];
-            }
-
-            if (! in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES)) {
-                return ['message' => 'Quote type not allowed for courtesy email', 'success' => false];
             }
 
             $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_COURTESY_EMAIL_WORKFLOW_URL)->value('value');
@@ -209,9 +283,51 @@ class CourtesyEmailService extends BaseService
 
     private function hasRecentCourtesyFlowForCustomer(string $normalizedEmail, int $quoteTypeId): bool
     {
+        $quoteUuids = $this->quoteUuidsForCustomerEmailAndLob($normalizedEmail, $quoteTypeId);
+
+        if ($quoteUuids->isEmpty()) {
+            return false;
+        }
+
+        return QuoteFlowDetails::query()
+            ->whereIn('quote_uuid', $quoteUuids->all())
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
+            ->where('started_at', '>=', now()->subDays(7))
+            ->exists();
+    }
+
+    private function courtesyCooldownExpiresAt(string $normalizedEmail, int $quoteTypeId): ?Carbon
+    {
+        $quoteUuids = $this->quoteUuidsForCustomerEmailAndLob($normalizedEmail, $quoteTypeId);
+
+        if ($quoteUuids->isEmpty()) {
+            return null;
+        }
+
+        $latest = QuoteFlowDetails::query()
+            ->whereIn('quote_uuid', $quoteUuids->all())
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
+            ->where('started_at', '>=', now()->subDays(7))
+            ->orderByDesc('started_at')
+            ->first();
+
+        if ($latest?->started_at === null) {
+            return null;
+        }
+
+        return $latest->started_at->copy()->addDays(7);
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    private function quoteUuidsForCustomerEmailAndLob(string $normalizedEmail, int $quoteTypeId): Collection
+    {
         $quoteType = QuoteTypes::getName($quoteTypeId);
         if (! $quoteType) {
-            return false;
+            return collect();
         }
 
         $model = $quoteType->model();
@@ -221,17 +337,15 @@ class CourtesyEmailService extends BaseService
             $query->where('quote_type_id', $quoteTypeId);
         }
 
-        $quoteUuids = $query->pluck('uuid');
+        return $query->pluck('uuid');
+    }
 
-        if ($quoteUuids->isEmpty()) {
-            return false;
+    private function formatLogDateTime(?Carbon $value): string
+    {
+        if ($value === null) {
+            return '—';
         }
 
-        return QuoteFlowDetails::query()
-            ->whereIn('quote_uuid', $quoteUuids->toArray())
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL)
-            ->where('started_at', '>=', now()->subDays(7))
-            ->exists();
+        return $value->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 }

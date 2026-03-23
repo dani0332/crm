@@ -10,6 +10,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import AvailablePlans from './Partials/AvailablePlans.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const props = defineProps({
   quote: Object,
@@ -53,6 +54,14 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lookUpData: Object,
@@ -1229,6 +1238,10 @@ const handlePlanSelected = plan => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+    />
 
     <QuoteActivities
       :can="can"

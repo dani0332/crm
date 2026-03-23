@@ -45,6 +45,7 @@ class BirdWhatsappWebhookRequest extends FormRequest
             default => array_merge($base, [
                 'payload.messageId' => 'required|string',
                 'payload.type' => 'nullable|string',
+                'payload.status' => 'nullable|string',
             ]),
         };
     }

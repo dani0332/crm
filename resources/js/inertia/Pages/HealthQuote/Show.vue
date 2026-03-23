@@ -7,6 +7,7 @@ import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import EmailStatus from '@/inertia/Components/EmailStatus.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const props = defineProps({
   quote: Object,
@@ -65,6 +66,14 @@ const props = defineProps({
   clientInquiryLogs: Array,
   hashCollapsibleStatuses: Boolean,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   quoteNotes: Object,
   paymentDocument: Array,
   noteDocumentType: Array,
@@ -4289,6 +4298,11 @@ const validateEmirateOfVisa = () => {
       :emailStatuses="emailStatuses"
       :expanded="sectionExpanded"
       show-index
+    />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
     />
     <x-divider class="my-4" />
 

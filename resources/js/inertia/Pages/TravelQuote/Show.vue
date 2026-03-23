@@ -6,6 +6,7 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const page = usePage();
 defineProps({
@@ -30,6 +31,14 @@ defineProps({
   documentType: Object,
   memberCategories: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   isAdmin: Boolean,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -3122,6 +3131,11 @@ const fullAddress = computed(() => {
     </div>
 
     <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
+    />
 
     <div ref="planDataTable" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

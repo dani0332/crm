@@ -43,10 +43,12 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
@@ -286,6 +288,13 @@ class TravelController extends Controller
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
 
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $record->uuid,
+            QuoteTypeId::Travel,
+            $record->id,
+            $record->email ?? null
+        );
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,
@@ -310,6 +319,8 @@ class TravelController extends Controller
             'documentType' => $documentType,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Travel),
             'activities' => $activities,
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
