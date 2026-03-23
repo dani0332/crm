@@ -20,7 +20,7 @@ class ClaimsManagersSeeder extends Seeder
     {
         // Ensure roles exist
         $claimManagerRole = Role::firstOrCreate([
-            'name' => RolesEnum::CLAIM_MANAGER,
+            'name' => RolesEnum::ClaimsManager,
             'guard_name' => 'web',
         ]);
 

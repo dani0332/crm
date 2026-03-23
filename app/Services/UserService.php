@@ -513,7 +513,7 @@ class UserService extends BaseService
     public function getClaimsManagers(): array
     {
         return CacheManager::remember(CacheKeyEnum::CLAIM_MANAGERS_KEY, function () {
-            return User::withRole(RolesEnum::CLAIM_MANAGER)
+            return User::withRole(RolesEnum::ClaimsManager)
                 ->activeUser()
                 ->select('id', 'name', 'email')
                 ->orderBy('name')

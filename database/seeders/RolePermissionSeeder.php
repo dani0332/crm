@@ -320,7 +320,7 @@ class RolePermissionSeeder extends Seeder
     private function addClaimsPermissions(): void
     {
         $roleClaimsManager = Role::firstOrCreate([
-            'name' => RolesEnum::CLAIM_MANAGER,
+            'name' => RolesEnum::ClaimsManager,
             'guard_name' => 'web',
         ]);
 
@@ -353,7 +353,7 @@ class RolePermissionSeeder extends Seeder
 
         }
 
-        $roles = Role::whereIn('name', [RolesEnum::CLAIM_MANAGER])->get();
+        $roles = Role::whereIn('name', [RolesEnum::ClaimsManager])->get();
 
         foreach ($claimsPermissions['claimManager'] as $permissionName) {
             $permission = Permission::firstOrCreate([

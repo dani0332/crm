@@ -89,7 +89,7 @@ alwaysApply: false
 - `getDropdownData(): array` - Get all dropdown data for forms (LOB, types, statuses, managers, car data) - uses ClaimStatusesService
 - `getLineOfBusinessOptions(): array` - Get active quote types for LOB dropdown
 - `getClaimTypes(): array` - Get claim types from lookups
-- `getClaimsManagers(): array` - Get users with CLAIM_MANAGER role
+- `getClaimsManagers(): array` - Get users with ClaimsManager role
 - `getClaimRequestTypes(): array` - Get health claim request types from lookups
 - `getClaimServiceTypes(): array` - Get health service types from lookups
 - `getCarMake(): array` - Get active car makes

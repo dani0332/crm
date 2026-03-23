@@ -219,7 +219,7 @@ class ClaimsService extends BaseService
     {
         // is loggedin user is claim manager
         $user = auth()->user();
-        $isClaimManager = $user?->hasRole(RolesEnum::CLAIM_MANAGER);
+        $isClaimManager = $user?->hasRole(RolesEnum::ClaimsManager);
         if ($isClaimManager) {
             $query->where('manager_id', $user->id);
         }
@@ -509,7 +509,7 @@ class ClaimsService extends BaseService
 
             $responseData = $response->data;
             $user = auth()->user();
-            $isClaimManager = $user?->hasRole(RolesEnum::CLAIM_MANAGER);
+            $isClaimManager = $user?->hasRole(RolesEnum::ClaimsManager);
 
             if ($responseData['success'] && $isClaimManager) {
                 $claim = $this->getClaimById($responseData['claimUID']);
