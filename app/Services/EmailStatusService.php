@@ -13,14 +13,30 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class EmailStatusService extends BaseService
 {
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
-        return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-            ->orderBy('updated_at', 'desc')
+        $quoteTypeId = (int) $quoteTypeId;
+        $quoteId = (int) $quoteId;
+        $key = 'email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}";
+
+        $ids = Cache::remember(
+            $key,
+            now()->endOfDay(),
+            fn () => EmailStatus::query()
+                ->where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+                ->orderByDesc('updated_at')
+                ->pluck('id')
+                ->all()
+        );
+
+        return EmailStatus::query()
+            ->whereIn('id', $ids)
+            ->orderByDesc('updated_at')
             ->get();
     }
 
