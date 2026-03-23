@@ -2665,9 +2665,9 @@ class RenewalsUploadService
                                 }
                             }
                             if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
-                                LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
+                                LoggerService::info('fn - uploadedLeadsValidation - checking previous advisor email');
                                 if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
-                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
+                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid');
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
                                 }
@@ -3501,6 +3501,21 @@ class RenewalsUploadService
     }
 
     /**
+     * Resolve CarPlan by text, repair type, and provider ID.
+     */
+    private function resolveCarPlan(?string $planName, ?string $planType, ?int $providerId): ?CarPlan
+    {
+        if ($planName === null || $planType === null || $providerId === null) {
+            return null;
+        }
+
+        return CarPlan::where('text', $planName)
+            ->where('repair_type', $planType)
+            ->where('provider_id', $providerId)
+            ->first();
+    }
+
+    /**
      * Resolve transitionable provider config: check if lead's insurer can transition to provider_name and resolve plan.
      *
      * @param  RenewalQuoteProcess  $lead  Must have insurer (code), provider_name (text), plan_name, plan_type
@@ -3520,9 +3535,12 @@ class RenewalsUploadService
             : null;
 
         LoggerService::info('isTransitionableLead inside function', [
-            'leadData' => $leadData,
-            'sourceProvider' => $sourceProvider,
-            'targetProvider' => $targetProvider,
+            'insurer' => $leadData->insurer ?? null,
+            'provider_name' => $leadData->provider_name ?? null,
+            'plan_name' => $leadData->plan_name ?? null,
+            'plan_type' => $leadData->plan_type ?? null,
+            'sourceProvider' => $sourceProvider?->id,
+            'targetProvider' => $targetProvider?->id,
         ]);
 
         if ($sourceProvider && $targetProvider) {
@@ -3532,14 +3550,11 @@ class RenewalsUploadService
                 ->where('is_active', true)
                 ->first();
 
-            LoggerService::info('isTransitionableLead inside function - transition', ['transition' => $transition]);
+            LoggerService::info('isTransitionableLead inside function - transition', ['transition_id' => $transition?->id]);
             if ($transition) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
                 $newTransitionId = $transition->id;
-                $carPlan = CarPlan::where('text', $leadData->plan_name ?? '')
-                    ->where('repair_type', $leadData->plan_type ?? '')
-                    ->where('provider_id', $targetProvider->id)
-                    ->first();
+                $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
                 if (! $carPlan) {
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
@@ -3580,12 +3595,9 @@ class RenewalsUploadService
             $target = $transition->targetProvider;
             $source = $transition->sourceProvider;
 
-            $carPlan = CarPlan::where('text', $leadData->plan_name ?? '')
-                ->where('repair_type', $leadData->plan_type ?? '')
-                ->where('provider_id', $target->id)
-                ->first();
+            $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $target->id);
 
-            LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan' => $carPlan]);
+            LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan_id' => $carPlan?->id]);
 
             return [
                 'status' => true,
@@ -3607,22 +3619,18 @@ class RenewalsUploadService
     private function getNonTransitionableLeadConfig($leadData): array
     {
         $insuranceProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-        LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider', ['insuranceProvider' => $insuranceProvider]);
+        LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider', ['insuranceProvider_id' => $insuranceProvider?->id]);
 
         $carPlan = null;
         if ($insuranceProvider && $insuranceProvider->code === ($leadData->insurer ?? null)) {
-            LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider and insurer code match');
-            $carPlan = CarPlan::where('repair_type', $leadData->plan_type ?? '')
-                ->where('text', $leadData->plan_name ?? '')
-                ->where('provider_id', $insuranceProvider->id)
-                ->first();
+            $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $insuranceProvider->id);
         } else {
             // If code mismatch and not a transition lead (which is handled by the caller),
             // we should return null for provider so validation gives the correct error.
             $insuranceProvider = null;
         }
 
-        LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan' => $carPlan]);
+        LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan_id' => $carPlan?->id]);
 
         return [
             'status' => false,

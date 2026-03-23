@@ -236,3 +236,22 @@ test('isTransitionableLead completes within 100 milliseconds', function () {
 
     expect($duration)->toBeLessThan(0.1);
 });
+
+test('getNonTransitionableLeadConfig returns null provider when codes do not match', function () {
+    $provider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA, // Code mismatch: RSA vs AXA
+        'provider_name' => 'AXA',
+    ]);
+
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['insuranceProvider'])->toBeNull()
+        ->and($result['carPlan'])->toBeNull();
+});
