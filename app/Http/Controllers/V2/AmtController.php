@@ -609,6 +609,9 @@ class AmtController extends Controller
         $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
             ->first();
+
+        abort_if(! $record, 404);
+
         $entityEmirateOfRegistrationId = $record->quoteRequestEntityMapping?->entity?->emirate_of_registration_id ?? null;
         if ($entityEmirateOfRegistrationId) {
             $record->emirate_of_registration_id = $entityEmirateOfRegistrationId;
