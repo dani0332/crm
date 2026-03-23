@@ -1727,7 +1727,7 @@ class AMLService
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
 
-        $insured = $this->createOrUpdateInsured($request, $isEntity);
+        $insured = $this->createOrUpdateInsured($request, $isEntity, $quoteTypeId, $quote);
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
 
         $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
@@ -1742,7 +1742,7 @@ class AMLService
         return [$shouldApplicableForScreening, $insured, $entityId];
     }
 
-    private function createOrUpdateInsured($request, bool $isEntity): Insured
+    private function createOrUpdateInsured($request, bool $isEntity, $quoteTypeId, $quote): Insured
     {
         if ($isEntity) {
             LoggerService::info('Entity Details', extra: [
@@ -1754,17 +1754,35 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
 
-            $insured = Insured::updateOrCreate([
-                'customer_type' => CustomerTypeEnum::Entity,
-                'id_type' => $request->screening_id_type,
-                'id_number' => $request->screening_id_number,
-            ], [
+            $insuredData =  [
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
                 'trade_license_no' => $request->screening_id_number,
-            ]);
+            ];
+
+            if ($quoteTypeId === QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+                if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                    if ($quote->isPolicyBooked()) {
+                        unset($insuredData['emirate_of_registration_id']);
+                        LoggerService::info('Entity Details', extra: [
+                            'id_type' => $request->screening_id_type,
+                            'id_number' => $request->screening_id_number,
+                            'company_name' => $request->company_name,
+                            'company_address' => $request->company_address,
+                            'policy_booked' => true,
+                            'industry_type_code' => $request->industry_type_code,
+                            'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                        ]);
+                    }
+                }
+            }
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Entity,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
+            ],$insuredData);
         } else {
             // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)

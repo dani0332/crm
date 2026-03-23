@@ -252,6 +252,22 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const emirateOfRegistrationError = computed(() => {
+  if (customerProfileForm.errors.emirate_of_registration_id) {
+    return customerProfileForm.errors.emirate_of_registration_id;
+  }
+  const value = customerProfileForm.emirate_of_registration_id;
+  const isEmpty =
+    value === null || value === undefined || value === '' || value === false;
+  if (
+    enabledCustomerType === page.props.customerTypeEnum.Entity &&
+    isEmpty
+  ) {
+    return 'Please update Emirate of registration in Entity Profile.';
+  }
+  return null;
+});
+
 const enabledCustomerType =
   page.props.quote.latest_insured?.customer_type ??
   page.props.customerTypeEnum.Entity;
@@ -1136,6 +1152,7 @@ function handleOcrNotification(event) {
                       <template #tooltip>
                         Defines the legal Emirate of registration of the entity
                         and is required.
+                        Editing this will update KYC/AML & may alter available plan options.
                       </template>
                     </x-tooltip>
                   </dt>
@@ -1148,9 +1165,7 @@ function handleOcrNotification(event) {
                       filterable
                       :disabled="props.isEmirateOfRegistrationLocked"
                       :rules="[isRequired]"
-                      :error="
-                        customerProfileForm.errors.emirate_of_registration_id
-                      "
+                      :error="emirateOfRegistrationError"
                       required
                     />
                   </dd>

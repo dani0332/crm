@@ -70,6 +70,7 @@ class CustomerProfileRequest extends FormRequest
     {
         return [
             'customer_id.required' => 'Something went wrong. Customer not associated with this lead',
+            'emirate_of_registration_id.required' => 'Please update Emirate of registration in Entity Profile.',
         ];
     }
 }
