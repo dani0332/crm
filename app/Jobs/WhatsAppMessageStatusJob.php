@@ -22,7 +22,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
     public int $tries = 3;
     public int $timeout = 15;
     public int $backoff = 300;
-    private object $messageData;
+    protected object $messageData;
 
     public function __construct(object $messageData)
     {

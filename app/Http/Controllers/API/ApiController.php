@@ -204,8 +204,20 @@ class ApiController extends Controller
         LoggerService::info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
+            ->whereNull('ended_at')
+            ->latest('id')
             ->first();
+
         if (! $workflow) {
+            $alreadyEnded = QuoteFlowDetails::where('quote_uuid', $quoteUID)
+                ->where('flow_type', $flowType)
+                ->whereNotNull('ended_at')
+                ->exists();
+
+            if ($alreadyEnded) {
+                return apiResponse([], Response::HTTP_OK, 'Workflow already stopped');
+            }
+
             LoggerService::info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
