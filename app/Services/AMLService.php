@@ -43,6 +43,8 @@ use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsurancePartner;
+use App\Models\InsurancePartnerMapping;
 use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
@@ -2643,6 +2645,32 @@ class AMLService
 
     public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId, $leadSource)
     {
+        $requireLookups = [
+            LookupsEnum::RTA_TRANSACTION_TYPE,
+            LookupsEnum::RTA_PLATE_CATEGORY,
+            LookupsEnum::VEHICLE_COLOR,
+            LookupsEnum::BANK_NAME,
+            LookupsEnum::PLATE_CODE,
+        ];
+        
+        if ($leadSource == LeadSourceEnum::CARS24) {
+            $isPartnerActive = InsurancePartner::active()->forCode($leadSource)->first();
+
+            if (! $isPartnerActive) {
+                LoggerService::info('Additional Vehicle and Driver Details are not enabled for the partner', [
+                    'partner' => $leadSource,
+                ]);
+                
+                return [];
+            }
+
+            return InsurancePartnerMapping::active()->whereIn('key', $requireLookups)
+                ->get()
+                ->groupBy('key')
+                ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item])
+                ->toArray();
+        }
+
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
             return [];
         }
@@ -2672,13 +2700,7 @@ class AMLService
             InsuranceProvidersEnum::AFNIC,
             InsuranceProvidersEnum::AWNI,
         ])) {
-            return $this->getAMLLookups($insuranceProviderId, [
-                LookupsEnum::RTA_TRANSACTION_TYPE,
-                LookupsEnum::RTA_PLATE_CATEGORY,
-                LookupsEnum::VEHICLE_COLOR,
-                LookupsEnum::BANK_NAME,
-                LookupsEnum::PLATE_CODE,
-            ])->toArray();
+            return $this->getAMLLookups($insuranceProviderId, $requireLookups)->toArray();
         }
 
         return [];
