@@ -54,6 +54,8 @@ use App\Traits\PersonalQuoteLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use PDF;
@@ -742,7 +744,7 @@ class LifeQuoteService extends BaseService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -766,7 +768,7 @@ class LifeQuoteService extends BaseService
 
                 return json_decode($getContents);
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -911,7 +913,7 @@ class LifeQuoteService extends BaseService
             $queryParams['planIds'] = is_array($planIds) ? implode(',', $planIds) : $planIds;
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->get(
@@ -934,7 +936,7 @@ class LifeQuoteService extends BaseService
 
                 return json_decode($getContents);
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
