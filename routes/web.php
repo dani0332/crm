@@ -576,6 +576,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
+        Route::post('update-user-state', [UserController::class, 'updateActiveState']);
         Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
         Route::resource('roles', RoleController::class);
@@ -806,7 +807,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'kyc'], function () {
-        Route::resource('aml', AMLController::class);
+        Route::get('aml', [AMLController::class, 'index'])->name('aml.index')->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
+        Route::resource('aml', AMLController::class)->except(['index']);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails'])->name('amlQuoteDetails');
         Route::get('aml/{aml}/{insuredId?}/{customerId?}', [AMLController::class, 'show'])->name('aml.show');
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');

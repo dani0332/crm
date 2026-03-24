@@ -42,7 +42,6 @@ class SageProcessesController extends Controller
         try {
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe());
 
-            // dd($failedProcesses->toArray());
             $response = [
                 'failedProcesses' => $failedProcesses,
                 'filters' => request()->all(),

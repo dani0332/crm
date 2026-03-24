@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
+use App\Http\Requests\UpdateUserActiveStateRequest;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
@@ -43,7 +44,7 @@ class UserController extends Controller
         $this->userService = $userService;
         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:users-edit', ['only' => ['edit', 'update', 'updateActiveState']]);
         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
     }
 
@@ -668,5 +669,33 @@ class UserController extends Controller
         ];
 
         return $claimManagerRoles;
+    }
+    
+    public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
+    {
+        $user = User::find($request->id);
+        $status = $request->boolean('status');
+
+        if ($user && (int) $user->id === (int) Auth::id() && ! $status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot deactivate your own account.',
+            ], 403);
+        }
+
+        if ($user && (bool) $user->is_active !== $status) {
+            DB::transaction(function () use ($user, $status) {
+                $user->is_active = $status ? 1 : 0;
+                $user->save();
+
+                if (! $status) {
+                    $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
+                }
+            });
+
+            return response()->json(['success' => true, 'message' => 'User status updated successfully']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'User status not updated'], 400);
     }
 }
