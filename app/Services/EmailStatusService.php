@@ -22,7 +22,7 @@ class EmailStatusService extends BaseService
     {
         $quoteTypeId = (int) $quoteTypeId;
         $quoteId = (int) $quoteId;
-        $key = 'email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}";
+        $key = $this->emailStatusListCacheKey($quoteTypeId, $quoteId);
 
         $ids = Cache::remember(
             $key,
@@ -54,7 +54,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->reason = $reason;
         $newEmailStatus->type = EmailStatusTypeEnum::Email;
         $newEmailStatus->save();
-        Cache::forget('email_statuses:'.today()->toDateString().":{$newEmailStatus->quote_type_id}:{$newEmailStatus->quote_id}");
+        $this->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
 
         return $newEmailStatus->id;
     }
@@ -135,7 +135,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->quote_type_id = $quoteTypeId;
         $newEmailStatus->quote_id = $quote->id;
         $newEmailStatus->save();
-        Cache::forget('email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quote->id}");
+        $this->forgetEmailStatusListCache($quoteTypeId, (int) $quote->id);
 
         return (object) ['message' => 'WhatsApp event logged successfully', 'status' => true];
     }
@@ -150,7 +150,7 @@ class EmailStatusService extends BaseService
         }
         $emailStatus->email_status = $status;
         $emailStatus->save();
-        Cache::forget('email_statuses:'.today()->toDateString().":{$emailStatus->quote_type_id}:{$emailStatus->quote_id}");
+        $this->forgetEmailStatusListCache((int) $emailStatus->quote_type_id, (int) $emailStatus->quote_id);
         info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
     }
 
@@ -197,7 +197,7 @@ class EmailStatusService extends BaseService
             // Update the customer_replied field
             $emailStatus->customer_replied = true;
             $emailStatus->save();
-            Cache::forget('email_statuses:'.today()->toDateString().":{$emailStatus->quote_type_id}:{$emailStatus->quote_id}");
+            $this->forgetEmailStatusListCache((int) $emailStatus->quote_type_id, (int) $emailStatus->quote_id);
 
             LoggerService::info(self::class.' - Customer replied status updated', [
                 'uuid' => $quoteUuid,
@@ -254,7 +254,17 @@ class EmailStatusService extends BaseService
         $email->type = EmailStatusTypeEnum::Email;
         $email->customer_id = $customerId;
         $email->save();
-        Cache::forget('email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}");
+        $this->forgetEmailStatusListCache($quoteTypeId, $quoteId);
+    }
+
+    public function forgetEmailStatusListCache(int $quoteTypeId, int $quoteId): void
+    {
+        Cache::forget($this->emailStatusListCacheKey($quoteTypeId, $quoteId));
+    }
+    
+    private function emailStatusListCacheKey(int $quoteTypeId, int $quoteId): string
+    {
+        return 'email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}";
     }
 
 }
