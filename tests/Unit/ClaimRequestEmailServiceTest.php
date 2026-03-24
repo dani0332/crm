@@ -187,7 +187,7 @@ it('google review bcc produces a sequential array when stored value has a leadin
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)
@@ -206,7 +206,7 @@ it('google review bcc produces a sequential array when stored value has consecut
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)
@@ -225,7 +225,7 @@ it('google review bcc produces a sequential array when stored value has a traili
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)
@@ -244,7 +244,7 @@ it('sub-status bcc produces a sequential array when stored value has a leading c
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)
@@ -263,7 +263,7 @@ it('sub-status bcc produces a sequential array when stored value has consecutive
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)
