@@ -27,7 +27,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
-use App\Services\AMLService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -1173,9 +1173,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
-        $colors = collect(app(AMLService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
-            LookupsEnum::VEHICLE_COLOR,
-        ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
+        $colors = app(AMLLookupsService::class)
+            ->getAMLLookups($quoteDetails?->plan?->provider_id, [LookupsEnum::VEHICLE_COLOR])
+            ->get('vehicle_color', collect())
+            ->pluck('text', 'code')
+            ->toArray();
 
         $othersColorCode = collect($colors ?? [])->filter(function ($text, $code) {
             return stripos($text, 'other') !== false;

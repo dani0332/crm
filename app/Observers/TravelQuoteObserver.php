@@ -51,12 +51,6 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
-        LoggerService::info('TravelQuoteObserver - updated event with quote id : '.$travelQuote->uuid, [
-            'uuid' => $travelQuote->uuid,
-            'old_quote_status_id' => $travelQuote->getOriginal('quote_status_id'),
-            'new_quote_status_id' => $travelQuote->quote_status_id,
-        ]);
-
         $dirty = $travelQuote->getDirty();
         $changes = [];
         $quoteStatusChanged = isset($dirty['quote_status_id']);
@@ -79,9 +73,10 @@ class TravelQuoteObserver
             'isPolicyBookedChanged' => $travelQuote->quote_status_id == QuoteStatusEnum::PolicyBooked,
             'hasPolicyBookedStatusChange' => $hasPolicyBookedStatusChange,
             'hasPolicySentOrBookedStatusChange' => $hasPolicySentOrBookedStatusChange,
+            'dirty' => $dirty,
         ]);
 
-        if ($quoteStatusChanged && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+        if ($hasPolicyBookedStatusChange) {
             LoggerService::info('TravelQuoteObserver -  inside policy booked check with quote id : '.$travelQuote->uuid, [
                 'uuid' => $travelQuote->uuid,
                 'quote_status_id' => $travelQuote->quote_status_id,
