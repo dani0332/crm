@@ -310,7 +310,7 @@ trait QuoteAllocatable
     {
         return $query->whereHas('payments', function ($paymentQuery) {
             $paymentQuery->whereNotNull('authorized_at')
-                ->where('authorized_at', '<=', now()->subMinutes(10));
+                ->where('authorized_at', '<=', now()->subHours(24));
         })->whereDoesntHave('documents');
     }
 
