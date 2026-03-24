@@ -35,12 +35,6 @@ class GoogleReviewCommunicationLogService
 
         $formatDisplayDateTime = fn (mixed $v): string => $v === null ? '—' : Carbon::parse($v)->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT'));
 
-        $flowContext = $this->courtesyEmailService->getGoogleReviewFlowLogContext(
-            $quoteUuid,
-            $quoteTypeId,
-            $recipientEmail
-        );
-
         $flows = QuoteFlowDetails::query()
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
@@ -48,6 +42,13 @@ class GoogleReviewCommunicationLogService
             ->orderByDesc('started_at')
             ->orderByDesc('id')
             ->get();
+
+        $flowContext = $this->courtesyEmailService->getGoogleReviewFlowLogContext(
+            $quoteUuid,
+            $quoteTypeId,
+            $recipientEmail,
+            $flows
+        );
 
         $normalizedRecipient = $recipientEmail !== null && $recipientEmail !== ''
             ? strtolower(trim($recipientEmail))
@@ -71,7 +72,8 @@ class GoogleReviewCommunicationLogService
                 'reason_non_dispatch' => '—',
                 'suppression_expires_at' => $suppressionExpiresForFlow,
                 'review_clicked_at' => '—',
-                'channel' => filled($flow->stopped_source) ? (string) $flow->stopped_source : '—',
+                'channel' => 'Email',
+                'stopping_source' => '—',
             ];
         }
 
@@ -115,6 +117,7 @@ class GoogleReviewCommunicationLogService
                 : ($msg->template_id !== null ? (string) $msg->template_id : '—');
 
             $status = (string) ($msg->email_status ?? '');
+            $isClicked = strtolower(trim($status)) === strtolower(ProcessStatusCode::CLICKED);
 
             $rows[] = [
                 'sort_at' => $sortAt,
@@ -126,8 +129,9 @@ class GoogleReviewCommunicationLogService
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => $msg->reason !== null && trim((string) $msg->reason) !== '' ? (string) $msg->reason : '—',
                 'suppression_expires_at' => $suppressionExpiresForMessages,
-                'review_clicked_at' => strtolower(trim($status)) === strtolower(ProcessStatusCode::CLICKED) ? $formatDisplayDateTime($maxFlowEndedAt) : '—',
-                'channel' => filled($stoppedSourceForQuote) ? (string) $stoppedSourceForQuote : $channel,
+                'review_clicked_at' => $isClicked ? $formatDisplayDateTime($maxFlowEndedAt) : '—',
+                'channel' => $channel,
+                'stopping_source' => $isClicked ? (filled($stoppedSourceForQuote) ? (string) $stoppedSourceForQuote : '—') : '—',
             ];
         }
 

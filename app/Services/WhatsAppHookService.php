@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EmailStatusTypeEnum;
 use App\Jobs\WhatsAppMessageStatusJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -176,11 +175,10 @@ class WhatsAppHookService
 
     private function dispatchJob(string $messageId, string $status, string $mobile, ?string $reason = null): void
     {
-        $messageData = (object) [
+        $messageData = [
             'message_id' => $messageId,
             'status' => $status,
             'mobile' => $mobile,
-            'type' => EmailStatusTypeEnum::WhatsApp,
             'reason' => $reason,
         ];
 

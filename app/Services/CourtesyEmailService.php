@@ -47,8 +47,16 @@ class CourtesyEmailService extends BaseService
         return in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true);
     }
 
-    public function getGoogleReviewFlowLogContext(string $quoteUuid, int $quoteTypeId, ?string $recipientEmail): array
-    {
+    /**
+     * @param  Collection<int, QuoteFlowDetails>|null  $courtesyFlowsForQuote  Pre-fetched courtesy flows for this quote (same filters as the show-page query) to avoid a duplicate DB round-trip.
+     * @return array{review_flow_status: string, suppression_expires_at: string}
+     */
+    public function getGoogleReviewFlowLogContext(
+        string $quoteUuid,
+        int $quoteTypeId,
+        ?string $recipientEmail,
+        ?Collection $courtesyFlowsForQuote = null,
+    ): array {
         if (! self::isCourtesyEmailQuoteType($quoteTypeId)) {
             return [
                 'review_flow_status' => 'Not applicable',
@@ -56,11 +64,13 @@ class CourtesyEmailService extends BaseService
             ];
         }
 
-        $hasFlowForQuote = QuoteFlowDetails::query()
-            ->where('quote_uuid', $quoteUuid)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
-            ->exists();
+        $hasFlowForQuote = $courtesyFlowsForQuote !== null
+            ? $courtesyFlowsForQuote->isNotEmpty()
+            : QuoteFlowDetails::query()
+                ->where('quote_uuid', $quoteUuid)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
+                ->exists();
 
         if ($hasFlowForQuote) {
             return [
@@ -80,12 +90,11 @@ class CourtesyEmailService extends BaseService
             ];
         }
 
-        if ($this->hasRecentCourtesyFlowForCustomer($normalizedEmail, $quoteTypeId)) {
+        $cooldown = $this->getCustomerCourtesyCooldownState($normalizedEmail, $quoteTypeId);
+        if ($cooldown['has_recent']) {
             return [
                 'review_flow_status' => 'Suppressed',
-                'suppression_expires_at' => $this->formatLogDateTime(
-                    $this->courtesyCooldownExpiresAt($normalizedEmail, $quoteTypeId)
-                ),
+                'suppression_expires_at' => $this->formatLogDateTime($cooldown['cooldown_expires_at']),
             ];
         }
 
@@ -311,26 +320,20 @@ class CourtesyEmailService extends BaseService
 
     private function hasRecentCourtesyFlowForCustomer(string $normalizedEmail, int $quoteTypeId): bool
     {
-        $quoteUuids = $this->quoteUuidsForCustomerEmailAndLob($normalizedEmail, $quoteTypeId);
-
-        if ($quoteUuids->isEmpty()) {
-            return false;
-        }
-
-        return QuoteFlowDetails::query()
-            ->whereIn('quote_uuid', $quoteUuids->all())
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
-            ->where('started_at', '>=', now()->subDays(7))
-            ->exists();
+        return $this->getCustomerCourtesyCooldownState($normalizedEmail, $quoteTypeId)['has_recent'];
     }
 
-    private function courtesyCooldownExpiresAt(string $normalizedEmail, int $quoteTypeId): ?Carbon
+    /**
+     * Single pass over customer quotes + flow rows: replaces separate exists() + latest() calls.
+     *
+     * @return array{has_recent: bool, cooldown_expires_at: ?Carbon}
+     */
+    private function getCustomerCourtesyCooldownState(string $normalizedEmail, int $quoteTypeId): array
     {
         $quoteUuids = $this->quoteUuidsForCustomerEmailAndLob($normalizedEmail, $quoteTypeId);
 
         if ($quoteUuids->isEmpty()) {
-            return null;
+            return ['has_recent' => false, 'cooldown_expires_at' => null];
         }
 
         $latest = QuoteFlowDetails::query()
@@ -339,13 +342,17 @@ class CourtesyEmailService extends BaseService
             ->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)
             ->where('started_at', '>=', now()->subDays(7))
             ->orderByDesc('started_at')
+            ->orderByDesc('id')
             ->first();
 
-        if ($latest?->started_at === null) {
-            return null;
+        if ($latest === null || $latest->started_at === null) {
+            return ['has_recent' => false, 'cooldown_expires_at' => null];
         }
 
-        return $latest->started_at->copy()->addDays(7);
+        return [
+            'has_recent' => true,
+            'cooldown_expires_at' => $latest->started_at->copy()->addDays(7),
+        ];
     }
 
     /**

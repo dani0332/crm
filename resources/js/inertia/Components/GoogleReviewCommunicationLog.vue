@@ -16,6 +16,7 @@ const props = defineProps({
 
 const tableColumns = [
   { text: 'ID', value: 'id' },
+  { text: 'Channel', value: 'channel' },
   { text: 'Email Template', value: 'email_template' },
   { text: 'Email Address', value: 'email_address' },
   { text: 'Status', value: 'status' },
@@ -24,10 +25,16 @@ const tableColumns = [
   { text: 'Reason for non-dispatch', value: 'reason_non_dispatch' },
   { text: 'Suppression expiry', value: 'suppression_expires_at' },
   { text: 'Review clicked at', value: 'review_clicked_at' },
-  { text: 'Channel', value: 'channel' },
+  { text: 'Stopping source', value: 'stopping_source' },
 ];
 
-const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
+const tableItems = computed(() =>
+  (props.googleReviewCommunicationLogs || []).map(row => ({
+    ...row,
+    stopping_source: row.stopping_source ?? '—',
+    channel: row.channel ?? '—',
+  })),
+);
 </script>
 
 <template>
@@ -37,9 +44,7 @@ const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
   >
     <Collapsible :expanded="expanded">
       <template #header>
-        <div
-          class="flex justify-between items-center w-full gap-4 flex-wrap"
-        >
+        <div class="flex justify-between items-center w-full gap-4 flex-wrap">
           <h3 class="font-semibold text-primary-800 text-lg">
             Google review communication log
           </h3>
@@ -48,7 +53,10 @@ const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
       <template #body>
         <x-divider class="my-4" />
         <p
-          v-if="!googleReviewCommunicationLogs || googleReviewCommunicationLogs.length === 0"
+          v-if="
+            !googleReviewCommunicationLogs ||
+            googleReviewCommunicationLogs.length === 0
+          "
           class="text-sm text-gray-500 mb-4"
         >
           No Google review courtesy activity recorded for this line of business
@@ -65,6 +73,21 @@ const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
         >
           <template #item-id="item">
             <span class="text-sm">{{ item.id ?? '—' }}</span>
+          </template>
+          <template #item-channel="item">
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded"
+              :class="
+                String(item.channel || '').toLowerCase() === 'whatsapp'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-slate-100 text-slate-700'
+              "
+            >
+              {{ item.channel || '—' }}
+            </span>
+          </template>
+          <template #item-stopping_source="item">
+            <span class="text-sm">{{ item.stopping_source || '—' }}</span>
           </template>
           <template #item-email_template="item">
             <span class="text-sm">{{ item.email_template || '—' }}</span>
@@ -85,13 +108,12 @@ const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
             <span class="text-sm">{{ item.reason_non_dispatch || '—' }}</span>
           </template>
           <template #item-suppression_expires_at="item">
-            <span class="text-sm">{{ item.suppression_expires_at || '—' }}</span>
+            <span class="text-sm">{{
+              item.suppression_expires_at || '—'
+            }}</span>
           </template>
           <template #item-review_clicked_at="item">
             <span class="text-sm">{{ item.review_clicked_at || '—' }}</span>
-          </template>
-          <template #item-channel="item">
-            <span class="text-sm">{{ item.channel || '—' }}</span>
           </template>
         </DataTable>
       </template>

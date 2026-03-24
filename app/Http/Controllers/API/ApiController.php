@@ -230,7 +230,6 @@ class ApiController extends Controller
         $decoded = json_decode($response->body ?? '', true) ?? [];
         $result = $decoded['result'] ?? [];
         $c = collect($result);
-        // Avoid marking ended_at unless Bird’s result for this flow_id is actually cancelled.
         $confirmed = $c->contains(fn ($s, $id) => (string) $id === (string) $workflow->flow_id && strtolower((string) $s) === 'cancelled');
         $data = ['action' => $decoded['action'] ?? 'cancel', 'runs' => $c->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all()];
 

@@ -12,20 +12,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class WhatsAppMessageStatusJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $tries = 3;
     public int $timeout = 15;
     public int $backoff = 300;
-    protected object $messageData;
+    protected array $messageData;
 
-    public function __construct(object $messageData)
+    public function __construct(array $messageData)
     {
         $this->messageData = $messageData;
     }
@@ -37,9 +36,9 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                 DB::setDefaultConnection('mysql');
             }
 
-            $messageId = $this->messageData->message_id ?? null;
-            $status = $this->messageData->status ?? null;
-            $mobile = $this->messageData->mobile ?? null;
+            $messageId = $this->messageData['message_id'] ?? null;
+            $status = $this->messageData['status'] ?? null;
+            $mobile = $this->messageData['mobile'] ?? null;
 
             if (empty($messageId) || empty($status) || empty($mobile)) {
                 LoggerService::info(self::class.' - Skipping: missing required fields', [
@@ -79,7 +78,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     $newRecord->mobile_no = $mobile;
                     $newRecord->msg_id = $messageId;
                     $newRecord->email_status = $status;
-                    $newRecord->reason = $this->messageData->reason ?? $baseRecord->reason;
+                    $newRecord->reason = $this->messageData['reason'] ?? $baseRecord->reason;
                     $newRecord->quote_type_id = $baseRecord->quote_type_id;
                     $newRecord->quote_id = $baseRecord->quote_id;
                     $newRecord->save();
@@ -101,9 +100,9 @@ class WhatsAppMessageStatusJob implements ShouldQueue
             LoggerService::error(
                 'WhatsAppMessageStatusJob failed',
                 [
-                    'message_id' => $this->messageData->message_id ?? null,
-                    'status' => $this->messageData->status ?? null,
-                    'mobile' => $this->messageData->mobile ?? null,
+                    'message_id' => $this->messageData['message_id'] ?? null,
+                    'status' => $this->messageData['status'] ?? null,
+                    'mobile' => $this->messageData['mobile'] ?? null,
                 ],
                 $th
             );
