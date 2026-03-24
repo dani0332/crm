@@ -31,7 +31,6 @@ use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
@@ -112,9 +111,6 @@ class ApiService
         $triggerOCB = $request->input('triggerOCB', false);
         $teamId = $request->input('teamId', false);
         $sicAdvisorRequested = $request->input('sicAdvisorRequested', false);
-        $assignAdvisorOnly = $request->input('assignAdvisorOnly', false);
-
-        Context::add("skipOCB-{$allocationId}", $assignAdvisorOnly);
 
         $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
         if ($lead) {
@@ -122,7 +118,7 @@ class ApiService
         }
 
         // Handle different scenarios based on request parameters
-        if ( ($assignAdvisor && ! $triggerOCB) || $assignAdvisorOnly ) {
+        if ( ($assignAdvisor && ! $triggerOCB) ) {
             return $this->assignAdvisorOnly($allocationType, $allocationId);
         }
 

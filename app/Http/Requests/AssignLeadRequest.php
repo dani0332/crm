@@ -29,8 +29,7 @@ class AssignLeadRequest extends FormRequest
             'reAssignAdvisor' => ['sometimes', 'boolean'],
             'triggerOCB' => ['sometimes', 'boolean'],
             'teamId' => ['sometimes', 'nullable'],
-            'sicAdvisorRequested' => ['sometimes', 'boolean'],
-            'assignAdvisorOnly' => ['sometimes', 'boolean'],
+            'sicAdvisorRequested' => ['sometimes', 'boolean']
         ];
     }
 }
