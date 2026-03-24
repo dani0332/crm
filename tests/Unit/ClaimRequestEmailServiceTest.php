@@ -176,6 +176,101 @@ it('uses empty bcc when application storage key is missing', function () {
     expect($payload->emailBcc)->toBe([]);
 });
 
+it('google review bcc produces a sequential array when stored value has a leading comma', function () {
+    DB::connection('sqlite')->table('application_storage')->insert([
+        'key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC,
+        'value' => ',ops@example.com',
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
+
+    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $payload = $method->invoke($service, $claim);
+
+    expect($payload->emailBcc)
+        ->toBe(['ops@example.com'])
+        ->and(array_is_list($payload->emailBcc))->toBeTrue();
+});
+
+it('google review bcc produces a sequential array when stored value has consecutive commas', function () {
+    DB::connection('sqlite')->table('application_storage')->insert([
+        'key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC,
+        'value' => 'ops@example.com,,audit@example.com',
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
+
+    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $payload = $method->invoke($service, $claim);
+
+    expect($payload->emailBcc)
+        ->toBe(['ops@example.com', 'audit@example.com'])
+        ->and(array_is_list($payload->emailBcc))->toBeTrue();
+});
+
+it('google review bcc produces a sequential array when stored value has a trailing comma', function () {
+    DB::connection('sqlite')->table('application_storage')->insert([
+        'key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC,
+        'value' => 'ops@example.com,',
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
+
+    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $payload = $method->invoke($service, $claim);
+
+    expect($payload->emailBcc)
+        ->toBe(['ops@example.com'])
+        ->and(array_is_list($payload->emailBcc))->toBeTrue();
+});
+
+it('sub-status bcc produces a sequential array when stored value has a leading comma', function () {
+    DB::connection('sqlite')->table('application_storage')->insert([
+        'key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL,
+        'value' => ',motor-bcc@example.com',
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
+
+    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $payload = $method->invoke($service, $claim, 'Hello');
+
+    expect($payload->emailBcc)
+        ->toBe(['motor-bcc@example.com'])
+        ->and(array_is_list($payload->emailBcc))->toBeTrue();
+});
+
+it('sub-status bcc produces a sequential array when stored value has consecutive commas', function () {
+    DB::connection('sqlite')->table('application_storage')->insert([
+        'key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL,
+        'value' => 'motor-bcc@example.com,,extra@example.com',
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
+
+    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $payload = $method->invoke($service, $claim, 'Hello');
+
+    expect($payload->emailBcc)
+        ->toBe(['motor-bcc@example.com', 'extra@example.com'])
+        ->and(array_is_list($payload->emailBcc))->toBeTrue();
+});
+
 function insertApplicationStorageRow(string $keyName, string $value): void
 {
     DB::connection('sqlite')->table('application_storage')->insert([

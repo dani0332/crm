@@ -159,9 +159,9 @@ class ClaimRequestEmailService extends BaseService
             : ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC;
 
         $claimGoogleReviewBccRaw = getAppStorageValueByKey($bccStorageKey, '');
-        $claimGoogleReviewBcc = array_filter(
+        $claimGoogleReviewBcc = array_values(array_filter(
             array_map('trim', explode(',', (string) ($claimGoogleReviewBccRaw ?: ''))),
-        );
+        ));
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
@@ -249,9 +249,9 @@ class ClaimRequestEmailService extends BaseService
 
         $subStatusBccStorageKey = $this->resolveClaimSubStatusCustomerEmailBccStorageKey($claimRequest);
         $subStatusBccRaw = getAppStorageValueByKey($subStatusBccStorageKey, '');
-        $subStatusBcc = array_filter(
+        $subStatusBcc = array_values(array_filter(
             array_map('trim', explode(',', (string) ($subStatusBccRaw ?: ''))),
-        );
+        ));
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
