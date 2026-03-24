@@ -1025,7 +1025,21 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :error="screeningFormDetails.errors.industry_type_code"
           />
         </x-field>
-        <x-field label="Emirates of Registration" required>
+        <div>
+          <h4 class="text-gray-700 text-sm font-medium mb-1">
+            <x-tooltip placement="bottom">
+              <span
+                class="underline decoration-dotted decoration-primary-600 cursor-help"
+              >
+                Emirates of Registration
+              </span>
+              <template #tooltip>
+                Editing this will update the Entity Profile and may alter
+                available plans, premiums, and branch assignment.
+              </template>
+            </x-tooltip>
+            <sup class="text-red-500">*</sup>
+          </h4>
           <x-select
             v-model="screeningFormDetails.emirate_of_registration_id"
             :options="emiratesOfRegistrationOptions"
@@ -1036,7 +1050,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :rules="[isRequired]"
             :error="screeningFormDetails.errors.emirate_of_registration_id"
           />
-        </x-field>
+        </div>
       </template>
     </dl>
     <x-divider

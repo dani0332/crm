@@ -89,7 +89,15 @@ class BusinessQuoteRepository extends BaseRepository
         }
 
         if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
-            $query->where('business_quote_request.emirate_of_registration_id', $requestParams['emirate_of_registration_id']);
+            $raw = $requestParams['emirate_of_registration_id'];
+            if (is_array($raw)) {
+                $ids = array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0));
+                if ($ids !== []) {
+                    $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
+                }
+            } else {
+                $query->where('business_quote_request.emirate_of_registration_id', $raw);
+            }
         }
 
         if ($forTotalLeadsCount) {
@@ -134,6 +142,7 @@ class BusinessQuoteRepository extends BaseRepository
                 },
                 'nationality',
                 'branch:id,name',
+                'emirate:id,text',
             ])
             ->select([
                 $this->getTable().'.*',

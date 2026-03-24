@@ -551,6 +551,7 @@ function handleOcrNotification(event) {
     });
   }
 }
+  
 </script>
 
 <template>
@@ -851,6 +852,21 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">PLAN TYPE</dt>
                 <dd>{{ quote.health_plan_type_text ?? '—' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      EMIRATE OF REGISTRATION
+                    </label>
+                    <template #tooltip>
+                      This value is sourced from the Entity Profile.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.emirate?.text ?? 'Not Assigned' }}</div>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
@@ -1148,8 +1164,7 @@ function handleOcrNotification(event) {
                       </span>
                       <template #tooltip>
                         Defines the legal Emirate of registration of the entity
-                        and is required. Editing this will update KYC/AML & may
-                        alter available plan options.
+                        and is required.
                       </template>
                     </x-tooltip>
                   </dt>

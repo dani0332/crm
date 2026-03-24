@@ -89,7 +89,7 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   assignment_type: '',
-  emirate_of_registration_id: '',
+  emirate_of_registration_id: [],
 });
 
 const leadStatusOptions = computed(() => {
@@ -178,7 +178,7 @@ const tableHeader = [
 
 function resetFilters() {
   for (const key in filters) {
-    filters[key] = '';
+    filters[key] = key === 'emirate_of_registration_id' ? [] : '';
   }
   router.visit(route('amt.index'), {
     method: 'get',
@@ -208,6 +208,13 @@ function filterQuotes(isValid) {
   }
   for (const key in filters) {
     if (filters[key] === '') {
+      delete filters[key];
+    }
+    if (
+      key === 'emirate_of_registration_id' &&
+      Array.isArray(filters[key]) &&
+      filters[key].length === 0
+    ) {
       delete filters[key];
     }
   }
@@ -286,6 +293,14 @@ function setQueryFilters() {
     } else {
       filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
     }
+  }
+  // Multi-select expects an array (legacy URLs used a single scalar).
+  const emirateVal = filters.emirate_of_registration_id;
+  if (emirateVal !== undefined && !Array.isArray(emirateVal)) {
+    filters.emirate_of_registration_id =
+      emirateVal === '' || emirateVal === null || Number.isNaN(Number(emirateVal))
+        ? []
+        : [Number(emirateVal)];
   }
 }
 
@@ -738,13 +753,26 @@ const insurerAMLStatusOption = computed(() => {
 
         <x-select
           v-model="filters.emirate_of_registration_id"
-          name="emirate_of_registration_id"
+          name="emirate_of_registration_id[]"
           placeholder="Search by Emirate of Registration"
           :options="emiratesOptions"
           class="w-full"
           filterable
           label="Emirate of Registration"
-        />
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.emirate_of_registration_id = emiratesOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.emirate_of_registration_id = []"
+            />
+          </template>
+        </x-select>
 
         <x-input
           v-model="filters.previous_quote_policy_number"
