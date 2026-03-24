@@ -171,7 +171,6 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
-            'branch:id,name',
             'quoteCustomerPlan',
             'latestInsured',
             'latestInsured.insuredKyc',
