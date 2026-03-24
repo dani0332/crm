@@ -644,20 +644,21 @@ class UserController extends Controller
     public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
     {
         $user = User::find($request->id);
+        $status = $request->boolean('status');
 
-        if ($user && (int) $user->id === (int) Auth::id() && $request->status == false) {
+        if ($user && (int) $user->id === (int) Auth::id() && ! $status) {
             return response()->json([
                 'success' => false,
                 'message' => 'You cannot deactivate your own account.',
             ], 403);
         }
 
-        if ($user && $user->is_active != $request->status) {
-            DB::transaction(function () use ($request, $user) {
-                $user->is_active = $request->status;
+        if ($user && (bool) $user->is_active !== $status) {
+            DB::transaction(function () use ($user, $status) {
+                $user->is_active = $status ? 1 : 0;
                 $user->save();
 
-                if ($request->status == false) {
+                if (! $status) {
                     $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
                 }
             });
