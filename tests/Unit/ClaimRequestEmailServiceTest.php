@@ -84,7 +84,7 @@ it('includes trimmed bcc from non-health google review storage key for car claim
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe(['ops@example.com', 'audit@example.com']);
@@ -101,7 +101,7 @@ it('includes trimmed bcc from health google review storage key for health claims
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim(QuoteTypeId::Health);
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe(['health-ops@example.com']);
@@ -122,7 +122,7 @@ it('uses health google review bcc for business lob when claim business type is g
         BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
     );
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe(['business-gm-bcc@example.com'])
@@ -143,7 +143,7 @@ it('uses health google review bcc when personal quote is group medical on non-he
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim(QuoteTypeId::Car, $personalQuote);
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe(['embedded-gm@example.com'])
@@ -161,7 +161,7 @@ it('does not use non-health bcc key when claim is health workflow', function () 
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim(QuoteTypeId::Health);
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe([]);
@@ -170,7 +170,7 @@ it('does not use non-health bcc key when claim is health workflow', function () 
 it('uses empty bcc when application storage key is missing', function () {
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimGoogleReviewEmailData');
     $payload = $method->invoke($service, $claim);
 
     expect($payload->emailBcc)->toBe([]);
@@ -195,7 +195,7 @@ it('sub-status customer email uses motor and general bcc key', function () {
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim();
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)->toBe(['motor-bcc@example.com']);
@@ -213,7 +213,7 @@ it('sub-status customer email uses health bcc for business lob with group medica
         BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
     );
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)->toBe(['business-gm-sub@example.com'])
@@ -228,7 +228,7 @@ it('sub-status customer email uses health bcc key for health claims', function (
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim(QuoteTypeId::Health);
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)->toBe(['health-a@example.com', 'health-b@example.com']);
@@ -242,7 +242,7 @@ it('sub-status customer email uses life bcc key for life claims', function () {
 
     [$claim, $service] = claimGoogleReviewEmailServiceWithClaim(QuoteTypeId::Life);
 
-    $method = new \ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
+    $method = new ReflectionMethod(ClaimRequestEmailService::class, 'buildClaimSubStatusCustomerUpdateEmailData');
     $payload = $method->invoke($service, $claim, 'Hello');
 
     expect($payload->emailBcc)->toBe(['life-a@example.com', 'life-b@example.com']);

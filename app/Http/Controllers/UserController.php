@@ -670,7 +670,7 @@ class UserController extends Controller
 
         return $claimManagerRoles;
     }
-    
+
     public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
     {
         $user = User::find($request->id);
