@@ -58,6 +58,7 @@ class ApplicationStorageSeeder extends Seeder
 
         $this->seedBirdWorkflowUrls();
         $this->claimGoogleReviewEmail();
+        $this->seedClaimSubStatusCustomerEmailBcc();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
         //     [
@@ -837,8 +838,9 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function claimGoogleReviewEmail()
+    private function claimGoogleReviewEmail(): void
     {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
             [
@@ -849,6 +851,60 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+    }
+
+    private function seedClaimSubStatusCustomerEmailBcc(): void
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,santhosh.ganesan@insurancemarket.ae,life.admin@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedTravelEnquiryEmail()

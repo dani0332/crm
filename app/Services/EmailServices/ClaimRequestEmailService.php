@@ -123,15 +123,45 @@ class ClaimRequestEmailService extends BaseService
     }
 
     /**
+     * Whether the claim follows health / group-medical routing:
+     * - Health LOB
+     * - Business LOB with group-medical business type (business_type_of_insurance_id = 5)
+     * - Personal quote flagged as group medical
+     */
+    private function claimUsesHealthOrGroupMedicalFlow(ClaimRequest $claimRequest): bool
+    {
+        if ($claimRequest->quote_type_id == QuoteTypeId::Health) {
+            return true;
+        }
+
+        if ($claimRequest->quote_type_id == QuoteTypeId::Business
+            && $claimRequest->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            return true;
+        }
+
+        return $claimRequest->personalQuote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
+    /**
      * Build email data for Google review email
      */
     private function buildClaimGoogleReviewEmailData(ClaimRequest $claimRequest): object
     {
-        $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
+        $phoneNumber = ! empty($claimRequest->manager?->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
 
-        $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $isGroupHealthClaim = $claimRequest->personalQuote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
-        $workflowType = $isHealthClaim || $isGroupHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
+        $isHealthOrGroupMedicalFlow = $this->claimUsesHealthOrGroupMedicalFlow($claimRequest);
+        $workflowType = $isHealthOrGroupMedicalFlow
+            ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL
+            : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
+
+        $bccStorageKey = $isHealthOrGroupMedicalFlow
+            ? ApplicationStorageEnums::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC
+            : ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC;
+
+        $claimGoogleReviewBccRaw = getAppStorageValueByKey($bccStorageKey, '');
+        $claimGoogleReviewBcc = array_filter(
+            array_map('trim', explode(',', (string) ($claimGoogleReviewBccRaw ?: ''))),
+        );
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
@@ -148,6 +178,7 @@ class ClaimRequestEmailService extends BaseService
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
             'isWAConsent' => $claimRequest->whatsapp_consent ? true : false,
+            'emailBcc' => $claimGoogleReviewBcc,
         ];
     }
 
@@ -208,13 +239,19 @@ class ClaimRequestEmailService extends BaseService
 
     private function buildClaimSubStatusCustomerUpdateEmailData(ClaimRequest $claimRequest, $message): object
     {
-        $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
+        $phoneNumber = ! empty($claimRequest->manager?->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
         $workflowType = WorkflowTypeEnum::CLAIM_SUB_STATUS_CUSTOMER_NOTIFICATION;
 
         $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Request';
-        if ($claimRequest->quote_type_id == QuoteTypeId::Health) {
+        if ($this->claimUsesHealthOrGroupMedicalFlow($claimRequest)) {
             $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement';
         }
+
+        $subStatusBccStorageKey = $this->resolveClaimSubStatusCustomerEmailBccStorageKey($claimRequest);
+        $subStatusBccRaw = getAppStorageValueByKey($subStatusBccStorageKey, '');
+        $subStatusBcc = array_filter(
+            array_map('trim', explode(',', (string) ($subStatusBccRaw ?: ''))),
+        );
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
@@ -233,7 +270,24 @@ class ClaimRequestEmailService extends BaseService
             'message' => $message,
             'isWAConsent' => $claimRequest->whatsapp_consent ? true : false,
             'subject' => $subject,
+            'emailBcc' => $subStatusBcc,
         ];
+    }
+
+    /**
+     * Which application_storage BCC key to use for sub-status customer emails (LOB-specific).
+     */
+    private function resolveClaimSubStatusCustomerEmailBccStorageKey(ClaimRequest $claimRequest): string
+    {
+        if ($claimRequest->quote_type_id == QuoteTypeId::Life) {
+            return ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE;
+        }
+
+        if ($this->claimUsesHealthOrGroupMedicalFlow($claimRequest)) {
+            return ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH;
+        }
+
+        return ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL;
     }
 
     /**
