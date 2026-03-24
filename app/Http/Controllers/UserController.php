@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
+use App\Http\Requests\UpdateUserActiveStateRequest;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
@@ -19,7 +20,10 @@ use App\Services\LookupService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -39,14 +43,14 @@ class UserController extends Controller
         $this->userService = $userService;
         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:users-edit', ['only' => ['edit', 'update', 'updateActiveState']]);
         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
     }
 
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -113,7 +117,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -146,7 +150,7 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function getBusinessQuoteType($type)
     {
@@ -220,7 +224,7 @@ class UserController extends Controller
      * Display the specified resource.
      *
      * @param  \App\User  $user
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(User $user)
     {
@@ -270,7 +274,7 @@ class UserController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  \App\User  $user
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(User $user)
     {
@@ -328,7 +332,7 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, User $user)
     {
@@ -454,7 +458,7 @@ class UserController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\User  $user
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(User $user)
     {
@@ -548,7 +552,7 @@ class UserController extends Controller
     /**
      * Add Insly Advisors to the user.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function addInslyAdvisor(InslyAdvisorRequest $request, User $user)
     {
@@ -578,7 +582,7 @@ class UserController extends Controller
      * Get the first manager of an advisor.
      *
      * @param  string  $email
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getFirstManager($email)
     {
@@ -635,5 +639,33 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
+    {
+        $user = User::find($request->id);
+        $status = $request->boolean('status');
+
+        if ($user && (int) $user->id === (int) Auth::id() && ! $status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot deactivate your own account.',
+            ], 403);
+        }
+
+        if ($user && (bool) $user->is_active !== $status) {
+            DB::transaction(function () use ($user, $status) {
+                $user->is_active = $status ? 1 : 0;
+                $user->save();
+
+                if (! $status) {
+                    $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
+                }
+            });
+
+            return response()->json(['success' => true, 'message' => 'User status updated successfully']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'User status not updated'], 400);
     }
 }
