@@ -1239,7 +1239,7 @@ class CarQuoteService extends BaseService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $carQuote->isGenesisLead;
 
-        $plans = $this->getPlans($carQuote->uuid, true, true, true, false, $isRenewalHistorical);
+        $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
         $totalPlans = is_countable($plans) ? count($plans) : 0;
 
@@ -1267,13 +1267,11 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false, $process = '')
     {
-        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
-            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
