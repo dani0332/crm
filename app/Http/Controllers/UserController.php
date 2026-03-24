@@ -645,7 +645,7 @@ class UserController extends Controller
     {
         $user = User::find($request->id);
 
-        if ($user && (int) $user->id === (int) Auth::id() && $request->status === false) {
+        if ($user && (int) $user->id === (int) Auth::id() && $request->status == false) {
             return response()->json([
                 'success' => false,
                 'message' => 'You cannot deactivate your own account.',
