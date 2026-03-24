@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -62,12 +63,14 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\ActivityLogController;
+use App\Http\Controllers\V2\Admin\AdminBuyLeadController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\LeadSourceController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
 use App\Http\Controllers\V2\Admin\RulesController;
+use App\Http\Controllers\V2\Admin\SystemHealthController;
 use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
@@ -103,11 +106,16 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\CheckHandbookDocumentsJob;
+use App\Jobs\UniversalSearchDataMigration;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -521,6 +529,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
+        Route::post('update-user-state', [UserController::class, 'updateActiveState']);
         Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
         Route::resource('roles', RoleController::class);
@@ -542,7 +551,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
-            \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'));
+            UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'));
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
@@ -584,8 +593,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
             Route::prefix('requests')->middleware('permission:'.PermissionsEnum::BUY_LEADS_ADMIN)->group(function () {
-                Route::get('/', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'index'])->name('admin.buy-leads.requests.index');
-                Route::post('/{buyLeadRequest}/expire', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'expire'])->name('admin.buy-leads.requests.expire');
+                Route::get('/', [AdminBuyLeadController::class, 'index'])->name('admin.buy-leads.requests.index');
+                Route::post('/{buyLeadRequest}/expire', [AdminBuyLeadController::class, 'expire'])->name('admin.buy-leads.requests.expire');
             });
         });
 
@@ -605,13 +614,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
 
         // System Health Dashboard - Engineering role only
-        Route::get('/system-health', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'index'])
+        Route::get('/system-health', [SystemHealthController::class, 'index'])
             ->name('admin.system-health.index');
-        Route::get('/system-health/databases', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'databases'])
+        Route::get('/system-health/databases', [SystemHealthController::class, 'databases'])
             ->name('admin.system-health.databases');
-        Route::get('/system-health/redis', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'redis'])
+        Route::get('/system-health/redis', [SystemHealthController::class, 'redis'])
             ->name('admin.system-health.redis');
-        Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
+        Route::get('/system-health/queues', [SystemHealthController::class, 'queues'])
             ->name('admin.system-health.queues');
 
     });
@@ -928,11 +937,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // for testing env only.
     if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
         Route::get('/run-advisor-payment-notification', function () {
-            if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+            if (! Auth::user()?->hasRole(RolesEnum::Admin)) {
                 return response()->json(['error' => 'Not authorized'], 403);
             }
 
-            \Illuminate\Support\Facades\Artisan::call('send-payment-email-to-advisor:cron');
+            Artisan::call('send-payment-email-to-advisor:cron');
 
             return response()->json([
                 'message' => 'Advisor payment notification command executed successfully!',
@@ -942,15 +951,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     }
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
+    Route::get('/run-policy-bulk-send', function (Request $request) {
         // Check if user has admin role
-        if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        if (! Auth::user()?->hasRole(RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
         }
 
         // Use cache lock to prevent multiple servers from executing simultaneously
         $lockKey = 'policy_bulk_send_lock';
-        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 600); // 10 minutes lock
+        $lock = Cache::lock($lockKey, 600); // 10 minutes lock
 
         if (! $lock->get()) {
             return response()->json([
@@ -979,7 +988,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 }
             }
 
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
+            Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
@@ -988,7 +997,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'start_date' => $startDate,
                 'sage_process_id' => $sageProcessId,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Command execution failed: '.$e->getMessage(),
                 'status' => 'failed',
@@ -1000,7 +1009,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously to check the handbook documents
-        \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
+        CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([
             'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
