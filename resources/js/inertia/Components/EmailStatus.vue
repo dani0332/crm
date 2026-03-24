@@ -5,12 +5,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  /** Match legacy tables that used `show-index` */
   showIndex: {
     type: Boolean,
     default: false,
   },
-  /** Enable footer pagination when many rows (e.g. Life quote) */
   paginate: {
     type: Boolean,
     default: false,

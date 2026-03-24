@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EmailStatusTypeEnum;
+use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteFlowType;
 use App\Models\EmailStatus;
 use App\Models\QuoteFlowDetails;
@@ -19,15 +20,6 @@ class GoogleReviewCommunicationLogService
         private CourtesyEmailService $courtesyEmailService,
     ) {}
 
-    /**
-     * Rows for the Google Review communication log UI (schema-aligned keys only).
-     * `status` is the single delivery/state column: courtesy workflow label, or `email_status.email_status` for rows from that table.
-     * `review_clicked_at`: each workflow row uses that flow’s `ended_at`; message rows use `max(ended_at)` from the same `$flows` query. `channel`: workflow rows use each flow’s `stopped_source`; message rows use first non-empty `stopped_source` from `$flows`, else Email/WhatsApp.
-     * (`touchpoint` omitted until data source exists; restore with Vue column.)
-     *
-     * @param  iterable<EmailStatus>|null  $emailStatuses  Prefer rows from {@see EmailStatusService::getEmailStatus()} (cached) to avoid a duplicate query on show pages.
-     * @return list<array<string, mixed>>
-     */
     public function getForQuote(
         string $quoteUuid,
         int $quoteTypeId,
@@ -40,6 +32,8 @@ class GoogleReviewCommunicationLogService
         }
 
         $rows = [];
+
+        $formatDisplayDateTime = fn (mixed $v): string => $v === null ? '—' : Carbon::parse($v)->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT'));
 
         $flowContext = $this->courtesyEmailService->getGoogleReviewFlowLogContext(
             $quoteUuid,
@@ -59,15 +53,12 @@ class GoogleReviewCommunicationLogService
             ? strtolower(trim($recipientEmail))
             : null;
 
-        // Query orders by started_at desc; first row is the most recent courtesy trigger.
         $latestFlowStartedAt = $flows->first()?->started_at;
 
         foreach ($flows as $flow) {
             $started = $flow->started_at;
-            $ended = $flow->ended_at;
-            // Per workflow row: 7-day cross-quote courtesy cooldown ends at trigger time + 7 days (not quote-level "Eligible" → —).
             $suppressionExpiresForFlow = $started !== null
-                ? $this->formatDisplayDateTime($started->copy()->addDays(7))
+                ? $formatDisplayDateTime($started->copy()->addDays(7))
                 : '—';
             $rows[] = [
                 'sort_at' => $started?->timestamp ?? 0,
@@ -75,13 +66,12 @@ class GoogleReviewCommunicationLogService
                 'email_template' => self::DEFAULT_COURTESY_EMAIL_TEMPLATE_LABEL,
                 'email_address' => $normalizedRecipient ?? '—',
                 'status' => 'Workflow triggered',
-                'sent_at' => $this->formatDisplayDateTime($started),
+                'sent_at' => $formatDisplayDateTime($started),
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => '—',
                 'suppression_expires_at' => $suppressionExpiresForFlow,
-                'review_clicked_at' => $this->formatDisplayDateTime($ended),
+                'review_clicked_at' => '—',
                 'channel' => filled($flow->stopped_source) ? (string) $flow->stopped_source : '—',
-                // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)
             ];
         }
 
@@ -107,8 +97,10 @@ class GoogleReviewCommunicationLogService
         $stoppedSourceForQuote = $flows->pluck('stopped_source')->filter()->first();
 
         $suppressionExpiresForMessages = $latestFlowStartedAt !== null
-            ? $this->formatDisplayDateTime($latestFlowStartedAt->copy()->addDays(7))
+            ? $formatDisplayDateTime($latestFlowStartedAt->copy()->addDays(7))
             : $flowContext['suppression_expires_at'];
+
+        $maxFlowEndedAt = $flows->max('ended_at');
 
         foreach ($messages as $msg) {
             $rawCreated = $msg->getRawOriginal('created_at');
@@ -134,9 +126,8 @@ class GoogleReviewCommunicationLogService
                 'review_flow_status' => $flowContext['review_flow_status'],
                 'reason_non_dispatch' => $msg->reason !== null && trim((string) $msg->reason) !== '' ? (string) $msg->reason : '—',
                 'suppression_expires_at' => $suppressionExpiresForMessages,
-                'review_clicked_at' => $this->formatDisplayDateTime($flows->max('ended_at')),
+                'review_clicked_at' => strtolower(trim($status)) === strtolower(ProcessStatusCode::CLICKED) ? $formatDisplayDateTime($maxFlowEndedAt) : '—',
                 'channel' => filled($stoppedSourceForQuote) ? (string) $stoppedSourceForQuote : $channel,
-                // 'touchpoint' => '—', // TODO: include when touchpoint data is wired (see Vue table column)
             ];
         }
 
@@ -147,18 +138,5 @@ class GoogleReviewCommunicationLogService
 
             return $r;
         }, $rows);
-    }
-
-    private function formatDisplayDateTime(mixed $value): string
-    {
-        if ($value === null) {
-            return '—';
-        }
-
-        $dt = $value instanceof Carbon
-            ? $value->clone()
-            : Carbon::parse($value);
-
-        return $dt->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 }

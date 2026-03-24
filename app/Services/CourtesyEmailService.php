@@ -47,12 +47,6 @@ class CourtesyEmailService extends BaseService
         return in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true);
     }
 
-    /**
-     * @return array{review_flow_status: string, suppression_expires_at: string}
-     *
-     * `suppression_expires_at` is only a formatted datetime when status is `Suppressed`.
-     * Otherwise `—`: fixed log shape; no suppression expiry to show when eligible / not triggered / N/A.
-     */
     public function getGoogleReviewFlowLogContext(string $quoteUuid, int $quoteTypeId, ?string $recipientEmail): array
     {
         if (! self::isCourtesyEmailQuoteType($quoteTypeId)) {

@@ -14,7 +14,6 @@ const props = defineProps({
   },
 });
 
-/** Column keys match CRM spreadsheet: Google Review Communication Log */
 const tableColumns = [
   { text: 'ID', value: 'id' },
   { text: 'Email Template', value: 'email_template' },
@@ -26,7 +25,6 @@ const tableColumns = [
   { text: 'Suppression expiry', value: 'suppression_expires_at' },
   { text: 'Review clicked at', value: 'review_clicked_at' },
   { text: 'Channel', value: 'channel' },
-  // { text: 'Touchpoint', value: 'touchpoint' }, // TODO: include when touchpoint data is wired
 ];
 
 const tableItems = computed(() => props.googleReviewCommunicationLogs || []);
