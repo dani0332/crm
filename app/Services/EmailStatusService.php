@@ -261,7 +261,7 @@ class EmailStatusService extends BaseService
     {
         Cache::forget($this->emailStatusListCacheKey($quoteTypeId, $quoteId));
     }
-    
+
     private function emailStatusListCacheKey(int $quoteTypeId, int $quoteId): string
     {
         return 'email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}";
