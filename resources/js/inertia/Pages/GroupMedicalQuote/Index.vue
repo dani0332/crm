@@ -155,6 +155,7 @@ const tableHeader = [
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
+  { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
@@ -173,7 +174,6 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
-  { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
 ];
 
 function resetFilters() {
@@ -611,14 +611,30 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by Email"
           label="Email"
         />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
+       
+        <x-select
+          v-model="filters.emirate_of_registration_id"
+          name="emirate_of_registration_id[]"
+          placeholder="Search by Emirate of Registration"
+          :options="emiratesOptions"
           class="w-full"
-          placeholder="Search by Mobile Number"
-          label="Mobile Number"
-        />
+          filterable
+          label="Emirate of Registration"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.emirate_of_registration_id = emiratesOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.emirate_of_registration_id = []"
+            />
+          </template>
+        </x-select>
+
         <x-input
           v-model="filters.company_name"
           type="search"
@@ -643,6 +659,14 @@ const insurerAMLStatusOption = computed(() => {
           label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
         />
         <x-select
           v-model="filters.leadStatus"
@@ -751,29 +775,7 @@ const insurerAMLStatusOption = computed(() => {
           label="Assignment Type"
         />
 
-        <x-select
-          v-model="filters.emirate_of_registration_id"
-          name="emirate_of_registration_id[]"
-          placeholder="Search by Emirate of Registration"
-          :options="emiratesOptions"
-          class="w-full"
-          filterable
-          label="Emirate of Registration"
-          multiple
-          truncate
-        >
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.emirate_of_registration_id = emiratesOptions.map(
-                  item => item.value,
-                )
-              "
-              @clear="filters.emirate_of_registration_id = []"
-            />
-          </template>
-        </x-select>
-
+        
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
