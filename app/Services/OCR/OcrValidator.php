@@ -133,6 +133,13 @@ trait OcrValidator
         return $isSupported;
     }
 
+    /**
+     * Determine whether the quote's selected plan qualifies for OCR processing.
+     *
+     * Plan validation only applies when the current quote type has entries in
+     * `\App\Enums\OCRDocumentTypeEnum::getPlanValidation()` and the current
+     * document type is mapped for that quote type.
+     */
     public function isPlanEligibleForOcr(QuoteTypes $quoteType, OCRDocumentTypeEnum $docType, Model $quote): bool
     {
         $logContext = [
