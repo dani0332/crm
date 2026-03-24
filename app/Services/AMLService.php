@@ -2496,20 +2496,9 @@ class AMLService
             return app(LivaInsuranceService::class)->getLIVALookups($leadSource);
         }
 
-        // for GIG and other insurers
-        if (in_array($insuranceProviderCode, [
-            InsuranceProvidersEnum::AXA,
-            InsuranceProvidersEnum::QIC,
-            InsuranceProvidersEnum::OIC,
-            InsuranceProvidersEnum::TM,
-            InsuranceProvidersEnum::RAK,
-            InsuranceProvidersEnum::DNIRC,
-            InsuranceProvidersEnum::AMJ,
-            InsuranceProvidersEnum::FID,
-            InsuranceProvidersEnum::NT,
-            InsuranceProvidersEnum::AFNIC,
-            InsuranceProvidersEnum::AWNI,
-        ])) {
+        $provider = InsuranceProvider::where('code', $insuranceProviderCode)->first();
+
+        if ($provider?->aml_lookups_enabled) {
             return app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, $requireLookups)->toArray();
         }
 
