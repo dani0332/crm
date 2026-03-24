@@ -1239,7 +1239,7 @@ class CarQuoteService extends BaseService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $carQuote->isGenesisLead;
 
-        $plans = $this->getPlans($carQuote->uuid, true, true, true, false, $isRenewalHistorical);
+        $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
         $totalPlans = is_countable($plans) ? count($plans) : 0;
 
