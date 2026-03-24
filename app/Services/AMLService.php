@@ -42,8 +42,6 @@ use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
-use App\Models\InsurancePartner;
-use App\Models\InsurancePartnerMapping;
 use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
@@ -67,6 +65,7 @@ use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\AML\AMLLookupsService;
+use App\Services\Cars24\Cars24Service;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -2475,7 +2474,7 @@ class AMLService
         ];
 
         if ($leadSource == LeadSourceEnum::CARS24) {
-            return $this->getCars24Lookups($requireLookups, $leadSource);
+            return app(Cars24Service::class)->getLookups($requireLookups, $leadSource);
         }
 
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
@@ -2489,25 +2488,6 @@ class AMLService
         return is_null($insuranceProviderCode)
             ? []
             : $this->getProviderLookups($insuranceProviderCode, $insuranceProviderId, $requireLookups, $leadSource);
-    }
-
-    protected function getCars24Lookups(array $requireLookups, string $leadSource): array
-    {
-        $isPartnerActive = InsurancePartner::active()->forCode($leadSource)->first();
-
-        if (! $isPartnerActive) {
-            LoggerService::info('Additional Vehicle and Driver Details are not enabled for the partner', [
-                'partner' => $leadSource,
-            ]);
-
-            return [];
-        }
-
-        return InsurancePartnerMapping::active()->whereIn('key', $requireLookups)
-            ->get()
-            ->groupBy('key')
-            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item])
-            ->toArray();
     }
 
     protected function getProviderLookups(string $insuranceProviderCode, mixed $insuranceProviderId, array $requireLookups, string $leadSource): array
