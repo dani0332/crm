@@ -23,23 +23,21 @@ class ClaimAllocationController extends Controller
         $todayTotalLeadCount = $this->getTodaysTotalLeadsCount();
         $todayTotalUnAssignedLeadCount = $this->getTodaysTotalUnAssignedLeadsCount();
 
-        $data = $this->getClaimManagers();
-        foreach ($data as $value) {
+        $managers = $this->getClaimManagers();
+        foreach ($managers as $value) {
             $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
             $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
         }
 
-        $data = [
+        return inertia('ClaimAllocation/Index', [
             'totalAssignedLeadCount' => $totalAssignedLeadCount,
             'availableUsers' => $availableUsers,
             'unAvailableUsers' => $unAvailableUsers,
             'todayTotalLeadCount' => $todayTotalLeadCount,
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
-            'data' => $data,
+            'data' => $managers,
             'lobSpecificLeadAllocation' => null,
-        ];
-
-        return inertia('ClaimAllocation/Index', $data);
+        ]);
     }
     private function getClaimManagers()
     {
