@@ -57,6 +57,78 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $this->seedBirdWorkflowUrls();
+        $this->claimGoogleReviewEmail();
+        $this->seedClaimSubStatusCustomerEmailBcc();
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+        //     [
+        //         'value' => '2024-12-01',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+        //     [
+        //         'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+        //     [
+        //         'value' => 'newleadpool@insurancemarket.ae',
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
+        // $this->seedAmlAutomation();
+
+        // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
@@ -759,6 +831,75 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/e6b4f8c2-74d7-4cc2-a1dd-d9e18d8b4655/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function claimGoogleReviewEmail(): void
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+    }
+
+    private function seedClaimSubStatusCustomerEmailBcc(): void
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,santhosh.ganesan@insurancemarket.ae,life.admin@insurancemarket.ae' : '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

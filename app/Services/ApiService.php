@@ -23,11 +23,14 @@ use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHealthSICWAFollowupJob;
+use App\Jobs\TravelAIGWorkflowJob;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
+use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
@@ -396,7 +399,7 @@ class ApiService
             info("------ AIG workflow trigger request completed for lead : {$quoteUuid} ------");
 
             return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             info("------ AIG workflow trigger failed: {$e->getMessage()} ------");
             Log::error($e);
 
@@ -450,7 +453,7 @@ class ApiService
             if ($updated) {
                 // Only dispatch the job if we successfully updated the record
                 LoggerService::info('------ Dispatching Travel AIG workflow job ------');
-                dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteType));
+                dispatch(new TravelAIGWorkflowJob($quoteUuid, $quoteType));
                 LoggerService::info('------ Travel AIG workflow trigger request completed ------');
 
                 return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
@@ -460,7 +463,7 @@ class ApiService
 
                 return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow already triggered for this quote');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Travel AIG workflow trigger failed', exception: $e);
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
@@ -514,6 +517,37 @@ class ApiService
         }
     }
 
+    public function processClaimAssignment($request)
+    {
+        // Extract request parameters
+        $quoteTypeId = $request->input('quoteTypeId');
+        $claimUuid = $request->input('claimUUID');
+        $quoteTypeLabel = $request->input('quoteTypeLabel');
+
+        try {
+            $result = app(ClaimAllocationService::class)->execute($claimUuid, $quoteTypeId, $quoteTypeLabel);
+
+            return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
+        } catch (Exception $e) {
+            LoggerService::error('Error processing claim assignment', exception: $e);
+
+            return apiResponse(
+                null,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'An error occurred while processing the claim assignment.'
+            );
+        }
+    }
+    public function getGenericDocuments($request)
+    {
+        $insuranceProvider = InsuranceProvider::find($request->insurance_provider_id);
+        $quoteTypeId = $request->quote_type_id;
+
+        return $genericDocuments = $insuranceProvider?->genericDocuments()?->when($quoteTypeId, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })->get() ?? [];
+    }
+
     public function missingDocsReminder($quoteUuid)
     {
         try {
@@ -533,7 +567,7 @@ class ApiService
             CarMissingDocReminderJob::dispatch($quoteUuid)->delay(now()->addSeconds(50));
 
             return ['success' => true, 'message' => 'Missing docs reminder has been sent to the customer'];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class.': Missing docs reminder failed', exception: $e);
 
             return ['success' => false, 'message' => 'Missing docs reminder failed: '.$e->getMessage()];
@@ -587,7 +621,7 @@ class ApiService
                         'missingDocuments' => null,
                     ];
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
 
             return [
@@ -627,7 +661,7 @@ class ApiService
                         'message' => 'Invalid quote type!',
                     ];
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'success' => false,
                 'message' => 'STP Advisor notification failed: '.$e->getMessage(),

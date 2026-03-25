@@ -9,6 +9,7 @@ use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationConfigurationController;
+use App\Http\Controllers\Allocations\ClaimAllocationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
@@ -19,6 +20,9 @@ use App\Http\Controllers\BranchAssignmentController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
+use App\Http\Controllers\ClaimDocumentsController;
+use App\Http\Controllers\ClaimLogController;
+use App\Http\Controllers\ClaimsController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
@@ -332,6 +336,42 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
+    // Claims Management Routes
+    Route::group(['prefix' => 'claim', 'as' => 'claims.'], function () {
+        // Main CRUD Routes
+        Route::get('/', [ClaimsController::class, 'index'])->name('index');
+        Route::get('/create', [ClaimsController::class, 'create'])->name('create');
+        Route::post('/', [ClaimsController::class, 'store'])->name('store');
+        Route::get('/{uuid}', [ClaimsController::class, 'show'])->name('show');
+        Route::get('/{uuid}/edit', [ClaimsController::class, 'edit'])->name('edit');
+        Route::put('/{uuid}', [ClaimsController::class, 'update'])->name('update');
+
+        // Search & Export
+        Route::post('/search-policies', [ClaimsController::class, 'searchPolicies'])->name('search-policies');
+        Route::post('/export', [ClaimsController::class, 'export'])->name('export');
+
+        // Claim Actions
+        Route::post('/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('update.details');
+        Route::post('/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('update.status');
+        Route::post('/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('update.complaint-status');
+        Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
+        Route::post('/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('send-notification');
+        Route::post('/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('make-additional-contact-primary');
+        Route::post('/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('optimize-message');
+
+        // Documents
+        Route::post('/{claim:uuid}/documents', [ClaimDocumentsController::class, 'storeDocument'])->name('documents.store');
+        Route::delete('/{claim:uuid}/documents/{document}', [ClaimDocumentsController::class, 'destroyDocument'])->name('documents.destroy');
+        Route::post('/documents/get-s3-temp-url', [ClaimDocumentsController::class, 'getS3TempUrl'])->name('documents.get-s3-temp-url');
+        Route::get('/{claim:uuid}/documents/download-all', [ClaimDocumentsController::class, 'downloadAllDocuments'])->name('documents.download-all');
+
+        // History & Logs
+        Route::get('/{claim:uuid}/lead-history', [ClaimLogController::class, 'getClaimLeadHistory'])->name('lead-history');
+        Route::get('/{claim:uuid}/sub-status-logs', [ClaimLogController::class, 'getClaimSubStatusLogs'])->name('sub-status-logs');
+        Route::get('/{claim:uuid}/complaint-status-logs', [ClaimLogController::class, 'getComplaintStatusLogs'])->name('complaint-status-logs');
+        Route::get('/{claim:uuid}/next-follow-up-logs', [ClaimLogController::class, 'getNextFollowUpLogs'])->name('next-follow-up-logs');
+    });
+
     // Non Motor
     Route::group(['prefix' => 'renewals'], function () {
         Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
@@ -467,6 +507,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
+    // claim allocation
+    Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
+    Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
+    Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
+    Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+
+    Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
