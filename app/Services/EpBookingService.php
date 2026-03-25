@@ -15,15 +15,17 @@ use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
+use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Throwable;
 
 class EpBookingService extends BaseService
 {
-    use GenericQueriesAllLobs;
+    use ChecksAzureFileExistence, GenericQueriesAllLobs;
 
     protected string $className = 'EpBookingService:';
     protected string $logPrefix = '';
@@ -181,6 +183,16 @@ class EpBookingService extends BaseService
             ];
 
         } catch (\Exception $e) {
+            if ($this->isTransientFileExistenceFailure($e)) {
+                LoggerService::warning("{$this->className} Transient file existence failure: {$e->getMessage()}", extra: [
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ]);
+
+                throw $e;
+            }
+
             return [
                 'success' => false,
                 'data' => null,
@@ -364,23 +376,15 @@ class EpBookingService extends BaseService
     private function fileExists(string $path): bool
     {
         try {
-            // For local storage
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
+            return $this->checkAzureFileExistsWithRetry($path);
+        } catch (Throwable $e) {
+            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage(), extra: [
+                'exception_class' => $e::class,
+                'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                'previous_exception_message' => $e->getPrevious()?->getMessage(),
+            ]);
 
-            // For remote URLs
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                $headers = get_headers($path);
-
-                return $headers && strpos($headers[0], '200') !== false;
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage());
-
-            return false;
+            throw new RuntimeException("Unable to check existence for: {$path}", previous: $e);
         }
     }
 

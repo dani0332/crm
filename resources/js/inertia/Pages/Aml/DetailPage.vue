@@ -9,7 +9,7 @@ const props = defineProps({
   businessCommuModeText: Array,
   amlStatusName: String,
   amlStatusCode: Array,
-  kycLogs: Array,
+  amlLogs: Array,
   lookups: Object,
   nationalities: Object,
   emirates: Object,
@@ -732,10 +732,10 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
       table-class-name="tablefixed"
       :headers="amlLogstableHeader"
       :loading="loader.amlLogTable"
-      :items="kycLogs || []"
+      :items="amlLogs || []"
       border-cell
       :rows-per-page="40"
-      :hide-footer="kycLogs.length < 40"
+      :hide-footer="amlLogs.length < 40"
     >
       <template #item-insurance_type="{ quotetype }">
         {{ quoteType.text }}
