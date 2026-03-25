@@ -19,7 +19,7 @@ class Emirate extends BaseModel
     public static function getActiveEmirates()
     {
         return Cache::remember('active_emirates', now()->addHours(24), function () {
-            return self::where('is_active', 1)->select('id', 'text')->get();
+            return self::where('is_active', 1)->select('id', 'text')->orderBy('text', 'asc')->get();
         });
     }
 }
