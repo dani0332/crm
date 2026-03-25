@@ -65,7 +65,10 @@ class SendBookPolicyRequest extends FormRequest
 
         if (request()->send_policy_type == 'customer') {
             $validator->after(function ($validator) use ($quote) {
-                $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords(request()->model_type));
+                if ($quote) {
+                    $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords(request()->model_type));
+                }
+
                 if (! $areSendPolicyDocsUploaded) {
                     $validator->errors()->add('error', 'Required documents are not uploaded');
                 }
