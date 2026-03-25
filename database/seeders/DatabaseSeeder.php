@@ -58,6 +58,7 @@ class DatabaseSeeder extends Seeder
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
             HealthGroupNationalitySeeder::class,
+            AwnicNationalitySeeder::class,
         ]);
     }
 }

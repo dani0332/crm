@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\CyberEmailService;
 use App\Services\Logger\LoggerService;
@@ -36,6 +37,11 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
 
         if (! $lead) {
             LoggerService::info(self::class.' - Cyber Lead not found');
+
+            return;
+        }
+        if (in_array($lead->quote_status_id, [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost, QuoteStatusEnum::Fake])) {
+            LoggerService::info(self::class.' - Lead not eligible for Cyber Automated Followups uuid: '.$this->quoteUuid);
 
             return;
         }

@@ -32,6 +32,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const page = usePage();
@@ -330,6 +334,17 @@ const sendUpdatePermissionCheck = computed(() => {
 });
 
 const { openTempUrl } = useDocumentTempUrl();
+
+const sortedQuoteDocuments = computed(() =>
+  [...(props.quoteDocuments || [])].sort((a, b) => b.id - a.id),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
+  }
+};
 </script>
 
 <template>
@@ -390,7 +405,7 @@ const { openTempUrl } = useDocumentTempUrl();
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
+          :items="sortedQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -399,9 +414,7 @@ const { openTempUrl } = useDocumentTempUrl();
           <template #item-original_name="item">
             <a
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.doc_url || item.watermarked_doc_url)
-              "
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
@@ -539,12 +552,7 @@ const { openTempUrl } = useDocumentTempUrl();
                   )"
                   :key="quoteDocument.id"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
-                  "
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
@@ -555,12 +563,7 @@ const { openTempUrl } = useDocumentTempUrl();
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
-                  "
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}

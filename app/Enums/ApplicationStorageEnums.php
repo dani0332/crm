@@ -257,6 +257,7 @@ final class ApplicationStorageEnums extends Enum
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
     public const LIFE_OCA_EMAIL_FLOW = 'LIFE_OCA_EMAIL_FLOW';
+    public const SAVINGS_OCA_EMAIL_FLOW = 'SAVINGS_OCA_EMAIL_FLOW';
     public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
     public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
     public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
@@ -310,12 +311,17 @@ final class ApplicationStorageEnums extends Enum
     /* OCR Customer Journey Flag */
     public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 
+    /* Bird EP Workflow URL */
+    public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
+
     /* EP ECB Policy Configuration */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
     public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
+
+    /* CAR EP (MDX / ECB) Retargeting Reminder */
+    public const ENABLE_CAR_EP_RETARGETING_REMINDER = 'ENABLE_CAR_EP_RETARGETING_REMINDER';
 
     // EP Failure Notification Email
     public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';
@@ -380,4 +386,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Chief Deputy Officer Mobile Number
     public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
+
+    // Instant Alfred Export Workflow
+    public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
 }

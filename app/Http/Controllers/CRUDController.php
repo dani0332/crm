@@ -17,6 +17,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\EpEcbExcludeVehicleEnum;
+use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -38,6 +39,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
@@ -68,6 +72,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
+use App\Models\RenewalQuoteProcess;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -114,6 +119,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
 use App\Services\Quotes\SavingsQuoteService;
+use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -2405,6 +2411,10 @@ class CRUDController extends Controller
         // get Car quote by uuid using model
         $carQuote = CarQuote::where('uuid', $request->quote_uuid)->first();
 
+        LoggerService::info(self::class.' - sendEmailOneClickBuy - Car Quote: ', extra: [
+            'carQuote' => $carQuote,
+        ]);
+
         $previousAdvisor = null;
         if (! empty($carQuote->previous_advisor_id)) {
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
@@ -2424,8 +2434,24 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
+
+        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
+            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
+            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        }
+        
+        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
+            'quote_id' => $carQuote->id,
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists() && $carQuote->isGenesisLead;
+        
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
+        $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
 
         info('sendEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
 
@@ -2444,6 +2470,11 @@ class CRUDController extends Controller
 
             return;
         }
+        
+        if($carQuote->isGenesisLead) {
+            $emailData->currentInsurer = '';
+        }
+
         $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {

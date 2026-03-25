@@ -86,8 +86,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                 Pipeline::send($allocationRequest)->through([
                     FetchLeadPipe::class,
                     VerifyAlreadyInProgressAllocationPipe::class,
-                    ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    ValidateNationalityConfigPipe::class,
                     ApplyRuleExclusionPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     ResetNationalityConfigPipe::class,

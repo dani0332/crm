@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProductOption extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesTestConnection;
 
     protected $fillable = ['embedded_product_id', 'price', 'variant', 'is_active'];
 
