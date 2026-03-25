@@ -199,10 +199,10 @@ class AMLQuoteDetailsService
             return false;
         }
 
-        if( $user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])){
+        if ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])) {
             return true;
         }
-        
+
         if (! method_exists($quoteRequest, 'isPolicyBooked')) {
             return false;
         }

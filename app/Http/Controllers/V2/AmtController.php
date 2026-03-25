@@ -540,7 +540,7 @@ class AmtController extends Controller
         }
 
         $user = auth()->user();
-        if( $user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])){
+        if ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])) {
             $isEmirateOfRegistrationLocked = true;
         }
 
