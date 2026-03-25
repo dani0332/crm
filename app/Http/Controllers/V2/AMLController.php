@@ -109,7 +109,7 @@ class AMLController extends Controller
         return inertia('Aml/Show', $data);
     }
 
-    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
             $request->customer_type,

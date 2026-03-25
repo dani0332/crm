@@ -10,7 +10,9 @@ use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Emirate;
 use App\Models\Payment;
@@ -101,11 +103,14 @@ class AMLQuoteDetailsService
         // Get RTA configuration for Car quotes
         $rtaConfigurationData = $this->amlService->getRTATransactionConfigurations($quoteType->code);
 
+        $isEmirateOfRegistrationLocked = $this->resolveEmirateOfRegistrationLocked($quoteType, $quoteRequest);
+
         // Prepare enums
         $enums = $this->prepareEnums();
 
         return array_merge([
             'quoteType' => $quoteType,
+            'isEmirateOfRegistrationLocked' => $isEmirateOfRegistrationLocked,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
             'amlLogs' => $amlLogs,
@@ -179,6 +184,24 @@ class AMLQuoteDetailsService
         return $isLIVA
             ? GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+    }
+
+    private function resolveEmirateOfRegistrationLocked(QuoteType $quoteType, object $quoteRequest): bool
+    {
+        if ($quoteType->code != quoteTypeCode::Business) {
+            return false;
+        }
+
+        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
+        if (($quoteRequest->business_type_of_insurance_id ?? null) != $groupMedicalTypeId) {
+            return false;
+        }
+
+        if (! method_exists($quoteRequest, 'isPolicyBooked')) {
+            return false;
+        }
+
+        return $quoteRequest->isPolicyBooked();
     }
 
     private function prepareEnums(): array
