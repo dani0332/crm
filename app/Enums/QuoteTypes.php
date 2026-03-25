@@ -495,10 +495,26 @@ enum QuoteTypes: string
     {
         return match ($this) {
             self::BUSINESS => [
-                self::CORPLINE,
-                self::GROUP_MEDICAL,
+                TeamsEnum::CORPLINE,
+                TeamsEnum::GROUP_MEDICAL,
+            ],
+            self::DEVICE => [
+                TeamsEnum::DEVICE_INSURANCE,
             ],
             default => [$this],
+        };
+    }
+
+    /**
+     * Resolve the QuoteType enum for a given team name.
+     */
+    public static function getQuoteTypesFromTeamName(string $teamName)
+    {
+        return match ($teamName) {
+            TeamsEnum::DEVICE_INSURANCE->value => [
+                self::DEVICE,
+            ],
+            default => [$teamName],
         };
     }
 

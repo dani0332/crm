@@ -174,6 +174,8 @@ class AMLController extends Controller
                     $dataAml->whereBetween($quoteRequestTable.'.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
                 }
 
+                LoggerService::sql(__CLASS__.'::'.__FUNCTION__,$dataAml);
+
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
             }
         }

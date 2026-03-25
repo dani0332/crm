@@ -214,6 +214,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
             quoteTypeCode::CYBER => ! Auth::user()->hasRole(RolesEnum::CyberAdvisor),
+            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::SmartPhoneAdvisor),
         ];
 
         return [
@@ -235,6 +236,7 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::GroupMedical,
                     quoteTypeCode::SAVINGS,
                     quoteTypeCode::CYBER,
+                    quoteTypeCode::Device,
                 ],
             ],
             'sub_teams' => [
@@ -300,6 +302,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
             quoteTypeCode::CYBER => PermissionsEnum::CYBER_DISTRIBUTION_REPORT,
+            quoteTypeCode::Device => PermissionsEnum::DEVICE_DISTRIBUTION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

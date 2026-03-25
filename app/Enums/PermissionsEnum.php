@@ -485,6 +485,8 @@ final class PermissionsEnum extends Enum
     public const DEVICE_LEAD_ALLOCATION_DASHBOARD = 'device-lead-allocation-dashboard';
     public const DEVICE_LEADPOOL = 'device-leadpool';
 
+    public const DEVICE_CONVERSION_REPORT = 'device-conversion-report';
+    public const DEVICE_DISTRIBUTION_REPORT = 'device-distribution-report';
 
     public static function getAdvisorConversionReportPermissions()
     {

@@ -62,6 +62,8 @@ class quoteTypeCode extends Enum
     const Device = 'Device';
     const CYBER = 'Cyber';
 
+    /** Please stop using this class instead use App\Enums\QuoteTypes (native PHP Enums) */
+
     public static function getName($value)
     {
         return match ($value) {
@@ -96,6 +98,23 @@ class quoteTypeCode extends Enum
         return match ($productName) {
             TeamNameEnum::CYBER => self::CYBER,
             TeamNameEnum::DEVICE => self::DEVICE,
+            default => $productName,
+        };
+    }
+
+    public static function getProductNameFromQuoteTypeCode(string $quoteTypeCode): string
+    {
+        return match ($quoteTypeCode) {
+            self::CYBER => TeamNameEnum::CYBER,
+            default => $quoteTypeCode,
+        };
+    }
+
+    public static function getQuoteTypeCodeFromProductName(string $productName): string
+    {
+        return match ($productName) {
+            TeamNameEnum::CYBER => self::CYBER,
+            TeamNameEnum::DEVICE => self::Device,
             default => $productName,
         };
     }

@@ -67,6 +67,8 @@ class SearchService extends BaseService
         // Select columns for normal query
         $baseQuery->select($selectColumns);
 
+        LoggerService::sql(__CLASS__.'::'.__FUNCTION__,$baseQuery);
+
         // Use cursor for better memory usage with large result sets
         return $baseQuery->paginate(15)->withQueryString();
     }
