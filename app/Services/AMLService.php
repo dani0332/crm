@@ -42,7 +42,6 @@ use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
-use App\Models\InsurancePartnerMapping;
 use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
