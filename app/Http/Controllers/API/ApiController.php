@@ -70,6 +70,7 @@ use App\Services\WhatsAppHookService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Response as HttpClientResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -224,12 +225,16 @@ class ApiController extends Controller
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
-        if ($response === false) {
+        $birdResponse = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
+        if ($birdResponse === false) {
             return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
         }
 
-        $decoded = json_decode($response->body ?? '', true) ?? [];
+        $bodyString = $birdResponse instanceof HttpClientResponse
+            ? $birdResponse->body()
+            : (string) ($birdResponse->body ?? '');
+
+        $decoded = json_decode($bodyString, true) ?? [];
         $result = $decoded['result'] ?? [];
         $c = collect($result);
         $confirmed = $c->contains(fn ($s, $id) => (string) $id === (string) $workflow->flow_id && strtolower((string) $s) === 'cancelled');
