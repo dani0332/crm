@@ -597,8 +597,14 @@ class CRUDService extends BaseService
         return $this->applicationstorageService->getValueByKey($key);
     }
 
-    public function getGenderOptions()
+    public function getGenderOptions($quoteTypeId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return Lookup::where('key', LookupsEnum::GENDER)
+                ->pluck('text', 'code')
+                ->all();
+        }
+
         $genderOptions = [
             GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
             GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,

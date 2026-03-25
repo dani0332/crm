@@ -75,6 +75,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'pec_marked_at',
             'branch_id',
             'is_branch_applicable',
+            'policy_holder_category_code',
+            'visa_category_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -104,6 +106,9 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'plan:id,text',
             'subSource:id,text',
+            'visaCategory:id,text',
+            'policyHolderCategory:id,code,text',
+            'gender:id,code,text',
         ]);
     }
 

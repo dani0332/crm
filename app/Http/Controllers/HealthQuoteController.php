@@ -178,8 +178,6 @@ class HealthQuoteController extends Controller
 
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
-        $request->validated();
-
         $quote = HealthQuote::where('uuid', $request->quoteId)->first();
         if ($quote?->is_quote_locked) {
             return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
@@ -206,8 +204,6 @@ class HealthQuoteController extends Controller
 
     public function healthQuoteUpdateMember(MemberDetailRequest $request)
     {
-        $request->validated();
-
         $quote = HealthQuote::where('uuid', $request->quoteId)->first();
         if ($quote?->is_quote_locked) {
             return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
@@ -251,6 +247,25 @@ class HealthQuoteController extends Controller
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
 
         return redirect()->back();
+    }
+
+    public function refreshPlans(Request $request)
+    {
+        $request->validate([
+            'quoteId' => 'required|string',
+        ]);
+
+        $response = $this->healthQuoteService->refreshPlans($request);
+
+        if ($response) {
+            $key = 'success';
+            $message = 'Plans refreshed successfully';
+        } else {
+            $key = 'error';
+            $message = 'Failed to refresh plans';
+        }
+
+        return redirect()->back()->with($key, $message);
     }
 
     public function plansByInsuranceProvider(Request $request)

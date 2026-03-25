@@ -50,6 +50,12 @@ const UBORelationOptions = computed(() => {
 });
 
 const uboMembers = ref(props.UBOsDetails);
+watch(
+  () => props.UBOsDetails,
+  newVal => {
+    uboMembers.value = newVal;
+  },
+);
 const computedUboMembers = computed(() => {
   return (
     uboMembers &&

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessActivity;
@@ -335,6 +336,27 @@ class DropdownSourceService extends BaseService
                 break;
             case 'business_activity':
                 $data = BusinessActivity::active()->get();
+                break;
+            case 'gender':
+                $data = $lookUpService->getGender();
+                break;
+            case LookupsEnum::HEALTH_INSURE_OPTIONS->value:
+                $data = $lookUpService->getHealthInsureOptions();
+                break;
+            case LookupsEnum::POLICY_HOLDER_OPTIONS->value:
+                $data = $lookUpService->getPolicyHolder();
+                break;
+            case LookupsEnum::POLICY_HOLDER_CATEGORY->value:
+                $data = $lookUpService->getPolicyHolderCategory();
+                break;
+            case 'visa_category':
+                $data = $lookUpService->getVisaCategory();
+                break;
+            case LookupsEnum::HEALTH_MEMBER_RELATION->value:
+                $data = $lookUpService->getHealthMemberRelations();
+                break;
+            case LookupsEnum::DOMESTIC_WORKER_RELATION->value:
+                $data = $lookUpService->getDomesticWorkerRelations();
                 break;
             default:
                 break;

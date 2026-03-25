@@ -482,7 +482,6 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
-                'genderOptions' => $this->crudService->getGenderOptions(),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
                 'leadSourceParams' => [
@@ -501,7 +500,6 @@ class CRUDController extends Controller
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
-                'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'subSources' => $subSources,
                 'emirates' => $emirates,
@@ -1187,12 +1185,18 @@ class CRUDController extends Controller
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
                 $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
                 $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-                $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+                $memberRelations = LookupRepository::where('key', LookupsEnum::HEALTH_MEMBER_RELATION)->get();
+                $domesticWorkerRelations = LookupRepository::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION)->get();
                 $nationalities = Nationality::getActiveNationalities();
                 $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
                 $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
                 $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
                 $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+                $maritalStatusOptions = $this->dropdownSourceService->getDropdownSource('marital_status_id');
+                $visaCategoryOptions = $this->dropdownSourceService->getDropdownSource('visa_category');
+                $policyHolderCategoryOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_CATEGORY->value);
+                $insureCodeOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::HEALTH_INSURE_OPTIONS->value);
+                $policyHolderOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_OPTIONS->value);
 
                 @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Health);
                 $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
@@ -1264,7 +1268,7 @@ class CRUDController extends Controller
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
-                    'genderOptions' => $this->crudService->getGenderOptions(),
+                    'genderOptions' => $this->crudService->getGenderOptions($quoteTypeId),
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'ecomDetails' => $ecomDetails,
@@ -1272,6 +1276,7 @@ class CRUDController extends Controller
                     'membersDetail' => $membersDetail,
                     'memberCategories' => $memberCategories,
                     'memberRelations' => $memberRelations,
+                    'domesticWorkerRelations' => $domesticWorkerRelations,
                     'salaryBands' => $salaryBands,
                     'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
                     'nationalities' => $nationalities,
@@ -1337,6 +1342,12 @@ class CRUDController extends Controller
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
                     'branchOptions' => EmirateEnum::getBranchMapping(),
+                    'maritalStatusOptions' => $maritalStatusOptions,
+                    'visaCategoryOptions' => $visaCategoryOptions,
+                    'policyHolderCategoryOptions' => $policyHolderCategoryOptions,
+                    'insureCodeOptions' => $insureCodeOptions,
+                    'policyHolderOptions' => $policyHolderOptions,
+                    'emirateEnum' => EmirateEnum::asArray(),
                 ]);
             } else {
                 return view('shared.show', compact([
@@ -1415,9 +1426,13 @@ class CRUDController extends Controller
         $subSources = $this->lookupService->getSubSource();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
+
+            $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name)
+                ->where('is_third_party_payer', 0);
+
             return inertia('HealthQuote/Form', [
                 'quote' => $record,
-                'genderOptions' => $this->crudService->getGenderOptions(),
+                'membersDetail' => $membersDetail,
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),

@@ -54,6 +54,11 @@ class DatabaseSeeder extends Seeder
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
             AwnicNationalitySeeder::class,
+            HealthCoverForSeeder::class,
+            MemberCategorySeeder::class,
+            VisaCategorySeeder::class,
+            SalaryBandSeeder::class,
+            MaritalStatusSeeder::class,
         ]);
     }
 }

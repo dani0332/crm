@@ -11,6 +11,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -26,6 +27,7 @@ use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
+use App\Models\CustomerMembers;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
@@ -34,12 +36,14 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\Lookup;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
@@ -226,6 +230,11 @@ class HealthQuoteService extends BaseService
             'b.id as lead_branch_id',
             'is_quote_locked',
             'is_branch_applicable',
+            'hqr.policy_holder_category_code',
+            'hqr.visa_category_id',
+            'hqr.insure_code',
+            'hqr.policy_holder_code',
+            'hqr.is_quote_revisable',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -330,7 +339,15 @@ class HealthQuoteService extends BaseService
     public function saveHealthQuote(Request $request)
     {
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
+        $subSourceId = $request->sub_source_id ?? null;
+        $subSource = Lookup::find($subSourceId);
+        $sendOcbEmail = true;
+        if ($subSource && $subSource?->code == 'strategic-partners-referrals') {
+            $sendOcbEmail = false;
+        }
+
         $dataArr = [
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'email' => $request->email,
             'details' => $request->details,
             'mobileNo' => $request->mobile_no,
@@ -340,7 +357,7 @@ class HealthQuoteService extends BaseService
             'premium' => $request->premium,
             'leadTypeId' => $request->lead_type_id,
             'referenceUrl' => config('constants.APP_URL'),
-            'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
+            'isEbpRenewal' => $request->is_ebp_renewal == 'on' ? true : false,
             'coverForId' => $request->cover_for_id,
             'hasDental' => $request->has_dental == 'on' ? true : false,
             'hasWorldwideCover' => $request->has_worldwide_cover == 'on' ? true : false,
@@ -351,6 +368,16 @@ class HealthQuoteService extends BaseService
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
+            'insureCode' => $request->health_insure_code, // WHO WOULD THE CUSTOMER LIKE TO INSURE?
+            'policyHolderCode' => $request->policy_holder_code, // WHO WILL BE THE POLICYHOLDER?
+            'policyNumber' => $request->policy_number,
+            'policyHolderCategoryCode' => $request->policy_holder_category_code,
+            'policyStartDate' => $request->policy_start_date,
+            'firstName' => $request->first_name,
+            'lastName' => $request->last_name,
+            'sendOcbEmail' => $sendOcbEmail,
+            'userId' => auth()->user()->id,
+            'customerType' => CustomerTypeEnum::Individual,
         ];
 
         // Log lead source parameters for Health quotes
@@ -360,17 +387,9 @@ class HealthQuoteService extends BaseService
             'subSourceOptionsId' => $request->sub_source_options_id,
             'additionalNotes' => $request->additional_notes,
         ]);
-        $dataArr['memberDetails'][] = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
-            'dob' => $request->dob,
-            'gender' => $request->gender,
-            'nationalityId' => $request->nationality_id,
-            'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
-            'salaryBandId' => $request->salary_band_id,
-            'memberCategoryId' => $request->member_category_id,
-            'isPecMarked' => $request->pec == 1,
-        ];
+
+        $dataArr['memberDetails'] = collect($request->members)->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
+
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
 
@@ -379,7 +398,11 @@ class HealthQuoteService extends BaseService
             }
         }
 
+        LoggerService::info('Health saveHealthQuote - CAPI API request', extra: ['request' => $dataArr]);
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
+
+        LoggerService::info('Health saveHealthQuote - CAPI API response', extra: ['response' => $response]);
 
         if (isset($response->quoteUID)) {
 
@@ -432,6 +455,36 @@ class HealthQuoteService extends BaseService
         }
     }
 
+    /**
+     * Normalise a member array or model into the camelCase shape expected by CAPI/Ken payloads.
+     *
+     * @param  \App\Models\CustomerMembers|array<string, mixed>  $member
+     */
+    private function prepareMemberDetailPayload(CustomerMembers|array $member): array
+    {
+        $id = $member['id'] ?? 'temp-';
+        $dob = $member['dob'] ? Carbon::parse($member['dob'])->toDateString() : null;
+
+        return [
+            'id' => str_starts_with((string) ($id), 'temp-') ? null : $id,
+            'firstName' => $member['first_name'],
+            'lastName' => $member['last_name'] ?? null,
+            'dob' => $dob,
+            'gender' => $member['gender'],
+            'nationalityId' => $member['nationality_id'],
+            'emirateOfYourVisaId' => $member['emirate_of_your_visa_id'],
+            'salaryBandId' => $member['salary_band_id'],
+            'memberCategoryId' => $member['member_category_id'],
+            'visaCategoryId' => $member['visa_category_id'],
+            'relationCode' => $member['relation_code'],
+            'maritalStatusId' => $member['marital_status_id'],
+            'isInsured' => $member['is_insured'] == 1,
+            'isPolicyHolder' => $member['is_policy_holder'] == 1,
+            'isPrincipal' => $member['is_principal'] == 1,
+            'isPecMarked' => ($member['pec'] ?? $member['is_pec_marked']) == 1,
+        ];
+    }
+
     private function getQuerySuffix($item)
     {
         switch ($item) {
@@ -466,75 +519,111 @@ class HealthQuoteService extends BaseService
             return redirect('quote/health/'.$id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
         }
 
+        $customer = $healthQuote?->customer;
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
-        $healthQuote->first_name = $request->first_name;
-        $healthQuote->last_name = $request->last_name;
-        $healthQuote->details = $request->details;
-        $healthQuote->preference = $request->preference;
-        $healthQuote->source = $sourceName;
-        $healthQuote->marital_status_id = $request->marital_status_id;
-        $healthQuote->cover_for_id = $request->cover_for_id;
-        $healthQuote->nationality_id = $request->nationality_id;
-        $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
-        $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
-        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
-        $healthQuote->has_home = $request->has_home == 'on' ? true : false;
-        $healthQuote->premium = $request->premium;
-        // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
-            $healthQuote->quote_updated_at = Carbon::now();
-            $updateMemberDetails = [
-                'member_category_id' => $request->member_category_id,
-                'salary_band_id' => $request->salary_band_id,
-                'gender' => $request->gender,
-                'dob' => $request->dob,
-                'is_pec_marked' => $request->pec == 1,
-            ];
+        $priceStartingFrom = $healthQuote?->price_starting_from ?? null;
+        $members = collect($request->members);
+        $principalMember = $members->firstWhere('is_principal', 1);
+        $dataArr = [
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
+            'quoteUID' => $id,
+            'userId' => auth()->user()->id,
+            'data' => [
+                'receiveMarketingUpdates' => $customer?->receive_marketing_updates,
+                'email' => $request->email,
+                'details' => $request->details,
+                'mobileNo' => $request->mobile_no,
+                'preference' => $request->preference,
+                'source' => $sourceName,
+                'leadTypeId' => $request->lead_type_id,
+                'isEbpRenewal' => $request->is_ebp_renewal == 'on' ? true : false,
+                'hasDental' => $request->has_dental == 'on' ? true : false,
+                'hasWorldwideCover' => $request->has_worldwide_cover == 'on' ? true : false,
+                'hasHome' => $request->has_home == 'on' ? true : false,
+                'healthPlanTypeId' => $request->plan_type_id,
+                'additionalNotes' => $request->additional_notes ?? null,
+                'insureCode' => $request->health_insure_code,
+                'policyHolderCode' => $request->policy_holder_code,
+                'policyNumber' => $request->policy_number,
+                'policyHolderCategoryCode' => $request->policy_holder_category_code,
+                'policyStartDate' => $request->policy_start_date,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name,
 
-            $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
-            if ($healthQuoteFirstMember) {
-                $healthQuoteFirstMember->update(array_merge(
-                    $updateMemberDetails,
-                    [
-                        'nationality_id' => $request->nationality_id,
-                        'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
-                    ]
-                ));
-            }
+                // principal member details
+                'memberCategoryId' => $principalMember['member_category_id'] ?? null,
+                'emirateOfYourVisaId' => $principalMember['emirate_of_your_visa_id'] ?? null,
+                'nationalityId' => $principalMember['nationality_id'] ?? null,
+                'gender' => $principalMember['gender'] ?? null,
+                'dob' => $principalMember['dob'] ?? null,
+                'salaryBandId' => $principalMember['salary_band_id'] ?? null,
 
-            if ($healthQuote->primary_member_id) {
-                $healthQuote->memberDetails()->update($updateMemberDetails);
+                // confirm with Waleeb about this param
+                'priceStartingFrom' => $priceStartingFrom,
+                'customerType' => $request->customer_type ?? null,
+            ],
+        ];
+
+        $uboMembers = CustomerMembersRepository::getBy($healthQuote->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity)->where('is_third_party_payer', 0);
+
+        if ($request->customer_type == CustomerTypeEnum::Individual) {
+            $individualMembers = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member));
+            $dataArr['data']['memberDetails'] = array_merge($individualMembers->all(), $uboMembers->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all());
+        } else {
+            $customerMembers = CustomerMembersRepository::getBy($healthQuote->id, QuoteTypes::HEALTH->name)->where('is_third_party_payer', 0);
+            $uboPolicyHolderMember = $uboMembers->firstWhere('is_policy_holder', 1);
+            $allMembers = $customerMembers->merge($uboMembers);
+
+            $dataArr['data']['memberDetails'] = $allMembers->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all();
+
+            if (! $uboPolicyHolderMember) {
+                $dataArr['data']['memberDetails'][] = [
+                    'id' => null,
+                    'firstName' => $request->first_name,
+                    'lastName' => $request->last_name,
+                    'dob' => null,
+                    'gender' => null,
+                    'nationalityId' => null,
+                    'emirateOfYourVisaId' => $healthQuote->emirate_of_your_visa_id,
+                    'salaryBandId' => $request->salary_band_id,
+                    'memberCategoryId' => null,
+                    'visaCategoryId' => $request->visa_category_id,
+                    'relationCode' => null,
+                    'maritalStatusId' => null,
+                    'isInsured' => false,
+                    'isPolicyHolder' => true,
+                    'isPrincipal' => false,
+                    'isPecMarked' => false,
+                ];
             }
         }
-        $healthQuote->salary_band_id = $request->salary_band_id;
-        $healthQuote->member_category_id = $request->member_category_id;
-        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
-        $healthQuote->currently_insured_with_id = $request->currently_insured_with_id;
-        $healthQuote->gender = $request->gender;
-        $healthQuote->dob = $request->dob;
-        $healthQuote->policy_start_date = $request->policy_start_date;
-        $healthQuote->health_plan_type_id = $request->plan_type_id;
 
-        // Update sub-source fields from CreateLeadModal
         if ($request->has('sub_source_id')) {
-            $healthQuote->sub_source_id = $request->sub_source_id;
+            $dataArr['subSourceId'] = $request->sub_source_id ?? null;
         }
+
         if ($request->has('sub_source_options_id')) {
-            $healthQuote->sub_source_options_id = $request->sub_source_options_id;
-        }
-        if ($request->has('additional_notes')) {
-            $healthQuote->additional_notes = $request->additional_notes;
+            $dataArr['subSourceOptionsId'] = $request->sub_source_options_id ?? null;
         }
 
-        $healthQuote->save();
+        LoggerService::info('Health updateHealthQuote - CAPI API request', extra: ['request' => $dataArr, 'uuid' => $id]);
 
-        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-update-health-quote', $dataArr, HealthQuote::class);
 
-        ReEvaluatePecJob::dispatch($healthQuote->uuid);
+        LoggerService::info('Health updateHealthQuote - CAPI API response', extra: ['response' => $response, 'uuid' => $id]);
 
-        if (isset($request->return_to_view)) {
-            return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
+        if (isset($response?->data?->id)) {
+
+            LoggerService::info('Health updateHealthQuote - after CAPI request - advisorId and supportUserId:', [
+                'quoteUID' => $response?->data?->uuid ?? null,
+            ]);
+
+            $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+
+            ReEvaluatePecJob::dispatch($healthQuote->uuid);
         }
+
+        return $response;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -616,18 +705,18 @@ class HealthQuoteService extends BaseService
             'marital_status_id' => 'select|title',
             'assignment_type' => 'input|title|none',
             'cover_for_id' => 'select|title|required',
-            'nationality_id' => 'select|title|required',
+            'nationality_id' => 'select|title',
             'lead_type_id' => 'select|title',
             'has_dental' => 'input|checkbox|title',
             'has_worldwide_cover' => 'input|checkbox|title',
             'has_home' => 'input|checkbox|title',
-            'emirate_of_your_visa_id' => 'select|title|required',
+            'emirate_of_your_visa_id' => 'select|title',
             'previous_quote_id' => 'readonly|title',
             'policy_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
-            'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
+            'gender' => 'select',
             'renewal_batches' => self::SELECT_TITLE_MULTIPLE,
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
@@ -640,6 +729,12 @@ class HealthQuoteService extends BaseService
             'policy_start_date' => 'input|date',
             'plan_type_id' => 'select|title',
             'payment_status_id' => 'select|title',
+            LookupsEnum::HEALTH_INSURE_OPTIONS->value => 'select',
+            LookupsEnum::POLICY_HOLDER_OPTIONS->value => 'select',
+            LookupsEnum::POLICY_HOLDER_CATEGORY->value => 'select',
+            'visa_category' => 'select',
+            LookupsEnum::HEALTH_MEMBER_RELATION->value => 'select',
+            LookupsEnum::DOMESTIC_WORKER_RELATION->value => 'select',
         ];
     }
 
@@ -1374,25 +1469,21 @@ class HealthQuoteService extends BaseService
         $quoteId = $request->quoteId;
 
         if ($quoteId) {
-            $memberDetails = [
-                'firstName' => $request->first_name,
-                'lastName' => $request->last_name ?? null,
-                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
-                'gender' => $request->gender,
-                'nationalityId' => $request->nationality_id,
-                'memberCategoryId' => $request->member_category_id,
-                'salaryBandId' => $request->salary_band_id,
-                'dob' => Carbon::parse($request->dob)->toDateString(),
-                'relationCode' => $request->relation_code,
-                'isPecMarked' => $request->pec == 1,
-            ];
+            $memberDetails = $this->prepareMemberDetailPayload($request->all());
 
             $dataArray = [
                 'quoteUID' => $quoteId,
                 'memberDetails' => [$memberDetails],
+                'userId' => auth()->user()->id,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
+            LoggerService::info('Health quote add member - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
+
             $response = Ken::request('/add-health-quote-members', 'POST', $dataArray);
+
+            LoggerService::info('Health quote add member - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
+
         } else {
             $response = [
                 'status' => false,
@@ -1409,27 +1500,20 @@ class HealthQuoteService extends BaseService
         $memberId = $request->id ?? null;
 
         if ($quoteId && $memberId) {
-            $memberDetails = [
-                'id' => $memberId,
-                'firstName' => $request->first_name,
-                'lastName' => $request->last_name ?? null,
-                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
-                'gender' => $request->gender,
-                'nationalityId' => $request->nationality_id,
-                'memberCategoryId' => $request->member_category_id,
-                'salaryBandId' => $request->salary_band_id,
-                'dob' => Carbon::parse($request->dob)->toDateString(),
-                'relationCode' => $request->relation_code,
-                'isPecMarked' => $request->pec == 1,
-                'isPrincipal' => $request->is_principal == 1,
-            ];
+            $memberDetails = $this->prepareMemberDetailPayload($request->all());
 
             $dataArray = [
                 'quoteUID' => $quoteId,
                 'memberDetails' => [$memberDetails],
+                'userId' => auth()->user()->id,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
+            LoggerService::info('Health quote update member - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
+
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
+            LoggerService::info('Health quote update member - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
 
         } else {
             $response = [
@@ -1444,7 +1528,7 @@ class HealthQuoteService extends BaseService
     public function healthQuoteDeleteMember($request)
     {
         $quoteId = $request->quoteId ?? null;
-        $memberId = $request->customer_member_id ?? null;
+        $memberId = $request->id ?? null;
 
         if ($quoteId && $memberId) {
             $memberDetails = [
@@ -1454,9 +1538,16 @@ class HealthQuoteService extends BaseService
             $dataArray = [
                 'quoteUID' => $quoteId,
                 'memberDetails' => [$memberDetails],
+                'userId' => auth()->user()->id,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
+            LoggerService::info('Health quote delete member - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
+
             $response = Ken::request('/delete-health-quote-members', 'POST', $dataArray);
+
+            LoggerService::info('Health quote delete member - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
+
         } else {
             $response = [
                 'status' => false,
@@ -1465,6 +1556,64 @@ class HealthQuoteService extends BaseService
         }
 
         return $response;
+    }
+
+    public function refreshPlans($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $quote = HealthQuote::where('uuid', $quoteId)->with('members')->first();
+
+        if (! $quote) {
+            return [
+                'status' => false,
+                'message' => 'Quote not found',
+            ];
+        }
+
+        try {
+            $dataArray = [
+                'firstName' => $quote->first_name,
+                'lastName' => $quote->last_name,
+                'email' => $quote->email,
+                'mobileNo' => $quote->mobile_no,
+                'dob' => Carbon::parse($quote->dob)->format('Y-m-d'),
+                'gender' => $quote->gender,
+                'emirateOfYourVisaId' => $quote->emirate_of_your_visa_id,
+                'salaryBandId' => $quote->salary_band_id,
+                'memberCategoryId' => $quote->member_category_id,
+                'nationalityId' => $quote->nationality_id,
+                'quoteUID' => $quote->uuid,
+                'healthPlanTypeId' => $quote->health_plan_type_id,
+                'quoteStatusId' => $quote->quote_status_id,
+                'maritalStatusId' => $quote->marital_status_id,
+                'filters' => [],
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                'userId' => auth()->user()->id,
+                'customerType' => $quote->customer_type,
+            ];
+
+            $dataArray['memberDetails'] = $quote->activeMembers
+                ->filter(function ($member) use ($quote) {
+                    return $member->is_third_party_payer == 0 &&
+                        $member->customer_type == $quote->customer_type;
+                })
+                ->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
+
+            LoggerService::info('Health quote refresh plans - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
+
+            $response = Ken::request('/get-revised-health-quote-plans', 'POST', $dataArray);
+
+            LoggerService::info('Health quote refresh plans - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
+
+            return $response;
+        } catch (\Exception $e) {
+            LoggerService::error('HealthQuoteService - refreshPlans - Error', extra: [
+                'uuid' => $quoteId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     /**

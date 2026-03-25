@@ -9,11 +9,15 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
@@ -164,6 +168,10 @@ class HandleInertiaRequests extends Middleware
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'healthInsureEnum' => array_column(HealthInsureEnum::cases(), 'value', 'name'),
+            'healthPolicyHolderEnum' => array_column(HealthPolicyHolderEnum::cases(), 'value', 'name'),
+            'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
         ];
     }
 

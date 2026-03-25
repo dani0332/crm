@@ -22,7 +22,7 @@ class HealthQuotesExport implements CsvExportableInterface
         private HealthQuoteService $healthQuoteService,
         private CRUDService $crudService
     ) {
-        $this->genderOptions = $this->crudService->getGenderOptions();
+        $this->genderOptions = $this->crudService->getGenderOptions(QuoteTypeId::Health);
     }
 
     public function collection(array $requestParams = []): Collection
@@ -64,12 +64,15 @@ class HealthQuotesExport implements CsvExportableInterface
             'POLICY NUMBER',
             'SOURCE',
             'LEAD TYPE',
-            'SALARY BAND',
             'MEMBER CATEGORY',
+            'POLICY HOLDER CATEGORY',
+            'VISA CATEGORY',
+            'GENDER',
+            'MARITAL STATUS',
+            'SALARY',
             'CURRENTLY INSURED WITH',
             'IS ECOMMERCE',
             'Device',
-            'Gender',
             'Nationality',
             'Age Bands',
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
@@ -115,12 +118,15 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->policy_number,
             $quote->source,
             $quote->healthLeadType?->text,
-            $quote->salaryBand?->text,
             $quote->memberCategory?->text,
+            $quote->policyHolderCategory?->text ?? '',
+            $quote->visaCategory?->text ?? '',
+            $this->genderOptions[$quote->gender] ?? '',
+            $quote->maritalStatus?->text ?? '',
+            $quote->salaryBand?->text ?? '',
             $quote->currentProvider?->text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->device,
-            $this->genderOptions[$quote->gender] ?? '',
             $quote->nationality?->text,
             Carbon::parse($quote->dob)->age,
             $quote->customer_type,

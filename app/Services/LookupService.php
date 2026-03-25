@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -22,6 +24,7 @@ use App\Models\SalaryBand;
 use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
+use App\Models\VisaCategory;
 use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
 use Illuminate\Support\Facades\Cache;
@@ -306,5 +309,54 @@ class LookupService extends BaseService
                     ->get();
             }
         );
+    }
+
+    public function getGender()
+    {
+        return Lookup::where('key', LookupsEnum::GENDER)->get();
+    }
+
+    public function getHealthInsureOptions()
+    {
+        return Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
+            ->map(function ($item) {
+                $item->text = HealthInsureEnum::from($item->code)->getLabel();
+
+                return $item;
+            });
+    }
+
+    public function getPolicyHolder()
+    {
+        return Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
+            ->map(function ($item) {
+                $item->text = HealthPolicyHolderEnum::from($item->code)->getLabel();
+
+                return $item;
+            });
+    }
+
+    public function getPolicyHolderCategory()
+    {
+        return Lookup::where('key', LookupsEnum::POLICY_HOLDER_CATEGORY)->get();
+    }
+
+    public function getVisaCategory()
+    {
+        return VisaCategory::where('is_active', true)->orderBy('sort_order')->get();
+    }
+
+    public function getHealthMemberRelations()
+    {
+        return Lookup::where('key', LookupsEnum::HEALTH_MEMBER_RELATION->value)
+            ->where('is_active', true)->orderBy('sort_order')
+            ->get();
+    }
+
+    public function getDomesticWorkerRelations()
+    {
+        return Lookup::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION->value)
+            ->where('is_active', true)->orderBy('sort_order')
+            ->get();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -24,6 +25,7 @@ class LookupSeeder extends Seeder
         $this->createCISavings();
         $this->createRmCategories();
         $this->createReferralSources();
+        $this->healthRevampLookups();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -437,6 +439,192 @@ class LookupSeeder extends Seeder
                     ]);
                 }
             }
+        }
+    }
+
+    private function healthRevampLookups(): void
+    {
+        $this->healthInsure();
+        $this->healthPolicyHolder();
+        $this->healthPolicyHolderCategory();
+        $this->gender();
+        $this->healthMemberRelation();
+        $this->domesticWorkerRelation();
+    }
+
+    private function healthInsure(): void
+    {
+        $insures = [
+            [
+                'text' => 'Only Myself',
+                'code' => 'ONLY_MYSELF',
+            ],
+            [
+                'text' => 'Only My Family Members',
+                'code' => 'ONLY_MY_FAMILY_MEMBERS',
+            ],
+            [
+                'text' => 'Myself & My Family Members',
+                'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
+            ],
+        ];
+
+        foreach ($insures as $insure) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::HEALTH_INSURE_OPTIONS,
+                'code' => $insure['code'],
+                'text' => $insure['text'],
+            ], [
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function healthPolicyHolder(): void
+    {
+        $policyHolders = [
+            [
+                'text' => 'Me',
+                'code' => 'ME',
+            ],
+            [
+                'text' => 'Other Adult Family Member',
+                'code' => 'OTHER_ADULT_FAMILY_MEMBER',
+            ],
+        ];
+
+        foreach ($policyHolders as $policyHolder) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::POLICY_HOLDER_OPTIONS,
+                'code' => $policyHolder['code'],
+                'text' => $policyHolder['text'],
+            ], [
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function healthPolicyHolderCategory(): void
+    {
+        $policyHolderCategories = [
+            [
+                'text' => 'Resident',
+                'code' => 'RESIDENT',
+            ],
+            [
+                'text' => 'UAE Citizen',
+                'code' => 'UAE_CITIZEN',
+            ],
+            [
+                'text' => 'Establishment/Company/Corporate',
+                'code' => 'ESTABLISHMENT_COMPANY_CORPORATE',
+            ],
+            [
+                'text' => 'Investor Visa',
+                'code' => 'INVESTOR_VISA',
+            ],
+            [
+                'text' => 'GCC Citizen',
+                'code' => 'GCC_CITIZEN',
+            ],
+        ];
+
+        foreach ($policyHolderCategories as $policyHolderCategory) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::POLICY_HOLDER_CATEGORY,
+                'code' => $policyHolderCategory['code'],
+                'text' => $policyHolderCategory['text'],
+            ], [
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function gender(): void
+    {
+        $genders = [
+            [
+                'text' => GenericRequestEnum::MALE_SINGLE,
+                'code' => GenericRequestEnum::MALE_SINGLE_VALUE,
+            ],
+            [
+                'text' => GenericRequestEnum::FEMALE,
+                'code' => GenericRequestEnum::FEMALE_SHORT_VALUE,
+            ],
+        ];
+
+        foreach ($genders as $gender) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::GENDER,
+                'code' => $gender['code'],
+                'text' => $gender['text'],
+            ]);
+        }
+    }
+
+    private function healthMemberRelation(): void
+    {
+        $memberRelations = [
+            [
+                'text' => 'Dependent Spouse',
+                'code' => 'relSpouse',
+            ],
+            [
+                'text' => 'Dependent Child',
+                'code' => 'relChild',
+            ],
+            [
+                'text' => 'Dependent Parent',
+                'code' => 'relParent',
+            ],
+            [
+                'text' => 'Dependent Sibling / Other Relatives',
+                'code' => 'relSiblingOrRelatives',
+            ],
+        ];
+
+        foreach ($memberRelations as $memberRelation) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::HEALTH_MEMBER_RELATION,
+                'code' => $memberRelation['code'],
+                'text' => $memberRelation['text'],
+            ]);
+        }
+    }
+
+    private function domesticWorkerRelation(): void
+    {
+        $domesticWorkerRelations = [
+            [
+                'text' => 'Domestic Worker',
+                'code' => 'relDomesticWorker',
+            ],
+            [
+                'text' => 'Maid',
+                'code' => 'relMaid',
+            ],
+            [
+                'text' => 'Driver',
+                'code' => 'relDriver',
+            ],
+            [
+                'text' => 'Nanny',
+                'code' => 'relNanny',
+            ],
+        ];
+
+        foreach ($domesticWorkerRelations as $domesticWorkerRelation) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::DOMESTIC_WORKER_RELATION,
+                'code' => $domesticWorkerRelation['code'],
+                'text' => $domesticWorkerRelation['text'],
+            ]);
         }
     }
 }

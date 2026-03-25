@@ -2,10 +2,11 @@
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import HealthMemberDetails from '../../Components/HealthMemberDetails.vue';
+import { useHealthQuoteFlags } from '../../Composables/useHealthQuoteFlags';
 
 const props = defineProps({
   quote: Object,
@@ -15,6 +16,7 @@ const props = defineProps({
   membersDetail: Array,
   memberCategories: Array,
   memberRelations: Array,
+  domesticWorkerRelations: Array,
   salaryBands: Array,
   nationalities: Array,
   emirates: Array,
@@ -70,8 +72,14 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAUHLead: Boolean,
-  branchOptions: Object,
+  branchOptions: Array,
   hasPecTag: Boolean,
+  visaCategoryOptions: Array,
+  policyHolderCategoryOptions: Array,
+  insureCodeOptions: Array,
+  policyHolderOptions: Array,
+  maritalStatusOptions: Array,
+  emirateEnum: Object,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -97,6 +105,39 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const members = ref(page.props.membersDetail);
+const computedMembers = computed(() => {
+  return members.value.filter(x => !x.is_third_party_payer);
+});
+const isIncludePolicyholder = computed(() => {
+  const includePolicyholderMembers = computedMembers.value.filter(
+    x => x.is_insured == 1 && x.is_policy_holder == 1);
+  return includePolicyholderMembers.length > 0;
+});
+
+const {
+  isIndividualAndFamilies,
+  isDomesticHelper,
+  isSelf_Me,
+  isSelf_Other,
+  isFamily_Me,
+  isFamily_Other,
+  isSelfAndFamily_Me,
+  isSelfAndFamily_Other,
+} = useHealthQuoteFlags({
+  getCoverForId: () => page.props.quote.cover_for_id,
+  getInsureCode: () => page.props.quote.insure_code,
+  getPolicyHolderCode: () => page.props.quote.policy_holder_code,
+});
+
+const showIncludePolicyholderField = computed(() => {
+  return isFamily_Other.value || isSelfAndFamily_Other.value;
+});
+
+const showAdditionalFields = computed(() => {
+  return isSelf_Me.value || isSelfAndFamily_Me.value || (isIncludePolicyholder.value && showIncludePolicyholderField.value);
+});
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -307,10 +348,17 @@ const memberCategoriesOptions = computed(() => {
 });
 
 const memberRelationOptions = computed(() => {
-  return page.props.memberRelations.map(relation => ({
-    value: relation.code,
-    label: relation.text,
-  }));
+  if (isDomesticHelper.value) {
+    return page.props.domesticWorkerRelations.map(relation => ({
+      value: relation.code,
+      label: relation.text,
+    }));
+  } else {
+    return page.props.memberRelations.map(relation => ({
+      value: relation.code,
+      label: relation.text,
+    }));
+  }
 });
 
 const emiratesOptions = computed(() => {
@@ -327,15 +375,13 @@ const salaryBandsOptions = computed(() => {
   }));
 });
 
-const memberHealthRegulationAuthority = computed(() => {
-  return memberForm.emirate_of_your_visa_id ===
-    props.branchOptions.find(b => b.branch === 'Abu Dhabi')?.id
-    ? 'DoH'
-    : 'DHA';
-});
-
-const memberPecErrorMessage = computed(() => {
-  return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
+const visaCategorySelect = computed(() => {
+  return page.props.visaCategoryOptions
+  .filter(item => item.health_cover_for_id === page.props.quote.cover_for_id)
+  .map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
 });
 
 const onTeamAssign = () => {
@@ -435,80 +481,6 @@ const onLeadStatus = () => {
   );
 };
 
-const members = ref(page.props.membersDetail);
-const computedMembers = computed(() => {
-  return members.value.filter(x => !x.is_third_party_payer);
-});
-
-const memberDetailsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Member Name',
-      value: 'first_name',
-    },
-    {
-      text: 'Policy PEC Flag',
-      value: 'is_pec_marked',
-    },
-    {
-      text: 'Gender',
-      value: 'gender',
-    },
-    {
-      text: 'DOB',
-      value: 'dob',
-    },
-    {
-      text: 'Relation',
-      value: 'relation',
-    },
-    {
-      text: 'Nationality',
-      value: 'nationality',
-    },
-    {
-      text: 'Emirate of Visa',
-      value: 'emirate',
-    },
-    {
-      text: 'Member Category',
-      value: 'member_category_id',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
-});
-
-const memberForm = useForm({
-  id: null,
-  gender: null,
-  dob: null,
-  nationality_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.nationality_id,
-  salary_band_id: null,
-  emirate_of_your_visa_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.emirate_of_your_visa_id,
-  member_category_id: null,
-  quote_request_id: page.props.quote.id,
-  update_lead_against_member: null,
-  first_name: null,
-  last_name: null,
-  relation_code: null,
-  quote_type: page.props.modelType,
-  customer_id: page.props.quote.customer_id,
-  customer_type:
-    page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
-  customer_member_id: null,
-  quoteId: page.props.quote.uuid,
-  pec: null,
-  is_principal: null,
-});
-
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
@@ -520,203 +492,7 @@ const rules = {
     'Phone must be valid',
 };
 
-const initialEditCategoryId = ref(null);
-const previouslySelectedCategoryId = ref(null);
-
-function onEditMember(data) {
-  memberActionEdit.value = true;
-  modals.member = true;
-
-  updateMemberForm(data);
-}
-
-function updateMemberForm(data) {
-  memberForm.id = data.id;
-  memberForm.gender = data.gender;
-  memberForm.dob = data.dob;
-  memberForm.nationality_id = data.nationality_id;
-  memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
-  memberForm.member_category_id = data.member_category_id;
-  memberForm.salary_band_id = data.salary_band_id;
-  memberForm.first_name = data.first_name;
-  memberForm.last_name = data.last_name;
-  memberForm.relation_code = data.relation_code;
-  memberForm.update_lead_against_member = data.index === 1;
-  memberForm.pec = data.is_pec_marked ? 1 : 2;
-  memberForm.is_principal = data.is_principal;
-
-  // set initialEditCategoryId to member_category_id when any member is edited
-  initialEditCategoryId.value = data.member_category_id;
-
-  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
-  previouslySelectedCategoryId.value = initialEditCategoryId.value;
-}
-
-const onAddMemberModal = () => {
-  memberForm.reset();
-  memberActionEdit.value = false;
-  modals.member = true;
-  memberForm.nationality_id = page.props.quote.nationality_id;
-};
-
-const memberFieldReq = reactive({
-  nationality: false,
-  dob: false,
-});
-
-const memberPecValidationError = ref('');
-
 const membersDetailsUpdated = ref(false);
-
-const onMemberSubmit = isValid => {
-  // Reset previous error messages
-  memberFieldReq.nationality = false;
-  memberFieldReq.dob = false;
-  memberPecValidationError.value = '';
-
-  if (memberForm.nationality_id == null) {
-    memberFieldReq.nationality = true;
-  }
-  if (memberForm.dob == null) {
-    memberFieldReq.dob = true;
-  }
-
-  // Validate PEC selection (must be 1 or 2, not null/undefined)
-  if (memberForm.pec == null || memberForm.pec == undefined) {
-    memberPecValidationError.value = memberPecErrorMessage.value;
-    return;
-  }
-
-  if (
-    !isValid ||
-    memberFieldReq.nationality ||
-    memberFieldReq.dob ||
-    memberPecValidationError.value
-  )
-    return;
-  if (memberActionEdit.value) {
-    memberForm.put(`/health-quote-update-member`, {
-      preserveScroll: true,
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages.error) {
-          notification.success({
-            title: 'Member Updated',
-            position: 'top',
-          });
-          memberForm.reset();
-          onLoadAvailablePlansData();
-          // location.reload();
-        }
-      },
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not saved',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.member = false;
-        membersDetailsUpdated.value = true;
-      },
-    });
-  } else {
-    memberForm.post(`/health-quote-add-member`, {
-      // new mavonic endpoint
-      preserveScroll: true,
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages.error) {
-          notification.success({
-            title: 'Member Added',
-            position: 'top',
-          });
-          onLoadAvailablePlansData();
-          // location.reload();
-        }
-      },
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not saved',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.member = false;
-        membersDetailsUpdated.value = true;
-      },
-    });
-  }
-};
-
-const memberDelete = id => {
-  modals.memberConfirm = true;
-  confirmDeleteData.member = id;
-  memberForm.customer_member_id = id;
-};
-
-const memberPrincipal = data => {
-  // Update member form as we need to call update Kapi Api with all data
-  updateMemberForm(data);
-  memberForm.is_principal = 1;
-
-  modals.memberPrincipal = true;
-  confirmPrincipalData.member = data.id;
-  memberForm.customer_member_id = data.id;
-};
-
-const memberDeleteConfirmed = () => {
-  memberForm.post(
-    `/health-quote-delete-member`,
-    // `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Deleted',
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-        // location.reload();
-      },
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.memberConfirm = false;
-        membersDetailsUpdated.value = true;
-      },
-    },
-  );
-};
-
-const memberPrincipalConfirmed = () => {
-  memberForm.put(`/health-quote-update-member`, {
-    preserveScroll: true,
-    onSuccess: response => {
-      const flash_messages = response.props.flash;
-      if (!flash_messages.error) {
-        notification.success({
-          title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-      }
-    },
-    onError: errors => {
-      notification.error({
-        title: errors.error || 'Some error occurred while processing request',
-        position: 'top',
-      });
-    },
-    onFinish: () => {
-      modals.memberPrincipal = false;
-    },
-  });
-};
 
 const onRecieveMembersDetailsReview = () => {
   membersDetailsUpdated.value = false;
@@ -781,6 +557,7 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
+  membersDetailsUpdated.value = false;
   plansTable.isLoading = true;
   let data = {
     jsonData: true,
@@ -1740,6 +1517,7 @@ onMounted(() => {
   isMounted.value = true;
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  membersDetailsUpdated.value = page.props.quote?.is_quote_revisable == 1;
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1796,18 +1574,6 @@ watch(
     }
   },
 );
-const memberCategorySalaryMapping = {
-  'Investor or Partner': 2,
-  'Golden visa': 2,
-  'Self-employed or Freelancer': 2,
-  'Domestic worker': 1,
-  'Dependent spouse': 2,
-  'Dependent child': 2,
-  'Dependent parent': 2,
-  'Dependent sibling or Other relatives': 2,
-  'Employee with salary AED 4000 and below': 1,
-  'Employee with salary above AED 4000': 2,
-};
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
@@ -1925,37 +1691,6 @@ const confirmSendEmail = () => {
     });
 };
 
-watch(
-  () => memberForm.member_category_id,
-  (newValue, oldValue) => {
-    if (newValue) {
-      if (
-        (!memberActionEdit.value && modals.member) || // Add case
-        (memberActionEdit.value &&
-          (newValue !== initialEditCategoryId.value ||
-            (newValue === initialEditCategoryId.value &&
-              newValue !== previouslySelectedCategoryId.value)))
-      ) {
-        //fetch category text
-        const selectedCategory = memberCategoriesOptions.value.find(
-          option => option.value === newValue,
-        );
-
-        // fetch salary band id based on category text
-        const salaryBandId =
-          memberCategorySalaryMapping[selectedCategory.label];
-
-        // if quote status is Transaction Approved do not auto-popualte salary band automatically
-        if (page.props.quote.quote_status_id != 15) {
-          memberForm.salary_band_id = salaryBandId;
-        }
-        previouslySelectedCategoryId.value = newValue;
-      }
-    }
-  },
-  { immediate: true },
-);
-
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
 
 const onAddUpdate = () => {
@@ -1993,14 +1728,20 @@ const validateEmirateOfVisa = () => {
   }
   modals.createPlan = true;
 };
+
+const onMemberUpdated = () => {
+  membersDetailsUpdated.value = true;
+};
+
+const isRevival = page.props.quote.source == leadSource.REVIVAL ? true : false;
 </script>
 
 <template>
   <div>
-    <Head title="Health Detail" />
+    <Head :title="`Health ${isRevival ? 'Revival' : ''} Detail`" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Health Detail</h2>
+        <h2 class="text-xl font-semibold">Health {{ isRevival ? 'Revival' : '' }} Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -2046,8 +1787,8 @@ const validateEmirateOfVisa = () => {
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-        <Link :href="route('health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
+        <Link :href="route(isRevival ? 'health-revival-quotes-list' : 'health.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Health {{ isRevival ? 'Revival' : '' }} List </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
@@ -2410,6 +2151,18 @@ const validateEmirateOfVisa = () => {
                 </dt>
                 <dd>{{ quote.cover_for_id_text }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2" v-if="isIndividualAndFamilies">
+                <dt class="font-medium">
+                  WHO WOULD THE CUSTOMER LIKE TO INSURE?
+                </dt>
+                <dd>{{ page.props.insureCodeOptions.find(option => option.code === quote.insure_code)?.text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2" v-if="isIndividualAndFamilies">
+                <dt class="font-medium">
+                  WHO WILL BE THE POLICYHOLDER?
+                </dt>
+                <dd>{{ page.props.policyHolderOptions.find(option => option.code === quote.policy_holder_code)?.text ?? 'N/A' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
                 <dd>{{ quote.currently_insured_with_id_text }}</dd>
@@ -2483,11 +2236,11 @@ const validateEmirateOfVisa = () => {
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">FIRST NAME</dt>
+                  <dt class="font-medium">POLICYHOLDER FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">LAST NAME</dt>
+                  <dt class="font-medium">POLICYHOLDER LAST NAME</dt>
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -2579,7 +2332,7 @@ const validateEmirateOfVisa = () => {
                   <dt class="font-medium">SALARY BAND</dt>
                   <dd>{{ quote.salary_band_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2" v-if="showAdditionalFields">
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
                 </div>
@@ -2588,6 +2341,18 @@ const validateEmirateOfVisa = () => {
                   <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Visa Category</dt>
+                  <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="!showAdditionalFields">
+                  <dt class="font-medium">Policyholder Category</dt>
+                  <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="showIncludePolicyholderField">
+                  <dt class="font-medium">Is the Policyholder Included in the Policy?</dt>
+                  <dd>{{ isIncludePolicyholder ? 'Yes' : 'No' }}</dd>
+                </div>
               </dl>
               <dl
                 v-if="
@@ -2596,11 +2361,11 @@ const validateEmirateOfVisa = () => {
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">FIRST NAME</dt>
+                  <dt class="font-medium">POLICYHOLDER FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">LAST NAME</dt>
+                  <dt class="font-medium">POLICYHOLDER LAST NAME</dt>
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -2689,6 +2454,14 @@ const validateEmirateOfVisa = () => {
                       filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Visa Category</dt>
+                  <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="!showAdditionalFields">
+                  <dt class="font-medium">Policyholder Category</dt>
+                  <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -2795,460 +2568,37 @@ const validateEmirateOfVisa = () => {
       </template>
     </x-modal>
 
-    <x-accordion
+    <HealthMemberDetails
       v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
-      show-icon
-    >
-      <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
-        </h3>
-        <template #content>
-          <x-divider class="mb-4 mt-1" />
-          <AddMemberButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              @click.prevent="onAddMemberModal"
-              size="sm"
-              color="orange"
-              :disabled="isDisabled || isLocked"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Add Member
-            </x-button>
-          </AddMemberButtonTemplate>
-          <div class="flex mb-3 justify-end">
-            <x-tooltip
-              v-if="lockLeadSectionsDetails.member_details"
-              position="bottom"
-            >
-              <AddMemButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                This lead is now locked as the policy has been booked. If
-                changes are needed such midterm addition of member, go to 'Send
-                Update', select 'Add Update', and choose 'Endorsement Financial'
-              </template>
-            </x-tooltip>
-            <AddMemButtonReuseTemplate v-else />
-          </div>
-          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="onEditMember(item)"
-              :disabled="isDisabled || isLocked"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Edit
-            </x-button>
-          </EditMemberButtonTemplate>
-          <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="memberDelete(item.id)"
-              :disabled="isDisabled || isLocked"
-              v-if="readOnlyMode.isDisable === true && !item.is_principal"
-            >
-              Delete
-            </x-button>
-          </DeleteMemberButtonTemplate>
-          <PrincipalMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="memberPrincipal(item)"
-              v-if="!item.is_principal"
-              :disabled="isLocked"
-            >
-              Make Principal
-            </x-button>
-          </PrincipalMemberButtonTemplate>
-          <DataTable
-            table-class-name="tablefixed overflow-auto"
-            :headers="memberDetailsTable.columns"
-            :items="membersDetail || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-first_name="{ first_name, last_name }">
-              {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
-            </template>
-
-            <template #item-is_pec_marked="{ is_pec_marked }">
-              <div class="text-center">
-                <x-tag size="sm" :color="is_pec_marked ? 'error' : 'success'">
-                  {{ is_pec_marked ? 'Yes' : 'No' }}
-                </x-tag>
-              </div>
-            </template>
-
-            <template #item-gender="{ gender }">
-              {{ genderText(gender).value }}
-            </template>
-
-            <template #item-dob="{ dob }">
-              {{ dateFormat(dob) }}
-            </template>
-
-            <template #item-relation="{ relation }">
-              {{ relation?.text }}
-            </template>
-
-            <template #item-nationality="{ nationality }">
-              {{ nationality?.text }}
-            </template>
-
-            <template #item-emirate="{ emirate }">
-              {{ emirate?.text }}
-            </template>
-
-            <template #item-member_category_id="{ member_category_id }">
-              {{ memberCategoryText(member_category_id).value }}
-            </template>
-
-            <template #item-action="item">
-              <div class="flex gap-2">
-                <x-tooltip
-                  v-if="lockLeadSectionsDetails.member_details"
-                  position="left"
-                  align="center"
-                  class="yoyo-tip"
-                >
-                  <EditMemberButtonReuseTemplate
-                    :isDisabled="true"
-                    :item="item"
-                  />
-                  <template #tooltip>
-                    <div class="whitespace-normal text-xs">
-                      This lead is now locked as the policy has been booked. If
-                      changes are needed such midterm deletion of member or
-                      marital status change, go to 'Send Update', select 'Add
-                      Update', and choose 'Endorsement Financial'
-                    </div>
-                  </template>
-                </x-tooltip>
-                <EditMemberButtonReuseTemplate v-else :item="item" />
-                <x-tooltip
-                  v-if="page.props.lockLeadSectionsDetails.member_details"
-                  position="left"
-                  align="center"
-                  class="yoyo-tip"
-                >
-                  <DeleteMemberButtonReuseTemplate
-                    :isDisabled="true"
-                    :item="item"
-                  />
-                  <template #tooltip>
-                    <div class="whitespace-normal text-xs">
-                      This lead is now locked as the policy has been booked. If
-                      changes are needed such midterm deletion of member or
-                      marital status change, go to 'Send Update', select 'Add
-                      Update', and choose 'Endorsement Financial'
-                    </div>
-                  </template>
-                </x-tooltip>
-                <DeleteMemberButtonReuseTemplate v-else :item="item" />
-
-                <x-tooltip
-                  v-if="page.props.lockLeadSectionsDetails.member_details"
-                  position="left"
-                  align="center"
-                  class="yoyo-tip"
-                >
-                  <PrincipalMemberButtonReuseTemplate
-                    :isDisabled="true"
-                    :item="item"
-                  />
-                  <template #tooltip>
-                    <div class="whitespace-normal text-xs">
-                      This lead is now locked as the policy has been booked. If
-                      changes are needed such midterm deletion of member or
-                      marital status change, go to 'Send Update', select 'Add
-                      Update', and choose 'Endorsement Financial'
-                    </div>
-                  </template>
-                </x-tooltip>
-                <PrincipalMemberButtonReuseTemplate v-else :item="item" />
-              </div>
-            </template>
-          </DataTable>
-
-          <x-modal
-            v-model="modals.member"
-            size="lg"
-            :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
-            show-close
-            backdrop
-            is-form
-            persistent
-            @submit="onMemberSubmit"
-          >
-            <div
-              v-if="isManualPlansCount > 0"
-              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-              role="alert"
-            >
-              <div class="flex">
-                <div class="py-1">
-                  <svg
-                    class="fill-current h-6 w-6 text-read-900 mr-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                  <p class="text-sm">
-                    Please revist all manual plan(s) and update the per member
-                    price
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="grid md:grid-cols-2 gap-4">
-              <input type="hidden" :value="memberForm.id" />
-              <x-input
-                maxLength="60"
-                v-model="memberForm.first_name"
-                label="First Name"
-                placeholder="First Name"
-                :rules="[isRequired]"
-              />
-              <x-input
-                maxLength="60"
-                v-model="memberForm.last_name"
-                label="Last Name"
-                placeholder="Last Name"
-                :rules="[isRequired]"
-              />
-              <x-select
-                v-model="memberForm.nationality_id"
-                label="Nationality"
-                :options="nationalityOptions"
-                placeholder="Select Nationality"
-                filterable
-                filterPlaceholder="Filter Nationality...."
-                :hasError="memberFieldReq.nationality"
-              />
-
-              <x-select
-                v-model="memberForm.emirate_of_your_visa_id"
-                label="Emirate of Visa*"
-                :options="emiratesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Emirate of Visa"
-                class="w-full"
-              />
-
-              <x-select
-                v-model="memberForm.member_category_id"
-                label="Member Category*"
-                :options="memberCategoriesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Member Category"
-                class="w-full"
-              />
-
-              <x-select
-                v-model="memberForm.gender"
-                label="Gender*"
-                :options="genderSelect"
-                :rules="[isRequired]"
-                placeholder="Select Gender"
-                class="w-full"
-              />
-              <DatePicker
-                v-model="memberForm.dob"
-                label="DOB*"
-                :max-date="new Date()"
-                :rules="[isRequired]"
-                :hasError="memberFieldReq.dob"
-              />
-              <x-select
-                v-model="memberForm.relation_code"
-                label="Relation"
-                :options="memberRelationOptions"
-                placeholder="Select Relation"
-                class="w-full"
-              />
-              <x-select
-                v-model="memberForm.salary_band_id"
-                label="Salary Band"
-                :options="salaryBandsOptions"
-                placeholder="Select Salary Band"
-                class="w-full"
-              />
-            </div>
-
-            <!-- PEC Field -->
-            <div class="md:col-span-2" data-member-pec-field>
-              <div class="mb-3">
-                <ToolTip
-                  title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
-                  tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
-                  class="w-full"
-                />
-              </div>
-              <div>
-                <x-form-group v-model="memberForm.pec">
-                  <x-radio :value="1" label="Yes" />
-                  <x-radio :value="2" label="No" />
-                </x-form-group>
-                <div
-                  v-if="memberPecValidationError"
-                  class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
-                >
-                  {{ memberPecValidationError }}
-                </div>
-              </div>
-            </div>
-
-            <template #secondary-action>
-              <x-button
-                size="sm"
-                ghost
-                tabindex="-1"
-                @click="modals.member = false"
-              >
-                Cancel
-              </x-button>
-            </template>
-            <template #primary-action>
-              <x-button
-                size="sm"
-                color="emerald"
-                :loading="memberForm.processing"
-                type="submit"
-              >
-                {{ memberActionEdit ? 'Update' : 'Save' }}
-              </x-button>
-            </template>
-          </x-modal>
-
-          <x-modal
-            v-model="modals.memberConfirm"
-            title="Delete Member Detail"
-            show-close
-            backdrop
-          >
-            <div
-              v-if="isManualPlansCount > 0"
-              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-              role="alert"
-            >
-              <div class="flex">
-                <div class="py-1">
-                  <svg
-                    class="fill-current h-6 w-6 text-read-900 mr-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                  <p class="text-sm">
-                    Please revist all manual plan(s) and update the per member
-                    price
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p>Are you sure you want to delete this?</p>
-            <template #actions>
-              <div class="text-right space-x-4">
-                <x-button
-                  size="sm"
-                  ghost
-                  @click.prevent="modals.memberConfirm = false"
-                >
-                  Cancel
-                </x-button>
-                <x-button
-                  size="sm"
-                  color="error"
-                  @click.prevent="memberDeleteConfirmed"
-                  :loading="memberForm.processing"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </x-modal>
-
-          <!-- Modal to make member principal -->
-          <x-modal
-            v-model="modals.memberPrincipal"
-            title="Confirm Principal Member"
-            show-close
-            backdrop
-          >
-            <div
-              v-if="isManualPlansCount > 0"
-              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-              role="alert"
-            >
-              <div class="flex">
-                <div class="py-1">
-                  <svg
-                    class="fill-current h-6 w-6 text-read-900 mr-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                  <p class="text-sm">
-                    Please revist all manual plan(s) and update the per member
-                    price
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p>Are you sure you want to make this member principal?</p>
-            <template #actions>
-              <div class="text-right space-x-4">
-                <x-button
-                  size="sm"
-                  ghost
-                  @click.prevent="modals.memberPrincipal = false"
-                >
-                  Cancel
-                </x-button>
-                <x-button
-                  size="sm"
-                  color="error"
-                  @click.prevent="memberPrincipalConfirmed"
-                  :loading="memberForm.processing"
-                >
-                  Confirm
-                </x-button>
-              </div>
-            </template>
-          </x-modal>
-        </template>
-      </x-accordion-item>
-    </x-accordion>
+      :membersDetail="membersDetail"
+      :quote="quote"
+      :isManualPlansCount="isManualPlansCount"
+      :isLocked="isLocked"
+      :readOnlyMode="readOnlyMode"
+      :lockLeadSectionsDetails="lockLeadSectionsDetails"
+      :nationalities="nationalityOptions"
+      :memberCategories="memberCategoriesOptions"
+      :memberRelations="memberRelationOptions"
+      :emirates="emiratesOptions"
+      :salaryBands="salaryBandsOptions"
+      :genderOptions="genderSelect"
+      :maritalStatusOptions="maritalStatusOptions.map(item => ({
+        value: item.id,
+        label: item.text,
+      }))"
+      :visaCategoryOptions="visaCategorySelect"
+      :includePolicyHolder="isIncludePolicyholder"
+      :coverForId="quote.cover_for_id"
+      :healthInsureCode="quote.insure_code"
+      :policyHolderCode="quote.policy_holder_code"
+      @memberUpdated="onMemberUpdated"
+      @loadAvailablePlans="onLoadAvailablePlansData"
+    />
+    
     <UBODetails
       v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
-      :UBOsDetails="UBOsDetails"
+      :UBOsDetails="UBOsDetails.filter(x => x.is_policy_holder == 0)"
       :nationalities="nationalities"
       :UBORelations="UBORelations"
       :quote_type="page.props.modelType"

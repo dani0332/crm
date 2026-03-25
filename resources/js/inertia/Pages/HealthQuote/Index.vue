@@ -143,12 +143,16 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LEAD TYPE', value: 'health_lead_type.text', is_active: true },
-  { text: 'SALARY BAND', value: 'salary_band.text', is_active: true },
   {
     text: 'MEMBER CATEGORY',
     value: 'member_category.text',
     is_active: true,
   },
+  { text: 'PolicyHolder Category', value: 'policy_holder_category.text', is_active: true },
+  { text: 'Visa Category', value: 'visa_category.text', is_active: true },
+  { text: 'Gender', value: 'gender.text', is_active: true },
+  { text: 'Marital Status', value: 'marital_status.text', is_active: true },
+  { text: 'SALARY', value: 'salary_band.text', is_active: true },
   {
     text: 'CURRENTLY INSURED WITH',
     value: 'insurance_provider.text',

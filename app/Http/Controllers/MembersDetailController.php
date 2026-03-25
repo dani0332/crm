@@ -67,6 +67,7 @@ class MembersDetailController extends Controller
                 'code' => generateQuoteMemberCode($request->customer_type, $customerEntityId),
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 'is_third_party_payer' => $request->is_third_party_payer ?? false,
+                'is_insured' => $request->is_insured ?? 1,
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
