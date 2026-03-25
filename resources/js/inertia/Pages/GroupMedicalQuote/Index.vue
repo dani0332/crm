@@ -298,7 +298,9 @@ function setQueryFilters() {
   const emirateVal = filters.emirate_of_registration_id;
   if (emirateVal !== undefined && !Array.isArray(emirateVal)) {
     filters.emirate_of_registration_id =
-      emirateVal === '' || emirateVal === null || Number.isNaN(Number(emirateVal))
+      emirateVal === '' ||
+      emirateVal === null ||
+      Number.isNaN(Number(emirateVal))
         ? []
         : [Number(emirateVal)];
   }
@@ -611,7 +613,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by Email"
           label="Email"
         />
-       
+
         <x-select
           v-model="filters.emirate_of_registration_id"
           name="emirate_of_registration_id[]"
@@ -775,7 +777,6 @@ const insurerAMLStatusOption = computed(() => {
           label="Assignment Type"
         />
 
-        
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
