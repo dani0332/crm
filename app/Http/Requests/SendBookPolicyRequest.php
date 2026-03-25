@@ -75,7 +75,7 @@ class SendBookPolicyRequest extends FormRequest
                     if (! $quote?->advisor_id) {
                         $validator->errors()->add('error', 'Please select advisor');
                     }
-    
+
                     if (! $quote?->email) {
                         $validator->errors()->add('error', 'Customer email is required');
                     }
