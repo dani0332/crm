@@ -2,6 +2,7 @@
 
 namespace Tests\Helpers;
 
+use Tests\Support\Schema\CommunicationEventLogSchema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\RenewalsSchema;
@@ -36,6 +37,13 @@ class TestSchemaCreator
         self::createMinimalSchema();
 
         (new RulesSchema)->register();
+    }
+
+    public static function createCommunicationEventLogSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new CommunicationEventLogSchema)->register();
     }
 
 }
