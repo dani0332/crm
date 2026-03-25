@@ -20,15 +20,7 @@ class AdnicQuoteUpdaterService
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
-
-            /* 'policy_issuance_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate,
-            'price_vat_applicable' => $issuePolicyResult?->PolicyInfo?->premiumAmount,
-            'vat' => $issuePolicyResult?->PolicyInfo?->prmVatAmt,
-            'price_with_vat' => $issuePolicyResult?->PolicyInfo?->FinalPremium,
-            'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
-            'insurer_debit_note_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->CommisionNoteDocumentId,
-            'insurer_tax_invoice_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->TaxInvoiceDocumentId,
-            'insurer_policy_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->PolicyDocumentId, */
+            'price_vat_applicable' => $issuePolicyResult?->QuoteInfo?->PartnerPremium,
         ];
 
         // Filter out null values to avoid overwriting existing data
@@ -40,15 +32,9 @@ class AdnicQuoteUpdaterService
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void
     {
         $data = [
-            //  'commission_vat_applicable' => $issuePolicyResult?->PolicyInfo?->commissionPayableAmt,
-            //  'commission' => $issuePolicyResult?->PolicyInfo?->CommissionAmount,
-            //  'commission_vat' => $issuePolicyResult?->PolicyInfo?->commissionVatAmt,
-            //  'commmission_percentage' => $issuePolicyResult?->PolicyInfo?->CommissionPercentage ?? 0,
              'insurer_tax_number' => $issuePolicyResult?->PolicyInfo?->DebitNoteNo ?? null,
-            //  'insurer_invoice_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate ?? null,
              'insurer_commmission_invoice_number' => $issuePolicyResult?->PolicyInfo?->creditNoteNo ?? null,
          ];
-          // Filter out null values to avoid overwriting existing data
          $data = array_filter($data, fn ($value) => $value !== null);
 
          Payment::where('code', $quoteCode)->update($data);
