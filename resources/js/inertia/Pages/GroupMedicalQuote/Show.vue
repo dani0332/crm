@@ -551,7 +551,6 @@ function handleOcrNotification(event) {
     });
   }
 }
-  
 </script>
 
 <template>
