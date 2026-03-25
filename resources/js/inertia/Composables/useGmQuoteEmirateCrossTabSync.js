@@ -89,9 +89,7 @@ export function useGmQuoteEmirateCrossTabListen({
     const sameByUuid =
       myUuid && d.quoteUuid && String(d.quoteUuid) === String(myUuid);
     const sameById =
-      myId != null &&
-      d.quoteId != null &&
-      Number(d.quoteId) === Number(myId);
+      myId != null && d.quoteId != null && Number(d.quoteId) === Number(myId);
     if (!sameByUuid && !sameById) {
       return;
     }
