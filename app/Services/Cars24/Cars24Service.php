@@ -46,27 +46,8 @@ class Cars24Service
             return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => []];
         }
 
-        $lookupMappings = [
-            ['key' => 'rta-transaction-type', 'code' => $vehicleDriverDetail->rta_transaction_type, 'field' => 'rta_transaction_type'],
-            ['key' => 'rta-plate-category', 'code' => $vehicleDriverDetail->rta_plate_category, 'field' => 'rta_plate_category'],
-            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_color, 'field' => 'vehicle_color'],
-            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_plate_color, 'field' => 'vehicle_plate_color'],
-            ['key' => 'bank-name', 'code' => $vehicleDriverDetail->bank_name, 'field' => 'bank_name'],
-        ];
-
-        $mappings = InsurancePartnerMapping::active()
-            ->where(function ($query) use ($lookupMappings) {
-                foreach ($lookupMappings as $config) {
-                    if ($config['code'] !== null && $config['code'] !== '') {
-                        $query->orWhere(function ($q) use ($config) {
-                            $q->where('key', $config['key'])->where('code', $config['code']);
-                        });
-                    }
-                }
-            })
-            ->get()
-            ->mapWithKeys(fn ($mapping) => [$mapping->key.'-'.$mapping->code => $mapping]);
-
+        $lookupMappings = $this->buildLookupMappings($vehicleDriverDetail);
+        $mappings = $this->fetchMappings($lookupMappings);
         $mappingValues = [];
 
         foreach ($lookupMappings as $config) {
@@ -80,5 +61,32 @@ class Cars24Service
         }
 
         return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => $mappingValues];
+    }
+
+    private function buildLookupMappings($vehicleDriverDetail): array
+    {
+        return [
+            ['key' => 'rta-transaction-type', 'code' => $vehicleDriverDetail->rta_transaction_type, 'field' => 'rta_transaction_type'],
+            ['key' => 'rta-plate-category', 'code' => $vehicleDriverDetail->rta_plate_category, 'field' => 'rta_plate_category'],
+            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_color, 'field' => 'vehicle_color'],
+            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_plate_color, 'field' => 'vehicle_plate_color'],
+            ['key' => 'bank-name', 'code' => $vehicleDriverDetail->bank_name, 'field' => 'bank_name'],
+        ];
+    }
+
+    private function fetchMappings(array $lookupMappings)
+    {
+        return InsurancePartnerMapping::active()
+            ->where(function ($query) use ($lookupMappings) {
+                foreach ($lookupMappings as $config) {
+                    if ($config['code'] !== null && $config['code'] !== '') {
+                        $query->orWhere(function ($q) use ($config) {
+                            $q->where('key', $config['key'])->where('code', $config['code']);
+                        });
+                    }
+                }
+            })
+            ->get()
+            ->mapWithKeys(fn ($mapping) => [$mapping->key.'-'.$mapping->code => $mapping]);
     }
 }
