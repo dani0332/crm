@@ -37,7 +37,6 @@ class CheckRouteAccess
             ? $this->buildPrefixPermission($permissionPrefix, $permissionSuffix)
             : $this->mapRouteNameToPermission($routeName, $methodName, $permissionSuffix);
 
-        info("permissionName: ".$permissionName);
 
         if (auth()->user()->can($permissionName) || $this->allowedViewAllLeads($permissionName) || $this->allowedViewAllReports($permissionName)) {
             return $next($request);
