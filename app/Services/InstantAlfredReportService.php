@@ -522,7 +522,9 @@ class InstantAlfredReportService
     {
         $segment = $request->segment ?? null;
 
-        return ($segment && $segment !== 'all') ? $segment : null;
+        return ($segment && strtolower((string) $segment) !== 'all')
+            ? strtoupper((string) $segment)
+            : null;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
