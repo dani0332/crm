@@ -1,6 +1,6 @@
 ---
 name: inertia-vue-development
-description: "Develops Inertia.js v2 Vue client-side applications. Activates when creating Vue pages, forms, or navigation; using <Link>, <Form>, useForm, or router; working with deferred props, prefetching, or polling; or when user mentions Vue with Inertia, Vue pages, Vue forms, or Vue navigation."
+description: 'Develops Inertia.js v2 Vue client-side applications. Activates when creating Vue pages, forms, or navigation; using <Link>, <Form>, useForm, or router; working with deferred props, prefetching, or polling; or when user mentions Vue with Inertia, Vue pages, Vue forms, or Vue navigation.'
 license: MIT
 metadata:
   author: laravel
@@ -23,22 +23,23 @@ Vue page components should be placed in the `resources/js/Pages` directory.
 Important: Vue components must have a single root element.
 
 <!-- Basic Vue Page Component -->
+
 ```vue
 <script setup>
 defineProps({
-    users: Array
-})
+  users: Array,
+});
 </script>
 
 <template>
-    <div>
-        <h1>Users</h1>
-        <ul>
-            <li v-for="user in users" :key="user.id">
-                {{ user.name }}
-            </li>
-        </ul>
-    </div>
+  <div>
+    <h1>Users</h1>
+    <ul>
+      <li v-for="user in users" :key="user.id">
+        {{ user.name }}
+      </li>
+    </ul>
+  </div>
 </template>
 ```
 
@@ -49,32 +50,32 @@ defineProps({
 Use `<Link>` for client-side navigation instead of traditional `<a>` tags:
 
 <!-- Inertia Vue Navigation -->
+
 ```vue
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div>
-        <Link href="/">Home</Link>
-        <Link href="/users">Users</Link>
-        <Link :href="`/users/${user.id}`">View User</Link>
-    </div>
+  <div>
+    <Link href="/">Home</Link>
+    <Link href="/users">Users</Link>
+    <Link :href="`/users/${user.id}`">View User</Link>
+  </div>
 </template>
 ```
 
 ### Link with Method
 
 <!-- Link with POST Method -->
+
 ```vue
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Link href="/logout" method="post" as="button">
-        Logout
-    </Link>
+  <Link href="/logout" method="post" as="button"> Logout </Link>
 </template>
 ```
 
@@ -83,42 +84,42 @@ import { Link } from '@inertiajs/vue3'
 Prefetch pages to improve perceived performance:
 
 <!-- Prefetch on Hover -->
+
 ```vue
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Link href="/users" prefetch>
-        Users
-    </Link>
+  <Link href="/users" prefetch> Users </Link>
 </template>
 ```
 
 ### Programmatic Navigation
 
 <!-- Router Visit -->
+
 ```vue
 <script setup>
-import { router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3';
 
 function handleClick() {
-    router.visit('/users')
+  router.visit('/users');
 }
 
 // Or with options
 function createUser() {
-    router.visit('/users', {
-        method: 'post',
-        data: { name: 'John' },
-        onSuccess: () => console.log('Done'),
-    })
+  router.visit('/users', {
+    method: 'post',
+    data: { name: 'John' },
+    onSuccess: () => console.log('Done'),
+  });
 }
 </script>
 
 <template>
-    <Link href="/users">Users</Link>
-    <Link href="/logout" method="post" as="button">Logout</Link>
+  <Link href="/users">Users</Link>
+  <Link href="/logout" method="post" as="button">Logout</Link>
 </template>
 ```
 
@@ -129,38 +130,37 @@ function createUser() {
 For Inertia v2.0.x: Build forms using the `useForm` composable as the `<Form>` component is not available until v2.1.0+.
 
 <!-- useForm Composable Example -->
+
 ```vue
 <script setup>
-import { useForm } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3';
 
 const form = useForm({
-    name: '',
-    email: '',
-    password: '',
-})
+  name: '',
+  email: '',
+  password: '',
+});
 
 function submit() {
-    form.post('/users', {
-        onSuccess: () => form.reset('password'),
-    })
+  form.post('/users', {
+    onSuccess: () => form.reset('password'),
+  });
 }
 </script>
 
 <template>
-    <form @submit.prevent="submit">
-        <input type="text" v-model="form.name" />
-        <div v-if="form.errors.name">{{ form.errors.name }}</div>
+  <form @submit.prevent="submit">
+    <input type="text" v-model="form.name" />
+    <div v-if="form.errors.name">{{ form.errors.name }}</div>
 
-        <input type="email" v-model="form.email" />
-        <div v-if="form.errors.email">{{ form.errors.email }}</div>
+    <input type="email" v-model="form.email" />
+    <div v-if="form.errors.email">{{ form.errors.email }}</div>
 
-        <input type="password" v-model="form.password" />
-        <div v-if="form.errors.password">{{ form.errors.password }}</div>
+    <input type="password" v-model="form.password" />
+    <div v-if="form.errors.password">{{ form.errors.password }}</div>
 
-        <button type="submit" :disabled="form.processing">
-            Create User
-        </button>
-    </form>
+    <button type="submit" :disabled="form.processing">Create User</button>
+  </form>
 </template>
 ```
 
@@ -171,26 +171,27 @@ function submit() {
 Use deferred props to load data after initial page render:
 
 <!-- Deferred Props with Empty State -->
+
 ```vue
 <script setup>
 defineProps({
-    users: Array
-})
+  users: Array,
+});
 </script>
 
 <template>
-    <div>
-        <h1>Users</h1>
-        <div v-if="!users" class="animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <ul v-else>
-            <li v-for="user in users" :key="user.id">
-                {{ user.name }}
-            </li>
-        </ul>
+  <div>
+    <h1>Users</h1>
+    <div v-if="!users" class="animate-pulse">
+      <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-1/2"></div>
     </div>
+    <ul v-else>
+      <li v-for="user in users" :key="user.id">
+        {{ user.name }}
+      </li>
+    </ul>
+  </div>
 </template>
 ```
 
@@ -199,55 +200,61 @@ defineProps({
 Use the `usePoll` composable to automatically refresh data at intervals. It handles cleanup on unmount and throttles polling when the tab is inactive.
 
 <!-- Basic Polling -->
+
 ```vue
 <script setup>
-import { usePoll } from '@inertiajs/vue3'
+import { usePoll } from '@inertiajs/vue3';
 
 defineProps({
-    stats: Object
-})
+  stats: Object,
+});
 
-usePoll(5000)
+usePoll(5000);
 </script>
 
 <template>
-    <div>
-        <h1>Dashboard</h1>
-        <div>Active Users: {{ stats.activeUsers }}</div>
-    </div>
+  <div>
+    <h1>Dashboard</h1>
+    <div>Active Users: {{ stats.activeUsers }}</div>
+  </div>
 </template>
 ```
 
 <!-- Polling With Request Options and Manual Control -->
+
 ```vue
 <script setup>
-import { usePoll } from '@inertiajs/vue3'
+import { usePoll } from '@inertiajs/vue3';
 
 defineProps({
-    stats: Object
-})
+  stats: Object,
+});
 
-const { start, stop } = usePoll(5000, {
+const { start, stop } = usePoll(
+  5000,
+  {
     only: ['stats'],
     onStart() {
-        console.log('Polling request started')
+      console.log('Polling request started');
     },
     onFinish() {
-        console.log('Polling request finished')
+      console.log('Polling request finished');
     },
-}, {
+  },
+  {
     autoStart: false,
     keepAlive: true,
-})
+  },
+);
 </script>
 
 <template>
-    <div>
-        <h1>Dashboard</h1>
-        <div>Active Users: {{ stats.activeUsers }}</div>
-        <button @click="start">Start Polling</button>
-        <button @click="stop">Stop Polling</button>
-    </div>
+  <div>
+    <h1>Dashboard</h1>
+    <div>Active Users: {{ stats.activeUsers }}</div>
+    <button @click="start">Start Polling</button>
+    <button @click="stop">Stop Polling</button>
+  </div>
 </template>
 ```
 
@@ -259,31 +266,32 @@ const { start, stop } = usePoll(5000, {
 Load more data when user scrolls to a specific element:
 
 <!-- Infinite Scroll with WhenVisible -->
+
 ```vue
 <script setup>
-import { WhenVisible } from '@inertiajs/vue3'
+import { WhenVisible } from '@inertiajs/vue3';
 
 defineProps({
-    users: Object
-})
+  users: Object,
+});
 </script>
 
 <template>
-    <div>
-        <div v-for="user in users.data" :key="user.id">
-            {{ user.name }}
-        </div>
-
-        <WhenVisible
-            v-if="users.next_page_url"
-            data="users"
-            :params="{ page: users.current_page + 1 }"
-        >
-            <template #fallback>
-                <div>Loading more...</div>
-            </template>
-        </WhenVisible>
+  <div>
+    <div v-for="user in users.data" :key="user.id">
+      {{ user.name }}
     </div>
+
+    <WhenVisible
+      v-if="users.next_page_url"
+      data="users"
+      :params="{ page: users.current_page + 1 }"
+    >
+      <template #fallback>
+        <div>Loading more...</div>
+      </template>
+    </WhenVisible>
+  </div>
 </template>
 ```
 
