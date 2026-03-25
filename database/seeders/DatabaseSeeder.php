@@ -58,6 +58,7 @@ class DatabaseSeeder extends Seeder
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
         ]);
     }
 }
