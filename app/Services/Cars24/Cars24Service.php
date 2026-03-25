@@ -38,7 +38,6 @@ class Cars24Service
 
         $providerCodeColumn = match ($paymentDetails->insuranceProvider->code) {
             InsuranceProvidersEnum::AXA => 'axa_code',
-            InsuranceProvidersEnum::DNIRC => 'dni_code',
             default => null,
         };
 
