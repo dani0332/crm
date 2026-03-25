@@ -46,6 +46,7 @@ class Cars24Service
             return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => []];
         }
 
+        $clonedVehicleDriverDetail = clone $vehicleDriverDetail;
         $lookupMappings = $this->buildLookupMappings($vehicleDriverDetail);
         $mappings = $this->fetchMappings($lookupMappings);
         $mappingValues = [];
@@ -54,13 +55,13 @@ class Cars24Service
             if ($config['code'] !== null && $config['code'] !== '') {
                 $mapping = $mappings->get($config['key'].'-'.$config['code']);
                 if ($mapping) {
-                    $vehicleDriverDetail->{$config['field']} = $mapping->{$providerCodeColumn};
+                    $clonedVehicleDriverDetail->{$config['field']} = $mapping->{$providerCodeColumn};
                     $mappingValues[$config['key'].'-'.$config['code']] = $mapping->value;
                 }
             }
         }
 
-        return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => $mappingValues];
+        return ['vehicleDriverDetail' => $clonedVehicleDriverDetail, 'mappingValues' => $mappingValues];
     }
 
     private function buildLookupMappings($vehicleDriverDetail): array
@@ -76,6 +77,13 @@ class Cars24Service
 
     private function fetchMappings(array $lookupMappings)
     {
+        $hasValidCodes = collect($lookupMappings)
+            ->contains(fn ($config) => $config['code'] !== null && $config['code'] !== '');
+
+        if (! $hasValidCodes) {
+            return collect();
+        }
+
         return InsurancePartnerMapping::active()
             ->where(function ($query) use ($lookupMappings) {
                 foreach ($lookupMappings as $config) {
