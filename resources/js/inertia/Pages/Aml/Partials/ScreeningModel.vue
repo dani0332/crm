@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { notifyGmQuoteEmirateUpdated } from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
 import KYCDetails from './KYCDetails.vue';
@@ -710,6 +711,13 @@ const submitScreeningForm = isValid => {
         }
       },
       onSuccess: response => {
+        if (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Business) {
+          notifyGmQuoteEmirateUpdated({
+            quoteUuid: quoteRequest.uuid,
+            quoteId: quoteRequest.id,
+            source: 'aml-screening-modal',
+          });
+        }
         if (response.props.flash.success?.length === 0) {
           notification.success({
             title: 'Quote is updated',

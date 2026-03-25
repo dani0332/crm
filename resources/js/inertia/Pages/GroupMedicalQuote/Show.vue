@@ -5,6 +5,10 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import {
+  notifyGmQuoteEmirateUpdated,
+  useGmQuoteEmirateCrossTabListen,
+} from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 
 const props = defineProps({
   quote: Object,
@@ -48,6 +52,10 @@ const props = defineProps({
 });
 
 const page = usePage();
+useGmQuoteEmirateCrossTabListen({
+  quoteUuid: computed(() => page.props.quote?.uuid),
+  quoteId: computed(() => page.props.quote?.id),
+});
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
@@ -315,12 +323,31 @@ const customerProfileForm = useForm({
     null,
 });
 
+const resolvedEmirateOfRegistrationId = computed(
+  () =>
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ??
+    page.props.quote?.emirate_of_registration_id ??
+    null,
+);
+
+watch(resolvedEmirateOfRegistrationId, newVal => {
+  if (newVal !== customerProfileForm.emirate_of_registration_id) {
+    customerProfileForm.emirate_of_registration_id = newVal;
+  }
+});
+
 const updateProfileDetails = isValid => {
   if (!isValid) return;
 
   customerProfileForm.post(route('update-customer-profile'), {
     preserveScroll: true,
     onSuccess: () => {
+      notifyGmQuoteEmirateUpdated({
+        quoteUuid: page.props.quote?.uuid,
+        quoteId: page.props.quote?.id,
+        source: 'gm-lead-profile',
+      });
       notification.success({
         title: 'Customer profile details update Successfully',
         position: 'top',
@@ -413,6 +440,11 @@ const linkEntity = () => {
         customerProfileForm.emirate_of_registration_id =
           response.emirate_of_registration_id;
 
+        notifyGmQuoteEmirateUpdated({
+          quoteUuid: page.props.quote?.uuid,
+          quoteId: page.props.quote?.id,
+          source: 'gm-link-entity',
+        });
         notification.success({
           title: res.data.message,
           position: 'top',

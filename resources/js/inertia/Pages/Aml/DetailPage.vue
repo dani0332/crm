@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ScreeningModel from './Partials/ScreeningModel.vue';
+import { useGmQuoteEmirateCrossTabListen } from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 const props = defineProps({
   quoteType: Object,
   quoteRequest: Object,
@@ -54,6 +55,14 @@ const IsComplianceCommentsEnable = ref(false);
 const screeningModel = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
+
+useGmQuoteEmirateCrossTabListen({
+  quoteUuid: computed(() => props.quoteRequest?.uuid),
+  quoteId: computed(() => props.quoteRequest?.id),
+  enabled: computed(
+    () => props.quoteType?.code === quoteTypeCodeEnum.Business,
+  ),
+});
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
