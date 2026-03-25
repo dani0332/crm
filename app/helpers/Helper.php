@@ -654,6 +654,45 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
     }
 }
 
+if (! function_exists('sanitizeNotesFromEmoji')) {
+    /**
+     * Remove emoji from the string, including compound sequences (ZWJ, variation selectors, skin tones).
+     * Keycap emoji (digit/#/* + optional VS16 + U+20E3) are removed first so grapheme splitting cannot leave a stray base character.
+     * Uses PCRE extended grapheme clusters (\X) so sequences like 👨‍👩‍👧 are removed in full, not leaving U+200D / VS16 behind.
+     * A follow-up pass strips any remaining joiners, presentation selectors, and emoji modifier codepoints.
+     * Only horizontal whitespace (spaces, tabs on the same line) is normalised so gaps left by removed emoji do not stack;
+     * newlines and paragraph breaks are preserved.
+     */
+    function sanitizeNotesFromEmoji(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        // Strip emoji keycap sequences on the raw string so split grapheme clusters cannot leave a preserved digit + VS + U+20E3.
+        $value = preg_replace('/[0-9#*]\x{FE0F}?\x{20E3}/u', '', $value) ?? $value;
+
+        $sanitized = preg_replace_callback('/\X/u', static function (array $matches): string {
+            $cluster = $matches[0];
+
+            // \p{Extended_Pictographic} includes ASCII 0–9, #, and * as keycap bases; keep them only as lone graphemes.
+            if (preg_match('/^[0-9#*]$/u', $cluster) === 1) {
+                return $cluster;
+            }
+
+            return preg_match('/\p{Extended_Pictographic}/u', $cluster) === 1 ? '' : $cluster;
+        }, $value);
+
+        $sanitized = $sanitized ?? $value;
+
+        $sanitized = preg_replace('/[\x{200D}\x{FE0E}\x{FE0F}\x{1F3FB}-\x{1F3FF}]/u', '', $sanitized);
+        $sanitized = $sanitized ?? $value;
+        $sanitized = preg_replace('/\h+/u', ' ', $sanitized);
+
+        return trim($sanitized ?? $value);
+    }
+}
+
 if (! function_exists('removeCountryCode')) {
     function removeCountryCode($mobile)
     {
