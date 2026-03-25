@@ -3853,6 +3853,14 @@ const fullAddress = computed(() => {
       :expanded="sectionExpanded"
     />
 
+    <PolicyIssuanceApiLogs
+      v-if="isAllianceProvider"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal
       v-model="modals.mixInquiryConfirm"
       title="SORRY!"

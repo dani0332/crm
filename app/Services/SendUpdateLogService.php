@@ -1767,9 +1767,10 @@ class SendUpdateLogService
 
         $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType);
 
+        // Preserve send_update_log's provider/plan when getProviderDetails returns null (e.g. legacy leads without plan on main payment)
         $bookingDetails = array_merge($bookingDetails, [
-            'insurance_provider_id' => $insuranceProviderId,
-            'plan_id' => $planId,
+            'insurance_provider_id' => $insuranceProviderId ?? $sendUpdate?->insurance_provider_id,
+            'plan_id' => $planId ?? $sendUpdate?->plan_id,
         ]);
 
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);

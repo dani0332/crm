@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\User;
+use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -69,12 +71,16 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             // Login on the write connection before CsvExportService::generateCsvFileWithCount switches to mysql_read.
             // has already been downgraded to the read replica, causing a read-only error.
             if (! Auth::check()) {
-                if (empty($this->requestParams['user'])) {
-                    throw new \RuntimeException('Export job cannot proceed: no user resolved for auth context (user_id: '.($this->requestParams['user_id'] ?? 'null').')');
+                if (! empty($this->requestParams['user'])) {
+                    Auth::login($this->requestParams['user']);
+                } else {
+                    LoggerService::warning('No user provided for logged in context.');
                 }
 
-                Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
+                LoggerService::info('Request parameters after merge (excluding user):', [
+                    'request_params' => Arr::except(request()->all(), ['user']),
+                ]);
             }
 
             // Process CSV and send email
@@ -143,9 +149,18 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             'App\\Exports\\Reports\\EndorsementReportExport',
             'App\\Exports\\Reports\\InstallmentReportExport',
             'App\\Exports\\Reports\\ConversionAsAtReportExport',
+            'App\\Exports\\ClaimsExport',
         ];
 
         if (in_array($this->exportClass, $exportWithRequestParams)) {
+            // Special handling for ClaimsExport which needs ClaimsService as first parameter
+            if ($this->exportClass === 'App\\Exports\\ClaimsExport') {
+                return app($this->exportClass, [
+                    'claimsService' => app(ClaimsService::class),
+                    'requestParams' => $this->requestParams,
+                ]);
+            }
+
             return app($this->exportClass, ['requestParams' => $this->requestParams]);
         }
 
