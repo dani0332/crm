@@ -73,7 +73,7 @@ class HandleCarAdvisorUpdated
             if (in_array($responseCode, [200, 201])) {
                 LoggerService::info('SIC Notification to Advisor: '.$user->email.' Sent Successfully against Quote UuId: '.$lead->uuid);
             } else {
-                LoggerService::warning('SIC Notification to Advisor Not Sent: '.$responseCode.' Advisor EmailAddress: '.$user->email.' Quote UuId: '.$lead->uuid);
+                LoggerService::error('SIC Notification to Advisor Not Sent: '.$responseCode.' Advisor EmailAddress: '.$user->email.' Quote UuId: '.$lead->uuid);
             }
 
             $lead->sic_flow_enabled = 0;
