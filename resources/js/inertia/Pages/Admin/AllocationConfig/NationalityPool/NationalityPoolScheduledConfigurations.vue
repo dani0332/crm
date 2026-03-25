@@ -31,9 +31,9 @@ const tooltip = ref({
   visible: false,
   text: '',
   x: 0,
-  y: 0
-})
-const emit = defineEmits(['edit-config'])
+  y: 0,
+});
+const emit = defineEmits(['edit-config']);
 
 function deleteLog(item) {
   selectedItemId.value = item.id;
@@ -43,20 +43,25 @@ function deleteLog(item) {
 function confirmDelete() {
   deleting.value = true;
 
-  axios.delete(route('admin.nationality-pool-audit-logs.destroy', selectedItemId.value)).then(response => {
-    notification.success({
-      title: 'Scheduled configuration deleted successfully',
-      position: 'top',
-    });
+  axios
+    .delete(
+      route('admin.nationality-pool-audit-logs.destroy', selectedItemId.value),
+    )
+    .then(response => {
+      notification.success({
+        title: 'Scheduled configuration deleted successfully',
+        position: 'top',
+      });
 
-    window.location.reload();
-  }).catch(error => {
-    showDeleteModal.value = false;
+      window.location.reload();
+    })
+    .catch(error => {
+      showDeleteModal.value = false;
       notification.error({
         title: 'Error deleting scheduled configuration',
         position: 'top',
       });
-  });
+    });
 }
 
 function editLog(item) {
@@ -66,35 +71,39 @@ function editLog(item) {
 const loadData = async () => {
   routingLogs.loading = true;
 
-  axios.get(route('admin.nationality-pool-audit-logs', 'scheduled')).then(response => {
-    routingLogs.data = response.data.data;
-  }).catch(error => {
-   notification.error({
-    title: 'Error loading scheduled configurations',
-    position: 'top',
-   });
-  }).finally(() => {
-    routingLogs.loading = false;
-  });
+  axios
+    .get(route('admin.nationality-pool-audit-logs', 'scheduled'))
+    .then(response => {
+      routingLogs.data = response.data.data;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error loading scheduled configurations',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      routingLogs.loading = false;
+    });
 };
 
 const showTooltip = (event, nationalities) => {
-  const rect = event.target.getBoundingClientRect()
+  const rect = event.target.getBoundingClientRect();
 
   tooltip.value = {
     visible: true,
     text: nationalities.join(', '),
     x: rect.left + rect.width / 2,
-    y: rect.top
-  }
-}
+    y: rect.top,
+  };
+};
 
 const hideTooltip = () => {
-  tooltip.value.visible = false
-}
+  tooltip.value.visible = false;
+};
 
 defineExpose({
-  loadData
+  loadData,
 });
 </script>
 
@@ -104,7 +113,7 @@ defineExpose({
       <template #header>
         <div class="flex items-center gap-2">
           <h3 class="font-semibold text-primary-800 text-lg">
-           Scheduled Configurations
+            Scheduled Configurations
           </h3>
         </div>
       </template>
@@ -122,8 +131,8 @@ defineExpose({
           </x-button>
         </div>
         <div v-else class="relative">
-           <!-- Loading Overlay -->
-           <div
+          <!-- Loading Overlay -->
+          <div
             v-if="routingLogs.loading"
             class="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg"
           >
@@ -147,7 +156,9 @@ defineExpose({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              <span class="text-sm text-gray-600 font-medium">Loading configurations...</span>
+              <span class="text-sm text-gray-600 font-medium"
+                >Loading configurations...</span
+              >
             </div>
           </div>
           <DataTable
@@ -158,36 +169,51 @@ defineExpose({
             hide-rows-per-page
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
-            style="z-index:1"
+            style="z-index: 1"
           >
-          <template #item-status="{ deleted_at }">
-            <x-tag size="sm" :color="deleted_at ? 'error' : 'success'">
-              {{ deleted_at ? 'Deleted' : 'Scheduled' }}
-            </x-tag>
-          </template>
-          <template #item-nationalities="{ nationalities }">
-            <span>
-              {{ nationalities.slice(0, 7).join(', ') }}
-            </span>
-            <span
-              v-if="nationalities.length > 7"
-              class="text-primary cursor-pointer ml-1"
-              @mouseenter="showTooltip($event, nationalities)"
-              @mouseleave="hideTooltip"
-            >
-              +{{ nationalities.length - 7 }} more
-            </span>
-          </template>
-          <template #item-action="item">
-              <div style="display:flex; gap:4px; width:120px;" v-if="!item.deleted_at">
-                <x-button size="xs" color="primary" outlined style="flex:1;" @click.prevent="editLog(item)">
+            <template #item-status="{ deleted_at }">
+              <x-tag size="sm" :color="deleted_at ? 'error' : 'success'">
+                {{ deleted_at ? 'Deleted' : 'Scheduled' }}
+              </x-tag>
+            </template>
+            <template #item-nationalities="{ nationalities }">
+              <span>
+                {{ nationalities.slice(0, 7).join(', ') }}
+              </span>
+              <span
+                v-if="nationalities.length > 7"
+                class="text-primary cursor-pointer ml-1"
+                @mouseenter="showTooltip($event, nationalities)"
+                @mouseleave="hideTooltip"
+              >
+                +{{ nationalities.length - 7 }} more
+              </span>
+            </template>
+            <template #item-action="item">
+              <div
+                style="display: flex; gap: 4px; width: 120px"
+                v-if="!item.deleted_at"
+              >
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  style="flex: 1"
+                  @click.prevent="editLog(item)"
+                >
                   Edit
                 </x-button>
-                <x-button size="xs" color="error" outlined style="flex:1;" @click.prevent="deleteLog(item)">
+                <x-button
+                  size="xs"
+                  color="error"
+                  outlined
+                  style="flex: 1"
+                  @click.prevent="deleteLog(item)"
+                >
                   Delete
                 </x-button>
               </div>
-          </template>
+            </template>
           </DataTable>
         </div>
 
@@ -198,14 +224,14 @@ defineExpose({
             :style="{
               position: 'fixed',
               left: tooltip.x + 'px',
-              top: (tooltip.y - 10) + 'px',
-              transform: 'translate(-50%, -100%)'
+              top: tooltip.y - 10 + 'px',
+              transform: 'translate(-50%, -100%)',
             }"
             class="bg-black text-white text-xs rounded p-2 shadow-lg z-[9999] max-w-xs whitespace-normal break-words"
           >
             {{ tooltip.text }}
           </div>
-       </Teleport>
+        </Teleport>
       </template>
     </Collapsible>
 
@@ -216,30 +242,30 @@ defineExpose({
       title="Confirm Delete"
       show-close
       backdrop
-    >  
-        <p>Are you sure you want to delete this scheduled configuration?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              v-if="!deleting"
-              size="sm"
-              ghost
-              tabindex="-1"
-              @click.prevent="showDeleteModal = false"
-            >
-              Close
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              tabindex="-1"
-              :loading="deleting"
-              @click.prevent="confirmDelete"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
+    >
+      <p>Are you sure you want to delete this scheduled configuration?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            v-if="!deleting"
+            size="sm"
+            ghost
+            tabindex="-1"
+            @click.prevent="showDeleteModal = false"
+          >
+            Close
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            tabindex="-1"
+            :loading="deleting"
+            @click.prevent="confirmDelete"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
     </x-modal>
   </div>
 </template>
