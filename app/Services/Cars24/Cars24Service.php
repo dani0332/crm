@@ -33,35 +33,52 @@ class Cars24Service
     public function mapCars24LookupsToProviderCodes($vehicleDriverDetail, $paymentDetails)
     {
         if (! $vehicleDriverDetail || ! $paymentDetails?->insuranceProvider?->code) {
-            return $vehicleDriverDetail;
+            return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => []];
         }
 
         $providerCodeColumn = match ($paymentDetails->insuranceProvider->code) {
             InsuranceProvidersEnum::AXA => 'axa_code',
+            InsuranceProvidersEnum::DNIRC => 'dni_code',
             default => null,
         };
 
         if (! $providerCodeColumn) {
-            return $vehicleDriverDetail;
+            return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => []];
         }
 
+        $lookupMappings = [
+            ['key' => 'rta-transaction-type', 'code' => $vehicleDriverDetail->rta_transaction_type, 'field' => 'rta_transaction_type'],
+            ['key' => 'rta-plate-category', 'code' => $vehicleDriverDetail->rta_plate_category, 'field' => 'rta_plate_category'],
+            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_color, 'field' => 'vehicle_color'],
+            ['key' => 'vehicle-color', 'code' => $vehicleDriverDetail->vehicle_plate_color, 'field' => 'vehicle_plate_color'],
+            ['key' => 'bank-name', 'code' => $vehicleDriverDetail->bank_name, 'field' => 'bank_name'],
+        ];
+
         $mappings = InsurancePartnerMapping::active()
-            ->whereIn('code', array_filter([
-                $vehicleDriverDetail->rta_transaction_type,
-                $vehicleDriverDetail->rta_plate_category,
-                $vehicleDriverDetail->vehicle_color,
-                $vehicleDriverDetail->vehicle_plate_color,
-                $vehicleDriverDetail->bank_name,
-            ]))
+            ->where(function ($query) use ($lookupMappings) {
+                foreach ($lookupMappings as $config) {
+                    if ($config['code'] !== null && $config['code'] !== '') {
+                        $query->orWhere(function ($q) use ($config) {
+                            $q->where('key', $config['key'])->where('code', $config['code']);
+                        });
+                    }
+                }
+            })
             ->get()
-            ->keyBy('code');
+            ->mapWithKeys(fn ($mapping) => [$mapping->key.'-'.$mapping->code => $mapping]);
 
-        $vehicleDriverDetail->rta_transaction_type = $mappings->get($vehicleDriverDetail->rta_transaction_type)?->{$providerCodeColumn} ?? $vehicleDriverDetail->rta_transaction_type;
-        $vehicleDriverDetail->rta_plate_category = $mappings->get($vehicleDriverDetail->rta_plate_category)?->{$providerCodeColumn} ?? $vehicleDriverDetail->rta_plate_category;
-        $vehicleDriverDetail->vehicle_color = $mappings->get($vehicleDriverDetail->vehicle_color)?->{$providerCodeColumn} ?? $vehicleDriverDetail->vehicle_color;
-        $vehicleDriverDetail->vehicle_plate_color = $mappings->get($vehicleDriverDetail->vehicle_plate_color)?->{$providerCodeColumn} ?? $vehicleDriverDetail->vehicle_plate_color;
-        $vehicleDriverDetail->bank_name = $mappings->get($vehicleDriverDetail->bank_name)?->{$providerCodeColumn} ?? $vehicleDriverDetail->bank_name;
+        $mappingValues = [];
 
-        return $vehicleDriverDetail;
+        foreach ($lookupMappings as $config) {
+            if ($config['code'] !== null && $config['code'] !== '') {
+                $mapping = $mappings->get($config['key'].'-'.$config['code']);
+                if ($mapping) {
+                    $vehicleDriverDetail->{$config['field']} = $mapping->{$providerCodeColumn};
+                    $mappingValues[$config['key'].'-'.$config['code']] = $mapping->value;
+                }
+            }
+        }
+
+        return ['vehicleDriverDetail' => $vehicleDriverDetail, 'mappingValues' => $mappingValues];
     }
 }

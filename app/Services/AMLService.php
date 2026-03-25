@@ -1007,9 +1007,12 @@ class AMLService
         $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
         $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
         $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
+        $mappingValues = [];
 
         if ($quoteDetails->source == LeadSourceEnum::CARS24) {
-            $vehicleDriverDetail = app(Cars24Service::class)->mapCars24LookupsToProviderCodes($vehicleDriverDetail, $paymentDetails);
+            $result = app(Cars24Service::class)->mapCars24LookupsToProviderCodes($vehicleDriverDetail, $paymentDetails);
+            $vehicleDriverDetail = $result['vehicleDriverDetail'];
+            $mappingValues = $result['mappingValues'];
         }
 
         $lookupsConfigs = [
@@ -1071,24 +1074,24 @@ class AMLService
             'chassisNumber' => $carQuoteRequestDetails?->chassis_number ?? '',
             'rtaTransactionType' => [
                 'code' => $vehicleDriverDetail?->rta_transaction_type ?? null,
-                'value' => $rtaTransactionType?->text ?? null,
+                'value' => $rtaTransactionType?->text ?? $mappingValues['rta-transaction-type-'.($vehicleDriverDetail?->rta_transaction_type ?? '')] ?? null,
                 'authority' => 'RTA',
             ],
             'trafficCodeNumber' => $vehicleDriverDetail?->traffic_code_number ?? null,
             'engineNumber' => $vehicleDriverDetail?->vehicle_engine_number ?? null,
-            'rtaPlateCategory' => $rtaPlateCategory?->text ?? null,
+            'rtaPlateCategory' => $rtaPlateCategory?->text ?? $mappingValues['rta-plate-category-'.($vehicleDriverDetail?->rta_plate_category ?? '')] ?? null,
             'vehicleColor' => [
                 'code' => $vehicleDriverDetail?->vehicle_color ?? null,
-                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? $mappingValues['vehicle-color-'.($vehicleDriverDetail?->vehicle_color ?? '')] ?? null,
             ],
             'plateColor' => [
                 'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
-                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? $mappingValues['vehicle-color-'.($vehicleDriverDetail?->vehicle_plate_color ?? '')] ?? null,
             ],
             'bankLoan' => $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null,
             'bankName' => [
                 'code' => $vehicleDriverDetail?->bank_name ?? null,
-                'value' => $bankName?->text ?? null,
+                'value' => $bankName?->text ?? $mappingValues['bank-name-'.($vehicleDriverDetail?->bank_name ?? '')] ?? null,
             ],
             'firstRegistrationDate' => $vehicleDriverDetail?->first_registration_date ?? null,
             'policyEffectiveDate' => $quoteDetails->policy_start_date ?? null,
