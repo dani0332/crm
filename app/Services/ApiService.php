@@ -121,7 +121,7 @@ class ApiService
         }
 
         // Handle different scenarios based on request parameters
-        if ( ($assignAdvisor && ! $triggerOCB) ) {
+        if (($assignAdvisor && ! $triggerOCB)) {
             return $this->assignAdvisorOnly($allocationType, $allocationId);
         }
 

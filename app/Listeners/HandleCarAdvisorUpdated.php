@@ -16,7 +16,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
 use App\Services\UserService;
-use Illuminate\Support\Facades\Log;
 
 class HandleCarAdvisorUpdated
 {
