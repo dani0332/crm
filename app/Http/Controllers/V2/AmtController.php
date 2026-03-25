@@ -539,6 +539,11 @@ class AmtController extends Controller
             $isEmirateOfRegistrationLocked = $record->isPolicyBooked();
         }
 
+        $user = auth()->user();
+        if( $user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])){
+            $isEmirateOfRegistrationLocked = true;
+        }
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'quote_request_id' => $record->id,

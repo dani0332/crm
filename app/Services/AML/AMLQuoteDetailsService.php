@@ -14,6 +14,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\Emirate;
 use App\Models\Payment;
 use App\Models\QuoteType;
@@ -188,6 +189,7 @@ class AMLQuoteDetailsService
 
     private function resolveEmirateOfRegistrationLocked(QuoteType $quoteType, object $quoteRequest): bool
     {
+        $user = auth()->user();
         if ($quoteType->code != quoteTypeCode::Business) {
             return false;
         }
@@ -197,6 +199,10 @@ class AMLQuoteDetailsService
             return false;
         }
 
+        if( $user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])){
+            return true;
+        }
+        
         if (! method_exists($quoteRequest, 'isPolicyBooked')) {
             return false;
         }
