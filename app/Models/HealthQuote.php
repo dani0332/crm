@@ -553,8 +553,10 @@ class HealthQuote extends Model implements AuditableContract
             }
         }
 
-        if ($this->price_starting_from < $sicConfig->price_starting_from) {
-            return true;
+        if (! empty($this->price_starting_from)) {
+            if ($this->price_starting_from < $sicConfig->price_starting_from) {
+                return true;
+            }
         }
 
         return false;
