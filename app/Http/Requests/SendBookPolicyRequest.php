@@ -67,18 +67,19 @@ class SendBookPolicyRequest extends FormRequest
             $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
                     $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords(request()->model_type));
-                }
+                    if (! $areSendPolicyDocsUploaded) {
+                        $validator->errors()->add('error', 'Required documents are not uploaded');
+                    }
 
-                if (! $areSendPolicyDocsUploaded) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
-                }
-
-                if (! $quote?->advisor_id) {
-                    $validator->errors()->add('error', 'Please select advisor');
-                }
-
-                if (! $quote?->email) {
-                    $validator->errors()->add('error', 'Customer email is required');
+                    if (! $quote?->advisor_id) {
+                        $validator->errors()->add('error', 'Please select advisor');
+                    }
+    
+                    if (! $quote?->email) {
+                        $validator->errors()->add('error', 'Customer email is required');
+                    }
+                } else {
+                    $validator->errors()->add('error', 'Quote not found');
                 }
             });
         }
