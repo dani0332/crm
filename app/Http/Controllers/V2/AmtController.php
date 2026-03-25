@@ -394,7 +394,7 @@ class AmtController extends Controller
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
 
         $subSources = app(LookupService::class)->getSubSource();
-        $emirates = Emirate::query()->withActive()->orderBy('text', 'asc')->get();
+        $emirates = Emirate::getActiveEmirates();
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,

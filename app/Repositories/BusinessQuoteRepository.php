@@ -90,13 +90,11 @@ class BusinessQuoteRepository extends BaseRepository
 
         if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
             $raw = $requestParams['emirate_of_registration_id'];
-            if (is_array($raw)) {
-                $ids = array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0));
-                if ($ids !== []) {
-                    $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
-                }
-            } else {
-                $query->where('business_quote_request.emirate_of_registration_id', $raw);
+            $ids = is_array($raw)
+                ? array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0))
+                : [(int) $raw];
+            if ($ids !== []) {
+                $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
             }
         }
 

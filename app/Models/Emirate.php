@@ -11,6 +11,9 @@ class Emirate extends BaseModel
 
     protected $table = 'emirates';
 
+    /**
+     * Local scope: {@code Emirate::query()->withActive()}.
+     */
     public function scopeWithActive($query)
     {
         return $query->where('is_active', 1);
