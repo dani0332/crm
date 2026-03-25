@@ -132,14 +132,21 @@ trait Reportable
 
     protected function getQuoteType($request)
     {
-        // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        if(!empty($request['lob'])){
-            /** Filter sends ProductName */
-            return QuoteTypes::getQuoteTypesFromTeamName($request['lob'])[0];
-        }else{
-            /** Without (Default) case gets logged-in user's products and pass forward */
-            return QuoteTypes::getQuoteTypesFromTeamName($this->getUserPorductName())[0]->value;
+        /**
+         * The `lob` filter coming from the UI contains a *product name* (for example: "Health", "Cyber Insurance").
+         * Internally, retention & reporting logic works with quote type *codes* (see `quoteTypeCode`).
+         *
+         * - If the request already contains a LOB, normalise it from product name → quote type code.
+         * - If no LOB is provided, fall back to the logged‑in user's single product (if any),
+         *   again normalising it to the corresponding quote type code.
+         */
+        $lob = $request['lob'] ?? $this->getUserPorductName();
+
+        if (empty($lob)) {
+            return null;
         }
+
+        return quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
     }
 
     private function isAdvisorManager()

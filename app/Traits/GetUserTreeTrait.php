@@ -38,7 +38,8 @@ trait GetUserTreeTrait
         }
 
         if($productType == QuoteTypes::DEVICE->value){
-            $productType = QuoteTypes::DEVICE->getTeams()[0];
+            $productType = QuoteTypes::DEVICE->getTeams()[0]->value;
+            /** Below getProductNameFromQuoteTypeCode is essentially redundant if we're doing ->getTeams() here */
         }
 
         $childUserIds = [$userId];

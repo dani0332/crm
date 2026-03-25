@@ -501,6 +501,9 @@ enum QuoteTypes: string
             self::DEVICE => [
                 TeamsEnum::DEVICE_INSURANCE,
             ],
+            self::CYBER => [
+                TeamsEnum::CYBER_INSURANCE,
+            ],
             default => [$this],
         };
     }

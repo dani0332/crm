@@ -7,6 +7,7 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CycleQuote;
 use App\Models\DeviceQuote;
+use App\Models\CyberQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -88,24 +89,7 @@ class quoteTypeCode extends Enum
     {
         return match ($quoteTypeCode) {
             self::CYBER => TeamNameEnum::CYBER,
-            self::DEVICE => TeamNameEnum::DEVICE,
-            default => $quoteTypeCode,
-        };
-    }
-
-    public static function getQuoteTypeCodeFromProductName(string $productName): string
-    {
-        return match ($productName) {
-            TeamNameEnum::CYBER => self::CYBER,
-            TeamNameEnum::DEVICE => self::DEVICE,
-            default => $productName,
-        };
-    }
-
-    public static function getProductNameFromQuoteTypeCode(string $quoteTypeCode): string
-    {
-        return match ($quoteTypeCode) {
-            self::CYBER => TeamNameEnum::CYBER,
+            self::Device => TeamNameEnum::DEVICE,
             default => $quoteTypeCode,
         };
     }
