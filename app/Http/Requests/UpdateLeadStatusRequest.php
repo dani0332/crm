@@ -32,7 +32,7 @@ class UpdateLeadStatusRequest extends FormRequest
         return true;
     }
 
-     /**
+    /**
      * Sanitize notes and lost_notes by removing emoji (Extended_Pictographic) before validation.
      */
     protected function prepareForValidation(): void
@@ -50,7 +50,7 @@ class UpdateLeadStatusRequest extends FormRequest
             $this->merge($merge);
         }
     }
-    
+
     /**
      * Get the validation rules that apply to the request.
      *
