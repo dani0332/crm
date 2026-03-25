@@ -6,7 +6,7 @@ Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarket
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes
 
-IMCRM is developed on Laravel using PHP 8.4 or above, and MySQL
+IMCRM is developed on Laravel using PHP 8.4 or above, and MySQL 
 
 URLs:
 
@@ -57,7 +57,7 @@ Make sure to run `yarn prod` before every push so the assets are compiled with t
 
 **Code Formatting**
 
-This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
+This project has pint configured, make sure to runs `composer pint:fix` before every push to the code repo.
 
 **Getting Deployment Logs**
 
