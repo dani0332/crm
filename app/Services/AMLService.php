@@ -42,6 +42,7 @@ use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsurancePartnerMapping;
 use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
@@ -1007,6 +1008,11 @@ class AMLService
         $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
         $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
         $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
+
+        if ($quoteDetails->source == LeadSourceEnum::CARS24) {
+            $vehicleDriverDetail = app(Cars24Service::class)->mapCars24LookupsToProviderCodes($vehicleDriverDetail, $paymentDetails);
+        }
+
         $lookupsConfigs = [
             [
                 'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
@@ -1020,7 +1026,7 @@ class AMLService
             ],
             [
                 'key' => LookupsEnum::VEHICLE_COLOR,
-                'codes' => array_filter([$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]),
+                'codes' => [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color],
                 'requires_provider' => true,
             ],
             [
