@@ -268,7 +268,7 @@ const emirateOfRegistrationError = computed(() => {
   const isEmpty =
     value === null || value === undefined || value === '' || value === false;
   if (enabledCustomerType === page.props.customerTypeEnum.Entity && isEmpty) {
-    return 'Please update Emirate of registration in Entity Profile.';
+    return 'Emirate of registration is required.';
   }
   return null;
 });

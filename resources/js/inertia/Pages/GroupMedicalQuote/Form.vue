@@ -127,6 +127,26 @@ watch(
   },
 );
 
+const emirateOfRegistrationFieldError = computed(() => {
+  if (quoteForm.errors.emirate_of_registration_id) {
+    return quoteForm.errors.emirate_of_registration_id;
+  }
+  if (!isEdit.value) {
+    return null;
+  }
+  const value = quoteForm.emirate_of_registration_id;
+  const isEmpty =
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    value === false ||
+    value === 0;
+  if (isEmpty) {
+    return 'Please update Emirate of registration in Entity Profile';
+  }
+  return null;
+});
+
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
@@ -301,7 +321,7 @@ function onSubmit(isValid) {
           "
           :rules="props.isEmirateDisabled ? [] : [isRequired]"
           class="w-full"
-          :error="quoteForm.errors.emirate_of_registration_id"
+          :error="emirateOfRegistrationFieldError"
           label="EMIRATE OF REGISTRATION"
           :required="!props.isEmirateDisabled"
           :disabled="props.isEmirateDisabled"
