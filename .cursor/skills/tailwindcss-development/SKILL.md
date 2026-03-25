@@ -25,6 +25,7 @@ Use `search-docs` for detailed Tailwind CSS v3 patterns and documentation.
 - Import using `@tailwind` directives:
 
 <!-- v3 Import Syntax -->
+
 ```css
 @tailwind base;
 @tailwind components;
@@ -36,10 +37,11 @@ Use `search-docs` for detailed Tailwind CSS v3 patterns and documentation.
 When listing items, use gap utilities for spacing; don't use margins.
 
 <!-- Gap Utilities -->
+
 ```html
 <div class="flex gap-8">
-    <div>Item 1</div>
-    <div>Item 2</div>
+  <div>Item 1</div>
+  <div>Item 2</div>
 </div>
 ```
 
@@ -48,9 +50,10 @@ When listing items, use gap utilities for spacing; don't use margins.
 If existing pages and components support dark mode, new pages and components must support it the same way, typically using the `dark:` variant:
 
 <!-- Dark Mode -->
+
 ```html
 <div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-    Content adapts to color scheme
+  Content adapts to color scheme
 </div>
 ```
 
@@ -59,21 +62,23 @@ If existing pages and components support dark mode, new pages and components mus
 ### Flexbox Layout
 
 <!-- Flexbox Layout -->
+
 ```html
 <div class="flex items-center justify-between gap-4">
-    <div>Left content</div>
-    <div>Right content</div>
+  <div>Left content</div>
+  <div>Right content</div>
 </div>
 ```
 
 ### Grid Layout
 
 <!-- Grid Layout -->
+
 ```html
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div>Card 1</div>
-    <div>Card 2</div>
-    <div>Card 3</div>
+  <div>Card 1</div>
+  <div>Card 2</div>
+  <div>Card 3</div>
 </div>
 ```
 
