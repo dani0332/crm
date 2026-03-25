@@ -59,9 +59,7 @@ const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
 useGmQuoteEmirateCrossTabListen({
   quoteUuid: computed(() => props.quoteRequest?.uuid),
   quoteId: computed(() => props.quoteRequest?.id),
-  enabled: computed(
-    () => props.quoteType?.code === quoteTypeCodeEnum.Business,
-  ),
+  enabled: computed(() => props.quoteType?.code === quoteTypeCodeEnum.Business),
 });
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);

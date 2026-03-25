@@ -711,7 +711,9 @@ const submitScreeningForm = isValid => {
         }
       },
       onSuccess: response => {
-        if (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Business) {
+        if (
+          page.props.quoteType.code === page.props.quoteTypeCodeEnum.Business
+        ) {
           notifyGmQuoteEmirateUpdated({
             quoteUuid: quoteRequest.uuid,
             quoteId: quoteRequest.id,
