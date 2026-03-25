@@ -3,12 +3,15 @@
 namespace Database\Seeders;
 
 use App\Enums\QuoteTypeId;
+use App\Models\BusinessQuote;
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * One-off: set {@see \App\Models\BusinessQuote} {@code emirate_of_registration_id} from {@see \App\Models\Insured}
- * via {@see \App\Models\CustomerInsured} for business quotes where that column is currently null.
+ * One-off: set {@see BusinessQuote} {@code emirate_of_registration_id} from {@see Insured}
+ * via {@see CustomerInsured} for business quotes where that column is currently null.
  *
  * Join path: {@code business_quote_request} → {@code customer_insured} ({@code quote_request_id}, {@code quote_type_id} = Business, active row)
  * → {@code insured} ({@code insured_id}); copy {@code insured.emirate_of_registration_id} when present.
