@@ -11,7 +11,6 @@ use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\AlfredChat;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use MongoDB\Model\BSONArray;
 use MongoDB\Model\BSONDocument;
@@ -45,15 +44,8 @@ class InstantAlfredExportService
 
     private function generateDetailedReportCsv(array $params): array
     {
-        $startTime = microtime(true);
-
         $sqlData = $this->fetchDetailedReportSqlData($params);
         $uuids = array_keys($sqlData);
-
-        Log::info('[DetailedReport] SQL fetch completed', [
-            'uuid_count' => count($uuids),
-            'elapsed_sec' => round(microtime(true) - $startTime, 2),
-        ]);
 
         $fileName = 'detailed_report_'.now()->format('Y-m-d_His').'_'.uniqid().'.csv';
         $azurePath = "temp/exports/{$fileName}";
@@ -65,7 +57,6 @@ class InstantAlfredExportService
             fputcsv($stream, $this->getDetailedReportHeaders());
 
             if (! empty($uuids)) {
-                $mongoStart = microtime(true);
                 foreach ($this->streamDetailedReportMongoData($uuids, $sqlData, $params) as $row) {
                     fputcsv($stream, $row);
                     $records++;
@@ -74,22 +65,10 @@ class InstantAlfredExportService
                         gc_collect_cycles();
                     }
                 }
-                Log::info('[DetailedReport] MongoDB streaming completed', [
-                    'mongo_records' => $records,
-                    'mongo_elapsed_sec' => round(microtime(true) - $mongoStart, 2),
-                    'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
-                ]);
             }
 
-            $uploadStart = microtime(true);
             $result = $this->uploadCsvToAzure($stream, $azurePath);
             $result['records'] = $records;
-
-            Log::info('[DetailedReport] Completed', [
-                'records' => $records,
-                'azure_upload_sec' => round(microtime(true) - $uploadStart, 2),
-                'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
-            ]);
 
             return $result;
 
@@ -97,10 +76,6 @@ class InstantAlfredExportService
             if (is_resource($stream)) {
                 fclose($stream);
             }
-            Log::error('Detailed report CSV generation failed', [
-                'error' => $e->getMessage(),
-                'elapsed_sec' => round(microtime(true) - $startTime, 2),
-            ]);
             throw $e;
         }
     }
@@ -114,7 +89,6 @@ class InstantAlfredExportService
             $hasSortType = ! empty($params['sortType']);
 
             if ($hasSortType) {
-                // Two-pass: fetch sorted IDs, then full records per batch in sorted order.
                 $sortedIds = $reportService->getSortedIds($params);
                 $rows = collect();
 
@@ -155,10 +129,6 @@ class InstantAlfredExportService
 
     private function buildDetailedReportPipeline(array $uuids, array $params): array
     {
-        // Match only by quote_id — date filtering is already applied by the SQL query
-        // on chat_initiated_at, so we must include ALL messages for each matched quote.
-        // Filtering MongoDB by date here would drop quotes whose messages fall outside
-        // the window, causing the Detailed report to have fewer unique Ref-IDs than Summary.
         $matchConditions = ['quote_id' => ['$in' => $uuids]];
 
         $sortDir = ($params['sortType'] ?? 'asc') === 'desc' ? -1 : 1;
@@ -237,8 +207,6 @@ class InstantAlfredExportService
 
     private function generateConsolidatedReportCsv(array $params): array
     {
-        $startTime = microtime(true);
-
         $fileName = 'consolidated_report_'.now()->format('Y-m-d_His').'_'.uniqid().'.csv';
         $azurePath = "temp/exports/{$fileName}";
 
@@ -262,20 +230,8 @@ class InstantAlfredExportService
                 DB::setDefaultConnection('mysql');
             }
 
-            Log::info('[ConsolidatedReport] SQL+MongoDB streaming completed', [
-                'records' => $records,
-                'elapsed_sec' => round(microtime(true) - $startTime, 2),
-            ]);
-
-            $uploadStart = microtime(true);
             $result = $this->uploadCsvToAzure($stream, $azurePath);
             $result['records'] = $records;
-
-            Log::info('[ConsolidatedReport] Completed', [
-                'records' => $records,
-                'azure_upload_sec' => round(microtime(true) - $uploadStart, 2),
-                'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
-            ]);
 
             return $result;
 
@@ -283,10 +239,6 @@ class InstantAlfredExportService
             if (is_resource($stream)) {
                 fclose($stream);
             }
-            Log::error('Consolidated report CSV generation failed', [
-                'error' => $e->getMessage(),
-                'elapsed_sec' => round(microtime(true) - $startTime, 2),
-            ]);
             throw $e;
         }
     }
@@ -297,8 +249,6 @@ class InstantAlfredExportService
         $hasSortType = ! empty($params['sortType']);
 
         if ($hasSortType) {
-            // Two-pass: fetch sorted IDs first (lightweight, no heavy JOINs),
-            // then batch fetch full records in sorted order via WHERE id IN (...).
             $sortedIds = $reportService->getSortedIds($params);
 
             foreach (array_chunk($sortedIds, self::UUID_BATCH_SIZE) as $idBatch) {
@@ -310,7 +260,6 @@ class InstantAlfredExportService
                 }
             }
         } else {
-            // No sort: lazyById() cursor pagination (most memory-efficient path).
             $query = $reportService->getReportQuery($params);
             $sqlRecordsBatch = [];
 

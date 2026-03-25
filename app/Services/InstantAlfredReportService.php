@@ -15,31 +15,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
-/**
- * Optimized SQL service for Instant Alfred exports.
- *
- * Key differences from InstantAlfredService:
- *  - Removes lookup JOINs (payment_status, quote_status, lookups, quote_batches)
- *    and resolves their text values via PHP maps instead.
- *  - Removes the quote_tags GROUP_CONCAT subquery from the main query.
- *    Tags are fetched per-batch (scoped to the actual UUIDs) and segment
- *    is calculated in PHP using str_contains() — no SQL LIKE or HAVING.
- *  - The main query only keeps joins that cannot be moved to PHP:
- *    quote-type-specific tables (car/health/travel) for lead_assignment_trigger
- *    and plan data (provider, plan type, plan name).
- */
 class InstantAlfredReportService
 {
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns an optimized query builder used as the SQL base for both reports.
-     * Removed JOINs: lookups, payment_status, quote_status, quote_batches, quote_tags.
-     */
     public function getReportQuery(array $params)
     {
         $request = $this->buildRequest($params);
@@ -48,22 +26,7 @@ class InstantAlfredReportService
         return $this->buildCoreQuery($quoteTypeId, $request);
     }
 
-    /**
-     * Returns the quoteTypeId resolved from the params array.
-     */
-    public function resolveQuoteTypeIdFromParams(array $params): int
-    {
-        return $this->resolveQuoteTypeId($params['quoteType'] ?? request()->quoteType ?? 'Car');
-    }
-
-    /**
-     * Two-pass sort — Pass 1:
-     * Fetches only pqr.id values sorted by chat_initiated_at using a lightweight
-     * query with no heavy JOINs. Avoids the lazyById + ORDER BY conflict that
-     * causes records to be skipped.
-     *
-     * @return int[]
-     */
+    /** @return int[] */
     public function getSortedIds(array $params): array
     {
         $request = $this->buildRequest($params);
@@ -84,12 +47,6 @@ class InstantAlfredReportService
         return $query->pluck('pqr.id')->toArray();
     }
 
-    /**
-     * Two-pass sort — Pass 2:
-     * Fetches full report records for a specific batch of pqr.id values.
-     * Uses WHERE id IN (...) on primary key (instant lookup) and preserves
-     * the original sort order via FIELD().
-     */
     public function getReportQueryByIds(array $ids, array $params)
     {
         $request = $this->buildRequest($params);
@@ -108,13 +65,7 @@ class InstantAlfredReportService
         return $query;
     }
 
-    /**
-     * Processes a batch of SQL records for the Consolidated report.
-     * Fetches MongoDB $group aggregation, merges with SQL data, and
-     * enriches with PHP-resolved lookup text + segment.
-     *
-     * @param  array<\stdClass>  $sqlRecords
-     */
+    /** @param  array<\stdClass>  $sqlRecords */
     public function processConsolidatedChunk(array $sqlRecords, array $params): Collection
     {
         if (empty($sqlRecords)) {
@@ -135,11 +86,7 @@ class InstantAlfredReportService
         try {
             $mongoResults = AlfredChat::raw(fn ($c) => $c->aggregate($pipeline))->toArray();
             $mongoByUuid = collect($mongoResults)->keyBy('id');
-        } catch (\Exception $e) {
-            Log::error('[ConsolidatedChunk] MongoDB aggregation failed', [
-                'uuid_count' => count($uuids),
-                'error' => $e->getMessage(),
-            ]);
+        } catch (\Exception) {
             $mongoByUuid = collect();
         }
 
@@ -149,7 +96,6 @@ class InstantAlfredReportService
             $mongo = $mongoByUuid->get($sqlRecord->uuid);
             $segment = $this->resolveSegment($tagsByUuid[$sqlRecord->uuid] ?? null, $sqlRecord->source ?? '');
 
-            // PHP-based segment filter (replaces SQL HAVING)
             if ($segmentFilter !== null && $segment !== $segmentFilter) {
                 continue;
             }
@@ -159,7 +105,6 @@ class InstantAlfredReportService
                 ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
                 : 'N/A';
 
-            // PHP-resolved lookup text (replaces lookup JOINs)
             $sqlRecord->payment_status = $lookupMaps['payment_statuses'][$sqlRecord->payment_status_id ?? ''] ?? 'N/A';
             $sqlRecord->quote_status_id_text = $lookupMaps['quote_statuses'][$sqlRecord->quote_status_id ?? ''] ?? 'N/A';
             $sqlRecord->quote_batch_id_text = $lookupMaps['quote_batches'][$sqlRecord->quote_batch_id ?? ''] ?? 'N/A';
@@ -188,14 +133,7 @@ class InstantAlfredReportService
         return collect($result);
     }
 
-    /**
-     * Enriches the Detailed report SQL data array (keyed by uuid) with:
-     *  - PHP-resolved lookup text (payment_status, quote_status, quote_batch, transaction_type)
-     *  - segment calculated in PHP from tags
-     * Applies the segment filter if present, removing non-matching UUIDs.
-     *
-     * @param  array<string, array<string, mixed>>  $sqlData  UUID-keyed array from fetchDetailedReportSqlData
-     */
+    /** @param  array<string, array<string, mixed>>  $sqlData */
     public function enrichDetailedSqlData(array $sqlData, array $params): array
     {
         if (empty($sqlData)) {
@@ -227,10 +165,6 @@ class InstantAlfredReportService
         return $sqlData;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Core SQL Query (optimized — no lookup JOINs, no quote_tags subquery)
-    // ─────────────────────────────────────────────────────────────────────────
-
     private function buildCoreQuery(int $quoteTypeId, Request $request)
     {
         $query = DB::table('personal_quotes as pqr')
@@ -244,11 +178,6 @@ class InstantAlfredReportService
         $this->addQuoteTypeJoins($query, $quoteTypeId);
 
         $query->groupBy('pqr.id');
-
-        // No SQL ORDER BY — lazyById() uses cursor pagination on pqr.id,
-        // and any pre-existing ORDER BY on a different column causes it to
-        // skip records. Sorting for exports is handled by MongoDB instead:
-        // consolidated sorts by date_of_first_interaction, detailed by created_at.
 
         return $query;
     }
@@ -277,10 +206,6 @@ class InstantAlfredReportService
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Filter Application
-    // ─────────────────────────────────────────────────────────────────────────
-
     private function applyDateFilters($query, Request $request): void
     {
         if (! empty($request->lead_created_at)) {
@@ -297,7 +222,6 @@ class InstantAlfredReportService
             ]);
         }
 
-        // Default to current day when no date/identifier filters are set
         $noFilters = empty($request->email)
             && empty($request->mobile_no)
             && empty($request->quoteId)
@@ -359,10 +283,6 @@ class InstantAlfredReportService
             }
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Quote-Type Joins (lead_assignment_trigger + plan data only)
-    // ─────────────────────────────────────────────────────────────────────────
 
     private function addQuoteTypeJoins($query, int $quoteTypeId): void
     {
@@ -432,19 +352,7 @@ class InstantAlfredReportService
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PHP Lookup Maps (replaces JOINs to tiny reference tables)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Loads reference tables into PHP maps for fast O(1) lookup.
-     *
-     * - payment_status / quote_status / quote_batches are tiny (< 100 rows) → loaded in full.
-     * - lookups can have 5k+ rows, so we scope it to only the distinct
-     *   transaction_type_ids present in the current result set.
-     *
-     * @param  int[]  $transactionTypeIds  Distinct IDs from the SQL result set
-     */
+    /** @param  int[]  $transactionTypeIds */
     private function loadLookupMaps(array $transactionTypeIds = []): array
     {
         $transactionTypeQuery = DB::table('lookups')->select('id', 'text');
@@ -461,13 +369,7 @@ class InstantAlfredReportService
         ];
     }
 
-    /**
-     * Fetches GROUP_CONCAT tags only for the given UUIDs.
-     * Scoping to specific UUIDs avoids a full table scan on quote_tags,
-     * unlike the old subquery which joined the entire table.
-     *
-     * @return array<string, string> uuid → comma-separated tags
-     */
+    /** @return array<string, string> */
     private function fetchTagsByUuids(array $uuids, int $quoteTypeId): array
     {
         if (empty($uuids)) {
@@ -483,11 +385,6 @@ class InstantAlfredReportService
             ->toArray();
     }
 
-    /**
-     * Calculates the segment label in PHP — replaces the LIKE-based SQL CASE statement.
-     * Follows the same priority order as the original SQL:
-     *   AIG → SIC-REVIVAL → SIC → NON-SIC
-     */
     private function resolveSegment(?string $tags, string $source): string
     {
         if (empty($tags)) {
@@ -527,10 +424,6 @@ class InstantAlfredReportService
             : null;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MongoDB Pipeline (Consolidated)
-    // ─────────────────────────────────────────────────────────────────────────
-
     private function buildConsolidatedPipeline(array $uuids, Request $request): array
     {
         return [
@@ -547,10 +440,6 @@ class InstantAlfredReportService
             ['$sort' => ['date_of_first_interaction' => ($request->sortType === 'desc') ? -1 : 1]],
         ];
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private function resolveQuoteTypeId(string $quoteType): int
     {
