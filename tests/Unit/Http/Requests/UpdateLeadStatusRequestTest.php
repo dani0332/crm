@@ -34,6 +34,11 @@ it('sanitizeNotesFromEmoji helper preserves ASCII digits hash and asterisk in bu
     expect(sanitizeNotesFromEmoji($note))->toBe($note);
 });
 
+it('sanitizeNotesFromEmoji helper preserves copyright registered and trademark symbols in notes', function (): void {
+    $note = "Company\u{00AE} policy \u{00A9} 2025 Acme\u{2122}";
+    expect(sanitizeNotesFromEmoji($note))->toBe($note);
+});
+
 it('sanitizeNotesFromEmoji helper still removes digit keycap emoji grapheme clusters', function (): void {
     $keycapOne = "Pick \u{0031}\u{FE0F}\u{20E3} staff";
     expect(sanitizeNotesFromEmoji($keycapOne))->toBe('Pick staff');

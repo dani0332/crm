@@ -662,6 +662,8 @@ if (! function_exists('sanitizeNotesFromEmoji')) {
      * A follow-up pass strips any remaining joiners, presentation selectors, and emoji modifier codepoints.
      * Only horizontal whitespace (spaces, tabs on the same line) is normalised so gaps left by removed emoji do not stack;
      * newlines and paragraph breaks are preserved.
+     *
+     * Lone grapheme clusters that match \p{Extended_Pictographic} but are normal text (keycap bases 0–9#*, ©®™, ℹ, ‼, ⁉) are kept.
      */
     function sanitizeNotesFromEmoji(?string $value): string
     {
@@ -672,11 +674,12 @@ if (! function_exists('sanitizeNotesFromEmoji')) {
         // Strip emoji keycap sequences on the raw string so split grapheme clusters cannot leave a preserved digit + VS + U+20E3.
         $value = preg_replace('/[0-9#*]\x{FE0F}?\x{20E3}/u', '', $value) ?? $value;
 
-        $sanitized = preg_replace_callback('/\X/u', static function (array $matches): string {
+        $preserveLoneExtendedPictographicText = '/^(?:[0-9#*]|\x{00A9}|\x{00AE}|\x{2122}|\x{2139}|\x{203C}|\x{2049})$/u';
+
+        $sanitized = preg_replace_callback('/\X/u', static function (array $matches) use ($preserveLoneExtendedPictographicText): string {
             $cluster = $matches[0];
 
-            // \p{Extended_Pictographic} includes ASCII 0–9, #, and * as keycap bases; keep them only as lone graphemes.
-            if (preg_match('/^[0-9#*]$/u', $cluster) === 1) {
+            if (preg_match($preserveLoneExtendedPictographicText, $cluster) === 1) {
                 return $cluster;
             }
 
