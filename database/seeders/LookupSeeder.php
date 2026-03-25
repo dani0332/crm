@@ -29,6 +29,7 @@ class LookupSeeder extends Seeder
         $this->createClaimRequestTypes();
         $this->createClaimServiceTypes();
         $this->createClaimRequestAccessTypes();
+        $this->createClaimReimbursementOptions();
         $this->createClaimTPAOptions();
         $this->createRmCategories();
         $this->createReferralSources();
@@ -423,6 +424,36 @@ class LookupSeeder extends Seeder
             Lookup::firstOrCreate([
                 'quote_type_id' => $type['quote_type_id'],
                 'key' => ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value,
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function createClaimReimbursementOptions(): void
+    {
+        $claimRequestType = [
+            [
+                'code' => 'cheque',
+                'text' => 'Cheque',
+                'sort_order' => 1,
+            ],
+            [
+                'code' => 'bank-account',
+                'text' => 'Bank Account',
+                'sort_order' => 2,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'key' => ClaimsEnum::CLAIM_REIMBURSEMENT_OPTIONS_KEY->value,
                 'code' => $type['code'],
                 'text' => $type['text'],
             ], [
