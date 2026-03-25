@@ -554,7 +554,7 @@ class InstantAlfredReportService
 
     private function resolveQuoteTypeId(string $quoteType): int
     {
-        return collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+        return (int) (collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType)) ?: 0);
     }
 
     private function buildRequest(array $params): Request
