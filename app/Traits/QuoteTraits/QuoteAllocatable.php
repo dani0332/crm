@@ -52,6 +52,7 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+
         if ($this->advisor_id) {
             // if advisor is already assigned then we don't need to mark it as failed
 
@@ -241,7 +242,31 @@ trait QuoteAllocatable
     {
         return (bool) $this->ai_advisor_required;
     }
+    public function markLeadAllocationFailedForClaim()
+    {
 
+        if ($this->manager_id) {
+            // if manager is already assigned then we don't need to mark it as failed
+            return;
+        }
+
+        if ($this->lead_allocation_failed_at) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
+
+            return; // Already marked as failed
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_failed_at' => now(),
+                'lead_allocation_started_at' => null,
+            ]);
+        });
+    }
     public function assignToAIAdvisor()
     {
         if ($this->isAIAdvisorAssigned()) {
@@ -310,7 +335,7 @@ trait QuoteAllocatable
     {
         return $query->whereHas('payments', function ($paymentQuery) {
             $paymentQuery->whereNotNull('authorized_at')
-                ->where('authorized_at', '<=', now()->subMinutes(10));
+                ->where('authorized_at', '<=', now()->subHours(24));
         })->whereDoesntHave('documents');
     }
 

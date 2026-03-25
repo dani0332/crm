@@ -8,6 +8,7 @@ use App\Models\QuoteDocument;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -151,6 +152,52 @@ test('handle rethrows exception when watermark service throws', function () {
 
     $quoteDocument->refresh();
     expect($quoteDocument->watermarked_doc_name)->toBeNull();
+});
+
+test('handle retries transient azure existence failures before watermarking', function () {
+    $documentType = DocumentType::factory()->create(['code' => 'COI']);
+    $quoteDocument = QuoteDocument::factory()->create([
+        'quote_documentable_id' => 1,
+        'doc_url' => 'documents/Car/transient.pdf',
+        'doc_name' => 'transient.pdf',
+        'doc_mime_type' => 'application/pdf',
+        'document_type_code' => $documentType->code,
+    ]);
+
+    $storageDisk = Mockery::mock();
+    $storageDisk->shouldReceive('exists')
+        ->once()
+        ->andThrow(UnableToCheckExistence::forLocation(
+            $quoteDocument->doc_url,
+            new RuntimeException('cURL error 6: Could not resolve host: azstorimprivateprd.blob.core.windows.net')
+        ));
+    $storageDisk->shouldReceive('exists')
+        ->once()
+        ->andReturn(true);
+
+    Storage::shouldReceive('disk')
+        ->with('azureIMPrivate')
+        ->twice()
+        ->andReturn($storageDisk);
+
+    $watermarkedName = 'watermarked_transient.pdf';
+    $watermarkedUrl = 'documents/Car/watermarked_transient.pdf';
+
+    $this->mock(QuoteDocumentService::class, function ($mock) use ($watermarkedName, $watermarkedUrl) {
+        $mock->shouldReceive('watermarkPdf')
+            ->once()
+            ->andReturn([
+                'watermarked_doc_name' => $watermarkedName,
+                'watermarked_doc_url' => $watermarkedUrl,
+            ]);
+    });
+
+    $job = new WatermarkDocumentsJob($quoteDocument->id, 'TEST-UUID', $documentType->id);
+    $job->handle();
+
+    $quoteDocument->refresh();
+    expect($quoteDocument->watermarked_doc_name)->toBe($watermarkedName)
+        ->and($quoteDocument->watermarked_doc_url)->toBe($watermarkedUrl);
 });
 
 test('job has correct timeout tries and backoff', function () {
