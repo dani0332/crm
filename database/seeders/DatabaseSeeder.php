@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
+            ClaimStatusesSeeder::class, // ClaimStatusesSeeder is dependent on LookupSeeder
             SavingsQuoteDataSeeder::class,
+            GenericDocumentTypesSeeder::class,
             CyberQuoteDataSeeder::class,
             CyberLeadAllocationSeeder::class,
             // ILAGMPermissionSeeder::class,
@@ -53,6 +55,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
+            ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
         ]);
     }
