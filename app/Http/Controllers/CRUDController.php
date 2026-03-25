@@ -2438,12 +2438,12 @@ class CRUDController extends Controller
             return response()->json(['success' => 'OCB email sent to customer']);
         }
 
-        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
             $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
             $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
             $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
         }
-        
+
         $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
             'quote_id' => $carQuote->id,
             'quote_type' => QuoteTypeShortCode::CAR,
@@ -2452,7 +2452,7 @@ class CRUDController extends Controller
             'email_sent' => true,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $carQuote->isGenesisLead;
-        
+
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
 
@@ -2473,8 +2473,8 @@ class CRUDController extends Controller
 
             return;
         }
-        
-        if($carQuote->isGenesisLead) {
+
+        if ($carQuote->isGenesisLead) {
             $emailData->currentInsurer = '';
         }
 
