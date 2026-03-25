@@ -641,7 +641,7 @@ class AMLController extends Controller
 
             $policyIssuance = $quote->policyIssuance();
 
-            if ($policyIssuance->exists()) {
+            if ($isHealthQuote && $policyIssuance->exists()) {
                 app(AdnicInsuranceService::class)->retryPolicyIssuance($policyIssuance->first());
             } else {
                 $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
