@@ -676,6 +676,7 @@ describe('Rule Type Change - Cleanup', function () {
             'rule_id' => $rule->id,
             'lead_source_id' => null,
         ]);
+
         // Verify all rule_lead_sources were deleted
         expect(DB::table('rule_lead_sources')->where('rule_id', $rule->id)->count())->toBe(0);
 

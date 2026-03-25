@@ -30,6 +30,7 @@ class DocumentTypeCode extends Enum
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
     const SEND_UPDATE_AUDIT_RECORD = 'SUAR'; // Send Update Audit Record
     const QUOTE = 'QUOTE';
+    const CLAIM = 'CLAIM';
     const MEMBER = 'MEMBER';
     const ENDORSEMENT_DOCUMENTS = 'ENDORSEMENT_DOCUMENTS';
     const SEND_UPDATE = 'SEND_UPDATE';

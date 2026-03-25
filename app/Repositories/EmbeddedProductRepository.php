@@ -195,7 +195,7 @@ class EmbeddedProductRepository extends BaseRepository
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure);
+        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
 
         // generate unique uuid
         $docUuid = uniqid();
@@ -950,7 +950,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  mixed  $modelType
      * @return mixed
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function getPDF(
         $short_code,
