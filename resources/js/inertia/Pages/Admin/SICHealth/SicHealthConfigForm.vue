@@ -51,16 +51,19 @@ onMounted(() => {
 });
 
 function validateFields() {
- if (sicConfigurableForm.is_price_starting_from && sicConfigurableForm.price_starting_from == 0) {
-  notification.error({
-    title: 'Max Price is required',
-    position: 'top',
-  });
-  return false;
- }
+  if (
+    sicConfigurableForm.is_price_starting_from &&
+    sicConfigurableForm.price_starting_from == 0
+  ) {
+    notification.error({
+      title: 'Max Price is required',
+      position: 'top',
+    });
+    return false;
+  }
 
- if (sicConfigurableForm.is_age) {
-   if (sicConfigurableForm.min_age == 0 || sicConfigurableForm.max_age == 0) {
+  if (sicConfigurableForm.is_age) {
+    if (sicConfigurableForm.min_age == 0 || sicConfigurableForm.max_age == 0) {
       notification.error({
         title: 'Min Age and Max Age are required',
         position: 'top',
@@ -75,7 +78,7 @@ function validateFields() {
       });
       return false;
     }
- }
+  }
 
   return true;
 }
@@ -181,7 +184,10 @@ const ageRangeValid = computed(() => {
               required
             />
           </div>
-          <span class="text-xs">Leads with member age within this range will not be assigned to an advisor</span>
+          <span class="text-xs"
+            >Leads with member age within this range will not be assigned to an
+            advisor</span
+          >
         </div>
         <div class="col-span-1 sm:col-span-1">
           <x-checkbox
@@ -202,7 +208,10 @@ const ageRangeValid = computed(() => {
               label="Min Starting Price (AED)"
             />
           </div>
-          <span class="text-xs">Leads with starting price below this value will not be assigned to an advisor</span>
+          <span class="text-xs"
+            >Leads with starting price below this value will not be assigned to
+            an advisor</span
+          >
         </div>
         <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox v-model="sicConfigurableForm.is_type" label="Plan Type" />

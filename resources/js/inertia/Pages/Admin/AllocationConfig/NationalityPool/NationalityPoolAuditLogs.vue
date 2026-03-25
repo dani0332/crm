@@ -12,8 +12,8 @@ const tooltip = ref({
   visible: false,
   text: '',
   x: 0,
-  y: 0
-})
+  y: 0,
+});
 
 const routingLogs = reactive({
   loading: false,
@@ -27,38 +27,42 @@ const routingLogs = reactive({
   ],
 });
 
-const loadData = async () => { 
+const loadData = async () => {
   routingLogs.loading = true;
 
-  axios.get(route('admin.nationality-pool-audit-logs', 'audit')).then(response => {
-    routingLogs.data = response.data.data;
-  }).catch(error => {
-    notification.error({
-      title: 'Error loading audit logs',
-      position: 'top',
+  axios
+    .get(route('admin.nationality-pool-audit-logs', 'audit'))
+    .then(response => {
+      routingLogs.data = response.data.data;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error loading audit logs',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      routingLogs.loading = false;
     });
-  }).finally(() => {
-    routingLogs.loading = false;
-  });
 };
 
 const showTooltip = (event, nationalities) => {
-  const rect = event.target.getBoundingClientRect()
+  const rect = event.target.getBoundingClientRect();
 
   tooltip.value = {
     visible: true,
     text: nationalities.join(', '),
     x: rect.left + rect.width / 2,
-    y: rect.top
-  }
-}
+    y: rect.top,
+  };
+};
 
 const hideTooltip = () => {
-  tooltip.value.visible = false
-}
+  tooltip.value.visible = false;
+};
 
 defineExpose({
-  loadData
+  loadData,
 });
 </script>
 
@@ -67,9 +71,7 @@ defineExpose({
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">
-           Audit Logs
-          </h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
         </div>
       </template>
       <template #body>
@@ -111,7 +113,9 @@ defineExpose({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              <span class="text-sm text-gray-600 font-medium">Loading logs...</span>
+              <span class="text-sm text-gray-600 font-medium"
+                >Loading logs...</span
+              >
             </div>
           </div>
           <DataTable
@@ -123,19 +127,19 @@ defineExpose({
             :rows-per-page="15"
             :hide-footer="routingLogs.data?.length < 15"
           >
-          <template #item-nationalities="{ nationalities }">
-            <span>
-              {{ nationalities.slice(0, 7).join(', ') }}
-            </span> 
-            <span
-              v-if="nationalities.length > 7"
-              class="text-primary cursor-pointer ml-1"
-              @mouseenter="showTooltip($event, nationalities)"
-              @mouseleave="hideTooltip"
-            >
-              +{{ nationalities.length - 7 }} more
-            </span>
-          </template>
+            <template #item-nationalities="{ nationalities }">
+              <span>
+                {{ nationalities.slice(0, 7).join(', ') }}
+              </span>
+              <span
+                v-if="nationalities.length > 7"
+                class="text-primary cursor-pointer ml-1"
+                @mouseenter="showTooltip($event, nationalities)"
+                @mouseleave="hideTooltip"
+              >
+                +{{ nationalities.length - 7 }} more
+              </span>
+            </template>
           </DataTable>
         </div>
 
@@ -146,14 +150,14 @@ defineExpose({
             :style="{
               position: 'fixed',
               left: tooltip.x + 'px',
-              top: (tooltip.y - 10) + 'px',
-              transform: 'translate(-50%, -100%)'
+              top: tooltip.y - 10 + 'px',
+              transform: 'translate(-50%, -100%)',
             }"
             class="bg-black text-white text-xs rounded p-2 shadow-lg z-[9999] max-w-xs whitespace-normal break-words"
           >
             {{ tooltip.text }}
           </div>
-       </Teleport>
+        </Teleport>
       </template>
     </Collapsible>
   </div>

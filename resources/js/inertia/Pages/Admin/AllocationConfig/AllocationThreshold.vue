@@ -147,9 +147,9 @@ onMounted(() => {
   <!-- Disclaimer -->
   <p class="text-sm text-red-600 mt-2 mb-2">
     <span class="font-semibold">Effective 9th March 2026:</span>
-    price-threshold routing is disabled for
-    Entry Level, Good, and Best teams. These leads will be routed based on
-    customer intent. GBP routing continues based on threshold and GBP nationality pool.
+    price-threshold routing is disabled for Entry Level, Good, and Best teams.
+    These leads will be routed based on customer intent. GBP routing continues
+    based on threshold and GBP nationality pool.
   </p>
 
   <!-- Tabs -->
@@ -192,7 +192,7 @@ onMounted(() => {
                 class="w-full"
                 v-model="team.min_price"
                 label="Min Price"
-                :disabled = "team.name != 'GBP' && !roles.includes('ADMIN')"
+                :disabled="team.name != 'GBP' && !roles.includes('ADMIN')"
               />
               <p class="text-xs -mt-4">
                 Minimum annual premium (AED) required for this
@@ -204,14 +204,19 @@ onMounted(() => {
               class="w-full"
               v-model="team.max_price"
               label="Max Price"
-              :disabled = "team.name != 'GBP' && !roles.includes('ADMIN')"
+              :disabled="team.name != 'GBP' && !roles.includes('ADMIN')"
             />
           </div>
         </x-form>
       </div>
 
       <div class="flex justify-end gap-3 mt-5">
-        <x-button size="sm" color="#ff5e00" @click="updateTeams()" :disabled="!roles.includes('ADMIN')">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click="updateTeams()"
+          :disabled="!roles.includes('ADMIN')"
+        >
           Update {{ tabs[activeTab].label }}
         </x-button>
       </div>
