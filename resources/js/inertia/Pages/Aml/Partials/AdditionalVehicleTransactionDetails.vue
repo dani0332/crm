@@ -376,6 +376,12 @@ const isRenewal = computed(() => {
   );
 });
 
+const isCars24 = computed(() => {
+  return (
+    page.props.quoteRequest?.source === page.props.leadSource.CARS24
+  );
+});
+
 const isLivaRenewal = computed(() => {
   return isRenewal.value && isLIVA.value;
 });
@@ -1155,7 +1161,7 @@ watch(
 
           <!-- Plate Code -->
           <x-input
-            v-if="isGIG || isLIVA"
+            v-if="isGIG || isLIVA || isCars24"
             v-model="additionalVehicleTransactionDetailsForm.plate_code"
             :rules="
               isLIVA
