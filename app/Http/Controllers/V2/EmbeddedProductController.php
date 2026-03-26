@@ -183,6 +183,7 @@ class EmbeddedProductController extends Controller
                 'detail' => $ep,
                 'transactions' => $dataset,
             ],
+            'reportLobFilterOptions' => EmbeddedProductRepository::quoteTypeReportLobFilterOptions($ep->short_code),
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
             'sage_statuses' => SageEmbeddedProductEnum::withLabels(),

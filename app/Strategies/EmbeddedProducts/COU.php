@@ -32,6 +32,7 @@ class COU extends EmbeddedProduct
     {
         return [
             'EP REF-ID',
+            'Line of Business',
             'ADVISOR NAME',
             'DATE OF ISSUANCE',
             'PLAN COMMENCEMENT DATE',
@@ -52,6 +53,7 @@ class COU extends EmbeddedProduct
     {
         return [
             $certificate->ref_id,
+            $certificate->lob ?? '',
             $certificate->advisor_name,
             $certificate->payment_date,
             $certificate->plan_start_date,

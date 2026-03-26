@@ -84,6 +84,124 @@ class EmbeddedProductRepository extends BaseRepository
         EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER],
     ];
 
+    /**
+     * @return list<string>|null
+     */
+    public static function allowedLobCodesForEmbeddedProduct(string $epShortCode): ?array
+    {
+        foreach (self::ALLOWED_LOBS_FOR_EPS as $key => $codes) {
+            if (strcasecmp($key, $epShortCode) === 0) {
+                return $codes;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve quote type IDs for embedded product report LOB filtering.
+     *
+     * @param  array<int, string>  $selectedLobCodes
+     * @return list<int>|null null = do not apply LOB filter; empty list = no rows should match
+     */
+    public static function resolveLobFilterQuoteTypeIds(string $epShortCode, array $selectedLobCodes): ?array
+    {
+        $allowed = self::allowedLobCodesForEmbeddedProduct($epShortCode);
+        if ($allowed === null) {
+            return null;
+        }
+
+        $selected = array_values(array_filter($selectedLobCodes));
+        if ($selected === []) {
+            return null;
+        }
+
+        $codes = array_values(array_intersect($selected, $allowed));
+        if ($codes === []) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($codes as $code) {
+            $id = match ($code) {
+                quoteTypeCode::Car => QuoteTypeId::Car,
+                quoteTypeCode::Home => QuoteTypeId::Home,
+                quoteTypeCode::Travel => QuoteTypeId::Travel,
+                quoteTypeCode::CYBER => QuoteTypeId::Cyber,
+                default => null,
+            };
+            if ($id !== null) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @return array<int, array{label: string, value: string}>
+     */
+    public static function quoteTypeReportLobFilterOptions(string $epShortCode): array
+    {
+        $allowed = self::allowedLobCodesForEmbeddedProduct($epShortCode);
+        if ($allowed === null) {
+            return [];
+        }
+
+        $rows = QuoteType::query()
+            ->whereIn('code', $allowed)
+            ->orderBy('sort_order')
+            ->get(['code', 'text']);
+
+        if ($rows->isNotEmpty()) {
+            return $rows->map(fn ($row) => ['label' => $row->text, 'value' => $row->code])
+                ->values()
+                ->all();
+        }
+
+        return collect($allowed)->map(function (string $code) {
+            $id = match ($code) {
+                quoteTypeCode::Car => QuoteTypeId::Car,
+                quoteTypeCode::Home => QuoteTypeId::Home,
+                quoteTypeCode::Travel => QuoteTypeId::Travel,
+                quoteTypeCode::CYBER => QuoteTypeId::Cyber,
+                default => null,
+            };
+            $label = $id !== null ? (QuoteTypeId::getOptions()[$id] ?? $code) : $code;
+
+            return ['label' => $label, 'value' => $code];
+        })->values()->all();
+    }
+
+    /**
+     * Infer Line of Business label from Courier EP ref (e.g. COU-CAR-…, COU-TRA-…) when
+     * {@see EmbeddedTransaction::$quote_type_id} is missing or does not map in {@see QuoteTypeId::getOptions()}.
+     *
+     * HAM- is the short prefix for Home Appliances (distinct from HOM- / Home insurance in {@see QuoteTypes::shortCode()}).
+     *
+     * @return non-empty-string|null
+     */
+    public static function lineOfBusinessLabelFromCourierEpCode(string $code): ?string
+    {
+        if ($code === '' || strcasecmp(substr($code, 0, 4), 'COU-') !== 0) {
+            return null;
+        }
+
+        if (preg_match('/^COU-([A-Za-z]{3})-/i', $code, $matches) !== 1) {
+            return null;
+        }
+
+        $segment = strtoupper($matches[1]);
+
+        if ($segment === 'HAM') {
+            return 'Home Appliances';
+        }
+
+        $quoteType = QuoteTypes::getNameShortCode($segment);
+
+        return $quoteType !== null ? $quoteType->value : null;
+    }
+
     public function model()
     {
         return EmbeddedProduct::class;

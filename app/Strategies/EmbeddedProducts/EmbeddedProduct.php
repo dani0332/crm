@@ -171,7 +171,7 @@ class EmbeddedProduct
      */
     protected function processCarBikeReportRecord($quoteObject, $item)
     {
-        $item->lob = QuoteTypeId::getOptions()[$item->quote_type_id] ?? '';
+        $item->lob = $this->resolveLineOfBusinessLabelForEmbeddedReportRow($item);
 
         if ($item->quote_type_id == QuoteTypeId::Car) {
             $carMake = $quoteObject?->carMake?->text ?? '';
@@ -197,6 +197,25 @@ class EmbeddedProduct
         return $item;
     }
 
+    /**
+     * LOB for the grid/export: prefer {@see EmbeddedTransaction::$quote_type_id}, then parse Courier EP ref (COU-CAR-, COU-HAM- for Home Appliances, …).
+     */
+    protected function resolveLineOfBusinessLabelForEmbeddedReportRow(object $item): string
+    {
+        $quoteTypeId = $item->quote_type_id ?? null;
+        if ($quoteTypeId !== null && $quoteTypeId !== '') {
+            $options = QuoteTypeId::getOptions();
+            $id = (int) $quoteTypeId;
+            if (array_key_exists($id, $options)) {
+                return $options[$id];
+            }
+        }
+
+        $fromRef = EmbeddedProductRepository::lineOfBusinessLabelFromCourierEpCode((string) ($item->code ?? ''));
+
+        return $fromRef ?? '';
+    }
+
     protected function getReportRelations()
     {
         return [
@@ -215,6 +234,11 @@ class EmbeddedProduct
 
     public function filterReport($ep, $filters)
     {
+        $lobQuoteTypeIds = EmbeddedProductRepository::resolveLobFilterQuoteTypeIds(
+            $ep->short_code,
+            (array) ($filters['lob'] ?? [])
+        );
+
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
         });
@@ -225,6 +249,16 @@ class EmbeddedProduct
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
+            ->when(
+                $lobQuoteTypeIds !== null,
+                function ($query) use ($lobQuoteTypeIds) {
+                    if ($lobQuoteTypeIds === []) {
+                        $query->whereRaw('0 = 1');
+                    } else {
+                        $query->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
+                    }
+                }
+            )
             ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
                 $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
             })
