@@ -257,7 +257,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         return [
             'status' => true,
             'message' => 'All policy issuance steps completed successfully',
-            'completed_step' => $currentStep,
+            'completed_step' => $process->completed_step ?? end($stepsExecuted) ?: null,
             'error' => null,
         ];
     }
