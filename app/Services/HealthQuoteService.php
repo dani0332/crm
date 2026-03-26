@@ -1594,8 +1594,7 @@ class HealthQuoteService extends BaseService
 
             $dataArray['memberDetails'] = $quote->activeMembers
                 ->filter(function ($member) use ($quote) {
-                    return $member->is_third_party_payer == 0 &&
-                        $member->customer_type == $quote->customer_type;
+                    return $member->is_third_party_payer == 0;
                 })
                 ->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
 

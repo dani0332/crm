@@ -117,6 +117,10 @@ const isIncludePolicyholder = computed(() => {
   return includePolicyholderMembers.length > 0;
 });
 
+const insuredMembersCount = computed(() => {
+  return page.props.membersDetail.filter(m => m.is_insured == 1).length;
+});
+
 const {
   isIndividualAndFamilies,
   isDomesticHelper,
@@ -135,7 +139,7 @@ const {
 const coverForText = computed(() => {
   let text = page.props.quote.cover_for_id_text
   if(isIndividualAndFamilies.value) {
-    if(isSelf_Me.value || isSelf_Other.value) {
+    if(insuredMembersCount.value === 1) {
       text = 'Individual';
     } else {
       text = 'Family';
