@@ -610,6 +610,16 @@ class CoreSchema
                 $table->unsignedBigInteger('branch_id')->nullable();
                 $table->boolean('is_branch_applicable')->default(0);
                 $table->boolean('is_error_email_sent')->default(0);
+                $table->boolean('is_quote_locked')->default(0);
+                $table->string('cover_for_id')->nullable();
+                $table->string('customer_type')->nullable();
+                $table->unsignedBigInteger('health_plan_type_id')->nullable();
+                $table->unsignedBigInteger('primary_member_id')->nullable();
+                $table->string('insure_code', 50)->nullable();
+                $table->string('policy_holder_code', 50)->nullable();
+                $table->boolean('is_quote_revisable')->default(0);
+                $table->unsignedBigInteger('visa_category_id')->nullable();
+                $table->string('policy_holder_category_code', 50)->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -985,8 +995,10 @@ class CoreSchema
             'lookups' => function (Blueprint $table) {
                 $table->id();
                 $table->string('key')->nullable();
+                $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
                 $table->timestamps();
             },
             'activities' => function (Blueprint $table) {
@@ -1120,8 +1132,21 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
                 $table->unsignedBigInteger('member_category_id')->nullable();
                 $table->unsignedBigInteger('salary_band_id')->nullable();
+                $table->boolean('is_policy_holder')->default(0);
+                $table->boolean('is_insured')->default(1);
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('visa_category_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'visa_categories' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code', 50);
+                $table->string('text', 50);
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->unsignedBigInteger('health_cover_for_id')->nullable();
+                $table->timestamps();
             },
             'insured_kyc' => function (Blueprint $table) {
                 $table->id();
