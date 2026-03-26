@@ -18,6 +18,21 @@ class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
 
+    /**
+     * Normalize emirate filter input into positive integer IDs.
+     *
+     * @return array<int>
+     */
+    public static function normalizeEmirateOfRegistrationIds(mixed $rawInput): array
+    {
+        $values = is_array($rawInput) ? $rawInput : [$rawInput];
+
+        return array_values(array_filter(
+            array_map('intval', $values),
+            static fn (int $id): bool => $id > 0
+        ));
+    }
+
     public function model()
     {
         return BusinessQuote::class;
@@ -89,10 +104,7 @@ class BusinessQuoteRepository extends BaseRepository
         }
 
         if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
-            $raw = $requestParams['emirate_of_registration_id'];
-            $ids = is_array($raw)
-                ? array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0))
-                : [(int) $raw];
+            $ids = self::normalizeEmirateOfRegistrationIds($requestParams['emirate_of_registration_id']);
             if ($ids !== []) {
                 $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
             }

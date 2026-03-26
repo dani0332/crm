@@ -279,10 +279,7 @@ class AmtController extends Controller
         }
 
         if (isset($request->emirate_of_registration_id) && $request->emirate_of_registration_id !== '') {
-            $raw = $request->emirate_of_registration_id;
-            $ids = is_array($raw)
-                ? array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0))
-                : [(int) $raw];
+            $ids = BusinessQuoteRepository::normalizeEmirateOfRegistrationIds($request->emirate_of_registration_id);
             if ($ids !== []) {
                 $data->whereIn('bqr.emirate_of_registration_id', $ids);
             }
