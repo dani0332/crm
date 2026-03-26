@@ -4333,9 +4333,7 @@ const { openTempUrl } = useDocumentTempUrl();
     >
       <template #actions>
         <template
-          v-if="
-            !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-          "
+          v-if="!can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)"
         >
           <template v-if="displaySendPolicyButton">
             <!-- Send Policy placeholder -->
