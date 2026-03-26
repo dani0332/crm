@@ -2691,9 +2691,7 @@ const getDisplayPriceInAED = item => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div
-            class="flex justify-between items-center w-full gap-4 flex-wrap"
-          >
+          <div class="flex justify-between items-center w-full gap-4 flex-wrap">
             <h3 class="font-semibold text-primary-800 text-lg">
               Documents
               <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>

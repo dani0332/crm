@@ -74,9 +74,7 @@ const emailStatusTable = reactive({
 const emailStatusesTableColumns = computed(() =>
   emailStatusTable.columns.filter(column => {
     if (!page.props.isAdmin) {
-      return (
-        column.value !== 'customer_id' && column.value !== 'template_id'
-      );
+      return column.value !== 'customer_id' && column.value !== 'template_id';
     }
     return true;
   }),
@@ -94,9 +92,7 @@ const hideFooter = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
-        <div
-          class="flex justify-between items-center w-full gap-4 flex-wrap"
-        >
+        <div class="flex justify-between items-center w-full gap-4 flex-wrap">
           <h3 class="font-semibold text-primary-800 text-lg">
             Follow-up status
             <span class="text-sm font-normal text-gray-500 ml-1"
