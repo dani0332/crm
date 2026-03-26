@@ -123,10 +123,12 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                 'process_id' => $process->id ?? null,
                 'feature' => LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION->value,
             ]);
-            $response['error'] = 'ADNIC Health Automation is disabled';
-            $response['message'] = 'ADNIC Health Automation is disabled';
 
-            return $response;
+            return [
+                'status' => false,
+                'error' => 'ADNIC Health Automation is disabled',
+                'message' => 'ADNIC Health Automation is disabled',
+            ];
         }
 
         $response = ['status' => false, 'error' => null, 'message' => null];
