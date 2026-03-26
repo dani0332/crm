@@ -7,6 +7,7 @@ use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Traits\ChecksAzureFileExistence;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,13 +15,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use League\Flysystem\UnableToCheckExistence;
 use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use ChecksAzureFileExistence, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120; // 2 minutes
     public $tries = 3;
@@ -68,7 +68,6 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         try {
             if (! $this->fileExists($sourcePath)) {
-                cache()->forget("processing_{$this->lockKey}");
                 LoggerService::warning("Source file does not exist: {$sourcePath}");
 
                 return;
@@ -101,20 +100,19 @@ class WatermarkDocumentsJob implements ShouldQueue
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                cache()->forget("processing_{$this->lockKey}");
                 LoggerService::info('Watermark job completed');
             }
         } catch (\Exception $e) {
-            cache()->forget("processing_{$this->lockKey}");
             LoggerService::error('Error processing watermark. Error: '.$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
         } catch (Throwable $t) {
             // Ensure the processing lock is always cleared for non-Exception Throwables (e.g. TypeError, Error)
-            cache()->forget("processing_{$this->lockKey}");
             LoggerService::error('Error processing watermark (Throwable): '.$t->getMessage(), [
                 'throwable_class' => $t::class,
             ], $t);
             throw $t;
+        } finally {
+            cache()->forget("processing_{$this->lockKey}");
         }
     }
 
@@ -174,18 +172,7 @@ class WatermarkDocumentsJob implements ShouldQueue
     private function fileExists(string $path): bool
     {
         try {
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                $headers = get_headers($path);
-                if (! empty($headers) && is_array($headers) && preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
-                    $status = (int) $matches[1];
-
-                    return $status >= 200 && $status < 400;
-                }
-
-                return false;
-            }
-
-            return Storage::disk('azureIMPrivate')->exists($path);
+            return $this->checkAzureFileExistsWithRetry($path);
         } catch (UnableToCheckExistence $e) {
             $previous = $e->getPrevious();
             LoggerService::warning(

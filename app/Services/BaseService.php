@@ -518,10 +518,6 @@ class BaseService
                     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
                 }
             }
-
-            // if (! $lead->isSuppressIntroEmail() && $sendAdvisorAssignedEmail) {
-            //     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
-            // }
         }
     }
 }
