@@ -5,7 +5,9 @@ namespace App\Http\Middleware;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Closure;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
 class CheckRouteAccess
@@ -13,8 +15,8 @@ class CheckRouteAccess
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
+     * @return Response|RedirectResponse
      */
     public function handle(Request $request, Closure $next, ?string $permissionPrefix = null)
     {
@@ -37,7 +39,6 @@ class CheckRouteAccess
             ? $this->buildPrefixPermission($permissionPrefix, $permissionSuffix)
             : $this->mapRouteNameToPermission($routeName, $methodName, $permissionSuffix);
 
-
         if (auth()->user()->can($permissionName) || $this->allowedViewAllLeads($permissionName) || $this->allowedViewAllReports($permissionName)) {
             return $next($request);
         }
@@ -47,7 +48,7 @@ class CheckRouteAccess
 
     private function mapMethodToPermissionSuffix(string $methodName): string
     {
-       $mapping = [
+        $mapping = [
             'store' => 'create',
             'update' => 'edit',
             'destroy' => 'delete',
