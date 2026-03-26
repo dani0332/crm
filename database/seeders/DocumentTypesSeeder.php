@@ -835,7 +835,7 @@ class DocumentTypesSeeder extends Seeder
                 'code' => 'CLM_CAR_CF',
                 'text' => 'Claim form',
                 'description' => 'Upload your signed and completed claim form.',
-                'is_active' => 1,
+                'is_active' => 0,
                 'quote_type_id' => QuoteTypeId::Car,
                 'folder_path' => 'claims/car',
                 'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
