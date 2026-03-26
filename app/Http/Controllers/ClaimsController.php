@@ -59,8 +59,8 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_STATUS_UPDATE], ['only' => ['updateClaimStatus']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_SUB_STATUS_UPDATE], ['only' => ['sendNotification', 'optimizeMessage']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show', 'getClaimLeadHistory', 'getClaimSubStatusLogs', 'getComplaintStatusLogs', 'getNextFollowUpLogs']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_MANUAL_ASSIGN], ['only' => ['assignClaim', 'bulkAssignClaims']]);
     }
 
