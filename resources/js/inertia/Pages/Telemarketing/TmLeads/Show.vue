@@ -25,7 +25,7 @@ const leadForm = useForm({
 
 function onSubmit(isValid) {
   if (isValid) {
-    leadForm.get(route('tmLeadUpdate', props.tmlead.id), {
+    leadForm.put(route('tmLeadUpdate', props.tmlead.id), {
       preserveScroll: true,
       onSuccess: () => {},
       onError: errors => {},
