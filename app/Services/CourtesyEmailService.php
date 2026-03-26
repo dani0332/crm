@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
+use App\Enums\EmirateEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -228,7 +229,11 @@ class CourtesyEmailService extends BaseService
                 ],
             ];
 
-            $payload['isAUH'] = (int) ($quote->branch_id ?? BranchEnum::DUBAI->value) === BranchEnum::ABU_DHABI->value;
+            $payload['isAUH'] = match ($quoteTypeId) {
+                QuoteTypeId::Health => (int) ($quote->emirate_of_your_visa_id ?? 0) === EmirateEnum::ABU_DHABI,
+                QuoteTypeId::GroupMedical => (int) ($quote->latestInsured?->emirate_of_registration_id ?? $quote->emirate_of_registration_id ?? 0) === EmirateEnum::ABU_DHABI,
+                default => (int) ($quote->branch_id ?? BranchEnum::DUBAI->value) === BranchEnum::ABU_DHABI->value,
+            };
 
             $response = $this->birdService->triggerWebHookRequest($workflowUrl, $payload);
 
