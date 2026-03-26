@@ -26,6 +26,9 @@ const leadForm = useForm({
 function onSubmit(isValid) {
   if (isValid) {
     leadForm.put(route('tmLeadUpdate', props.tmlead.id), {
+      headers: {
+        'content-type': 'application/json',
+      },
       preserveScroll: true,
       onSuccess: () => {},
       onError: errors => {},
