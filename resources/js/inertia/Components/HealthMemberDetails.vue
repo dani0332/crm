@@ -744,6 +744,7 @@ defineExpose({
             || isSelf_Me
             || (isSelf_Other && localMembersFiltered.length === 1)
             || (isDomesticHelper && localMembersFiltered.length === 1)
+            || localMembersFiltered.length >= 8
             "
             v-if="readOnlyMode.isDisable === true"
           >

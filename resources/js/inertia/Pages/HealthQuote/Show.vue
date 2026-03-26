@@ -130,6 +130,18 @@ const {
   getPolicyHolderCode: () => page.props.quote.policy_holder_code,
 });
 
+const coverForText = computed(() => {
+  let text = page.props.quote.cover_for_id_text
+  if(isIndividualAndFamilies.value) {
+    if(isSelf_Me.value || isSelf_Other.value) {
+      text = 'Individual';
+    } else {
+      text = 'Family';
+    }
+  }
+  return text;
+});
+
 const showIncludePolicyholderField = computed(() => {
   return isFamily_Other.value || isSelfAndFamily_Other.value;
 });
@@ -2149,7 +2161,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL ? true : false;
                 <dt class="font-medium">
                   FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
                 </dt>
-                <dd>{{ quote.cover_for_id_text }}</dd>
+                <dd>{{ coverForText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2" v-if="isIndividualAndFamilies">
                 <dt class="font-medium">

@@ -101,11 +101,11 @@ class CustomerMembers extends Model
         if ($audit->event == 'created') {
 
             if (isset($transformedNew['is_policy_holder']) && $transformedNew['is_policy_holder'] == 'true') {
-                $audit->event = 'Member Added (Policy Holder)';
+                $audit->event = 'member_added (Policy Holder)';
             } elseif (isset($transformedNew['is_principal']) && $transformedNew['is_principal'] == 'true') {
-                $audit->event = 'Member Added (Principal)';
+                $audit->event = 'member_added (Principal)';
             } else {
-                $audit->event = 'Member Added';
+                $audit->event = 'member_added';
             }
         } else {
 
@@ -115,27 +115,27 @@ class CustomerMembers extends Model
             }
 
             if (! empty($transformedNew['deletedAt'])) {
-                $audit->event = 'Member Removed';
+                $audit->event = 'member_deleted';
             } elseif (isset($transformedOld['isPolicyHolder']) && isset($transformedNew['isPolicyHolder'])
                 && $transformedOld['isPolicyHolder'] == 'true' && $transformedNew['isPolicyHolder'] == 'false'
             ) {
-                $audit->event = 'Policy Holder Removed';
+                $audit->event = 'member_updated (Policy Holder Removed)';
             } elseif (isset($transformedOld['isPrincipal']) && $transformedOld['isPrincipal'] == 'true'
                 && isset($transformedNew['isPrincipal']) && $transformedNew['isPrincipal'] == 'false'
             ) {
-                $audit->event = 'Principal Removed';
+                $audit->event = 'member_updated (Principal Removed)';
             } elseif (
                 isset($transformedOld['isPolicyHolder']) && $transformedOld['isPolicyHolder'] == 'false'
                 && isset($transformedNew['isPolicyHolder']) && $transformedNew['isPolicyHolder'] == 'true'
             ) {
-                $audit->event = 'Policy Holder Added';
+                $audit->event = 'member_updated (Policy Holder Added)';
             } elseif (
                 isset($transformedOld['isPrincipal']) && $transformedOld['isPrincipal'] == 'false'
                 && isset($transformedNew['isPrincipal']) && $transformedNew['isPrincipal'] == 'true'
             ) {
-                $audit->event = 'Principal Added';
+                $audit->event = 'member_updated (Principal Added)';
             } else {
-                $audit->event = 'Member Updated';
+                $audit->event = 'member_updated';
                 if ($data['model']?->is_policy_holder == 1) {
                     $audit->event .= ' (Policy Holder)';
                 } elseif ($data['model']?->is_principal == 1) {

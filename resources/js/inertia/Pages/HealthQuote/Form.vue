@@ -583,6 +583,7 @@ const maritalStatusOptions = computed(() => {
 
         <x-select
           v-if='isIndividualAndFamilies'
+          :disabled="isEdit"
           v-model="quoteForm.health_insure_code"
           :rules="[isRequired]"
           :options="
@@ -599,6 +600,7 @@ const maritalStatusOptions = computed(() => {
 
         <x-select
           v-if='isIndividualAndFamilies'
+          :disabled="isEdit"
           v-model="quoteForm.policy_holder_code"
           :rules="[isRequired]"
           :options="
