@@ -860,20 +860,27 @@ watch(
 
     <Transition name="fade">
       <div
-        v-if="claimsSelected.length > 0 && can(permissionsEnum.CLAIMS_MANUAL_ASSIGN)"
+        v-if="
+          claimsSelected.length > 0 && can(permissionsEnum.CLAIMS_MANUAL_ASSIGN)
+        "
         class="mb-4"
       >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-          <h3 class="font-semibold text-primary-800">Assign Claims (Claims Lead)</h3>
+          <h3 class="font-semibold text-primary-800">
+            Assign Claims (Claims Lead)
+          </h3>
           <p class="text-sm text-gray-500 mt-1">
             {{ claimsSelected.length }} claim(s) selected
           </p>
           <x-divider class="mb-4 mt-1" />
           <x-form
-            @submit="(e) => {
-              if (e && typeof e.preventDefault === 'function') e.preventDefault();
-              onBulkAssign();
-            }"
+            @submit="
+              e => {
+                if (e && typeof e.preventDefault === 'function')
+                  e.preventDefault();
+                onBulkAssign();
+              }
+            "
             :auto-focus="false"
           >
             <div class="w-full flex flex-col md:flex-row gap-4 items-end">
