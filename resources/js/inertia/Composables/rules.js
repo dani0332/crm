@@ -1,7 +1,16 @@
 export const useRules = () => {
-  const isEmail = v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(v) ||
-    'E-mail must be valid';
+  const isEmail = v => {
+    if (!v) return true; // Allow empty if not required
+
+    // Standard email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(v)) {
+      return 'Email address must be in a valid format';
+    }
+
+    return true;
+  };
 
   const isMobile = v => {
     if (v) {
@@ -70,16 +79,27 @@ export const useRules = () => {
     !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
 
   const isMobileNo = v => {
-    if (v) {
-      const regex = /^[0-9+\-\s]+$/;
-      if (v.length < 10) {
-        return 'Mobile Number should be 10 digits long';
-      }
-      if (v.length > 20) {
-        return 'Mobile Number should be less than 20 digits long';
-      }
-      return regex.test(v) || 'Invalid mobile number';
+    if (!v) return true; // Allow empty if not required
+
+    // Match server-side validation: /^[\+]?[0-9\s\-\(\)]+$/
+    const regex = /^[\+]?[0-9\s\-\(\)]+$/;
+
+    if (!regex.test(v)) {
+      return 'Phone number format is invalid. Only digits, spaces, +, -, and parentheses are allowed';
     }
+
+    // Count only digits to validate length
+    const digitsOnly = v.replace(/[^\d]/g, '');
+
+    if (digitsOnly.length < 7) {
+      return 'Phone number must be at least 7 digits long';
+    }
+
+    if (v.length > 20) {
+      return 'Phone number must not exceed 20 characters';
+    }
+
+    return true;
   };
   const price_vat_notapplicable = v => {
     return (

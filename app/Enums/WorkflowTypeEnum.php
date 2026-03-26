@@ -49,6 +49,7 @@ final class WorkflowTypeEnum extends Enum
     public const COMPANY_CAR_OCB = 'company_car_ocb';
     public const AIG_WORKFLOW = 'aig_workflow';
     public const LIFE_OCA_EMAIL = 'life_oca_email';
+    public const SAVINGS_OCA_EMAIL = 'savings_oca_email';
     public const CAR_COMMERCIAL_OCB = 'car_commercial_ocb';
     public const TRAVEL_AIG_WORKFLOW = 'travel_aig_workflow';
     public const CAR_INTRO_EMAIL = 'car_intro_email';
@@ -66,11 +67,16 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const CYBER_AUTOMATION_FAILED = 'cyber_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
+    public const CLAIM_INTRODUCTORY_EMAIL_TO_CUSTOMER = 'claim_introductory_email_to_customer';
+    public const CLAIM_GOOGLE_REVIEW_EMAIL = 'claim_google_review_email';
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL = 'claim_health_google_review_email';
+    public const CLAIM_SUB_STATUS_CUSTOMER_NOTIFICATION = 'claim_sub_status_customer_notification';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
     public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'travel_renewal_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
+    public const CAR_EP_RETARGETING_REMINDER = 'car_ep_retargeting_reminder';
 
     // Cyber workflow
     public const CYBER_OCB_INTRO_EMAIL = 'cyber_ocb_intro_email';

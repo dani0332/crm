@@ -257,6 +257,7 @@ final class ApplicationStorageEnums extends Enum
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
     public const LIFE_OCA_EMAIL_FLOW = 'LIFE_OCA_EMAIL_FLOW';
+    public const SAVINGS_OCA_EMAIL_FLOW = 'SAVINGS_OCA_EMAIL_FLOW';
     public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
     public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
     public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
@@ -280,6 +281,24 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AI_ADVISOR_OCB = 'BIRD_AI_ADVISOR_OCB';
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
+
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
+
+    /** Comma-separated BCC for Bird claim Google review email (non-health / default workflow) */
+    public const CLAIM_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for Bird claim health & group-medical Google review email workflow */
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for motor & general (non-health, non-life) claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL';
+
+    /** Comma-separated BCC for health & group-medical claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH';
+
+    /** Comma-separated BCC for life claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE';
 
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
@@ -310,12 +329,17 @@ final class ApplicationStorageEnums extends Enum
     /* OCR Customer Journey Flag */
     public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 
+    /* Bird EP Workflow URL */
+    public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
+
     /* EP ECB Policy Configuration */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
     public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
+
+    /* CAR EP (MDX / ECB) Retargeting Reminder */
+    public const ENABLE_CAR_EP_RETARGETING_REMINDER = 'ENABLE_CAR_EP_RETARGETING_REMINDER';
 
     // EP Failure Notification Email
     public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';
@@ -327,6 +351,10 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+
+    // Claim Intro Email
+    public const CLAIM_INTRO_EMAIL_SWITCH = 'CLAIM_INTRO_EMAIL_SWITCH';
+    public const CLAIM_INTRO_EMAIL_WORKFLOW = 'CLAIM_INTRO_EMAIL_WORKFLOW';
 
     /* Cyber OCB */
     public const BIRD_CYBER_OCB_INTRO_EMAIL = 'BIRD_CYBER_OCB_INTRO_EMAIL';
@@ -377,4 +405,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Chief Deputy Officer Mobile Number
     public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
+
+    // Instant Alfred Export Workflow
+    public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
 }

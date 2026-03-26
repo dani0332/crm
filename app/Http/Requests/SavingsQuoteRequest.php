@@ -45,7 +45,7 @@ class SavingsQuoteRequest extends FormRequest
             'currency_id' => ['required', Rule::exists(CurrencyType::class, 'id')],
             'investment_amount' => 'required|numeric|min:1',
             'investment_frequency' => ['required', Rule::exists(Lookup::class, 'id')],
-            'notes' => 'required|string',
+            'additional_notes' => 'required|string',
             // Sub-source fields
             'sub_source_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
             'sub_source_options_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
@@ -64,4 +64,5 @@ class SavingsQuoteRequest extends FormRequest
             'last_name.regex' => 'The last name may only contain letters, spaces, and hyphens.',
         ];
     }
+
 }

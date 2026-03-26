@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
+use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -71,6 +72,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+        $quote->refresh();
+        LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - check advisor id', extra: [
+            'quoteAdvisorId' => $quote->advisor_id,
+            'dataAdvisorId' => $this->data?->advisorId ?? null,
+        ]);
 
         $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
 
@@ -125,6 +131,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
 
         $quote->load('advisor');
+        $advisor = $quote->advisor_id ? $quote->advisor : User::find($this->data?->advisorId) ?? null;
+        LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - Advisor Object', extra: [
+            'advisor' => $advisor,
+            'quoteAdvisorId' => $quote->advisor_id,
+            'dataAdvisorId' => $this->data?->advisorId ?? null,
+        ]);
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
         $roadsideAssistance = '';
@@ -149,14 +161,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $emailData->currentInsurer = '';
         $emailData->profilePicture = '';
         $emailData->isChsAdvisor = false;
-        if (! empty($quote->advisor)) {
-            $emailData->advisorName = $quote->advisor->name;
-            $emailData->advisorEmail = $quote->advisor->email;
-            $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
+        if (! empty($advisor)) {
+            $emailData->advisorName = $advisor->name;
+            $emailData->advisorEmail = $advisor->email;
+            $advisorMobileNo = formatMobileNo($advisor->mobile_no);
             $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
-            $emailData->advisorLandlineNo = $quote->advisor->landline_no;
-            $emailData->googleMeet = $quote->advisor->calendar_link;
-            $emailData->profilePicture = $quote->advisor->profile_photo_path;
+            $emailData->advisorLandlineNo = $advisor->landline_no;
+            $emailData->googleMeet = $advisor->calendar_link;
+            $emailData->profilePicture = $advisor->profile_photo_path;
             if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL) {
                 $emailData->isChsAdvisor = true;
             }

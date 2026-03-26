@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\LookupsEnum;
@@ -287,6 +288,53 @@ class LookupService extends BaseService
                 'key' => LookupsEnum::SUB_SOURCE,
                 'is_active' => 1,
             ])->get();
+        });
+    }
+
+    /**
+     * Get claim request types
+     */
+    public function getClaimRequestTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_REQUEST_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
+    }
+
+    /**
+     * Get claim Service Type
+     */
+    public function getClaimServiceTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_SERVICE_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
+    }
+
+    /**
+     * Get claim types from lookup
+     */
+    public function getClaimTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
         });
     }
 
