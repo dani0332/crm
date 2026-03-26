@@ -732,8 +732,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('status', StatusController::class);
         Route::resource('paymentmode', PaymentModeController::class);
         Route::resource('transaction', TransactionController::class)->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete');
-        Route::get('home', [TransactionController::class, 'transectionHome'])->name('home');
-        Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->name('showtransaction');
+        Route::get('home', [TransactionController::class, 'transectionHome'])->middleware('permission:transapp-search')->name('home');
+        Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->middleware('permission:transapp-search')->name('showtransaction');
         Route::get('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransectionView'])->name('reissue_view');
         Route::get('re-issue-transaction-form', [TransactionController::class, 'cancelAndReIssueTransectionForm'])->name('re_issue_transaction_form');
         Route::post('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransection'])->name('re_issue');
