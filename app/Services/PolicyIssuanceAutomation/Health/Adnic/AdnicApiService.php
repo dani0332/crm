@@ -159,7 +159,7 @@ class AdnicApiService
                     ]);
 
                     $allDocsDownloaded = false;
-                    break;
+                    break 2;
                 }
             }
         }
