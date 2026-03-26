@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -57,8 +58,14 @@ class SendBookPolicyRequest extends FormRequest
                 if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
                     $validator->errors()->add('error', 'Required documents are not uploaded');
                 }
+            });
+        }
 
-                // TODO : need to also check for Policy Handbook from Savings plan section.
+        if ($quote?->quote_type_id == QuoteTypeId::Business && $quote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            $validator->after(function ($validator) use ($quote) {
+                if (! $quote?->emirate_of_registration_id) {
+                    $validator->errors()->add('error', 'Posting blocked: Emirate of registration is required for financial processing.');
+                }
             });
         }
 

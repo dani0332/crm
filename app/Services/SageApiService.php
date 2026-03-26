@@ -939,6 +939,12 @@ class SageApiService
             return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
         }
 
+        if ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL && ! $quote->emirate_of_registration_id) {
+            LoggerService::info('Emirate of registration is mandatory for SAGE posting.', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Emirate of registration is mandatory for SAGE posting.'];
+        }
+
         if (! $isPolicyBookedOnSage) {
 
             LoggerService::info('Payment frequency: '.$payment->frequency);
