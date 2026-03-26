@@ -19,6 +19,7 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ class AllocationService extends BaseService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -83,7 +84,7 @@ class AllocationService extends BaseService
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
 
             return $leadAllocation;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error($e->getMessage());
         }
     }
@@ -111,14 +112,14 @@ class AllocationService extends BaseService
                 );
             } catch (QueryException $exception) {
 
-                LoggerService::error("QueryException: " . $exception->getMessage(), [
+                LoggerService::error('QueryException: '.$exception->getMessage(), [
                     'message' => $exception->getMessage(),
                     'code' => $exception->getCode(),
                     'getCode' => $exception->getCode() === 23000,
                 ]);
 
                 if ($exception->getCode() === 23000 || $exception->getCode() === '23000') {
-                    LoggerService::info("Re-attempting to update QuoteDetails");
+                    LoggerService::info('Re-attempting to update QuoteDetails');
                     $updated = $quoteModel::where($keyColumn, $leadId)->update([
                         'advisor_assigned_date' => now(),
                         'advisor_assigned_by_id' => auth()->id(),
@@ -130,7 +131,7 @@ class AllocationService extends BaseService
                     }
                 }
 
-                LoggerService::error("QueryException in upsertQuoteDetail: " . $exception->getMessage(), [
+                LoggerService::error('QueryException in upsertQuoteDetail: '.$exception->getMessage(), [
                     'message' => $exception->getMessage(),
                     'code' => $exception->getCode(),
                     'lead_id' => $leadId,
@@ -143,7 +144,7 @@ class AllocationService extends BaseService
         if (DB::transactionLevel() === 0) {
             DB::transaction($attemptUpsert);
         } else {
-            /*If we're alreacy in a open transaction */
+            /* If we're alreacy in a open transaction */
             $attemptUpsert();
         }
     }
@@ -451,7 +452,7 @@ class AllocationService extends BaseService
             ]);
 
             return $isBusinessHours;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
 
             return false;

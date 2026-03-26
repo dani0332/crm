@@ -58,7 +58,6 @@ class FakeQuoteDetailModel
     public static array $updatedRecords = [];
 
     private string $whereColumn;
-
     private mixed $whereValue;
 
     public static function reset(): void
@@ -88,7 +87,7 @@ class FakeQuoteDetailModel
 
     public static function where(string $column, mixed $value): self
     {
-        $instance = new self();
+        $instance = new self;
         $instance->whereColumn = $column;
         $instance->whereValue = $value;
 
@@ -109,4 +108,3 @@ class FakeQuoteDetailModel
         return 1;
     }
 }
-
