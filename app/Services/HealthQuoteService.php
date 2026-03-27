@@ -463,25 +463,25 @@ class HealthQuoteService extends BaseService
     private function prepareMemberDetailPayload(CustomerMembers|array $member): array
     {
         $id = $member['id'] ?? 'temp-';
-        $dob = $member['dob'] ? Carbon::parse($member['dob'])->toDateString() : null;
+        $dob = !empty($member['dob']) ? Carbon::parse($member['dob'])->toDateString() : null;
 
         return [
             'id' => str_starts_with((string) ($id), 'temp-') ? null : $id,
-            'firstName' => $member['first_name'],
+            'firstName' => $member['first_name'] ?? null,
             'lastName' => $member['last_name'] ?? null,
             'dob' => $dob,
-            'gender' => $member['gender'],
-            'nationalityId' => $member['nationality_id'],
-            'emirateOfYourVisaId' => $member['emirate_of_your_visa_id'],
-            'salaryBandId' => $member['salary_band_id'],
-            'memberCategoryId' => $member['member_category_id'],
-            'visaCategoryId' => $member['visa_category_id'],
-            'relationCode' => $member['relation_code'],
-            'maritalStatusId' => $member['marital_status_id'],
-            'isInsured' => $member['is_insured'] == 1,
-            'isPolicyHolder' => $member['is_policy_holder'] == 1,
-            'isPrincipal' => $member['is_principal'] == 1,
-            'isPecMarked' => ($member['pec'] ?? $member['is_pec_marked']) == 1,
+            'gender' => $member['gender'] ?? null,
+            'nationalityId' => $member['nationality_id'] ?? null,
+            'emirateOfYourVisaId' => $member['emirate_of_your_visa_id'] ?? null,
+            'salaryBandId' => $member['salary_band_id'] ?? null,
+            'memberCategoryId' => $member['member_category_id'] ?? null,
+            'visaCategoryId' => $member['visa_category_id'] ?? null,
+            'relationCode' => $member['relation_code'] ?? null,
+            'maritalStatusId' => $member['marital_status_id'] ?? null,
+            'isInsured' => ($member['is_insured'] ?? null) == 1,
+            'isPolicyHolder' => ($member['is_policy_holder'] ?? null) == 1,
+            'isPrincipal' => ($member['is_principal'] ?? null) == 1,
+            'isPecMarked' => ($member['pec'] ?? $member['is_pec_marked'] ?? null) == 1,
         ];
     }
 

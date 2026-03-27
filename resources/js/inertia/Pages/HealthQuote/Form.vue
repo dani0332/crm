@@ -115,7 +115,7 @@ const computedMembers = computed(() => {
   const membersArray = Array.isArray(props.membersDetail) 
     ? props.membersDetail 
     : Object.values(props.membersDetail || {});
-  return membersArray.filter(x => !x.is_third_party_payer == 1) || [];
+  return membersArray.filter(x => x.is_third_party_payer != 1) || [];
 });
 
 const policyHolderInsuredMember = computed(() => {

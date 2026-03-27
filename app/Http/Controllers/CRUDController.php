@@ -509,6 +509,7 @@ class CRUDController extends Controller
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
+                'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'subSources' => $subSources,
                 'emirates' => $emirates,

@@ -12,7 +12,7 @@ enum HealthInsureEnum: string
     {
         return match ($this) {
             self::ONLY_MYSELF => 'Only the customer',
-            self::ONLY_MY_FAMILY_MEMBERS => 'Only the customer’s family member(s)',
+            self::ONLY_MY_FAMILY_MEMBERS => "Only the customer's family member(s)",
             self::MYSELF_AND_MY_FAMILY_MEMBERS => 'The customer and their family member(s)',
             default => '',
         };
