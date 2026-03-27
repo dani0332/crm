@@ -32,7 +32,10 @@ class AuditableController extends Controller
 
     public function __construct(private BaseService $baseService)
     {
-        $this->middleware(CheckAuditableTypePermission::class)->only('loadAuditableComponent');
+        $this->middleware(
+            [CheckAuditableTypePermission::class],
+            ['only' => ['loadAuditableComponent']]
+        );
     }
 
     public function loadAuditableComponent(Request $request)
