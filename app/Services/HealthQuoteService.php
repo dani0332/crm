@@ -612,18 +612,17 @@ class HealthQuoteService extends BaseService
 
         LoggerService::info('Health updateHealthQuote - CAPI API response', extra: ['response' => $response, 'uuid' => $id]);
 
-        if (isset($response?->data?->id)) {
-
-            LoggerService::info('Health updateHealthQuote - after CAPI request - advisorId and supportUserId:', [
-                'quoteUID' => $response?->data?->uuid ?? null,
-            ]);
-
-            $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
-
-            ReEvaluatePecJob::dispatch($healthQuote->uuid);
+        if (! isset($response?->data?->id)) {
+            return false;
         }
 
-        return $response;
+        LoggerService::info('Health updateHealthQuote - after CAPI request - advisorId and supportUserId:', [
+            'quoteUID' => $response?->data?->uuid ?? null,
+        ]);
+
+        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+
+        ReEvaluatePecJob::dispatch($healthQuote->uuid);
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)

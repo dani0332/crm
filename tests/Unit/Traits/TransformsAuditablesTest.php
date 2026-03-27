@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Models\CustomerMembers;
+use App\Models\Nationality;
 use App\Traits\TransformsAuditables;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -366,4 +368,72 @@ describe('CustomerMembers::customizeAuditTransformation – event string dataset
             auditData('updated', ['firstName' => 'J', 'lastName' => 'D'], ['firstName' => 'K'], makeModel(is_principal: 1)),
         ],
     ]);
+});
+
+// ============================================================================
+// performAuditTransformation — relational FK resolution
+// ============================================================================
+
+describe('performAuditTransformation – relational FK resolution', function () {
+    test('old and new relational text are resolved from their respective FK ids, not from current model state', function () {
+        // Seed two nationality rows with distinct names.
+        $oldNationalityId = DB::table('nationality')->insertGetId(['text' => 'British', 'is_active' => 1]);
+        $newNationalityId = DB::table('nationality')->insertGetId(['text' => 'Canadian', 'is_active' => 1]);
+
+        // Create a CustomerMembers row whose current nationality_id points to the NEW value,
+        // simulating what the DB looks like after the update has already been committed.
+        $memberId = DB::table('customer_members')->insertGetId([
+            'quote_type' => 'App\Models\HealthQuote',
+            'quote_id' => 1,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'nationality_id' => $newNationalityId,
+        ]);
+
+        // Build the audit data the same way AuditRepository does: old_values has the previous FK,
+        // new_values has the current FK.
+        $data = [
+            'audit' => (object) [
+                'event' => 'updated',
+                'auditable_id' => $memberId,
+                'auditable_type' => CustomerMembers::class,
+            ],
+            'transformedOld' => ['nationality_id' => $oldNationalityId],
+            'transformedNew' => ['nationality_id' => $newNationalityId],
+        ];
+
+        $result = (new CustomerMembers)->transformAuditables($data);
+
+        // Old should resolve to "British" (id=$oldNationalityId), NOT "Canadian".
+        expect($result['transformedOld']['nationality'])->toBe('British');
+        // New should resolve to "Canadian" (id=$newNationalityId).
+        expect($result['transformedNew']['nationality'])->toBe('Canadian');
+    });
+
+    test('old relational text is null when old FK id has no matching record', function () {
+        $newNationalityId = DB::table('nationality')->insertGetId(['text' => 'German', 'is_active' => 1]);
+
+        $memberId = DB::table('customer_members')->insertGetId([
+            'quote_type' => 'App\Models\HealthQuote',
+            'quote_id' => 1,
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'nationality_id' => $newNationalityId,
+        ]);
+
+        $data = [
+            'audit' => (object) [
+                'event' => 'updated',
+                'auditable_id' => $memberId,
+                'auditable_type' => CustomerMembers::class,
+            ],
+            'transformedOld' => ['nationality_id' => 99999],
+            'transformedNew' => ['nationality_id' => $newNationalityId],
+        ];
+
+        $result = (new CustomerMembers)->transformAuditables($data);
+
+        expect($result['transformedOld']['nationality'])->toBeNull();
+        expect($result['transformedNew']['nationality'])->toBe('German');
+    });
 });

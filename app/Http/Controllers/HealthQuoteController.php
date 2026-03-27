@@ -14,6 +14,7 @@ use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDeleteRequest;
 use App\Http\Requests\MemberDetailRequest;
+use App\Http\Requests\RefreshPlansRequest;
 use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -249,11 +250,8 @@ class HealthQuoteController extends Controller
         return redirect()->back();
     }
 
-    public function refreshPlans(Request $request)
+    public function refreshPlans(RefreshPlansRequest $request)
     {
-        $request->validate([
-            'quoteId' => 'required|string',
-        ]);
 
         $response = $this->healthQuoteService->refreshPlans($request);
 

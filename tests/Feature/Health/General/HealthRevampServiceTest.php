@@ -575,3 +575,90 @@ describe('health_quote_request new schema columns', function () {
         expect((int) $row->visa_category_id)->toBe($visaCategory->id);
     });
 });
+
+// ============================================================================
+// SECTION 5: updateHealthQuote – return value contract
+// ============================================================================
+
+describe('HealthQuoteService updateHealthQuote return value', function () {
+    /**
+     * Build a minimal update request for the given quote.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    function makeUpdateRequest(HealthQuote $quote, array $overrides = []): Request
+    {
+        $request = new Request;
+        $request->merge(array_merge([
+            'email' => $quote->email,
+            'mobile_no' => $quote->mobile_no,
+            'first_name' => $quote->first_name,
+            'last_name' => $quote->last_name,
+            'customer_type' => 'Individual',
+            'members' => [[
+                'id' => null,
+                'first_name' => $quote->first_name,
+                'last_name' => $quote->last_name,
+                'dob' => '1990-01-01',
+                'gender' => 'M',
+                'nationality_id' => null,
+                'emirate_of_your_visa_id' => null,
+                'salary_band_id' => null,
+                'member_category_id' => null,
+                'visa_category_id' => null,
+                'relation_code' => null,
+                'marital_status_id' => null,
+                'is_insured' => 1,
+                'is_policy_holder' => 1,
+                'is_principal' => 1,
+                'pec' => 0,
+            ]],
+        ], $overrides));
+
+        return $request;
+    }
+
+    test('returns false when CAPI response does not contain data.id', function () {
+        $quote = HealthQuote::factory()->create();
+
+        $mock = Mockery::mock('alias:'.CapiRequestService::class);
+        $mock->shouldReceive('sendCAPIRequest')
+            ->once()
+            ->andReturn((object) ['error' => 'Something went wrong']);
+
+        $request = makeUpdateRequest($quote);
+        $result = app(HealthQuoteService::class)->updateHealthQuote($request, $quote->uuid);
+
+        expect($result)->toBeFalse();
+    });
+
+    test('returns null (no explicit return) when CAPI succeeds with data.id', function () {
+        $quote = HealthQuote::factory()->create();
+
+        $mock = Mockery::mock('alias:'.CapiRequestService::class);
+        $mock->shouldReceive('sendCAPIRequest')
+            ->once()
+            ->andReturn((object) ['data' => (object) ['id' => 99, 'uuid' => $quote->uuid]]);
+
+        $this->mock(\App\Services\SLA\SLAService::class, function ($mock) {
+            $mock->shouldReceive('meetSLAOnEdit')->once()->andReturnNull();
+        });
+
+        $request = makeUpdateRequest($quote);
+        $result = app(HealthQuoteService::class)->updateHealthQuote($request, $quote->uuid);
+
+        expect($result)->toBeNull();
+    });
+
+    test('returns a redirect response when the quote is locked', function () {
+        $quote = HealthQuote::factory()->locked()->create();
+
+        $mock = Mockery::mock('alias:'.CapiRequestService::class);
+        $mock->shouldReceive('sendCAPIRequest')->never();
+
+        $request = makeUpdateRequest($quote);
+        $result = app(HealthQuoteService::class)->updateHealthQuote($request, $quote->uuid);
+
+        expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    });
+});
