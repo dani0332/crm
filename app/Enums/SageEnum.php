@@ -240,4 +240,7 @@ final class SageEnum extends Enum
     const PAYMENT_CODE_IP = 'IP';
     const BANK_CODE_TAP = 'TAP';
     const PAYMENT_CODE_CREDIT_CARD = 'CC';
+
+    const SAGE = 'sage';
+    const CUSTOMER = 'customer';
 }
