@@ -14,8 +14,9 @@ use Throwable;
 class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
+    
+    public int $uniqueFor = 640;
 
-    public int $uniqueFor = 300;
     public int $timeout = 60;
     public int $tries = 4;
     public array $backoff = [30, 60, 120];
