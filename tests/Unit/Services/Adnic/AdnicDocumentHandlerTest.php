@@ -246,6 +246,28 @@ class AdnicDocumentHandlerTest extends TestCase
         }
     }
 
+    public function test_get_document_by_type_keeps_only_latest_per_document_type_code(): void
+    {
+        $older = new \stdClass;
+        $older->id = 1;
+        $older->document_type_code = DocumentTypeCode::HEA_VISA;
+
+        $newer = new \stdClass;
+        $newer->id = 2;
+        $newer->document_type_code = DocumentTypeCode::HEA_VISA;
+
+        $quote = new \stdClass;
+        $quote->uuid = 'quote-uuid-latest-docs';
+        $quote->documents = collect([$older, $newer]);
+
+        $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_VISA]);
+
+        $this->assertNotNull($result);
+        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertCount(1, $result);
+        $this->assertSame(2, $result->first()->id);
+    }
+
     public function test_upload_and_attach_to_quote_documents_builds_correct_data_array(): void
     {
         $quote = new \stdClass;

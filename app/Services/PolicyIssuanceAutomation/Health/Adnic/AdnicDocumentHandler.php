@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Models\HealthUMAFResponse;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Collection;
 
 class AdnicDocumentHandler
 {
@@ -93,10 +94,19 @@ class AdnicDocumentHandler
             return null;
         }
 
-        // Handle Emirates ID document splitting logic
+        $emirateIdType = null;
         if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
             $emirateIdType = $this->modifyEmirateDocument($quote->uuid);
+        }
 
+        $documents = $this->keepLatestDocumentsPerType($documents, $emirateIdType);
+
+        if ($documents->isEmpty()) {
+            return null;
+        }
+
+        // Handle Emirates ID document splitting logic
+        if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
             // Filter only HEA_EMIRATE_ID_COPY documents
             $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
 
@@ -107,7 +117,7 @@ class AdnicDocumentHandler
                 // Find indices of HEA_EMIRATE_ID_COPY documents
                 $emirateIdIndices = [];
                 foreach ($documentsArray as $index => $doc) {
-                    if ($doc['document_type_code'] === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
                         $emirateIdIndices[] = $index;
                     }
                 }
@@ -134,7 +144,7 @@ class AdnicDocumentHandler
 
                 // Find first HEA_EMIRATE_ID_COPY document and modify its insurerDocCode
                 foreach ($documentsArray as $index => $doc) {
-                    if ($doc['document_type_code'] === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
                         $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
                         break;
                     }
@@ -145,6 +155,57 @@ class AdnicDocumentHandler
         }
 
         return $documents;
+    }
+
+    /**
+     * Resolve document_type_code from an array, object, or Eloquent model row.
+     */
+    private function getDocumentTypeCode(mixed $doc): string
+    {
+        if (is_array($doc)) {
+            return (string) ($doc['document_type_code'] ?? '');
+        }
+
+        if (is_object($doc)) {
+            return (string) ($doc->document_type_code ?? '');
+        }
+
+        return '';
+    }
+
+    private function getDocumentId(mixed $doc): int
+    {
+        if (is_array($doc)) {
+            return (int) ($doc['id'] ?? 0);
+        }
+
+        if (is_object($doc)) {
+            return (int) ($doc->id ?? 0);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Keep one newest row per document_type_code (by primary key). For physical Emirates ID, keep the two
+     * newest HEA_EMIRATE_ID_COPY rows so front/back split can still run.
+     */
+    private function keepLatestDocumentsPerType(Collection $documents, ?int $emirateIdType): Collection
+    {
+        $grouped = $documents->groupBy(fn (mixed $doc) => $this->getDocumentTypeCode($doc));
+
+        return $grouped->flatMap(function (Collection $group, string $typeCode) use ($emirateIdType) {
+            $sorted = $group->sortByDesc(fn (mixed $doc) => $this->getDocumentId($doc))->values();
+
+            if (
+                $typeCode === DocumentTypeCode::HEA_EMIRATE_ID_COPY
+                && $emirateIdType === AdnicEnum::EMIRATES_ID_CODE
+            ) {
+                return $sorted->take(2);
+            }
+
+            return $sorted->take(1);
+        })->values();
     }
 
     public function getQuoteDocumentTypeCodessToUpload()
