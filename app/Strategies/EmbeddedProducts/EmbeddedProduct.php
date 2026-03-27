@@ -14,6 +14,9 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 
 class EmbeddedProduct
@@ -251,13 +254,7 @@ class EmbeddedProduct
             ->where('embedded_transactions.is_selected', true)
             ->when(
                 $lobQuoteTypeIds !== null,
-                function ($query) use ($lobQuoteTypeIds) {
-                    if ($lobQuoteTypeIds === []) {
-                        $query->whereRaw('0 = 1');
-                    } else {
-                        $query->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
-                    }
-                }
+                fn ($query) => $this->applyLobFilterToEmbeddedReportQuery($query, $lobQuoteTypeIds)
             )
             ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
                 $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
@@ -288,15 +285,7 @@ class EmbeddedProduct
                 });
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
-                        ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
-                        : today()->startOfDay();
-                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
-                        ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
-                        : today()->endOfDay();
-                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
-                });
+                $this->applyDateOfPurchaseFilterToEmbeddedReportQuery($query, $filters);
             })
             ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
@@ -305,11 +294,7 @@ class EmbeddedProduct
                 $query->whereIn('embedded_transactions.policy_status', (array) $filters['ep_api_status']);
             })
             ->when(! empty($filters['ep_sage_status'] ?? null), function ($query) use ($filters) {
-                $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
-
-                if (! empty($sageStatusIds)) {
-                    $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
-                }
+                $this->applySageStatusFilterToEmbeddedReportQuery($query, $filters);
             })
             ->when(isset($filters['tax_invoice_no']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.tax_invoice_no', 'like', "%{$filters['tax_invoice_no']}%");
@@ -320,6 +305,54 @@ class EmbeddedProduct
 
         $dataset = $this->updateQuery($dataset, $filters);
 
+        [$sortBy, $sortOrder] = $this->resolveEmbeddedReportSort($filters);
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+        $dataset = $this->fetchEmbeddedReportResults($dataset, $filters);
+
+        $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function applyLobFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $lobQuoteTypeIds): void
+    {
+        if ($lobQuoteTypeIds === []) {
+            $query->whereRaw('0 = 1');
+
+            return;
+        }
+
+        $query->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
+    }
+
+    protected function applyDateOfPurchaseFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $filters): void
+    {
+        $query->whereHas('quoteRequest', function ($query) use ($filters) {
+            $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
+                ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
+                : today()->startOfDay();
+            $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
+                ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
+                : today()->endOfDay();
+            $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
+        });
+    }
+
+    protected function applySageStatusFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $filters): void
+    {
+        $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
+
+        if (! empty($sageStatusIds)) {
+            $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
+        }
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    protected function resolveEmbeddedReportSort(array $filters): array
+    {
         $sortBy = 'embedded_transactions.id';
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
@@ -331,17 +364,16 @@ class EmbeddedProduct
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
 
-        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+        return [$sortBy, $sortOrder];
+    }
 
+    protected function fetchEmbeddedReportResults(EloquentBuilder|QueryBuilder $dataset, array $filters): Collection|Paginator
+    {
         if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
-            $dataset = $dataset->get();
-        } else {
-            $dataset = $dataset->simplePaginate()->withQueryString();
+            return $dataset->get();
         }
 
-        $dataset = $this->postFilterReportProcessing($dataset);
-
-        return $dataset;
+        return $dataset->simplePaginate()->withQueryString();
     }
 
     protected function loadVehicleRelations($dataset)
@@ -486,9 +518,9 @@ class EmbeddedProduct
         return $docs;
     }
 
-    protected function isCriteriaMatched($quote): bool
+    protected function isCriteriaMatched(mixed $quote): bool
     {
-        return true;
+        return blank($quote) || filled($quote);
     }
 
     public function isDisabled(EmbeddedTransaction $epTransaction): bool

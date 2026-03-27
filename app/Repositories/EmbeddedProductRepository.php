@@ -107,35 +107,32 @@ class EmbeddedProductRepository extends BaseRepository
     public static function resolveLobFilterQuoteTypeIds(string $epShortCode, array $selectedLobCodes): ?array
     {
         $allowed = self::allowedLobCodesForEmbeddedProduct($epShortCode);
-        if ($allowed === null) {
-            return null;
-        }
-
         $selected = array_values(array_filter($selectedLobCodes));
-        if ($selected === []) {
-            return null;
-        }
 
-        $codes = array_values(array_intersect($selected, $allowed));
-        if ($codes === []) {
-            return [];
-        }
-
-        $ids = [];
-        foreach ($codes as $code) {
-            $id = match ($code) {
-                quoteTypeCode::Car => QuoteTypeId::Car,
-                quoteTypeCode::Home => QuoteTypeId::Home,
-                quoteTypeCode::Travel => QuoteTypeId::Travel,
-                quoteTypeCode::CYBER => QuoteTypeId::Cyber,
-                default => null,
-            };
-            if ($id !== null) {
-                $ids[] = $id;
+        $result = null;
+        if ($allowed !== null && $selected !== []) {
+            $codes = array_values(array_intersect($selected, $allowed));
+            if ($codes === []) {
+                $result = [];
+            } else {
+                $ids = [];
+                foreach ($codes as $code) {
+                    $id = match ($code) {
+                        quoteTypeCode::Car => QuoteTypeId::Car,
+                        quoteTypeCode::Home => QuoteTypeId::Home,
+                        quoteTypeCode::Travel => QuoteTypeId::Travel,
+                        quoteTypeCode::CYBER => QuoteTypeId::Cyber,
+                        default => null,
+                    };
+                    if ($id !== null) {
+                        $ids[] = $id;
+                    }
+                }
+                $result = array_values(array_unique($ids));
             }
         }
 
-        return array_values(array_unique($ids));
+        return $result;
     }
 
     /**
@@ -183,23 +180,19 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public static function lineOfBusinessLabelFromCourierEpCode(string $code): ?string
     {
-        if ($code === '' || strcasecmp(substr($code, 0, 4), 'COU-') !== 0) {
-            return null;
+        $label = null;
+        if (
+            $code !== ''
+            && strcasecmp(substr($code, 0, 4), 'COU-') === 0
+            && preg_match('/^COU-([a-z]{3})-/i', $code, $matches) === 1
+        ) {
+            $segment = strtoupper($matches[1]);
+            $label = $segment === 'HAM'
+                ? 'Home Appliances'
+                : QuoteTypes::getNameShortCode($segment)?->value;
         }
 
-        if (preg_match('/^COU-([A-Za-z]{3})-/i', $code, $matches) !== 1) {
-            return null;
-        }
-
-        $segment = strtoupper($matches[1]);
-
-        if ($segment === 'HAM') {
-            return 'Home Appliances';
-        }
-
-        $quoteType = QuoteTypes::getNameShortCode($segment);
-
-        return $quoteType !== null ? $quoteType->value : null;
+        return $label;
     }
 
     public function model()
