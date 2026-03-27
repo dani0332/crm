@@ -1575,7 +1575,7 @@ class HealthQuoteService extends BaseService
                 'lastName' => $quote->last_name,
                 'email' => $quote->email,
                 'mobileNo' => $quote->mobile_no,
-                'dob' => Carbon::parse($quote->dob)->format('Y-m-d'),
+                'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->toDateString() : null,
                 'gender' => $quote->gender,
                 'emirateOfYourVisaId' => $quote->emirate_of_your_visa_id,
                 'salaryBandId' => $quote->salary_band_id,
