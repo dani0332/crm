@@ -531,15 +531,7 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
-        $isEmirateOfRegistrationLocked = false;
-        if ($record?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-            $isEmirateOfRegistrationLocked = $record->isPolicyBooked();
-        }
-
-        $user = auth()->user();
-        if ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])) {
-            $isEmirateOfRegistrationLocked = true;
-        }
+        $isEmirateOfRegistrationLocked = app(CentralService::class)->isEmirateOfRegistrationLocked($record, quoteTypeCode::Business);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BUSINESS->id(),

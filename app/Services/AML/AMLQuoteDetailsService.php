@@ -10,17 +10,15 @@ use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Models\Emirate;
 use App\Models\Payment;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 
 class AMLQuoteDetailsService
@@ -104,7 +102,10 @@ class AMLQuoteDetailsService
         // Get RTA configuration for Car quotes
         $rtaConfigurationData = $this->amlService->getRTATransactionConfigurations($quoteType->code);
 
-        $isEmirateOfRegistrationLocked = $this->resolveEmirateOfRegistrationLocked($quoteType, $quoteRequest);
+        $isEmirateOfRegistrationLocked = app(CentralService::class)->isEmirateOfRegistrationLocked(
+            $quoteRequest,
+            $quoteType->code
+        );
 
         // Prepare enums
         $enums = $this->prepareEnums();
@@ -185,29 +186,6 @@ class AMLQuoteDetailsService
         return $isLIVA
             ? GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
-    }
-
-    private function resolveEmirateOfRegistrationLocked(QuoteType $quoteType, object $quoteRequest): bool
-    {
-        $user = auth()->user();
-        if ($quoteType->code != quoteTypeCode::Business) {
-            return false;
-        }
-
-        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
-        if (($quoteRequest->business_type_of_insurance_id ?? null) != $groupMedicalTypeId) {
-            return false;
-        }
-
-        if ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts])) {
-            return true;
-        }
-
-        if (! method_exists($quoteRequest, 'isPolicyBooked')) {
-            return false;
-        }
-
-        return $quoteRequest->isPolicyBooked();
     }
 
     private function prepareEnums(): array
