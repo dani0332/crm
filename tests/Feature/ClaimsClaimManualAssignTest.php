@@ -5,6 +5,7 @@ use App\Models\ClaimRequest;
 use App\Models\User;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 use Tests\Helpers\TestSchemaCreator;
@@ -29,13 +30,12 @@ beforeEach(function () {
         'email' => 'regular-'.uniqid().'@test.com',
     ]);
 
-  
 });
 
 test('assignClaim throws ValidationException when user is not a claims manager', function () {
     $claim = new ClaimRequest;
     $claim->id = 1;
-    $claim->uuid = \Illuminate\Support\Str::uuid()->toString();
+    $claim->uuid = Str::uuid()->toString();
     $claim->manager_id = null;
     $claim->exists = true;
 
@@ -45,7 +45,7 @@ test('assignClaim throws ValidationException when user is not a claims manager',
 test('assignClaim throws ValidationException when manager id does not exist', function () {
     $claim = new ClaimRequest;
     $claim->id = 1;
-    $claim->uuid = \Illuminate\Support\Str::uuid()->toString();
+    $claim->uuid = Str::uuid()->toString();
     $claim->manager_id = null;
     $claim->exists = true;
 
