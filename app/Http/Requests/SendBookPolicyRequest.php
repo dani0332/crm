@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -62,7 +63,7 @@ class SendBookPolicyRequest extends FormRequest
             });
         }
 
-        if ($quote?->quote_type_id == QuoteTypeId::Business && $quote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+        if ($quote instanceof BusinessQuote && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
             $validator->after(function ($validator) use ($quote) {
                 if (! $quote?->emirate_of_registration_id) {
                     $validator->errors()->add('error', 'Posting blocked: Emirate of registration is required for financial processing.');
