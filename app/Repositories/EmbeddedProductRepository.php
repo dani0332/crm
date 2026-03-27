@@ -136,6 +136,23 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
+     * Three-letter segment in Courier EP refs (`COU-{SEG}-…`) aligned with {@see lineOfBusinessLabelFromCourierEpCode}.
+     * Used when {@see EmbeddedTransaction::$quote_type_id} is null but the ref still encodes the LOB.
+     *
+     * @return non-empty-string|null
+     */
+    public static function courierEpRefSegmentForQuoteTypeFilter(int $quoteTypeId): ?string
+    {
+        return match ($quoteTypeId) {
+            QuoteTypeId::Car => 'CAR',
+            QuoteTypeId::Home => 'HOM',
+            QuoteTypeId::Travel => 'TRA',
+            QuoteTypeId::Cyber => 'CYB',
+            default => null,
+        };
+    }
+
+    /**
      * @return array<int, array{label: string, value: string}>
      */
     public static function quoteTypeReportLobFilterOptions(string $epShortCode): array

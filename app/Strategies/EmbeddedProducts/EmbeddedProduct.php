@@ -323,7 +323,30 @@ class EmbeddedProduct
             return;
         }
 
-        $query->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
+        $segments = [];
+        foreach ($lobQuoteTypeIds as $id) {
+            $segment = EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter((int) $id);
+            if ($segment !== null) {
+                $segments[] = $segment;
+            }
+        }
+        $segments = array_values(array_unique($segments));
+
+        $query->where(function ($q) use ($lobQuoteTypeIds, $segments) {
+            $q->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
+            if ($segments !== []) {
+                $q->orWhere(function ($sub) use ($segments) {
+                    $sub->whereNull('embedded_transactions.quote_type_id')
+                        ->where(function ($inner) use ($segments) {
+                            foreach ($segments as $segment) {
+                                $inner->orWhereRaw('LOWER(embedded_transactions.code) LIKE ?', [
+                                    'cou-'.strtolower($segment).'-%',
+                                ]);
+                            }
+                        });
+                });
+            }
+        });
     }
 
     protected function applyDateOfPurchaseFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $filters): void
@@ -518,9 +541,13 @@ class EmbeddedProduct
         return $docs;
     }
 
+    /**
+     * Whether the quote satisfies product-specific eligibility. Base implementation always matches;
+     * override in subclasses (e.g. ECB) when EP availability depends on quote data.
+     */
     protected function isCriteriaMatched(mixed $quote): bool
     {
-        return blank($quote) || filled($quote);
+        return true;
     }
 
     public function isDisabled(EmbeddedTransaction $epTransaction): bool

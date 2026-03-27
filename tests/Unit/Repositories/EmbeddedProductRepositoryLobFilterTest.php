@@ -68,4 +68,12 @@ describe('EmbeddedProductRepository LOB filter helpers', function () {
         expect($ids)->toBeArray();
         expect($ids)->toContain(QuoteTypeId::Car);
     });
+
+    test('courierEpRefSegmentForQuoteTypeFilter maps quote type ids to COU ref segments', function () {
+        expect(EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter(QuoteTypeId::Car))->toBe('CAR');
+        expect(EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter(QuoteTypeId::Home))->toBe('HOM');
+        expect(EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter(QuoteTypeId::Travel))->toBe('TRA');
+        expect(EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter(QuoteTypeId::Cyber))->toBe('CYB');
+        expect(EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter(999))->toBeNull();
+    });
 });
