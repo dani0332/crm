@@ -564,8 +564,11 @@ const memberPrincipalConfirmed = () => {
 
     const targetId = confirmPrincipalData.member;
     localMembers.value = localMembers.value.map(m => {
-      const isPrincipal = m.is_insured == 1 ? (m.id === targetId ? 1 : 0) : m.is_principal;
-      const isPolicyHolder = m.is_insured == 1 ? (m.id === targetId && makeActionName.value === 'policyholder' ? 1 : 0) : m.is_policy_holder;
+      const principalWhenInsured = m.id === targetId ? 1 : 0;
+      const isPrincipal = m.is_insured == 1 ? principalWhenInsured : m.is_principal;
+
+      const policyHolderWhenInsured = m.id === targetId && makeActionName.value === 'policyholder' ? 1 : 0;
+      const isPolicyHolder = m.is_insured == 1 ? policyHolderWhenInsured : m.is_policy_holder;
 
       return { ...m, is_principal: isPrincipal, is_policy_holder: isPolicyHolder };
     });

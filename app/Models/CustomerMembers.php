@@ -134,40 +134,22 @@ class CustomerMembers extends Model
 
     private static function resolveUpdatedEvent(array $transformedOld, array $transformedNew, $model): string
     {
-        if (! empty($transformedNew['deletedAt'])) {
-            return 'member_deleted';
-        }
-
         $oldPolicyHolder = $transformedOld['isPolicyHolder'] ?? null;
         $newPolicyHolder = $transformedNew['isPolicyHolder'] ?? null;
-
-        if ($oldPolicyHolder === 'true' && $newPolicyHolder === 'false') {
-            return 'member_updated (Policy Holder Removed)';
-        }
-
-        if ($oldPolicyHolder === 'false' && $newPolicyHolder === 'true') {
-            return 'member_updated (Policy Holder Added)';
-        }
-
         $oldPrincipal = $transformedOld['isPrincipal'] ?? null;
         $newPrincipal = $transformedNew['isPrincipal'] ?? null;
 
-        if ($oldPrincipal === 'true' && $newPrincipal === 'false') {
-            return 'member_updated (Principal Removed)';
-        }
+        $event = match (true) {
+            ! empty($transformedNew['deletedAt']) => 'member_deleted',
+            $oldPolicyHolder === 'true' && $newPolicyHolder === 'false' => 'member_updated (Policy Holder Removed)',
+            $oldPolicyHolder === 'false' && $newPolicyHolder === 'true' => 'member_updated (Policy Holder Added)',
+            $oldPrincipal === 'true' && $newPrincipal === 'false' => 'member_updated (Principal Removed)',
+            $oldPrincipal === 'false' && $newPrincipal === 'true' => 'member_updated (Principal Added)',
+            $model?->is_policy_holder == 1 => 'member_updated (Policy Holder)',
+            $model?->is_principal == 1 => 'member_updated (Principal)',
+            default => 'member_updated',
+        };
 
-        if ($oldPrincipal === 'false' && $newPrincipal === 'true') {
-            return 'member_updated (Principal Added)';
-        }
-
-        if ($model?->is_policy_holder == 1) {
-            return 'member_updated (Policy Holder)';
-        }
-
-        if ($model?->is_principal == 1) {
-            return 'member_updated (Principal)';
-        }
-
-        return 'member_updated';
+        return $event;
     }
 }
