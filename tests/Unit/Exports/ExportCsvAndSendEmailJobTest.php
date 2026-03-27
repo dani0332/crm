@@ -13,6 +13,7 @@ class DummyExportForTest
 {
     public static ?string $expectedFoo = null;
     public static bool $called = false;
+    public static bool $expectHasOnlyFirst = false;
 
     public function sendEmailWithCSVAttachment(string $recipient, string $subject, array $requestParams, array $extra = [], string $fileName = ''): void
     {
@@ -20,6 +21,10 @@ class DummyExportForTest
 
         if ($actual !== self::$expectedFoo) {
             throw new \Exception("Unexpected request foo value. Actual: {$actual}; Expected: ".self::$expectedFoo);
+        }
+        $hasOnlyFirst = request()->has('only_first');
+        if ($hasOnlyFirst !== self::$expectHasOnlyFirst) {
+            throw new \Exception('only_first presence mismatch. Actual: '.($hasOnlyFirst ? 'present' : 'absent').'; Expected: '.(self::$expectHasOnlyFirst ? 'present' : 'absent'));
         }
 
         self::$called = true;
@@ -34,6 +39,7 @@ it('does not leak request parameters between sequential export jobs', function (
 
     $paramsOne = [
         'foo' => 'one',
+        'only_first' => 'secret',
         'fileName' => 'test-one.csv',
         'recipientEmail' => 'one@example.test',
         'subject' => 'Test One',
@@ -50,6 +56,7 @@ it('does not leak request parameters between sequential export jobs', function (
 
     // First job: expect 'one'
     DummyExportForTest::$expectedFoo = 'one';
+    DummyExportForTest::$expectHasOnlyFirst = true;
     DummyExportForTest::$called = false;
 
     $jobOne = new ExportCsvAndSendEmailJob(DummyExportForTest::class, $paramsOne['recipientEmail'], $paramsOne);
@@ -70,6 +77,7 @@ it('does not leak request parameters between sequential export jobs', function (
     // Reset and run second job sequentially in same process
     DummyExportForTest::$expectedFoo = 'two';
     DummyExportForTest::$called = false;
+    DummyExportForTest::$expectHasOnlyFirst = false;
 
     $jobTwo = new ExportCsvAndSendEmailJob(DummyExportForTest::class, $paramsTwo['recipientEmail'], $paramsTwo);
     $jobTwo->job = new class {
