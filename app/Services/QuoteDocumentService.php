@@ -87,7 +87,13 @@ class QuoteDocumentService extends BaseService
                 return $query;
             })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->when($documentTypeCategory === DocumentTypeCode::CLAIM, function ($collection) {
+                return $collection->each(function ($documentType) {
+                    $documentType->is_claim_form = str_starts_with($documentType->code, 'CLM_')
+                        && str_ends_with($documentType->code, '_CF');
+                });
+            });
     }
 
     public function isEnabled($quoteModelType)

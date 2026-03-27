@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Exports\ClaimsExport;
+use App\Http\Requests\ClaimAssignRequest;
+use App\Http\Requests\ClaimBulkAssignRequest;
 use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimExportValidationRequest;
@@ -27,6 +29,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +61,7 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_SUB_STATUS_UPDATE], ['only' => ['sendNotification', 'optimizeMessage']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIMS_MANUAL_ASSIGN], ['only' => ['assignClaim', 'bulkAssignClaims']]);
     }
 
     /**
@@ -297,6 +301,87 @@ class ClaimsController extends Controller
 
             return redirect()->back()->with('error', 'Failed to update claim status. Please try again.');
         }
+    }
+
+    /**
+     * Manually assign a claim to a claims manager (Claims Lead feature).
+     */
+    public function assignClaim(ClaimAssignRequest $request, ClaimRequest $claim): RedirectResponse
+    {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_MANUAL_ASSIGN);
+        try {
+            $this->claimsService->assignClaim($claim, (int) $request->validated('manager_id'));
+
+            return redirect()->back()->with('success', 'Claim assigned successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            LoggerService::error(' Error assigning claim - Claim UUID: '.$claim->uuid, extra: [
+                'error' => $e->getMessage(),
+                'claim_request_id' => $claim->uuid,
+                'manager_id' => $request->validated('manager_id'),
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Bulk assign claims to a claims manager (Claims Lead feature, from list page).
+     */
+    public function bulkAssignClaims(ClaimBulkAssignRequest $request): RedirectResponse
+    {
+        $claimUuids = $request->validated('claim_uuids');
+        $managerId = (int) $request->validated('manager_id');
+        $assigned = 0;
+        $errors = [];
+
+        foreach ($claimUuids as $uuid) {
+            try {
+                $claim = $this->claimsService->getClaimByUUID($uuid);
+                LoggerService::info(' Bulk assigning claim - UUID: '.$uuid, extra: [
+                    'claim_uuid' => $uuid,
+                    'manager_id' => $managerId,
+                    'user_id' => Auth::id(),
+                    'claim' => $claim,
+                ]);
+                
+                if ($claim) {
+                    $this->claimsService->assignClaim($claim, $managerId);
+                    LoggerService::info(' Claim assigned successfully - UUID: '.$uuid, extra: [
+                        'claim_uuid' => $uuid,
+                        'manager_id' => $managerId,
+                        'user_id' => Auth::id(),
+                    ]);
+                    $assigned++;
+                }
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $errors[] = $uuid.': '.implode(' ', $e->validator->errors()->all());
+            } catch (Exception $e) {
+                LoggerService::error(' Error bulk assigning claim - UUID: '.$uuid, extra: [
+                    'error' => $e->getMessage(),
+                    'user_id' => Auth::id(),
+                ]);
+                $errors[] = $uuid.': '.$e->getMessage();
+            }
+        }
+
+        if ($assigned > 0) {
+            $message = $assigned === count($claimUuids)
+                ? 'All selected claims assigned successfully.'
+                : "{$assigned} of ".count($claimUuids).' claims assigned successfully.';
+            if (count($errors) > 0) {
+                $message .= ' Errors: '.implode('; ', array_slice($errors, 0, 3));
+                if (count($errors) > 3) {
+                    $message .= ' ...';
+                }
+            }
+
+            return redirect()->back()->with('success', $message);
+        }
+
+        return redirect()->back()->with('error', count($errors) > 0 ? implode('; ', $errors) : 'Failed to assign claims.');
     }
 
     /**

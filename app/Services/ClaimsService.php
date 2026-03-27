@@ -18,6 +18,7 @@ use App\Models\CarModel;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
+use App\Models\User;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
@@ -27,6 +28,7 @@ use App\Traits\CentralTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ClaimsService extends BaseService
 {
@@ -380,6 +382,25 @@ class ClaimsService extends BaseService
             ->with(['documents.createdBy:id,name'])
             ->where('uuid', $uuid)
             ->first();
+    }
+
+    /**
+     * Manually assign a claim to a claims manager (Claims Lead feature).
+     * Validates that the target user has CLAIM_MANAGER role.
+     */
+    public function assignClaim(ClaimRequest $claim, int $managerId): ClaimRequest
+    {
+        $manager = User::find($managerId);
+
+        if (! $manager || ! $manager->hasRole(RolesEnum::ClaimsManager)) {
+            throw ValidationException::withMessages([
+                'manager_id' => ['The selected user must be a claims manager.'],
+            ]);
+        }
+
+        $claim->assignManager($managerId);
+
+        return $claim->fresh(['manager:id,name']);
     }
 
     /**
@@ -1248,5 +1269,16 @@ class ClaimsService extends BaseService
 
             throw $e;
         }
+    }
+    /**
+     * Get a minimal claim by UUID for operations that only need identity and manager fields
+     * (e.g. bulk assign). Uses a lightweight select to avoid loading full query/relations.
+     */
+    public function getClaimByUUID(string $uuid): ?ClaimRequest
+    {
+        return ClaimRequest::query()
+            ->select(['id', 'uuid', 'manager_id', 'manager_assigned_date'])
+            ->where('uuid', $uuid)
+            ->first();
     }
 }
