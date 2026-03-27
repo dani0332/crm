@@ -24,6 +24,23 @@ class HealthCoverForSeeder extends Seeder
 
     private function createHealthCoverFor(): void
     {
+        $healthCoverForUpdates = [
+            [
+                'code' => 'MY_COMPANY',
+                'text' => 'Group of Employees',
+                'is_active' => 1,
+                'sort_order' => 3,
+                'updated_at' => now(),
+            ],
+        ];
+
+        foreach ($healthCoverForUpdates as $healthCoverForItem) {
+            HealthCoverFor::updateOrCreate(
+                ['code' => $healthCoverForItem['code']],
+                $healthCoverForItem
+            );
+        }
+
         $healthCoverFor = [
             [
                 'code' => 'INDIVIDUAL_AND_FAMILIES',

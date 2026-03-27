@@ -752,14 +752,17 @@ class LookupSeeder extends Seeder
             [
                 'text' => 'Only Myself',
                 'code' => 'ONLY_MYSELF',
+                'sort_order' => 1,
             ],
             [
                 'text' => 'Only My Family Members',
                 'code' => 'ONLY_MY_FAMILY_MEMBERS',
+                'sort_order' => 2,
             ],
             [
                 'text' => 'Myself & My Family Members',
                 'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
+                'sort_order' => 3,
             ],
         ];
 
@@ -770,6 +773,7 @@ class LookupSeeder extends Seeder
                 'text' => $insure['text'],
             ], [
                 'is_active' => 1,
+                'sort_order' => $insure['sort_order'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -782,10 +786,12 @@ class LookupSeeder extends Seeder
             [
                 'text' => 'Me',
                 'code' => 'ME',
+                'sort_order' => 1,
             ],
             [
                 'text' => 'Other Adult Family Member',
                 'code' => 'OTHER_ADULT_FAMILY_MEMBER',
+                'sort_order' => 2,
             ],
         ];
 
@@ -796,6 +802,7 @@ class LookupSeeder extends Seeder
                 'text' => $policyHolder['text'],
             ], [
                 'is_active' => 1,
+                'sort_order' => $policyHolder['sort_order'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
