@@ -16,6 +16,7 @@ class AdnicStepExecutor
     public $healthInsurerResponse = '';
     public function __construct(
         private AdnicApiService $apiService,
+        private AdnicResponseHandler $responseHandler,
     ) {}
 
     /**
@@ -31,6 +32,17 @@ class AdnicStepExecutor
             'process_id' => $process->id,
             'plan_id' => $quote->plan_id,
         ]);
+
+        if (! $quote->insurerGenerateQuoteRequestResponse) {
+            $message = 'Insurer generate-quote request/response not found for this quote.';
+
+            return $this->responseHandler->buildStepResponse(
+                AdnicEnum::STEP_ISSUE_POLICY,
+                false,
+                $message,
+                $message,
+            );
+        }
 
         $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 
@@ -65,6 +77,17 @@ class AdnicStepExecutor
             'step' => AdnicEnum::STEP_UPLOAD_DOCUMENTS,
             'process_id' => $process->id,
         ]);
+
+        if (! $quote->insurerGenerateQuoteRequestResponse) {
+            $message = 'Insurer generate-quote request/response not found for this quote.';
+
+            return $this->responseHandler->buildStepResponse(
+                AdnicEnum::STEP_UPLOAD_DOCUMENTS,
+                false,
+                $message,
+                $message,
+            );
+        }
 
         $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 

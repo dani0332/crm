@@ -254,10 +254,15 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             'total_steps' => count($stepsExecuted),
         ]);
 
+        $lastCompletedStep = $process->completed_step;
+        if ($lastCompletedStep === null && $stepsExecuted !== []) {
+            $lastCompletedStep = $stepsExecuted[array_key_last($stepsExecuted)];
+        }
+
         return [
             'status' => true,
             'message' => 'All policy issuance steps completed successfully',
-            'completed_step' => $process->completed_step ?? end($stepsExecuted) ?: null,
+            'completed_step' => $lastCompletedStep,
             'error' => null,
         ];
     }
