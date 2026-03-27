@@ -9,7 +9,8 @@ class CommunicationEventLogService
 {
     public function getLogsForQuoteUuid(string $quoteUuid): Collection
     {
-        return CommunicationEventLog::where('quote_uuid', $quoteUuid)
+        return CommunicationEventLog::query()
+            ->where('quoteUuid', $quoteUuid)
             ->orderByDesc('created_at')
             ->get();
     }
