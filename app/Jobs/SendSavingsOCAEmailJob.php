@@ -16,12 +16,17 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
     use Queueable;
 
     public int $uniqueFor = 300;
+    public int $timeout = 60;
+    public int $tries = 4;
+    public array $backoff = [30, 60, 120];
     protected ?string $uniqueIdOverride = null;
 
     public function __construct(
         protected string $quoteUID,
         protected array $data = []
     ) {
+        $this->onQueue('renewals');
+
         if ($this->data['force_send'] ?? false) {
             $this->uniqueIdOverride = "savings-oca-email-{$this->quoteUID}-force-".uniqid('', true);
         }
