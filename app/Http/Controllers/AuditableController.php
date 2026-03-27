@@ -34,7 +34,7 @@ class AuditableController extends Controller
     {
         $this->middleware(
             [CheckAuditableTypePermission::class],
-            ['only' => ['loadAuditableComponent']]
+            ['only' => ['loadAuditableComponent', 'loadAuditLogs']]
         );
     }
 
