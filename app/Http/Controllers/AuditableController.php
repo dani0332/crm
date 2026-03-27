@@ -29,15 +29,15 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(private BaseService $baseService) {}
+
     public function loadAuditableComponent(Request $request)
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;
 
         if ($request->jsonData) {
-            $service = app()->make(BaseService::class);
-
-            return response()->json($service->audits($auditableId, $auditableType));
+            return response()->json($this->baseService->audits($auditableId, $auditableType));
         }
 
         return view('auditable', compact('auditableId', 'auditableType'));
