@@ -133,7 +133,8 @@ test('get steps locking status handles processing at upload policy docs', functi
 
     $result = $this->service->getStepsLockingStatus($quote, false);
 
-    expect($result['isEditPolicyDetailsDisabled'])->toBeTrue();
+    expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
+        ->and($result['message'])->toBe('Booking Details is editable');
 });
 
 // CRITICAL TEST: Response structure consistency
