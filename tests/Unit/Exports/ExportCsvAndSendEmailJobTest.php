@@ -2,7 +2,6 @@
 
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\Middleware\FreshRequest;
-use Illuminate\Support\Facades\Artisan;
 
 /**
  * Dummy export class used only for this test.
@@ -20,7 +19,7 @@ class DummyExportForTest
         $actual = request()->input('foo');
 
         if ($actual !== self::$expectedFoo) {
-            throw new \Exception("Unexpected request foo value. Actual: {$actual}; Expected: ".self::$expectedFoo);
+            throw new Exception("Unexpected request foo value. Actual: {$actual}; Expected: ".self::$expectedFoo);
         }
         $hasOnlyFirst = request()->has('only_first');
         if ($hasOnlyFirst !== self::$expectHasOnlyFirst) {
@@ -35,7 +34,7 @@ it('does not leak request parameters between sequential export jobs', function (
     // Ensure no pre-existing request data
     request()->replace([]);
 
-    $middleware = new FreshRequest();
+    $middleware = new FreshRequest;
 
     $paramsOne = [
         'foo' => 'one',
@@ -61,13 +60,21 @@ it('does not leak request parameters between sequential export jobs', function (
 
     $jobOne = new ExportCsvAndSendEmailJob(DummyExportForTest::class, $paramsOne['recipientEmail'], $paramsOne);
     // Simulate the queue job wrapper that provides getJobId() and attempts()
-    $jobOne->job = new class {
-        public function getJobId() { return 'test-job-1'; }
-        public function attempts() { return 1; }
+    $jobOne->job = new class
+    {
+        public function getJobId()
+        {
+            return 'test-job-1';
+        }
+        public function attempts()
+        {
+            return 1;
+        }
     };
 
     $next = function ($job) {
         $job->handle();
+
         return null;
     };
 
@@ -80,11 +87,17 @@ it('does not leak request parameters between sequential export jobs', function (
     DummyExportForTest::$expectHasOnlyFirst = false;
 
     $jobTwo = new ExportCsvAndSendEmailJob(DummyExportForTest::class, $paramsTwo['recipientEmail'], $paramsTwo);
-    $jobTwo->job = new class {
-        public function getJobId() { return 'test-job-2'; }
-        public function attempts() { return 1; }
+    $jobTwo->job = new class
+    {
+        public function getJobId()
+        {
+            return 'test-job-2';
+        }
+        public function attempts()
+        {
+            return 1;
+        }
     };
     $middleware->handle($jobTwo, $next);
     expect(DummyExportForTest::$called)->toBeTrue();
 });
-
