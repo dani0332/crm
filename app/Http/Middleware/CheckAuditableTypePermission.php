@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
+use App\Models\Allocation\AllocationConfiguration;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,9 +18,10 @@ class CheckAuditableTypePermission
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $auditableType = $request->auditableType;
+        $auditableType = (string) $request->input('auditableType', '');
 
-        if ($auditableType === 'App\Models\Allocation\AllocationConfiguration') {
+        // Match DB behaviour (utf8mb4_unicode_ci): same logical type must be gated even if casing differs.
+        if (strcasecmp($auditableType, AllocationConfiguration::class) === 0) {
             if (! Auth::user()->can(PermissionsEnum::ILA_CONFIG_ALL_LOB)) {
                 abort(403, 'You do not have sufficient permission');
             }
