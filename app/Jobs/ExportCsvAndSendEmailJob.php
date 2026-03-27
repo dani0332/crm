@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Jobs\Middleware\FreshRequest;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -169,6 +170,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         );
 
         return [
+            new FreshRequest,
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
                 ->expireAfter($this->timeout),
