@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
+use App\Http\Middleware\CheckAuditableTypePermission;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
@@ -29,7 +30,10 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct(private BaseService $baseService) {}
+    public function __construct(private BaseService $baseService)
+    {
+        $this->middleware(CheckAuditableTypePermission::class)->only('loadAuditableComponent');
+    }
 
     public function loadAuditableComponent(Request $request)
     {
