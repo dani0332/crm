@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
@@ -11,10 +13,34 @@ use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function (Request $request, Closure $next) {
+            $user = $request->user();
+            if ($user === null) {
+                abort(403, 'Unauthorized access');
+            }
+
+            if ($user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
+                return $next($request);
+            }
+
+            abort_unless(
+                $user->can(PermissionsEnum::RULE_CONFIG_LIST),
+                403,
+                'Unauthorized access'
+            );
+
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      */

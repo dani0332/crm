@@ -1,12 +1,16 @@
 <?php
 
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Models\LeadSource;
 use App\Models\QuoteType;
+use App\Models\Role;
 use App\Models\Rule;
 use App\Models\RuleLeadSource;
 use App\Models\RuleType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -15,6 +19,8 @@ beforeEach(function () {
 
     // Create and authenticate a user for testing
     $this->user = User::factory()->create();
+    $adminRole = Role::firstOrCreate(['name' => RolesEnum::Admin, 'guard_name' => 'web']);
+    $this->user->assignRole($adminRole);
     $this->actingAs($this->user);
 
     // Create required test data using DB inserts
@@ -952,6 +958,108 @@ describe('Rule Type Change - Cleanup', function () {
             'utm_source' => 'facebook',
             'utm_campaign' => 'winter2024',
             'utm_medium' => 'social',
+        ]);
+    });
+});
+
+describe('Rules authorization', function () {
+    test('advisor with only rule.create cannot create allocation rules', function () {
+        $advisor = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $advisor->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => 'rule.create', 'guard_name' => 'web']);
+        $advisor->givePermissionTo('rule.create');
+        $this->actingAs($advisor);
+
+        $ruleData = [
+            'name' => 'Unauthorized Rule',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertForbidden();
+    });
+
+    test('user with rule-config-list and rule.create can create allocation rules', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'rule.create', 'guard_name' => 'web']);
+        $user->givePermissionTo([PermissionsEnum::RULE_CONFIG_LIST, 'rule.create']);
+        $this->actingAs($user);
+
+        $ruleData = [
+            'name' => 'Authorized Rule',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id, $this->testUser2->id],
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('message', 'Rule is created successfully.');
+    });
+
+    test('advisor with only rule.edit cannot open rule edit page', function () {
+        $rule = Rule::create([
+            'name' => 'Rule For Edit Idor Test',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+        $rule->users()->attach([$this->testUser1->id]);
+
+        $advisor = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $advisor->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => 'rule.edit', 'guard_name' => 'web']);
+        $advisor->givePermissionTo('rule.edit');
+        $this->actingAs($advisor);
+
+        $response = $this->get(route('rule.edit', $rule->id));
+
+        $response->assertForbidden();
+    });
+
+    test('advisor with only rule.edit cannot update allocation rules', function () {
+        $rule = Rule::create([
+            'name' => 'Rule For Update Idor Test',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+        $rule->users()->attach([$this->testUser1->id]);
+
+        $advisor = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $advisor->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => 'rule.edit', 'guard_name' => 'web']);
+        $advisor->givePermissionTo('rule.edit');
+        $this->actingAs($advisor);
+
+        $updateData = [
+            'name' => 'Hacked Rule Name',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => false,
+            'rule_users' => [$this->testUser2->id],
+        ];
+
+        $response = $this->put(route('rule.update', $rule->id), $updateData);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('rules', [
+            'id' => $rule->id,
+            'name' => 'Rule For Update Idor Test',
+            'is_active' => true,
         ]);
     });
 });

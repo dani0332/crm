@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Models\LeadSource;
 use App\Models\QuoteType;
@@ -18,7 +20,16 @@ class RuleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
+            return true;
+        }
+
+        return $user->can(PermissionsEnum::RULE_CONFIG_LIST);
     }
 
     /**
