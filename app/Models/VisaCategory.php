@@ -11,6 +11,6 @@ class VisaCategory extends Model
 
     public function scopeActive($query)
     {
-        $query->where('status', 1);
+        $query->where('is_active', true);
     }
 }

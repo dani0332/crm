@@ -562,8 +562,6 @@ const memberPrincipal = data => {
 const memberPrincipalConfirmed = () => {
   if (isCreate.value || isEdit.value) {
 
-    console.log(makeActionName.value);
-
     const targetId = confirmPrincipalData.member;
     localMembers.value = localMembers.value.map(m => ({
       ...m,

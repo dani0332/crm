@@ -391,7 +391,7 @@ class LookupService extends BaseService
 
     public function getVisaCategory()
     {
-        return VisaCategory::where('is_active', true)->orderBy('sort_order')->get();
+        return VisaCategory::active()->orderBy('sort_order')->get();
     }
 
     public function getHealthMemberRelations()

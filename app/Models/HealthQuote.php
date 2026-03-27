@@ -625,7 +625,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(Lookup::class, 'policy_holder_category_code', 'code');
     }
 
-    public function gender()
+    public function genderLookup()
     {
         return $this->belongsTo(Lookup::class, 'gender', 'code');
     }

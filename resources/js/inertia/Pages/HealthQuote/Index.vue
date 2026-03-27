@@ -150,7 +150,7 @@ const tableHeader = ref([
   },
   { text: 'PolicyHolder Category', value: 'policy_holder_category.text', is_active: true },
   { text: 'Visa Category', value: 'visa_category.text', is_active: true },
-  { text: 'Gender', value: 'gender.text', is_active: true },
+  { text: 'Gender', value: 'gender_lookup.text', is_active: true },
   { text: 'Marital Status', value: 'marital_status.text', is_active: true },
   { text: 'SALARY', value: 'salary_band.text', is_active: true },
   {

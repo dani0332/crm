@@ -322,6 +322,7 @@ function preprocessFormData() {
     isFamily_Me.value ||
     (quoteForm.include_policyholder != 1 && (isFamily_Other.value || isSelfAndFamily_Other.value))) {
       
+      // if policy holder is not insured then add/update it to members array
       if (isCustomerTypeIndividual.value) {
           // add first member to members array
         const index = quoteForm.members.findIndex(
@@ -407,10 +408,9 @@ function onSubmit(isValid) {
     },
   };
 
-  quoteForm.transform(data => {
-    preprocessFormData();
-    return data;
-  }).submit(method, url, options);
+  preprocessFormData();
+
+  quoteForm.transform(data => data).submit(method, url, options);
 }
 
 const nationalityOptions = computed(() => {

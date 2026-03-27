@@ -108,7 +108,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'subSource:id,text',
             'visaCategory:id,text',
             'policyHolderCategory:id,code,text',
-            'gender:id,code,text',
+            'genderLookup:id,code,text',
         ]);
     }
 

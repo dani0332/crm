@@ -1740,7 +1740,6 @@ class AMLService
     {
         if (! $quote) {
             LoggerService::info('Quote not found', extra: [
-                'quote_id' => $quote->id,
                 'function' => __FUNCTION__,
             ]);
 
