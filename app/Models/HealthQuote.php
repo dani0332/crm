@@ -7,6 +7,7 @@ use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -622,12 +623,14 @@ class HealthQuote extends Model implements AuditableContract
 
     public function policyHolderCategory()
     {
-        return $this->belongsTo(Lookup::class, 'policy_holder_category_code', 'code');
+        return $this->belongsTo(Lookup::class, 'policy_holder_category_code', 'code')
+            ->where('key', LookupsEnum::POLICY_HOLDER_CATEGORY->value);
     }
 
     public function genderLookup()
     {
-        return $this->belongsTo(Lookup::class, 'gender', 'code');
+        return $this->belongsTo(Lookup::class, 'gender', 'code')
+            ->where('key', LookupsEnum::GENDER->value);
     }
 
     public function pa()

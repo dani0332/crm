@@ -257,12 +257,12 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->refreshPlans($request);
 
-        if ($response) {
+        if (($response['status'] ?? true) !== false) {
             $key = 'success';
             $message = 'Plans refreshed successfully';
         } else {
             $key = 'error';
-            $message = 'Failed to refresh plans';
+            $message = $response['message'] ?? 'Failed to refresh plans';
         }
 
         return redirect()->back()->with($key, $message);

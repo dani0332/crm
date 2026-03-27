@@ -463,7 +463,7 @@ class HealthQuoteService extends BaseService
     private function prepareMemberDetailPayload(CustomerMembers|array $member): array
     {
         $id = $member['id'] ?? 'temp-';
-        $dob = !empty($member['dob']) ? Carbon::parse($member['dob'])->toDateString() : null;
+        $dob = ! empty($member['dob']) ? Carbon::parse($member['dob'])->toDateString() : null;
 
         return [
             'id' => str_starts_with((string) ($id), 'temp-') ? null : $id,
@@ -1593,7 +1593,7 @@ class HealthQuoteService extends BaseService
             ];
 
             $dataArray['memberDetails'] = $quote->activeMembers
-                ->filter(function ($member) use ($quote) {
+                ->filter(function ($member) {
                     return $member->is_third_party_payer == 0;
                 })
                 ->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
@@ -1611,7 +1611,10 @@ class HealthQuoteService extends BaseService
                 'error' => $e->getMessage(),
             ]);
 
-            return false;
+            return [
+                'status' => false,
+                'message' => 'Failed to refresh plans',
+            ];
         }
     }
 

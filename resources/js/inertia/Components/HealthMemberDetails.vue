@@ -938,7 +938,7 @@ defineExpose({
         <x-modal
           v-model="modals.member"
           size="lg"
-          :title="modalTitle(memberActionEdit.value)"
+          :title="modalTitle(memberActionEdit)"
           show-close
           backdrop
           is-form
