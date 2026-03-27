@@ -23,7 +23,7 @@ class DummyExportForTest
         }
         $hasOnlyFirst = request()->has('only_first');
         if ($hasOnlyFirst !== self::$expectHasOnlyFirst) {
-            throw new \Exception('only_first presence mismatch. Actual: '.($hasOnlyFirst ? 'present' : 'absent').'; Expected: '.(self::$expectHasOnlyFirst ? 'present' : 'absent'));
+            throw new Exception('only_first presence mismatch. Actual: '.($hasOnlyFirst ? 'present' : 'absent').'; Expected: '.(self::$expectHasOnlyFirst ? 'present' : 'absent'));
         }
 
         self::$called = true;
