@@ -158,7 +158,7 @@ class DocumentTypeCode extends Enum
     const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
     const HEA_EID_BACK = 'HEAEIDB'; // Emirates ID Back
     public const HEA_VISA = 'VISA_Hlth'; // Visa
-    public const HEA_PAS = 'HlthPAS'; // Passport
+    public const HEA_PAS = 'MEPP'; // Passport
     public const HEA_BIRTH_CERTIFICATE = 'MEBC'; // Birth Certificate
     public const HEA_MEDICAL_APPLICATION_FORM = 'MED_HLTH'; // medical application form
     public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
