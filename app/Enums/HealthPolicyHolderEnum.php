@@ -12,7 +12,6 @@ enum HealthPolicyHolderEnum: string
         return match ($this) {
             self::ME => 'The customer',
             self::OTHER_ADULT_FAMILY_MEMBER => 'Another adult family member',
-            default => '',
         };
     }
 }

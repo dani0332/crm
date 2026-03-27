@@ -124,10 +124,11 @@ const policyHolderInsuredMember = computed(() => {
   );
 });
 
-const isIncludePolicyholder = computed(() => {
-  return policyHolderInsuredMember.value ? true : false;
-});
+const isIncludePolicyholder = computed(() => Boolean(policyHolderInsuredMember.value));
 
+
+const pecValue = policyHolderInsuredMember.value?.is_pec_marked == 1 ? 1 : 2;
+const includePolicyholderValue = isIncludePolicyholder.value ? '1' : '0';
 
 const quoteForm = useForm({
   modelType: '"Health"',
@@ -158,7 +159,7 @@ const quoteForm = useForm({
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
   plan_type_id: props.quote?.health_plan_type_id || null,
-  pec: isEdit.value ? policyHolderInsuredMember.value?.is_pec_marked == 1 ? 1 : 2 : null,
+  pec: isEdit.value ? pecValue : null,
   // Sub-source fields from CreateLeadModal
   sub_source_id:
     parseInt(
@@ -177,7 +178,7 @@ const quoteForm = useForm({
   })(),
   health_insure_code: props.quote?.insure_code || null,
   policy_holder_code: props.quote?.policy_holder_code || null,
-  include_policyholder: isEdit.value ? (isIncludePolicyholder.value ? '1' : '0') : null,
+  include_policyholder: isEdit.value ? includePolicyholderValue : null,
   visa_category_id: props.quote?.visa_category_id || null,
   policy_holder_category_code: props.quote?.policy_holder_category_code || null,
   members: [],

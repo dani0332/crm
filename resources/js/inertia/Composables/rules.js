@@ -284,7 +284,7 @@ export const useRules = () => {
         birthDate = new Date(value);
       }
       
-      if (isNaN(birthDate.getTime())) return 'Invalid date';
+      if (Number.isNaN(birthDate.getTime())) return 'Invalid date';
       
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();

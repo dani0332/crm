@@ -1811,7 +1811,7 @@ const onMemberUpdated = () => {
   membersDetailsUpdated.value = true;
 };
 
-const isRevival = page.props.quote.source == leadSource.REVIVAL ? true : false;
+const isRevival = page.props.quote.source == leadSource.REVIVAL;
 </script>
 
 <template>

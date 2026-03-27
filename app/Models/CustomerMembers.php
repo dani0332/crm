@@ -99,51 +99,75 @@ class CustomerMembers extends Model
         $transformedNew = &$data['transformedNew'];
 
         if ($audit->event == 'created') {
-
-            if (isset($transformedNew['is_policy_holder']) && $transformedNew['is_policy_holder'] == 'true') {
-                $audit->event = 'member_added (Policy Holder)';
-            } elseif (isset($transformedNew['is_principal']) && $transformedNew['is_principal'] == 'true') {
-                $audit->event = 'member_added (Principal)';
-            } else {
-                $audit->event = 'member_added';
-            }
+            $audit->event = self::resolveCreatedEvent($transformedNew);
         } else {
-
-            if (! isset($transformedOld['firstName']) || ! isset($transformedOld['lastName'])) {
-                $transformedOld['name'] = $data['model']?->first_name.' '.$data['model']?->last_name;
-                $transformedNew['name'] = $data['model']?->first_name.' '.$data['model']?->last_name;
-            }
-
-            if (! empty($transformedNew['deletedAt'])) {
-                $audit->event = 'member_deleted';
-            } elseif (isset($transformedOld['isPolicyHolder']) && isset($transformedNew['isPolicyHolder'])
-                && $transformedOld['isPolicyHolder'] == 'true' && $transformedNew['isPolicyHolder'] == 'false'
-            ) {
-                $audit->event = 'member_updated (Policy Holder Removed)';
-            } elseif (isset($transformedOld['isPrincipal']) && $transformedOld['isPrincipal'] == 'true'
-                && isset($transformedNew['isPrincipal']) && $transformedNew['isPrincipal'] == 'false'
-            ) {
-                $audit->event = 'member_updated (Principal Removed)';
-            } elseif (
-                isset($transformedOld['isPolicyHolder']) && $transformedOld['isPolicyHolder'] == 'false'
-                && isset($transformedNew['isPolicyHolder']) && $transformedNew['isPolicyHolder'] == 'true'
-            ) {
-                $audit->event = 'member_updated (Policy Holder Added)';
-            } elseif (
-                isset($transformedOld['isPrincipal']) && $transformedOld['isPrincipal'] == 'false'
-                && isset($transformedNew['isPrincipal']) && $transformedNew['isPrincipal'] == 'true'
-            ) {
-                $audit->event = 'member_updated (Principal Added)';
-            } else {
-                $audit->event = 'member_updated';
-                if ($data['model']?->is_policy_holder == 1) {
-                    $audit->event .= ' (Policy Holder)';
-                } elseif ($data['model']?->is_principal == 1) {
-                    $audit->event .= ' (Principal)';
-                }
-            }
+            self::populateNameIfMissing($data, $transformedOld, $transformedNew);
+            $audit->event = self::resolveUpdatedEvent($transformedOld, $transformedNew, $data['model']);
         }
 
         return $data;
+    }
+
+    private static function resolveCreatedEvent(array $transformedNew): string
+    {
+        if (($transformedNew['is_policy_holder'] ?? null) == 'true') {
+            return 'member_added (Policy Holder)';
+        }
+
+        if (($transformedNew['is_principal'] ?? null) == 'true') {
+            return 'member_added (Principal)';
+        }
+
+        return 'member_added';
+    }
+
+    private static function populateNameIfMissing(array $data, array &$transformedOld, array &$transformedNew): void
+    {
+        if (isset($transformedOld['firstName']) && isset($transformedOld['lastName'])) {
+            return;
+        }
+
+        $fullName = $data['model']?->first_name.' '.$data['model']?->last_name;
+        $transformedOld['name'] = $fullName;
+        $transformedNew['name'] = $fullName;
+    }
+
+    private static function resolveUpdatedEvent(array $transformedOld, array $transformedNew, $model): string
+    {
+        if (! empty($transformedNew['deletedAt'])) {
+            return 'member_deleted';
+        }
+
+        $oldPolicyHolder = $transformedOld['isPolicyHolder'] ?? null;
+        $newPolicyHolder = $transformedNew['isPolicyHolder'] ?? null;
+
+        if ($oldPolicyHolder === 'true' && $newPolicyHolder === 'false') {
+            return 'member_updated (Policy Holder Removed)';
+        }
+
+        if ($oldPolicyHolder === 'false' && $newPolicyHolder === 'true') {
+            return 'member_updated (Policy Holder Added)';
+        }
+
+        $oldPrincipal = $transformedOld['isPrincipal'] ?? null;
+        $newPrincipal = $transformedNew['isPrincipal'] ?? null;
+
+        if ($oldPrincipal === 'true' && $newPrincipal === 'false') {
+            return 'member_updated (Principal Removed)';
+        }
+
+        if ($oldPrincipal === 'false' && $newPrincipal === 'true') {
+            return 'member_updated (Principal Added)';
+        }
+
+        if ($model?->is_policy_holder == 1) {
+            return 'member_updated (Policy Holder)';
+        }
+
+        if ($model?->is_principal == 1) {
+            return 'member_updated (Principal)';
+        }
+
+        return 'member_updated';
     }
 }
