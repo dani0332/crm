@@ -378,7 +378,7 @@ const isRenewal = computed(() => {
 
 const isCars24 = computed(() => {
   return (
-    page.props.quoteRequest?.source === page.props.leadSource.CARS24
+    quote?.source === page.props.leadSource.CARS24
   );
 });
 
