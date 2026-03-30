@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteTypes;
 use App\Services\Allocation\RetryAllocationService;
 use Illuminate\Console\Command;
 
@@ -26,6 +27,14 @@ class RetryLifeRevivalAllocation extends Command
      */
     public function handle(RetryAllocationService $retryAllocationService)
     {
-        //
+        $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::LIFE);
+
+        if (empty($retryAllocation)) {
+            return Command::SUCCESS;
+        }
+
+        [$startTime, $endTime] = $retryAllocation;
+
+        $retryAllocationService->executeLifeRevivalAllocation();
     }
 }
