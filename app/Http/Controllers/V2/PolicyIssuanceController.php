@@ -32,7 +32,7 @@ class PolicyIssuanceController extends Controller
             $policyIssuance->completed_step = $request->completed_step;
         }
         $policyIssuance->save();
-        PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
+        PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('renewals');
 
         return response()->json(['message' => 'Policy issuance triggered successfully'], Response::HTTP_OK);
     }
@@ -58,7 +58,7 @@ class PolicyIssuanceController extends Controller
             'status' => PolicyIssuanceEnum::PENDING_STATUS,
             'completed_step' => null,
         ]);
-        PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
+        PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('renewals');
 
         return response()->json(
             [
