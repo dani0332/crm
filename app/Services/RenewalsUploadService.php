@@ -3553,12 +3553,12 @@ class RenewalsUploadService
             LoggerService::info('isTransitionableLead inside function - transition', ['transition_id' => $transition?->id]);
             if ($transition) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
-                $newTransitionId = $transition->id;
                 $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
                 if (! $carPlan) {
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
                 } else {
+                    $newTransitionId = $transition->id;
                     $status = true;
                 }
             }
