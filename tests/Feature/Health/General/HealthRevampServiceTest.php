@@ -11,10 +11,7 @@ use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
-
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedHealthQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
@@ -60,25 +57,13 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
     });
 
     test('member payload temp id resolves to null when id starts with temp-', function () {
-        $memberData = [
-            'id' => 'temp-abc123',
+        $memberData = CustomerMembers::factory()->principal()->raw([
             'first_name' => 'John',
             'last_name' => 'Doe',
             'dob' => '1990-01-15',
             'gender' => 'M',
-            'nationality_id' => 1,
-            'emirate_of_your_visa_id' => 1,
-            'salary_band_id' => 1,
-            'member_category_id' => 1,
-            'visa_category_id' => null,
-            'relation_code' => null,
-            'marital_status_id' => null,
-            'is_insured' => 1,
-            'is_policy_holder' => 0,
-            'is_principal' => 1,
-            'pec' => 0,
-            'is_pec_marked' => 0,
-        ];
+            'id' => 'temp-abc123',
+        ]);
 
         $service = app(HealthQuoteService::class);
         $method = (new ReflectionClass($service))->getMethod('prepareMemberDetailPayload');
@@ -101,8 +86,7 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
     });
 
     test('member payload preserves real id when it does not start with temp-', function () {
-        $memberData = [
-            'id' => 42,
+        $memberData = CustomerMembers::factory()->persisted(42)->policyHolder()->raw([
             'first_name' => 'Jane',
             'last_name' => 'Smith',
             'dob' => '1985-06-20',
@@ -114,12 +98,8 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
             'visa_category_id' => 5,
             'relation_code' => 'SPOUSE',
             'marital_status_id' => 1,
-            'is_insured' => 1,
-            'is_policy_holder' => 1,
             'is_principal' => 0,
-            'pec' => 0,
-            'is_pec_marked' => 0,
-        ];
+        ]);
 
         $service = app(HealthQuoteService::class);
         $method = (new ReflectionClass($service))->getMethod('prepareMemberDetailPayload');
@@ -136,25 +116,12 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
     });
 
     test('member payload returns null dob when dob is null', function () {
-        $memberData = [
+        $memberData = CustomerMembers::factory()->raw([
             'id' => null,
             'first_name' => 'Ali',
             'last_name' => null,
             'dob' => null,
-            'gender' => 'M',
-            'nationality_id' => 1,
-            'emirate_of_your_visa_id' => 1,
-            'salary_band_id' => 1,
-            'member_category_id' => 1,
-            'visa_category_id' => null,
-            'relation_code' => null,
-            'marital_status_id' => null,
-            'is_insured' => 1,
-            'is_policy_holder' => 0,
-            'is_principal' => 0,
-            'pec' => 0,
-            'is_pec_marked' => 0,
-        ];
+        ]);
 
         $service = app(HealthQuoteService::class);
         $method = (new ReflectionClass($service))->getMethod('prepareMemberDetailPayload');
@@ -167,25 +134,13 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
     });
 
     test('member payload uses is_pec_marked when pec key is absent', function () {
-        $memberData = [
+        $memberData = CustomerMembers::factory()->pecMarked()->raw([
             'id' => 10,
             'first_name' => 'Test',
             'last_name' => 'User',
             'dob' => '2000-01-01',
-            'gender' => 'M',
-            'nationality_id' => 1,
-            'emirate_of_your_visa_id' => 1,
-            'salary_band_id' => 1,
-            'member_category_id' => 1,
-            'visa_category_id' => null,
-            'relation_code' => null,
-            'marital_status_id' => null,
-            'is_insured' => 1,
-            'is_policy_holder' => 0,
-            'is_principal' => 0,
-            'is_pec_marked' => 1,
-            // no 'pec' key
-        ];
+        ]);
+        unset($memberData['pec']); // explicitly absent to test fallback to is_pec_marked
 
         $service = app(HealthQuoteService::class);
         $method = (new ReflectionClass($service))->getMethod('prepareMemberDetailPayload');
@@ -197,22 +152,15 @@ describe('HealthQuoteService prepareMemberDetailPayload via add-member endpoint'
     });
 
     test('member payload accepts CustomerMembers model instance', function () {
-        $member = new CustomerMembers([
+        $member = CustomerMembers::factory()->make([
             'first_name' => 'Model',
             'last_name' => 'Member',
             'dob' => '1995-03-10',
             'gender' => 'F',
             'nationality_id' => 3,
-            'emirate_of_your_visa_id' => 1,
-            'salary_band_id' => 1,
-            'member_category_id' => 1,
             'visa_category_id' => 2,
             'relation_code' => 'CHILD',
             'marital_status_id' => null,
-            'is_insured' => 1,
-            'is_policy_holder' => 0,
-            'is_principal' => 0,
-            'is_pec_marked' => 0,
         ]);
 
         $service = app(HealthQuoteService::class);
@@ -245,8 +193,7 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
                 return (object) ['quoteUID' => 'hq-'.uniqid()];
             });
 
-        $memberPayload = [
-            'id' => 'temp-1',
+        $memberPayload = CustomerMembers::factory()->principal()->raw([
             'first_name' => 'Ahmed',
             'last_name' => 'Al-Mansouri',
             'dob' => '1990-01-01',
@@ -255,14 +202,7 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
             'emirate_of_your_visa_id' => null,
             'salary_band_id' => null,
             'member_category_id' => null,
-            'visa_category_id' => null,
-            'relation_code' => null,
-            'marital_status_id' => null,
-            'is_insured' => 1,
-            'is_policy_holder' => 0,
-            'is_principal' => 1,
-            'pec' => 0,
-        ];
+        ]);
 
         $request = new Request;
         $request->merge([
@@ -306,8 +246,7 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
             });
 
         $members = [
-            [
-                'id' => 'temp-1',
+            CustomerMembers::factory()->principal()->policyHolder()->raw([
                 'first_name' => 'Ahmed',
                 'last_name' => 'Test',
                 'dob' => '1990-01-01',
@@ -317,15 +256,9 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
                 'salary_band_id' => null,
                 'member_category_id' => null,
                 'visa_category_id' => 3,
-                'relation_code' => null,
                 'marital_status_id' => 1,
-                'is_insured' => 1,
-                'is_policy_holder' => 1,
-                'is_principal' => 1,
-                'pec' => 0,
-            ],
-            [
-                'id' => 'temp-2',
+            ]),
+            CustomerMembers::factory()->temp()->raw([
                 'first_name' => 'Sara',
                 'last_name' => 'Test',
                 'dob' => '1992-05-10',
@@ -334,14 +267,8 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
                 'emirate_of_your_visa_id' => null,
                 'salary_band_id' => null,
                 'member_category_id' => null,
-                'visa_category_id' => null,
                 'relation_code' => 'SPOUSE',
-                'marital_status_id' => null,
-                'is_insured' => 1,
-                'is_policy_holder' => 0,
-                'is_principal' => 0,
-                'pec' => 0,
-            ],
+            ]),
         ];
 
         $request = new Request;
@@ -377,7 +304,7 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
     test('saveHealthQuote disables OCB email for strategic-partners-referrals sub-source', function () {
         $captured = null;
 
-        $subSourceId = DB::connection('sqlite')->table('lookups')->insertGetId([
+        $subSourceId = DB::table('lookups')->insertGetId([
             'key' => 'sub-source',
             'code' => 'strategic-partners-referrals',
             'text' => 'Strategic Partners',
@@ -406,24 +333,18 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
             'nationality_id' => $this->lookups['nationality_id'],
             'cover_for_id' => 4,
             'sub_source_id' => $subSourceId,
-            'members' => [[
-                'id' => 'temp-1',
-                'first_name' => 'Test',
-                'last_name' => 'User',
-                'dob' => '1990-01-01',
-                'gender' => 'M',
-                'nationality_id' => $this->lookups['nationality_id'],
-                'emirate_of_your_visa_id' => null,
-                'salary_band_id' => null,
-                'member_category_id' => null,
-                'visa_category_id' => null,
-                'relation_code' => null,
-                'marital_status_id' => null,
-                'is_insured' => 1,
-                'is_policy_holder' => 0,
-                'is_principal' => 1,
-                'pec' => 0,
-            ]],
+            'members' => [
+                CustomerMembers::factory()->principal()->raw([
+                    'first_name' => 'Test',
+                    'last_name' => 'User',
+                    'dob' => '1990-01-01',
+                    'gender' => 'M',
+                    'nationality_id' => $this->lookups['nationality_id'],
+                    'emirate_of_your_visa_id' => null,
+                    'salary_band_id' => null,
+                    'member_category_id' => null,
+                ]),
+            ],
         ]);
 
         app(HealthQuoteService::class)->saveHealthQuote($request);
@@ -528,7 +449,7 @@ describe('health_quote_request new schema columns', function () {
             'policy_holder_category_code' => 'CAT_A',
         ]);
 
-        $row = DB::connection('sqlite')->table('health_quote_request')->find($quote->id);
+        $row = DB::table('health_quote_request')->find($quote->id);
 
         expect($row->insure_code)->toBe('ONLY_MYSELF')
             ->and($row->policy_holder_code)->toBe('ME')
@@ -539,7 +460,7 @@ describe('health_quote_request new schema columns', function () {
     test('health quote is_quote_revisable defaults to false via factory', function () {
         $quote = HealthQuote::factory()->create();
 
-        $row = DB::connection('sqlite')->table('health_quote_request')->find($quote->id);
+        $row = DB::table('health_quote_request')->find($quote->id);
 
         expect((bool) $row->is_quote_revisable)->toBeFalse();
     });
@@ -547,7 +468,7 @@ describe('health_quote_request new schema columns', function () {
     test('health quote revisable state is set correctly via factory', function () {
         $quote = HealthQuote::factory()->revisable()->create();
 
-        $row = DB::connection('sqlite')->table('health_quote_request')->find($quote->id);
+        $row = DB::table('health_quote_request')->find($quote->id);
 
         expect((bool) $row->is_quote_revisable)->toBeTrue();
     });
@@ -555,7 +476,7 @@ describe('health_quote_request new schema columns', function () {
     test('health quote locked state is set correctly via factory', function () {
         $quote = HealthQuote::factory()->locked()->create();
 
-        $row = DB::connection('sqlite')->table('health_quote_request')->find($quote->id);
+        $row = DB::table('health_quote_request')->find($quote->id);
 
         expect((bool) $row->is_quote_locked)->toBeTrue();
     });
@@ -570,7 +491,7 @@ describe('health_quote_request new schema columns', function () {
 
         $quote = HealthQuote::factory()->create(['visa_category_id' => $visaCategory->id]);
 
-        $row = DB::connection('sqlite')->table('health_quote_request')->find($quote->id);
+        $row = DB::table('health_quote_request')->find($quote->id);
 
         expect((int) $row->visa_category_id)->toBe($visaCategory->id);
     });
@@ -595,24 +516,19 @@ describe('HealthQuoteService updateHealthQuote return value', function () {
             'first_name' => $quote->first_name,
             'last_name' => $quote->last_name,
             'customer_type' => 'Individual',
-            'members' => [[
-                'id' => null,
-                'first_name' => $quote->first_name,
-                'last_name' => $quote->last_name,
-                'dob' => '1990-01-01',
-                'gender' => 'M',
-                'nationality_id' => null,
-                'emirate_of_your_visa_id' => null,
-                'salary_band_id' => null,
-                'member_category_id' => null,
-                'visa_category_id' => null,
-                'relation_code' => null,
-                'marital_status_id' => null,
-                'is_insured' => 1,
-                'is_policy_holder' => 1,
-                'is_principal' => 1,
-                'pec' => 0,
-            ]],
+            'members' => [
+                CustomerMembers::factory()->principal()->policyHolder()->raw([
+                    'id' => null,
+                    'first_name' => $quote->first_name,
+                    'last_name' => $quote->last_name,
+                    'dob' => '1990-01-01',
+                    'gender' => 'M',
+                    'nationality_id' => null,
+                    'emirate_of_your_visa_id' => null,
+                    'salary_band_id' => null,
+                    'member_category_id' => null,
+                ]),
+            ],
         ], $overrides));
 
         return $request;

@@ -5,12 +5,18 @@ namespace App\Repositories;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\CustomerMembers;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
 class AuditRepository extends BaseRepository
 {
+    private const API_MODEL_MAP = [
+        'App\Models\HealthQuoteRequestMemberDetails' => CustomerMembers::class,
+        'App\Models\HealthQuoteRequest' => HealthQuote::class,
+    ];
+
     public function model()
     {
         return Audit::class;
@@ -191,11 +197,8 @@ class AuditRepository extends BaseRepository
             }
             $transformedOld = $extractProfiles($transformedOld);
 
-            $model = $quoteObject;
-            if ($audit->auditable_type === CustomerMembers::class) {
-                $model = app(CustomerMembers::class);
-            }
-
+            $modelClass = self::API_MODEL_MAP[$audit->auditable_type] ?? $audit->auditable_type;
+            $model = class_exists($modelClass) ? app($modelClass) : $quoteObject;
             if (method_exists($model, 'transformAuditables')) {
                 $data = [
                     'audit' => $audit,

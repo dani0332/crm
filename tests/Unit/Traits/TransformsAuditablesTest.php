@@ -6,11 +6,6 @@ use App\Models\CustomerMembers;
 use App\Models\Nationality;
 use App\Traits\TransformsAuditables;
 use Illuminate\Support\Facades\DB;
-use Tests\Helpers\TestSchemaCreator;
-
-beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-});
 
 afterEach(function () {
     Mockery::close();

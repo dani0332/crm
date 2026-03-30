@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -40,6 +41,7 @@ use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DropdownSourceService extends BaseService
@@ -107,7 +109,11 @@ class DropdownSourceService extends BaseService
                 $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
                 break;
             case 'marital_status_id':
-                $data = MartialStatus::select('id', 'text')->where('is_active', true)->get();
+                $data = Cache::remember(
+                    CacheKeyEnum::MARITAL_STATUS_KEY->value,
+                    CacheKeyEnum::MARITAL_STATUS_KEY->expiry(),
+                    fn () => MartialStatus::select('id', 'text')->where('is_active', true)->get()
+                );
                 break;
             case 'nationality_id':
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();

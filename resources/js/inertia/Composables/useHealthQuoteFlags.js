@@ -11,11 +11,7 @@ import { usePage } from '@inertiajs/vue3';
  * @returns {object} Reactive computed flags
  */
 export function useHealthQuoteFlags({ getCoverForId, getInsureCode, getPolicyHolderCode }) {
-  const page = usePage();
-
-  const healthCoverForEnum = page.props.healthCoverForEnum;
-  const healthInsureEnum = page.props.healthInsureEnum;
-  const healthPolicyHolderEnum = page.props.healthPolicyHolderEnum;
+  const { healthCoverForEnum, healthInsureEnum, healthPolicyHolderEnum } = usePage().props;
 
   const isIndividualAndFamilies = computed(() => getCoverForId() === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES);
   const isDomesticHelper = computed(() => getCoverForId() === healthCoverForEnum.DOMESTIC_HELPER);

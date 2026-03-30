@@ -3,10 +3,7 @@
 use Tests\Helpers\HealthILA\HealthQuoteMockHelper;
 use Tests\Helpers\HealthILA\HealthQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
-
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedHealthQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);

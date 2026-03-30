@@ -21,6 +21,14 @@ enum CacheKeyEnum: string
     case CLAIM_TYPE_KEY = 'claim_type_key';
     case BUSINESS_TYPE_OF_INSURANCE_KEY = 'business_type_of_insurance_key';
     case CAR_MODEL_YEAR_KEY = 'car_model_year_key';
+    case HEALTH_INSURE_OPTIONS_KEY = 'health_insure_options_key';
+    case POLICY_HOLDER_KEY = 'policy_holder_key';
+    case POLICY_HOLDER_CATEGORY_KEY = 'policy_holder_category_key';
+    case VISA_CATEGORY_KEY = 'visa_category_key';
+    case HEALTH_MEMBER_RELATIONS_KEY = 'health_member_relations_key';
+    case DOMESTIC_WORKER_RELATIONS_KEY = 'domestic_worker_relations_key';
+    case GENDER_KEY = 'gender_key';
+    case MARITAL_STATUS_KEY = 'marital_status_key';
 
     public function expiry()
     {

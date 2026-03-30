@@ -6,11 +6,6 @@ use App\Models\CustomerMembers;
 use App\Models\MartialStatus;
 use App\Models\VisaCategory;
 use Illuminate\Support\Facades\DB;
-use Tests\Helpers\TestSchemaCreator;
-
-beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-});
 
 describe('CustomerMembers - new relationships', function () {
     test('has maritalStatus belongsTo relationship', function () {
@@ -55,8 +50,8 @@ describe('CustomerMembers - new relationships', function () {
     });
 
     test('has is_policy_holder and is_insured stored in database', function () {
-        $db = DB::connection('sqlite');
-        $id = $db->table('customer_members')->insertGetId([
+        $db = DB::connection();
+        $id = DB::table('customer_members')->insertGetId([
             'quote_type' => 'App\Models\HealthQuote',
             'quote_id' => 1,
             'first_name' => 'John',
@@ -67,7 +62,7 @@ describe('CustomerMembers - new relationships', function () {
             'updated_at' => now(),
         ]);
 
-        $row = $db->table('customer_members')->find($id);
+        $row = DB::table('customer_members')->find($id);
 
         expect((bool) $row->is_policy_holder)->toBeTrue()
             ->and((bool) $row->is_insured)->toBeFalse();
@@ -270,7 +265,7 @@ describe('VisaCategory model', function () {
     });
 
     test('active scope filters by is_active', function () {
-        $db = DB::connection('sqlite');
+        $db = DB::connection();
         $db->table('visa_categories')->insert([
             ['code' => 'VC1', 'text' => 'Visit Visa', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['code' => 'VC2', 'text' => 'Work Permit', 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
@@ -286,7 +281,7 @@ describe('VisaCategory model', function () {
     });
 
     test('can be created with all fillable attributes', function () {
-        $db = DB::connection('sqlite');
+        $db = DB::connection();
         $id = $db->table('visa_categories')->insertGetId([
             'code' => 'VISIT',
             'text' => 'Visit Visa',

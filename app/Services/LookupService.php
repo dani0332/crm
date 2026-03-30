@@ -6,6 +6,7 @@ use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -361,50 +362,82 @@ class LookupService extends BaseService
 
     public function getGender()
     {
-        return Lookup::where('key', LookupsEnum::GENDER)->get();
+        return Cache::remember(
+            CacheKeyEnum::GENDER_KEY->value,
+            CacheKeyEnum::GENDER_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::GENDER)->get()
+        );
     }
 
     public function getHealthInsureOptions()
     {
-        return Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
-            ->map(function ($item) {
-                $item->text = HealthInsureEnum::from($item->code)->getLabel();
+        return Cache::remember(
+            CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->value,
+            CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->expiry(),
+            function () {
+                return Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
+                    ->map(function ($item) {
+                        $item->text = HealthInsureEnum::from($item->code)->getLabel();
 
-                return $item;
-            });
+                        return $item;
+                    });
+            }
+        );
     }
 
     public function getPolicyHolder()
     {
-        return Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
-            ->map(function ($item) {
-                $item->text = HealthPolicyHolderEnum::from($item->code)->getLabel();
+        return Cache::remember(
+            CacheKeyEnum::POLICY_HOLDER_KEY->value,
+            CacheKeyEnum::POLICY_HOLDER_KEY->expiry(),
+            function () {
+                return Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
+                    ->map(function ($item) {
+                        $item->text = HealthPolicyHolderEnum::from($item->code)->getLabel();
 
-                return $item;
-            });
+                        return $item;
+                    });
+            }
+        );
     }
 
     public function getPolicyHolderCategory()
     {
-        return Lookup::where('key', LookupsEnum::POLICY_HOLDER_CATEGORY)->get();
+        return Cache::remember(
+            CacheKeyEnum::POLICY_HOLDER_CATEGORY_KEY->value,
+            CacheKeyEnum::POLICY_HOLDER_CATEGORY_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::POLICY_HOLDER_CATEGORY)->get()
+        );
     }
 
     public function getVisaCategory()
     {
-        return VisaCategory::active()->orderBy('sort_order')->get();
+        return Cache::remember(
+            CacheKeyEnum::VISA_CATEGORY_KEY->value,
+            CacheKeyEnum::VISA_CATEGORY_KEY->expiry(),
+            fn () => VisaCategory::active()->orderBy('sort_order')->get()
+        );
     }
 
     public function getHealthMemberRelations()
     {
-        return Lookup::where('key', LookupsEnum::HEALTH_MEMBER_RELATION->value)
-            ->where('is_active', true)->orderBy('sort_order')
-            ->get();
+        return Cache::remember(
+            CacheKeyEnum::HEALTH_MEMBER_RELATIONS_KEY->value,
+            CacheKeyEnum::HEALTH_MEMBER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::HEALTH_MEMBER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
+        );
     }
 
     public function getDomesticWorkerRelations()
     {
-        return Lookup::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION->value)
-            ->where('is_active', true)->orderBy('sort_order')
-            ->get();
+        return Cache::remember(
+            CacheKeyEnum::DOMESTIC_WORKER_RELATIONS_KEY->value,
+            CacheKeyEnum::DOMESTIC_WORKER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
+        );
     }
 }

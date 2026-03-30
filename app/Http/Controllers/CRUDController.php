@@ -1195,8 +1195,8 @@ class CRUDController extends Controller
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
                 $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
                 $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-                $memberRelations = LookupRepository::where('key', LookupsEnum::HEALTH_MEMBER_RELATION)->get();
-                $domesticWorkerRelations = LookupRepository::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION)->get();
+                $memberRelations = $this->dropdownSourceService->getDropdownSource(LookupsEnum::HEALTH_MEMBER_RELATION->value);
+                $domesticWorkerRelations = $this->dropdownSourceService->getDropdownSource(LookupsEnum::DOMESTIC_WORKER_RELATION->value);
                 $nationalities = Nationality::getActiveNationalities();
                 $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
                 $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();

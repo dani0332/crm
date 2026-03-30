@@ -320,17 +320,34 @@ const refreshPlansForm = useForm({
   quoteId: props.quote?.uuid,
 });
 
-const onRefreshPlans = () => {
-  refreshPlansForm.post(route('health.refresh-plans'), {
+const submitForm = (form, method, url, { successTitle, onSuccess, onFinish } = {}) => {
+  form[method](url, {
     preserveScroll: true,
-    onSuccess: () => {
-      emit('loadAvailablePlans');
+    onSuccess: response => {
+      const hasError = response?.props?.flash?.error;
+      if (!hasError) {
+        if (successTitle) {
+          notification.success({ title: successTitle, position: 'top' });
+        }
+        onSuccess?.();
+      }
     },
     onError: errors => {
       notification.error({
-        title: 'Failed to refresh plans',
+        title: errors.error || 'Data not updated',
         position: 'top',
       });
+    },
+    onFinish,
+  });
+};
+
+const onRefreshPlans = () => {
+  refreshPlansForm.post(route('health.refresh-plans'), {
+    preserveScroll: true,
+    onSuccess: () => emit('loadAvailablePlans'),
+    onError: () => {
+      notification.error({ title: 'Failed to refresh plans', position: 'top' });
     },
   });
 };
@@ -454,54 +471,20 @@ const onMemberSubmit = isValid => {
     return;
   }
 
-  if (memberActionEdit.value) {
-    memberForm.put(`/health-quote-update-member`, {
-      preserveScroll: true,
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages.error) {
-          notification.success({
-            title: 'Member Updated',
-            position: 'top',
-          });
-          memberForm.reset();
-          emit('memberUpdated');
-        }
-      },
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.member = false;
-      },
-    });
-  } else {
-    memberForm.post(`/health-quote-add-member`, {
-      preserveScroll: true,
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages.error) {
-          notification.success({
-            title: 'Member Added',
-            position: 'top',
-          });
-          emit('memberUpdated');
-        }
-      },
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.member = false;
-      },
-    });
-  }
+  const [method, url, successTitle] = memberActionEdit.value
+    ? ['put', '/health-quote-update-member', 'Member Updated']
+    : ['post', '/health-quote-add-member', 'Member Added'];
+
+  submitForm(memberForm, method, url, {
+    successTitle,
+    onSuccess: () => {
+      memberForm.reset();
+      emit('memberUpdated');
+    },
+    onFinish: () => {
+      modals.member = false;
+    },
+  });
 };
 
 const memberDelete = id => {
@@ -524,21 +507,9 @@ const memberDeleteConfirmed = () => {
     return;
   }
 
-  memberForm.post(`/health-quote-delete-member`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Member Deleted',
-        position: 'top',
-      });
-      emit('memberUpdated');
-    },
-    onError: errors => {
-      notification.error({
-        title: errors.error || 'Data not updated',
-        position: 'top',
-      });
-    },
+  submitForm(memberForm, 'post', '/health-quote-delete-member', {
+    successTitle: 'Member Deleted',
+    onSuccess: () => emit('memberUpdated'),
     onFinish: () => {
       modals.memberConfirm = false;
     },
