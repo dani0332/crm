@@ -21,15 +21,6 @@ class RulesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(function (Request $request, Closure $next) {
-            $user = $request->user();
-            if ($user === null || ! $user instanceof User) {
-                abort(403, 'Unauthorized access');
-            }
-
-            return $next($request);
-        });
-
         $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('index');
         $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('show');
         $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_CREATE)->only(['create', 'store']);
