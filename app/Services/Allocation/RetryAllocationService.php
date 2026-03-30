@@ -411,4 +411,6 @@ class RetryAllocationService
 
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
+
+    public function executeLifeRevivalAllocation() {}
 }
