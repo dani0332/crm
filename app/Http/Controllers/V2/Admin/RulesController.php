@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;

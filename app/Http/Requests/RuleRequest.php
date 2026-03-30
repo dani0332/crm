@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Models\LeadSource;
 use App\Models\QuoteType;
