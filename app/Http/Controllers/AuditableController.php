@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Http\Middleware\CheckAuditableTypePermission;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
@@ -32,10 +32,7 @@ class AuditableController extends Controller
 
     public function __construct(private BaseService $baseService)
     {
-        $this->middleware(
-            [CheckAuditableTypePermission::class],
-            ['only' => ['loadAuditableComponent', 'loadAuditLogs']]
-        );
+        $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
     }
 
     public function loadAuditableComponent(Request $request)
