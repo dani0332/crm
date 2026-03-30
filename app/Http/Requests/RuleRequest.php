@@ -25,10 +25,6 @@ class RuleRequest extends FormRequest
             return false;
         }
 
-        if ($user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
-            return true;
-        }
-
         return match ($this->route()?->getName()) {
             'rule.store' => $user->can(PermissionsEnum::RULE_CONFIG_CREATE),
             'rule.update' => $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
