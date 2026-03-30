@@ -62,7 +62,13 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function resolveLead()
     {
-        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
+        $modelDetails = $this->allocationRequest->getQuoteType()->modelDetail();
+
+        $leadQuery = $this->allocationRequest->model()
+            ->where('uuid', $this->allocationRequest->getQuoteUUID())
+            ->when($modelDetails !== [], fn ($query) => $query->with($modelDetails));
+
+        $lead = $leadQuery->first();
 
         if (! $lead) {
             LoggerService::info('Lead not found');

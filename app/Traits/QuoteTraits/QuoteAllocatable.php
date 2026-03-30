@@ -5,6 +5,7 @@ namespace App\Traits\QuoteTraits;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -366,5 +367,22 @@ trait QuoteAllocatable
                             ->whereBetween('created_at', [$extendedStartDate, $to]);
                     });
             });
+    }
+
+    public function isRevivalCommsIntentHighOrMedium(): bool
+    {
+        $partial = $this->carQuoteRequestDetailPartial;
+
+        if (! filled($partial?->engagement_level) || ! filled($partial?->engagement_level_updated_at)) {
+            return false;
+        }
+
+        $updatedAt = Carbon::parse($partial?->engagement_level_updated_at ?? now());
+
+        return match ($partial?->engagement_level) {
+            MotorRevivalEnum::INTENT_HIGH->value => now()->greaterThan($updatedAt->copy()->addMinutes(15)), // for HIGH, IMCRM should wait more than 15 minutes
+            MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addHours(3)), // for MEDIUM, IMCRM should wait more than 3 hours
+            default => false,
+        };
     }
 }

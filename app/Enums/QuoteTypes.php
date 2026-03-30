@@ -511,4 +511,12 @@ enum QuoteTypes: string
         };
     }
 
+    public function modelDetail(): array
+    {
+        return match ($this) {
+            self::CAR => ['carQuoteRequestDetailPartial'],
+            default => [],
+        };
+    }
+
 }
