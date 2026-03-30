@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
@@ -56,22 +54,6 @@ class SendBookPolicyRequest extends FormRequest
                 }
 
                 if (! app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords((string) $modelType))) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
-                }
-            });
-        }
-
-        if (is_object($quote) && $quote->quote_type_id == QuoteTypeId::Savings) {
-            $validator->after(function ($validator) use ($quote) {
-                $uploadedDocuments = $quote->documents()->pluck('document_type_code')->toArray();
-                $requiredDocuments = [
-                    DocumentTypeCode::PS_SAV,
-                    DocumentTypeCode::PC_SAV,
-                    DocumentTypeCode::AC_SAV,
-                ];
-
-                // Check if all required documents are present in uploaded documents
-                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
                     $validator->errors()->add('error', 'Required documents are not uploaded');
                 }
             });

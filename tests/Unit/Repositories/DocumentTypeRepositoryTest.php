@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\TravelQuote;
 use App\Repositories\DocumentTypeRepository;
@@ -38,7 +39,7 @@ beforeEach(function () {
 /**
  * DocumentTypeRepository::validateSendPolicyDocsUploaded — same logic as SendBookPolicyRequest lines 52–62.
  *
- * QA mapping: Car (DOC-LOB-05..06), Travel (DOC-LOB-07 multi-LOB), Business BTI (DOC-LOB-08..10).
+ * QA mapping: Car (DOC-LOB-05..06), Travel (DOC-LOB-07 multi-LOB), Savings (replaces hardcoded SendBookPolicyRequest block), Business BTI (DOC-LOB-08..10).
  */
 describe('DocumentTypeRepository', function () {
     describe('Car LOB', function () {
@@ -120,6 +121,69 @@ describe('DocumentTypeRepository', function () {
             $repository = new DocumentTypeRepository;
 
             expect($repository->validateSendPolicyDocsUploaded($quote, 'Travel'))->toBeTrue();
+        });
+    });
+
+    describe('Savings LOB (DB-driven send-policy documents)', function () {
+        test('returns true when PS_SAV, PC_SAV, and AC_SAV are configured and uploaded', function () {
+            foreach ([DocumentTypeCode::PS_SAV, DocumentTypeCode::PC_SAV, DocumentTypeCode::AC_SAV] as $index => $code) {
+                DocumentType::factory()->create([
+                    'code' => $code,
+                    'text' => "Savings required {$code}",
+                    'is_active' => 1,
+                    'quote_type_id' => QuoteTypeId::Savings,
+                    'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                    'is_required' => 1,
+                    'is_required_for_send_policy' => 1,
+                    'sort_order' => $index + 1,
+                ]);
+            }
+
+            $quote = PersonalQuote::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'code' => 'SAV-SPV-1',
+                'quote_type_id' => QuoteTypeId::Savings,
+                'email' => 'savings@example.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ([DocumentTypeCode::PS_SAV, DocumentTypeCode::PC_SAV, DocumentTypeCode::AC_SAV] as $code) {
+                QuoteDocument::factory()
+                    ->forQuote($quote->id, PersonalQuote::class)
+                    ->ofType($code)
+                    ->create();
+            }
+
+            $repository = new DocumentTypeRepository;
+
+            expect($repository->validateSendPolicyDocsUploaded($quote, 'Savings'))->toBeTrue();
+        });
+
+        test('returns false when a configured Savings send-policy document is missing', function () {
+            DocumentType::factory()->create([
+                'code' => DocumentTypeCode::PS_SAV,
+                'text' => 'Savings required PS_SAV',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Savings,
+                'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                'is_required' => 1,
+                'is_required_for_send_policy' => 1,
+                'sort_order' => 1,
+            ]);
+
+            $quote = PersonalQuote::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'code' => 'SAV-SPV-2',
+                'quote_type_id' => QuoteTypeId::Savings,
+                'email' => 'savings@example.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $repository = new DocumentTypeRepository;
+
+            expect($repository->validateSendPolicyDocsUploaded($quote, 'Savings'))->toBeFalse();
         });
     });
 
