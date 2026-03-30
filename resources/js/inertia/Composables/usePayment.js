@@ -155,6 +155,81 @@ export const usePayment = () => {
     };
   };
 
+  const TRAVEL_MEMBER_SENIOR_AGE = 65;
+
+  /**
+   * Payments that apply to a travel member: match plan_id to adult vs senior plan lists.
+   * When plan lists are not loaded yet, a single quote payment applies to everyone; otherwise all payments (legacy behaviour).
+   *
+   * @param {Array<Record<string, unknown>>} payments
+   * @param {number} memberAge
+   * @param {Array<number|string>} normalPlanIds
+   * @param {Array<number|string>} seniorPlanIds
+   * @returns {Array<Record<string, unknown>>}
+   */
+  const paymentsRelevantToTravelMember = (
+    payments,
+    memberAge,
+    normalPlanIds,
+    seniorPlanIds,
+  ) => {
+    if (!Array.isArray(payments) || payments.length === 0) {
+      return [];
+    }
+
+    const normal = Array.isArray(normalPlanIds) ? normalPlanIds : [];
+    const senior = Array.isArray(seniorPlanIds) ? seniorPlanIds : [];
+    const bucketsKnown = normal.length > 0 || senior.length > 0;
+
+    if (bucketsKnown) {
+      const bucketIds =
+        memberAge >= TRAVEL_MEMBER_SENIOR_AGE && senior.length > 0
+          ? senior
+          : normal;
+
+      if (bucketIds.length > 0) {
+        return payments.filter(
+          p =>
+            p.plan_id != null &&
+            bucketIds.some(id => String(id) === String(p.plan_id)),
+        );
+      }
+
+      return [];
+    }
+
+    if (payments.length === 1) {
+      return payments;
+    }
+
+    return payments;
+  };
+
+  /**
+   * Authorized / settled lock state for member details actions, scoped to that member's payment segment.
+   *
+   * @param {Array<Record<string, unknown>>} payments
+   * @param {number} memberAge
+   * @param {Array<number|string>} normalPlanIds
+   * @param {Array<number|string>} seniorPlanIds
+   * @returns {{ hasAuthorized: boolean, statusText: string|null }}
+   */
+  const hasAuthorizedPaymentForTravelMember = (
+    payments,
+    memberAge,
+    normalPlanIds,
+    seniorPlanIds,
+  ) => {
+    const subset = paymentsRelevantToTravelMember(
+      payments,
+      memberAge,
+      normalPlanIds,
+      seniorPlanIds,
+    );
+
+    return hasAuthorizedSplit(subset);
+  };
+
   return {
     formatDate,
     formatAmount,
@@ -166,5 +241,7 @@ export const usePayment = () => {
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
     hasAuthorizedSplit,
+    paymentsRelevantToTravelMember,
+    hasAuthorizedPaymentForTravelMember,
   };
 };
