@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
-
     public function __construct()
     {
         $this->middleware(function (Request $request, Closure $next) {
@@ -45,6 +44,7 @@ class RulesController extends Controller
             };
 
             abort_unless($allowed, 403, 'Unauthorized access');
+
             return $next($request);
         });
     }
