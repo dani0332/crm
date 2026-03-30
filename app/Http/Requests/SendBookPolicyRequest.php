@@ -7,7 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\SageEnum;
+use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Repositories\DocumentTypeRepository;
@@ -49,7 +49,7 @@ class SendBookPolicyRequest extends FormRequest
         $modelType = $this->input('model_type');
         $quote = $this->getQuoteObject($modelType, $this->input('quote_id'));
 
-        if (in_array($sendPolicyType, [SageEnum::CUSTOMER, SageEnum::SAGE], true)) {
+        if (in_array($sendPolicyType, [SendPolicyTypeEnum::CUSTOMER, SendPolicyTypeEnum::SAGE], true)) {
             $validator->after(function ($validator) use ($quote, $modelType) {
                 if (! $quote) {
                     return;
@@ -77,7 +77,7 @@ class SendBookPolicyRequest extends FormRequest
             });
         }
 
-        if ($sendPolicyType == SageEnum::CUSTOMER) {
+        if ($sendPolicyType == SendPolicyTypeEnum::CUSTOMER) {
             $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
                     if (! $quote?->advisor_id) {
@@ -93,7 +93,7 @@ class SendBookPolicyRequest extends FormRequest
             });
         }
 
-        if ($sendPolicyType == SageEnum::SAGE) {
+        if ($sendPolicyType == SendPolicyTypeEnum::SAGE) {
             if (! request()->has('through_automation') && ! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
