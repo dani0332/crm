@@ -31,7 +31,7 @@ class InsuranceProviderTransitionsSeeder extends Seeder
 
         if ($rsa) {
             $rsaHasActiveTransition = InsuranceProviderTransition::where('source_insurance_provider_id', $rsa->id)
-                ->whereHas('targetProvider', fn ($q) => $q->where('is_active', 1))
+                ->where('is_active', true)
                 ->exists();
 
             if (! $rsaHasActiveTransition) {
@@ -45,7 +45,7 @@ class InsuranceProviderTransitionsSeeder extends Seeder
 
         if ($tm) {
             $tmHasActiveTransition = InsuranceProviderTransition::where('source_insurance_provider_id', $tm->id)
-                ->whereHas('targetProvider', fn ($q) => $q->where('is_active', 1))
+                ->where('is_active', true)
                 ->exists();
 
             if (! $tmHasActiveTransition) {
