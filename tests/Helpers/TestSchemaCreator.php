@@ -10,7 +10,9 @@ use Tests\Support\Schema\RulesSchema;
 class TestSchemaCreator
 {
     /**
-     * Create minimal required tables tests.
+     * Create minimal required tables for tests (see {@see CoreSchema}).
+     *
+     * Includes `document_types` columns used by send-policy and LOB-specific document tests.
      */
     public static function createMinimalSchema(): void
     {

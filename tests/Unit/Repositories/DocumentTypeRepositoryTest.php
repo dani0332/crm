@@ -12,28 +12,12 @@ use App\Models\QuoteDocument;
 use App\Models\TravelQuote;
 use App\Repositories\DocumentTypeRepository;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\Schema\SchemaUtils;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-
-    Schema::table('document_types', function (Blueprint $table) {
-        if (! Schema::hasColumn('document_types', 'category')) {
-            $table->string('category')->nullable();
-        }
-        if (! Schema::hasColumn('document_types', 'is_required')) {
-            $table->boolean('is_required')->default(0);
-        }
-        if (! Schema::hasColumn('document_types', 'is_required_for_send_policy')) {
-            $table->boolean('is_required_for_send_policy')->default(0);
-        }
-        if (! Schema::hasColumn('document_types', 'business_type_of_insurance_id')) {
-            $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
-        }
-    });
 });
 
 /**

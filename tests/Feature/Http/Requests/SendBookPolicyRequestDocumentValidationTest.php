@@ -13,7 +13,6 @@ use App\Models\QuoteDocument;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator as ValidatorInstance;
@@ -25,21 +24,6 @@ const SBP_REQUIRED_DOCUMENTS_MESSAGE = 'Required documents are not uploaded';
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-
-    Schema::table('document_types', function (Blueprint $table) {
-        if (! Schema::hasColumn('document_types', 'category')) {
-            $table->string('category')->nullable();
-        }
-        if (! Schema::hasColumn('document_types', 'is_required')) {
-            $table->boolean('is_required')->default(0);
-        }
-        if (! Schema::hasColumn('document_types', 'is_required_for_send_policy')) {
-            $table->boolean('is_required_for_send_policy')->default(0);
-        }
-        if (! Schema::hasColumn('document_types', 'business_type_of_insurance_id')) {
-            $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
-        }
-    });
 });
 
 /**
