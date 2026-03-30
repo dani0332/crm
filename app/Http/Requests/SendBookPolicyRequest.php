@@ -61,9 +61,9 @@ class SendBookPolicyRequest extends FormRequest
             });
         }
 
-        if ($quote?->quote_type_id == QuoteTypeId::Savings) {
+        if (is_object($quote) && $quote->quote_type_id == QuoteTypeId::Savings) {
             $validator->after(function ($validator) use ($quote) {
-                $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
+                $uploadedDocuments = $quote->documents()->pluck('document_type_code')->toArray();
                 $requiredDocuments = [
                     DocumentTypeCode::PS_SAV,
                     DocumentTypeCode::PC_SAV,
