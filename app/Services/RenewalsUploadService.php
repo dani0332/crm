@@ -3556,10 +3556,10 @@ class RenewalsUploadService
                 $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
                 if (! $carPlan) {
-                    // Preserve existing transition_id so downstream isTransitionableLeadForProcess
-                    // still returns the correct provider, producing "Invalid Insurer Plan Name"
-                    // rather than "Invalid Insurance Provider". Leaves null leads unchanged.
-                    $newTransitionId = $originalTransitionId;
+                    // Clear the transition_id so checkIsTransitionableLead() correctly returns false.
+                    // The error below is sufficient — no need to preserve the old transition_id
+                    // to drive a different error message downstream.
+                    $newTransitionId = null;
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
                 } else {
                     $newTransitionId = $transition->id;
