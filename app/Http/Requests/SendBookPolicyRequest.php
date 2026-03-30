@@ -7,7 +7,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Repositories\DocumentTypeRepository;
@@ -45,21 +44,7 @@ class SendBookPolicyRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $sendPolicyType = $this->input('send_policy_type');
-        $modelType = $this->input('model_type');
-        $quote = $this->getQuoteObject($modelType, $this->input('quote_id'));
-
-        if (in_array($sendPolicyType, [SendPolicyTypeEnum::CUSTOMER, SendPolicyTypeEnum::SAGE], true)) {
-            $validator->after(function ($validator) use ($quote, $modelType) {
-                if (! $quote) {
-                    return;
-                }
-
-                if (! app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords((string) $modelType))) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
-                }
-            });
-        }
+        $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
 
         if ($quote?->quote_type_id == QuoteTypeId::Savings) {
             $validator->after(function ($validator) use ($quote) {
@@ -74,12 +59,19 @@ class SendBookPolicyRequest extends FormRequest
                 if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
                     $validator->errors()->add('error', 'Required documents are not uploaded');
                 }
+
+                // TODO : need to also check for Policy Handbook from Savings plan section.
             });
         }
 
-        if ($sendPolicyType == SendPolicyTypeEnum::CUSTOMER) {
+        if (request()->send_policy_type == 'customer') {
             $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
+                    $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords(request()->model_type));
+                    if (! $areSendPolicyDocsUploaded) {
+                        $validator->errors()->add('error', 'Required documents are not uploaded');
+                    }
+
                     if (! $quote?->advisor_id) {
                         $validator->errors()->add('error', 'Please select advisor');
                     }
@@ -93,7 +85,7 @@ class SendBookPolicyRequest extends FormRequest
             });
         }
 
-        if ($sendPolicyType == SendPolicyTypeEnum::SAGE) {
+        if (request()->send_policy_type == 'sage') {
             if (! request()->has('through_automation') && ! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',

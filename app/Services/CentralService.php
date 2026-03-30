@@ -63,7 +63,6 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
-use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -80,8 +79,6 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -1135,7 +1132,7 @@ class CentralService extends BaseService
             }
         }
 
-        $client = new Client;
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1160,7 +1157,7 @@ class CentralService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (BadResponseException $e) {
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1857,7 +1854,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name ?? '';
-            $emailData->corplineDetails = $quote?->brief_details ?? '';
+            $emailData->corplineDetails = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = '-'; // need to confirm.
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
@@ -2459,11 +2456,11 @@ class CentralService extends BaseService
     /**
      * Find renewal batch by expiry date for non-motor LOBs
      */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
     {
-        $expiryDate = Carbon::parse($expiryDate);
+        $expiryDate = \Carbon\Carbon::parse($expiryDate);
 
-        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();
