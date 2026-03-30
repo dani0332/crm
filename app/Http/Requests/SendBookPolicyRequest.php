@@ -9,7 +9,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -26,7 +28,7 @@ class SendBookPolicyRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -64,12 +66,21 @@ class SendBookPolicyRequest extends FormRequest
 
         if (request()->send_policy_type == 'customer') {
             $validator->after(function ($validator) use ($quote) {
-                if (! $quote?->advisor_id) {
-                    $validator->errors()->add('error', 'Please select advisor');
-                }
+                if ($quote) {
+                    $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords(request()->model_type));
+                    if (! $areSendPolicyDocsUploaded) {
+                        $validator->errors()->add('error', 'Required documents are not uploaded');
+                    }
 
-                if (! $quote?->email) {
-                    $validator->errors()->add('error', 'Customer email is required');
+                    if (! $quote?->advisor_id) {
+                        $validator->errors()->add('error', 'Please select advisor');
+                    }
+
+                    if (! $quote?->email) {
+                        $validator->errors()->add('error', 'Customer email is required');
+                    }
+                } else {
+                    $validator->errors()->add('error', 'Quote not found');
                 }
             });
         }
