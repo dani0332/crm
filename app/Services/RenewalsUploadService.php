@@ -3576,6 +3576,31 @@ class RenewalsUploadService
     }
 
     /**
+     * Determine whether a car quote's renewal history qualifies as historical
+     * (i.e. a prior email has already been sent via a transitionable process).
+     * Centralises the duplicated block from CRUDController and CarQuoteService.
+     */
+    public function resolveIsRenewalHistorical(CarQuote $carQuote): bool
+    {
+        $latestProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+
+        if (! $latestProcess) {
+            return false;
+        }
+
+        $isTransitionableLead = $this->isTransitionableLeadForProcess($latestProcess)['status'];
+
+        return $isTransitionableLead && RenewalQuoteProcess::where('id', '!=', $latestProcess->id)->where([
+            'quote_id' => $carQuote->id,
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists();
+    }
+
+    /**
      * Get transitionable provider config from stored transition on process only.
      * Does not run isTransitionableLead; use that only during validation and persist transition_id there.
      * If process has no transition_id, returns non-transitionable config (status false, provider/plan from lead data).
