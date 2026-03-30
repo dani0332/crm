@@ -82,7 +82,8 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
-const { hasAuthorizedSplit } = usePayment();
+const { hasAuthorizedSplit, hasAuthorizedPaymentForTravelMember } =
+  usePayment();
 const checkCheckedPlans = computed(() => {
   return true;
 });
@@ -166,6 +167,14 @@ const normalPlansIds = reactive({
 const seniorPlansIds = reactive({
   ids: [],
 });
+
+const memberPaymentLock = member =>
+  hasAuthorizedPaymentForTravelMember(
+    page.props.payments,
+    calculateAge(member.dob),
+    normalPlansIds.ids,
+    seniorPlansIds.ids,
+  );
 
 const canSendOcbEmail = computed(() => {
   return (
@@ -2704,9 +2713,9 @@ const fullAddress = computed(() => {
           </div>
 
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when payment is authorized -->
+            <!-- Show button with tooltip when this member's segment payment is authorized -->
             <x-tooltip
-              v-if="isAuthorizedPayment.hasAuthorized"
+              v-if="memberPaymentLock(item).hasAuthorized"
               position="bottom"
             >
               <x-button size="xs" color="primary" outlined :disabled="true">
@@ -2714,7 +2723,7 @@ const fullAddress = computed(() => {
               </x-button>
               <template #tooltip>
                 {{
-                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + memberPaymentLock(item).statusText}`
                 }}
               </template>
             </x-tooltip>
@@ -2733,9 +2742,9 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when payment is authorized -->
+            <!-- Show button with tooltip when this member's segment payment is authorized -->
             <x-tooltip
-              v-if="isAuthorizedPayment.hasAuthorized"
+              v-if="memberPaymentLock(item).hasAuthorized"
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">
@@ -2743,7 +2752,7 @@ const fullAddress = computed(() => {
               </x-button>
               <template #tooltip>
                 {{
-                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + memberPaymentLock(item).statusText}`
                 }}
               </template>
             </x-tooltip>
