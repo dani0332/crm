@@ -194,9 +194,13 @@ const onLoadAuditLogData = async () => {
           </h3>
           <div
             v-if="
-              (hasRole(rolesEnum.Engineering) ||
-                (can(permissionsEnum.CYBER_API_TRIGGER) &&
-                  props.quoteTypeId == 19)) &&
+              (
+                can(permissionsEnum.RE_TRIGGER_POLICY_ISSUANCE) ||
+                (
+                  can(permissionsEnum.CYBER_API_TRIGGER) &&
+                  props.quoteTypeId == 19
+                )
+              ) &&
               policyIssuanceId
             "
             class="flex gap-2"
