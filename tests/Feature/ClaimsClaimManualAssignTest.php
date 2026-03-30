@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->claimsService = app(ClaimsService::class);
 
     $claimManagerRole = Role::firstOrCreate(
-        ['name' => RolesEnum::CLAIM_MANAGER, 'guard_name' => 'web'],
+        ['name' => RolesEnum::ClaimsManager, 'guard_name' => 'web'],
         ['created_at' => now(), 'updated_at' => now()]
     );
     $this->claimManager = User::factory()->create([

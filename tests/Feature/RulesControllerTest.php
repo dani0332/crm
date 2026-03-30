@@ -21,6 +21,26 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $adminRole = Role::firstOrCreate(['name' => RolesEnum::Admin, 'guard_name' => 'web']);
     $this->user->assignRole($adminRole);
+
+    foreach ([
+        PermissionsEnum::RULE_CONFIG_LIST,
+        PermissionsEnum::RULE_CONFIG_CREATE,
+        PermissionsEnum::RULE_CONFIG_UPDATE,
+    ] as $permissionName) {
+        Permission::firstOrCreate([
+            'name' => $permissionName,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    $this->user->givePermissionTo([
+        PermissionsEnum::RULE_CONFIG_LIST,
+        PermissionsEnum::RULE_CONFIG_CREATE,
+        PermissionsEnum::RULE_CONFIG_UPDATE,
+    ]);
+
     $this->actingAs($this->user);
 
     // Create required test data using DB inserts
@@ -1018,7 +1038,7 @@ describe('Rules authorization', function () {
         $response->assertOk();
     });
 
-    test('retail advisor with rule-config-list cannot open rules list', function () {
+    test('car advisor with rule-config-list can open rules list', function () {
         $user = User::factory()->create();
         Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
         $user->assignRole(RolesEnum::CarAdvisor);
@@ -1028,7 +1048,7 @@ describe('Rules authorization', function () {
 
         $response = $this->get(route('rule.index'));
 
-        $response->assertForbidden();
+        $response->assertOk();
     });
 
     test('retail advisor with rule-config-list and a manager role can open rules list', function () {
@@ -1046,7 +1066,7 @@ describe('Rules authorization', function () {
         $response->assertOk();
     });
 
-    test('retail advisor with rule-config-list cannot view rule detail', function () {
+    test('car advisor with rule-config-list can view rule detail', function () {
         $rule = Rule::create([
             'name' => 'Rule Detail Idor Advisor',
             'rule_type' => $this->carMakeModelRuleType->id,
@@ -1064,7 +1084,7 @@ describe('Rules authorization', function () {
 
         $response = $this->get(route('rule.show', $rule->id));
 
-        $response->assertForbidden();
+        $response->assertOk();
     });
 
     test('user with only rule-config-create cannot open rules list', function () {
