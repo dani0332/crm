@@ -155,18 +155,11 @@ const loadPolicyIssuanceLogs = async () => {
     .then(res => {
       if (res.data.success) {
         apiLogs.data = res.data.data ?? [];
-
-        if (res.data.data.length === 0) {
-          notification.warning({
-            title: 'No API logs found',
-            position: 'top',
-          });
-        } else {
-          notification.success({
-            title: 'Policy Issuance API Logs Loaded Successfully',
-            position: 'top',
-          });
-        }
+        apiLogs.policyIssuance = res.data.policyIssuance ?? null;
+        notification.success({
+          title: 'Policy Issuance API Logs Loaded Successfully',
+          position: 'top',
+        });
       } else {
         notification.error({
           title: res.data.message || `Failed to load Policy Issuance API logs`,
