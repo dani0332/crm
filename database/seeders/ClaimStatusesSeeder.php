@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Lookup;
+use App\Models\QuoteType;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -81,11 +82,15 @@ class ClaimStatusesSeeder extends Seeder
             ['text' => 'Documents uploaded', 'description' => 'The documents you uploaded are received and under review.', 'sort_order' => 12, 'access_type_id' => $claimAccessTypeSystem?->id],
         ];
 
-        // Quote Type IDs for Non-Motor
-        $nonMotorQuoteTypes = [
+        // Non-motor quote types: only IDs that exist in quote_type (Health uses dedicated statuses below).
+        $nonMotorQuoteTypeCandidates = [
             QuoteTypeId::Life, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Travel, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::TradeCredit,
             QuoteTypeId::GroupMedical, QuoteTypeId::Corpline, QuoteTypeId::CompanyCar, QuoteTypeId::JobLoss, QuoteTypeId::JBLS, QuoteTypeId::Savings,
         ];
+        $nonMotorQuoteTypes = QuoteType::query()
+            ->whereIn('id', $nonMotorQuoteTypeCandidates)
+            ->pluck('id')
+            ->all();
 
         // Health Claim Statuses
         $healthReimbursementStatuses = [

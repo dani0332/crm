@@ -69,6 +69,7 @@ enum LoggerFeatureEnum: string
     case CLAIM_UPDATE = 'claim-update';
     case CLAIM_DETAILS_UPDATE = 'claim-details-update';
     case CLAIM_STATUS_UPDATE = 'claim-status-update';
+    case CLAIM_MANUAL_ASSIGN = 'claim-manual-assign';
     case CLAIM_NEXT_FOLLOW_UP_UPDATE = 'claim-next-follow-up-update';
     case CLAIM_MAKE_ADDITIONAL_CONTACT_PRIMARY = 'claim-make-additional-contact-primary';
     case CLAIM_LIST = 'claim-list';
