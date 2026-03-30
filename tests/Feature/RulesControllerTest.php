@@ -984,13 +984,109 @@ describe('Rules authorization', function () {
         $response->assertForbidden();
     });
 
-    test('user with rule-config-list and rule.create can create allocation rules', function () {
+    test('user with only rule-config-list cannot create allocation rules', function () {
         $user = User::factory()->create();
         Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
         $user->assignRole(RolesEnum::CarAdvisor);
         Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'rule.create', 'guard_name' => 'web']);
-        $user->givePermissionTo([PermissionsEnum::RULE_CONFIG_LIST, 'rule.create']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $ruleData = [
+            'name' => 'List Only Rule',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertForbidden();
+    });
+
+    test('user with only rule-config-list can open rules list when not a retail-only advisor', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::LeadPool, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::LeadPool);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $response = $this->get(route('rule.index'));
+
+        $response->assertOk();
+    });
+
+    test('retail advisor with rule-config-list cannot open rules list', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $response = $this->get(route('rule.index'));
+
+        $response->assertForbidden();
+    });
+
+    test('retail advisor with rule-config-list and a manager role can open rules list', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => RolesEnum::CarManager, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        $user->assignRole(RolesEnum::CarManager);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $response = $this->get(route('rule.index'));
+
+        $response->assertOk();
+    });
+
+    test('retail advisor with rule-config-list cannot view rule detail', function () {
+        $rule = Rule::create([
+            'name' => 'Rule Detail Idor Advisor',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+        $rule->users()->attach([$this->testUser1->id]);
+
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $response = $this->get(route('rule.show', $rule->id));
+
+        $response->assertForbidden();
+    });
+
+    test('user with only rule-config-create cannot open rules list', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_CREATE, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_CREATE);
+        $this->actingAs($user);
+
+        $response = $this->get(route('rule.index'));
+
+        $response->assertForbidden();
+    });
+
+    test('user with rule-config-list and rule-config-create can create allocation rules', function () {
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_CREATE, 'guard_name' => 'web']);
+        $user->givePermissionTo([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::RULE_CONFIG_CREATE]);
         $this->actingAs($user);
 
         $ruleData = [
@@ -1060,6 +1156,72 @@ describe('Rules authorization', function () {
             'id' => $rule->id,
             'name' => 'Rule For Update Idor Test',
             'is_active' => true,
+        ]);
+    });
+
+    test('user with only rule-config-list cannot update allocation rules', function () {
+        $rule = Rule::create([
+            'name' => 'Rule List Only Update Test',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+        $rule->users()->attach([$this->testUser1->id]);
+
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        $user->givePermissionTo(PermissionsEnum::RULE_CONFIG_LIST);
+        $this->actingAs($user);
+
+        $updateData = [
+            'name' => 'Should Not Apply',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => false,
+            'rule_users' => [$this->testUser2->id],
+        ];
+
+        $response = $this->put(route('rule.update', $rule->id), $updateData);
+
+        $response->assertForbidden();
+    });
+
+    test('user with rule-config-list and rule-config-update can update allocation rules', function () {
+        $rule = Rule::create([
+            'name' => 'Rule Update Permission Test',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+        $rule->users()->attach([$this->testUser1->id]);
+
+        $user = User::factory()->create();
+        Role::firstOrCreate(['name' => RolesEnum::CarAdvisor, 'guard_name' => 'web']);
+        $user->assignRole(RolesEnum::CarAdvisor);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_LIST, 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => PermissionsEnum::RULE_CONFIG_UPDATE, 'guard_name' => 'web']);
+        $user->givePermissionTo([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::RULE_CONFIG_UPDATE]);
+        $this->actingAs($user);
+
+        $updateData = [
+            'name' => 'Updated By Rule Config Update',
+            'rule_type' => $this->carMakeModelRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => false,
+            'rule_users' => [$this->testUser2->id],
+        ];
+
+        $response = $this->put(route('rule.update', $rule->id), $updateData);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('message', 'Rule is updated successfully.');
+
+        $this->assertDatabaseHas('rules', [
+            'id' => $rule->id,
+            'name' => 'Updated By Rule Config Update',
+            'is_active' => false,
         ]);
     });
 });

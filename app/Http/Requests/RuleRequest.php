@@ -29,7 +29,11 @@ class RuleRequest extends FormRequest
             return true;
         }
 
-        return $user->can(PermissionsEnum::RULE_CONFIG_LIST);
+        return match ($this->route()?->getName()) {
+            'rule.store' => $user->can(PermissionsEnum::RULE_CONFIG_CREATE),
+            'rule.update' => $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
+            default => false,
+        };
     }
 
     /**

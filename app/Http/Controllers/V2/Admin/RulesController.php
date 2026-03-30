@@ -11,6 +11,7 @@ use App\Models\LeadSource;
 use App\Models\QuoteType;
 use App\Models\Rule;
 use App\Models\RuleType;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Closure;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
+
     public function __construct()
     {
         $this->middleware(function (Request $request, Closure $next) {
@@ -27,16 +29,23 @@ class RulesController extends Controller
                 abort(403, 'Unauthorized access');
             }
 
-            if ($user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
-                return $next($request);
+            if (! $user instanceof User) {
+                abort(403, 'Unauthorized access');
             }
 
-            abort_unless(
-                $user->can(PermissionsEnum::RULE_CONFIG_LIST),
-                403,
-                'Unauthorized access'
-            );
+            $action = $request->route()?->getActionMethod();
 
+            $allowed = match ($action) {
+                'index' => $user->can(PermissionsEnum::RULE_CONFIG_LIST),
+                'show' => $user->can(PermissionsEnum::RULE_CONFIG_LIST)
+                    || $user->can(PermissionsEnum::RULE_CONFIG_CREATE)
+                    || $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
+                'create', 'store' => $user->can(PermissionsEnum::RULE_CONFIG_CREATE),
+                'edit', 'update' => $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
+                default => false,
+            };
+
+            abort_unless($allowed, 403, 'Unauthorized access');
             return $next($request);
         });
     }
