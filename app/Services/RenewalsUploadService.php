@@ -3588,9 +3588,7 @@ class RenewalsUploadService
             return false;
         }
 
-        $isTransitionableLead = $this->isTransitionableLeadForProcess($latestProcess)['status'];
-
-        return $isTransitionableLead && RenewalQuoteProcess::where('id', '!=', $latestProcess->id)->where([
+        return $latestProcess->checkIsTransitionableLead() && RenewalQuoteProcess::where('id', '!=', $latestProcess->id)->where([
             'quote_id' => $carQuote->id,
             'quote_type' => QuoteTypeShortCode::CAR,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
