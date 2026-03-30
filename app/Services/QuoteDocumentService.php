@@ -21,7 +21,9 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
+use App\Models\Claim;
 use App\Models\DocumentType;
+use App\Models\GenericDocument;
 use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
@@ -61,13 +63,16 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null, $documentTypeCategory = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
+                $query->where('category', $documentTypeCategory);
+            })
             ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
                 $query->where(function ($query) use ($registrationType) {
                     $query->whereNull('registration_type')
@@ -82,7 +87,13 @@ class QuoteDocumentService extends BaseService
                 return $query;
             })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->when($documentTypeCategory === DocumentTypeCode::CLAIM, function ($collection) {
+                return $collection->each(function ($documentType) {
+                    $documentType->is_claim_form = str_starts_with($documentType->code, 'CLM_')
+                        && str_ends_with($documentType->code, '_CF');
+                });
+            });
     }
 
     public function isEnabled($quoteModelType)
@@ -309,6 +320,7 @@ class QuoteDocumentService extends BaseService
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_category' => $documentType->category,
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
@@ -1218,4 +1230,111 @@ class QuoteDocumentService extends BaseService
             $memberDetailId,
         );
     }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     */
+    public function getClaimDocuments(): array
+    {
+        // Get quote type IDs for claim documents
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+
+        $documents = GenericDocument::whereIn('quote_type_id', $quoteTypeIds)
+            ->where('documentable_type', Claim::class)
+            ->with(['insuranceProvider', 'businessTypeOfInsurance'])
+            ->get();
+
+        // Fallback to empty response structure if no documents are found
+        if ($documents->isEmpty()) {
+            return $this->getEmptyClaimDocumentsResponseStructure();
+        }
+
+        $grouped = $this->groupClaimDocumentsByQuoteType($documents);
+
+        // Ensure all quote types are present in response even if empty
+        $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
+        foreach ($emptyStructure as $lob => $structure) {
+            if (! isset($grouped[$lob])) {
+                $grouped[$lob] = $structure;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Get empty response structure with all quote types for claim documents
+     */
+    public function getEmptyClaimDocumentsResponseStructure(): array
+    {
+        $structure = [];
+
+        // Get all quote types from enum
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+        foreach ($quoteTypeIds as $quoteTypeId) {
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            if ($lob) {
+                $structure[$lob] = [
+                    'quoteTypeId' => $quoteTypeId,
+                    'docs' => [],
+                ];
+            }
+        }
+
+        return $structure;
+    }
+
+    /**
+     * Group claim documents by quote type and insurance provider
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection  $documents
+     */
+    public function groupClaimDocumentsByQuoteType($documents): array
+    {
+        $grouped = $this->getEmptyClaimDocumentsResponseStructure();
+
+        foreach ($documents as $document) {
+            if (! $document->insuranceProvider) {
+                continue;
+            }
+
+            $quoteTypeId = $document->quote_type_id ?? null;
+
+            // Skip if quote_type_id is null
+            if ($quoteTypeId === null) {
+                continue;
+            }
+
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+
+            // If LOB not found or not in grouped structure, skip this document
+            if (! $lob || ! isset($grouped[$lob])) {
+                continue;
+            }
+
+            $docUrl = $document->path ? storageUrl().$document->path : '';
+
+            $docData = [
+                'insuranceProviderId' => $document->insuranceProvider->id,
+                'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
+                'docUrl' => $docUrl,
+                'docTitle' => $document->name,
+            ];
+
+            // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
+            if ($quoteTypeId === QuoteTypeId::Business && ! empty($document->business_type_of_insurance_id)) {
+                $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
+                $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
+                    'id' => $document->businessTypeOfInsurance->id,
+                    'text' => $document->businessTypeOfInsurance->text ?? null,
+                    'code' => $document->businessTypeOfInsurance->code ?? null,
+                ] : null;
+            }
+
+            $grouped[$lob]['docs'][] = $docData;
+        }
+
+        return $grouped;
+    }
+
 }

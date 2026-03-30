@@ -95,4 +95,14 @@ class InsuranceProvider extends BaseModel implements AuditableContract
             'target_insurance_provider_id'
         );
     }
+
+    public function genericDocuments()
+    {
+        return $this->morphMany(GenericDocument::class, 'documentable');
+    }
+
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(InsuranceProviderContact::class, 'insurance_provider_id');
+    }
 }

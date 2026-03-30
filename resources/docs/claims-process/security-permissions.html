@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Security & Permissions - Claims Management System</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .content-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .content-section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .content-section h3 {
+        color: #34495e;
+        font-size: 1.5em;
+        margin: 25px 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .security-layers {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 25px 0;
+      }
+
+      .security-layer {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        border-left: 4px solid #e74c3c;
+        text-align: center;
+      }
+
+      .security-layer.authentication {
+        border-left-color: #3498db;
+      }
+      .security-layer.authorization {
+        border-left-color: #27ae60;
+      }
+      .security-layer.validation {
+        border-left-color: #f39c12;
+      }
+      .security-layer.audit {
+        border-left-color: #9b59b6;
+      }
+
+      .security-layer h4 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+      }
+
+      .security-layer .icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .permissions-table {
+        overflow-x: auto;
+        margin: 20px 0;
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(52, 152, 219, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: #3498db;
+        color: white;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+      }
+
+      tr:hover {
+        background: #f8f9fa;
+      }
+
+      .permission-code {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .vulnerability-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+      }
+
+      .vulnerability-section h4 {
+        color: #721c24;
+        margin-bottom: 15px;
+      }
+
+      .mitigation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+      }
+
+      .mitigation-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #dc3545;
+      }
+
+      .mitigation-item strong {
+        color: #721c24;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .compliance-section {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+      }
+
+      .compliance-section h4 {
+        color: #155724;
+        margin-bottom: 15px;
+      }
+
+      .audit-flow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .audit-step {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 150px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .audit-step:not(:last-child):after {
+        content: '→';
+        position: absolute;
+        right: -25px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5em;
+        color: #fff;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .security-layers {
+          grid-template-columns: 1fr;
+        }
+
+        .audit-flow {
+          flex-direction: column;
+        }
+
+        .audit-step:not(:last-child):after {
+          content: '↓';
+          right: 50%;
+          top: 100%;
+          transform: translateX(50%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <a href="/docs/claims-process/index.html">Claims Management</a>
+        <span>></span>
+        <span>Security & Permissions</span>
+      </div>
+
+      <div class="header">
+        <h1>🔐 Security & Permissions</h1>
+        <p>Comprehensive security implementation and access control systems</p>
+      </div>
+
+      <div class="content-section">
+        <h2>🛡️ Multi-Layer Security Architecture</h2>
+        <p>
+          The Claims Management System implements a comprehensive multi-layer
+          security approach ensuring data protection, access control, and
+          regulatory compliance.
+        </p>
+
+        <div class="security-layers">
+          <div class="security-layer authentication">
+            <span class="icon">🔑</span>
+            <h4>Authentication</h4>
+            <p>
+              Laravel Sanctum token-based authentication with session management
+              and multi-factor authentication support
+            </p>
+          </div>
+
+          <div class="security-layer authorization">
+            <span class="icon">👮</span>
+            <h4>Authorization</h4>
+            <p>
+              Spatie Permission package with role-based access control and
+              granular permission management
+            </p>
+          </div>
+
+          <div class="security-layer validation">
+            <span class="icon">✅</span>
+            <h4>Input Validation</h4>
+            <p>
+              Comprehensive input sanitization, CSRF protection, and SQL
+              injection prevention
+            </p>
+          </div>
+
+          <div class="security-layer audit">
+            <span class="icon">📊</span>
+            <h4>Audit Logging</h4>
+            <p>
+              Complete activity tracking, change monitoring, and compliance
+              reporting
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🎯 Granular Permission System</h2>
+        <h3>📋 Claims-Specific Permissions</h3>
+        <p>
+          The system implements 11 specific permissions for claims management,
+          providing fine-grained access control for different user roles.
+        </p>
+
+        <div class="permissions-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Permission</th>
+                <th>Scope</th>
+                <th>Description</th>
+                <th>Typical Roles</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="permission-code">CLAIM_LIST</span></td>
+                <td>Read</td>
+                <td>View claims listing and search functionality</td>
+                <td>All Claims Staff</td>
+              </tr>
+              <tr>
+                <td><span class="permission-code">CLAIM_SHOW</span></td>
+                <td>Read</td>
+                <td>View individual claim details and information</td>
+                <td>Claims Handlers, Managers</td>
+              </tr>
+              <tr>
+                <td><span class="permission-code">CLAIM_CREATE</span></td>
+                <td>Write</td>
+                <td>Create new claims via CPAPI integration</td>
+                <td>Claims Handlers</td>
+              </tr>
+              <tr>
+                <td><span class="permission-code">CLAIM_EDIT</span></td>
+                <td>Write</td>
+                <td>Edit existing claim details and information</td>
+                <td>Claims Handlers, Senior Staff</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code">CLAIMS_STATUS_UPDATE</span>
+                </td>
+                <td>Write</td>
+                <td>Update main claim status (Open/Closed)</td>
+                <td>Team Leads, Managers</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code">CLAIMS_SUB_STATUS_UPDATE</span>
+                </td>
+                <td>Write</td>
+                <td>Update detailed sub-status and send notifications</td>
+                <td>Claims Managers</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code">CLAIM_DOCUMENT_UPLOAD</span>
+                </td>
+                <td>Write</td>
+                <td>Upload documents to claims</td>
+                <td>Claims Handlers</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code">CLAIM_DOCUMENT_DELETE</span>
+                </td>
+                <td>Delete</td>
+                <td>Remove documents from claims</td>
+                <td>Senior Claims Staff</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code">CLAIM_DOCUMENT_S3_URL</span>
+                </td>
+                <td>Access</td>
+                <td>Generate secure S3 temporary URLs</td>
+                <td>Claims Staff</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="permission-code"
+                    >CLAIM_DOWNLOAD_ALL_DOCUMENTS</span
+                  >
+                </td>
+                <td>Bulk</td>
+                <td>Download all claim documents as ZIP</td>
+                <td>Claims Managers</td>
+              </tr>
+              <tr>
+                <td><span class="permission-code">CLAIMS_EXPORT_DATA</span></td>
+                <td>Export</td>
+                <td>Export claims data for reporting</td>
+                <td>Managers, Analysts</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔒 Implementation Patterns</h2>
+        <h3>⚙️ Backend Permission Enforcement</h3>
+
+        <div class="code-block">
+          // Controller-level permission middleware class ClaimsController
+          extends Controller { public function __construct() { // Apply
+          permission middleware to all methods
+          $this->middleware('permission:'.PermissionsEnum::CLAIM_LIST)->only(['index']);
+          $this->middleware('permission:'.PermissionsEnum::CLAIM_SHOW)->only(['show']);
+          $this->middleware('permission:'.PermissionsEnum::CLAIM_CREATE)->only(['create',
+          'store']);
+          $this->middleware('permission:'.PermissionsEnum::CLAIM_EDIT)->only(['edit',
+          'update']);
+          $this->middleware('permission:'.PermissionsEnum::CLAIMS_STATUS_UPDATE)->only(['updateClaimStatus']);
+          $this->middleware('permission:'.PermissionsEnum::CLAIMS_SUB_STATUS_UPDATE)->only(['sendNotification']);
+          } // Method-level permission checks public function
+          updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest
+          $claim): RedirectResponse { // Additional permission validation if
+          needed if (!Auth::user()->can(PermissionsEnum::CLAIM_EDIT)) {
+          abort(403, 'Unauthorized action.'); } // Log permission usage for
+          audit LoggerService::info('Permission used: CLAIM_EDIT', [ 'user_id'
+          => Auth::id(), 'claim_uuid' => $claim->uuid, 'action' =>
+          'update_details', ]); // Proceed with update logic return
+          $this->claimsService->updateClaimDetails($claim,
+          $request->validated()); } }
+        </div>
+
+        <h3>🎨 Frontend Permission Integration</h3>
+
+        <div class="code-block">
+          // Vue.js permission-based rendering &lt;script setup&gt; import {
+          useCan, useCanAny } from '@/composables/permissions'; import {
+          PermissionsEnum } from '@/enums/PermissionsEnum'; // Permission checks
+          const canViewClaims = useCan(PermissionsEnum.CLAIM_LIST); const
+          canCreateClaims = useCan(PermissionsEnum.CLAIM_CREATE); const
+          canEditClaims = useCan(PermissionsEnum.CLAIM_EDIT); const
+          canManageStatus = useCanAny([ PermissionsEnum.CLAIMS_STATUS_UPDATE,
+          PermissionsEnum.CLAIMS_SUB_STATUS_UPDATE ]); const canManageDocuments
+          = useCanAny([ PermissionsEnum.CLAIM_DOCUMENT_UPLOAD,
+          PermissionsEnum.CLAIM_DOCUMENT_DELETE ]); &lt;/script&gt;
+          &lt;template&gt; &lt;div class="claims-interface"&gt; &lt;!--
+          Navigation based on permissions --&gt; &lt;nav class="claims-nav"&gt;
+          &lt;router-link v-if="canViewClaims" to="/claims" class="nav-link"&gt;
+          View Claims &lt;/router-link&gt; &lt;router-link
+          v-if="canCreateClaims" to="/claims/create" class="nav-link"&gt; Create
+          Claim &lt;/router-link&gt; &lt;/nav&gt; &lt;!-- Conditional feature
+          rendering --&gt; &lt;div class="claim-actions"&gt; &lt;button
+          v-if="canEditClaims" @click="editClaim" class="btn btn-primary"&gt;
+          Edit Details &lt;/button&gt; &lt;ClaimStatus v-if="canManageStatus"
+          :claim="claim" /&gt; &lt;ClaimDocuments v-if="canManageDocuments"
+          :claim="claim" /&gt; &lt;!-- Disabled state for unauthorized users
+          --&gt; &lt;button v-else disabled class="btn btn-disabled"
+          title="Insufficient permissions"&gt; Edit Details &lt;/button&gt;
+          &lt;/div&gt; &lt;/div&gt; &lt;/template&gt;
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📊 Comprehensive Audit Logging</h2>
+        <h3>🔍 Activity Tracking & Compliance</h3>
+
+        <div class="audit-flow">
+          <div class="audit-step">
+            <strong>1. Action Capture</strong>
+            <div>User actions logged in real-time</div>
+          </div>
+          <div class="audit-step">
+            <strong>2. Context Collection</strong>
+            <div>User, IP, timestamp, and data changes</div>
+          </div>
+          <div class="audit-step">
+            <strong>3. Secure Storage</strong>
+            <div>Encrypted audit logs with integrity checks</div>
+          </div>
+          <div class="audit-step">
+            <strong>4. Compliance Reporting</strong>
+            <div>Automated reports for regulatory requirements</div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          // Comprehensive audit logging implementation class
+          ClaimRequestObserver { public function updating(ClaimRequest
+          $claimRequest): void { // Log all field changes with before/after
+          values $changes = []; $original = $claimRequest->getOriginal();
+          foreach ($claimRequest->getDirty() as $field => $newValue) {
+          $changes[$field] = [ 'old' => $original[$field] ?? null, 'new' =>
+          $newValue, ]; } // Comprehensive audit log entry
+          LoggerService::info('Claim updated', [ 'claim_uuid' =>
+          $claimRequest->uuid, 'user_id' => Auth::id(), 'user_email' =>
+          Auth::user()->email ?? 'system', 'ip_address' => request()->ip(),
+          'user_agent' => request()->userAgent(), 'changes' => $changes,
+          'timestamp' => now()->toISOString(), 'action' => 'claim_update',
+          'session_id' => session()->getId(), ]); // Create activity record for
+          user interface ClaimActivity::createForClaim( $claimRequest->id,
+          $claimRequest->uuid, $claimRequest->claim_status_id, 'Claim details
+          updated', null, Auth::id() ); } public function created(ClaimRequest
+          $claimRequest): void { LoggerService::info('New claim created', [
+          'claim_uuid' => $claimRequest->uuid, 'user_id' => Auth::id(),
+          'customer_email' => $claimRequest->email, 'quote_type_id' =>
+          $claimRequest->quote_type_id, 'source' => $claimRequest->source,
+          'ip_address' => request()->ip(), 'timestamp' => now()->toISOString(),
+          'action' => 'claim_creation', ]); } }
+        </div>
+
+        <div class="compliance-section">
+          <h4>📋 Compliance & Data Protection</h4>
+          <ul>
+            <li>
+              <strong>GDPR Compliance:</strong> Data minimization, consent
+              tracking, and right to erasure implementation
+            </li>
+            <li>
+              <strong>Data Retention:</strong> Automated data lifecycle
+              management with configurable retention periods
+            </li>
+            <li>
+              <strong>Access Logging:</strong> Complete audit trail of data
+              access and modifications
+            </li>
+            <li>
+              <strong>Privacy Controls:</strong> Field-level encryption for
+              sensitive data and pseudonymization
+            </li>
+            <li>
+              <strong>Breach Detection:</strong> Automated alerts for unusual
+              access patterns and data export activities
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔐 Document Security</h2>
+        <h3>📁 Secure File Handling</h3>
+
+        <div class="code-block">
+          // Secure document access with temporary URLs class ClaimsService
+          extends BaseService { public function generateSecureDocumentUrl(int
+          $documentId): array { $document =
+          GenericDocument::findOrFail($documentId); // Verify user has
+          permission to access this document $this->authorize('view',
+          $document); // Generate temporary URL with expiration $temporaryUrl =
+          Storage::disk('s3')->temporaryUrl( $document->file_path,
+          now()->addHour(), [ 'ResponseContentType' => $document->mime_type,
+          'ResponseContentDisposition' => 'inline;
+          filename="'.$document->file_name.'"', ] ); // Log document access for
+          audit LoggerService::info('Document accessed', [ 'document_id' =>
+          $documentId, 'document_name' => $document->file_name, 'claim_uuid' =>
+          $document->model->uuid ?? null, 'user_id' => Auth::id(), 'ip_address'
+          => request()->ip(), 'access_method' => 'temporary_url', 'expires_at'
+          => now()->addHour()->toISOString(), ]); return [ 'url' =>
+          $temporaryUrl, 'expires_at' => now()->addHour(), 'document_name' =>
+          $document->file_name, ]; } public function
+          validateFileUpload(UploadedFile $file): bool { // File type validation
+          $allowedMimes = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']; if
+          (!in_array($file->getClientOriginalExtension(), $allowedMimes)) {
+          throw new ValidationException('Invalid file type'); } // File size
+          validation (10MB limit) if ($file->getSize() > 10 * 1024 * 1024) {
+          throw new ValidationException('File size exceeds limit'); } // Virus
+          scanning (if enabled) if (config('security.virus_scanning_enabled')) {
+          $scanResult = $this->performVirusScan($file); if
+          (!$scanResult['clean']) { LoggerService::error('Virus detected in
+          uploaded file', [ 'filename' => $file->getClientOriginalName(),
+          'user_id' => Auth::id(), 'scan_result' => $scanResult, ]); throw new
+          SecurityException('File failed security scan'); } } return true; } }
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Security & Permissions Documentation</strong></p>
+        <p>Part of the Claims Management System Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

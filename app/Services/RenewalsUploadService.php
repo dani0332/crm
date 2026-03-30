@@ -398,9 +398,9 @@ class RenewalsUploadService
      *
      * @return mixed|string|null
      */
-    public function getPlans($id, $isRenewalHistorical = false)
+    public function getPlans($id, $isRenewalHistorical = false, $process = '')
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true, $isRenewalHistorical);
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true, $isRenewalHistorical, $process);
 
         if (isset($quotePlans->quotes)) {
             return true;
@@ -554,7 +554,7 @@ class RenewalsUploadService
             }
         }
 
-        $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical);
+        $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical, 'renewalsUpload');
         if ($plansResponse === true) {
             LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
                 'UUID' => $quote->uuid,
