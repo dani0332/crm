@@ -2437,22 +2437,21 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
-
-        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        $isTransitionableLead = false;
+        if ($carQuote->latestUpdateRenewalQuoteProcess) {
+            $transitionableConfig = app(RenewalsUploadService::class)->isTransitionableLeadForProcess($carQuote->latestUpdateRenewalQuoteProcess);
+            $isTransitionableLead = $transitionableConfig['status'];
         }
-        
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
+
+        $isRenewalHistorical = $carQuote->latestUpdateRenewalQuoteProcess && RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
             'quote_id' => $carQuote->id,
             'quote_type' => QuoteTypeShortCode::CAR,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'email_sent' => true,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
-        
+        ])->exists() && $isTransitionableLead;
+
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
 
@@ -2473,8 +2472,8 @@ class CRUDController extends Controller
 
             return;
         }
-        
-        if($carQuote->isGenesisLead) {
+
+        if($isTransitionableLead) {
             $emailData->currentInsurer = '';
         }
 

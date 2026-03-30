@@ -1226,21 +1226,20 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        $isTransitionableLead = false;
+        if ($carQuote->latestUpdateRenewalQuoteProcess) {
+            $transitionableConfig = app(RenewalsUploadService::class)->isTransitionableLeadForProcess($carQuote->latestUpdateRenewalQuoteProcess);
+            $isTransitionableLead = $transitionableConfig['status'];
         }
 
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
+        $isRenewalHistorical = $carQuote->latestUpdateRenewalQuoteProcess && RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
             'quote_id' => $carQuote->id,
             'quote_type' => QuoteTypeShortCode::CAR,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'email_sent' => true,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
+        ])->exists() && $isTransitionableLead;
 
         $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
