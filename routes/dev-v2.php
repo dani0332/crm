@@ -32,7 +32,7 @@ Route::group(['prefix' => 'policy-issuance'], function () {
         $quoteObject->quote_status_id = QuoteStatusEnum::PolicyBooked;
         $quoteObject->save();
 
-        $data = new \stdClass;
+        $data = new stdClass;
         $data->model_type = strtolower($quoteType);
         $data->quote_id = $quoteObject->id;
 
@@ -45,7 +45,7 @@ Route::group(['prefix' => 'policy-issuance'], function () {
      */
     Route::get('/test-send-update-to-customer-job/{sendUpdateLogId}', function ($sendUpdateLogId) {
         $sendUpdateLog = SendUpdateLog::find($sendUpdateLogId);
-        $payload = new \stdClass;
+        $payload = new stdClass;
         $payload->sendUpdateId = $sendUpdateLogId;
         $payload->quoteType = QuoteTypes::CYBER->value;
         $payload->action = SendUpdateLogStatusEnum::ACTION_SNBU;

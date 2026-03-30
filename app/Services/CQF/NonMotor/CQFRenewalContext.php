@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor;
 
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
+use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
@@ -14,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 class CQFRenewalContext
 {
     public function __construct(
-        /** @var \App\Models\PersonalQuote|\App\Models\CarQuote Quote source (CarQuote only for Bike LOB when vehicle_type_id is Bike) */
+        /** @var PersonalQuote|CarQuote Quote source (CarQuote only for Bike LOB when vehicle_type_id is Bike) */
         public Model $quote,
         public RenewalsUploadLeads $renewalsUploadLeads,
         public QuoteTypes $quoteType,

@@ -88,7 +88,7 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
     protected function collectEmbeddedProductCodes(Model $oldQuote, PersonalQuote $newQuote, array &$epCodes): void {}
 
     /**
-     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     * @return array{0: Carbon, 1: Carbon}
      */
     protected function computePolicyDates(Model $quote, int $renewalDaysThreshold): array
     {

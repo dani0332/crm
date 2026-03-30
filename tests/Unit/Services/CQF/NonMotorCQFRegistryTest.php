@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\QuoteTypes;
+use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
+use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
+use App\Services\CQF\Contracts\CQFValidationInterface;
 use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 
 beforeEach(function () {
@@ -40,21 +43,21 @@ it('returns validator for Bike', function () {
     $validator = $this->registry->getValidator(QuoteTypes::BIKE);
 
     expect($validator)->not->toBeNull()
-        ->and($validator)->toBeInstanceOf(\App\Services\CQF\Contracts\CQFValidationInterface::class);
+        ->and($validator)->toBeInstanceOf(CQFValidationInterface::class);
 });
 
 it('returns mapper for Bike', function () {
     $mapper = $this->registry->getMapper(QuoteTypes::BIKE);
 
     expect($mapper)->not->toBeNull()
-        ->and($mapper)->toBeInstanceOf(\App\Services\CQF\Contracts\CQFQuoteMappingInterface::class);
+        ->and($mapper)->toBeInstanceOf(CQFQuoteMappingInterface::class);
 });
 
 it('returns storage for Bike', function () {
     $storage = $this->registry->getStorage(QuoteTypes::BIKE);
 
     expect($storage)->not->toBeNull()
-        ->and($storage)->toBeInstanceOf(\App\Services\CQF\Contracts\CQFQuoteStorageInterface::class);
+        ->and($storage)->toBeInstanceOf(CQFQuoteStorageInterface::class);
 });
 
 it('returns null for unsupported LOB when not in registry', function () {

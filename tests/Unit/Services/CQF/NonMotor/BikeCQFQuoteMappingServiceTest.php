@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteMappingService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -16,7 +17,7 @@ beforeEach(function () {
 });
 
 it('returns empty array when quote is not PersonalQuote', function () {
-    $quote = Mockery::mock(\Illuminate\Database\Eloquent\Model::class);
+    $quote = Mockery::mock(Model::class);
     $uploadLead = Mockery::mock(RenewalsUploadLeads::class)->shouldIgnoreMissing();
     $uploadLead->shouldReceive('getAttribute')->with('renewal_import_code')->andReturn('IMP-001');
 

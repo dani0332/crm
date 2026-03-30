@@ -6,6 +6,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Models\RenewalQuoteProcess;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
@@ -19,7 +20,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function collection()
     {
