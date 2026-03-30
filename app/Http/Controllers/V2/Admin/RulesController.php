@@ -23,30 +23,17 @@ class RulesController extends Controller
     {
         $this->middleware(function (Request $request, Closure $next) {
             $user = $request->user();
-            if ($user === null) {
+            if ($user === null || ! $user instanceof User) {
                 abort(403, 'Unauthorized access');
             }
-
-            if (! $user instanceof User) {
-                abort(403, 'Unauthorized access');
-            }
-
-            $action = $request->route()?->getActionMethod();
-
-            $allowed = match ($action) {
-                'index' => $user->can(PermissionsEnum::RULE_CONFIG_LIST),
-                'show' => $user->can(PermissionsEnum::RULE_CONFIG_LIST)
-                    || $user->can(PermissionsEnum::RULE_CONFIG_CREATE)
-                    || $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
-                'create', 'store' => $user->can(PermissionsEnum::RULE_CONFIG_CREATE),
-                'edit', 'update' => $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
-                default => false,
-            };
-
-            abort_unless($allowed, 403, 'Unauthorized access');
 
             return $next($request);
         });
+
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('index');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('show');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_CREATE)->only(['create', 'store']);
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_UPDATE)->only(['edit', 'update']);
     }
 
     /**
