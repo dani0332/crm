@@ -6,6 +6,11 @@ use App\Models\CustomerMembers;
 use App\Models\MartialStatus;
 use App\Models\VisaCategory;
 use Illuminate\Support\Facades\DB;
+use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
 
 describe('CustomerMembers - new relationships', function () {
     test('has maritalStatus belongsTo relationship', function () {

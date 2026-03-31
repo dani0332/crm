@@ -5,7 +5,10 @@ declare(strict_types=1);
 use App\Enums\LookupsEnum;
 use App\Services\LookupService;
 use Illuminate\Support\Facades\DB;
+use Tests\Helpers\TestSchemaCreator;
+
 beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
     $this->lookupService = app(LookupService::class);
 });
 
@@ -44,7 +47,7 @@ describe('LookupService::getHealthInsureOptions', function () {
 
         $byCode = $results->keyBy('code');
         expect($byCode['ONLY_MYSELF']->text)->toBe('Only the customer')
-            ->and($byCode['ONLY_MY_FAMILY_MEMBERS']->text)->toBe("Only the customer\u{2019}s family member(s)")
+            ->and($byCode['ONLY_MY_FAMILY_MEMBERS']->text)->toBe("Only the customer's family member(s)")
             ->and($byCode['MYSELF_AND_MY_FAMILY_MEMBERS']->text)->toBe('The customer and their family member(s)');
     });
 

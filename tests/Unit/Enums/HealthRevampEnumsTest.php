@@ -6,6 +6,11 @@ use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\LookupsEnum;
+use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
 
 describe('HealthInsureEnum', function () {
     test('has correct case values', function () {
@@ -18,7 +23,7 @@ describe('HealthInsureEnum', function () {
         expect($case->getLabel())->toBe($expectedLabel);
     })->with([
         [HealthInsureEnum::ONLY_MYSELF, 'Only the customer'],
-        [HealthInsureEnum::ONLY_MY_FAMILY_MEMBERS, "Only the customer\u{2019}s family member(s)"],
+        [HealthInsureEnum::ONLY_MY_FAMILY_MEMBERS, "Only the customer's family member(s)"],
         [HealthInsureEnum::MYSELF_AND_MY_FAMILY_MEMBERS, 'The customer and their family member(s)'],
     ]);
 

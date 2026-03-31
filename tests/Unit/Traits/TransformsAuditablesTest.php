@@ -6,6 +6,11 @@ use App\Models\CustomerMembers;
 use App\Models\Nationality;
 use App\Traits\TransformsAuditables;
 use Illuminate\Support\Facades\DB;
+use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
 
 afterEach(function () {
     Mockery::close();
@@ -105,20 +110,20 @@ describe('CustomerMembers::customizeAuditTransformation – created event', func
 // ============================================================================
 
 describe('CustomerMembers::customizeAuditTransformation – member_deleted', function () {
-    test('event is member_deleted when deletedAt is present in transformedNew', function () {
+    test('event is member_deleted when deleted_at is present in transformedNew', function () {
         $result = CustomerMembers::customizeAuditTransformation(
-            auditData('updated', ['firstName' => 'John', 'lastName' => 'Doe'], ['deletedAt' => '2026-01-01 00:00:00'], makeModel())
+            auditData('updated', ['first_name' => 'John', 'last_name' => 'Doe'], ['deleted_at' => '2026-01-01 00:00:00'], makeModel())
         );
 
         expect($result['audit']->event)->toBe('member_deleted');
     });
 
     test('member_deleted takes priority over any other flag changes', function () {
-        // Even if policy holder flags are also changing, deletedAt wins
+        // Even if policy holder flags are also changing, deleted_at wins
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe', 'isPolicyHolder' => 'true'],
-                ['deletedAt' => '2026-01-01 00:00:00', 'isPolicyHolder' => 'false'],
+                ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 'true'],
+                ['deleted_at' => '2026-01-01 00:00:00', 'is_policy_holder' => 'false'],
                 makeModel()
             )
         );
@@ -132,11 +137,11 @@ describe('CustomerMembers::customizeAuditTransformation – member_deleted', fun
 // ============================================================================
 
 describe('CustomerMembers::customizeAuditTransformation – policy holder flag changes', function () {
-    test('event is member_updated (Policy Holder Removed) when isPolicyHolder changes true→false', function () {
+    test('event is member_updated (Policy Holder Removed) when is_policy_holder changes true→false', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe', 'isPolicyHolder' => 'true'],
-                ['isPolicyHolder' => 'false'],
+                ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 'true'],
+                ['is_policy_holder' => 'false'],
                 makeModel()
             )
         );
@@ -144,11 +149,11 @@ describe('CustomerMembers::customizeAuditTransformation – policy holder flag c
         expect($result['audit']->event)->toBe('member_updated (Policy Holder Removed)');
     });
 
-    test('event is member_updated (Policy Holder Added) when isPolicyHolder changes false→true', function () {
+    test('event is member_updated (Policy Holder Added) when is_policy_holder changes false→true', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe', 'isPolicyHolder' => 'false'],
-                ['isPolicyHolder' => 'true'],
+                ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 'false'],
+                ['is_policy_holder' => 'true'],
                 makeModel(is_policy_holder: 1)
             )
         );
@@ -156,11 +161,11 @@ describe('CustomerMembers::customizeAuditTransformation – policy holder flag c
         expect($result['audit']->event)->toBe('member_updated (Policy Holder Added)');
     });
 
-    test('no policy holder event when only new isPolicyHolder key is present without old', function () {
+    test('no policy holder event when only new is_policy_holder key is present without old', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['isPolicyHolder' => 'true'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['is_policy_holder' => 'true'],
                 makeModel()
             )
         );
@@ -175,11 +180,11 @@ describe('CustomerMembers::customizeAuditTransformation – policy holder flag c
 // ============================================================================
 
 describe('CustomerMembers::customizeAuditTransformation – principal flag changes', function () {
-    test('event is member_updated (Principal Removed) when isPrincipal changes true→false', function () {
+    test('event is member_updated (Principal Removed) when is_principal changes true→false', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe', 'isPrincipal' => 'true'],
-                ['isPrincipal' => 'false'],
+                ['first_name' => 'John', 'last_name' => 'Doe', 'is_principal' => 'true'],
+                ['is_principal' => 'false'],
                 makeModel()
             )
         );
@@ -187,11 +192,11 @@ describe('CustomerMembers::customizeAuditTransformation – principal flag chang
         expect($result['audit']->event)->toBe('member_updated (Principal Removed)');
     });
 
-    test('event is member_updated (Principal Added) when isPrincipal changes false→true', function () {
+    test('event is member_updated (Principal Added) when is_principal changes false→true', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe', 'isPrincipal' => 'false'],
-                ['isPrincipal' => 'true'],
+                ['first_name' => 'John', 'last_name' => 'Doe', 'is_principal' => 'false'],
+                ['is_principal' => 'true'],
                 makeModel(is_principal: 1)
             )
         );
@@ -199,11 +204,11 @@ describe('CustomerMembers::customizeAuditTransformation – principal flag chang
         expect($result['audit']->event)->toBe('member_updated (Principal Added)');
     });
 
-    test('no principal event when only new isPrincipal key is present without old', function () {
+    test('no principal event when only new is_principal key is present without old', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['isPrincipal' => 'true'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['is_principal' => 'true'],
                 makeModel()
             )
         );
@@ -220,8 +225,8 @@ describe('CustomerMembers::customizeAuditTransformation – member_updated suffi
     test('event is plain member_updated when model is neither policy holder nor principal', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['firstName' => 'Jane'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['first_name' => 'Jane'],
                 makeModel(is_policy_holder: 0, is_principal: 0)
             )
         );
@@ -232,8 +237,8 @@ describe('CustomerMembers::customizeAuditTransformation – member_updated suffi
     test('event appends (Policy Holder) when model is_policy_holder is 1', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['firstName' => 'Jane'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['first_name' => 'Jane'],
                 makeModel(is_policy_holder: 1, is_principal: 0)
             )
         );
@@ -244,8 +249,8 @@ describe('CustomerMembers::customizeAuditTransformation – member_updated suffi
     test('event appends (Principal) when model is_principal is 1 and is_policy_holder is 0', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['firstName' => 'Jane'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['first_name' => 'Jane'],
                 makeModel(is_policy_holder: 0, is_principal: 1)
             )
         );
@@ -256,8 +261,8 @@ describe('CustomerMembers::customizeAuditTransformation – member_updated suffi
     test('(Policy Holder) suffix takes precedence over (Principal) when both are 1', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'John', 'lastName' => 'Doe'],
-                ['firstName' => 'Jane'],
+                ['first_name' => 'John', 'last_name' => 'Doe'],
+                ['first_name' => 'Jane'],
                 makeModel(is_policy_holder: 1, is_principal: 1)
             )
         );
@@ -282,18 +287,18 @@ describe('CustomerMembers::customizeAuditTransformation – name population', fu
             ->and($result['transformedNew']['name'])->toBe('John Doe');
     });
 
-    test('does not overwrite name when firstName key is already present', function () {
+    test('does not overwrite name when first_name key is already present', function () {
         $model = makeModel(first_name: 'John', last_name: 'Doe');
 
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('updated',
-                ['firstName' => 'OldFirst', 'lastName' => 'OldLast'],
-                ['firstName' => 'NewFirst'],
+                ['first_name' => 'OldFirst', 'last_name' => 'OldLast'],
+                ['first_name' => 'NewFirst'],
                 $model
             )
         );
 
-        // name key should not be injected since firstName is present in transformedOld
+        // name key should not be injected since first_name is present in transformedOld
         expect(isset($result['transformedOld']['name']))->toBeFalse();
     });
 
@@ -332,35 +337,35 @@ describe('CustomerMembers::customizeAuditTransformation – event string dataset
         ],
         'updated – deleted' => [
             'member_deleted',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D'], ['deletedAt' => '2026-01-01'], makeModel()),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D'], ['deleted_at' => '2026-01-01'], makeModel()),
         ],
         'updated – policy holder removed' => [
             'member_updated (Policy Holder Removed)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D', 'isPolicyHolder' => 'true'], ['isPolicyHolder' => 'false'], makeModel()),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D', 'is_policy_holder' => 'true'], ['is_policy_holder' => 'false'], makeModel()),
         ],
         'updated – policy holder added' => [
             'member_updated (Policy Holder Added)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D', 'isPolicyHolder' => 'false'], ['isPolicyHolder' => 'true'], makeModel(is_policy_holder: 1)),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D', 'is_policy_holder' => 'false'], ['is_policy_holder' => 'true'], makeModel(is_policy_holder: 1)),
         ],
         'updated – principal removed' => [
             'member_updated (Principal Removed)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D', 'isPrincipal' => 'true'], ['isPrincipal' => 'false'], makeModel()),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D', 'is_principal' => 'true'], ['is_principal' => 'false'], makeModel()),
         ],
         'updated – principal added' => [
             'member_updated (Principal Added)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D', 'isPrincipal' => 'false'], ['isPrincipal' => 'true'], makeModel(is_principal: 1)),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D', 'is_principal' => 'false'], ['is_principal' => 'true'], makeModel(is_principal: 1)),
         ],
         'updated – plain' => [
             'member_updated',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D'], ['firstName' => 'K'], makeModel()),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D'], ['first_name' => 'K'], makeModel()),
         ],
         'updated – plain policy holder model' => [
             'member_updated (Policy Holder)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D'], ['firstName' => 'K'], makeModel(is_policy_holder: 1)),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D'], ['first_name' => 'K'], makeModel(is_policy_holder: 1)),
         ],
         'updated – plain principal model' => [
             'member_updated (Principal)',
-            auditData('updated', ['firstName' => 'J', 'lastName' => 'D'], ['firstName' => 'K'], makeModel(is_principal: 1)),
+            auditData('updated', ['first_name' => 'J', 'last_name' => 'D'], ['first_name' => 'K'], makeModel(is_principal: 1)),
         ],
     ]);
 });

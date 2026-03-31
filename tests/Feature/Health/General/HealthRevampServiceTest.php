@@ -11,7 +11,10 @@ use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\TestSchemaCreator;
+
 beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedHealthQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
@@ -421,7 +424,7 @@ describe('HealthQuoteService refreshPlans', function () {
             ->and($capturedPayload)->toHaveKey('memberDetails');
     });
 
-    test('returns false when Ken API throws exception', function () {
+    test('returns falsy status when Ken API throws exception', function () {
         $quote = HealthQuote::factory()->create();
 
         Ken::swap(
@@ -435,7 +438,8 @@ describe('HealthQuoteService refreshPlans', function () {
 
         $result = app(HealthQuoteService::class)->refreshPlans($request);
 
-        expect($result)->toBeFalse();
+        expect($result['status'])->toBeFalse()
+            ->and($result['message'])->toBe('Failed to refresh plans');
     });
 });
 
