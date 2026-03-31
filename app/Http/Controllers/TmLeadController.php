@@ -134,7 +134,7 @@ class TmLeadController extends Controller
     {
         $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number);
         if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
-            return redirect()->route('tmleads-list')->with('message', "You don't have access to view this lead");
+            return redirect()->route('tmleads-list')->with('error', "You don't have access to view this lead");
         }
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');
@@ -176,7 +176,7 @@ class TmLeadController extends Controller
     {
         if (Auth::user()->hasRole('TM_ADVISOR')) {
             if (Auth::user()->id != $tmlead->assigned_to_id) {
-                return redirect()->route('tmleads-list')->with('message', "You don't have access to edit this lead");
+                return redirect()->route('tmleads-list')->with('error', "You don't have access to edit this lead");
             }
             $isUserTmAdvisor = '1';
         } else {
@@ -222,7 +222,7 @@ class TmLeadController extends Controller
     public function update(TmLeadRequest $request, TmLead $tmlead)
     {
         if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
-            return redirect()->route('tmleads-list')->with('message', "You don't have access to edit this lead");
+            return redirect()->route('tmleads-list')->with('error', "You don't have access to edit this lead");
         }
 
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, 'update', $tmlead->id);

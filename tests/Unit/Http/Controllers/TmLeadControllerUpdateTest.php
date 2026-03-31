@@ -43,7 +43,7 @@ test('tm advisor cannot update a lead assigned to another user', function () {
     $response = $controller->update($request, $tmLead);
 
     expect($response->getTargetUrl())->toContain('/telemarketing/tmleads')
-        ->and(session('message'))->toBe("You don't have access to edit this lead");
+        ->and(session('error'))->toBe("You don't have access to edit this lead");
 });
 
 test('tm advisor cannot view a lead assigned to another user', function () {
@@ -62,5 +62,5 @@ test('tm advisor cannot view a lead assigned to another user', function () {
     $response = $controller->show($tmLead);
 
     expect($response->getTargetUrl())->toContain('/telemarketing/tmleads')
-        ->and(session('message'))->toBe("You don't have access to view this lead");
+        ->and(session('error'))->toBe("You don't have access to view this lead");
 });
