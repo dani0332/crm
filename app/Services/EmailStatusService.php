@@ -107,9 +107,7 @@ class EmailStatusService extends BaseService
         if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
             ->where('quote_id', $quote->id)
-            ->where(function ($query): void {
-                $query->where('type', EmailStatusTypeEnum::Email);
-            })
+            ->where('type', EmailStatusTypeEnum::Email)
             ->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
