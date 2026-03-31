@@ -91,7 +91,7 @@ class PermissionSeeder extends Seeder
             ->where(function ($query) {
                 $query->whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])
                     ->orWhereHas('permissions', function ($permissionQuery) {
-                        $permissionQuery->whereAny('name',[PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TransAppDelete]);
+                        $permissionQuery->whereIn('name',[PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TransAppDelete]);
                     });
             })
             ->get();
