@@ -114,13 +114,13 @@ describe('CustomerMembers::customizeAuditTransformation - created event', functi
 });
 
 describe('CustomerMembers::customizeAuditTransformation - updated event', function () {
-    test('sets event to member_deleted when deletedAt is present in new data', function () {
+    test('sets event to member_deleted when deleted_at is present in new data', function () {
         $audit = (object) ['event' => 'updated', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe'],
-            'transformedNew' => ['deletedAt' => '2026-01-01 00:00:00'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe'],
+            'transformedNew' => ['deleted_at' => '2026-01-01 00:00:00'],
             'model' => $model,
         ];
 
@@ -134,8 +134,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe', 'isPolicyHolder' => 'true'],
-            'transformedNew' => ['isPolicyHolder' => 'false'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 'true'],
+            'transformedNew' => ['is_policy_holder' => 'false'],
             'model' => $model,
         ];
 
@@ -149,8 +149,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 1, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe', 'isPolicyHolder' => 'false'],
-            'transformedNew' => ['isPolicyHolder' => 'true'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 'false'],
+            'transformedNew' => ['is_policy_holder' => 'true'],
             'model' => $model,
         ];
 
@@ -164,8 +164,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe', 'isPrincipal' => 'true'],
-            'transformedNew' => ['isPrincipal' => 'false'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe', 'is_principal' => 'true'],
+            'transformedNew' => ['is_principal' => 'false'],
             'model' => $model,
         ];
 
@@ -179,8 +179,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 1];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe', 'isPrincipal' => 'false'],
-            'transformedNew' => ['isPrincipal' => 'true'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe', 'is_principal' => 'false'],
+            'transformedNew' => ['is_principal' => 'true'],
             'model' => $model,
         ];
 
@@ -194,8 +194,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe'],
-            'transformedNew' => ['firstName' => 'Jane'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe'],
+            'transformedNew' => ['first_name' => 'Jane'],
             'model' => $model,
         ];
 
@@ -209,8 +209,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 1, 'is_principal' => 0];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe'],
-            'transformedNew' => ['firstName' => 'Jane'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe'],
+            'transformedNew' => ['first_name' => 'Jane'],
             'model' => $model,
         ];
 
@@ -224,8 +224,8 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 1];
         $data = [
             'audit' => $audit,
-            'transformedOld' => ['firstName' => 'John', 'lastName' => 'Doe'],
-            'transformedNew' => ['firstName' => 'Jane'],
+            'transformedOld' => ['first_name' => 'John', 'last_name' => 'Doe'],
+            'transformedNew' => ['first_name' => 'Jane'],
             'model' => $model,
         ];
 
@@ -234,7 +234,7 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         expect($result['audit']->event)->toBe('member_updated (Principal)');
     });
 
-    test('populates name in transformedOld and transformedNew when firstName/lastName keys are absent', function () {
+    test('populates name in transformedOld and transformedNew when first_name/last_name keys are absent', function () {
         $audit = (object) ['event' => 'updated', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
