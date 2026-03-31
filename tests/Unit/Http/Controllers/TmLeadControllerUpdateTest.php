@@ -12,7 +12,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    Route::name('tmleads.index')->get('/telemarketing/tmleads', fn () => 'ok');
+    Route::name('tmleads-list')->get('/telemarketing/tmleads', fn () => 'ok');
 });
 
 test('tm advisor cannot update a lead assigned to another user', function () {
