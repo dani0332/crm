@@ -417,7 +417,7 @@ class RetryAllocationService
     {
         $leadsToRevive = LifeQuote::whereNot('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereNot('source', LeadSourceEnum::REVIVAL)
-            ->whereDate('created_at', now()->subDays(90))
+            ->whereDate('created_at', '<=', now()->subDays(90))
             ->count();
         echo $leadsToRevive;
         exit;
