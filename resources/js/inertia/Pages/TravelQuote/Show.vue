@@ -3130,7 +3130,11 @@ const fullAddress = computed(() => {
       </Collapsible>
     </div>
 
-    <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
+    <EmailStatus
+      :emailStatuses="emailStatuses"
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :expanded="sectionExpanded"
+    />
     <GoogleReviewCommunicationLog
       :google-review-communication-logs="googleReviewCommunicationLogs"
       :show-google-review-communication-log="showGoogleReviewCommunicationLog"

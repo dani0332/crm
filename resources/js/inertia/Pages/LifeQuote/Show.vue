@@ -2680,6 +2680,7 @@ const getDisplayPriceInAED = item => {
 
     <EmailStatus
       :emailStatuses="emailStatuses"
+      :google-review-communication-logs="googleReviewCommunicationLogs"
       :expanded="sectionExpanded"
       paginate
     />

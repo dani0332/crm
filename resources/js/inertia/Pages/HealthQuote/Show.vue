@@ -4296,6 +4296,7 @@ const validateEmirateOfVisa = () => {
 
     <EmailStatus
       :emailStatuses="emailStatuses"
+      :google-review-communication-logs="googleReviewCommunicationLogs"
       :expanded="sectionExpanded"
       show-index
     />

@@ -1,6 +1,15 @@
 <script setup>
 const props = defineProps({
   emailStatuses: Array,
+  /**
+   * When provided, any email_status row whose id already appears in
+   * googleReviewCommunicationLogs (as an actual email event, not a
+   * "Workflow triggered" flow row) is hidden here to prevent duplicates.
+   */
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
   expanded: {
     type: Boolean,
     default: true,
@@ -47,13 +56,29 @@ function subjectDisplay(row) {
   return '—';
 }
 
+/**
+ * IDs of email_status rows that are already displayed inside the
+ * Google-review communication log (those come from the Bird courtesy-email
+ * workflow).  Rows whose status is "Workflow triggered" are QuoteFlowDetails
+ * entries, not EmailStatus rows, so we skip them.
+ */
+const courtesyEmailStatusIds = computed(() =>
+  new Set(
+    (props.googleReviewCommunicationLogs || [])
+      .filter(r => r.status !== 'Workflow triggered')
+      .map(r => r.id),
+  ),
+);
+
 const tableItems = computed(() =>
-  (props.emailStatuses || []).map(row => ({
-    ...row,
-    _channel: channelLabel(row),
-    _recipient: recipientDisplay(row),
-    _subject: subjectDisplay(row),
-  })),
+  (props.emailStatuses || [])
+    .filter(row => !courtesyEmailStatusIds.value.has(row.id))
+    .map(row => ({
+      ...row,
+      _channel: channelLabel(row),
+      _recipient: recipientDisplay(row),
+      _subject: subjectDisplay(row),
+    })),
 );
 
 const emailStatusTable = reactive({
