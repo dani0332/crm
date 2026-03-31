@@ -13,7 +13,10 @@ use App\Models\TravelQuote;
 use App\Repositories\DocumentTypeRepository;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
+use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\Schema\SchemaUtils;
+
+beforeEach(fn () => TestSchemaCreator::ensureMinimalSchema());
 
 /**
  * DocumentTypeRepository::validateSendPolicyDocsUploaded — same logic as SendBookPolicyRequest lines 52–62.

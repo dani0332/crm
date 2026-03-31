@@ -2,6 +2,7 @@
 
 namespace Tests\Helpers;
 
+use Illuminate\Support\Facades\Schema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\RenewalsSchema;
@@ -9,6 +10,8 @@ use Tests\Support\Schema\RulesSchema;
 
 class TestSchemaCreator
 {
+    private const MINIMAL_SCHEMA_SENTINEL_TABLE = 'users';
+
     /**
      * Create minimal required tables for tests (see {@see CoreSchema}).
      *
@@ -17,6 +20,15 @@ class TestSchemaCreator
     public static function createMinimalSchema(): void
     {
         (new CoreSchema)->register();
+    }
+
+    public static function ensureMinimalSchema(): void
+    {
+        if (Schema::hasTable(self::MINIMAL_SCHEMA_SENTINEL_TABLE)) {
+            return;
+        }
+
+        self::createMinimalSchema();
     }
 
     public static function createCyberSchema(): void

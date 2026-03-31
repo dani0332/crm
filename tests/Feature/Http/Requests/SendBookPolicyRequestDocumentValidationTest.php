@@ -16,7 +16,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator as ValidatorInstance;
+use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\Schema\SchemaUtils;
+
+beforeEach(fn () => TestSchemaCreator::ensureMinimalSchema());
 
 /** Matches SendBookPolicyRequest::withValidator document gate message. */
 const SBP_REQUIRED_DOCUMENTS_MESSAGE = 'Required documents are not uploaded';
