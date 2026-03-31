@@ -86,9 +86,21 @@ class PermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        $roles = Role::whereIn('name', [RolesEnum::Engineering, RolesEnum::Admin])->get();
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->where(function ($query) {
+                $query->whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])
+                    ->orWhereHas('permissions', function ($permissionQuery) {
+                        $permissionQuery->whereAny([
+                            'name' => PermissionsEnum::TransAppCreate,
+                            'name' => PermissionsEnum::TransAppEdit,
+                            'name' => PermissionsEnum::TransAppDelete,
+                        ]);
+                    });
+            })
+            ->get();
 
-        if ($roles) {
+        if ($roles->isNotEmpty()) {
             foreach ($roles as $role) {
                 if (! $role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
