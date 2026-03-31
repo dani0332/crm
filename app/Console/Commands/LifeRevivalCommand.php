@@ -35,10 +35,6 @@ class LifeRevivalCommand extends Command
             return false;
         }
 
-        if (empty($retryAllocation)) {
-            return Command::SUCCESS;
-        }
-
         $allocationCreationService->executeLifeRevivalAllocation();
     }
 }
