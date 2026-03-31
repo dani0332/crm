@@ -25,10 +25,17 @@ const leadForm = useForm({
 
 function onSubmit(isValid) {
   if (isValid) {
+    const csrfToken = document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute('content');
+
     leadForm.put(route('tmLeadUpdate', props.tmlead.id), {
       headers: {
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken ?? '',
+        'X-XSRF-TOKEN': csrfToken ?? '',
       },
+      forceFormData: false,
       preserveScroll: true,
       onSuccess: () => {},
       onError: errors => {},
