@@ -2,8 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\QuoteTypes;
-use App\Services\Allocation\RetryAllocationService;
+use App\Enums\ApplicationStorageEnums;
+use App\Services\Allocation\AllocationCreationService;
+use App\Services\ApplicationStorageService;
 use Illuminate\Console\Command;
 
 class LifeRevivalCommand extends Command
@@ -25,14 +26,19 @@ class LifeRevivalCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(RetryAllocationService $retryAllocationService)
+    public function handle(AllocationCreationService $allocationCreationService)
     {
-        $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::LIFE);
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            info('DTT is not enabled from cms');
+
+            return false;
+        }
 
         if (empty($retryAllocation)) {
             return Command::SUCCESS;
         }
 
-        $retryAllocationService->executeLifeRevivalAllocation(); // change to revivalservice (generic for all lob)
+        $allocationCreationService->executeLifeRevivalAllocation();
     }
 }
