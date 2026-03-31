@@ -26,7 +26,7 @@ class TmLeadController extends Controller
         $this->teleMarketingLeadsService = $tmLeadsCreateUpdateService;
         $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'show', 'store']]);
         $this->middleware('permission:telemarketing-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update','tmLeadUpdate']]);
         $this->middleware('permission:telemarketing-delete', ['only' => ['destroy']]);
     }
 
@@ -255,6 +255,12 @@ class TmLeadController extends Controller
             'tm_lead_statuses_id' => 'required',
             'notes' => 'max:500',
         ]);
+
+        $tmLeadData = TmLead::find($request->tmLeadId);
+
+        if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmLeadData->assigned_to_id) {
+            return redirect()->route('tmleads.index')->with('message', "You don't have access to edit this lead");
+        }
 
         if ((($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < '3')
             || ($tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate
