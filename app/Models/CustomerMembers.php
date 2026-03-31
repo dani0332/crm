@@ -123,7 +123,7 @@ class CustomerMembers extends Model
 
     private static function populateNameIfMissing(array $data, array &$transformedOld, array &$transformedNew): void
     {
-        if (isset($transformedOld['first_name']) && isset($transformedOld['first_name'])) {
+        if (isset($transformedOld['first_name']) && isset($transformedOld['last_name'])) {
             return;
         }
 
