@@ -289,9 +289,15 @@ class QuoteDocumentController extends Controller
             'doc_uuid' => 'required|string',
         ]);
 
+        
         $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
+        }
+
+        $isEnableUploadDocument = app(QuoteDocumentService::class)->isEnableUploadDocument($document->quoteDocumentable->quote_status_id);
+        if (! $isEnableUploadDocument) {
+            return redirect()->back()->with('message', 'Document cannot be deleted as the policy is locked.');
         }
 
         // Update Accuracy Matrix cache before deleting document
