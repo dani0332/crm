@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
@@ -61,7 +62,12 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-        $quoteTypeId = (int) request('quoteTypeId');
+        $quoteTypeId = (int) (
+            $request->route('quoteTypeId')
+            ?? $request->input('quoteTypeId')
+            ?? $request->input('quote_type_id')
+            ?? 0
+        );
         $quoteType = QuoteTypes::getName($quoteTypeId);
 
         if (! $quoteType) {
@@ -74,10 +80,12 @@ class EmailStatusService extends BaseService
         }
 
         $model = $quoteType->model();
-        $query = $model::where('uuid', $request->uuid);
+        $query = $model::where('uuid', $request->route('uuid') ?? $request->input('uuid'));
 
-        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+        if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
+        } elseif ($model instanceof BusinessQuote && $quoteTypeId === QuoteTypeId::GroupMedical) {
+            $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
         }
 
         $quote = $query->first();

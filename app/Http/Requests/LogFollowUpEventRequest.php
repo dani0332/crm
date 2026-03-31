@@ -14,6 +14,21 @@ class LogFollowUpEventRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $body = $this->input('body');
+        if (! is_array($body)) {
+            $body = is_string($body) ? json_decode($body, true) : null;
+        }
+        if (! is_array($body)) {
+            return;
+        }
+        if (isset($body['quote_type_id'])) {
+            $body['quoteTypeId'] ??= $body['quote_type_id'];
+        }
+        $this->merge($body);
+    }
+
     public function rules(): array
     {
         return [
@@ -27,11 +42,10 @@ class LogFollowUpEventRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $v): void {
-            $data = $v->getData();
-            $hasEmail = isset($data['customer_email']) && trim((string) $data['customer_email']) !== '';
-            $hasMobile = isset($data['mobile_no']) && trim((string) $data['mobile_no']) !== '';
-
-            if (! $hasEmail && ! $hasMobile) {
+            $d = $v->getData();
+            $email = trim((string) ($d['customer_email'] ?? ''));
+            $mobile = trim((string) ($d['mobile_no'] ?? ''));
+            if ($email === '' && $mobile === '') {
                 $v->errors()->add('customer_email', 'Either customer_email or mobile_no is required.');
             }
         });

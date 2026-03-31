@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
@@ -17,6 +18,7 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -315,8 +317,10 @@ class CourtesyEmailService extends BaseService
         $model = $quoteType->model();
         $query = $model::where('uuid', $quoteUID);
 
-        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+        if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
+        } elseif ($model instanceof BusinessQuote) {
+            $this->scopeBusinessQuoteLineOfBusiness($query, $quoteTypeId);
         }
 
         return $query->first();
@@ -372,11 +376,25 @@ class CourtesyEmailService extends BaseService
         $model = $quoteType->model();
         $query = $model::query()->where('email', $normalizedEmail);
 
-        if ($model instanceof PersonalQuote || $model instanceof BusinessQuote) {
+        if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
+        } elseif ($model instanceof BusinessQuote) {
+            $this->scopeBusinessQuoteLineOfBusiness($query, $quoteTypeId);
         }
 
         return $query->pluck('uuid');
+    }
+
+    /**
+     * `business_quote_request` has no `quote_type_id`; scope Group Medical by insurance type.
+     */
+    private function scopeBusinessQuoteLineOfBusiness(Builder $query, int $quoteTypeId): void
+    {
+        if ($quoteTypeId !== QuoteTypeId::GroupMedical) {
+            return;
+        }
+
+        $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
     }
 
     private function formatLogDateTime(?Carbon $value): string
