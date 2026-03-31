@@ -24,7 +24,7 @@ class TmLeadController extends Controller
     public function __construct(TMLeadsService $tmLeadsCreateUpdateService)
     {
         $this->teleMarketingLeadsService = $tmLeadsCreateUpdateService;
-        $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'show', 'store']]);
         $this->middleware('permission:telemarketing-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:telemarketing-delete', ['only' => ['destroy']]);
@@ -220,6 +220,10 @@ class TmLeadController extends Controller
      */
     public function update(TmLeadRequest $request, TmLead $tmlead)
     {
+        if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
+            return redirect()->route('tmleads.index')->with('message', "You don't have access to edit this lead");
+        }
+
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, 'update', $tmlead->id);
 
         if (isset($request->return_to_view)) {
