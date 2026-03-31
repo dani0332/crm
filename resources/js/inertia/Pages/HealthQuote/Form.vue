@@ -686,10 +686,12 @@ const maritalStatusOptions = computed(() => {
           v-model="quoteForm.visa_category_id"
           :rules="[isRequired]"
           :options="
-            [
-              { value: '', label: 'Select Visa Category' },
-              ...visaCategoryOptions
-            ]
+            props.dropdownSource.visa_category
+            .filter(item => item.health_cover_for_id === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES)
+            .map(item => ({
+              value: item.id,
+              label: item.text,
+              }))
           "
           class="w-full"
           label="VISA CATEGORY"

@@ -18,17 +18,11 @@ class CustomerMembers extends Model
     ];
     protected array $auditRelationMap = [
         'nationality_id' => ['relation' => 'nationality', 'field' => 'text'],
-        'nationalityId' => ['relation' => 'nationality', 'field' => 'text'],
         'member_category_id' => ['relation' => 'memberCategory', 'field' => 'text'],
-        'memberCategoryId' => ['relation' => 'memberCategory', 'field' => 'text'],
         'salary_band_id' => ['relation' => 'salaryBand', 'field' => 'text'],
-        'salaryBandId' => ['relation' => 'salaryBand', 'field' => 'text'],
         'emirate_of_your_visa_id' => ['relation' => 'emirate', 'field' => 'text'],
-        'emirateOfYourVisaId' => ['relation' => 'emirate', 'field' => 'text'],
         'marital_status_id' => ['relation' => 'maritalStatus', 'field' => 'text'],
-        'maritalStatusId' => ['relation' => 'maritalStatus', 'field' => 'text'],
         'visa_category_id' => ['relation' => 'visaCategory', 'field' => 'text'],
-        'visaCategoryId' => ['relation' => 'visaCategory', 'field' => 'text'],
     ];
 
     public function getNameAttribute()
@@ -129,7 +123,7 @@ class CustomerMembers extends Model
 
     private static function populateNameIfMissing(array $data, array &$transformedOld, array &$transformedNew): void
     {
-        if (isset($transformedOld['firstName']) && isset($transformedOld['lastName'])) {
+        if (isset($transformedOld['first_name']) && isset($transformedOld['first_name'])) {
             return;
         }
 
@@ -140,13 +134,13 @@ class CustomerMembers extends Model
 
     private static function resolveUpdatedEvent(array $transformedOld, array $transformedNew, $model): string
     {
-        $oldPolicyHolder = $transformedOld['isPolicyHolder'] ?? $transformedOld['is_policy_holder'] ?? null;
-        $newPolicyHolder = $transformedNew['isPolicyHolder'] ?? $transformedNew['is_policy_holder'] ?? null;
-        $oldPrincipal = $transformedOld['isPrincipal'] ?? $transformedOld['is_principal'] ?? null;
-        $newPrincipal = $transformedNew['isPrincipal'] ?? $transformedNew['is_principal'] ?? null;
+        $oldPolicyHolder = $transformedOld['is_policy_holder'] ?? null;
+        $newPolicyHolder = $transformedNew['is_policy_holder'] ?? null;
+        $oldPrincipal = $transformedOld['is_principal'] ?? null;
+        $newPrincipal = $transformedNew['is_principal'] ?? null;
 
         $event = match (true) {
-            ! empty($transformedNew['deletedAt']) => 'member_deleted',
+            ! empty($transformedNew['deleted_at']) => 'member_deleted',
             $oldPolicyHolder === 'true' && $newPolicyHolder === 'false' => 'member_updated (Policy Holder Removed)',
             $oldPolicyHolder === 'false' && $newPolicyHolder === 'true' => 'member_updated (Policy Holder Added)',
             $oldPrincipal === 'true' && $newPrincipal === 'false' => 'member_updated (Principal Removed)',
