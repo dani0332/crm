@@ -41,4 +41,3 @@ test('destroy does not delete document when policy is locked', function () {
 
     expect($document->fresh())->not->toBeNull();
 });
-
