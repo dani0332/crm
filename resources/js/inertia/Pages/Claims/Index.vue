@@ -129,6 +129,51 @@ const managersOptions = computed(() => {
   );
 });
 
+const claimsSelected = ref([]);
+const assignForm = useForm({
+  manager_id: null,
+});
+
+const onBulkAssign = () => {
+  if (!assignForm.manager_id) {
+    notification.error({
+      title: 'Please select a claims manager to assign.',
+      position: 'top',
+    });
+    return;
+  }
+  assignForm
+    .transform(data => ({
+      ...data,
+      claim_uuids: claimsSelected.value.map(c => c.uuid),
+    }))
+    .post(route('claims.bulk-assign'), {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        claimsSelected.value = [];
+        notification.success({
+          title: 'Claims assigned successfully.',
+          position: 'top',
+        });
+        router.visit(route('claims.index'), {
+          method: 'get',
+          data: filters,
+          preserveState: true,
+          preserveScroll: true,
+        });
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(key => {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    });
+};
+
 const complaintStatusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.complaintStatuses?.map(cs => ({
@@ -813,8 +858,63 @@ watch(
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div
+        v-if="
+          claimsSelected.length > 0 && can(permissionsEnum.CLAIMS_MANUAL_ASSIGN)
+        "
+        class="mb-4"
+      >
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+          <h3 class="font-semibold text-primary-800">
+            Assign Claims (Claims Lead)
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            {{ claimsSelected.length }} claim(s) selected
+          </p>
+          <x-divider class="mb-4 mt-1" />
+          <x-form
+            @submit="
+              e => {
+                if (e && typeof e.preventDefault === 'function')
+                  e.preventDefault();
+                onBulkAssign();
+              }
+            "
+            :auto-focus="false"
+          >
+            <div class="w-full flex flex-col md:flex-row gap-4 items-end">
+              <div class="flex-1 w-auto min-w-[200px]">
+                <x-select
+                  v-model="assignForm.manager_id"
+                  label="Assign to Claims Manager"
+                  :options="managersOptions"
+                  placeholder="Select claims manager"
+                  class="w-full"
+                  filterable
+                  filterPlaceholder="Filter managers..."
+                  :error="assignForm.errors.manager_id"
+                />
+              </div>
+              <div class="mb-3 md:pb-1">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Data Table -->
     <DataTable
+      v-model:items-selected="claimsSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

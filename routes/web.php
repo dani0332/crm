@@ -337,7 +337,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Claims Management Routes
-    Route::group(['prefix' => 'claim', 'as' => 'claims.'], function () {
+    Route::group(['prefix' => 'claim', 'as' => 'claims.', 'middleware' => 'claims_module_enabled'], function () {
         // Main CRUD Routes
         Route::get('/', [ClaimsController::class, 'index'])->name('index');
         Route::get('/create', [ClaimsController::class, 'create'])->name('create');
@@ -351,7 +351,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/export', [ClaimsController::class, 'export'])->name('export');
 
         // Claim Actions
+        Route::post('/bulk-assign', [ClaimsController::class, 'bulkAssignClaims'])->name('bulk-assign');
         Route::post('/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('update.details');
+        Route::post('/{claim:uuid}/assign', [ClaimsController::class, 'assignClaim'])->name('assign');
         Route::post('/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('update.status');
         Route::post('/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('update.complaint-status');
         Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
@@ -508,10 +510,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     // claim allocation
-    Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
-    Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
-    Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
-    Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    Route::middleware('claims_module_enabled')->group(function () {
+        Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
+        Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
+        Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
+        Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    });
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);

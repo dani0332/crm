@@ -32,6 +32,7 @@ class DocumentTypeResource extends JsonResource
             'category' => $this->category,
             'tool_tip' => $this->tool_tip,
             'business_type_of_insurance_id' => $this->business_type_of_insurance_id,
+            'is_claim_form' => $this->when(isset($this->is_claim_form), fn () => $this->is_claim_form),
         ];
     }
 }

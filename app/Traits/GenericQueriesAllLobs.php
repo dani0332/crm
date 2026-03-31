@@ -679,14 +679,29 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
+    /**
+     * Normalize date value from request. Frontend may send a string or nested array (e.g. [["2024-01-01"]]).
+     * Returns a value suitable for Carbon::parse().
+     */
+    private function normalizeDateValue(mixed $value)
+    {
+        while (is_array($value) && $value !== []) {
+            $value = $value[0];
+        }
+
+        return is_scalar($value) ? $value : now()->endOfDay();
+    }
+
     public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [], $useJoin = true)
     {
         $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
         if (! empty($request->get('payment_due_date')) && ! $useJoin) {
-            $startDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][0])->startOfDay() : $defaultDate;
-            $endDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][1])->endOfDay() : $defaultDate;
+            $startDateRaw = $request['payment_due_date'][0] ?? null;
+            $endDateRaw = $request['payment_due_date'][1] ?? null;
+            $startDate = isset($request['payment_due_date']) ? Carbon::parse($this->normalizeDateValue($startDateRaw))->startOfDay() : $defaultDate;
+            $endDate = isset($request['payment_due_date']) ? Carbon::parse($this->normalizeDateValue($endDateRaw))->endOfDay() : $defaultDate;
 
             $query->whereHas('paymentSplits', function ($q) use ($startDate, $endDate, $dateFormat) {
                 $q->whereBetween('due_date', [
@@ -706,8 +721,10 @@ trait GenericQueriesAllLobs
             return;
         }
         $dateType = $request->get('payment_due_date') ? 'payment_due_date' : 'booking_date';
-        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
-        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
+        $startDateRaw = $request[$dateType][0] ?? null;
+        $endDateRaw = $request[$dateType][1] ?? null;
+        $startDate = isset($request[$dateType]) ? Carbon::parse($this->normalizeDateValue($startDateRaw))->startOfDay() : $defaultDate;
+        $endDate = isset($request[$dateType]) ? Carbon::parse($this->normalizeDateValue($endDateRaw))->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 

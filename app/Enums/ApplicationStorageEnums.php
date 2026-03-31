@@ -411,4 +411,6 @@ final class ApplicationStorageEnums extends Enum
 
     // Courtesy Email Workflow
     public const BIRD_COURTESY_EMAIL_WORKFLOW_URL = 'BIRD_COURTESY_EMAIL_WORKFLOW_URL';
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
 }
