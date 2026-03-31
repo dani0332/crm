@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\QuoteJourney;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 
 class QuoteJourneyService
 {
@@ -62,33 +63,26 @@ class QuoteJourneyService
      */
     public function advanceAfterRequiredCustomerDocuments(string $quoteUUID, int $quoteTypeId): void
     {
+        // Only consider a prior "Documents uploaded" entry when it is in a state that can be advanced (PENDING or IN_PROCESS).
         $priorEntry = QuoteJourney::query()
             ->where('quote_uuid', $quoteUUID)
             ->where('quote_type_id', $quoteTypeId)
             ->where('text', QuoteJourneyEnum::DOCUMENT_UPLOADED)
+            ->whereIn('status', [QuoteJourneyEnum::PENDING, QuoteJourneyEnum::IN_PROCESS])
             ->latest('id')
             ->first();
 
-        if ($priorEntry && ! in_array($priorEntry->status, [QuoteJourneyEnum::COMPLETED, QuoteJourneyEnum::CANCELLED], true)) {
-
-            $priorEntry->update([
-                'status' => QuoteJourneyEnum::COMPLETED,
-            ]);
-            LoggerService::info('QuoteJourneyService - completed Documents uploaded journey step', extra: [
-                'quote_uuid' => $quoteUUID,
-                'quote_type_id' => $quoteTypeId,
-                'quote_journey_id' => $priorEntry->id,
-            ]);
-        } elseif (! $priorEntry) {
-            LoggerService::warning('QuoteJourneyService - no prior journey row for required customer documents', [
+        if (! $priorEntry) {
+            LoggerService::warning('QuoteJourneyService - no prior journey row in PENDING/IN_PROCESS for required customer documents; skipping advancement', [
                 'quote_uuid' => $quoteUUID,
                 'quote_type_id' => $quoteTypeId,
             ]);
 
-            // Prior step missing — skip updating policy issuance status to avoid creating inconsistent state.
+            // Prior step missing or not in an actionable status — skip updating policy issuance to avoid reactivating cancelled/completed journeys.
             return;
         }
 
+        // Fetch policy issuance entry before performing updates so both changes can be done atomically.
         $policyIssuanceEntry = QuoteJourney::query()
             ->where('quote_uuid', $quoteUUID)
             ->where('quote_type_id', $quoteTypeId)
@@ -109,14 +103,22 @@ class QuoteJourneyService
             return;
         }
 
-        $policyIssuanceEntry->update([
-            'status' => QuoteJourneyEnum::IN_PROCESS,
-        ]);
+        // Perform both updates in a single transaction to keep journey state consistent.
+        DB::transaction(function () use ($priorEntry, $policyIssuanceEntry) {
+            $priorEntry->update([
+                'status' => QuoteJourneyEnum::COMPLETED,
+            ]);
 
-        LoggerService::info('QuoteJourneyService - policy issuance journey set to in process', extra: [
+            $policyIssuanceEntry->update([
+                'status' => QuoteJourneyEnum::IN_PROCESS,
+            ]);
+        });
+
+        LoggerService::info('QuoteJourneyService - completed Documents uploaded journey step and set policy issuance to in process', extra: [
             'quote_uuid' => $quoteUUID,
             'quote_type_id' => $quoteTypeId,
-            'quote_journey_id' => $policyIssuanceEntry->id,
+            'documents_uploaded_journey_id' => $priorEntry->id,
+            'policy_issuance_journey_id' => $policyIssuanceEntry->id,
         ]);
     }
 
