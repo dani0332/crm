@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
@@ -17,6 +18,7 @@ use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -663,5 +665,29 @@ class CarQuote extends BaseModel
                 'engagement_level',
                 'engagement_level_updated_at',
             ]);
+    }
+
+    public function scopeWhereRevivalIntentEligible(Builder $query): Builder
+    {
+        return $query->whereHas('carQuoteRequestDetail', function ($q) {
+            $q->where(function ($w) {
+                $w->where(function ($h) {
+                    $h->where('engagement_level', MotorRevivalEnum::INTENT_HIGH->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subMinutes(15));
+                })->orWhere(function ($m) {
+                    $m->where('engagement_level', MotorRevivalEnum::MEDIUM_INTENT->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subHours(3));
+                });
+            });
+        });
+    }
+
+    public function scopeWhereRevivalIntentRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL)
+            ->whereNull('advisor_id')
+            ->whereRevivalIntentEligible();
     }
 }

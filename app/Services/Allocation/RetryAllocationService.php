@@ -84,13 +84,17 @@ class RetryAllocationService
                     });
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
+            ->where(function ($q) use ($exemptedLeadSources) {
+                $q->whereNotIn('source', $exemptedLeadSources)
+                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible());
+            })
             ->orderByDesc('created_at')
             ->where(function ($q) {
                 $q->eligibleForAllocation(QuoteTypes::CAR);
                 $q->orWhere(function ($sq) {
                     $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
                 });
+                $q->orWhere(fn ($sq) => $sq->whereRevivalIntentRetryEligible());
             })
             ->take($chunkSize);
 
