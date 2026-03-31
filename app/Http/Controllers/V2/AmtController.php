@@ -510,7 +510,7 @@ class AmtController extends Controller
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
 
-        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Business, $record->id);
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::GroupMedical, $record->id);
         $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
             $record->uuid,
             QuoteTypeId::GroupMedical,

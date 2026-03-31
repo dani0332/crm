@@ -256,7 +256,7 @@ class ApiController extends Controller
         }
 
         $workflow->ended_at = now();
-        $workflow->stopped_source = $request->input('stop_source', 'api');
+        $workflow->stopped_source = $request->input('stop_source') ?? 'api';
         $workflow->save();
 
         return apiResponse($data, Response::HTTP_OK, 'Email event stopped successfully');

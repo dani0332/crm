@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypes;
 use App\Models\EmailStatus;
@@ -72,6 +73,7 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->msg_id = $this->emailData->message_id;
                         $newEmailStatus->email_status = $this->emailData->status;
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
+                        $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
                         $newEmailStatus->save();
 
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
@@ -106,6 +108,7 @@ class EmailStatusEventJob implements ShouldQueue
         $newEmailStatus->msg_id = $this->emailData->message_id;
         $newEmailStatus->email_status = $this->emailData->status;
         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
+        $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
         $newEmailStatus->save();
         $emailStatusService->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
