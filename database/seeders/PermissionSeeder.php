@@ -48,6 +48,7 @@ class PermissionSeeder extends Seeder
         }
 
         $this->addBuyLeadsAdminPermission();
+        $this->addLifeRevivalPermissions();
     }
 
     private function addBuyLeadsAdminPermission(): void
@@ -71,6 +72,37 @@ class PermissionSeeder extends Seeder
                     info("Role {$role->name} already has permission {$permission->name}");
                 }
             }
+        }
+    }
+
+    private function addLifeRevivalPermissions(): void
+    {
+        $permissions = [
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_SHOW,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+                'guard_name' => 'web',
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            Permission::firstOrCreate(
+                [
+                    'name' => $permissionData['name'],
+                    'guard_name' => $permissionData['guard_name'],
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 }
