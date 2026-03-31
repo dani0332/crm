@@ -220,7 +220,7 @@ class CourtesyEmailService extends BaseService
                 'whatsAppconsent' => $quoteType ? getWhatsappConsent($quoteType, $quote->uuid) : false,
                 'customer' => [
                     'email' => $quote->email,
-                    'firstName' => $firstName,
+                    'firstName' => ucfirst(strtolower($firstName)),
                     'lastName' => $lastName,
                     'WhatsAppNumber' => ! empty($quote->mobile_no) ? formatMobileNoWithoutPlus($quote->mobile_no) : '',
                 ],
