@@ -62,12 +62,13 @@ function subjectDisplay(row) {
  * workflow).  Rows whose status is "Workflow triggered" are QuoteFlowDetails
  * entries, not EmailStatus rows, so we skip them.
  */
-const courtesyEmailStatusIds = computed(() =>
-  new Set(
-    (props.googleReviewCommunicationLogs || [])
-      .filter(r => r.status !== 'Workflow triggered')
-      .map(r => r.id),
-  ),
+const courtesyEmailStatusIds = computed(
+  () =>
+    new Set(
+      (props.googleReviewCommunicationLogs || [])
+        .filter(r => r.status !== 'Workflow triggered')
+        .map(r => r.id),
+    ),
 );
 
 const tableItems = computed(() =>
