@@ -109,7 +109,7 @@ const hideFooter = computed(() => {
   if (!props.paginate) {
     return true;
   }
-  return (props.emailStatuses || []).length < props.rowsPerPage;
+  return tableItems.value.length < props.rowsPerPage;
 });
 </script>
 
