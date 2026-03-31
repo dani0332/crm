@@ -37,7 +37,7 @@ test('destroy does not delete document when policy is locked', function () {
             'doc_uuid' => $document->doc_uuid,
         ])
         ->assertRedirect('/quotes/business/8U8SCYTZ')
-        ->assertSessionHas('message', 'Document cannot be deleted as the policy is locked.');
+        ->assertSessionHas('error', 'Document cannot be deleted as the policy is locked.');
 
     expect($document->fresh())->not->toBeNull();
 });
