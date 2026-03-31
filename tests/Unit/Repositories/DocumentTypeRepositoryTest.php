@@ -16,10 +16,6 @@ use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\Schema\SchemaUtils;
 
-beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-});
-
 /**
  * DocumentTypeRepository::validateSendPolicyDocsUploaded — same logic as SendBookPolicyRequest lines 52–62.
  *

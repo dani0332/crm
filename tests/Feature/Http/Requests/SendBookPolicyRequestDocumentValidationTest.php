@@ -22,10 +22,6 @@ use Tests\Support\Schema\SchemaUtils;
 /** Matches SendBookPolicyRequest::withValidator document gate message. */
 const SBP_REQUIRED_DOCUMENTS_MESSAGE = 'Required documents are not uploaded';
 
-beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-});
-
 /**
  * Builds a validator after SendBookPolicyRequest::withValidator (same pattern as automation services).
  */
