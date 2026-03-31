@@ -43,11 +43,11 @@ class AllocationCreationService
             })) {
                 continue;
             }
-            // Add all non-policybooked leads from this group
+            // Add all non-policybooked leads
             $filteredLeads = $filteredLeads->merge($group);
         }
 
-        // Exclude policy book individual leads (since above it filetered group only)
+        // Exclude policybooked individual leads (since above we filetered only group)
         $filteredLeads = $filteredLeads->filter(function ($item) {
             return $item->quote_status_id != QuoteStatusEnum::PolicyBooked;
         });
