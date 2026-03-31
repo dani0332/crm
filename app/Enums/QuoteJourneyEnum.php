@@ -11,4 +11,5 @@ final class QuoteJourneyEnum extends Enum
     public const PENDING = 'PENDING';
     public const POLICY_ISSUANCE = 'Policy issuance';
     public const CANCELLED = 'CANCELLED';
+    public const DOCUMENT_UPLOADED = 'Documents uploaded';
 }
