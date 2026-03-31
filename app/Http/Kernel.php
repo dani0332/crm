@@ -74,6 +74,5 @@ class Kernel extends HttpKernel
         'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
         'check_lead_report_access' => \App\Http\Middleware\CheckReportPermission::class,
         'readonly_db' => SetReadDbConnection::class,
-        'tmlead.update.security' => \App\Http\Middleware\EnsureSecureTmLeadUpdateRequest::class,
     ];
 }

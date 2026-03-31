@@ -862,9 +862,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tmleadstatus', TmLeadStatusController::class);
         Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
         Route::resource('tmuploadlead', TmUploadLeadController::class)->names(generateRouteNames('tmuploadlead'));
-        Route::put('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])
-            ->middleware('tmlead.update.security')
-            ->name('tmLeadUpdate');
+        Route::put('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
         Route::post('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
     });
 
