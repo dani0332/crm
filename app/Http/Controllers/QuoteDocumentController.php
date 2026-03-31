@@ -298,7 +298,7 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('message', 'Document not found');
         }
 
-        $isEnableUploadDocument = app(QuoteDocumentService::class)->isEnableUploadDocument($document->quoteDocumentable?->quote_status_id ?? null);
+        $isEnableUploadDocument = $this->quoteDocumentService->isEnableUploadDocument($document->quoteDocumentable?->quote_status_id ?? null);
         if (! $isEnableUploadDocument) {
             return redirect()->back()->with('message', 'Document cannot be deleted as the policy is locked.');
         }
