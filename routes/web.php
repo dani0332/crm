@@ -300,6 +300,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('health-revival-quotes-show');
             Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
             Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
+
+            // Life revival
+            Route::get('life-revival', function () {})->name('life-revival-quotes-list');
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
