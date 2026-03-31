@@ -290,12 +290,15 @@ class QuoteDocumentController extends Controller
         ]);
 
         
-        $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
+        $document = QuoteDocument::with('quoteDocumentable')
+            ->where('id', $request->doc_id)
+            ->where('doc_uuid', $request->doc_uuid)
+            ->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
         }
 
-        $isEnableUploadDocument = app(QuoteDocumentService::class)->isEnableUploadDocument($document->quoteDocumentable->quote_status_id);
+        $isEnableUploadDocument = app(QuoteDocumentService::class)->isEnableUploadDocument($document->quoteDocumentable?->quote_status_id ?? null);
         if (! $isEnableUploadDocument) {
             return redirect()->back()->with('message', 'Document cannot be deleted as the policy is locked.');
         }
