@@ -254,7 +254,7 @@ class TmLeadController extends Controller
 
         $this->validate($request, [
             'tm_lead_statuses_id' => 'required',
-            'tmLeadId' => 'required',
+            'tmLeadId' => 'required|integer',
             'notes' => 'max:500',
         ]);
 
