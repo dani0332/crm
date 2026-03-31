@@ -29,6 +29,7 @@ use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -71,7 +72,7 @@ class QuoteDocumentController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -289,7 +290,6 @@ class QuoteDocumentController extends Controller
             'doc_uuid' => 'required|string',
         ]);
 
-        
         $document = QuoteDocument::with('quoteDocumentable')
             ->where('id', $request->doc_id)
             ->where('doc_uuid', $request->doc_uuid)
