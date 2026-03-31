@@ -14,7 +14,6 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersIdEnum;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -411,17 +410,5 @@ class RetryAllocationService
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
-    }
-
-    public function executeLifeRevivalAllocation()
-    {
-        $leadsToRevive = LifeQuote::whereNot('quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->whereNot('source', LeadSourceEnum::REVIVAL)
-            ->whereDate('created_at', '<=', now()->subDays(90))
-            ->select('uuid', 'dob', 'gender')
-            ->get();
-        
-      
-        exit;
     }
 }
