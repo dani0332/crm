@@ -369,6 +369,16 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
+     * Scope to filter users by role name
+     */
+    public function scopeWithRole($query, string $roleName)
+    {
+        return $query->whereHas('roles', function ($query) use ($roleName) {
+            $query->where('name', $roleName);
+        });
+    }
+
+    /**
      * get user all teams id function
      *
      * @param  int  $userId
@@ -381,7 +391,7 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function managers()
     {

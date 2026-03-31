@@ -28,7 +28,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PolicyIssuance;
 use App\Models\UAELicenseHeldFor;
-use App\Services\AMLService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -1274,7 +1274,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
-        $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
+        $additionalLookups = app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, [
             LookupsEnum::RTA_TRANSACTION_TYPE,
             LookupsEnum::RTA_PLATE_CATEGORY,
             LookupsEnum::VEHICLE_COLOR,

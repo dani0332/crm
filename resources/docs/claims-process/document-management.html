@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Management - Claims Management System</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .content-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .content-section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .content-section h3 {
+        color: #34495e;
+        font-size: 1.5em;
+        margin: 25px 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .workflow-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin: 25px 0;
+      }
+
+      .workflow-step {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 25px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .workflow-step .step-number {
+        position: absolute;
+        left: -2px;
+        top: -2px;
+        background: #3498db;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      .workflow-step h4 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+        margin-left: 30px;
+      }
+
+      .workflow-step p {
+        color: #7f8c8d;
+        margin-left: 30px;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .lob-document-types {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin: 25px 0;
+      }
+
+      .lob-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 30px;
+        border-left: 4px solid #e74c3c;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .lob-card.motor {
+        border-left-color: #e74c3c;
+      }
+      .lob-card.health {
+        border-left-color: #27ae60;
+      }
+      .lob-card.life {
+        border-left-color: #3498db;
+      }
+
+      .lob-card h4 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+      }
+
+      .lob-card ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .lob-card li {
+        margin-bottom: 8px;
+        padding-left: 20px;
+        position: relative;
+        color: #555;
+      }
+
+      .lob-card li:before {
+        content: '📄';
+        position: absolute;
+        left: 0;
+        font-size: 0.9em;
+      }
+
+      .s3-integration {
+        background: linear-gradient(135deg, #ff7b7b 0%, #667eea 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px 0;
+      }
+
+      .s3-integration h4 {
+        margin-bottom: 15px;
+        font-size: 1.2em;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .feature-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+      }
+
+      .feature-item strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .api-endpoint {
+        background: #27ae60;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-family: monospace;
+        font-size: 0.9em;
+        display: inline-block;
+        margin: 5px 0;
+      }
+
+      .method-get {
+        background: #27ae60;
+      }
+      .method-post {
+        background: #3498db;
+      }
+      .method-put {
+        background: #f39c12;
+      }
+      .method-delete {
+        background: #e74c3c;
+      }
+
+      .security-section {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+      }
+
+      .security-section h4 {
+        color: #856404;
+        margin-bottom: 10px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        margin: 20px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: #3498db;
+        color: white;
+        font-weight: 600;
+      }
+
+      tr:hover {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .bulk-operations {
+        background: #e8f5e8;
+        border: 1px solid #c3e6c3;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+      }
+
+      .bulk-operations h4 {
+        color: #155724;
+        margin-bottom: 10px;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .lob-document-types {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <a href="/docs/claims-process/index.html">Claims Management</a>
+        <span>></span>
+        <span>Document Management</span>
+      </div>
+
+      <div class="header">
+        <h1>📄 Document Management</h1>
+        <p>Comprehensive guide to claim document handling and S3 integration</p>
+      </div>
+
+      <div class="content-section">
+        <h2>📋 Overview</h2>
+        <p>
+          The Claims Management System provides comprehensive document
+          management capabilities including multi-file upload, LOB-specific
+          document types, Azure S3 storage integration, secure access control,
+          and bulk operations for efficient claim processing.
+        </p>
+
+        <div class="workflow-steps">
+          <div class="workflow-step">
+            <div class="step-number">1</div>
+            <h4>Document Type Selection</h4>
+            <p>
+              LOB-specific document types are dynamically loaded based on
+              claim's Line of Business
+            </p>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-number">2</div>
+            <h4>Multi-File Upload</h4>
+            <p>
+              Support for multiple file formats with validation and size limits
+            </p>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-number">3</div>
+            <h4>S3 Storage Integration</h4>
+            <p>Secure upload to Azure S3 with organized folder structure</p>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-number">4</div>
+            <h4>Access Control</h4>
+            <p>Permission-based viewing and temporary URL generation</p>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-number">5</div>
+            <h4>Bulk Operations</h4>
+            <p>Download all documents as ZIP for efficient processing</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📁 LOB-Specific Document Types</h2>
+        <p>
+          Each Line of Business has specific document requirements managed
+          through the lookup system with
+          <code>lookup_type = 'document-types'</code>.
+        </p>
+
+        <div class="lob-document-types">
+          <div class="lob-card motor">
+            <h4>🚗 Motor/Car Claims Documents</h4>
+            <ul>
+              <li>Emirates ID/Passport Copy</li>
+              <li>Driving License Copy</li>
+              <li>Vehicle Registration (Mulkiya)</li>
+              <li>Police Report</li>
+              <li>Repair Estimates/Invoices</li>
+              <li>Accident Photos</li>
+              <li>Vehicle Photos (Pre/Post Accident)</li>
+              <li>Third Party Information</li>
+              <li>Bank Details (IBAN Certificate)</li>
+              <li>Assignment Letter (if applicable)</li>
+            </ul>
+          </div>
+
+          <div class="lob-card health">
+            <h4>🏥 Health Claims Documents</h4>
+            <ul>
+              <li>Emirates ID/Passport Copy</li>
+              <li>Medical Reports</li>
+              <li>Prescription/Medicine Bills</li>
+              <li>Hospital/Clinic Invoices</li>
+              <li>Lab Test Reports</li>
+              <li>Discharge Summary</li>
+              <li>Treatment Authorization Forms</li>
+              <li>Bank Details (IBAN Certificate)</li>
+              <li>Salary Certificate (if applicable)</li>
+              <li>Additional Medical Documents</li>
+            </ul>
+          </div>
+
+          <div class="lob-card life">
+            <h4>💼 Life Claims Documents</h4>
+            <ul>
+              <li>Death Certificate</li>
+              <li>Emirates ID/Passport of Deceased</li>
+              <li>Emirates ID/Passport of Beneficiary</li>
+              <li>Medical Reports</li>
+              <li>Hospital Records</li>
+              <li>Police Report (if applicable)</li>
+              <li>Bank Details (IBAN Certificate)</li>
+              <li>Beneficiary Proof Documents</li>
+              <li>Legal Heir Certificate</li>
+              <li>Court Documents (if applicable)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>☁️ Azure S3 Storage Integration</h2>
+
+        <div class="s3-integration">
+          <h4>🔗 Storage Architecture</h4>
+          <p>
+            Documents are stored in Azure S3 with organized folder structure and
+            secure access patterns:
+          </p>
+          <div
+            style="
+              margin-top: 15px;
+              font-family: monospace;
+              background: rgba(255, 255, 255, 0.2);
+              padding: 15px;
+              border-radius: 8px;
+            "
+          >
+            <strong>Folder Structure:</strong><br />
+            /claims/{claim_uuid}/documents/{document_type}/{filename}
+          </div>
+        </div>
+
+        <div class="code-block">
+          // ClaimsService::uploadDocuments() method public function
+          uploadDocuments(array $files, string $claimUuid, int $documentTypeId):
+          array { $uploadedFiles = []; $documentType =
+          $this->getDocumentTypeById($documentTypeId); foreach ($files as $file)
+          { $filename = $this->generateSecureFilename($file); $s3Path =
+          "claims/{$claimUuid}/documents/{$documentType->value}/{$filename}"; //
+          Upload to S3 $s3Response = Storage::disk('s3')->put($s3Path,
+          file_get_contents($file)); if ($s3Response) { // Create database
+          record $document = GenericDocument::create([ 'uuid' => Str::uuid(),
+          'model_type' => GenericModelTypeEnum::CLAIM_REQUEST, 'model_id' =>
+          $claimId, 'document_type_id' => $documentTypeId, 'file_name' =>
+          $file->getClientOriginalName(), 'file_path' => $s3Path, 'file_size' =>
+          $file->getSize(), 'mime_type' => $file->getMimeType(), 'uploaded_by'
+          => Auth::id(), ]); $uploadedFiles[] = $document; } } return
+          $uploadedFiles; }
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Secure File Naming</strong>
+            UUID-based filenames prevent conflicts and enhance security
+          </div>
+          <div class="feature-item">
+            <strong>Organized Storage</strong>
+            Hierarchical folder structure by claim and document type
+          </div>
+          <div class="feature-item">
+            <strong>Metadata Tracking</strong>
+            Complete file information stored in database
+          </div>
+          <div class="feature-item">
+            <strong>Access Control</strong>
+            Permission-based document access with temporary URLs
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔐 Security & Access Control</h2>
+        <h3>🛡️ Permission-Based Access</h3>
+        <p>
+          Document access is controlled through granular permissions ensuring
+          only authorized users can view, upload, or download claim documents.
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Permission</th>
+                <th>Access Level</th>
+                <th>Description</th>
+                <th>API Endpoints</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CLAIM_DOCUMENTS_UPLOAD</td>
+                <td>Upload</td>
+                <td>Upload new documents to claims</td>
+                <td>POST /claim/{uuid}/documents</td>
+              </tr>
+              <tr>
+                <td>CLAIM_DOCUMENTS_VIEW</td>
+                <td>View</td>
+                <td>View and download claim documents</td>
+                <td>GET /claim/{uuid}/documents</td>
+              </tr>
+              <tr>
+                <td>CLAIM_DOCUMENTS_DELETE</td>
+                <td>Delete</td>
+                <td>Remove documents from claims</td>
+                <td>DELETE /claim/{uuid}/documents/{id}</td>
+              </tr>
+              <tr>
+                <td>CLAIM_DOCUMENTS_BULK_DOWNLOAD</td>
+                <td>Bulk Operations</td>
+                <td>Download all documents as ZIP</td>
+                <td>GET /claim/{uuid}/documents/download-all</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="security-section">
+          <h4>🔒 Temporary URL Generation</h4>
+          <p>
+            For secure document access, the system generates temporary URLs with
+            expiration times:
+          </p>
+          <ul>
+            <li>
+              <strong>Default Expiry:</strong> 1 hour for document viewing
+            </li>
+            <li>
+              <strong>Bulk Download:</strong> 30 minutes for ZIP file access
+            </li>
+            <li>
+              <strong>Access Logging:</strong> All document access attempts are
+              logged
+            </li>
+            <li>
+              <strong>IP Validation:</strong> Optional IP-based access
+              restrictions
+            </li>
+          </ul>
+        </div>
+
+        <div class="code-block">
+          // Temporary URL generation for secure access public function
+          generateTemporaryUrl(string $filePath, int $expiryMinutes = 60):
+          string { return Storage::disk('s3')->temporaryUrl($filePath,
+          now()->addMinutes($expiryMinutes)); } // Usage in ClaimsService public
+          function getDocumentWithTemporaryUrl(int $documentId): array {
+          $document = GenericDocument::findOrFail($documentId); // Generate
+          temporary URL $temporaryUrl =
+          $this->generateTemporaryUrl($document->file_path); // Log access
+          attempt LoggerService::info('Document accessed', [ 'document_id' =>
+          $documentId, 'user_id' => Auth::id(), 'claim_uuid' =>
+          $document->model->uuid ?? null, ]); return [ 'document' => $document,
+          'temporary_url' => $temporaryUrl, 'expires_at' =>
+          now()->addHour()->toISOString(), ]; }
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📤 File Upload Workflow</h2>
+        <h3>🔄 Multi-File Upload Process</h3>
+
+        <div class="api-endpoint method-post">POST /claim/{uuid}/documents</div>
+
+        <div class="code-block">
+          // ClaimsController::uploadDocuments() method public function
+          uploadDocuments(Request $request, ClaimRequest $claim): JsonResponse {
+          try { $request->validate([ 'files' => 'required|array|min:1|max:10',
+          'files.*' =>
+          'required|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
+          'document_type_id' => 'required|integer|exists:lookups,id', ]);
+          $uploadedDocuments = $this->claimsService->uploadDocuments(
+          $request->file('files'), $claim->uuid,
+          $request->input('document_type_id') ); return response()->json([
+          'success' => true, 'message' => 'Documents uploaded successfully',
+          'data' => GenericDocumentResource::collection($uploadedDocuments), ]);
+          } catch (\Exception $e) { LoggerService::error(' Error uploading
+          documents', [ 'error' => $e->getMessage(), 'claim_uuid' =>
+          $claim->uuid, 'user_id' => Auth::id(), ]); return response()->json([
+          'success' => false, 'message' => 'Failed to upload documents', ],
+          500); } }
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>File Validation</strong>
+            Size limits (10MB), format restrictions, and security checks
+          </div>
+          <div class="feature-item">
+            <strong>Batch Processing</strong>
+            Up to 10 files per upload request
+          </div>
+          <div class="feature-item">
+            <strong>Error Handling</strong>
+            Comprehensive error logging and user feedback
+          </div>
+          <div class="feature-item">
+            <strong>Progress Tracking</strong>
+            Real-time upload progress with Vue.js components
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📦 Bulk Operations</h2>
+
+        <div class="bulk-operations">
+          <h4>🗜️ ZIP Download Functionality</h4>
+          <p>
+            Claims managers can download all documents for a claim as a single
+            ZIP file for efficient processing and archival.
+          </p>
+        </div>
+
+        <div class="api-endpoint method-get">
+          GET /claim/{uuid}/documents/download-all
+        </div>
+
+        <div class="code-block">
+          // ClaimsService::downloadAllDocumentsAsZip() method public function
+          downloadAllDocumentsAsZip(string $claimUuid): Response { $claim =
+          ClaimRequest::where('uuid', $claimUuid)->firstOrFail(); $documents =
+          $claim->documents; if ($documents->isEmpty()) { throw new
+          \Exception('No documents found for this claim'); } $zipFileName =
+          "claim_{$claimUuid}_documents.zip"; $zipPath =
+          storage_path("temp/{$zipFileName}"); // Create ZIP file $zip = new
+          \ZipArchive(); $zip->open($zipPath, \ZipArchive::CREATE |
+          \ZipArchive::OVERWRITE); foreach ($documents as $document) {
+          $fileContent = Storage::disk('s3')->get($document->file_path);
+          $zip->addFromString($document->file_name, $fileContent); }
+          $zip->close(); // Log bulk download LoggerService::info('Bulk document
+          download', [ 'claim_uuid' => $claimUuid, 'document_count' =>
+          $documents->count(), 'user_id' => Auth::id(), ]); return
+          response()->download($zipPath)->deleteFileAfterSend(); }
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Automatic ZIP Creation</strong>
+            On-the-fly ZIP file generation with original filenames
+          </div>
+          <div class="feature-item">
+            <strong>Temporary Storage</strong>
+            ZIP files created in temporary directory and auto-deleted
+          </div>
+          <div class="feature-item">
+            <strong>Comprehensive Logging</strong>
+            All bulk operations logged for audit purposes
+          </div>
+          <div class="feature-item">
+            <strong>Permission Control</strong>
+            Requires CLAIM_DOCUMENTS_BULK_DOWNLOAD permission
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🎨 Frontend Document Management</h2>
+        <h3>🖼️ Vue.js Component Architecture</h3>
+        <p>
+          Document management is handled through the ClaimDocuments.vue
+          component with drag-and-drop upload, real-time progress, and
+          responsive design.
+        </p>
+
+        <div class="code-block">
+          // ClaimDocuments.vue - Key Features &lt;template&gt; &lt;div
+          class="document-management"&gt; &lt;!-- Document Type Selection --&gt;
+          &lt;select v-model="selectedDocumentType" class="form-select"&gt;
+          &lt;option v-for="type in documentTypes" :key="type.id"
+          :value="type.id"&gt; {{ type.name }} &lt;/option&gt; &lt;/select&gt;
+          &lt;!-- Drag & Drop Upload Area --&gt; &lt;div class="upload-area"
+          @drop="handleDrop" @dragover.prevent @dragenter.prevent &gt; &lt;input
+          type="file" multiple @change="handleFileSelect"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" /&gt; &lt;/div&gt; &lt;!--
+          Document List with Actions --&gt; &lt;div v-for="document in
+          documents" :key="document.id" class="document-item"&gt; &lt;span&gt;{{
+          document.file_name }}&lt;/span&gt; &lt;button
+          @click="viewDocument(document)" v-if="canView"&gt;View&lt;/button&gt;
+          &lt;button @click="deleteDocument(document)"
+          v-if="canDelete"&gt;Delete&lt;/button&gt; &lt;/div&gt; &lt;!-- Bulk
+          Download --&gt; &lt;button @click="downloadAllDocuments"
+          v-if="canBulkDownload && documents.length"&gt; Download All as ZIP
+          &lt;/button&gt; &lt;/div&gt; &lt;/template&gt;
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Drag & Drop Upload</strong>
+            Intuitive file upload with visual feedback and progress bars
+          </div>
+          <div class="feature-item">
+            <strong>Permission-Based UI</strong>
+            Conditional rendering based on user permissions
+          </div>
+          <div class="feature-item">
+            <strong>Real-Time Updates</strong>
+            Immediate UI updates after upload/delete operations
+          </div>
+          <div class="feature-item">
+            <strong>Responsive Design</strong>
+            Mobile-friendly interface with TailwindCSS styling
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📊 Document Analytics & Reporting</h2>
+        <h3>📈 Usage Metrics</h3>
+        <p>
+          The system tracks comprehensive document metrics for reporting and
+          optimization purposes.
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Upload Statistics</strong>
+            Track document upload frequency by LOB and document type
+          </div>
+          <div class="feature-item">
+            <strong>Storage Usage</strong>
+            Monitor S3 storage consumption and optimize costs
+          </div>
+          <div class="feature-item">
+            <strong>Access Patterns</strong>
+            Analyze document viewing and download patterns
+          </div>
+          <div class="feature-item">
+            <strong>Performance Metrics</strong>
+            Track upload/download speeds and success rates
+          </div>
+        </div>
+
+        <div class="code-block">
+          // Document analytics query example public function
+          getDocumentAnalytics(string $period = '30 days'): array { return [
+          'total_documents' => GenericDocument::where('model_type',
+          GenericModelTypeEnum::CLAIM_REQUEST) ->where('created_at', '>=',
+          now()->sub($period))->count(), 'documents_by_lob' =>
+          DB::table('generic_documents') ->join('claim_requests',
+          'generic_documents.model_id', '=', 'claim_requests.id')
+          ->join('lookups as lob', 'claim_requests.quote_type_id', '=',
+          'lob.id') ->where('generic_documents.created_at', '>=',
+          now()->sub($period)) ->groupBy('lob.value') ->selectRaw('lob.value as
+          lob, COUNT(*) as count') ->get(), 'storage_usage' =>
+          GenericDocument::where('model_type',
+          GenericModelTypeEnum::CLAIM_REQUEST) ->sum('file_size'), ]; }
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Document Management Documentation</strong></p>
+        <p>Part of the Claims Management System Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

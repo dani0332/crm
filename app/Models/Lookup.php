@@ -11,6 +11,38 @@ class Lookup extends Model
 {
     use HasFactory;
 
+    /**
+     * Scope to filter active records
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+    /**
+     * Scope to filter by key
+     */
+    public function scopeByKey($query, string $key)
+    {
+        return $query->where('key', $key);
+    }
+
+    /**
+     * Scope to filter by code
+     */
+    public function scopeByCode($query, string $code)
+    {
+        return $query->where('code', $code);
+    }
+
+    /**
+     * Scope to order by sort order
+     */
+    public function scopeOrderBySortOrder($query)
+    {
+        return $query->orderBy('sort_order');
+    }
+
     public function scopeWithChildTree($query, $quoteTypeId, $removeOptions = [])
     {
         return $query->with(['childs' => function ($query) use ($quoteTypeId, $removeOptions) {

@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ClaimsEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
 
@@ -22,6 +25,12 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+        $this->createClaimTypes();
+        $this->createClaimRequestTypes();
+        $this->createClaimServiceTypes();
+        $this->createClaimRequestAccessTypes();
+        $this->createClaimReimbursementOptions();
+        $this->createClaimTPAOptions();
         $this->createRmCategories();
         $this->createReferralSources();
     }
@@ -299,6 +308,291 @@ class LookupSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function createClaimTypes(): void
+    {
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'own-damage-claim',
+            'text' => 'Own Damage Claim',
+        ], [
+            'description' => 'Claims for damage to the insured vehicle caused by the policyholder or covered under comprehensive insurance.',
+            'is_active' => 1,
+            'sort_order' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'recoverable-claim',
+            'text' => 'Recoverable Claim',
+        ], [
+            'description' => 'Claims that can be recovered from a third party or through subrogation.',
+            'is_active' => 1,
+            'sort_order' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'unknown-damage-claim',
+            'text' => 'Unknown Damage Claim',
+        ], [
+            'description' => 'Claims where the cause of damage is unknown or unclear.',
+            'is_active' => 1,
+            'sort_order' => 3,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'water-damage',
+            'text' => 'Water Damage',
+        ], [
+            'description' => 'Claims for damage caused by water, flooding, or water-related incidents.',
+            'is_active' => 1,
+            'sort_order' => 4,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'theft',
+            'text' => 'Theft',
+        ], [
+            'description' => 'Claims for stolen vehicles or vehicle parts.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'fire-arson',
+            'text' => 'Fire/Arson',
+        ], [
+            'description' => 'Claims for damage caused by fire or arson.',
+            'is_active' => 1,
+            'sort_order' => 5,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
+            'code' => 'windscreen-only',
+            'text' => 'Windscreen Only',
+        ], [
+            'description' => 'Claims specifically for windscreen damage or replacement.',
+            'is_active' => 1,
+            'sort_order' => 6,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createClaimRequestTypes(): void
+    {
+        $claimRequestType = [
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'reimbursement',
+                'text' => 'Reimbursement',
+                'sort_order' => 1,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'pending-approvals',
+                'text' => 'Pending Approvals',
+                'sort_order' => 2,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'ask-a-question',
+                'text' => 'Ask a Question',
+                'sort_order' => 3,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value,
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function createClaimReimbursementOptions(): void
+    {
+        $claimRequestType = [
+            [
+                'code' => 'cheque',
+                'text' => 'Cheque',
+                'sort_order' => 1,
+            ],
+            [
+                'code' => 'bank-account',
+                'text' => 'Bank Account',
+                'sort_order' => 2,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'key' => ClaimsEnum::CLAIM_REIMBURSEMENT_OPTIONS_KEY->value,
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function createClaimServiceTypes(): void
+    {
+        $claimRequestType = [
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'in-patient-request',
+                'text' => 'In-patient request (Hospitalization, Major Surgeries, Life Threatening emergency)',
+                'sort_order' => 1,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'out-patient-request',
+                'text' => 'Out-patient request (Consultation, Diagnostics/Imaging, Pharmacy)',
+                'sort_order' => 2,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'others',
+                'text' => 'Others',
+                'sort_order' => 3,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value,
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+    private function createClaimRequestAccessTypes(): void
+    {
+        $claimRequestType = [
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'system-generated',
+                'text' => 'System Generated',
+                'sort_order' => 1,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'manual',
+                'text' => 'Manual',
+                'sort_order' => 2,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => ClaimsEnum::CLAIM_STATUS_ACCESS_TYPES_KEY->value,
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function createClaimTPAOptions(): void
+    {
+        // Define TPA mapping: Insurance Company Code => TPAs array
+        $tpaMapping = [
+            InsuranceProvidersEnum::ADNIC => ['INHOUSE'],
+            InsuranceProvidersEnum::ADNT => ['NAS'],
+            InsuranceProvidersEnum::OALLIANZ => ['INHOUSE'],
+            InsuranceProvidersEnum::ASNIC => ['NAS/NEXTCARE'],
+            InsuranceProvidersEnum::AXA => ['INHOUSE'], // AXA/GIG GULF
+            InsuranceProvidersEnum::BUP => ['SUKOON'],
+            InsuranceProvidersEnum::CIG => ['NEURON'],
+            InsuranceProvidersEnum::DIC => ['MEDNET', 'DUBAICARE'], // DUBAI INSURANCE
+            InsuranceProvidersEnum::ISON => ['MEDNET'],
+            InsuranceProvidersEnum::DNIRC => ['AAFIYA', 'NEXTCARE', 'MEDNET'],
+            InsuranceProvidersEnum::FID => ['NEXTCARE', 'NAS'],
+            InsuranceProvidersEnum::MDG => ['NAS', 'NEXTCARE', 'MEDNET'], // MEDGULF
+            InsuranceProvidersEnum::MTL => ['MEDNET', 'NEXTCARE'],
+            InsuranceProvidersEnum::NGI => ['INHOUSE', 'NEXTCARE'],
+            InsuranceProvidersEnum::NLGIC => ['INAYAH', 'NAS', 'NEXTCARE', 'MEDNET', 'AL MADALLAH'],
+            InsuranceProvidersEnum::NTCWATANIA => ['NAS'], // NOOR TAKAFUL/WATANIA
+            InsuranceProvidersEnum::OIC => ['INHOUSE'], // OMAN/SUKOON
+            InsuranceProvidersEnum::OI2 => ['NAS', 'NEXTCARE', 'MEDNET'], // ORIENT INSURANCE PJSC
+            InsuranceProvidersEnum::OUNB => ['NEXTCARE'], // ORIENT UNB TAKAFUL
+            InsuranceProvidersEnum::OI => ['MEDNET'],
+            InsuranceProvidersEnum::RAK => ['MEDNET', 'NAS', 'NEXTCARE'],
+            InsuranceProvidersEnum::SAICO => ['INHOUSE'],
+            InsuranceProvidersEnum::SI => ['NAS', 'MEDNET', 'NEXTCARE', 'AAFIYA', 'AL MADALLAH'], // SALAMA
+            InsuranceProvidersEnum::TE => ['NAS', 'AAFIYA', 'MEDNET', 'ECARE', 'NEXTCARE'], // TAKAFUL EMARAT
+            InsuranceProvidersEnum::HYH => ['NEXTCARE'],
+        ];
+
+        $sortOrder = 1;
+
+        foreach ($tpaMapping as $insurerCode => $tpaList) {
+            // Get insurance provider by code
+            $insuranceProvider = InsuranceProvider::where('code', $insurerCode)->first();
+
+            // Skip if provider not found
+            if (! $insuranceProvider) {
+                continue;
+            }
+
+            foreach ($tpaList as $tpaName) {
+                Lookup::firstOrCreate([
+                    'insurance_provider_id' => $insuranceProvider->id,
+                    'quote_type_id' => QuoteTypeId::Health,
+                    'key' => ClaimsEnum::CLAIM_TPA_OPTIONS_KEY->value,
+                    'code' => strtolower(str_replace(' ', '-', $tpaName)),
+                    'text' => $tpaName,
+                ], [
+                    'is_active' => 1,
+                    'sort_order' => $sortOrder++,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 
     private function createRmCategories(): void
