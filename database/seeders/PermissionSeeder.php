@@ -48,6 +48,18 @@ class PermissionSeeder extends Seeder
         }
 
         $this->addBuyLeadsAdminPermission();
+        $this->addEpDocumentManualOverridePermission();
+    }
+
+    private function addEpDocumentManualOverridePermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function addBuyLeadsAdminPermission(): void

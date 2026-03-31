@@ -1192,6 +1192,8 @@ class CoreSchema
                 $table->boolean('is_ocr_processed')->default(false);
                 $table->unsignedBigInteger('quote_id')->nullable();
                 $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
+                $table->boolean('is_manual_override')->default(false);
+                $table->text('override_remarks')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             },

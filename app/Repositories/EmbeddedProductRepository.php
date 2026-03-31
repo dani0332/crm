@@ -32,6 +32,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Jobs\SukoonMedexPurchaseFlowJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -1355,6 +1356,50 @@ class EmbeddedProductRepository extends BaseRepository
             'document_type' => $documentType,
             'can_add_document' => $canAddDocument,
         ];
+    }
+
+    public function fetchUpdateEpDocument(array $data): bool
+    {
+        $ep = $this->where('id', $data['epId'])->first();
+        if (! $ep) {
+            return false;
+        }
+
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
+        if ($transaction->isEmpty()) {
+            return false;
+        }
+
+        $embeddedTransaction = $transaction->first();
+
+        $oldDocument = $embeddedTransaction->documents()->withTrashed()->find($data['documentId']);
+        if (! $oldDocument) {
+            return false;
+        }
+
+        $oldDocument->delete();
+
+        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $documentData = $this->prepareDocumentData($data['file'], $data['documentNumber'], $oldDocument->document_type_text, $quoteObject, $data['modelType']);
+
+        $newDocument = $embeddedTransaction->documents()->create(array_merge($documentData, [
+            'is_manual_override' => true,
+            'override_remarks' => $data['remarks'],
+        ]));
+
+        if ($newDocument?->exists) {
+            $documentType = DocumentType::where('code', $newDocument->document_type_code)
+                ->where('quote_type_id', collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType'])))
+                ->first();
+
+            if ($documentType) {
+                WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
+                    ->delay(now()->addSeconds(10))
+                    ->afterCommit();
+            }
+        }
+
+        return true;
     }
 
     public function fetchUploadQuoteDocument($data)
