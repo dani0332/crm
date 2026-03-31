@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
@@ -153,6 +154,9 @@ class DocumentTypeRepository extends BaseRepository
 
         $requiredDocuments = DocumentType::where('quote_type_id', $quoteTypeId)
             ->where('is_required_for_send_policy', 1)
+            ->when($quoteTypeId == QuoteTypeId::Business, function ($query) use ($quote) {
+                return $query->where('business_type_of_insurance_id', $quote->business_type_of_insurance_id);
+            })
             ->required()
             ->active()
             ->pluck('code')
