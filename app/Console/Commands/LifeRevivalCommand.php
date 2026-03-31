@@ -6,21 +6,21 @@ use App\Enums\QuoteTypes;
 use App\Services\Allocation\RetryAllocationService;
 use Illuminate\Console\Command;
 
-class RetryLifeRevivalAllocation extends Command
+class LifeRevivalCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'RetryLifeRevivalAllocation:cron';
+    protected $signature = 'LifeRevival';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This command will retry the life revival allocation';
+    protected $description = 'This command will run the life revival process';
 
     /**
      * Execute the console command.
@@ -33,8 +33,6 @@ class RetryLifeRevivalAllocation extends Command
             return Command::SUCCESS;
         }
 
-        [$startTime, $endTime] = $retryAllocation;
-
-        $retryAllocationService->executeLifeRevivalAllocation();
+        $retryAllocationService->executeLifeRevivalAllocation(); // change to revivalservice (generic for all lob)
     }
 }
