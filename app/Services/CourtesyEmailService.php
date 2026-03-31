@@ -260,7 +260,10 @@ class CourtesyEmailService extends BaseService
                     'Bird webhook did not return Run-Id in response headers; workflow run not recorded',
                     $customer instanceof Customer ? $customer->id : null,
                 );
+
+                return ['message' => 'Bird webhook did not return Run-Id; workflow run not recorded', 'success' => false];
             }
+
             return ['message' => 'Processed workflow successfully', 'success' => true];
 
         } catch (\Exception $e) {
