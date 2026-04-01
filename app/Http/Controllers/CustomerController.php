@@ -232,7 +232,7 @@ class CustomerController extends Controller
         }
         
         if ($user->hasRole([RolesEnum::CorpLineRenewalAdvisor ,RolesEnum::GMRenewalAdvisor,RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor, RolesEnum::EBPAdvisor])) {
-            return $user->id === $advisorId ? true : false;
+            return $user->id == $advisorId ? true : false;
         }
 
         return false;
