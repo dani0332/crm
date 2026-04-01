@@ -5,6 +5,7 @@ namespace App\Services\Allocation;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\LifeQuote;
+use Illuminate\Support\Collection;
 
 class AllocationCreationService
 {
@@ -13,18 +14,22 @@ class AllocationCreationService
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = LifeQuote::whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
-            ->select('uuid', 'dob', 'gender', 'quote_status_id')
+            ->select('uuid','email', 'mobile_no', 'dob', 'gender', 'quote_status_id')
             ->get();
 
         // Step 2: Filter duplicate insured
         $filteredLeads = $this->filterDuplicateInsured($leadsToRevive);
+
+        // Step 3: Different insured with same contact
+        $differentInsuredWithSameContact = $this->filterDifferentInsuredWithSameContact($filteredLeads);
+        echo count($differentInsuredWithSameContact); exit;
     }
 
-    private function filterDuplicateInsured($leads)
+    private function filterDuplicateInsured(Collection $leads): Collection
     {
         // Step 2: Group quotes by dob and gender
-        $grouped = $leads->groupBy(function ($item) {
-            return $item->dob.'_'.$item->gender;
+        $grouped = $leads->groupBy(function ($lead) {
+            return $lead->dob.'_'.$lead->gender;
         });
 
         // Step 3: Exclude group if any quote in the group is PolicyBooked
@@ -53,5 +58,20 @@ class AllocationCreationService
         });
 
         return $filteredLeads;
+    }
+
+    private function filterDifferentInsuredWithSameContact(Collection $leads): Collection
+    {
+        $grouped = $leads->groupBy(function ($lead) {
+            return $lead->email ?: $lead->mobile_no;
+        });
+
+        foreach ($grouped as $group) {
+            if ($group->count() == 24) {
+                echo '<pre>'; print_r($group->toArray()); exit;
+            }
+        }
+        exit;
+        return $grouped;
     }
 }
