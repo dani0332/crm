@@ -1413,36 +1413,46 @@ class QuoteDocumentService extends BaseService
 
     public function updateQuoteJourney($quote): void
     {
-        $quoteType = QuoteTypes::getName($quote->quote_type_id);
-        if ($quoteType === null || ! in_array($quoteType, QuoteTypes::quoteJourneyOnCustomerDocumentUploadTypes(), true)) {
+        try {
+            $quoteType = QuoteTypes::getName($quote->quote_type_id);
+            if ($quoteType === null || ! in_array($quoteType, QuoteTypes::quoteJourneyOnCustomerDocumentUploadTypes(), true)) {
+                return;
+            }
+
+            $requiredDocumentTypes = $this->getQuoteDocumentsToReceive(
+                $quote->quote_type_id,
+                $quote->registration_type ?? null,
+                $quote->vehicle_use ?? null
+            );
+
+            $requiredCodes = $requiredDocumentTypes->pluck('code')->unique()->values()->all();
+            if ($requiredCodes === []) {
+                return;
+            }
+
+            $distinctPresent = (int) $quote->documents()
+                ->whereIn('document_type_code', $requiredCodes)
+                ->selectRaw('COUNT(DISTINCT document_type_code) as journey_distinct_types')
+                ->value('journey_distinct_types');
+
+            LoggerService::info('Updating Quote Journey', [
+                'required_documents' => $distinctPresent !== count($requiredCodes) ? 'not completed' : 'completed',
+            ]);
+
+            if ($distinctPresent !== count($requiredCodes)) {
+                return;
+            }
+
+            app(QuoteJourneyService::class)->advanceAfterRequiredCustomerDocuments($quote->uuid, (int) $quote->quote_type_id);
+        } catch (Throwable $e) {
+            LoggerService::error('QuoteDocumentService - updateQuoteJourney failed', [
+                'quote_uuid' => $quote->uuid ?? null,
+                'quote_type_id' => $quote->quote_type_id ?? null,
+            ], exception: $e);
+
+            // swallow exception to avoid blocking main upload flow (OCR, watermark dispatch)
             return;
         }
-
-        $requiredDocumentTypes = $this->getQuoteDocumentsToReceive(
-            $quote->quote_type_id,
-            $quote->registration_type ?? null,
-            $quote->vehicle_use ?? null
-        );
-
-        $requiredCodes = $requiredDocumentTypes->pluck('code')->unique()->values()->all();
-        if ($requiredCodes === []) {
-            return;
-        }
-
-        $distinctPresent = (int) $quote->documents()
-            ->whereIn('document_type_code', $requiredCodes)
-            ->selectRaw('COUNT(DISTINCT document_type_code) as journey_distinct_types')
-            ->value('journey_distinct_types');
-
-        LoggerService::info('Updating Quote Journey', [
-            'required_documents' => $distinctPresent !== count($requiredCodes) ? 'not completed' : 'completed',
-        ]);
-
-        if ($distinctPresent !== count($requiredCodes)) {
-            return;
-        }
-
-        app(QuoteJourneyService::class)->advanceAfterRequiredCustomerDocuments($quote->uuid, (int) $quote->quote_type_id);
     }
 
 }
