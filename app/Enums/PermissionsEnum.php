@@ -58,6 +58,7 @@ final class PermissionsEnum extends Enum
     public const TransAppCreate = 'transapp-create';
     public const TransAppEdit = 'transapp-edit';
     public const TransAppDelete = 'transapp-delete';
+    public const TRANSAPP_SEARCH = 'transapp-search';
     public const ClaimList = 'claim-list';
     public const ClaimCreate = 'claim-create';
     public const ClaimEdit = 'claim-edit';
@@ -182,6 +183,8 @@ final class PermissionsEnum extends Enum
     public const CAR_LEAD_ALLOCATION_DASHBOARD = 'car-lead-allocation-dashboard';
     public const HEALTH_LEAD_ALLOCATION_DASHBOARD = 'health-lead-allocation-dashboard';
     public const RULE_CONFIG_LIST = 'rule-config-list';
+    public const RULE_CONFIG_CREATE = 'rule-config-create';
+    public const RULE_CONFIG_UPDATE = 'rule-config-update';
     public const QUAD_CONFIG_LIST = 'quad-config-list';
     public const TIER_CONFIG_LIST = 'tier-config-list';
     public const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
