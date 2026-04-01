@@ -90,7 +90,7 @@ final class quoteBusinessTypeCode extends Enum
             quoteBusinessTypeCode::holidayHomes => 34,
             quoteBusinessTypeCode::fidelityGuarantee => 35,
             quoteBusinessTypeCode::goodsInTransit => 36,
-            quoteBusinessTypeCode::politicalViolenceAndTerrorism => 46,
+            quoteBusinessTypeCode::politicalViolenceAndTerrorism => 37,
         };
     }
 }
