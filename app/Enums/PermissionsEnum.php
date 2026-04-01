@@ -58,6 +58,7 @@ final class PermissionsEnum extends Enum
     public const TransAppCreate = 'transapp-create';
     public const TransAppEdit = 'transapp-edit';
     public const TransAppDelete = 'transapp-delete';
+    public const TRANSAPP_SEARCH = 'transapp-search';
     public const ClaimList = 'claim-list';
     public const ClaimCreate = 'claim-create';
     public const ClaimEdit = 'claim-edit';
