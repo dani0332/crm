@@ -11,6 +11,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
@@ -157,6 +158,10 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
+            if ($businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::GroupMedical, 'quoteUID' => $businessQuote->uuid]);
+            }
+
             ExtendCustomerSubscriptionViaSQS::dispatch(
                 $businessQuote->customer,
                 'LEAD_STATUS_UPDATE',
