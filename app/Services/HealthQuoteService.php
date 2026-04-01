@@ -12,6 +12,7 @@ use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -34,6 +35,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
 use App\Models\QuoteType;
@@ -49,6 +51,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -1877,6 +1880,44 @@ class HealthQuoteService extends BaseService
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
             ->orderBy('q.created_at', 'ASC');
+    }
+
+    /**
+     * Whether the user may edit plan despite {@see HealthQuote::$is_quote_locked}
+     * when lead is transaction-approved, main payment is insurer payment, and the user has the permission.
+     *
+     * @param  iterable<int, Payment>|null  $payments  Pre-loaded payments for the quote (e.g. from CRUD show). When null, resolves via {@see HealthQuote::payments()} when $quote is a {@see HealthQuote}.
+     */
+    public function canBypassPlanLock(object $quote, ?iterable $payments = null): bool
+    {
+        $isTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
+        $hasEditPlanPermission = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
+        $mainPayment = $payments?->first();
+        $isInsurerPaymentMethod = $mainPayment && $mainPayment->payment_methods_code === PaymentMethodsEnum::InsurerPayment;
+
+        return $isTransactionApproved && $hasEditPlanPermission && $isInsurerPaymentMethod;
+    }
+
+    /**
+     * Main lead payment: same as {@see Payment::scopeMainLeadPayment} (no send-update log).
+     *
+     * @param  iterable<int, Payment>|null  $payments
+     */
+    private function resolveMainLeadPayment(object $quote, ?iterable $payments): ?Payment
+    {
+        if ($payments !== null) {
+            $collection = $payments instanceof Collection ? $payments : collect($payments);
+
+            $main = $collection->first(fn ($payment) => $payment->send_update_log_id === null);
+
+            return $main instanceof Payment ? $main : null;
+        }
+
+        if ($quote instanceof HealthQuote) {
+            return $quote->payments()->mainLeadPayment()->first();
+        }
+
+        return null;
     }
 
     private function getTransactionApprovedDates($request)
