@@ -15,6 +15,7 @@ enum LoggerFeatureEnum: string
     case CREATE_PAYMENT = 'create-payment';
     case UPDATE_PAYMENT = 'update-payment';
     case DELETE_PARENT_PAYMENT = 'delete-parent-payment';
+    case RESET_MANAGE_PAYMENTS = 'reset-manage-payments';
     case DELETE_SPLIT_PAYMENT = 'delete-split-payment';
     case APPROVE_DECLINE_CHILD_PAYMENT = 'approve-decline-child-payment';
     case APPROVE_PARENT_PAYMENT = 'approve-parent-payment';
