@@ -44,6 +44,7 @@ use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\ResetManagePaymentsRequest;
 use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -908,6 +909,57 @@ class CentralController extends Controller
         $response = app(CentralService::class)->deletePayment($validatedRequest);
 
         return response()->json($response);
+    }
+
+    /**
+     * Reset all payments for a lead and revert status (per-LOB implementation).
+     * Currently supported: Health. Other quote types return 404 until implemented.
+     */
+    public function resetManagePayments(ResetManagePaymentsRequest $request, string $quoteType): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validated();
+
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RESET_MANAGE_PAYMENTS);
+        LoggerService::info('Reset payment process started');
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_request_id']);
+
+        if ($quote === false) {
+            LoggerService::warning('Reset payment process: quote not found');
+
+            abort(404);
+        }
+
+        $quote->load('payments');
+
+        $payments = $quote->payments;
+
+        if (! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
+            LoggerService::warning('Reset payment process: not allowed (canBypassPlanLock)');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to reset payments for this lead.',
+            ], 403);
+        }
+
+        try {
+            app(PaymentService::class)->resetHealthManagePayments($quote, $data['reason']);
+        } catch (\Throwable $th) {
+            LoggerService::error('Reset payment process failed', [], $th);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset payments. Please try again.',
+            ], 500);
+        }
+
+        LoggerService::info('Reset payment process completed successfully');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payments have been reset. You can add new payment records.',
+        ]);
     }
 
     public function checkInsurerReceiptNumber($quoteType, Request $request)
