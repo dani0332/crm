@@ -49,13 +49,13 @@ const UBORelationOptions = computed(() => {
   }));
 });
 
-const uboMembers = ref(props.UBOsDetails);
+// Use props directly so the table updates when Inertia refreshes page props after add/update/delete.
 const computedUboMembers = computed(() => {
-  return (
-    uboMembers &&
-    uboMembers.value &&
-    uboMembers.value.filter(x => !x.is_third_party_payer)
-  );
+  const list = props.UBOsDetails;
+  if (!list || !Array.isArray(list)) {
+    return [];
+  }
+  return list.filter(x => !x.is_third_party_payer);
 });
 
 const isLoading = ref(false);
@@ -128,7 +128,10 @@ const notifyUboResult = (page, successTitle) => {
   const flashError =
     page?.props?.flash?.error ?? usePage().props.flash?.error;
   if (flashError) {
-   
+    notification.error({
+      title: flashError,
+      position: 'top',
+    });
     return;
   }
   notification.success({

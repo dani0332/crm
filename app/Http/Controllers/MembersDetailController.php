@@ -16,6 +16,7 @@ use App\Services\LookupService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,7 +35,7 @@ class MembersDetailController extends Controller
      *
      * @param  mixed  $quoteObject
      */
-    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): ?RedirectResponse
+    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
     {
         if (! $quoteObject instanceof BusinessQuote) {
             return null;
@@ -43,10 +44,30 @@ class MembersDetailController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteObject);
 
         if (isset($lockLeadSectionsDetails['member_details']) && $lockLeadSectionsDetails['member_details'] === true) {
+            if ($this->memberLockResponseShouldBeJson($request)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => self::FLASH_ERROR_MEMBER_DETAILS_LOCKED,
+                ], 403);
+            }
+
             return redirect()->back()->with('error', self::FLASH_ERROR_MEMBER_DETAILS_LOCKED);
         }
 
         return null;
+    }
+
+    /**
+     * AML and other axios callers expect JSON, not an HTML redirect. Inertia visits use {@see \Inertia\Middleware} X-Inertia header and must receive a redirect + flash.
+     */
+    private function memberLockResponseShouldBeJson(Request $request): bool
+    {
+        if ($request->headers->has('X-Inertia')) {
+            return false;
+        }
+
+        return $request->boolean('from_aml_model')
+            || $request->expectsJson();
     }
 
     /**
@@ -199,6 +220,10 @@ class MembersDetailController extends Controller
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id ?? $request->quote_id);
 
         if ($quoteObject) {
+            if ($response = $this->responseIfBusinessQuoteMemberDetailsLocked($request, $quoteObject)) {
+                return $response;
+            }
+
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
