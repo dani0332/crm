@@ -20,6 +20,7 @@ use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -55,7 +56,7 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -77,7 +78,7 @@ class CustomerController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Customer  $carquote
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($uuid)
     {
@@ -93,7 +94,7 @@ class CustomerController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  \App\Customer  $customer
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($uuid)
     {
@@ -107,7 +108,7 @@ class CustomerController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \App\Customer  $customer
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $uuid)
     {
@@ -147,7 +148,7 @@ class CustomerController extends Controller
     /**
      * Store a newly uploaded customer.
      *
-     * @param \Illuminate\Http\Response
+     * @param Response
      */
     public function processCustomerUpload(Request $request)
     {
