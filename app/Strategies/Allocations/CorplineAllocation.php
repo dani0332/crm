@@ -37,6 +37,12 @@ class CorplineAllocation extends BaseAllocation
     private function fetchPoliticalViolenceAdvisor(int $onlineStatus)
     {
         $emails = $this->getAdvisorEmails(ApplicationStorageEnums::POLITICAL_VIOLENCE_ADVISOR_EMAIL);
+        if (empty($emails)) {
+            LoggerService::warning(self::class." - No Political Violence & Terrorism advisor email configured | quote Ref-ID: {$this->lead->uuid}");
+
+            return null;
+        }
+        LoggerService::info(self::class." - Fetching Political Violence & Terrorism advisor | quote Ref-ID: {$this->lead->uuid}", ['emails' => $emails]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CorpLineAdvisor])
             ->whereIn('users.email', $emails)
             ->first();
