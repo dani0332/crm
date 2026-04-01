@@ -230,7 +230,7 @@ class AdnicApiService
                 $docCode = $this->documentHandler->getQuoteDocumentMappingForInsurerDocuments($policyDocumentKey);
 
                 $documentContent = $downloadReponse['data']?->PolicyDocumentInfo?->DocumentContent ?? null;
-                $documentName = $downloadReponse['data']?->PolicyDocumentInfo?->DocumentName ?? null    ;
+                $documentName = $downloadReponse['data']?->PolicyDocumentInfo?->DocumentName ?? null;
 
                 if ($downloadReponse['status'] && $documentContent && $documentName) {
                     $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent, $docCode, $documentName);

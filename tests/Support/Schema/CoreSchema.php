@@ -1284,6 +1284,7 @@ class CoreSchema
                 $table->string('status')->nullable();
                 $table->string('completed_step')->nullable();
                 $table->text('message')->nullable();
+                $table->unsignedInteger('retry_count')->nullable()->default(0);
                 $table->timestamps();
             },
             'policy_issuance_logs' => function (Blueprint $table) {
@@ -1304,6 +1305,12 @@ class CoreSchema
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'policy_issuance' => [
+                'retry_count' => fn (Blueprint $table) => $table->unsignedInteger('retry_count')->nullable()->default(0),
+            ],
         ]);
     }
 
