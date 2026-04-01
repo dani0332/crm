@@ -1614,16 +1614,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => true,
             ],
         );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::POLITICAL_VIOLENCE_ADVISOR_EMAIL],
-            [
-                'value' => '',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => true,
-            ],
-        );
         // endregion
     }
 }
