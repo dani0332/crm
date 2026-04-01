@@ -6,7 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
 afterEach(function () {
-    \Mockery::close();
+    Mockery::close();
 });
 
 it('rejects a png that parses as an image but embeds script-like markup', function () {
@@ -15,7 +15,7 @@ it('rejects a png that parses as an image but embeds script-like markup', functi
     file_put_contents($tmp, $png.'<script>evil</script>');
     $uploaded = new UploadedFile($tmp, 'test.png', 'image/png', null, true);
 
-    $controller = new BorController(\Mockery::mock(BorService::class));
+    $controller = new BorController(Mockery::mock(BorService::class));
     $method = new ReflectionMethod(BorController::class, 'validateBorUploadFileContents');
     $method->setAccessible(true);
 
@@ -33,7 +33,7 @@ it('rejects a png containing php open tag', function () {
     file_put_contents($tmp, $png.'<?php echo 1; ?>');
     $uploaded = new UploadedFile($tmp, 'test.png', 'image/png', null, true);
 
-    $controller = new BorController(\Mockery::mock(BorService::class));
+    $controller = new BorController(Mockery::mock(BorService::class));
     $method = new ReflectionMethod(BorController::class, 'validateBorUploadFileContents');
     $method->setAccessible(true);
 
@@ -51,7 +51,7 @@ it('accepts a minimal valid png without disallowed markup', function () {
     file_put_contents($tmp, $png);
     $uploaded = new UploadedFile($tmp, 'test.png', 'image/png', null, true);
 
-    $controller = new BorController(\Mockery::mock(BorService::class));
+    $controller = new BorController(Mockery::mock(BorService::class));
     $method = new ReflectionMethod(BorController::class, 'validateBorUploadFileContents');
     $method->setAccessible(true);
     $method->invoke($controller, $uploaded);
