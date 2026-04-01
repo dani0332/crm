@@ -227,9 +227,10 @@ class CustomerController extends Controller
             return true;
         }
 
-        if ($user->hasRole([RolesEnum::CorplineRenewalManager ,RolesEnum::CorplineClaimManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMClaimManager, RolesEnum::GMDeputyManager, RolesEnum::GMManager, RolesEnum::GMRenewalManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager])) {
+        if ($user->hasRole([RolesEnum::CorplineRenewalManager, RolesEnum::CorplineClaimManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMClaimManager, RolesEnum::GMDeputyManager, RolesEnum::GMManager, RolesEnum::GMRenewalManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager])) {
             return true;
         }
+        
         if ($user->hasRole([RolesEnum::CorpLineRenewalAdvisor ,RolesEnum::GMRenewalAdvisor,RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor, RolesEnum::EBPAdvisor])) {
             return $user->id === $advisorId ? true : false;
         }
