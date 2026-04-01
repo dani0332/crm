@@ -1888,7 +1888,7 @@ class HealthQuoteService extends BaseService
      *
      * @param  iterable<int, Payment>|null  $payments  Pre-loaded payments for the quote (e.g. from CRUD show). When null, resolves via {@see HealthQuote::payments()} when $quote is a {@see HealthQuote}.
      */
-    public function canBypassPlanLock(object $quote, ?iterable $payments = null): bool
+    public function canBypassPlanLock(object $quote, ?iterable $payments): bool
     {
         $isTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         $hasEditPlanPermission = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
