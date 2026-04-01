@@ -535,11 +535,11 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        auth()->user()->can(PermissionsEnum::TRANSAPP_SEARCH),
                         'Search Transaction',
                         route('home'),
                         fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])

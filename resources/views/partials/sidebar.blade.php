@@ -214,11 +214,11 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan -->
-                @can(PermissionsEnum::TransAppList)
+                @canany([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @can(PermissionsEnum::TransAppCreate)
+                            @can(PermissionsEnum::TRANSAPP_SEARCH)
                             <li><a href="{{ route('home') }}">Search Transaction</a></li>
                             @endcan
                             @can(PermissionsEnum::TransAppCreate)
@@ -253,7 +253,7 @@ use App\Enums\PermissionsEnum;
                         </ul>
                     </li>
                 </ul>
-                @endcan
+                @endcanany
                 @can(PermissionsEnum::CustomersList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Customers <span class="fa fa-chevron-down"></span></a>
