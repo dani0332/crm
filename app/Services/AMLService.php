@@ -65,6 +65,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
+use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLLookupsService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
@@ -830,7 +831,7 @@ class AMLService
             }
 
             try {
-                $getQuoteResponse = app(\App\Services\AML\AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
+                $getQuoteResponse = app(AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('Successfully retrieved and updated quote details from insurer', extra: [

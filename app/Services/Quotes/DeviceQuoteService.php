@@ -118,8 +118,8 @@ class DeviceQuoteService extends BaseQuoteService
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
                     ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
+                        'personal_quotes.*',
+                    ])->selectRaw("
                 IF(
                     EXISTS (
                         SELECT *
