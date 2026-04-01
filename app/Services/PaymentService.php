@@ -174,7 +174,7 @@ class PaymentService extends BaseService
                 'payment_status_id' => PaymentStatusEnum::NEW,
                 'is_quote_locked' => false,
                 'transaction_approved_at' => null,
-                // 'reason_for_reset' => $reason,
+                'reason_for_reset' => $reason,
             ]);
 
             LoggerService::info('Reset manage payments: payments removed and quote reverted to New Lead', [
