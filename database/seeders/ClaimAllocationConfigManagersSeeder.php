@@ -215,7 +215,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'gloria.hurboda@insurancemarket.ae',
         ];
         $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
-        $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::CORPLINE->id(), RolesEnum::CorplineClaimManager);
+        $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::BUSINESS->id(), RolesEnum::CorplineClaimManager);
     }
     private function seedClaimAllocationConfigManagers($managersEmails = [], $quoteTypeId = null, $role = null): void
     {
