@@ -204,7 +204,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             $response['message'] = $executeStepSequence['message'];
             $response['error'] = $executeStepSequence['error'];
 
-            if (str_contains($executeStepSequence['message'], AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)) {
+            $stepMessage = $executeStepSequence['message'] ?? null;
+            if (is_string($stepMessage) && str_contains($stepMessage, AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)) {
                 $response['timeout'] = true;
             }
         } catch (Exception $e) {
