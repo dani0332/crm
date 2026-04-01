@@ -99,7 +99,8 @@ const confirm = async () => {
 <template>
   <x-modal v-model="isOpen" size="md" title="Reset Manage Payments" show-close>
     <p class="text-sm text-gray-600 mb-4">
-      This will remove all payment records for this lead. Enter a reason to confirm.
+      This will remove all payment records for this lead. Enter a reason to
+      confirm.
     </p>
     <x-label class="flex flex-col gap-2 mb-4">
       <span>Reason</span>
@@ -108,9 +109,7 @@ const confirm = async () => {
         class="w-full"
         rows="4"
         placeholder="Enter reason for resetting payments"
-        :error="
-          reasonError ? 'Reason is required (min. 5 characters)' : ''
-        "
+        :error="reasonError ? 'Reason is required (min. 5 characters)' : ''"
       />
     </x-label>
     <template #actions>
@@ -123,12 +122,7 @@ const confirm = async () => {
         >
           Confirm reset
         </x-button>
-        <x-button
-          size="sm"
-          ghost
-          :disabled="processing"
-          @click.prevent="close"
-        >
+        <x-button size="sm" ghost :disabled="processing" @click.prevent="close">
           Cancel
         </x-button>
       </div>
