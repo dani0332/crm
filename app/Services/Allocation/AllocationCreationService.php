@@ -9,12 +9,11 @@ use Illuminate\Support\Collection;
 
 class AllocationCreationService
 {
-    public function executeLifeRevivalAllocation()
+    public function executeLifeRevivalAllocation(): Collection
     {
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = LifeQuote::whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
-            ->select('uuid', 'email', 'mobile_no', 'dob', 'gender', 'quote_status_id')
             ->get();
 
         // Step 2: Filter duplicate insured

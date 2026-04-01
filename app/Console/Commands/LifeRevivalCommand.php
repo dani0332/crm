@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
 use Illuminate\Console\Command;
@@ -43,7 +44,8 @@ class LifeRevivalCommand extends Command
     private function processRevivalLeads($revivalLeads)
     {
         foreach ($revivalLeads as $lead) {
-            
+            LifeRevivalLeadsCreationJob::dispatch($lead);
+            exit;
         }
     }
 }
