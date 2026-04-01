@@ -1,8 +1,8 @@
 <?php
 
-namespace App\helpers;
+namespace App\Services;
 
-class EmailHelper
+class EmailValidationService
 {
     /**
      * Strip invisible Unicode characters and normalise whitespace from an

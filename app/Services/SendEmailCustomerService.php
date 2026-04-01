@@ -13,7 +13,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
-use App\helpers\EmailHelper;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
@@ -314,7 +313,7 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $value = EmailHelper::sanitize($additionalContact->value ?? '');
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
                     if ($value !== null) {
                         $ccAdditional[] = [
                             'email' => $value,
@@ -431,7 +430,7 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $value = EmailHelper::sanitize($additionalContact->value ?? '');
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
                     if ($value !== null) {
                         $ccAdditional[] = [
                             'email' => $value,
