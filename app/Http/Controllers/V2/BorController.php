@@ -80,7 +80,7 @@ class BorController extends Controller
                 'newBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             LoggerService::error('BOR request creation failed', [
                 'error' => $e->getMessage(),
@@ -109,7 +109,7 @@ class BorController extends Controller
                 'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to update BOR request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -203,7 +203,7 @@ class BorController extends Controller
                 'document' => $result['document'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('BOR document upload failed', [
                 'bor_log_id' => $borLogId ?? $request->input('bor_log_id'),
                 'error' => $e->getMessage(),
@@ -246,7 +246,7 @@ class BorController extends Controller
                 'message' => 'BOR PDF generated successfully for viewing',
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to generate BOR PDF for viewing', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -278,7 +278,7 @@ class BorController extends Controller
                 'updatedBorLog' => $result['borLog'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($e->getCode() !== 200) {
                 LoggerService::error('BOR cancellation failed', [
                     'bor_id' => $id,
@@ -312,7 +312,7 @@ class BorController extends Controller
                 'updatedBorLog' => $result['borLog'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('BOR completion failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
