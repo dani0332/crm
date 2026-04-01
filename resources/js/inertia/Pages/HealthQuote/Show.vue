@@ -4258,6 +4258,7 @@ const validateEmirateOfVisa = () => {
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
+      :canBypassPlanLock="canBypassPlanLock"
       :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
