@@ -1,19 +1,20 @@
 <?php
 
-use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\TestSchemaCreator;
+use Tests\TestCase;
 
 /**
- * @var \Tests\TestCase $this
+ * @var TestCase $this
+ *
  * @method \Illuminate\Testing\TestResponse get(string $uri, array $headers = [])
  * @method void actingAs($user, $guard = null)
- * @extends \Tests\TestCase
+ *
+ * @extends TestCase
  */
-
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 });
@@ -28,7 +29,7 @@ test('transapp home is forbidden for user without transapp-search permission', f
 });
 
 test('transapp home is accessible for role with transapp-search permission', function () {
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $user = TestDataSeeder::createUserWithRole(RolesEnum::Engineering);
 
     // seed only the transapp-search permission for the Engineering role
@@ -62,4 +63,3 @@ test('transapp home is accessible when permission is directly assigned to user',
 
     $response->assertStatus(200);
 });
-
