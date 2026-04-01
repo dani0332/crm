@@ -409,6 +409,9 @@ final class ApplicationStorageEnums extends Enum
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
 
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
     // Motor Revival OCB Workflow
     public const MOTOR_REVIVAL_WORKFLOW = 'MOTOR_REVIVAL_WORKFLOW';
 }
