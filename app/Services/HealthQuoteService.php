@@ -1884,40 +1884,27 @@ class HealthQuoteService extends BaseService
 
     /**
      * Whether the user may edit plan despite {@see HealthQuote::$is_quote_locked}
-     * when lead is transaction-approved, main payment is insurer payment, and the user has the permission.
+     * when the quote status allows bypass, main lead payment is insurer payment, and the user has the permission.
      *
      * @param  iterable<int, Payment>|null  $payments  Pre-loaded payments for the quote (e.g. from CRUD show). When null, resolves via {@see HealthQuote::payments()} when $quote is a {@see HealthQuote}.
      */
-    public function canBypassPlanLock(object $quote, ?iterable $payments): bool
+    public function canBypassPlanLock(object $quote, ?iterable $payments = null): bool
     {
-        $isTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
-        $hasEditPlanPermission = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
-        $mainPayment = $payments?->first();
-        $isInsurerPaymentMethod = $mainPayment && $mainPayment->payment_methods_code === PaymentMethodsEnum::InsurerPayment;
+        $planLockBypassQuoteStatusIds = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::ApplicationPending,
+        ];
 
-        return $isTransactionApproved && $hasEditPlanPermission && $isInsurerPaymentMethod;
-    }
+        $hasEligibleQuoteStatusForBypass = in_array($quote->quote_status_id, $planLockBypassQuoteStatusIds, true);
+        $userCanEditPlanAfterTransactionApproval = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
 
-    /**
-     * Main lead payment: same as {@see Payment::scopeMainLeadPayment} (no send-update log).
-     *
-     * @param  iterable<int, Payment>|null  $payments
-     */
-    private function resolveMainLeadPayment(object $quote, ?iterable $payments): ?Payment
-    {
-        if ($payments !== null) {
-            $collection = $payments instanceof Collection ? $payments : collect($payments);
+        $mainPayment = $hasEligibleQuoteStatusForBypass && $userCanEditPlanAfterTransactionApproval
+            ? $payments?->first()
+            : null;
 
-            $main = $collection->first(fn ($payment) => $payment->send_update_log_id === null);
+        $isMainLeadInsurerPayment = $mainPayment && $mainPayment->payment_methods_code === PaymentMethodsEnum::InsurerPayment;
 
-            return $main instanceof Payment ? $main : null;
-        }
-
-        if ($quote instanceof HealthQuote) {
-            return $quote->payments()->mainLeadPayment()->first();
-        }
-
-        return null;
+        return $userCanEditPlanAfterTransactionApproval && $isMainLeadInsurerPayment;
     }
 
     private function getTransactionApprovedDates($request)
