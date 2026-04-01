@@ -12,7 +12,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  quoteUuid: {
+  quoteCode: {
     type: String,
     required: true,
   },
@@ -57,6 +57,7 @@ const confirm = async () => {
     const payload = {
       reason: reason.value,
       quote_request_id: props.quoteRequestId,
+      quote_code: props.quoteCode,
     };
 
     const res = await axios.post(

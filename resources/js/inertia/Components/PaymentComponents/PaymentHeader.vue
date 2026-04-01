@@ -291,7 +291,7 @@ const downloadProformaPayment = async () => {
     <ResetManagePaymentsModal
       v-model="resetManagePaymentsModal"
       :quote-type="quoteType"
-      :quote-uuid="quoteRequest.uuid"
+      :quote-code="quoteRequest.code"
       :quote-request-id="quoteRequest.id"
     />
   </div>
