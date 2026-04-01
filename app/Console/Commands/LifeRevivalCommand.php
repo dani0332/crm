@@ -35,6 +35,15 @@ class LifeRevivalCommand extends Command
             return false;
         }
 
-        $allocationCreationService->executeLifeRevivalAllocation();
+        $revivalLeads = $allocationCreationService->executeLifeRevivalAllocation();
+
+        $this->processRevivalLeads($revivalLeads);
+    }
+
+    private function processRevivalLeads($revivalLeads)
+    {
+        foreach ($revivalLeads as $lead) {
+            
+        }
     }
 }
