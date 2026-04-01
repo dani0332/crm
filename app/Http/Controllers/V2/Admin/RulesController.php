@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
@@ -9,12 +10,23 @@ use App\Models\LeadSource;
 use App\Models\QuoteType;
 use App\Models\Rule;
 use App\Models\RuleType;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('index');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('show');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_CREATE)->only(['create', 'store']);
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_UPDATE)->only(['edit', 'update']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -187,6 +199,9 @@ class RulesController extends Controller
             } else {
                 $rule->ruleDetail()->update([
                     'lead_source_id' => null,
+                    'utm_source' => null,
+                    'utm_campaign' => null,
+                    'utm_medium' => null,
                 ]);
                 $rule->leadSources()->delete();
             }

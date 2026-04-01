@@ -431,6 +431,7 @@ const searchInsuredDetails = customerType => {
     axios
       .get(url)
       .then(res => {
+        // Check if status is true (response is guaranteed to exist when status is true)
         if (res.data.status) {
           clearErrors();
 

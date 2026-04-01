@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Jobs\Middleware\FreshRequest;
 use App\Models\User;
+use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -149,9 +150,18 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             'App\\Exports\\Reports\\EndorsementReportExport',
             'App\\Exports\\Reports\\InstallmentReportExport',
             'App\\Exports\\Reports\\ConversionAsAtReportExport',
+            'App\\Exports\\ClaimsExport',
         ];
 
         if (in_array($this->exportClass, $exportWithRequestParams)) {
+            // Special handling for ClaimsExport which needs ClaimsService as first parameter
+            if ($this->exportClass === 'App\\Exports\\ClaimsExport') {
+                return app($this->exportClass, [
+                    'claimsService' => app(ClaimsService::class),
+                    'requestParams' => $this->requestParams,
+                ]);
+            }
+
             return app($this->exportClass, ['requestParams' => $this->requestParams]);
         }
 
