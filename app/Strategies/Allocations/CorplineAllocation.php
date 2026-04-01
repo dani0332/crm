@@ -2,8 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
+
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\AllocationConfigurer;
