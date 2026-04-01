@@ -14,7 +14,7 @@ class AllocationCreationService
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = LifeQuote::whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
-            ->select('uuid','email', 'mobile_no', 'dob', 'gender', 'quote_status_id')
+            ->select('uuid', 'email', 'mobile_no', 'dob', 'gender', 'quote_status_id')
             ->get();
 
         // Step 2: Filter duplicate insured
@@ -22,17 +22,23 @@ class AllocationCreationService
 
         // Step 3: Different insured with same contact
         $differentInsuredWithSameContact = $this->filterDifferentInsuredWithSameContact($filteredLeads);
-        echo count($differentInsuredWithSameContact); exit;
+
+        // Step 4: Just exclude all leads with policybooked status
+        $filteredLeads = $differentInsuredWithSameContact->filter(function ($lead) {
+            return $lead->quote_status_id != QuoteStatusEnum::PolicyBooked;
+        });
+
+        return $filteredLeads;
     }
 
     private function filterDuplicateInsured(Collection $leads): Collection
     {
-        // Step 2: Group quotes by dob and gender
+        // Step 1: Group quotes by dob and gender
         $grouped = $leads->groupBy(function ($lead) {
             return $lead->dob.'_'.$lead->gender;
         });
 
-        // Step 3: Exclude group if any quote in the group is PolicyBooked
+        // Step 2: Exclude group if any quote in the group is PolicyBooked
         $filteredLeads = collect();
         foreach ($grouped as $group) {
             // Add since its not a duplicate
@@ -53,25 +59,50 @@ class AllocationCreationService
         }
 
         // Exclude policybooked individual leads (since above we filetered only group)
-        $filteredLeads = $filteredLeads->filter(function ($item) {
+        /*$filteredLeads = $filteredLeads->filter(function ($item) {
             return $item->quote_status_id != QuoteStatusEnum::PolicyBooked;
-        });
+        });*/
 
         return $filteredLeads;
     }
 
     private function filterDifferentInsuredWithSameContact(Collection $leads): Collection
     {
+        $filteredLeads = collect();
+        // Group leads with wither email or monile_no same
         $grouped = $leads->groupBy(function ($lead) {
             return $lead->email ?: $lead->mobile_no;
         });
 
         foreach ($grouped as $group) {
-            if ($group->count() == 24) {
-                echo '<pre>'; print_r($group->toArray()); exit;
+            // Case 1: If single lead in group, just add
+            if ($group->count() == 1) {
+                $filteredLeads = $filteredLeads->merge($group);
+
+                continue;
             }
+
+            // Case 2: Multi-lead group
+            // Check if any lead is PolicyBooked
+            $groupWithPolicyBooked = $group->contains(function ($lead) {
+                return $lead->quote_status_id == QuoteStatusEnum::PolicyBooked;
+            });
+
+            if ($groupWithPolicyBooked) {
+                // Merge only the leads with NOT PolicyBooked status
+                $nonPolicyBookedLeads = $group->filter(function ($lead) {
+                    return $lead->quote_status_id != QuoteStatusEnum::PolicyBooked;
+                });
+
+                $filteredLeads = $filteredLeads->merge($nonPolicyBookedLeads);
+
+                continue;
+            }
+
+            // Case 3: Multi-lead group with No PolicyBooked
+            $filteredLeads = $filteredLeads->merge($group);
         }
-        exit;
-        return $grouped;
+
+        return $filteredLeads;
     }
 }
