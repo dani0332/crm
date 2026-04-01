@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 beforeEach(function () {
     $this->controller = new MembersDetailController;
-    $this->lockMethod = new \ReflectionMethod($this->controller, 'responseIfBusinessQuoteMemberDetailsLocked');
+    $this->lockMethod = new ReflectionMethod($this->controller, 'responseIfBusinessQuoteMemberDetailsLocked');
     $this->lockMethod->setAccessible(true);
 });
 
