@@ -125,13 +125,8 @@ function onEditUBO(data) {
 }
 
 const notifyUboResult = (page, successTitle) => {
-  const flashError =
-    page?.props?.flash?.error ?? usePage().props.flash?.error;
+  const flashError = page?.props?.flash?.error ?? usePage().props.flash?.error;
   if (flashError) {
-    notification.error({
-      title: flashError,
-      position: 'top',
-    });
     return;
   }
   notification.success({
@@ -152,10 +147,7 @@ const onUBOSubmit = isValid => {
       preserveScroll: true,
       onSuccess: page => {
         notifyUboResult(page, 'UBO Updated');
-        if (
-          !page?.props?.flash?.error &&
-          !usePage().props.flash?.error
-        ) {
+        if (!page?.props?.flash?.error && !usePage().props.flash?.error) {
           UBOForm.reset();
         }
       },
