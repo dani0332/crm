@@ -36,9 +36,7 @@ const props = defineProps({
 const resetManagePaymentsModal = ref(false);
 
 const showResetManagePayments = computed(
-  () =>
-    props.canBypassPlanLock &&
-    props.payments?.length > 0,
+  () => props.canBypassPlanLock && props.payments?.length > 0,
 );
 
 const openResetManagePaymentsModal = () => {
@@ -246,10 +244,7 @@ const downloadProformaPayment = async () => {
                 payments[0].total_amount + payments[0].discount_value
               "
             />
-            <div
-              v-if="readOnlyMode.isDisable"
-              class="flex items-center gap-2"
-            >
+            <div v-if="readOnlyMode.isDisable" class="flex items-center gap-2">
               <x-button
                 v-if="showResetManagePayments"
                 size="sm"
