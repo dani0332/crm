@@ -5,12 +5,17 @@ namespace App\Services;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\V2\CentralController;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
+use App\Models\PaymentStatusLog;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService extends BaseService
 {
@@ -149,5 +154,45 @@ class PaymentService extends BaseService
                 'message' => 'Prepayment posting failed, please try again later.',
             ];
         }
+    }
+
+    /**
+     * Deletes all payments for the Health quote (splits, logs, parent/child rows) and reverts lead to New Lead.
+     * Call only after {@see HealthQuoteService::canBypassPlanLock()} is true for the same quote and payments.
+     */
+    public function resetHealthManagePayments(HealthQuote $quote, string $reason): void
+    {
+        DB::transaction(function () use ($quote, $reason) {
+            $paymentCodes = $quote->payments()->pluck('code')->all();
+
+            foreach ($paymentCodes as $paymentCode) {
+                $this->deleteHealthPaymentCascade($paymentCode);
+            }
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::NewLead,
+                'payment_status_id' => PaymentStatusEnum::NEW,
+                'is_quote_locked' => false,
+                'transaction_approved_at' => null,
+                // 'reason_for_reset' => $reason,
+            ]);
+
+            LoggerService::info('Reset manage payments: payments removed and quote reverted to New Lead', [
+                'quote_code' => $quote->code,
+                'reason' => $reason,
+            ]);
+        });
+    }
+
+    private function deleteHealthPaymentCascade(string $paymentCode): void
+    {
+        $paymentSplits = PaymentSplits::where('code', $paymentCode)->get();
+        foreach ($paymentSplits as $paymentSplit) {
+            $paymentSplit->documents()->forceDelete();
+        }
+        PaymentSplits::where('code', $paymentCode)->delete();
+        PaymentStatusHistory::where('payment_code', $paymentCode)->delete();
+        PaymentStatusLog::where('payment_code', $paymentCode)->delete();
+        Payment::where('code', $paymentCode)->delete();
     }
 }
