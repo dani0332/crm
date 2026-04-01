@@ -124,19 +124,37 @@ function onEditUBO(data) {
   UBOForm.quote_type = props.quote_type;
 }
 
+const notifyUboResult = (page, successTitle) => {
+  const flashError =
+    page?.props?.flash?.error ?? usePage().props.flash?.error;
+  if (flashError) {
+   
+    return;
+  }
+  notification.success({
+    title: successTitle,
+    position: 'top',
+  });
+};
+
 const onUBOSubmit = isValid => {
   if (!isValid) return;
   isLoading.value = true;
 
   if (UBOActionEdit.value) {
-    UBOForm.put(`/members/${UBOForm.id}`, {
+    UBOForm.transform(data => ({
+      ...data,
+      isInertia: true,
+    })).put(`/members/${UBOForm.id}`, {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'UBO Updated',
-          position: 'top',
-        });
-        UBOForm.reset();
+      onSuccess: page => {
+        notifyUboResult(page, 'UBO Updated');
+        if (
+          !page?.props?.flash?.error &&
+          !usePage().props.flash?.error
+        ) {
+          UBOForm.reset();
+        }
       },
       onFinish: () => {
         modals.UBO = false;
@@ -144,13 +162,13 @@ const onUBOSubmit = isValid => {
       },
     });
   } else {
-    UBOForm.post(`/members`, {
+    UBOForm.transform(data => ({
+      ...data,
+      isInertia: true,
+    })).post(`/members`, {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'UBO Added',
-          position: 'top',
-        });
+      onSuccess: page => {
+        notifyUboResult(page, 'UBO Added');
       },
       onFinish: () => {
         modals.UBO = false;
@@ -174,11 +192,8 @@ const UBODeleteConfirmed = () => {
     `/members/${props.quote.customer_type}-${props.quote_type}-${confirmDeleteData.UBO}`,
     {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'UBO Deleted',
-          position: 'top',
-        });
+      onSuccess: page => {
+        notifyUboResult(page, 'UBO Deleted');
       },
       onFinish: () => {
         modals.UBOConfirm = false;

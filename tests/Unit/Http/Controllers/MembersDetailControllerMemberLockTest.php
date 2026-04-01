@@ -6,7 +6,6 @@ use App\Http\Controllers\MembersDetailController;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use App\Services\CentralService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -49,7 +48,7 @@ test('it does not block business quote when member details are not locked (norma
     expect($result)->toBeNull();
 });
 
-test('it returns 403 json when business quote member details are locked (e.g. policy booked) and request is not inertia', function () {
+test('it redirects back with policy booked flash when business quote member details are locked', function () {
     $this->mock(CentralService::class, function ($mock) {
         $mock->shouldReceive('lockLeadSectionsDetails')
             ->once()
@@ -68,36 +67,6 @@ test('it returns 403 json when business quote member details are locked (e.g. po
 
     $result = $this->lockMethod->invoke($this->controller, $request, $quote);
 
-    expect($result)->toBeInstanceOf(JsonResponse::class)
-        ->and($result->getStatusCode())->toBe(403)
-        ->and($result->getData(true))->toMatchArray([
-            'error' => [
-                'message' => 'You are not authorized to add member details for this quote.',
-            ],
-        ]);
-});
-
-test('it redirects back with error when business quote member details are locked and inertia request', function () {
-    $this->mock(CentralService::class, function ($mock) {
-        $mock->shouldReceive('lockLeadSectionsDetails')
-            ->once()
-            ->andReturn([
-                'member_details' => true,
-                'plan_selection' => true,
-                'plan_details' => false,
-                'lead_status' => false,
-                'lead_details' => false,
-                'manage_payment' => false,
-            ]);
-    });
-
-    $request = Request::create('/', 'POST', [], [], [], [], json_encode([]));
-    $request->merge(['isInertia' => true]);
-
-    $quote = Mockery::mock(BusinessQuote::class);
-
-    $result = $this->lockMethod->invoke($this->controller, $request, $quote);
-
     expect($result)->toBeInstanceOf(RedirectResponse::class)
-        ->and(session('error'))->toBe('You are not authorized to add member details for this quote.');
+        ->and(session('error'))->toBe(MembersDetailController::FLASH_ERROR_MEMBER_DETAILS_LOCKED);
 });

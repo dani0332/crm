@@ -16,7 +16,6 @@ use App\Services\LookupService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -25,11 +24,16 @@ class MembersDetailController extends Controller
     use GenericQueriesAllLobs;
 
     /**
+     * Flash message when member/UBO changes are blocked (e.g. policy booked).
+     */
+    public const FLASH_ERROR_MEMBER_DETAILS_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to \'Send Update\', select \'Add Update\', and choose \'Endorsement Financial\'';
+
+    /**
      * When member details are locked for a business quote, block add/update/delete of members/UBOs.
      *
      * @param  mixed  $quoteObject
      */
-    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
+    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): ?RedirectResponse
     {
         if (! $quoteObject instanceof BusinessQuote) {
             return null;
@@ -38,11 +42,7 @@ class MembersDetailController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteObject);
 
         if (isset($lockLeadSectionsDetails['member_details']) && $lockLeadSectionsDetails['member_details'] === true) {
-            if (isset($request->isInertia) && $request->isInertia) {
-                return redirect()->back()->with('error', 'You are not authorized to add member details for this quote.');
-            }
-
-            return response()->json(['error' => ['message' => 'You are not authorized to add member details for this quote.']], 403);
+            return redirect()->back()->with('error', self::FLASH_ERROR_MEMBER_DETAILS_LOCKED);
         }
 
         return null;
