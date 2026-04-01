@@ -919,7 +919,7 @@ class CentralController extends Controller
     {
         $data = $request->validated();
 
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::RESET_MANAGE_PAYMENTS);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RESET_MANAGE_PAYMENTS, $data['quote_code']);
         LoggerService::info('Reset payment process started');
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_request_id']);

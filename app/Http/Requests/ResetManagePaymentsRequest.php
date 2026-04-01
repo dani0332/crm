@@ -25,6 +25,7 @@ class ResetManagePaymentsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'quote_code' => ['required', 'string'],
             'quote_request_id' => ['required', 'integer'],
             'reason' => ['required', 'string', 'min:5', 'max:200'],
         ];
