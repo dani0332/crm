@@ -5,7 +5,9 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Validates reset-manage-payments requests. Rules are extended per quote type as LOBs are enabled.
+ * Validates reset-manage-payments requests.
+ * Pass uuid and/or quote_request_id (at least one); Health rows live in health_quote_request.
+ * For other LOBs, extend rules when implemented; the controller resolves models via getQuoteObject().
  */
 class ResetManagePaymentsRequest extends FormRequest
 {
@@ -23,7 +25,7 @@ class ResetManagePaymentsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'uuid' => ['required', 'string', 'exists:health_quote_request,uuid'],
+            'quote_request_id' => ['required', 'integer'],
             'reason' => ['required', 'string', 'min:5', 'max:200'],
         ];
     }
