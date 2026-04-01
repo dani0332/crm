@@ -7,17 +7,46 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\MemberDetailRequest;
+use App\Models\BusinessQuote;
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
+use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class MembersDetailController extends Controller
 {
     use GenericQueriesAllLobs;
+
+    /**
+     * When member details are locked for a business quote, block add/update/delete of members/UBOs.
+     *
+     * @param  mixed  $quoteObject
+     */
+    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
+    {
+        if (! $quoteObject instanceof BusinessQuote) {
+            return null;
+        }
+
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteObject);
+
+        if (isset($lockLeadSectionsDetails['member_details']) && $lockLeadSectionsDetails['member_details'] === true) {
+            if (isset($request->isInertia) && $request->isInertia) {
+                return redirect()->back()->with('error', 'You are not authorized to add member details for this quote.');
+            }
+
+            return response()->json(['error' => ['message' => 'You are not authorized to add member details for this quote.']], 403);
+        }
+
+        return null;
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -30,6 +59,10 @@ class MembersDetailController extends Controller
         $quoteMemberDetails = $request->validated();
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
         if ($quoteObject) {
+            if ($response = $this->responseIfBusinessQuoteMemberDetailsLocked($request, $quoteObject)) {
+                return $response;
+            }
+
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
@@ -113,6 +146,10 @@ class MembersDetailController extends Controller
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
 
         if ($quoteObject) {
+            if ($response = $this->responseIfBusinessQuoteMemberDetailsLocked($request, $quoteObject)) {
+                return $response;
+            }
+
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
@@ -213,11 +250,16 @@ class MembersDetailController extends Controller
         $explode = explode('-', $id);
         $memberDetails = CustomerMembers::findOrFail($explode[2] ?? '');
 
+        $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
+
+        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject))) {
+            return $response;
+        }
+
         if (strtolower($explode[1] ?? '') == strtolower(quoteTypeCode::Health) && ($explode[0] ?? '') == CustomerTypeEnum::Individual) {
             HealthQuote::find($memberDetails->quote_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
         }
 
-        $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
         $quoteObject->updated_at = Carbon::now();
         $quoteObject->save();
 
