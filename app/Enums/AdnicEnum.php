@@ -40,4 +40,5 @@ class AdnicEnum
     public const EMIRATES_ID_CODE = 3;
     public const INSURED_EMIRATES_ID_APPLICATION_TEXT = 'EID Application Form';
     public const INSURED_EMIRATES_ID_APPLICATION_CODE = 2;
+    public const POLICY_CONVERSION_ALREADY_IN_PROGRESS = 'The Policy Conversion is already in Progress';
 }

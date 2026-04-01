@@ -240,7 +240,11 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
         $response = $automation->executeSteps($this->process);
 
-        if (! $response['status']) {
+        if (isset($response['timeout']) && $response['timeout']) {
+            $this->process->update([
+                'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+            ]);
+        } elseif (! $response['status']) {
             $errorMessage = $response['error'] ?? 'Unknown error';
 
             LoggerService::info('Automation execution failed', [

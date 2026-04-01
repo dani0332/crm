@@ -10,6 +10,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\PolicyIssuanceTimeoutRetryJob;
+use App\Models\PolicyIssuance;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -81,6 +83,44 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
         return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE);
+    }
+
+    /**
+     * Minutes to wait after the last policy issuance record update before dispatching a retry for TIMEOUT status.
+     */
+    public function getPolicyIssuanceTimeoutRetryCooldownMinutes(): int
+    {
+        return (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES);
+    }
+
+    public function getAllowRetryForTimeout(): int
+    {
+        return (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT);
+    }
+
+    /**
+     * When a policy issuance enters TIMEOUT, schedule a delayed job to reset it to PENDING for automation retry.
+     * Delay and max retries come from application storage; the job re-validates flags before updating.
+     */
+    public function handleTimeoutStatusUpdate(PolicyIssuance $policyIssuance): void
+    {
+        LoggerService::info('ADNIC timeout status observed', [
+            'policy_issuance_id' => $policyIssuance->id,
+            'status' => $policyIssuance->status,
+        ]);
+
+        if (! $this->isPolicyIssuanceAutomationRetryEnabledForTimeout()) {
+            LoggerService::info('ADNIC timeout retry not scheduled: retry automation disabled', [
+                'policy_issuance_id' => $policyIssuance->id,
+            ]);
+
+            return;
+        }
+
+        $delayMinutes = max(0, $this->getPolicyIssuanceTimeoutRetryCooldownMinutes());
+
+        PolicyIssuanceTimeoutRetryJob::dispatch($policyIssuance->id)
+            ->delay(now()->addMinutes($delayMinutes));
     }
 
     /**
@@ -163,6 +203,10 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             $response['status'] = $executeStepSequence['status'];
             $response['message'] = $executeStepSequence['message'];
             $response['error'] = $executeStepSequence['error'];
+
+            if (str_contains($executeStepSequence['message'], AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)) {
+                $response['timeout'] = true;
+            }
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
             LoggerService::error('Exception occurred during execution', extra: [
