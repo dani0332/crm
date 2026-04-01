@@ -15,7 +15,7 @@ class CorplineAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
-        if ($this->lead->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::POLITICAL_VIOLENCE_AND_TERRORISM_INSURANCE) {
+        if ($this->lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::POLITICAL_VIOLENCE_AND_TERRORISM_INSURANCE) {
             return $this->fetchPoliticalViolenceAdvisor($onlineStatus);
         }
 
