@@ -67,7 +67,9 @@ class BusinessQuoteObserver
                     break;
             }
 
-            if (! $businessQuote->isSuppressIntroEmail() && $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
+            $isPoliticalViolence = $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::POLITICAL_VIOLENCE_AND_TERRORISM_INSURANCE;
+
+            if (! $businessQuote->isSuppressIntroEmail() && $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance) && ! $isPoliticalViolence) {
                 LoggerService::info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} ");
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  ");
 

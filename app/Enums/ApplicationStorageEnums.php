@@ -411,4 +411,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
+    // Political Violence & Terrorism Insurance single advisor email
+    public const POLITICAL_VIOLENCE_ADVISOR_EMAIL = 'POLITICAL_VIOLENCE_ADVISOR_EMAIL';
 }
