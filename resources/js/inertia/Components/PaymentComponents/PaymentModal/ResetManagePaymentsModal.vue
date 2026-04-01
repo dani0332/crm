@@ -16,6 +16,11 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  /** Primary key on the quote request row; optional but preferred for lookup (numeric id for getQuoteObject). */
+  quoteRequestId: {
+    type: Number,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -60,12 +65,17 @@ const confirm = async () => {
   processing.value = true;
 
   try {
+    const payload = {
+      uuid: props.quoteUuid,
+      reason: trimmed,
+    };
+    if (props.quoteRequestId != null) {
+      payload.quote_request_id = props.quoteRequestId;
+    }
+
     const res = await axios.post(
       `/payments/${props.quoteType}/reset-manage-payments`,
-      {
-        uuid: props.quoteUuid,
-        reason: trimmed,
-      },
+      payload,
     );
 
     processing.value = false;
