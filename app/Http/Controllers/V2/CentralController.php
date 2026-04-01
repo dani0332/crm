@@ -927,7 +927,10 @@ class CentralController extends Controller
         if ($quote === false) {
             LoggerService::warning('Reset payment process: quote not found');
 
-            abort(404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Quote not found.',
+            ], 404);
         }
 
         $quote->load('payments');
