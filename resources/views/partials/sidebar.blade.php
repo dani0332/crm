@@ -230,7 +230,9 @@ use App\Enums\PermissionsEnum;
                             <li class="sub_menu"><a href="{{ route('cancel_view') }}">Cancel Transaction
                                     (without Re-Issue)</a></li>
                             @endcan
+                            @can(PermissionsEnum::TransAppList)
                             <li><a href="{{ route('transaction.index') }}">Transaction List</a></li>
+                            @endcan
 
                             @can(PermissionsEnum::CRMAdmin)
                             <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
