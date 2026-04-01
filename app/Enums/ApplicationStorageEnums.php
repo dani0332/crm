@@ -411,6 +411,4 @@ final class ApplicationStorageEnums extends Enum
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
-
-    
 }
