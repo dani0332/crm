@@ -215,6 +215,7 @@ class CarEmailService extends BaseService
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
                 'isRenewal' => ($plan->isRenewal ?? false),
+                'tags' => $plan->tags ?? null,
             ];
         }
 

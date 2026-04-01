@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'basicAuth' => \App\Http\Middleware\BasicAuth::class,
         'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
         'check_lead_report_access' => \App\Http\Middleware\CheckReportPermission::class,
+        'claims_module_enabled' => \App\Http\Middleware\ClaimsModuleEnabled::class,
         'readonly_db' => SetReadDbConnection::class,
     ];
 }

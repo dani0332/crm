@@ -20,6 +20,7 @@ use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
+use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -33,6 +34,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
@@ -498,7 +500,10 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-
+    public function assignClaim(ClaimAssignmentRequest $request)
+    {
+        return $this->apiService->processClaimAssignment($request);
+    }
     /**
      * Export email status logs as Excel file for a specific quote
      *
@@ -552,6 +557,11 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 
     public function missingDocsReminder($quoteUuid)

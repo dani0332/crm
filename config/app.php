@@ -1,14 +1,18 @@
 <?php
 
 use App\Facades\Awnic;
+use App\Facades\CustomerPortalApiFacade;
+use App\Facades\InstantWriterAIFacade;
 use App\Facades\PostMark;
 use App\helpers\LookUpModelHelper;
 use App\Providers\AppServiceProvider;
 use App\Providers\AwnicServiceProvider;
 use App\Providers\CacheManagerServiceProvider;
+use App\Providers\NgiServiceProvider;
+use App\Providers\CustomerPortalApiProvider;
 use App\Providers\EventServiceProvider;
 use App\Providers\HorizonServiceProvider;
-use App\Providers\NgiServiceProvider;
+use App\Providers\InstantWriterAIAPIServiceProvider;
 use App\Providers\PostMarkServiceProvider;
 use App\Providers\RepositoryServiceProvider;
 use App\Providers\RouteServiceProvider;
@@ -246,6 +250,8 @@ return [
         SocialiteServiceProvider::class,
         RepositoryServiceProvider::class,
         PostMarkServiceProvider::class,
+        CustomerPortalApiProvider::class,
+        InstantWriterAIAPIServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -328,6 +334,8 @@ return [
         'CapiService' => CapiService::class,
         'KyoService' => KyoService::class,
         'PostMark' => PostMark::class,
+        'CustomerPortalApi' => CustomerPortalApiFacade::class,
+        'InstantWriterAI' => InstantWriterAIFacade::class,
     ],
 
 ];

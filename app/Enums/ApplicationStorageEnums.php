@@ -291,6 +291,24 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
+
+    /** Comma-separated BCC for Bird claim Google review email (non-health / default workflow) */
+    public const CLAIM_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for Bird claim health & group-medical Google review email workflow */
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for motor & general (non-health, non-life) claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL';
+
+    /** Comma-separated BCC for health & group-medical claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH';
+
+    /** Comma-separated BCC for life claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE';
+
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
     public const CPA_AUSTRALIA_SAVINGS_BCC_EMAILS = 'CPA_AUSTRALIA_SAVINGS_BCC_EMAILS';
@@ -357,6 +375,9 @@ final class ApplicationStorageEnums extends Enum
     public const IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL = 'IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL';
     public const IMCRM_DOC_UPLOAD_FAILURE_EMAIL = 'IMCRM_DOC_UPLOAD_FAILURE_EMAIL';
     public const IMCRM_BOOK_POLICY_FAILURE_EMAIL = 'IMCRM_BOOK_POLICY_FAILURE_EMAIL';
+    // Claim Intro Email
+    public const CLAIM_INTRO_EMAIL_SWITCH = 'CLAIM_INTRO_EMAIL_SWITCH';
+    public const CLAIM_INTRO_EMAIL_WORKFLOW = 'CLAIM_INTRO_EMAIL_WORKFLOW';
 
     /* Cyber OCB */
     public const BIRD_CYBER_OCB_INTRO_EMAIL = 'BIRD_CYBER_OCB_INTRO_EMAIL';
@@ -407,4 +428,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
 }

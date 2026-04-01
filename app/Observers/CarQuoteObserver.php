@@ -17,6 +17,7 @@ use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\EP\RetargetEpReminderJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
@@ -26,7 +27,6 @@ use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
-use App\Services\EmbeddedTransactionService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -144,21 +144,7 @@ class CarQuoteObserver
                 ]);
             }
 
-            $embeddedTransactionService = app(EmbeddedTransactionService::class);
-            if ($embeddedTransactionService->isRetargetingEpReminderEnabled()) {
-                LoggerService::info('CarQuoteObserver - reached inside retarget ep reminder check', [
-                    'uuid' => $lead->uuid,
-                    'dirty' => $dirty,
-                ]);
-                try {
-                    $response = $embeddedTransactionService->retargetEpReminder($lead, QuoteTypeId::Car);
-                    LoggerService::info('CarQuoteObserver - retarget ep reminder triggered', ['uuid' => $lead->uuid, 'response' => $response]);
-                } catch (Exception $e) {
-                    LoggerService::error('CarQuoteObserver - retarget ep reminder failed', [
-                        'uuid' => $lead->uuid,
-                    ], exception: $e);
-                }
-            }
+            RetargetEpReminderJob::dispatch($lead->uuid, QuoteTypeId::Car);
 
             try {
                 app(BranchAssignmentService::class)->saveBranchOverride($lead, QuoteTypeId::Car);

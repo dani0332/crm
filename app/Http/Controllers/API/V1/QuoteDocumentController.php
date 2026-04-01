@@ -51,11 +51,12 @@ class QuoteDocumentController extends Controller
      */
     public function getQuoteDocumentsToReceive(Request $request, $quoteType, ActivitiesService $activitiesService)
     {
+        $documentTypeCategory = $request->category;
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
         $registrationType = $request->input('registration_type');
         $vehicleUse = $request->input('vehicle_use');
 
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse, $documentTypeCategory);
 
         return DocumentTypeResource::collection($documentTypes);
     }
@@ -132,5 +133,19 @@ class QuoteDocumentController extends Controller
         $result = $metLifeApiService->handleDocumentUpload($validatedData, $quote);
 
         return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     *
+     * @return JsonResponse
+     */
+    public function getClaimDocuments()
+    {
+        $data = $this->quoteDocumentService->getClaimDocuments();
+
+        return response()->json([
+            'data' => $data,
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
@@ -29,15 +30,18 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(private BaseService $baseService)
+    {
+        $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
+    }
+
     public function loadAuditableComponent(Request $request)
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;
 
         if ($request->jsonData) {
-            $service = app()->make(BaseService::class);
-
-            return response()->json($service->audits($auditableId, $auditableType));
+            return response()->json($this->baseService->audits($auditableId, $auditableType));
         }
 
         return view('auditable', compact('auditableId', 'auditableType'));
@@ -90,7 +94,7 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::CYBER->value) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::DEVICE->value)) {
+        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::TRAVEL->value && $quoteType !== QuoteTypes::CYBER->value && $quoteType !== QuoteTypes::DEVICE->value)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',

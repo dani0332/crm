@@ -871,6 +871,25 @@ export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
   return createdDate >= cutoffDate;
 };
 
+export const formattedDateYmd = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'YYYY-MM-DD').value;
+};
+
+export const formattedDateYmdWithTime = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'YYYY-MM-DD HH:mm:ss').value;
+};
+export const formattedDateDmy = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'DD-MM-YYYY').value;
+};
+
+export const formattedDateDmyWithTime = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'DD-MM-YYYY HH:mm:ss').value;
+};
+
 /**
  * Format date/datetime string to DD-MM-YYYY HH:mm:ss format
  * Handles custom formats like "02-Jul-2025 01:09pm" from SavingsQuote

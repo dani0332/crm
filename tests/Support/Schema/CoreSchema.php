@@ -315,6 +315,48 @@ class CoreSchema
                 $table->string('insurer_aml_status')->nullable();
                 $table->timestamps();
             },
+            'personal_quote_details' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->unsignedBigInteger('previous_advisor_id')->nullable();
+                $table->unsignedBigInteger('pa_id')->nullable();
+                $table->string('reviver_name', 100)->nullable();
+                $table->dateTime('advisor_assigned_date')->nullable();
+                $table->unsignedBigInteger('advisor_assigned_by_id')->nullable();
+                $table->dateTime('next_followup_date')->nullable();
+                $table->unsignedBigInteger('lost_reason_id')->nullable();
+                $table->string('transapp_code')->nullable();
+                $table->string('additional_notes', 500)->nullable();
+                $table->string('utm_source', 256)->nullable();
+                $table->string('utm_medium', 256)->nullable();
+                $table->string('utm_campaign', 256)->nullable();
+                $table->string('insly_id', 50)->nullable();
+                $table->string('risk_score_override', 255)->nullable();
+                $table->string('risk_score_override_by', 255)->nullable();
+                $table->dateTime('risk_score_override_date')->nullable();
+                $table->string('insly_advisor_name', 50)->nullable();
+                $table->dateTime('chat_initiated_at')->nullable();
+                $table->dateTime('temp_advisor_assigned_date')->nullable();
+                $table->string('insurer_quote_email', 100)->nullable();
+                $table->boolean('is_deleted')->default(0);
+                $table->string('membership_code', 50)->nullable();
+                $table->boolean('has_duplicate_lead')->default(0);
+                $table->string('existing_record_uuid', 50)->nullable();
+                $table->string('utm_id', 256)->nullable();
+                $table->string('utm_term', 256)->nullable();
+                $table->string('utm_content', 256)->nullable();
+                $table->string('building_and_flat_number', 255)->nullable();
+                $table->timestamps();
+                $table->unique('personal_quote_id');
+            },
+            'quote_journey' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('text');
+                $table->string('status');
+                $table->timestamps();
+            },
             'life_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');
@@ -474,6 +516,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_quote_id')->nullable();
@@ -1136,6 +1179,13 @@ class CoreSchema
                 $table->string('registration_type')->nullable();
                 $table->string('vehicle_use')->nullable();
                 $table->integer('sort_order')->nullable();
+                $table->string('accepted_files')->nullable();
+                $table->unsignedInteger('max_size')->nullable();
+                $table->unsignedInteger('max_files')->nullable();
+                $table->string('category')->nullable();
+                $table->boolean('is_required')->default(0);
+                $table->boolean('is_required_for_send_policy')->default(0);
+                $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
                 $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
