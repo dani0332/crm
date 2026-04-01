@@ -50,28 +50,14 @@ watch(
 );
 
 const confirm = async () => {
-  const trimmed = reason.value?.trim() ?? '';
-  if (trimmed.length < 5) {
-    reasonError.value = true;
-    notification.error({
-      title: 'Please enter a reason (at least 5 characters).',
-      position: 'top',
-    });
-
-    return;
-  }
-
   reasonError.value = false;
   processing.value = true;
 
   try {
     const payload = {
-      uuid: props.quoteUuid,
-      reason: trimmed,
+      reason: reason.value,
+      quote_request_id: props.quoteRequestId,
     };
-    if (props.quoteRequestId != null) {
-      payload.quote_request_id = props.quoteRequestId;
-    }
 
     const res = await axios.post(
       `/payments/${props.quoteType}/reset-manage-payments`,
