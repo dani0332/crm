@@ -336,7 +336,8 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->addIf(
                         // CLAIM_ALLOCATION_DASHBOARD
-                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD),
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)
+                            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true),
                         'Claims',
                         route('claim-allocation-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
@@ -378,7 +379,8 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)) {
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)
+            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true)) {
             $nav = $nav->add('Services', '', function (Section $section) {
                 $section
                     ->addIf(

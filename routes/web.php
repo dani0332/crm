@@ -337,7 +337,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Claims Management Routes
-    Route::group(['prefix' => 'claim', 'as' => 'claims.'], function () {
+    Route::group(['prefix' => 'claim', 'as' => 'claims.', 'middleware' => 'claims_module_enabled'], function () {
         // Main CRUD Routes
         Route::get('/', [ClaimsController::class, 'index'])->name('index');
         Route::get('/create', [ClaimsController::class, 'create'])->name('create');
@@ -510,10 +510,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     // claim allocation
-    Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
-    Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
-    Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
-    Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    Route::middleware('claims_module_enabled')->group(function () {
+        Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
+        Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
+        Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
+        Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    });
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
