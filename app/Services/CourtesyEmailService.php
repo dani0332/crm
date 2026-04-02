@@ -49,10 +49,6 @@ class CourtesyEmailService extends BaseService
         return in_array($quoteTypeId, self::ALLOWED_QUOTE_TYPES, true);
     }
 
-    /**
-     * @param  Collection<int, QuoteFlowDetails>|null  $courtesyFlowsForQuote  Pre-fetched courtesy flows for this quote (same filters as the show-page query) to avoid a duplicate DB round-trip.
-     * @return array{review_flow_status: string, suppression_expires_at: string}
-     */
     public function getGoogleReviewFlowLogContext(
         string $quoteUuid,
         int $quoteTypeId,
