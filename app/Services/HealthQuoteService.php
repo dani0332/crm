@@ -24,6 +24,7 @@ use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\ReEvaluatePecJob;
+use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -49,9 +50,9 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\BadResponseException;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -877,7 +878,7 @@ class HealthQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -944,7 +945,7 @@ class HealthQuoteService extends BaseService
 
                 return $getdecodeContents->quote;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1779,9 +1780,9 @@ class HealthQuoteService extends BaseService
         // Send a single email for all assigned leads
         if (! empty($updatedLeadIds) && $supportUserId) {
             try {
-                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
-                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
-                    \Illuminate\Support\Facades\Auth::id(),
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
@@ -1796,7 +1797,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::findOrFail($supportUserId)->name;
+            $supportUserName = User::findOrFail($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }

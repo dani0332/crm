@@ -100,7 +100,6 @@ class PermissionSeeder extends Seeder
         }
     }
 
-    
     private function addBuyLeadsAdminPermission(): void
     {
         $permission = Permission::firstOrCreate([
