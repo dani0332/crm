@@ -204,3 +204,24 @@ test('update-ep-document returns 422 when documentId does not exist', function (
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['documentId']);
 });
+
+test('update-ep-document returns 422 when documentId is soft-deleted', function () {
+    $this->actingAs($this->user);
+
+    $ep = EmbeddedProduct::factory()->createOneQuietly();
+    $doc = QuoteDocument::factory()->createOneQuietly(['quote_documentable_id' => 1]);
+    $doc->delete();
+
+    $response = $this->postJson(route('embedded-products.update-ep-document'), [
+        'epId' => $ep->id,
+        'modelType' => 'car',
+        'quoteId' => 1,
+        'documentId' => $doc->id,
+        'documentNumber' => 'DOC-001',
+        'file' => UploadedFile::fake()->create('cert.pdf', 100, 'application/pdf'),
+        'remarks' => 'Previously replaced document',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['documentId']);
+});

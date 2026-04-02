@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateEpDocumentRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class UpdateEpDocumentRequest extends FormRequest
             'epId' => ['required', 'exists:embedded_products,id'],
             'modelType' => ['required', 'string'],
             'quoteId' => ['required', 'integer'],
-            'documentId' => ['required', 'exists:quote_documents,id'],
+            'documentId' => ['required', Rule::exists('quote_documents', 'id')->withoutTrashed()],
             'documentNumber' => ['required', 'string', 'max:255'],
             'file' => ['required', 'file', 'mimes:pdf', 'max:10240'],
             'remarks' => ['required', 'string', 'max:1000'],
