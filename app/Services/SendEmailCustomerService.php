@@ -2105,4 +2105,80 @@ class SendEmailCustomerService extends BaseService
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
 
+    public function sendDttEmailViaBird($emailData, $workflowType, $workflowUrl)
+    {
+        try {
+            if (empty($workflowUrl)) {
+                LoggerService::error('sendDttEmailViaBird - Workflow URL is empty', [
+                    'workflowType' => $workflowType,
+                    'uuid' => $emailData->uuid ?? 'unknown',
+                ]);
+
+                return 500;
+            }
+
+            // Build Bird payload
+            $payload = [
+                'to' => [
+                    [
+                        'email' => $emailData->customerEmail,
+                        'name' => $emailData->customerName ?? ($emailData->customer->firstName ?? '').' '.($emailData->customer->lastName ?? ''),
+                    ],
+                ],
+                'workflowType' => $workflowType,
+                'quoteUID' => $emailData->uuid,
+                'customerEmail' => $emailData->customerEmail,
+                'customerName' => $emailData->customerName ?? ($emailData->customer->firstName ?? '').' '.($emailData->customer->lastName ?? ''),
+                'refID' => $emailData->refID ?? '',
+                'advisorName' => $emailData->advisorName ?? '',
+                'advisorEmail' => $emailData->advisorEmail ?? '',
+                'quotePlans' => $emailData->quotePlans ?? [],
+                'quotePlansCount' => is_countable($emailData->quotePlans ?? []) ? count($emailData->quotePlans) : 0,
+                'subject' => $emailData->subject ?? '',
+                'tag' => $emailData->tag ?? 'car-revival-lead-creation',
+                'lob' => $emailData->lob ?? QuoteTypes::CAR->id(),
+                'templateId' => $emailData->templateId ?? null,
+                'tierRId' => $emailData->tierRId ?? null,
+                'previousAdvisorName' => $emailData->previousAdvisorName ?? '',
+                'isReAssignment' => $emailData->isReAssignment ?? false,
+                'isRenewal' => $emailData->isRenewal ?? false,
+                'policyNumber' => $emailData->policyNumber ?? '',
+                'renewalDueDate' => $emailData->renewalDueDate ?? '',
+            ];
+
+            LoggerService::info('sendDttEmailViaBird - Triggering Bird workflow for DTT email', [
+                'uuid' => $emailData->uuid,
+                'customerEmail' => $emailData->customerEmail,
+                'workflowType' => $workflowType,
+                'workflowUrl' => $workflowUrl,
+            ]);
+
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $payload);
+
+            if ($response && $response->status_code === 200) {
+                LoggerService::info('sendDttEmailViaBird - Successfully triggered Bird workflow', [
+                    'uuid' => $emailData->uuid,
+                    'response_status' => $response->status_code,
+                ]);
+
+                return 201; // Return 201 to match legacy behavior
+            } else {
+                LoggerService::error('sendDttEmailViaBird - Failed to trigger Bird workflow', [
+                    'uuid' => $emailData->uuid,
+                    'response_status' => $response->status_code ?? 'no_response',
+                ]);
+
+                return $response->status_code ?? 500;
+            }
+
+        } catch (\Exception $exception) {
+            LoggerService::error('sendDttEmailViaBird - Exception occurred', [
+                'uuid' => $emailData->uuid ?? 'unknown',
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return 500;
+        }
+    }
+
 }

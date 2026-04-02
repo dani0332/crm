@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
@@ -120,91 +121,30 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $emailData->id = $this->dttRevival->id;
             $emailData->lob = QuoteTypes::CAR->id();
 
-            // after two days
-            if ($today->eq($afterTwoDays)) {
-                if ($quotePlansCount > 0) {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                $emailData->tag = 'reminder-purchase-your-motor-policy';
-                if ($this->dttRevival->follow_up_email_count == 0) {
-                    $this->sendFollowUpEmail($emailData);
-                }
-            }
-            // after seven days
-            if ($today->eq($afterSevenDays)) {
-                if ($quotePlansCount > 0) {
-                    $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                $emailData->tag = 'reminder-purchase-your-motor-policy';
-                if ($this->dttRevival->follow_up_email_count == 1) {
-                    $this->sendFollowUpEmail($emailData);
-                }
-            }
-            // after thirteen days
-            if ($today->eq($aftertThirteenDays)) {
-                if ($quotePlansCount > 0) {
-                    $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
-                $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
-                if ($this->dttRevival->follow_up_email_count == 2) {
-                    $this->sendFollowUpEmail($emailData);
-                }
-            }
-            // after twenty days
-            if ($today->eq($afterTwentyDays)) {
-                if ($quotePlansCount > 0) {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
-                $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
-                if ($this->dttRevival->follow_up_email_count == 3) {
-                    $this->sendFollowUpEmail($emailData);
-                }
-            }
-            // after twentyeight days
-            if ($today->eq($afterTwentyeightDays)) {
-                if ($quotePlansCount > 0) {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
-                $emailData->tag = 'final-reminder-secure-your-motor-policy';
-                if ($this->dttRevival->follow_up_email_count == 4) {
-                    $this->sendFollowUpEmail($emailData);
-                }
-            }
+            $this->sendFollowUpEmail($emailData);
         }
 
     }
 
     private function sendFollowUpEmail($emailData)
     {
-        $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+        // Migrate to Bird workflow - frequency is managed by Bird, but we update count here
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
+
+        if ($workflowUrl && ! empty($workflowUrl->value)) {
+            $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
+                $emailData,
+                WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP,
+                $workflowUrl->value
+            );
+        } else {
+            // Fallback to legacy if Bird workflow URL not found
+            $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+        }
+
         if ($response == 201) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
-            LoggerService::info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
+            LoggerService::info('CarRevivalFollowUpEmailJob email is sent via Bird '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         } else {
             LoggerService::info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         }

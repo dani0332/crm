@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
@@ -192,7 +193,21 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 $emailData->tag = 'dtt-initial-email';
                 $emailData->lob = QuoteTypes::CAR->id();
 
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                // Shifted to Bird Workflow, previous it was using Brevo
+                $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
+
+                if ($workflowUrl && ! empty($workflowUrl->value)) {
+                    $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
+                        $emailData,
+                        WorkflowTypeEnum::MOTOR_REVIVAL_OCB,
+                        $workflowUrl->value
+                    );
+                } else {
+                    LoggerService::warning('CarRevivalLeadsCreationJob - Bird workflow URL not found, falling back to legacy', [
+                        'uuid' => $revivalCarQuoteUUID,
+                    ]);
+                    $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                }
 
                 if ($response == 201) {
                     LoggerService::info($logPrefix.'carRevivalParentLead - '.$revivalCarQuoteUUID.' - Email Sent');
