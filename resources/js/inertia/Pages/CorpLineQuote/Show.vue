@@ -3,6 +3,7 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
@@ -131,6 +132,18 @@ const props = defineProps({
   quoteNotes: {
     type: Object,
     required: true,
+  },
+  emailStatuses: {
+    type: Array,
+    required: true,
+  },
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
   },
   vatPercentage: {
     type: Number,
@@ -1918,6 +1931,18 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <EmailStatus
+      :emailStatuses="emailStatuses"
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :expanded="sectionExpanded"
+    />
+
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

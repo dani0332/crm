@@ -129,6 +129,7 @@ class CourtesyEmailService extends BaseService
 
             $quote = $this->getQuoteByQuoteType($quoteTypeId, $quoteUID);
 
+            // dd($quote);
             if (! $quote?->email) {
                 LoggerService::warning('CourtesyEmailService - Quote not found or missing email', [
                     'quoteTypeId' => $quoteTypeId,
@@ -230,6 +231,11 @@ class CourtesyEmailService extends BaseService
                     'email' => $advisor->email,
                 ],
             ];
+
+            if ($quote instanceof BusinessQuote && filled($quote->business_type_of_insurance_id)) {
+                $payload['businessInsuranceTypeId'] = (int) $quote->business_type_of_insurance_id;
+                $payload['businessInsuranceType'] = $quote->businessTypeOfInsurance?->text ?? '';
+            }
 
             $payload['isAUH'] = match ($quoteTypeId) {
                 QuoteTypeId::Health => (int) ($quote->emirate_of_your_visa_id ?? 0) === EmirateEnum::ABU_DHABI,
@@ -388,7 +394,7 @@ class CourtesyEmailService extends BaseService
             return;
         }
 
-        $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+        // $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
     }
 
     private function formatLogDateTime(?Carbon $value): string
