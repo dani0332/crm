@@ -13,6 +13,7 @@ use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentAccessService;
 use App\Services\SLA\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
@@ -229,6 +230,16 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if ($quoteObject) {
+            $user = auth()->user();
+            $quoteDocumentAccessService = new QuoteDocumentAccessService;
+            // check if user can this lead
+            if (! $quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+                return response()->json(['error' => [
+                    'message' => 'You are not authorized to add additional contact for this quote.',
+                ]]);
+            }
+        }
         if ($key == GenericRequestEnum::EMAIL) {
             $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
                 ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
