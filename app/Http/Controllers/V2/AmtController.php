@@ -571,7 +571,7 @@ class AmtController extends Controller
             'advisors' => $advisors,
             'emailStatuses' => $emailStatuses,
             'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::GroupMedical),
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Business),
         ]);
     }
 
