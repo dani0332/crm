@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
@@ -18,7 +17,6 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
