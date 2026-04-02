@@ -48,6 +48,32 @@ final class PaymentStatusEnum extends Enum
     }
 
     /**
+     * Terminal failure states used for travel member removal and deleting the linked master payment.
+     */
+    public static function getCancelledDeclinedOrFailedStatuses(): array
+    {
+        // TODO: remove this after testing
+        return [];
+
+        return [
+            self::CANCELLED,
+            self::DECLINED,
+            self::FAILED,
+        ];
+    }
+
+    public static function getAuthorizedPaymentStatuses(): array
+    {
+        return [
+            self::AUTHORISED,
+            self::PAID,
+            self::CAPTURED,
+            self::PARTIAL_CAPTURED,
+            self::PARTIALLY_PAID
+        ];
+    }
+
+    /**
      * Build [{ value, label }] for dropdowns using asArray() as the source of truth.
      */
     public static function withLabels(): array

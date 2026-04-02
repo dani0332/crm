@@ -2074,18 +2074,24 @@ class CentralService extends BaseService
         $paymentCode = $request->payment_code;
         LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 
+        $draftLikeStatuses = [
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::OVERDUE,
+        ];
+        $terminalFailureStatuses = PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses();
+
         $payment = Payment::where(
             [
                 'id' => $request->payment_id,
                 'code' => $request->payment_code,
                 'paymentable_type' => TravelQuote::class,
             ])
-            ->whereIn('payment_status_id', [
-                PaymentStatusEnum::PENDING,
-                PaymentStatusEnum::NEW,
-                PaymentStatusEnum::DRAFT,
-                PaymentStatusEnum::OVERDUE,
-            ])
+            ->where(function ($query) use ($draftLikeStatuses, $terminalFailureStatuses) {
+                $query->whereIn('payment_status_id', $draftLikeStatuses)
+                    ->orWhereIn('payment_status_id', $terminalFailureStatuses);
+            })
             ->first();
         if (! $payment) {
             LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
@@ -2095,6 +2101,13 @@ class CentralService extends BaseService
 
         $quote = $payment->paymentable;
         $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
+        // $isTerminalFailure = in_array(
+        //     (int) $payment->payment_status_id,
+        //     $terminalFailureStatuses,
+        //     true
+        // );
+
+        // if (! $isTerminalFailure && ($quote->payments()->count() < 2 || ! $aboveAgeMembers)) {
         if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
             LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
 

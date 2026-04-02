@@ -387,6 +387,23 @@ const amlAndKycTooltip = computed(() => {
     return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
   }
 });
+
+const isTravelTerminalFailurePaymentRow = computed(() => {
+  if (props.quoteType !== quoteTypeCodeEnum.Travel) {
+    return false;
+  }
+  return [
+    paymentStatusEnum.CANCELLED,
+    paymentStatusEnum.FAILED,
+    paymentStatusEnum.DECLINED,
+  ].includes(props.payment.payment_status_id);
+});
+
+const showDeleteParentPaymentButton = computed(
+  () =>
+    (props.index === 1 && props.isChildPaymentDeletable) ||
+    isTravelTerminalFailurePaymentRow.value,
+);
 </script>
 
 <template>
@@ -471,6 +488,7 @@ const amlAndKycTooltip = computed(() => {
             Edit
           </x-button>
         </template>
+        <!-- <template v-if="showDeleteParentPaymentButton"> -->
         <template v-if="index == 1 && isChildPaymentDeletable">
           <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete

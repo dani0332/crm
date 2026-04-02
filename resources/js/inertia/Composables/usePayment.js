@@ -1,3 +1,5 @@
+import { calculateAge } from '@/inertia/Composables/utilities.js';
+
 export const usePayment = () => {
   const page = usePage();
   const paymentStatusEnum = page.props.paymentStatusEnum;
@@ -230,6 +232,57 @@ export const usePayment = () => {
     return hasAuthorizedSplit(subset);
   };
 
+  /**
+   * True when any master payment in this travel member's plan segment has terminal failure status
+   * (Cancelled, Failed, Declined). Scopes to the same payments as hasAuthorizedPaymentForTravelMember.
+   *
+   * @param {{ dob?: string|Date|null }} [member] Traveler row; when omitted (e.g. Add Member), uses quote DOB for plan bucket.
+   * @param {Array<number|string>} [normalPlanIds]
+   * @param {Array<number|string>} [seniorPlanIds]
+   */
+  const isPaymentCancelled = (member, normalPlanIds, seniorPlanIds) => {
+    const payments = page.props.payments;
+    const terminalFailureStatuses = [
+      paymentStatusEnum.CANCELLED,
+      paymentStatusEnum.FAILED,
+      paymentStatusEnum.DECLINED,
+    ];
+
+    if (!Array.isArray(payments)) {
+      return false;
+    }
+
+    const dob = member?.dob ?? page.props.quote?.dob ?? null;
+    const rawAge = calculateAge(dob);
+    const memberAge = Number.isFinite(rawAge) ? rawAge : 0;
+
+    const subset = paymentsRelevantToTravelMember(
+      payments,
+      memberAge,
+      normalPlanIds ?? [],
+      seniorPlanIds ?? [],
+    );
+
+    return subset.some(p =>
+      terminalFailureStatuses.includes(p.payment_status_id),
+    );
+  };
+
+  /**
+   * Member delete allowed when there are no payments, or linked segment has terminal failure status.
+   */
+  const canDeleteTravelMemberByLinkedPayment = (
+    member,
+    normalPlanIds,
+    seniorPlanIds,
+  ) => {
+    const payments = page.props.payments;
+    if (!Array.isArray(payments) || payments.length === 0) {
+      return true;
+    }
+    return isPaymentCancelled(member, normalPlanIds, seniorPlanIds);
+  };
+
   return {
     formatDate,
     formatAmount,
@@ -243,5 +296,7 @@ export const usePayment = () => {
     hasAuthorizedSplit,
     paymentsRelevantToTravelMember,
     hasAuthorizedPaymentForTravelMember,
+    isPaymentCancelled,
+    canDeleteTravelMemberByLinkedPayment,
   };
 };

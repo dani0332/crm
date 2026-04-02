@@ -82,11 +82,12 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
-const { hasAuthorizedSplit, hasAuthorizedPaymentForTravelMember } =
+const { hasAuthorizedSplit, isPaymentCancelled, canDeleteTravelMemberByLinkedPayment } =
   usePayment();
 const checkCheckedPlans = computed(() => {
   return true;
 });
+
 const checkedCount = computed(() => {
   return checkedItems.value.length;
 });
@@ -167,14 +168,6 @@ const normalPlansIds = reactive({
 const seniorPlansIds = reactive({
   ids: [],
 });
-
-const memberPaymentLock = member =>
-  hasAuthorizedPaymentForTravelMember(
-    page.props.payments,
-    calculateAge(member.dob),
-    normalPlansIds.ids,
-    seniorPlansIds.ids,
-  );
 
 const canSendOcbEmail = computed(() => {
   return (
@@ -612,6 +605,16 @@ const deleteTraveler = id => {
         position: 'top',
       });
       onLoadAvailablePlansData();
+    },
+    onError: errors => {
+      const raw =
+        errors?.travel_member_delete ??
+        Object.values(errors ?? {})[0];
+      const message = Array.isArray(raw) ? raw[0] : raw;
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -2715,7 +2718,7 @@ const fullAddress = computed(() => {
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <!-- Show button with tooltip when this member's segment payment is authorized -->
             <x-tooltip
-              v-if="memberPaymentLock(item).hasAuthorized"
+              v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
               <x-button size="xs" color="primary" outlined :disabled="true">
@@ -2723,7 +2726,7 @@ const fullAddress = computed(() => {
               </x-button>
               <template #tooltip>
                 {{
-                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + memberPaymentLock(item).statusText}`
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
                 }}
               </template>
             </x-tooltip>
@@ -2742,17 +2745,25 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when this member's segment payment is authorized -->
+            <!-- Delete only when this member's linked payment segment is Cancelled, Failed, or Declined -->
+            <!-- !canDeleteTravelMemberByLinkedPayment(
+                  item,
+                  normalPlansIds.ids,
+                  seniorPlansIds.ids,
+                ) -->
             <x-tooltip
-              v-if="memberPaymentLock(item).hasAuthorized"
+              v-if="!isPaymentCancelled(item, normalPlansIds.ids, seniorPlansIds.ids)"
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">
                 Delete
               </x-button>
               <template #tooltip>
+                <!-- You can remove this member only when their linked payment is
+                cancelled, failed, or declined. You may then delete that payment
+                from Manage Payment. -->
                 {{
-                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + memberPaymentLock(item).statusText}`
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isPaymentCancelled(item, normalPlansIds.ids, seniorPlansIds.ids).statusText}`
                 }}
               </template>
             </x-tooltip>
