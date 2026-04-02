@@ -2,6 +2,8 @@
 
 This guide describes the **Manage Payments** block used on quote show pages (`PaymentTableNew.vue`) and every nested piece that touches payment creation, splits, links, and modals. Paths are under `resources/js/inertia/Components/` unless noted.
 
+**See also:** [Payment store/update HTTP routes & observers](./PaymentStoreUpdateRoutes.md) (`POST …/store-new`, `POST …/update-new`).
+
 ---
 
 ## Directory layout (on disk)
