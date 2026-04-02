@@ -6,10 +6,10 @@ Defines the HTTP layer for **creating** and **updating** the “new payment stru
 
 **Routes** (`routes/web.php`):
 
-| Method | Path | Name | Controller | Middleware |
-|--------|------|------|--------------|------------|
-| `POST` | `/payments/{quoteType}/store-new` | `payment-create` | `CentralController@storeNewPayment` | `auth` stack + `check_route_access` |
-| `POST` | `/payments/{quoteType}/update-new` | `payment-edit` | `CentralController@updateNewPayment` | same |
+| Method | Path                               | Name             | Controller                           | Middleware                          |
+| ------ | ---------------------------------- | ---------------- | ------------------------------------ | ----------------------------------- |
+| `POST` | `/payments/{quoteType}/store-new`  | `payment-create` | `CentralController@storeNewPayment`  | `auth` stack + `check_route_access` |
+| `POST` | `/payments/{quoteType}/update-new` | `payment-edit`   | `CentralController@updateNewPayment` | same                                |
 
 `{quoteType}` is the LOB segment (e.g. `Health`, `Car`); validation requests use it with `quote_id`, `modelType`, `payment` payload, etc.
 
@@ -22,10 +22,10 @@ Middleware: `App\Http\Middleware\CheckRouteAccess`.
 - It reads the **current route name** (`$request->route()->getName()`) and checks `auth()->user()->can($routeName)` against Spatie **permission names** (same string as the route name).
 - Users with **Admin** or **Engineering** (`RolesEnum`) **skip** the permission check and are always allowed.
 
-| Route name | Spatie permission (DB `permissions.name`) | `PermissionsEnum` constant |
-|------------|---------------------------------------------|----------------------------|
-| `payment-create` | `payment-create` | `PermissionsEnum::PaymentsCreate` |
-| `payment-edit` | `payment-edit` | `PermissionsEnum::PaymentsEdit` |
+| Route name       | Spatie permission (DB `permissions.name`) | `PermissionsEnum` constant        |
+| ---------------- | ----------------------------------------- | --------------------------------- |
+| `payment-create` | `payment-create`                          | `PermissionsEnum::PaymentsCreate` |
+| `payment-edit`   | `payment-edit`                            | `PermissionsEnum::PaymentsEdit`   |
 
 So: **create** requires the **`payment-create`** permission; **update** requires **`payment-edit`**.
 
@@ -72,17 +72,17 @@ Registered in `AppServiceProvider`:
 
 ### `PaymentObserver`
 
-| Event | Behaviour |
-|--------|-----------|
+| Event         | Behaviour                                                                                                                                                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`created`** | **`updatePriceVat`:** resolves quote model type (including `PersonalQuote` vs morph class), calls `SplitPaymentService::calculateMasterPriceAndVat`, then **`Payment::withoutEvents`** updates `price_vat_applicable` and `price_vat` on the same payment. |
-| **`updated`** | If **`total_price`** changed → same VAT helper. If **upfront** frequency and **`payment_status_id`** changed to **`PAID`** → **`touch()`** first split (so split `updated_at` moves; interacts with split-level logic). |
+| **`updated`** | If **`total_price`** changed → same VAT helper. If **upfront** frequency and **`payment_status_id`** changed to **`PAID`** → **`touch()`** first split (so split `updated_at` moves; interacts with split-level logic).                                    |
 
 ### `PaymentSplitsObserver`
 
-| Event | Behaviour |
-|--------|-----------|
+| Event         | Behaviour                                                                                                                                                                                                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`created`** | **`updateSplitPriceVat`:** loads master payment + quote, adjusts first split amount by master **discount** when `sr_no === 1`, calls `SplitPaymentService::calculatePriceAndVat`, then **`PaymentSplits::withoutEvents`** updates split `price_vat_applicable` / `price_vat`. |
-| **`updated`** | Same VAT path when **`payment_amount`** is dirty. |
+| **`updated`** | Same VAT path when **`payment_amount`** is dirty.                                                                                                                                                                                                                             |
 
 So: **store/update** paths that create or change **payments** or **splits** will **recalculate VAT columns** on those models without re-firing observer loops (`withoutEvents`).
 

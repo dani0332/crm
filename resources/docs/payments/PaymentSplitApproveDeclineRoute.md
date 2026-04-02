@@ -6,8 +6,8 @@ This endpoint verifies or declines a **single child split** (`payment_splits` ro
 
 **Route** (`routes/web.php`):
 
-| Method | Path | Name | Controller | Middleware |
-|--------|------|------|------------|------------|
+| Method | Path                                                  | Name               | Controller                                     | Middleware                          |
+| ------ | ----------------------------------------------------- | ------------------ | ---------------------------------------------- | ----------------------------------- |
 | `POST` | `/payments/{quoteType}/split-payment-approve-decline` | `approve-payments` | `CentralController@splitPaymentApproveDecline` | `auth` stack + `check_route_access` |
 
 `{quoteType}` is the LOB segment (e.g. `Health`, `Car`). The body identifies the split (`splitPaymentId`), quote (`quote_id`, `modelType`), and approve vs decline flags.
@@ -21,9 +21,9 @@ Middleware: `App\Http\Middleware\CheckRouteAccess`.
 - It reads the **current route name** and checks `auth()->user()->can($routeName)` against Spatie **permission names** (same string as the route name).
 - Users with **Admin** or **Engineering** (`RolesEnum`) **skip** the permission check.
 
-| Route name | Spatie permission (DB `permissions.name`) | `PermissionsEnum` constant |
-|------------|---------------------------------------------|----------------------------|
-| `approve-payments` | `approve-payments` | `PermissionsEnum::ApprovePayments` |
+| Route name         | Spatie permission (DB `permissions.name`) | `PermissionsEnum` constant         |
+| ------------------ | ----------------------------------------- | ---------------------------------- |
+| `approve-payments` | `approve-payments`                        | `PermissionsEnum::ApprovePayments` |
 
 **Note:** The same route name `approve-payments` is also used for **master** approve/capture and **retry** payment. All three require the **`approve-payments`** permission.
 
@@ -31,10 +31,10 @@ Middleware: `App\Http\Middleware\CheckRouteAccess`.
 
 After base rules pass, **approval** is further gated by collection type (unless the INPL branch short-circuits):
 
-| Condition | Requirement |
-|-----------|--------------|
-| Approve + **broker** collection (`collection_type` === `broker`) | User must have `payment-verification-collected-by-broker` (`PAYMENT_VERIFICATION_COLLECTED_BY_BROKER`). |
-| Approve + **insurer** collection | User must have `payment-verification-collected-by-insurer` (`PAYMENT_VERIFICATION_COLLECTED_BY_INSURER`). |
+| Condition                                                        | Requirement                                                                                               |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Approve + **broker** collection (`collection_type` === `broker`) | User must have `payment-verification-collected-by-broker` (`PAYMENT_VERIFICATION_COLLECTED_BY_BROKER`).   |
+| Approve + **insurer** collection                                 | User must have `payment-verification-collected-by-insurer` (`PAYMENT_VERIFICATION_COLLECTED_BY_INSURER`). |
 
 **Insure Now Pay Later (`InsureNowPayLater`):** If the user has `inpl-approver` (`INPL_APPROVER`), the request loads the split; when the split’s method is INPL, the validator **returns without** adding broker/insurer errors (see `SplitPaymentUpdateRequest` for exact flow).
 
@@ -89,10 +89,10 @@ Then **`SageApiService::createARPrepaymentPremiumReceipt`** is called. On failur
 
 Same models as [store/update](./PaymentStoreUpdateRoutes.md): `PaymentObserver`, `PaymentSplitsObserver` (`AppServiceProvider`).
 
-| Model / event | On this flow |
-|---------------|----------------|
-| **`PaymentSplits` `updated`** | Approve/decline calls **`$splitPayment->update(...)`**. **`PaymentSplitsObserver`** recalculates split VAT only when **`payment_amount`** is dirty — typical approve/decline updates **status / collection / refs**, not `payment_amount`, so **VAT helper often does not run** here. |
-| **`Payment` `updated`** | Master **`update`** changes **`captured_amount`** / allocation (and later **`setMasterPaymentStatus`** may change **`payment_status_id`**). **`PaymentObserver`**: VAT recalculation runs only when **`total_price`** is dirty; **PAID** + upfront path may **`touch()`** first split when `payment_status_id` moves to PAID. So this flow mainly affects **status / captured_amount**, not master VAT fields unless something else changes `total_price`. |
+| Model / event                 | On this flow                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`PaymentSplits` `updated`** | Approve/decline calls **`$splitPayment->update(...)`**. **`PaymentSplitsObserver`** recalculates split VAT only when **`payment_amount`** is dirty — typical approve/decline updates **status / collection / refs**, not `payment_amount`, so **VAT helper often does not run** here.                                                                                                                                                                      |
+| **`Payment` `updated`**       | Master **`update`** changes **`captured_amount`** / allocation (and later **`setMasterPaymentStatus`** may change **`payment_status_id`**). **`PaymentObserver`**: VAT recalculation runs only when **`total_price`** is dirty; **PAID** + upfront path may **`touch()`** first split when `payment_status_id` moves to PAID. So this flow mainly affects **status / captured_amount**, not master VAT fields unless something else changes `total_price`. |
 
 In short: **child approve/decline** is dominated by **status, capture totals, documents, Sage, and lead status** — not the same “create splits → VAT fill” path as **store-new**.
 
@@ -102,22 +102,22 @@ In short: **child approve/decline** is dominated by **status, capture totals, do
 
 ### `rules()`
 
-| Field | Rule |
-|-------|------|
-| `approved_document_model` | optional array |
-| `bank_reference_number` | nullable string |
-| `collection_amount` | nullable numeric |
-| `customer_id` | required integer |
-| `declined_custom_reason` | nullable string |
-| `declined_reason` | nullable integer |
-| `is_approved` | required boolean |
-| `is_declined` | required boolean |
-| `modelType` | required string |
-| `plan_id` | required integer |
-| `quote_id` | required integer |
-| `splitPaymentId` | required integer |
-| `collection_type` | required string |
-| `insurer_receipt_number` | nullable string |
+| Field                     | Rule             |
+| ------------------------- | ---------------- |
+| `approved_document_model` | optional array   |
+| `bank_reference_number`   | nullable string  |
+| `collection_amount`       | nullable numeric |
+| `customer_id`             | required integer |
+| `declined_custom_reason`  | nullable string  |
+| `declined_reason`         | nullable integer |
+| `is_approved`             | required boolean |
+| `is_declined`             | required boolean |
+| `modelType`               | required string  |
+| `plan_id`                 | required integer |
+| `quote_id`                | required integer |
+| `splitPaymentId`          | required integer |
+| `collection_type`         | required string  |
+| `insurer_receipt_number`  | nullable string  |
 
 ### `withValidator`
 
