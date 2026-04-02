@@ -72,8 +72,6 @@ const props = defineProps({
   isAUHLead: Boolean,
   branchOptions: Object,
   hasPecTag: Boolean,
-  apiIssuanceStatus: String,
-  insurerApiStatus: String,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
