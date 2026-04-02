@@ -6,12 +6,16 @@ use App\Enums\AwnicEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReTriggerPolicyAutomationRequest;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\InsuranceProvider;
 use App\Models\PolicyIssuance;
 use App\Models\QuoteType;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 
 class PolicyIssuanceController extends Controller
@@ -65,5 +69,28 @@ class PolicyIssuanceController extends Controller
                 'message' => 'Manual policy issuance triggered successfully',
                 'policy_issuance_id' => $policyIssuance->id,
             ], Response::HTTP_OK);
+    }
+
+    public function reTriggerPolicyAutomation(ReTriggerPolicyAutomationRequest $request): JsonResponse
+    {
+        $policyIssuance = PolicyIssuance::query()
+            ->with(['insuranceProvider', 'model'])
+            ->find($request->integer('policy_issuance_id'));
+
+        if (! $policyIssuance) {
+            return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (! app(PolicyIssuanceService::class)->shouldOfferReTriggerPolicyAutomation($policyIssuance)) {
+            return response()->json(['message' => 'Policy issuance is not eligible for re-trigger.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            app(PolicyIssuanceService::class)->reTriggerPolicyAutomation($policyIssuance->fresh());
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return response()->json(['message' => 'Policy automation re-triggered successfully.'], Response::HTTP_OK);
     }
 }

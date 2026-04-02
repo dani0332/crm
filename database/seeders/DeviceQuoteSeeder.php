@@ -48,6 +48,7 @@ class DeviceQuoteSeeder extends Seeder
             PermissionsEnum::DEVICE_QUOTES_CREATE,
             PermissionsEnum::DEVICE_QUOTES_EDIT,
             PermissionsEnum::DEVICE_QUOTES_SHOW,
+            PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE,
         ];
         $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::Engineering]);
 

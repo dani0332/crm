@@ -501,6 +501,11 @@ final class PermissionsEnum extends Enum
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
 
+    /**
+     * IMCRM: re-trigger device policy automation (e.g. NGI document sync after repeated failures).
+     */
+    public const RE_TRIGGER_POLICY_AUTOMATION_DEVICE = 're-trigger-policy-automation-device';
+
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
 

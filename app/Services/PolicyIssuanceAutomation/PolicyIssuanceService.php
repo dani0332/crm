@@ -24,6 +24,7 @@ use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response as HttpClientResponse;
@@ -697,5 +698,68 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);
+    }
+
+    /**
+     * IMCRM allowlist: statuses where manual re-trigger of policy automation may be offered.
+     */
+    public function isReTriggerPolicyAutomationStatusAllowed(?string $status): bool
+    {
+        $allowed = [
+            null,
+            '',
+            PolicyIssuanceEnum::TIMEOUT_STATUS,
+            PolicyIssuanceEnum::FAILED_STATUS,
+        ];
+
+        return in_array($status, $allowed, true);
+    }
+
+    /**
+     * Whether IMCRM should show "Re Trigger Policy Automation" for this issuance (LOB-specific rules apply).
+     */
+    public function shouldOfferReTriggerPolicyAutomation(PolicyIssuance $policyIssuance): bool
+    {
+        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
+            return false;
+        }
+
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            return false;
+        }
+
+        return match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance),
+            default => false,
+        };
+    }
+
+    /**
+     * Re-run LOB-specific recovery (e.g. immediate NGI document job). Caller must authorize and validate request context.
+     *
+     * @throws \InvalidArgumentException When automation is disabled, LOB unsupported, or eligibility fails
+     */
+    public function reTriggerPolicyAutomation(PolicyIssuance $policyIssuance): void
+    {
+        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
+            throw new \InvalidArgumentException('Policy issuance automation is not allowed for this status ('.$policyIssuance->status.').');
+        }
+
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            throw new \InvalidArgumentException('Policy issuance automation is not enabled for this quote.');
+        }
+
+        match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures($policyIssuance),
+            default => throw new \InvalidArgumentException('Re-trigger is not supported for this line of business.'),
+        };
     }
 }

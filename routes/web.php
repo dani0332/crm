@@ -1107,4 +1107,5 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
+    Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE, 'check_route_access')->name('re-trigger-policy-automation');
 });

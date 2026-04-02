@@ -5,6 +5,7 @@ namespace App\Services\Quotes;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\NgiEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
@@ -12,8 +13,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\DeviceMake;
+use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ConnectException;
@@ -118,8 +121,8 @@ class DeviceQuoteService extends BaseQuoteService
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
                     ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
+                        'personal_quotes.*',
+                    ])->selectRaw("
                 IF(
                     EXISTS (
                         SELECT *
@@ -392,6 +395,49 @@ class DeviceQuoteService extends BaseQuoteService
         $rawEmails = preg_split('/[,\s]+/', trim($value));
 
         return array_values(array_filter($rawEmails, static fn ($email) => ! empty($email)));
+    }
+
+    /**
+     * IMCRM manual recovery: eligible when create-policy succeeded but GetAndUploadPolicyDocs failed at least three times.
+     */
+    public function isEligibleForReTriggerGetAndUploadPolicyDocuments(PolicyIssuance $policyIssuance): bool
+    {
+        if ($policyIssuance->completed_step !== NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE) {
+            return false;
+        }
+
+        if ($policyIssuance->status !== PolicyIssuanceEnum::FAILED_STATUS) {
+            return false;
+        }
+
+        $failedDocAttempts = $policyIssuance->policyIssuanceLogs()
+            ->where('step', NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM)
+            ->where('status', PolicyIssuanceEnum::FAILED_STATUS)
+            ->count();
+
+        return $failedDocAttempts >= 3;
+    }
+
+    /**
+     * Dispatch immediate NGI document fetch/upload job (no initial delay) and mark issuance pending for queue processing visibility.
+     *
+     * @throws \InvalidArgumentException When eligibility checks fail
+     */
+    public function reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures(PolicyIssuance $policyIssuance): void
+    {
+        if (! $this->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance)) {
+            throw new \InvalidArgumentException('Policy issuance is not eligible for document sync re-trigger.');
+        }
+
+        NgiGetPolicyDocumentsJob::dispatch($policyIssuance->id);
+
+        $policyIssuance->update([
+            'status' => PolicyIssuanceEnum::PENDING_STATUS,
+        ]);
+
+        LoggerService::info('Device NGI: manual re-trigger dispatched GetAndUploadPolicyDocs job without initial delay', extra: [
+            'policy_issuance_id' => $policyIssuance->id,
+        ]);
     }
 
 }
