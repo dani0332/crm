@@ -16,6 +16,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\Quotes\DeviceQuoteService;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -57,7 +58,7 @@ describe('DeviceQuoteService re-trigger GetAndUpload policy documents', function
             'is_active' => 1,
         ]);
 
-        $quoteId = \Illuminate\Support\Facades\DB::table('personal_quotes')->insertGetId([
+        $quoteId = DB::table('personal_quotes')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'code' => 'DEV-TEST-'.uniqid(),
             'quote_type_id' => QuoteTypeId::Device,
