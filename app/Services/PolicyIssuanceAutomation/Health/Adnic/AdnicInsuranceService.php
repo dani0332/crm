@@ -207,10 +207,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             $stepMessage = $executeStepSequence['message'] ?? null;
             if (
                 is_string($stepMessage) &&
-                (
-                    str_contains($stepMessage, AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS) ||
-                    str_contains($stepMessage, '404 Not Found') // this line is for testing purpose only.
-                )
+                str_contains($stepMessage, AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)
             ) {
                 $response['timeout'] = true;
             }
