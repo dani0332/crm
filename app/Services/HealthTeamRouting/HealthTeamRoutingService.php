@@ -246,7 +246,7 @@ class HealthTeamRoutingService
                 $this->healthTeamRoutingLogService->log(
                     HealthRoutingLogTypeEnum::ROUTING,
                     [
-                        'message' => "Non PEC lead identified, Notional team: {$notionalTeam}",
+                        'message' => "Non PEC lead identified, Team: {$notionalTeam}",
                         'step' => 'Non PEC lead check',
                         'is_non_pec' => true,
                         'source' => $this->source,
