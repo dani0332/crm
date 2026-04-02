@@ -563,7 +563,11 @@ const uploadUpdateEpDocument = event => {
 };
 
 const onUpdateDocumentSubmit = event => {
-  if (!updateDocumentForm.documentNumber || !updateDocumentForm.remarks || !updateDocumentForm.file) {
+  if (
+    !updateDocumentForm.documentNumber ||
+    !updateDocumentForm.remarks ||
+    !updateDocumentForm.file
+  ) {
     notification.error({
       title: 'Please fill in all required fields and attach a PDF file.',
       position: 'top',
@@ -589,7 +593,10 @@ const onUpdateDocumentSubmit = event => {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then(() => {
-      notification.success({ title: 'Document updated successfully.', position: 'top' });
+      notification.success({
+        title: 'Document updated successfully.',
+        position: 'top',
+      });
       modals.updateDocument = false;
       resetUpdateForm();
       modals.viewDocuments = true;
@@ -1010,7 +1017,8 @@ const onAddDocumentSubmit = event => {
                 <span
                   v-if="item.is_manual_override"
                   class="text-xs bg-amber-100 text-amber-700 rounded px-1 ml-1"
-                >Manual Override</span>
+                  >Manual Override</span
+                >
               </div>
             </template>
 
@@ -1045,7 +1053,10 @@ const onAddDocumentSubmit = event => {
                   Download
                 </x-button>
                 <x-button
-                  v-if="!item.is_policy_wordings && can(permissionsEnum.EP_DOCUMENT_MANUAL_OVERRIDE)"
+                  v-if="
+                    !item.is_policy_wordings &&
+                    can(permissionsEnum.EP_DOCUMENT_MANUAL_OVERRIDE)
+                  "
                   size="xs"
                   color="warning"
                   outlined
