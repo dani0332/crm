@@ -703,7 +703,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-        Route::resource('business', BusinessQuoteController::class);
+        Route::resource('business', BusinessQuoteController::class)->middleware('check_route_access:corpline-quotes');
 
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
