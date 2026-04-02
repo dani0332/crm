@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
+            ClaimAllocationConfigManagersSeeder::class,
             ClaimStatusesSeeder::class, // ClaimStatusesSeeder is dependent on LookupSeeder
             SavingsQuoteDataSeeder::class,
             GenericDocumentTypesSeeder::class,

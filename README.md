@@ -1,4 +1,4 @@
-<p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a></p>
+<p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a></p>.
  
 Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarketafia/org-afia/_apis/build/status%2Fstaging%2Fimcrm.stg.build?branchName=develop)](https://dev.azure.com/insurancemarketafia/org-afia/_build/latest?definitionId=44&branchName=develop)
 
@@ -57,7 +57,7 @@ Make sure to run `yarn prod` before every push so the assets are compiled with t
 
 **Code Formatting**
 
-This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
+This project has pint configured, make sure to runs `composer pint:fix` before every push to the code repo.
 
 **Getting Deployment Logs**
 

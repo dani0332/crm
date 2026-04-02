@@ -1,4 +1,5 @@
 <script setup>
+import ClaimAssignment from './Components/ClaimAssignment.vue';
 import ClaimDetails from './Components/ClaimDetails.vue';
 import ClaimStatus from './Components/ClaimStatus.vue';
 import ClaimSubStatusAndCustomerUpdate from './Components/ClaimSubStatusAndCustomerUpdate.vue';
@@ -80,6 +81,13 @@ const copyToClipboard = item => {
 
     <!-- Claim Details Component -->
     <ClaimDetails
+      :claim="claim"
+      :dropdowns="dropdowns"
+      :expanded="sectionExpanded"
+    />
+
+    <!-- Manual Allocation (Claims Lead) -->
+    <ClaimAssignment
       :claim="claim"
       :dropdowns="dropdowns"
       :expanded="sectionExpanded"

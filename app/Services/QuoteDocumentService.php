@@ -87,7 +87,13 @@ class QuoteDocumentService extends BaseService
                 return $query;
             })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->when($documentTypeCategory === DocumentTypeCode::CLAIM, function ($collection) {
+                return $collection->each(function ($documentType) {
+                    $documentType->is_claim_form = str_starts_with($documentType->code, 'CLM_')
+                        && str_ends_with($documentType->code, '_CF');
+                });
+            });
     }
 
     public function isEnabled($quoteModelType)
@@ -949,18 +955,49 @@ class QuoteDocumentService extends BaseService
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
+        $tempOutputFile = $tempFile.'_watermarked.docx';
 
-        $phpWord = IOFactory::load($tempFile);
-        $section = $phpWord->getSection(0);
-        // Define the watermark style
-        $header = $section->addHeader();
-        $header->addWatermark(public_path('images/watermark1.png'));
+        $result = null;
+        try {
+            $phpWord = IOFactory::load($tempFile);
+            $section = $phpWord->getSection(0);
+            // Define the watermark style
+            $header = $section->addHeader();
+            $header->addWatermark(public_path('images/watermark1.png'));
 
-        // Save the modified document
-        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($tempFile);
+            // Save to a separate temp path first — writing to the same path that IOFactory::load()
+            // opened (an internal ZipArchive read handle) causes a "Invalid or uninitialized Zip object"
+            // ValueError because PHP can't open the same file for writing while it's still referenced.
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($tempOutputFile);
 
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            // Release the source handle by unsetting, then atomically replace the original temp file
+            unset($phpWord, $objWriter);
+
+            // Check for successful atomic replacement, handle failure
+            if (! @rename($tempOutputFile, $tempFile)) {
+                // Clean up orphaned temp output file if present
+                if (file_exists($tempOutputFile)) {
+                    @unlink($tempOutputFile);
+                }
+                LoggerService::error("Failed to atomically replace temp file with watermarked docx during watermarking of $docName", extra: [
+                    'uuid' => $uuid,
+                    'tempFile' => $tempFile,
+                    'tempOutputFile' => $tempOutputFile,
+                ]);
+                throw new \RuntimeException("Failed to replace unwatermarked temp file with watermarked version for $docName");
+            }
+
+            $result = $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            foreach ([$tempOutputFile, $tempFile] as $cleanupPath) {
+                if (file_exists($cleanupPath)) {
+                    @unlink($cleanupPath);
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function isEnableUploadDocument($quoteStatusId)
