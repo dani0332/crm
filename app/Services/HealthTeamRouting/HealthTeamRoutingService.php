@@ -236,8 +236,8 @@ class HealthTeamRoutingService
 
             // Check if NOT PEC lead
             if (! $lead->isPECLead()) {
-                // Get notional team based on intent (health plan type)
-                $notionalTeam = HealthPlanTypeEnum::toTeamNameEnum($lead->health_plan_type_id);
+                // Get notional team
+                $notionalTeam = $this->getNotionalTeam($lead);
                 $lead->notional_team = $notionalTeam;
                 $lead->save();
 
@@ -344,5 +344,16 @@ class HealthTeamRoutingService
             null,
             $this->source
         );
+    }
+
+    private function getNotionalTeam($lead): ?string
+    {
+        // First check if its GBP qualified
+        if ($this->isGBPQualified($lead)) {
+            return HealthTeamType::GBP;
+        }
+
+        // Else intent based (health plan type)
+        return HealthPlanTypeEnum::toTeamNameEnum($lead->health_plan_type_id);
     }
 }
