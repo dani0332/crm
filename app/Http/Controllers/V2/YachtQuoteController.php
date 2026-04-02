@@ -54,13 +54,16 @@ use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class YachtQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -93,7 +96,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -120,7 +123,7 @@ class YachtQuoteController extends Controller
     /**
      * @param  $quoteTypeCode
      * @param  BikeQuoteRequest  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(YachtQuoteRequest $request)
     {
@@ -136,7 +139,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -152,7 +155,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
