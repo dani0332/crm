@@ -32,13 +32,16 @@ class CustomerController extends Controller
     private $customerService;
     private $lookupService;
     private $slaService;
+    private QuoteDocumentAccessService $quoteDocumentAccessService;
+
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
         BerlinService $berlinService,
         CustomerService $customerService,
         LookupService $lookupService,
-        SLAService $slaService
+        SLAService $slaService,
+        QuoteDocumentAccessService $quoteDocumentAccessService,
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
@@ -46,6 +49,7 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
         $this->lookupService = $lookupService;
         $this->slaService = $slaService;
+        $this->quoteDocumentAccessService = $quoteDocumentAccessService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -232,9 +236,7 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($quoteObject) {
             $user = auth()->user();
-            $quoteDocumentAccessService = new QuoteDocumentAccessService;
-            // check if user can this lead
-            if (! $quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+            if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
                 return response()->json(['error' => [
                     'message' => 'You are not authorized to add additional contact for this quote.',
                 ]]);
