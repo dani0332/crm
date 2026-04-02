@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -52,6 +53,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->reason = $reason;
         $newEmailStatus->type = EmailStatusTypeEnum::Email;
+        $newEmailStatus->flow_type = $emailData->flow_type ?? null;
         $newEmailStatus->save();
         $this->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
 
@@ -136,6 +138,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_status = ProcessStatusCode::SENT;
         $newEmailStatus->quote_type_id = $quoteTypeId;
         $newEmailStatus->quote_id = $quote->id;
+        $newEmailStatus->flow_type = $request->flow_type;
         $newEmailStatus->save();
         $this->forgetEmailStatusListCache($quoteTypeId, (int) $quote->id);
 
@@ -255,6 +258,7 @@ class EmailStatusService extends BaseService
         $email->reason = $reason;
         $email->type = EmailStatusTypeEnum::Email;
         $email->customer_id = $customerId;
+        $email->flow_type = QuoteFlowType::COURTESY_EMAIL;
         $email->save();
         $this->forgetEmailStatusListCache($quoteTypeId, $quoteId);
     }

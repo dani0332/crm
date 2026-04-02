@@ -1,15 +1,8 @@
 <script setup>
+const COURTESY_EMAIL_FLOW_TYPE_VALUE = 50;
+
 const props = defineProps({
   emailStatuses: Array,
-  /**
-   * When provided, any email_status row whose id already appears in
-   * googleReviewCommunicationLogs (as an actual email event, not a
-   * "Workflow triggered" flow row) is hidden here to prevent duplicates.
-   */
-  googleReviewCommunicationLogs: {
-    type: Array,
-    default: () => [],
-  },
   expanded: {
     type: Boolean,
     default: true,
@@ -32,53 +25,11 @@ const page = usePage();
 
 const isWhatsAppType = t => String(t ?? '').toLowerCase() === 'whatsapp';
 
-function isWhatsAppRow(row) {
-  return isWhatsAppType(row?.type);
-}
-
-function channelLabel(row) {
-  return isWhatsAppRow(row) ? 'WhatsApp' : 'Email';
-}
-
-function recipientDisplay(row) {
-  if (row?.mobile_no) {
-    const digits = String(row.mobile_no).replace(/\D/g, '');
-    return digits ? `+${digits}` : '—';
-  }
-  return row?.email_address?.trim() || '—';
-}
-
-function subjectDisplay(row) {
-  const s = row?.email_subject;
-  if (s != null && String(s).trim() !== '') {
-    return String(s).trim();
-  }
-  return '—';
-}
-
-/**
- * IDs of email_status rows that are already displayed inside the
- * Google-review communication log (those come from the Bird courtesy-email
- * workflow).  Rows whose status is "Workflow triggered" are QuoteFlowDetails
- * entries, not EmailStatus rows, so we skip them.
- */
-const courtesyEmailStatusIds = computed(
-  () =>
-    new Set(
-      (props.googleReviewCommunicationLogs || [])
-        .filter(r => r.status !== 'Workflow triggered')
-        .map(r => r.id),
-    ),
-);
-
 const tableItems = computed(() =>
   (props.emailStatuses || [])
-    .filter(row => !courtesyEmailStatusIds.value.has(row.id))
+    .filter(row => row?.flow_type !== COURTESY_EMAIL_FLOW_TYPE_VALUE)
     .map(row => ({
       ...row,
-      _channel: channelLabel(row),
-      _recipient: recipientDisplay(row),
-      _subject: subjectDisplay(row),
     })),
 );
 

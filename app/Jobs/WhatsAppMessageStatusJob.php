@@ -81,6 +81,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     $newRecord->reason = $this->messageData['reason'] ?? $baseRecord->reason;
                     $newRecord->quote_type_id = $baseRecord->quote_type_id;
                     $newRecord->quote_id = $baseRecord->quote_id;
+                    $newRecord->flow_type = $this->messageData['flow_type'] ?? $baseRecord->flow_type;
                     $newRecord->save();
                     $emailStatusService->forgetEmailStatusListCache((int) $newRecord->quote_type_id, (int) $newRecord->quote_id);
 

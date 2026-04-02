@@ -1399,6 +1399,7 @@ class CoreSchema
             $table->boolean('customer_replied')->default(false);
             $table->string('type')->nullable();
             $table->string('mobile_no')->nullable();
+            $table->unsignedSmallInteger('flow_type')->nullable();
             $table->timestamps();
         });
     }

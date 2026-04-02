@@ -3132,7 +3132,6 @@ const fullAddress = computed(() => {
 
     <EmailStatus
       :emailStatuses="emailStatuses"
-      :google-review-communication-logs="googleReviewCommunicationLogs"
       :expanded="sectionExpanded"
     />
     <GoogleReviewCommunicationLog

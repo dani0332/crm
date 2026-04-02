@@ -212,6 +212,7 @@ class CourtesyEmailService extends BaseService
                 'refId' => $refId,
                 'quoteTypeId' => $quoteTypeId,
                 'workflowType' => WorkflowTypeEnum::COURTESY_EMAIL_WORKFLOW,
+                'flowType' => QuoteFlowType::COURTESY_EMAIL->value,
                 'line_of_business' => $quoteType ? strtolower($quoteType->value) : '',
                 'advisorName' => $advisor->name,
                 'customerName' => $customerName,

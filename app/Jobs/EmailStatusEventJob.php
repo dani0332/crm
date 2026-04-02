@@ -74,6 +74,7 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->email_status = $this->emailData->status;
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                         $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
+                        $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
                         $newEmailStatus->save();
 
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
@@ -109,6 +110,7 @@ class EmailStatusEventJob implements ShouldQueue
         $newEmailStatus->email_status = $this->emailData->status;
         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
         $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
+        $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
         $newEmailStatus->save();
         $emailStatusService->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());

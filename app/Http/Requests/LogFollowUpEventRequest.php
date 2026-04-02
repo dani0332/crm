@@ -36,6 +36,7 @@ class LogFollowUpEventRequest extends FormRequest
             'customer_email' => 'nullable|string|email',
             'mobile_no' => ['nullable', 'string', 'regex:/^\+?[0-9]{10,20}$/'],
             'subject' => 'nullable|string',
+            'flow_type' => 'nullable|integer',
         ];
     }
 

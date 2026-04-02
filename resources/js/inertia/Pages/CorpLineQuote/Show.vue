@@ -1935,7 +1935,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
 
     <EmailStatus
       :emailStatuses="emailStatuses"
-      :google-review-communication-logs="googleReviewCommunicationLogs"
       :expanded="sectionExpanded"
     />
 

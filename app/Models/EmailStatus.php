@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EmailStatusTypeEnum;
+use App\Enums\QuoteFlowType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,10 +26,12 @@ class EmailStatus extends Model
         'customer_replied',
         'type',
         'mobile_no',
+        'flow_type',
     ];
     protected $casts = [
         'customer_replied' => 'boolean',
         'type' => EmailStatusTypeEnum::class,
+        'flow_type' => QuoteFlowType::class,
     ];
 
     public function getCreatedAtAttribute($date)

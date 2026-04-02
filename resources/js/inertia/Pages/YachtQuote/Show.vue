@@ -1081,10 +1081,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :payments="payments"
     />
 
-    <EmailStatus
-      :emailStatuses="emailStatuses"
-      :google-review-communication-logs="googleReviewCommunicationLogs"
-    />
+    <EmailStatus :emailStatuses="emailStatuses" />
     <GoogleReviewCommunicationLog
       :google-review-communication-logs="googleReviewCommunicationLogs"
       :show-google-review-communication-log="showGoogleReviewCommunicationLog"
