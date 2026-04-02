@@ -924,45 +924,46 @@ class CentralController extends Controller
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_request_id']);
 
-        if ($quote === false) {
-            LoggerService::warning('Reset payment process: quote not found');
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Quote not found.',
-            ], 404);
-        }
-
-        $quote->load('payments');
-
-        $payments = $quote->payments;
-
-        if (! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
-            LoggerService::warning('Reset payment process: not allowed (canBypassPlanLock)');
-
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not allowed to reset payments for this lead.',
-            ], 403);
-        }
-
-        try {
-            app(PaymentService::class)->resetHealthManagePayments($quote, $data['reason']);
-        } catch (\Throwable $th) {
-            LoggerService::error('Reset payment process failed', [], $th);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reset payments. Please try again.',
-            ], 500);
-        }
-
-        LoggerService::info('Reset payment process completed successfully');
-
-        return response()->json([
+        $payload = [
             'success' => true,
             'message' => 'Payments have been reset. You can add new payment records.',
-        ]);
+        ];
+        $status = 200;
+
+        if ($quote === false) {
+            LoggerService::warning('Reset payment process: quote not found');
+            $payload = [
+                'success' => false,
+                'message' => 'Quote not found.',
+            ];
+            $status = 404;
+        } else {
+            $quote->load('payments');
+            $payments = $quote->payments;
+
+            if (! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
+                LoggerService::warning('Reset payment process: not allowed (canBypassPlanLock)');
+                $payload = [
+                    'success' => false,
+                    'message' => 'You are not allowed to reset payments for this lead.',
+                ];
+                $status = 403;
+            } else {
+                try {
+                    app(PaymentService::class)->resetHealthManagePayments($quote, $data['reason']);
+                    LoggerService::info('Reset payment process completed successfully');
+                } catch (\Throwable $th) {
+                    LoggerService::error('Reset payment process failed', [], $th);
+                    $payload = [
+                        'success' => false,
+                        'message' => 'Failed to reset payments. Please try again.',
+                    ];
+                    $status = 500;
+                }
+            }
+        }
+
+        return response()->json($payload, $status);
     }
 
     public function checkInsurerReceiptNumber($quoteType, Request $request)
