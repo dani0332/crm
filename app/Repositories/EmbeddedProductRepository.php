@@ -1385,7 +1385,14 @@ class EmbeddedProductRepository extends BaseRepository
             ->where('quote_type_id', $quoteTypeId)
             ->first();
 
+        if (! $documentType) {
+            return false;
+        }
+
         $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        if ($quoteObject === false) {
+            return false;
+        }
 
         match ($oldDocument->document_type_code) {
             QuoteDocumentsEnum::POLICY_SCHEDULE => $embeddedTransaction->certificate_number = $data['documentNumber'],
@@ -1394,7 +1401,6 @@ class EmbeddedProductRepository extends BaseRepository
             QuoteDocumentsEnum::CAR_EP_TAX_INVOICE => $embeddedTransaction->tax_invoice_no = $data['documentNumber'],
             default => null,
         };
-        $embeddedTransaction->save();
 
         $docNameSuffix = Str::after($oldDocument->doc_name, '_');
         $storedDocName = "{$embeddedTransaction->certificate_number}_{$docNameSuffix}";
@@ -1415,26 +1421,40 @@ class EmbeddedProductRepository extends BaseRepository
             throw new Exception('Error uploading document');
         }
 
-        $newDocument = $embeddedTransaction->documents()->create([
-            'doc_name' => $storedDocName,
-            'original_name' => $originalName,
-            'doc_url' => $filePathAzure,
-            'doc_mime_type' => 'application/pdf',
-            'document_type_code' => $documentType->code,
-            'document_type_text' => $documentType->text,
-            'doc_uuid' => $docUuid,
-            'created_by_id' => Auth::id(),
-            'is_manual_override' => true,
-            'override_remarks' => $data['remarks'],
-        ]);
+        DB::transaction(function () use (
+            $embeddedTransaction,
+            $oldDocument,
+            $storedDocName,
+            $originalName,
+            $filePathAzure,
+            $documentType,
+            $docUuid,
+            $data,
+            $quoteObject
+        ): void {
+            $embeddedTransaction->save();
+            $oldDocument->delete();
 
-        if ($newDocument?->exists && $documentType && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
-            WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
-                ->delay(now()->addSeconds(10))
-                ->afterCommit();
-        }
+            $newDocument = $embeddedTransaction->documents()->create([
+                'doc_name' => $storedDocName,
+                'original_name' => $originalName,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => 'application/pdf',
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => Auth::id(),
+                'is_manual_override' => true,
+                'override_remarks' => $data['remarks'],
+            ]);
 
-        $oldDocument->delete();
+            if ($newDocument->exists && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
+                WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
+                    ->delay(now()->addSeconds(10))
+                    ->afterCommit();
+            }
+
+        });
 
         return true;
     }

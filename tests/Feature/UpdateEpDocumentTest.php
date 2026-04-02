@@ -1,11 +1,15 @@
 <?php
 
+use App\Enums\AuthGuardEnum;
+use App\Enums\PermissionsEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -18,6 +22,48 @@ beforeEach(function () {
 
 afterEach(function () {
     Mockery::close();
+});
+
+test('user with only EP_DOCUMENT_MANUAL_OVERRIDE can call update-ep-document without embedded product config', function () {
+    Queue::fake();
+
+    $user = TestDataSeeder::createUser(['email' => 'ep-doc-override-only@example.com']);
+    $permission = Permission::firstOrCreate(
+        ['name' => PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE, 'guard_name' => AuthGuardEnum::Web->value],
+        ['created_at' => now(), 'updated_at' => now()]
+    );
+    $user->givePermissionTo($permission);
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
+    $user->refresh();
+
+    expect($user->can(PermissionsEnum::EMBEDDED_PRODUCT_CONFIG))->toBeFalse();
+
+    $this->actingAs($user);
+
+    $ep = EmbeddedProduct::factory()->createOneQuietly();
+    $doc = QuoteDocument::factory()->createOneQuietly([
+        'quote_documentable_id' => 1,
+        'document_type_text' => 'EP Certificate',
+    ]);
+
+    $mockRepo = Mockery::mock(EmbeddedProductRepository::class)->makePartial();
+    $mockRepo->shouldReceive('fetchUpdateEpDocument')
+        ->once()
+        ->andReturn(true);
+    $this->app->instance(EmbeddedProductRepository::class, $mockRepo);
+
+    $response = $this->postJson(route('embedded-products.update-ep-document'), [
+        'epId' => $ep->id,
+        'modelType' => 'car',
+        'quoteId' => 1,
+        'documentId' => $doc->id,
+        'documentNumber' => 'DOC-001',
+        'file' => UploadedFile::fake()->create('cert.pdf', 100, 'application/pdf'),
+        'remarks' => 'Manual correction',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJson(['success' => true, 'message' => 'Document updated successfully.']);
 });
 
 test('unauthorized user cannot call update-ep-document endpoint', function () {
