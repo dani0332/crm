@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusHistory;
 use App\Models\PaymentStatusLog;
+use App\Models\QuoteStatusLog;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
@@ -160,7 +161,7 @@ class PaymentService extends BaseService
      * Deletes all payments for the Health quote (splits, logs, parent/child rows) and reverts lead to New Lead.
      * Call only after {@see HealthQuoteService::canBypassPlanLock()} is true for the same quote and payments.
      */
-    public function resetHealthManagePayments(HealthQuote $quote, string $reason): void
+    public function resetHealthManagePayments($quote, string $reason): void
     {
         DB::transaction(function () use ($quote, $reason) {
             $paymentCodes = $quote->payments()->pluck('code')->all();
@@ -170,8 +171,8 @@ class PaymentService extends BaseService
             }
 
             $quote->update([
-                'quote_status_id' => QuoteStatusEnum::NewLead,
-                'payment_status_id' => PaymentStatusEnum::NEW,
+                'quote_status_id' => QuoteStatusEnum::ApplicationPending,
+                'payment_status_id' => null,
                 'is_quote_locked' => false,
                 'transaction_approved_at' => null,
                 'reason_for_reset' => $reason,
