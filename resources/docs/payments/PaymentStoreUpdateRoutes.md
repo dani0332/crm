@@ -13,6 +13,24 @@ Defines the HTTP layer for **creating** and **updating** the “new payment stru
 
 ---
 
+## Permissions (`check_route_access`)
+
+Middleware: `App\Http\Middleware\CheckRouteAccess`.
+
+- It reads the **current route name** (`$request->route()->getName()`) and checks `auth()->user()->can($routeName)` against Spatie **permission names** (same string as the route name).
+- Users with **Admin** or **Engineering** (`RolesEnum`) **skip** the permission check and are always allowed.
+
+| Route name | Spatie permission (DB `permissions.name`) | `PermissionsEnum` constant |
+|------------|---------------------------------------------|----------------------------|
+| `payment-create` | `payment-create` | `PermissionsEnum::PaymentsCreate` |
+| `payment-edit` | `payment-edit` | `PermissionsEnum::PaymentsEdit` |
+
+So: **create** requires the **`payment-create`** permission; **update** requires **`payment-edit`**.
+
+**Note:** Other payment POST routes in `web.php` also use the name `payment-edit` (e.g. migrate / delete split). They rely on the **same** `payment-edit` permission—assign that permission to roles that should perform any of those actions.
+
+---
+
 ## What the controller does
 
 Both actions return a **redirect back** with flash `success` or `error` (Inertia/non-JSON flow).
