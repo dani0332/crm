@@ -44,6 +44,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
+use App\Models\QuoteDocument;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\SageProcess;
@@ -76,6 +77,13 @@ class EmbeddedProductRepository extends BaseRepository
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
     public const SALAMA_POLICY_WORDINGS_URL = 'https://insurancemarket.blob.core.windows.net/imcrm/'.self::SALAMA_POLICY_WORDINGS_PATH;
+
+    /**
+     * Root segment for quote documents on Azure blob disks (prepended to document type folder_path).
+     */
+    public const DOCUMENTS_STORAGE_PREFIX = 'documents/';
+
+    public const ERROR_UPLOADING_DOCUMENT = 'Error uploading document';
     public const ALLOWED_LOBS = [
         QuoteTypeId::Cyber,
         QuoteTypeId::Car,
@@ -194,7 +202,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $type = 'embedded_product';
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
@@ -1009,10 +1017,10 @@ class EmbeddedProductRepository extends BaseRepository
             $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
-            $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
+            $filePathAzure = self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path.'/'.$title;
             Storage::disk('azureIMPrivate')->put($filePathAzure, $pdfContent);
             if (! Storage::disk('azureIMPrivate')->exists($filePathAzure)) {
-                throw new Exception('Error uploading document');
+                throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
             }
 
             $documentData = [
@@ -1360,38 +1368,52 @@ class EmbeddedProductRepository extends BaseRepository
         ];
     }
 
-    public function fetchUpdateEpDocument(array $data): bool
+    /**
+     * Resolves models and derived names for EP document replacement, or null when prerequisites fail.
+     *
+     * @return array{
+     *     embeddedTransaction: EmbeddedTransaction,
+     *     oldDocument: QuoteDocument,
+     *     documentType: DocumentType,
+     *     quoteObject: object,
+     *     storedDocName: string,
+     * }|null
+     */
+    private function resolveFetchUpdateEpDocumentContext(array $data): ?array
     {
         $ep = $this->where('id', $data['epId'])->first();
-        if (! $ep) {
-            return false;
-        }
+        $transaction = $ep !== null
+            ? $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false)
+            : null;
 
-        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
-        if ($transaction->isEmpty()) {
-            return false;
-        }
+        $embeddedTransaction = ($transaction !== null && $transaction->isNotEmpty())
+            ? $transaction->first()
+            : null;
 
-        $embeddedTransaction = $transaction->first();
-
-        $oldDocument = $embeddedTransaction->documents()->withTrashed()->find($data['documentId']);
-        if (! $oldDocument) {
-            return false;
-        }
+        $oldDocument = $embeddedTransaction !== null
+            ? $embeddedTransaction->documents()->withTrashed()->find($data['documentId'])
+            : null;
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
 
-        $documentType = DocumentType::where('code', $oldDocument->document_type_code)
-            ->where('quote_type_id', $quoteTypeId)
-            ->first();
+        $documentType = $oldDocument !== null
+            ? DocumentType::where('code', $oldDocument->document_type_code)
+                ->where('quote_type_id', $quoteTypeId)
+                ->first()
+            : null;
 
-        if (! $documentType) {
-            return false;
-        }
+        $quoteObject = $documentType !== null
+            ? $this->getQuoteObject($data['modelType'], $data['quoteId'])
+            : false;
 
-        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-        if ($quoteObject === false) {
-            return false;
+        if ($ep === null
+            || $transaction === null
+            || $transaction->isEmpty()
+            || $oldDocument === null
+            || $documentType === null
+            || $quoteObject === false
+        ) {
+            return null;
         }
 
         match ($oldDocument->document_type_code) {
@@ -1405,20 +1427,42 @@ class EmbeddedProductRepository extends BaseRepository
         $docNameSuffix = Str::after($oldDocument->doc_name, '_');
         $storedDocName = "{$embeddedTransaction->certificate_number}_{$docNameSuffix}";
 
+        return [
+            'embeddedTransaction' => $embeddedTransaction,
+            'oldDocument' => $oldDocument,
+            'documentType' => $documentType,
+            'quoteObject' => $quoteObject,
+            'storedDocName' => $storedDocName,
+        ];
+    }
+
+    public function fetchUpdateEpDocument(array $data): bool
+    {
+        $ctx = $this->resolveFetchUpdateEpDocumentContext($data);
+        if ($ctx === null) {
+            return false;
+        }
+
+        $embeddedTransaction = $ctx['embeddedTransaction'];
+        $oldDocument = $ctx['oldDocument'];
+        $documentType = $ctx['documentType'];
+        $quoteObject = $ctx['quoteObject'];
+        $storedDocName = $ctx['storedDocName'];
+
         $uploadedFile = $data['file'];
         $originalName = $uploadedFile->getClientOriginalName();
-        $uniqueBlobName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $uniqueBlobName = $this->uniqueBlobNameFromOriginalName($originalName);
         $azureObjectName = $quoteObject->uuid.'_'.$uniqueBlobName;
         $docUuid = uniqid();
 
         $filePathAzure = $uploadedFile->storeAs(
-            'documents/'.$documentType->folder_path,
+            self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path,
             $azureObjectName,
             'azureIMPrivate'
         );
 
         if ($filePathAzure === false) {
-            throw new Exception('Error uploading document');
+            throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
         }
 
         DB::transaction(function () use (
@@ -1475,17 +1519,25 @@ class EmbeddedProductRepository extends BaseRepository
         return true;
     }
 
+    /**
+     * Unique filename segment for blob storage: removes whitespace from uniqid + original basename.
+     */
+    private function uniqueBlobNameFromOriginalName(string $originalName): string
+    {
+        return (string) preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+    }
+
     private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
     {
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
         $fileNameAzure = $quoteObject->uuid.'_'.$docName;
         $docUuid = uniqid();
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
+        $filePathAzure = $file->storeAs(self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
         if ($filePathAzure == false) {
-            throw new Exception('Error uploading document');
+            throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
         }
 
         return [
