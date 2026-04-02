@@ -62,8 +62,10 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use finfo;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PDF;
 use Throwable;
 
@@ -1377,27 +1379,62 @@ class EmbeddedProductRepository extends BaseRepository
             return false;
         }
 
-        $oldDocument->delete();
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
+
+        $documentType = DocumentType::where('code', $oldDocument->document_type_code)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first();
 
         $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-        $documentData = $this->prepareDocumentData($data['file'], $data['documentNumber'], $oldDocument->document_type_text, $quoteObject, $data['modelType']);
 
-        $newDocument = $embeddedTransaction->documents()->create(array_merge($documentData, [
+        match ($oldDocument->document_type_code) {
+            QuoteDocumentsEnum::POLICY_SCHEDULE => $embeddedTransaction->certificate_number = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $embeddedTransaction->tax_invoice_buyer_no = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_TAX_INVOICE => $embeddedTransaction->tax_invoice_no = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_EP_TAX_INVOICE => $embeddedTransaction->tax_invoice_no = $data['documentNumber'],
+            default => null,
+        };
+        $embeddedTransaction->save();
+
+        $docNameSuffix = Str::after($oldDocument->doc_name, '_');
+        $storedDocName = "{$embeddedTransaction->certificate_number}_{$docNameSuffix}";
+
+        $uploadedFile = $data['file'];
+        $originalName = $uploadedFile->getClientOriginalName();
+        $uniqueBlobName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $azureObjectName = $quoteObject->uuid.'_'.$uniqueBlobName;
+        $docUuid = uniqid();
+
+        $filePathAzure = $uploadedFile->storeAs(
+            'documents/'.$documentType->folder_path,
+            $azureObjectName,
+            'azureIMPrivate'
+        );
+
+        if ($filePathAzure === false) {
+            throw new Exception('Error uploading document');
+        }
+
+        $newDocument = $embeddedTransaction->documents()->create([
+            'doc_name' => $storedDocName,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => 'application/pdf',
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $documentType->text,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => Auth::id(),
             'is_manual_override' => true,
             'override_remarks' => $data['remarks'],
-        ]));
+        ]);
 
-        if ($newDocument?->exists) {
-            $documentType = DocumentType::where('code', $newDocument->document_type_code)
-                ->where('quote_type_id', collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType'])))
-                ->first();
-
-            if ($documentType) {
-                WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
-                    ->delay(now()->addSeconds(10))
-                    ->afterCommit();
-            }
+        if ($newDocument?->exists && $documentType && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
+                ->delay(now()->addSeconds(10))
+                ->afterCommit();
         }
+
+        $oldDocument->delete();
 
         return true;
     }
