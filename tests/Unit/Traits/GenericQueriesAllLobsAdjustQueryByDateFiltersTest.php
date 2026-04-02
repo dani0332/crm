@@ -48,7 +48,8 @@ it('returns scalar for flat string so Carbon::parse is safe', function (): void 
 describe('adjustQueryByDateFilters with request params', function () {
     beforeEach(function (): void {
         TestSchemaCreator::createMinimalSchema();
-        Config::set('constants.DB_DATE_FORMAT_MATCH', config('constants.DB_DATE_FORMAT_MATCH') ?? 'Y-m-d');
+        // Date-only format so bindings match assertions (Doppler/env often uses Y-m-d H:i:s).
+        Config::set('constants.DB_DATE_FORMAT_MATCH', 'Y-m-d');
     });
 
     it('does not throw when booking_date is sent as nested array from frontend', function (): void {
