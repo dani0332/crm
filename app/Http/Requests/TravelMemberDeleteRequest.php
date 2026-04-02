@@ -45,30 +45,11 @@ class TravelMemberDeleteRequest extends FormRequest
                 $validator->errors()->add('travel_member_delete', 'Quote not found.');
             }
 
-            $payments = $quote->payments()->get();
-            $hasAuthorizedSplit = $this->hasAuthorizedSplit($member->quote_id);
+            $travelQuoteService = app(TravelQuoteService::class);
+            $hasAuthorizedPayment = $travelQuoteService->memberHasAuthorizedPayment($member, $quote);
 
-            dd($payments->isEmpty(), $hasAuthorizedSplit);
-
-
-            if (! $payments->isEmpty()) {
-                $hasAuthorizedSplit = $this->hasAuthorizedSplit($member->quote_id);
-                dd($hasAuthorizedSplit);
-
-
-
-
-                if (! $hasAuthorizedSplit) {
-                    $validator->errors()->add('travel_member_delete', 'The selected member has authorized payment.');
-                }
-
-                $travelQuoteService = app(TravelQuoteService::class);
-                if (! $travelQuoteService->travelMemberMayBeDeletedWhenLinkedPaymentIsTerminal($member)) {
-                    $validator->errors()->add(
-                        'travel_member_delete',
-                        $travelQuoteService->travelMemberDeleteBlockedMessage()
-                    );
-                }
+            if ($hasAuthorizedPayment) {
+                $validator->errors()->add('travel_member_delete', 'Member cannot be deleted because payment has already been authorized.');
             }
         });
     }
