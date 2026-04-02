@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
