@@ -9,6 +9,7 @@ use App\Enums\MyAlfredWelcomeEmailProcessResult;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Services\Logger\LoggerService;
+use Throwable;
 
 class MyAlfredWelcomeEmailInboundService
 {
@@ -20,12 +21,17 @@ class MyAlfredWelcomeEmailInboundService
     ): MyAlfredWelcomeEmailProcessResult {
         LoggerService::startFeatureLogging(feature: LoggerFeatureEnum::SEND_MA_WELCOME_EMAIL);
 
-        LoggerService::info('MyAlfred Welcome Email - Request received', [
-            'customer_email' => $email,
-            'code' => $code,
-            'source' => $source,
-            'tag' => $tag,
-        ]);
+        try {
+            LoggerService::info('MyAlfred Welcome Email - Request received', [
+                'customer_email' => $email,
+                'code' => $code,
+                'source' => $source,
+                'tag' => $tag,
+            ]);
+        } catch (Throwable $e) {
+            // Ensure logging failures don't break the business flow.
+            LoggerService::error('MyAlfred Welcome Email - Logging failed', [], $e);
+        }
 
         $customer = Customer::query()->where('email', $email)->first();
 
