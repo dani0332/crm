@@ -35,7 +35,7 @@ class CourtesyEmailService extends BaseService
         QuoteTypeId::Pet,
         QuoteTypeId::Travel,
         QuoteTypeId::Yacht,
-        QuoteTypeId::GroupMedical,
+        QuoteTypeId::Business,
     ];
 
     /**
@@ -233,7 +233,7 @@ class CourtesyEmailService extends BaseService
 
             $payload['isAUH'] = match ($quoteTypeId) {
                 QuoteTypeId::Health => (int) ($quote->emirate_of_your_visa_id ?? 0) === EmirateEnum::ABU_DHABI,
-                QuoteTypeId::GroupMedical => (int) ($quote->latestInsured?->emirate_of_registration_id ?? $quote->emirate_of_registration_id ?? 0) === EmirateEnum::ABU_DHABI,
+                QuoteTypeId::Business => (int) ($quote->latestInsured?->emirate_of_registration_id ?? $quote->emirate_of_registration_id ?? 0) === EmirateEnum::ABU_DHABI,
                 default => (int) ($quote->branch_id ?? BranchEnum::DUBAI->value) === BranchEnum::ABU_DHABI->value,
             };
 
@@ -241,6 +241,12 @@ class CourtesyEmailService extends BaseService
 
             $headers = $response->headers ?? [];
             $hasRunId = isset($headers['Run-Id']) || isset($headers['run-id']);
+
+            LoggerService::info('CourtesyEmailService - Creating quote work flow details', [
+                'quoteUID' => $quote->uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'response' => $response,
+            ]);
 
             $this->birdService->createQuoteWorkFlowDetails(
                 $quote,
@@ -378,7 +384,7 @@ class CourtesyEmailService extends BaseService
      */
     private function scopeBusinessQuoteLineOfBusiness(Builder $query, int $quoteTypeId): void
     {
-        if ($quoteTypeId !== QuoteTypeId::GroupMedical) {
+        if ($quoteTypeId !== QuoteTypeId::Business) {
             return;
         }
 

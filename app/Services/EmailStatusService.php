@@ -84,8 +84,6 @@ class EmailStatusService extends BaseService
 
         if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
-        } elseif ($model instanceof BusinessQuote && $quoteTypeId === QuoteTypeId::GroupMedical) {
-            $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
         }
 
         $quote = $query->first();
