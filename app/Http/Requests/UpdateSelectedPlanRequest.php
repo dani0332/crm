@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
 use App\Rules\ValidateAuthorizedPayment;
 use App\Services\HealthQuoteService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -21,7 +22,7 @@ class UpdateSelectedPlanRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -54,6 +55,7 @@ class UpdateSelectedPlanRequest extends FormRequest
                 $quote = HealthQuote::where('code', request()->code)->with('payments')->first();
                 if (! $quote) {
                     $validator->errors()->add('error', 'Quote not found');
+
                     return;
                 }
                 $payments = $quote->payments;

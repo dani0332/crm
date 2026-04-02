@@ -86,6 +86,8 @@ use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -270,7 +272,7 @@ class CentralController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
@@ -297,7 +299,7 @@ class CentralController extends Controller
             }
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $paymentCode = $validatedData['payment_code'] ?? '';
             LoggerService::info('Quote Code: '.$paymentCode.' fn: updateBookingPolicy error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -359,7 +361,7 @@ class CentralController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
@@ -597,7 +599,7 @@ class CentralController extends Controller
             }
 
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             return response()->json(['message' => ['Something went wrong. Please try again later.']], 500);
@@ -767,7 +769,7 @@ class CentralController extends Controller
                     LoggerService::info("File does not exist: {$file['path']}");
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $appTrace = collect($e->getTrace())
                 ->filter(function ($trace) {
                     // Check if any value in the trace contains 'App/' or 'app/'
@@ -787,7 +789,7 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    public function voidPayment(Request $request): JsonResponse
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT);
         $response = app(CentralService::class)->voidPayment($request);
@@ -897,7 +899,7 @@ class CentralController extends Controller
         }
     }
 
-    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    public function deletePayment(Request $request): JsonResponse
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_PARENT_PAYMENT);
         $validatedRequest = (object) $request->validate([
@@ -915,7 +917,7 @@ class CentralController extends Controller
      * Reset all payments for a lead and revert status (per-LOB implementation).
      * Currently supported: Health. Other quote types return 404 until implemented.
      */
-    public function resetManagePayments(ResetManagePaymentsRequest $request, string $quoteType): \Illuminate\Http\JsonResponse
+    public function resetManagePayments(ResetManagePaymentsRequest $request, string $quoteType): JsonResponse
     {
         $data = $request->validated();
 
