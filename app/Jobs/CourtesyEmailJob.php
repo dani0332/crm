@@ -38,6 +38,11 @@ class CourtesyEmailJob implements ShouldQueue
         }
 
         LoggerService::startQuoteLogging($quoteUID);
+        
+        LoggerService::info('CourtesyEmailJob - Processing courtesy email workflow', [
+            'quoteUID' => $quoteUID,
+            'quoteTypeId' => $quoteTypeId,
+        ]);
 
         $courtesyEmailService->processCourtesyEmailWorkflow($quoteUID, $quoteTypeId);
     }
