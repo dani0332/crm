@@ -87,4 +87,5 @@ enum LoggerFeatureEnum: string
     case CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL = 'claim-sub-status-customer-update-email';
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case CSV_EXPORT = 'csv-export';
+    case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 }
