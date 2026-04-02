@@ -96,7 +96,9 @@ const tableItems = computed(() =>
             <span class="text-sm">{{ item.email_address || '—' }}</span>
           </template>
           <template #item-status="item">
-            <span class="text-sm">{{ item.status || '—' }}</span>
+            <span class="text-sm uppercase text-primary-600">{{
+              item.status || '—'
+            }}</span>
           </template>
           <template #item-sent_at="item">
             <span class="text-sm">{{ item.sent_at || '—' }}</span>

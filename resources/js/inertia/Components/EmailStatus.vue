@@ -26,18 +26,16 @@ const page = usePage();
 const isWhatsAppType = t => String(t ?? '').toLowerCase() === 'whatsapp';
 
 const tableItems = computed(() =>
-  (props.emailStatuses || [])
-    .filter(row => row?.flow_type !== COURTESY_EMAIL_FLOW_TYPE_VALUE)
-    .map(row => ({
-      ...row,
-    })),
+  (props.emailStatuses || []).filter(
+    row => row?.flow_type !== COURTESY_EMAIL_FLOW_TYPE_VALUE,
+  ),
 );
 
 const emailStatusTable = reactive({
   columns: [
-    { text: 'Channel', value: '_channel' },
-    { text: 'Subject', value: '_subject' },
-    { text: 'Recipient', value: '_recipient' },
+    { text: 'Channel', value: 'type' },
+    { text: 'Subject', value: 'email_subject' },
+    { text: 'Recipient', value: 'email_address' },
     { text: 'Status', value: 'email_status' },
     { text: 'Reason', value: 'reason' },
     { text: 'Template Id', value: 'template_id' },
@@ -93,16 +91,16 @@ const hideFooter = computed(() => {
           :rows-per-page="rowsPerPage"
           :show-index="showIndex"
         >
-          <template #item-_channel="item">
+          <template #item-type="{ type }">
             <span
-              class="text-xs font-semibold px-2 py-0.5 rounded"
+              class="text-xs font-semibold px-2 py-0.5 rounded capitalize"
               :class="
-                isWhatsAppType(item.type)
+                isWhatsAppType(type)
                   ? 'bg-green-100 text-green-800'
                   : 'bg-slate-100 text-slate-700'
               "
             >
-              {{ item._channel }}
+              {{ type }}
             </span>
           </template>
           <template #item-email_status="item">

@@ -36,9 +36,11 @@ class CourtesyEmailService extends BaseService
         QuoteTypeId::Business,
     ];
 
-    /**
-     * @return list<int>
-     */
+    public function __construct(
+        private BirdService $birdService,
+        private EmailStatusService $emailStatusService,
+    ) {}
+
     public static function allowedQuoteTypeIds(): array
     {
         return self::ALLOWED_QUOTE_TYPES;
@@ -101,11 +103,6 @@ class CourtesyEmailService extends BaseService
             'suppression_expires_at' => '—',
         ];
     }
-
-    public function __construct(
-        private BirdService $birdService,
-        private EmailStatusService $emailStatusService,
-    ) {}
 
     public function processCourtesyEmailWorkflow(string $quoteUID, int $quoteTypeId): array
     {
