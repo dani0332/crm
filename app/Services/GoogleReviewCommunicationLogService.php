@@ -97,7 +97,7 @@ class GoogleReviewCommunicationLogService
                 ->orderByDesc('id')
                 ->get();
 
-        $messages = $messages->where('flow_type', QuoteFlowType::COURTESY_EMAIL->value)->values();
+        $messages = $messages->where('flow_type', QuoteFlowType::COURTESY_EMAIL)->values();
 
         $stoppedSourceForQuote = $flows->pluck('stopped_source')->filter()->first();
 

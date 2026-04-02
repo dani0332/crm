@@ -239,9 +239,6 @@ class CourtesyEmailService extends BaseService
 
             $response = $this->birdService->triggerWebHookRequest($workflowUrl, $payload);
 
-            $headers = $response->headers ?? [];
-            $hasRunId = isset($headers['Run-Id']) || isset($headers['run-id']);
-
             LoggerService::info('CourtesyEmailService - Creating quote work flow details', [
                 'quoteUID' => $quote->uuid,
                 'quoteTypeId' => $quoteTypeId,
@@ -254,21 +251,6 @@ class CourtesyEmailService extends BaseService
                 QuoteFlowType::COURTESY_EMAIL->value,
                 $quoteTypeId,
             );
-
-            if (! $hasRunId) {
-                LoggerService::warning('CourtesyEmailService - Run-Id not found in response headers', [
-                    'quoteUID' => $quote->uuid,
-                    'quoteTypeId' => $quoteTypeId,
-                ]);
-                $this->logCourtesyNotDispatched(
-                    $quote,
-                    $quoteTypeId,
-                    'Bird webhook did not return Run-Id in response headers; workflow run not recorded',
-                    $customer instanceof Customer ? $customer->id : null,
-                );
-
-                return ['message' => 'Bird webhook did not return Run-Id; workflow run not recorded', 'success' => false];
-            }
 
             return ['message' => 'Processed workflow successfully', 'success' => true];
 
