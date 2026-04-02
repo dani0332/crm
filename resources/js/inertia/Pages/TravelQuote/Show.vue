@@ -82,8 +82,9 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
-const { hasAuthorizedSplit, isPaymentCancelled, canDeleteTravelMemberByLinkedPayment } =
-  usePayment();
+const { hasAuthorizedSplit, isMemberPaymentCancelled } = usePayment();
+
+const memberPaymentCancelled = member => isMemberPaymentCancelled(member);
 const checkCheckedPlans = computed(() => {
   return true;
 });
@@ -2716,7 +2717,7 @@ const fullAddress = computed(() => {
           </div>
 
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when this member's segment payment is authorized -->
+            <!-- Show button with tooltip when payment is authorized -->
             <x-tooltip
               v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
@@ -2745,25 +2746,17 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Delete only when this member's linked payment segment is Cancelled, Failed, or Declined -->
-            <!-- !canDeleteTravelMemberByLinkedPayment(
-                  item,
-                  normalPlansIds.ids,
-                  seniorPlansIds.ids,
-                ) -->
+            <!-- Show button with tooltip when payment is authorized and not cancelled -->
             <x-tooltip
-              v-if="!isPaymentCancelled(item, normalPlansIds.ids, seniorPlansIds.ids)"
+              v-if="isAuthorizedPayment.hasAuthorized && ! memberPaymentCancelled(item)"
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">
                 Delete
               </x-button>
               <template #tooltip>
-                <!-- You can remove this member only when their linked payment is
-                cancelled, failed, or declined. You may then delete that payment
-                from Manage Payment. -->
                 {{
-                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isPaymentCancelled(item, normalPlansIds.ids, seniorPlansIds.ids).statusText}`
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
                 }}
               </template>
             </x-tooltip>
