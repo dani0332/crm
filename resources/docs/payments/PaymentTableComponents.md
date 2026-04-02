@@ -49,16 +49,16 @@ resources/js/inertia/
 
 ## Quick reference table (group → responsibility)
 
-| Group | Folder / entry file | What lives here |
-|--------|---------------------|-----------------|
-| **Shell** | `PaymentTableNew.vue` | Collapsible card, totals, all modal wiring, handlers for add/edit/CC link/delete/void. |
-| **Table chrome** | `PaymentComponents/` (`PaymentHeader`, `PaymentTableHeader`) | Header actions + column titles. |
-| **Grid rows** | `PaymentComponents/` (`PaymentRow`, `PaymentSplitRow`) | Parent payment row + expanded split rows (links, capture, retry). |
-| **Create/edit UI** | `PaymentComponents/CreatePaymentForm.vue` | Modal form orchestration; calls into `PaymentFormComps` + Tabby modal. |
-| **Form sections** | `PaymentComponents/PaymentFormComps/` | Fields, schedule, alerts, notes, verify/decline/verification, footer. |
-| **Dialogs** | `PaymentComponents/PaymentModal/` | AML, gallery, retry, delete split/parent, void, Tabby notice. |
-| **Plan/total widget** | `Components/UpdateTotalPrice.vue` | Optional total price control from payment header. |
-| **Shared logic** | `inertia/Composables/` | `usePayment`, `useAMLKYC`, `useDocumentTempUrl` — formatting, AML/KYC, doc URLs. |
+| Group                 | Folder / entry file                                          | What lives here                                                                        |
+| --------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| **Shell**             | `PaymentTableNew.vue`                                        | Collapsible card, totals, all modal wiring, handlers for add/edit/CC link/delete/void. |
+| **Table chrome**      | `PaymentComponents/` (`PaymentHeader`, `PaymentTableHeader`) | Header actions + column titles.                                                        |
+| **Grid rows**         | `PaymentComponents/` (`PaymentRow`, `PaymentSplitRow`)       | Parent payment row + expanded split rows (links, capture, retry).                      |
+| **Create/edit UI**    | `PaymentComponents/CreatePaymentForm.vue`                    | Modal form orchestration; calls into `PaymentFormComps` + Tabby modal.                 |
+| **Form sections**     | `PaymentComponents/PaymentFormComps/`                        | Fields, schedule, alerts, notes, verify/decline/verification, footer.                  |
+| **Dialogs**           | `PaymentComponents/PaymentModal/`                            | AML, gallery, retry, delete split/parent, void, Tabby notice.                          |
+| **Plan/total widget** | `Components/UpdateTotalPrice.vue`                            | Optional total price control from payment header.                                      |
+| **Shared logic**      | `inertia/Composables/`                                       | `usePayment`, `useAMLKYC`, `useDocumentTempUrl` — formatting, AML/KYC, doc URLs.       |
 
 ---
 

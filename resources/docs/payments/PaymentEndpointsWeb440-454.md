@@ -8,21 +8,21 @@ All routes below live inside the authenticated group (`auth`, `last_login_check`
 
 ## Summary table
 
-| # | Path | Route name | `check_route_access` | Permission (if middleware) | Controller | Backend entrypoint (typical) |
-|---|------|------------|----------------------|----------------------------|------------|------------------------------|
-| 1 | `…/split-payment-approve-decline` | `approve-payments` | yes | `approve-payments` (`ApprovePayments`) | `splitPaymentApproveDecline` | `PaymentRepository::fetchSplitPaymentApproveDecline` |
-| 2 | `…/master-payment-approve-capture` | `approve-payments` | yes | same | `masterPaymentApproveCapture` | `PaymentRepository::fetchMasterPaymentApproveCapture` |
-| 3 | `…/migrate-payment` | `payment-edit` | yes | `payment-edit` (`PaymentsEdit`) | `migratePayment` | `PaymentRepository::fetchMigratePayments` |
-| 4 | `…/update-total-price` | `temp-update-totalprice` | yes | `temp-update-totalprice` (`TEMP_UPDATE_TOTALPRICE`) | `updateTotalPrice` | `PaymentRepository::fetchUpdateTotalPrice` |
-| 5 | `…/store-new` | `payment-create` | yes | `payment-create` (`PaymentsCreate`) | `storeNewPayment` | `PaymentRepository::fetchCreateNewPayment` |
-| 6 | `…/update-new` | `payment-edit` | yes | `payment-edit` (`PaymentsEdit`) | `updateNewPayment` | `PaymentRepository::fetchUpdateNewPayment` |
-| 7 | `…/retry-payment` | `approve-payments` | yes | `approve-payments` (`ApprovePayments`) | `retrySplitPayment` | `SplitPaymentService::processSplitPaymentApprove` |
-| 8 | `…/delete-split-payment` | `payment-edit` | yes | `payment-edit` (`PaymentsEdit`) | `deleteSplitPayment` | `SplitPaymentService::deleteSplitPayment` |
-| 9 | `…/void-payment` | `payments-void` | yes | `payments-void` (`PAYMENTS_VOID`) | `voidPayment` | `CentralService::voidPayment` |
-| 10 | `…/remove-insurer-payment-link` | `payments-remove-insurer-payment-link` | **no** | *Authenticated only* | `removeInsurerPaymentLink` | `CentralService::removeInsurerPaymentLink` |
-| 11 | `…/payments-capture-validation` | `capture-validation` | **no** | *Authenticated only* | `paymentsCaptureValidtion` | `CentralService::capturePaymentValidation` |
-| 12 | `…/delete-payment` | `payments-delete` | **no** | *Authenticated only* | `deletePayment` | `CentralService::deletePayment` |
-| 13 | `…/check-insurer-receipt-number` | `check-insurer-receipt-number` | **no** | *Authenticated only* | `checkInsurerReceiptNumber` | `CentralService::checkInsurerReceiptNumber` |
+| #   | Path                               | Route name                             | `check_route_access` | Permission (if middleware)                          | Controller                    | Backend entrypoint (typical)                          |
+| --- | ---------------------------------- | -------------------------------------- | -------------------- | --------------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
+| 1   | `…/split-payment-approve-decline`  | `approve-payments`                     | yes                  | `approve-payments` (`ApprovePayments`)              | `splitPaymentApproveDecline`  | `PaymentRepository::fetchSplitPaymentApproveDecline`  |
+| 2   | `…/master-payment-approve-capture` | `approve-payments`                     | yes                  | same                                                | `masterPaymentApproveCapture` | `PaymentRepository::fetchMasterPaymentApproveCapture` |
+| 3   | `…/migrate-payment`                | `payment-edit`                         | yes                  | `payment-edit` (`PaymentsEdit`)                     | `migratePayment`              | `PaymentRepository::fetchMigratePayments`             |
+| 4   | `…/update-total-price`             | `temp-update-totalprice`               | yes                  | `temp-update-totalprice` (`TEMP_UPDATE_TOTALPRICE`) | `updateTotalPrice`            | `PaymentRepository::fetchUpdateTotalPrice`            |
+| 5   | `…/store-new`                      | `payment-create`                       | yes                  | `payment-create` (`PaymentsCreate`)                 | `storeNewPayment`             | `PaymentRepository::fetchCreateNewPayment`            |
+| 6   | `…/update-new`                     | `payment-edit`                         | yes                  | `payment-edit` (`PaymentsEdit`)                     | `updateNewPayment`            | `PaymentRepository::fetchUpdateNewPayment`            |
+| 7   | `…/retry-payment`                  | `approve-payments`                     | yes                  | `approve-payments` (`ApprovePayments`)              | `retrySplitPayment`           | `SplitPaymentService::processSplitPaymentApprove`     |
+| 8   | `…/delete-split-payment`           | `payment-edit`                         | yes                  | `payment-edit` (`PaymentsEdit`)                     | `deleteSplitPayment`          | `SplitPaymentService::deleteSplitPayment`             |
+| 9   | `…/void-payment`                   | `payments-void`                        | yes                  | `payments-void` (`PAYMENTS_VOID`)                   | `voidPayment`                 | `CentralService::voidPayment`                         |
+| 10  | `…/remove-insurer-payment-link`    | `payments-remove-insurer-payment-link` | **no**               | _Authenticated only_                                | `removeInsurerPaymentLink`    | `CentralService::removeInsurerPaymentLink`            |
+| 11  | `…/payments-capture-validation`    | `capture-validation`                   | **no**               | _Authenticated only_                                | `paymentsCaptureValidtion`    | `CentralService::capturePaymentValidation`            |
+| 12  | `…/delete-payment`                 | `payments-delete`                      | **no**               | _Authenticated only_                                | `deletePayment`               | `CentralService::deletePayment`                       |
+| 13  | `…/check-insurer-receipt-number`   | `check-insurer-receipt-number`         | **no**               | _Authenticated only_                                | `checkInsurerReceiptNumber`   | `CentralService::checkInsurerReceiptNumber`           |
 
 Rows **10–13** have **no** `check_route_access`; only logged-in users. Tighten access in controller/policy if needed.
 
@@ -60,8 +60,8 @@ Same permission string applies to every route that shares the name. Named route 
 **Repository (`fetchMasterPaymentApproveCapture`):**
 
 - If **`is_declined`:** **`handlePaymentDecline`** — updates master payment decline fields; sets quote to **TransactionDeclined** or send-update **TRANSACTION_DECLINE**; returns message `'Transaction declined'`.
-- If **`is_approved`:** **`handlePaymentApprove`** —  
-  - When **`is_capture`:** loops `collection_amount` by split `sr_no`, calls **`SplitPaymentService::processSplitPaymentApprove`** per non-`PAID` split.  
+- If **`is_approved`:** **`handlePaymentApprove`** —
+  - When **`is_capture`:** loops `collection_amount` by split `sr_no`, calls **`SplitPaymentService::processSplitPaymentApprove`** per non-`PAID` split.
   - Then **`SplitPaymentService::processMasterPaymentApprove`** for the master payment.
 
 **Request:** `SplitPaymentApproveRequest` — `is_approved`, `is_declined`, `is_capture`, `collection_amount[]`, `collection_type`, `send_update_id`, etc. **`withValidator`:** quote must exist (main send-update vs lead); if `is_approved`, user must **`can(ApprovePayments)`** (extra guard on top of route middleware).
@@ -186,21 +186,21 @@ Same permission string applies to every route that shares the name. Named route 
 
 ## Form requests (quick reference)
 
-| Controller method | Request class |
-|-------------------|----------------|
-| `splitPaymentApproveDecline` | `SplitPaymentUpdateRequest` |
-| `masterPaymentApproveCapture` | `SplitPaymentApproveRequest` |
-| `migratePayment` | `MigratePaymentsRequest` |
-| `updateTotalPrice` | `UpdateTotalPriceRequest` |
-| `storeNewPayment` | `StorePaymentRequest` |
-| `updateNewPayment` | `UpdatePaymentRequest` |
-| `retrySplitPayment` | `RetrySplitPaymentRequest` |
-| `deleteSplitPayment` | `DeleteSplitPaymentRequest` |
-| `voidPayment` | `Request` |
-| `removeInsurerPaymentLink` | `Request` |
-| `paymentsCaptureValidtion` | `PaymentCaptureValidtionRequest` |
-| `deletePayment` | inline validation |
-| `checkInsurerReceiptNumber` | inline validation |
+| Controller method             | Request class                    |
+| ----------------------------- | -------------------------------- |
+| `splitPaymentApproveDecline`  | `SplitPaymentUpdateRequest`      |
+| `masterPaymentApproveCapture` | `SplitPaymentApproveRequest`     |
+| `migratePayment`              | `MigratePaymentsRequest`         |
+| `updateTotalPrice`            | `UpdateTotalPriceRequest`        |
+| `storeNewPayment`             | `StorePaymentRequest`            |
+| `updateNewPayment`            | `UpdatePaymentRequest`           |
+| `retrySplitPayment`           | `RetrySplitPaymentRequest`       |
+| `deleteSplitPayment`          | `DeleteSplitPaymentRequest`      |
+| `voidPayment`                 | `Request`                        |
+| `removeInsurerPaymentLink`    | `Request`                        |
+| `paymentsCaptureValidtion`    | `PaymentCaptureValidtionRequest` |
+| `deletePayment`               | inline validation                |
+| `checkInsurerReceiptNumber`   | inline validation                |
 
 ---
 
