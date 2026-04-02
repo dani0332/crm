@@ -91,6 +91,7 @@ class HealthQuoteService extends BaseService
             'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',
+            'hqr.notional_team',
             'hqr.has_home',
             'hqr.premium',
             'hqr.policy_number',

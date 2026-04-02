@@ -2316,7 +2316,7 @@ const validateEmirateOfVisa = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUBTEAM</dt>
-                <dd>{{ quote.health_team_type }}</dd>
+                <dd>{{ quote.health_team_type ?? quote.notional_team }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
