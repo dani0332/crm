@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Services\MyAlfredWelcomeEmailInboundService;
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Services\Logger\LoggerService;
+use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,11 +33,31 @@ class ProcessMyAlfredWelcomeEmailSqsJob implements ShouldQueue
 
     public function handle(MyAlfredWelcomeEmailInboundService $welcomeEmailInboundService): void
     {
+        // Mark logs as coming from the SQS inbound consumer so it's distinguishable from API-origin logs.
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SQS_INBOUND_QUEUE);
+
         $welcomeEmailInboundService->process(
             $this->email,
             $this->code,
             $this->source,
             $this->tag,
         );
+        LoggerService::endLogging();
+    }
+
+    /**
+     * Handle a job failure after all retries are exhausted.
+     */
+    public function failed(Throwable $exception): void
+    {
+        // Ensure feature context is set for SQS inbound failures.
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SQS_INBOUND_QUEUE);
+        LoggerService::error('ProcessMyAlfredWelcomeEmailSqsJob failed', [], $exception, [
+            'email' => $this->email,
+            'code' => $this->code,
+            'source' => $this->source,
+            'tag' => $this->tag,
+        ]);
+        LoggerService::endLogging();
     }
 }
