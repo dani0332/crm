@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\ClaimsLeadAllocationConfig;
 use App\Models\Permission;
+use App\Models\QuoteType;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -214,12 +215,25 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'gloria.hurboda@insurancemarket.ae',
         ];
         $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
-        $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::CORPLINE->id(), RolesEnum::CorplineClaimManager);
+        $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::BUSINESS->id(), RolesEnum::CorplineClaimManager);
     }
     private function seedClaimAllocationConfigManagers($managersEmails = [], $quoteTypeId = null, $role = null): void
     {
         $users = User::select('id', 'email')->whereIn('email', $managersEmails)->get();
         foreach ($users as $user) {
+            if ($quoteTypeId === null || $quoteTypeId === '') {
+                LoggerService::warning('Claim allocation config skipped: quote type id is empty');
+
+                continue;
+            }
+
+            if (! QuoteType::query()->whereKey($quoteTypeId)->exists()) {
+                LoggerService::warning(
+                    "Claim allocation config skipped: quote_type id {$quoteTypeId} does not exist in quote_type table"
+                );
+
+                continue;
+            }
 
             $isExists = ClaimsLeadAllocationConfig::where('user_id', $user->id)->where('quote_type_id', $quoteTypeId)->first();
             // Assign the Claim Manager role to the user if not already assigned
