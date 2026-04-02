@@ -158,7 +158,7 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            
+
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Business, 'quoteUID' => $businessQuote->uuid]);
 
             ExtendCustomerSubscriptionViaSQS::dispatch(
