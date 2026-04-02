@@ -184,16 +184,18 @@ class BorUploadFileContentValidator
         if ($nul === false || ! isset($chunkData[$nul + 1])) {
             return null;
         }
-        if (ord($chunkData[$nul + 1]) !== 0) {
+        $compressionMethod = ord($chunkData[$nul + 1]);
+        $afterMethod = substr($chunkData, $nul + 2);
+        if ($afterMethod === '') {
             return null;
         }
-        $compressed = substr($chunkData, $nul + 2);
-        if ($compressed === '') {
-            return null;
+        if ($compressionMethod !== 0) {
+            return $afterMethod;
         }
-        $plain = @zlib_decode($compressed);
 
-        return is_string($plain) ? $plain : $compressed;
+        $plain = @zlib_decode($afterMethod);
+
+        return is_string($plain) ? $plain : $afterMethod;
     }
 
     private function pngExtractITxtText(string $chunkData): ?string
@@ -229,31 +231,67 @@ class BorUploadFileContentValidator
     }
 
     /**
-     * JPEG COM (0xFFFE) only in the header region before SOS — avoids false matches inside entropy-coded scan data.
+     * JPEG COM (0xFFFE) in the scan header only (markers before SOS).
+     * Parsed segment-by-segment using length fields so a fake \xFF\xDA inside APP1/EXIF
+     * (e.g. embedded thumbnail JPEG) does not truncate the region and hide COM segments after APP1.
      */
     private function jpegComSegmentsInHeaderContainDisallowedMarkup(string $contents): bool
     {
-        $sos = strpos($contents, "\xFF\xDA");
-        $header = $sos !== false ? substr($contents, 0, $sos) : $contents;
-        $offset = 0;
-        $headerLen = strlen($header);
-        while ($offset + 4 <= $headerLen) {
-            $pos = strpos($header, "\xFF\xFE", $offset);
-            if ($pos === false) {
+        if (! str_starts_with($contents, "\xFF\xD8")) {
+            return false;
+        }
+
+        $n = strlen($contents);
+        $i = 2;
+
+        while ($i < $n) {
+            if ($contents[$i] !== "\xFF") {
                 break;
             }
-            if ($pos + 4 > $headerLen) {
+            $i++;
+            while ($i < $n && $contents[$i] === "\xFF") {
+                $i++;
+            }
+            if ($i >= $n) {
                 break;
             }
-            $segLen = (ord($header[$pos + 2]) << 8) | ord($header[$pos + 3]);
-            if ($segLen < 2) {
+
+            $marker = ord($contents[$i]);
+            $i++;
+
+            if ($marker === 0x00) {
+                continue;
+            }
+
+            if ($marker === 0xD9) {
                 break;
             }
-            $payload = substr($header, $pos + 4, $segLen - 2);
-            if ($this->textPayloadContainsDisallowedMarkup($payload)) {
-                return true;
+
+            if ($marker === 0xDA) {
+                break;
             }
-            $offset = $pos + 2 + $segLen;
+
+            if (($marker >= 0xD0 && $marker <= 0xD7) || $marker === 0x01) {
+                continue;
+            }
+
+            if ($i + 2 > $n) {
+                break;
+            }
+
+            $segLen = (ord($contents[$i]) << 8) | ord($contents[$i + 1]);
+            if ($segLen < 2 || $i + $segLen > $n) {
+                break;
+            }
+
+            if ($marker === 0xFE) {
+                $payload = substr($contents, $i + 2, $segLen - 2);
+                if ($this->textPayloadContainsDisallowedMarkup($payload)) {
+                    return true;
+                }
+            }
+
+            $i += $segLen;
         }
 
         return false;
