@@ -52,6 +52,10 @@ class UpdateSelectedPlanRequest extends FormRequest
 
             if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
                 $quote = HealthQuote::where('code', request()->code)->with('payments')->first();
+                if (! $quote) {
+                    $validator->errors()->add('error', 'Quote not found');
+                    return;
+                }
                 $payments = $quote->payments;
 
                 if ($quote?->is_quote_locked && ! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
