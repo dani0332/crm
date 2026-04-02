@@ -1933,10 +1933,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteCode="$page.props.quote.code"
     />
 
-    <EmailStatus
-      :emailStatuses="emailStatuses"
-      :expanded="sectionExpanded"
-    />
+    <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
 
     <GoogleReviewCommunicationLog
       :google-review-communication-logs="googleReviewCommunicationLogs"
