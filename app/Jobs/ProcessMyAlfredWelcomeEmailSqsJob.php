@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Services\MyAlfredWelcomeEmailInboundService;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
-use Throwable;
+use App\Services\MyAlfredWelcomeEmailInboundService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessMyAlfredWelcomeEmailSqsJob implements ShouldQueue
 {

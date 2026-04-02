@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\MyAlfredWelcomeEmailProcessResult;
+use App\Exceptions\CustomerNotFoundForWelcomeEmailException;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Services\Logger\LoggerService;
@@ -28,27 +29,34 @@ class MyAlfredWelcomeEmailInboundService
                 'source' => $source,
                 'tag' => $tag,
             ]);
-        } catch (Throwable $e) {
-            // Ensure logging failures don't break the business flow.
-            LoggerService::error('MyAlfred Welcome Email - Logging failed', [], $e);
-        }
 
-        $customer = Customer::query()->where('email', $email)->first();
+            $customer = Customer::query()->where('email', $email)->first();
 
-        if (! $customer) {
-            LoggerService::warning('MyAlfred Welcome Email - Customer not found', [
-                'customer_email' => $email,
+            if (! $customer) {
+                LoggerService::warning('MyAlfred Welcome Email - Customer not found', [
+                    'customer_email' => $email,
+                ]);
+
+                throw new CustomerNotFoundForWelcomeEmailException($email);
+            }
+
+            LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+                'customer_email' => $customer->email,
             ]);
 
-            return MyAlfredWelcomeEmailProcessResult::CustomerNotFound;
+            MAWelcomeJob::dispatch($customer, $source, $tag);
+
+            return MyAlfredWelcomeEmailProcessResult::Dispatched;
+        } catch (Throwable $e) {
+            if (! $e instanceof CustomerNotFoundForWelcomeEmailException) {
+                LoggerService::error('MyAlfred Welcome Email - Processing failed', [], $e, [
+                    'customer_email' => $email,
+                ]);
+            }
+
+            throw $e;
+        } finally {
+            LoggerService::endLogging();
         }
-
-        LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
-            'customer_email' => $customer->email,
-        ]);
-
-        MAWelcomeJob::dispatch($customer, $source, $tag);
-
-        return MyAlfredWelcomeEmailProcessResult::Dispatched;
     }
 }
