@@ -158,7 +158,7 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            if ($businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                 CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Business, 'quoteUID' => $businessQuote->uuid]);
             }
 
