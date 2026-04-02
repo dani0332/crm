@@ -1,15 +1,14 @@
 <script setup>
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { createReusableTemplate } from '@vueuse/core';
 import { reactive } from 'vue';
+import OcrLogs from '../../Components/OcrLogs.vue';
 import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import OcrLogs from '../../Components/OcrLogs.vue';
-import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const props = defineProps({
   insuredDetails: Array,
@@ -55,14 +54,6 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
-  googleReviewCommunicationLogs: {
-    type: Array,
-    default: () => [],
-  },
-  showGoogleReviewCommunicationLog: {
-    type: Boolean,
-    default: false,
-  },
   isFuncsEnabled: Object,
   amlStatusName: String,
 });
@@ -1718,10 +1709,6 @@ const formatDob = dob => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
-    <GoogleReviewCommunicationLog
-      :google-review-communication-logs="googleReviewCommunicationLogs"
-      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
-    />
 
     <QuoteActivities
       :can="can"
