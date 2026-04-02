@@ -1,5 +1,7 @@
 # Routes: `store-new` & `update-new` payments
 
+**Index:** [All payment endpoints ~440–454](./PaymentEndpointsWeb440-454.md)
+
 Defines the HTTP layer for **creating** and **updating** the “new payment structure” (parent `payments` row + `payment_splits`) from the CRM Manage Payments UI.
 
 **Routes** (`routes/web.php`):
@@ -92,3 +94,5 @@ So: **store/update** paths that create or change **payments** or **splits** will
 - `App\Http\Requests\UpdatePaymentRequest` — validation for update (includes lock/edit rules as applicable).
 
 For the full **Manage Payments** UI tree, see [PaymentTableComponents.md](./PaymentTableComponents.md).
+
+For **split approve / decline** (`split-payment-approve-decline`, route `approve-payments`), see [PaymentSplitApproveDeclineRoute.md](./PaymentSplitApproveDeclineRoute.md).
