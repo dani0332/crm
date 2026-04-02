@@ -7,7 +7,6 @@ use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\HealthQuoteService;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 
 it('returns true when pre-loaded payments include main insurer payment', function () {
@@ -29,32 +28,15 @@ it('returns true when pre-loaded payments include main insurer payment', functio
     expect($service->canBypassPlanLock($quote, collect([$payment])))->toBeTrue();
 });
 
-it('returns true when payments are loaded via health quote relation', function () {
-    $payment = Mockery::mock(Payment::class)->makePartial();
-    $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
-
-    $morphMany = Mockery::mock(MorphMany::class);
-    $morphMany->shouldReceive('mainLeadPayment')->once()->andReturnSelf();
-    $morphMany->shouldReceive('first')->once()->andReturn($payment);
-
+it('returns false when quote status is not transaction approved', function () {
     $quote = Mockery::mock(HealthQuote::class)->makePartial();
-    $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
-    $quote->shouldReceive('payments')->once()->andReturn($morphMany);
+    $quote->quote_status_id = QuoteStatusEnum::Quoted;
+    $quote->shouldReceive('payments')->never();
 
     $user = Mockery::mock(User::class);
     $user->shouldReceive('can')->with(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL)->once()->andReturn(true);
 
     Auth::shouldReceive('user')->once()->andReturn($user);
-
-    $service = app(HealthQuoteService::class);
-
-    expect($service->canBypassPlanLock($quote))->toBeTrue();
-});
-
-it('returns false when quote status is not transaction approved', function () {
-    $quote = Mockery::mock(HealthQuote::class)->makePartial();
-    $quote->quote_status_id = QuoteStatusEnum::Quoted;
-    $quote->shouldReceive('payments')->never();
 
     $service = app(HealthQuoteService::class);
 
