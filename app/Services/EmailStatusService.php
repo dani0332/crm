@@ -254,7 +254,7 @@ class EmailStatusService extends BaseService
         $email->email_address = $customerEmail;
         $email->msg_id = 'courtesy-not-dispatched-'.Str::uuid()->toString();
         $email->email_subject = 'Google review courtesy';
-        $email->email_status = ProcessStatusCode::COURTESY_NOT_DISPATCHED;
+        $email->email_status = ProcessStatusCode::FAILED;
         $email->reason = $reason;
         $email->type = EmailStatusTypeEnum::Email;
         $email->customer_id = $customerId;

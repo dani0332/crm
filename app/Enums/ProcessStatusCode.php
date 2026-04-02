@@ -17,6 +17,5 @@ final class ProcessStatusCode extends Enum
     public const FAILED = 'Failed';
     public const SENT = 'Sent';
     public const UNSUBSCRIBED = 'unsubscribe-request';
-    public const COURTESY_NOT_DISPATCHED = 'CourtesyEmailWorkflowNotDispatched';
     public const CLICKED = 'Clicked';
 }
