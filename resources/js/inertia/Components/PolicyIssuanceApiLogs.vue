@@ -142,9 +142,7 @@ const policyIssuanceDetail = computed(() => {
   return apiLogs.policyIssuance;
 });
 
-const policyIssuanceId = computed(
-  () => apiLogs.policyIssuance?.id ?? null,
-);
+const policyIssuanceId = computed(() => apiLogs.policyIssuance?.id ?? null);
 
 const apiLogs = reactive({
   loading: false,
@@ -269,9 +267,7 @@ const onLoadAuditLogData = async () => {
             </x-button>
           </div>
           <div
-            v-if="
-              policyIssuanceId && apiLogs.reTriggerPolicyAutomationEligible
-            "
+            v-if="policyIssuanceId && apiLogs.reTriggerPolicyAutomationEligible"
             class="flex gap-2"
             @click.stop
           >
