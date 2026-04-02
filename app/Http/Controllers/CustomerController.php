@@ -238,8 +238,13 @@ class CustomerController extends Controller
         if ($quoteObject) {
             $user = auth()->user();
             if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+                $authorizationMessage = 'You are not authorized to add additional contact for this quote.';
+                if ($request->isInertia) {
+                    vAbort($authorizationMessage);
+                }
+
                 return response()->json(['error' => [
-                    'message' => 'You are not authorized to add additional contact for this quote.',
+                    'message' => $authorizationMessage,
                 ]]);
             }
         }

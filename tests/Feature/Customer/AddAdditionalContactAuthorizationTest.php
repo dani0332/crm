@@ -101,6 +101,35 @@ test('add additional contact returns unauthorized when user cannot access quote 
     expect(CustomerAdditionalContact::query()->where('customer_id', $customer->id)->count())->toBe(0);
 })->with(['car', 'health', 'travel']);
 
+test('add additional contact returns inertia validation error when unauthorized user posts with isInertia', function (): void {
+    $intruder = TestDataSeeder::createUser(['email' => 'inertia-intruder-'.Str::uuid().'@example.com']);
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, ['email' => 'inertia-advisor-'.Str::uuid().'@example.com']);
+    $customer = createTestCustomer();
+    $quote = CarQuote::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'code' => 'CAR-INERTIA-'.Str::random(6),
+        'advisor_id' => $advisor->id,
+        'customer_id' => $customer->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($intruder);
+
+    $response = $this->from('/quotes/car/test')
+        ->post('/customer-additional-contact/add', [
+            'customer_id' => $customer->id,
+            'additional_contact_type' => GenericRequestEnum::MOBILE_NO,
+            'additional_contact_val' => '+97150'.random_int(1000000, 9999999),
+            'quote_type' => 'car',
+            'quote_id' => $quote->id,
+            'isInertia' => true,
+        ]);
+
+    $response->assertSessionHasErrors('error');
+    expect(CustomerAdditionalContact::query()->where('customer_id', $customer->id)->count())->toBe(0);
+});
+
 test('add additional contact succeeds when assigned advisor accesses car, health, and travel quotes', function (string $quoteType) {
     $role = match ($quoteType) {
         'car' => RolesEnum::CarAdvisor,
