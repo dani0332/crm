@@ -2037,8 +2037,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
 const isLocked = computed(
   () =>
-    (page.props.quote.is_quote_locked ?? false) &&
-    !(page.props.canBypassPlanLock ?? false),
+    (page.props.quote.is_quote_locked ?? false)
 );
 
 const isPrimaryEmailLocked = computed(() => {
