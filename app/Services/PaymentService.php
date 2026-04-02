@@ -158,7 +158,7 @@ class PaymentService extends BaseService
     }
 
     /**
-     * Deletes all payments for the Health quote (splits, logs, parent/child rows) and reverts lead to New Lead.
+     * Deletes all payments for the Health quote (splits, logs, parent/child rows) and reverts lead to Application Pending.
      * Call only after {@see HealthQuoteService::canBypassPlanLock()} is true for the same quote and payments.
      */
     public function resetHealthManagePayments($quote, string $reason): void
@@ -178,7 +178,7 @@ class PaymentService extends BaseService
                 'reason_for_reset' => $reason,
             ]);
 
-            LoggerService::info('Reset manage payments: payments removed and quote reverted to New Lead', [
+            LoggerService::info('Reset manage payments: payments removed and quote reverted to Application Pending', [
                 'quote_code' => $quote->code,
                 'reason' => $reason,
             ]);
