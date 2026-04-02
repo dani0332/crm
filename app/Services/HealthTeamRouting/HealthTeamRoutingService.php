@@ -236,12 +236,17 @@ class HealthTeamRoutingService
 
             // Check if NOT PEC lead
             if (! $lead->isPECLead()) {
-                // Terminate with logs about storing national team
-                LoggerService::info('Non PEC lead identified, storing national team', ['source' => $this->source]);
+                // Get notional team based on intent (health plan type)
+                $notionalTeam = HealthPlanTypeEnum::toTeamNameEnum($lead->health_plan_type_id);
+                $lead->notional_team = $notionalTeam;
+                $lead->save();
+
+                // Terminate with logs about storing notional team
+                LoggerService::info("Non PEC lead identified, Notional team: {$notionalTeam}", ['source' => $this->source]);
                 $this->healthTeamRoutingLogService->log(
                     HealthRoutingLogTypeEnum::ROUTING,
                     [
-                        'message' => 'Non PEC lead identified, storing national team',
+                        'message' => "Non PEC lead identified, Notional team: {$notionalTeam}",
                         'step' => 'Non PEC lead check',
                         'is_non_pec' => true,
                         'source' => $this->source,
