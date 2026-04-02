@@ -60,7 +60,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 
@@ -104,7 +103,6 @@ class AMLController extends Controller
      * @return Response|ResponseFactory
      */
     public function show(AML $aml, AMLDisplayService $amlDisplayService, $insuredId = null, $customerId = null)
-
     {
         $data = $amlDisplayService->prepareShowData(
             $aml,
@@ -115,7 +113,7 @@ class AMLController extends Controller
         return inertia('Aml/Show', $data);
     }
 
-    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
             $request->customer_type,

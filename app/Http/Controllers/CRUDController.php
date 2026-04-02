@@ -2442,7 +2442,7 @@ class CRUDController extends Controller
             return response()->json(['success' => 'OCB email sent to customer']);
         }
 
-        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
             $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
             $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
             $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
@@ -2478,7 +2478,7 @@ class CRUDController extends Controller
             return;
         }
 
-        if($carQuote->isGenesisLead) {
+        if ($carQuote->isGenesisLead) {
             $emailData->currentInsurer = '';
         }
 

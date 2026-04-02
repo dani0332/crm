@@ -71,7 +71,6 @@ class LookupSeeder extends Seeder
         ]);
     }
 
-
     private function createEndorsementFinancialSavings(): void
     {
         $ef = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
