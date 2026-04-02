@@ -129,7 +129,6 @@ class CourtesyEmailService extends BaseService
 
             $quote = $this->getQuoteByQuoteType($quoteTypeId, $quoteUID);
 
-            // dd($quote);
             if (! $quote?->email) {
                 LoggerService::warning('CourtesyEmailService - Quote not found or missing email', [
                     'quoteTypeId' => $quoteTypeId,
@@ -319,8 +318,6 @@ class CourtesyEmailService extends BaseService
 
         if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
-        } elseif ($model instanceof BusinessQuote) {
-            $this->scopeBusinessQuoteLineOfBusiness($query, $quoteTypeId);
         }
 
         return $query->first();
@@ -378,23 +375,9 @@ class CourtesyEmailService extends BaseService
 
         if ($model instanceof PersonalQuote) {
             $query->where('quote_type_id', $quoteTypeId);
-        } elseif ($model instanceof BusinessQuote) {
-            $this->scopeBusinessQuoteLineOfBusiness($query, $quoteTypeId);
         }
 
         return $query->pluck('uuid');
-    }
-
-    /**
-     * `business_quote_request` has no `quote_type_id`; scope Group Medical by insurance type.
-     */
-    private function scopeBusinessQuoteLineOfBusiness(Builder $query, int $quoteTypeId): void
-    {
-        if ($quoteTypeId !== QuoteTypeId::Business) {
-            return;
-        }
-
-        // $query->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
     }
 
     private function formatLogDateTime(?Carbon $value): string
