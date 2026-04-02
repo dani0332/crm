@@ -157,130 +157,40 @@ export const usePayment = () => {
     };
   };
 
-  const TRAVEL_MEMBER_SENIOR_AGE = 65;
-
-  /**
-   * Payments that apply to a travel member: match plan_id to adult vs senior plan lists.
-   * When plan lists are not loaded yet, a single quote payment applies to everyone; otherwise all payments (legacy behaviour).
-   *
-   * @param {Array<Record<string, unknown>>} payments
-   * @param {number} memberAge
-   * @param {Array<number|string>} normalPlanIds
-   * @param {Array<number|string>} seniorPlanIds
-   * @returns {Array<Record<string, unknown>>}
-   */
-  const paymentsRelevantToTravelMember = (
-    payments,
-    memberAge,
-    normalPlanIds,
-    seniorPlanIds,
-  ) => {
-    if (!Array.isArray(payments) || payments.length === 0) {
-      return [];
-    }
-
-    const normal = Array.isArray(normalPlanIds) ? normalPlanIds : [];
-    const senior = Array.isArray(seniorPlanIds) ? seniorPlanIds : [];
-    const bucketsKnown = normal.length > 0 || senior.length > 0;
-
-    if (bucketsKnown) {
-      const bucketIds =
-        memberAge >= TRAVEL_MEMBER_SENIOR_AGE && senior.length > 0
-          ? senior
-          : normal;
-
-      if (bucketIds.length > 0) {
-        return payments.filter(
-          p =>
-            p.plan_id != null &&
-            bucketIds.some(id => String(id) === String(p.plan_id)),
-        );
-      }
-
-      return [];
-    }
-
-    if (payments.length === 1) {
-      return payments;
-    }
-
-    return payments;
-  };
-
-  /**
-   * Authorized / settled lock state for member details actions, scoped to that member's payment segment.
-   *
-   * @param {Array<Record<string, unknown>>} payments
-   * @param {number} memberAge
-   * @param {Array<number|string>} normalPlanIds
-   * @param {Array<number|string>} seniorPlanIds
-   * @returns {{ hasAuthorized: boolean, statusText: string|null }}
-   */
-  const hasAuthorizedPaymentForTravelMember = (
-    payments,
-    memberAge,
-    normalPlanIds,
-    seniorPlanIds,
-  ) => {
-    const subset = paymentsRelevantToTravelMember(
-      payments,
-      memberAge,
-      normalPlanIds,
-      seniorPlanIds,
-    );
-
-    return hasAuthorizedSplit(subset);
-  };
-
-  /**
-   * True when any master payment in this travel member's plan segment has terminal failure status
-   * (Cancelled, Failed, Declined). Scopes to the same payments as hasAuthorizedPaymentForTravelMember.
-   *
-   * @param {{ dob?: string|Date|null }} [member] Traveler row; when omitted (e.g. Add Member), uses quote DOB for plan bucket.
-   * @param {Array<number|string>} [normalPlanIds]
-   * @param {Array<number|string>} [seniorPlanIds]
-   */
-  const isPaymentCancelled = (member, normalPlanIds, seniorPlanIds) => {
+  const isMemberPaymentCancelled = member => {
     const payments = page.props.payments;
-    const terminalFailureStatuses = [
+    const paymentCancelledStatuses = new Set([
       paymentStatusEnum.CANCELLED,
       paymentStatusEnum.FAILED,
       paymentStatusEnum.DECLINED,
-    ];
+    ]);
 
-    if (!Array.isArray(payments)) {
+    if (!Array.isArray(payments) || payments.length === 0) {
       return false;
     }
 
-    const dob = member?.dob ?? page.props.quote?.dob ?? null;
-    const rawAge = calculateAge(dob);
+    const rawAge = calculateAge(member.dob);
     const memberAge = Number.isFinite(rawAge) ? rawAge : 0;
 
-    const subset = paymentsRelevantToTravelMember(
-      payments,
-      memberAge,
-      normalPlanIds ?? [],
-      seniorPlanIds ?? [],
-    );
+    const subset = paymentsRelevantToTravelMember(payments, memberAge);
 
-    return subset.some(p =>
-      terminalFailureStatuses.includes(p.payment_status_id),
-    );
+    return subset.some(p => paymentCancelledStatuses.has(p.payment_status_id));
   };
 
-  /**
-   * Member delete allowed when there are no payments, or linked segment has terminal failure status.
-   */
-  const canDeleteTravelMemberByLinkedPayment = (
-    member,
-    normalPlanIds,
-    seniorPlanIds,
-  ) => {
-    const payments = page.props.payments;
-    if (!Array.isArray(payments) || payments.length === 0) {
-      return true;
+  const paymentsRelevantToTravelMember = (payments, memberAge) => {
+    const TRAVEL_MEMBER_SENIOR_AGE = 65;
+    const memberIsSenior = memberAge >= TRAVEL_MEMBER_SENIOR_AGE;
+
+    return payments.filter(p => {
+      return memberIsSenior ? isSeniorMemberPayment(p.code) : !isSeniorMemberPayment(p.code);
+    });
+  };
+
+  const isSeniorMemberPayment = code => {
+    if (code === null || code === undefined) {
+      return false;
     }
-    return isPaymentCancelled(member, normalPlanIds, seniorPlanIds);
+    return String(code).trim().endsWith('-1');
   };
 
   return {
@@ -294,9 +204,6 @@ export const usePayment = () => {
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
     hasAuthorizedSplit,
-    paymentsRelevantToTravelMember,
-    hasAuthorizedPaymentForTravelMember,
-    isPaymentCancelled,
-    canDeleteTravelMemberByLinkedPayment,
+    isMemberPaymentCancelled,
   };
 };
