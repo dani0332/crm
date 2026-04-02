@@ -6,6 +6,7 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -40,7 +41,6 @@ use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
@@ -1402,193 +1402,40 @@ class TravelQuoteService extends BaseService
         }
     }
 
-    const hasAuthorizedSplit = payments => {
-        const authorizedStatuses = [
-          paymentStatusEnum.AUTHORISED,
-          paymentStatusEnum.PAID,
-          paymentStatusEnum.CAPTURED,
-          paymentStatusEnum.PARTIAL_CAPTURED,
-          paymentStatusEnum.PARTIALLY_PAID,
-        ];
-    
-        if (!Array.isArray(payments)) {
-          return {
-            hasAuthorized: false,
-            statusText: null,
-          };
-        }
-    
-        for (const payment of payments) {
-          if (authorizedStatuses.includes(payment.payment_status_id)) {
-            return {
-              hasAuthorized: true,
-              statusText: formatString(payment.payment_status?.text),
-            };
-          }
-        }
-    
-        return {
-          hasAuthorized: false,
-          statusText: null,
-        };
-      };
-
-    public function hasAuthorizedSplit($quoteId)
+    public function memberHasAuthorizedPayment(CustomerMembers $member, TravelQuote $quote): bool
     {
-        $authorizedPaymentStatuses = PaymentStatusEnum::getAuthorizedPaymentStatuses();
-        
-        
-        
-        $hasAuthorizedSplit = $this->hasAuthorizedSplit($member->quote_id);
-        dd($hasAuthorizedSplit);
+        $payments = $quote->payments()->get();
 
-        return $hasAuthorizedSplit;
-    }
-
-
-
-
-
-
-
-
-
-
-
-    private const TRAVEL_MEMBER_SENIOR_AGE = 65;
-
-    /**
-     * Travel member may be deleted when the quote has no payments, or when at least one payment
-     * linked to their plan segment is Cancelled, Failed, or Declined.
-     */
-    public function travelMemberMayBeDeletedWhenLinkedPaymentIsTerminal(CustomerMembers $member): bool
-    {
-        if (! $this->memberBelongsToTravelQuote($member)) {
-            return true;
-        }
-
-        $quote = TravelQuote::query()->find($member->quote_id);
-        if (! $quote) {
+        if ($payments->isEmpty()) {
             return false;
         }
 
-        $payments = $quote->payments()->get();
-        if ($payments->isEmpty()) {
-            return true;
-        }
-
-        [$normalPlanIds, $seniorPlanIds] = $this->normalAndSeniorPlanIdsForQuote($quote->id);
-        $memberAge = $this->ageFromMemberDob($member);
-        $subset = $this->paymentsRelevantToTravelMemberCollection(
-            $payments,
-            $memberAge,
-            $normalPlanIds,
-            $seniorPlanIds
-        );
-
-        $terminal = PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses();
-
-        return $subset->contains(fn (Payment $p) => in_array((int) $p->payment_status_id, $terminal, true));
-    }
-
-    private function memberBelongsToTravelQuote(CustomerMembers $member): bool
-    {
-        $type = (string) ($member->quote_type ?? '');
-
-        return str_contains($type, 'TravelQuote');
-    }
-
-    /**
-     * Message for Form Requests / API when deletion is blocked because linked payment is not terminal.
-     */
-    public function travelMemberDeleteBlockedMessage(): string
-    {
-        return 'This member can only be removed when their linked payment is cancelled, failed, or declined.';
-    }
-
-    private function ageFromMemberDob(CustomerMembers $member): int
-    {
-        $raw = $member->getRawOriginal('dob') ?? null;
-        if ($raw === null || $raw === '') {
-            return 0;
-        }
-        try {
-            return Carbon::parse($raw)->age;
-        } catch (\Throwable) {
-            return 0;
-        }
-    }
-
-    /**
-     * @return array{0: array<int|string>, 1: array<int|string>}
-     */
-    private function normalAndSeniorPlanIdsForQuote(int $travelQuoteId): array
-    {
-        try {
-            $planBuckets = $this->sortedPlansList($travelQuoteId);
-        } catch (\Throwable) {
-            return [[], []];
-        }
-
-        if (! is_array($planBuckets)) {
-            return [[], []];
-        }
-
-        $normalPlans = $planBuckets['normalPlans'] ?? [];
-        $seniorPlans = $planBuckets['seniorPlans'] ?? [];
-        $normalIds = collect($normalPlans)->pluck('id')->filter()->map(fn ($id) => (string) $id)->values()->all();
-        $seniorIds = collect($seniorPlans)->pluck('id')->filter()->map(fn ($id) => (string) $id)->values()->all();
-
-        return [$normalIds, $seniorIds];
-    }
-
-    /**
-     * Mirrors resources/js/inertia/Composables/usePayment.js paymentsRelevantToTravelMember.
-     *
-     * @param  Collection<int, Payment>  $payments
-     * @return Collection<int, Payment>
-     */
-    private function paymentsRelevantToTravelMemberCollection(
-        Collection $payments,
-        int $memberAge,
-        array $normalPlanIds,
-        array $seniorPlanIds
-    ): Collection {
-        if ($payments->isEmpty()) {
-            return collect();
-        }
-
-        $normal = array_values(array_filter($normalPlanIds, fn ($id) => $id !== '' && $id !== null));
-        $senior = array_values(array_filter($seniorPlanIds, fn ($id) => $id !== '' && $id !== null));
-        $bucketsKnown = count($normal) > 0 || count($senior) > 0;
-
-        if ($bucketsKnown) {
-            $bucketIds = ($memberAge >= self::TRAVEL_MEMBER_SENIOR_AGE && count($senior) > 0)
-                ? $senior
-                : $normal;
-
-            if (count($bucketIds) > 0) {
-                return $payments->filter(function (Payment $p) use ($bucketIds) {
-                    if ($p->plan_id === null) {
-                        return false;
-                    }
-                    foreach ($bucketIds as $id) {
-                        if ((string) $id === (string) $p->plan_id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                })->values();
+        $rawDob = $member->getRawOriginal('dob') ?? null;
+        $memberAge = 0;
+        if ($rawDob !== null && $rawDob !== '') {
+            try {
+                $memberAge = Carbon::parse($rawDob)->age;
+            } catch (\Throwable) {
+                $memberAge = 0;
             }
-
-            return collect();
         }
 
-        if ($payments->count() === 1) {
-            return $payments->values();
+        $memberIsSenior = $memberAge >= GenericRequestEnum::TRAVEL_SENIOR_MEMBER_AGE;
+        $relevantPayments = $payments->filter(function (Payment $payment) use ($memberIsSenior): bool {
+            $code = $payment->code ?? null;
+            $isSeniorPaymentCode = is_string($code) && $code !== '' && str_ends_with(trim($code), '-1');
+
+            return $memberIsSenior ? $isSeniorPaymentCode : ! $isSeniorPaymentCode;
+        });
+
+        if ($relevantPayments->isEmpty()) {
+            return false;
         }
 
-        return $payments->values();
+        $authorizedStatuses = PaymentStatusEnum::getAuthorizedPaymentStatuses();
+
+        return $relevantPayments->contains(function (Payment $payment) use ($authorizedStatuses): bool {
+            return in_array((int) $payment->payment_status_id, $authorizedStatuses, true);
+        });
     }
 }
