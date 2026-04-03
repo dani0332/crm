@@ -156,10 +156,13 @@ it('accepts a typical pdf by header magic without treating it as a raster image'
     expect(true)->toBeTrue();
 });
 
-it('accepts a docx-like zip archive by local file header magic', function () {
-    $tmp = tempnam(sys_get_temp_dir(), 'bor');
-    // Minimal local file header (docx/xlsx are ZIP); not a valid archive, enough for allowed-type check.
-    file_put_contents($tmp, "PK\x03\x04\x14\x00\x00\x00\x08\x00".str_repeat("\x00", 18).'word/');
+it('accepts a minimal valid docx containing OOXML parts', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'bor').'.docx';
+    $zip = new \ZipArchive;
+    expect($zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE))->toBeTrue();
+    $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+    $zip->addFromString('word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>x</w:t></w:r></w:p></w:body></w:document>');
+    $zip->close();
     expect(@getimagesize($tmp))->toBeFalse();
 
     $uploaded = new UploadedFile($tmp, 'bor.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', null, true);
@@ -168,6 +171,50 @@ it('accepts a docx-like zip archive by local file header magic', function () {
     @unlink($tmp);
 
     expect(true)->toBeTrue();
+})->skip(
+    ! extension_loaded('zip'),
+    'ext-zip required'
+);
+
+it('rejects docx extension when archive is not OOXML Word', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'bor').'.docx';
+    file_put_contents($tmp, "PK\x03\x04\x14\x00\x00\x00\x08\x00".str_repeat("\x00", 18).'word/');
+    expect(@getimagesize($tmp))->toBeFalse();
+
+    $uploaded = new UploadedFile($tmp, 'bor.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', null, true);
+
+    try {
+        expect(fn () => (new BorUploadFileContentValidator)->validate($uploaded))
+            ->toThrow(ValidationException::class);
+    } finally {
+        @unlink($tmp);
+    }
+});
+
+it('rejects disallowed client file extension', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'bor').'.html';
+    file_put_contents($tmp, '<html><body></body></html>');
+    $uploaded = new UploadedFile($tmp, 'x.html', 'text/html', null, true);
+
+    try {
+        expect(fn () => (new BorUploadFileContentValidator)->validate($uploaded))
+            ->toThrow(ValidationException::class);
+    } finally {
+        @unlink($tmp);
+    }
+});
+
+it('rejects pdf with html-like payload in leading bytes', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'bor');
+    file_put_contents($tmp, "%PDF-1.4\n<html><body></body></html>");
+    $uploaded = new UploadedFile($tmp, 'x.pdf', 'application/pdf', null, true);
+
+    try {
+        expect(fn () => (new BorUploadFileContentValidator)->validate($uploaded))
+            ->toThrow(ValidationException::class);
+    } finally {
+        @unlink($tmp);
+    }
 });
 
 it('accepts a legacy ole compound document by header magic', function () {

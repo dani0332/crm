@@ -7,9 +7,27 @@ use Illuminate\Validation\ValidationException;
 
 class BorUploadFileContentValidator
 {
+    private const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+
     /**
-     * Verify file structure beyond MIME sniffing: real image/PDF/Office headers, and block HTML/script
-     * in PNG text chunks / JPEG COM comments and high-confidence payloads after IEND/EOI — not raw pixel data.
+     * @var array<string, list<string>>
+     */
+    private const REPORTED_MIMES_BY_EXTENSION = [
+        'pdf' => ['application/pdf'],
+        'doc' => ['application/msword'],
+        'docx' => [
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/zip',
+            'application/x-zip-compressed',
+        ],
+        'jpg' => ['image/jpeg'],
+        'jpeg' => ['image/jpeg'],
+        'png' => ['image/png', 'image/x-png'],
+    ];
+
+    /**
+     * Verify client extension, reported MIME, file signatures (magic bytes), and type-specific structure.
+     * Blocks generic ZIP/HTML/script polyglots that only matched loose PK/%PDF checks before.
      *
      * @throws ValidationException
      */
@@ -22,56 +40,190 @@ class BorUploadFileContentValidator
             ]);
         }
 
-        $handle = fopen($path, 'rb');
-        if ($handle === false) {
+        $extension = strtolower($file->getClientOriginalExtension());
+        if ($extension === '' || ! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            throw ValidationException::withMessages([
+                'file' => ['The file extension is not allowed.'],
+            ]);
+        }
+
+        $reportedMime = strtolower((string) $file->getMimeType());
+        if (! $this->reportedMimeIsAllowedForExtension($reportedMime, $extension)) {
+            throw ValidationException::withMessages([
+                'file' => ['The file type does not match an allowed document format.'],
+            ]);
+        }
+
+        match ($extension) {
+            'jpg', 'jpeg' => $this->validateJpegUpload($path),
+            'png' => $this->validatePngUpload($path),
+            'pdf' => $this->validatePdfUpload($path),
+            'docx' => $this->validateDocxUpload($path),
+            'doc' => $this->validateLegacyWordUpload($path),
+            default => throw ValidationException::withMessages([
+                'file' => ['The file extension is not allowed.'],
+            ]),
+        };
+    }
+
+    private function reportedMimeIsAllowedForExtension(string $reportedMime, string $extension): bool
+    {
+        $allowed = self::REPORTED_MIMES_BY_EXTENSION[$extension] ?? [];
+
+        if (in_array($reportedMime, $allowed, true)) {
+            return true;
+        }
+
+        return $reportedMime === 'application/octet-stream';
+    }
+
+    private function validateJpegUpload(string $path): void
+    {
+        $head = $this->readLeadingBytes($path, 3);
+        if ($head === null || ! str_starts_with($head, "\xFF\xD8\xFF")) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid JPEG image.'],
+            ]);
+        }
+
+        $info = @getimagesize($path);
+        if ($info === false || ($info[2] ?? null) !== IMAGETYPE_JPEG) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid JPEG image.'],
+            ]);
+        }
+
+        $this->assertRasterHasNoDisallowedPayload($path);
+    }
+
+    private function validatePngUpload(string $path): void
+    {
+        $head = $this->readLeadingBytes($path, 8);
+        if ($head === null || ! str_starts_with($head, "\x89PNG\r\n\x1a\n")) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid PNG image.'],
+            ]);
+        }
+
+        $info = @getimagesize($path);
+        if ($info === false || ($info[2] ?? null) !== IMAGETYPE_PNG) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid PNG image.'],
+            ]);
+        }
+
+        $this->assertRasterHasNoDisallowedPayload($path);
+    }
+
+    private function assertRasterHasNoDisallowedPayload(string $path): void
+    {
+        $contents = $this->readFileContentsForValidation($path);
+        if ($contents === false) {
             throw ValidationException::withMessages([
                 'file' => ['The file could not be read for validation.'],
             ]);
         }
 
-        $head = fread($handle, 8);
-        fclose($handle);
-
-        if ($head === false || $head === '') {
+        if ($this->rasterImageContainsDisallowedPayload($contents)) {
             throw ValidationException::withMessages([
-                'file' => ['The uploaded file is empty.'],
+                'file' => ['The file contains disallowed content.'],
+            ]);
+        }
+    }
+
+    private function validatePdfUpload(string $path): void
+    {
+        $head = $this->readLeadingBytes($path, 5);
+        if ($head === null || ! str_starts_with($head, '%PDF')) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid PDF.'],
             ]);
         }
 
-        $isRasterImage = @getimagesize($path) !== false;
+        $probe = $this->readLeadingBytes($path, 8192);
+        if ($probe !== null && $this->asciiLooksLikeWebOrPhpPayload($probe)) {
+            throw ValidationException::withMessages([
+                'file' => ['The file content is not allowed for PDF uploads.'],
+            ]);
+        }
+    }
 
-        if ($isRasterImage) {
-            $contents = $this->readFileContentsForValidation($path);
-            if ($contents === false) {
-                throw ValidationException::withMessages([
-                    'file' => ['The file could not be read for validation.'],
-                ]);
-            }
-
-            if ($this->rasterImageContainsDisallowedPayload($contents)) {
-                throw ValidationException::withMessages([
-                    'file' => ['The file contains disallowed content.'],
-                ]);
-            }
-
-            return;
+    private function validateDocxUpload(string $path): void
+    {
+        $head = $this->readLeadingBytes($path, 4);
+        if ($head === null || ! str_starts_with($head, "PK\x03\x04")) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid Word document (OOXML).'],
+            ]);
         }
 
-        if (str_starts_with($head, '%PDF')) {
-            return;
+        if (! class_exists(\ZipArchive::class)) {
+            throw ValidationException::withMessages([
+                'file' => ['Document validation is temporarily unavailable.'],
+            ]);
         }
 
-        if (str_starts_with($head, "PK\x03\x04")) {
-            return;
+        if (! $this->zipArchiveIsOfficeOpenXmlWordDocument($path)) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid Word document (.docx).'],
+            ]);
+        }
+    }
+
+    private function validateLegacyWordUpload(string $path): void
+    {
+        $head = $this->readLeadingBytes($path, 8);
+        $oleMagic = "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1";
+        if ($head === null || ! str_starts_with($head, $oleMagic)) {
+            throw ValidationException::withMessages([
+                'file' => ['The file is not a valid Word document (.doc).'],
+            ]);
+        }
+    }
+
+    /**
+     * OOXML wordprocessing package: [Content_Types].xml plus main document part.
+     */
+    private function zipArchiveIsOfficeOpenXmlWordDocument(string $path): bool
+    {
+        $zip = new \ZipArchive;
+        if ($zip->open($path, \ZipArchive::RDONLY) !== true) {
+            return false;
         }
 
-        if (str_starts_with($head, "\xD0\xCF\x11\xE0")) {
-            return;
+        $hasContentTypes = $zip->locateName('[Content_Types].xml') !== false;
+        $hasWordDocument = $zip->locateName('word/document.xml') !== false;
+        $zip->close();
+
+        return $hasContentTypes && $hasWordDocument;
+    }
+
+    /**
+     * High-confidence markers in the leading bytes (polyglot HTML/PHP in a disguised binary upload).
+     */
+    private function asciiLooksLikeWebOrPhpPayload(string $bytes): bool
+    {
+        return (bool) preg_match(
+            '/<\?php\b|<\?=\s*|\b<!DOCTYPE\s+html\b|<\s*html[\s>]|<\s*head[\s>]|<\s*body[\s>]|<\s*script\b|<\s*svg\b/i',
+            $bytes
+        );
+    }
+
+    private function readLeadingBytes(string $path, int $maxLength): ?string
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return null;
         }
 
-        throw ValidationException::withMessages([
-            'file' => ['The file could not be verified as an allowed document type.'],
-        ]);
+        $data = fread($handle, $maxLength);
+        fclose($handle);
+
+        if ($data === false || $data === '') {
+            return null;
+        }
+
+        return $data;
     }
 
     /**
