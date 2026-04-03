@@ -2071,6 +2071,7 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
+        dd('working');
         $paymentCode = $request->payment_code;
         LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 

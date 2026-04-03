@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import moment from 'moment';
+import { calculateAge } from '@/inertia/Composables/utilities.js';
 import { usePayment } from '../../Composables/usePayment';
 import { useAMLKYC } from '../../Composables/useAMLKYC';
 
@@ -80,6 +81,49 @@ const editPayment = () => {
 
 const deletePayment = () => {
   emit('delete-payment', props.payment);
+};
+
+const travelSeniorMemberAge = Number(
+  genericRequestEnum?.TRAVEL_SENIOR_MEMBER_AGE ?? 65,
+);
+
+/** Matches travel master payment senior segment (e.g. TRA-1234-1). */
+const isSeniorSegmentPaymentCode = code => {
+  if (code === null || code === undefined) {
+    return false;
+  }
+  return String(code).trim().endsWith('-1');
+};
+
+const activeTravelTravelers = computed(() =>
+  Array.isArray(page.props.travelers) ? page.props.travelers : [],
+);
+
+/**
+ * Count of travelers still on the quote for this payment's age segment (senior vs under-65).
+ * Uses the same "-1" code rule as usePayment / TravelQuoteService.
+ */
+const travelerCountForPaymentSegment = payment => {
+  const seniorSegment = isSeniorSegmentPaymentCode(payment?.code);
+  return activeTravelTravelers.value.filter(traveler => {
+    const rawAge = calculateAge(traveler.dob);
+    const age = Number.isFinite(rawAge) ? rawAge : 0;
+    return seniorSegment ? age >= travelSeniorMemberAge : age < travelSeniorMemberAge;
+  }).length;
+};
+
+/**
+ * Show orphan child-payment delete: the payment targets a segment that no longer has any travelers.
+ * Requires `travelers` on the page (Travel quote show); omit on other contexts so we do not assume an empty list.
+ */
+const hasRelevantMemberDeleted = payment => {
+  if (props.quoteType !== quoteTypeCodeEnum.Travel) {
+    return false;
+  }
+  if (!Array.isArray(page.props.travelers)) {
+    return false;
+  }
+  return travelerCountForPaymentSegment(payment) === 0;
 };
 
 const voidPayment = () => {
@@ -388,22 +432,22 @@ const amlAndKycTooltip = computed(() => {
   }
 });
 
-const isTravelTerminalFailurePaymentRow = computed(() => {
-  if (props.quoteType !== quoteTypeCodeEnum.Travel) {
-    return false;
-  }
-  return [
-    paymentStatusEnum.CANCELLED,
-    paymentStatusEnum.FAILED,
-    paymentStatusEnum.DECLINED,
-  ].includes(props.payment.payment_status_id);
-});
+// const isTravelTerminalFailurePaymentRow = computed(() => {
+//   if (props.quoteType !== quoteTypeCodeEnum.Travel) {
+//     return false;
+//   }
+//   return [
+//     paymentStatusEnum.CANCELLED,
+//     paymentStatusEnum.FAILED,
+//     paymentStatusEnum.DECLINED,
+//   ].includes(props.payment.payment_status_id);
+// });
 
-const showDeleteParentPaymentButton = computed(
-  () =>
-    (props.index === 1 && props.isChildPaymentDeletable) ||
-    isTravelTerminalFailurePaymentRow.value,
-);
+// const showDeleteParentPaymentButton = computed(
+//   () =>
+//     (props.index === 1 && props.isChildPaymentDeletable) ||
+//     isTravelTerminalFailurePaymentRow.value,
+// );
 </script>
 
 <template>
@@ -488,8 +532,7 @@ const showDeleteParentPaymentButton = computed(
             Edit
           </x-button>
         </template>
-        <!-- <template v-if="showDeleteParentPaymentButton"> -->
-        <template v-if="index == 1 && isChildPaymentDeletable">
+        <template v-if="index == 1 && isChildPaymentDeletable && hasRelevantMemberDeleted(payment)">
           <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete
           </x-button>

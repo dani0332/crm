@@ -869,15 +869,19 @@ onMounted(() => {
 
 const isChildPaymentDeletable = computed(() => {
   if (props.payments.length !== 2) return false;
+
   const childPaymentNotAuthorised = [
     paymentStatusEnum.PENDING,
     paymentStatusEnum.NEW,
     paymentStatusEnum.DRAFT,
     paymentStatusEnum.OVERDUE,
+    paymentStatusEnum.CANCELLED,
+    paymentStatusEnum.DECLINED,
+    paymentStatusEnum.FAILED,
   ].includes(props.payments[1].payment_status_id);
+
   return (
     props.quoteType == quoteTypeCodeEnum.Travel &&
-    page.props?.aboveAgeMembers &&
     childPaymentNotAuthorised
   );
 });
