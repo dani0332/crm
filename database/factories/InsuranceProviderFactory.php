@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\InsuranceProvidersEnum;
 use App\Models\InsuranceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -43,7 +44,7 @@ class InsuranceProviderFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'code' => 'ADNIC',
+                'code' => InsuranceProvidersEnum::ADNIC,
                 'text' => 'ADNIC Insurance',
             ];
         });
@@ -51,14 +52,12 @@ class InsuranceProviderFactory extends Factory
     /**
      * Indicate that the insurance provider is RSA.
      */
-    public function rsa()
+    public function rsa(): static
     {
-        return $this->state(function (array $attributes) {
-            return [
-                'code' => 'TE',
-                'text' => 'ADNIC Insurance',
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'code' => InsuranceProvidersEnum::RSA,
+            'text' => 'RSA Insurance',
+        ]);
     }
     /**
      * Indicate that the insurance provider is AXA.
@@ -66,7 +65,7 @@ class InsuranceProviderFactory extends Factory
     public function axa()
     {
         return $this->state(fn (array $attributes) => [
-            'code' => \App\Enums\InsuranceProvidersEnum::AXA,
+            'code' => InsuranceProvidersEnum::AXA,
             'text' => 'AXA Insurance',
         ]);
     }
