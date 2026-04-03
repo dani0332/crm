@@ -193,6 +193,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 $emailData->tag = 'dtt-initial-email';
                 $emailData->lob = QuoteTypes::CAR->id();
                 $emailData->whatsAppNumber = ! empty($carQuote?->mobile_no) ? formatMobileNo($carQuote->mobile_no) : '';
+                $emailData->carMake = (string) $carQuote?->car_make_id;
+                $emailData->carModel = (string) $carQuote?->car_model_id;
+                // call MACRM API to get the voucher code
+                $emailData->voucherCode = 'ABCDEFG';
+                $emailData->myAlfredurl = 'https://myalfred.com/voucher/ABCDEFG';
 
                 // Shifted to Bird Workflow, previous it was using Brevo
                 $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();

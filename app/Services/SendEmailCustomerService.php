@@ -2155,6 +2155,11 @@ class SendEmailCustomerService extends BaseService
                 'isRenewal' => $emailData->isRenewal ?? false,
                 'policyNumber' => $emailData->policyNumber ?? '',
                 'renewalDueDate' => $emailData->renewalDueDate ?? '',
+                'carMake' => $emailData->carMake ?? '',
+                'carModel' => $emailData->carModel ?? '',
+                'whatsAppNumber' => $emailData->whatsAppNumber ?? '',
+                'voucherCode' => $emailData->voucherCode ?? '',
+                'myAlfredurl' => $emailData->myAlfredurl ?? '',
             ];
 
             LoggerService::info('sendDttEmailViaBird - Triggering Bird workflow for DTT email', [
