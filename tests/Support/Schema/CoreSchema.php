@@ -475,6 +475,7 @@ class CoreSchema
             'car_quote_request_detail' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('car_quote_request_id')->nullable();
+                $table->string('engagement_level')->nullable();
                 $table->timestamps();
             },
             'car_plan' => function (Blueprint $table) {
