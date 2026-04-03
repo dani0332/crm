@@ -122,7 +122,7 @@ class BranchAssignmentService extends BaseService
     {
         $advisorPrimaryBranch = $quote->advisor?->primaryBranch() ?? null;
         $emirateOfYourVisaId = $quote->emirate_of_your_visa_id ?? null;
-        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $hasBranch = $advisorPrimaryBranch !== null && ($quoteTypeId == QuoteTypeId::Health ? $emirateOfYourVisaId !== null : $emirateOfRegistrationId !== null);
 
         LoggerService::info('Branch assignment validation for quote: '.$quote->code.' on sage booking', extra: [

@@ -739,7 +739,6 @@ class ManagementReport
     {
         $now = now()->format('Y-m-d H:i:s');
         $healthQuoteType = QuoteTypeId::Health;
-        $businessQuoteType = QuoteTypeId::Business;
         $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
         $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
