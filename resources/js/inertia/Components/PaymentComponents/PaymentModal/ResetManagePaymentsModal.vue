@@ -81,7 +81,7 @@ const confirm = async () => {
       position: 'top',
     });
     close();
-    router.reload();
+    router.reload({ preserveState: false });
   } catch (err) {
     processing.value = false;
     const msg =
