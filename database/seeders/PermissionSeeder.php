@@ -110,7 +110,8 @@ class PermissionSeeder extends Seeder
     }
 
     /**
-     * IMCRM: device policy issuance document re-trigger. Device roles may not exist yet; they receive this again from DeviceQuoteSeeder.
+     * IMCRM: device policy issuance document re-trigger. Runs before DeviceQuoteSeeder; DeviceAdvisor/DeviceManager
+     * roles may not exist yet, so DeviceQuoteSeeder must assign this permission when it creates those roles.
      */
     private function addReTriggerPolicyAutomationDevicePermission(): void
     {

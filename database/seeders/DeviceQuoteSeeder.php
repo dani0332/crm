@@ -41,17 +41,35 @@ class DeviceQuoteSeeder extends Seeder
         }
     }
 
-    private function seedDevicePermissions()
+    /**
+     * Permission name → role names assigned in {@see seedDevicePermissions()}.
+     * Single source of truth so every device permission (including re-trigger) is explicitly mapped.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function deviceQuotePermissionRoleAssignments(): array
     {
-        $permissions = [
-            PermissionsEnum::DEVICE_QUOTES_LIST,
-            PermissionsEnum::DEVICE_QUOTES_CREATE,
-            PermissionsEnum::DEVICE_QUOTES_EDIT,
-            PermissionsEnum::DEVICE_QUOTES_SHOW,
-            PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE,
+        $rolesWithFullDeviceQuoteAccess = [
+            RolesEnum::Admin,
+            RolesEnum::DeviceAdvisor,
+            RolesEnum::DeviceManager,
+            RolesEnum::Engineering,
         ];
-        $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::Engineering]);
 
+        return [
+            PermissionsEnum::DEVICE_QUOTES_LIST => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_CREATE => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_EDIT => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_SHOW => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE => $rolesWithFullDeviceQuoteAccess,
+        ];
+    }
+
+    private function seedDevicePermissions(): void
+    {
+        foreach (self::deviceQuotePermissionRoleAssignments() as $permission => $roles) {
+            $this->seedPermissions([$permission], $roles);
+        }
     }
 
 }

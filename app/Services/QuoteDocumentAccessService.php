@@ -175,6 +175,9 @@ class QuoteDocumentAccessService
             QuoteTypes::SAVINGS => [
                 RolesEnum::SavingsManager,
             ],
+            QuoteTypes::DEVICE => [
+                RolesEnum::DeviceManager,
+            ],
             QuoteTypes::CYBER => [
                 RolesEnum::CyberManager,
             ],

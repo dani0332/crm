@@ -13,6 +13,7 @@ use App\Models\PolicyIssuance;
 use App\Models\QuoteType;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
@@ -86,7 +87,11 @@ class PolicyIssuanceController extends Controller
         }
 
         try {
-            app(PolicyIssuanceService::class)->reTriggerPolicyAutomation($policyIssuance->fresh());
+            $policyIssuance->refresh();
+
+            app(PolicyIssuanceService::class)->reTriggerPolicyAutomation($policyIssuance);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {
             return response()->json(['message' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }

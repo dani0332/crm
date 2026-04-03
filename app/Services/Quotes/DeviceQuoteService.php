@@ -419,7 +419,8 @@ class DeviceQuoteService extends BaseQuoteService
     }
 
     /**
-     * Dispatch immediate NGI document fetch/upload job (no initial delay) and mark issuance pending for queue processing visibility.
+     * Mark issuance pending for queue visibility, then dispatch immediate NGI document fetch/upload job (no initial delay).
+     * Status is persisted before dispatch so sync drivers cannot overwrite the job's final status.
      *
      * @throws \InvalidArgumentException When eligibility checks fail
      */
@@ -429,11 +430,11 @@ class DeviceQuoteService extends BaseQuoteService
             throw new \InvalidArgumentException('Policy issuance is not eligible for document sync re-trigger.');
         }
 
-        NgiGetPolicyDocumentsJob::dispatch($policyIssuance->id);
-
         $policyIssuance->update([
             'status' => PolicyIssuanceEnum::PENDING_STATUS,
         ]);
+
+        NgiGetPolicyDocumentsJob::dispatch($policyIssuance->id);
 
         LoggerService::info('Device NGI: manual re-trigger dispatched GetAndUploadPolicyDocs job without initial delay', extra: [
             'policy_issuance_id' => $policyIssuance->id,
