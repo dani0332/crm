@@ -418,64 +418,62 @@ class HealthEmailService extends BaseService
             $advisor = User::activeUser()->where('id', $lead->advisor_id)->first();
             if (! $advisor) {
                 LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");
-
-                return [
+                $result = [
                     'success' => false,
                     'message' => 'Advisor not found',
                 ];
-            }
-
-            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
-            if ($automationFailureKey) {
-                match ($automationFailureKey) {
-                    'UploadDocuments' => $emailData->UploadDocuments = true,
-                    'IssuePolicy' => $emailData->IssuePolicy = true,
-                    'UploadPolicyDocumentsToIMCRM' => $emailData->UploadPolicyDocumentsToIMCRM = true,
-                    default => null,
-                };
-            }
-
-            if (! $isApiFailed) {
-                app(PusherNotificationService::class)->sendSTPAdvisorNotification($lead);
-                LoggerService::info(self::class.' - Pusher notification sent to advisor (ID: '.($advisor?->id ?? $lead->advisor_id ?? 'N/A').") for UUID: {$lead->uuid}");
-            }
-
-            $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW, useCache: true);
-            if (! $workflow) {
-                LoggerService::error(self::class." - Workflow not found for UUID: {$lead->uuid}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Workflow not found',
-                ];
-            }
-
-            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
-            if ($isFollowupExecuted) {
-                LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed');
-
-                return [
-                    'success' => true,
-                    'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed',
-                ];
-            }
-            $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
-            if (in_array($response->status_code, [200, 201])) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
-                LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent for lead uuid: '.$lead->uuid);
-
-                return [
-                    'success' => true,
-                    'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent',
-                ];
             } else {
-                LoggerService::error(self::class.' - STP Advisor '.($isApiFailed ? 'API Failed' : '')." notification failed for UUID: {$lead->uuid}");
+                $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
+                if ($automationFailureKey) {
+                    match ($automationFailureKey) {
+                        'UploadDocuments' => $emailData->UploadDocuments = true,
+                        'IssuePolicy' => $emailData->IssuePolicy = true,
+                        'UploadPolicyDocumentsToIMCRM' => $emailData->UploadPolicyDocumentsToIMCRM = true,
+                        default => null,
+                    };
+                }
 
-                return [
-                    'success' => false,
-                    'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification failed',
-                ];
+                if (! $isApiFailed) {
+                    app(PusherNotificationService::class)->sendSTPAdvisorNotification($lead);
+                    LoggerService::info(self::class.' - Pusher notification sent to advisor (ID: '.($advisor?->id ?? $lead->advisor_id ?? 'N/A').") for UUID: {$lead->uuid}");
+                }
+
+                $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW, useCache: true);
+                if (! $workflow) {
+                    LoggerService::error(self::class." - Workflow not found for UUID: {$lead->uuid}");
+                    $result = [
+                        'success' => false,
+                        'message' => 'Workflow not found',
+                    ];
+                } else {
+                    $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
+                    if ($isFollowupExecuted) {
+                        LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed');
+                        $result = [
+                            'success' => true,
+                            'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed',
+                        ];
+                    } else {
+                        $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
+                        if (in_array($response->status_code, [200, 201])) {
+                            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
+                            LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent for lead uuid: '.$lead->uuid);
+                            $result = [
+                                'success' => true,
+                                'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent',
+                            ];
+                        } else {
+                            LoggerService::error(self::class.' - STP Advisor '.($isApiFailed ? 'API Failed' : '')." notification failed for UUID: {$lead->uuid}");
+                            $result = [
+                                'success' => false,
+                                'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification failed',
+                            ];
+                        }
+                    }
+                }
             }
+
+            return $result;
         } catch (\Exception $e) {
             LoggerService::warning(self::class." - Error sending STP Advisor notification for UUID: {$lead->uuid}", exception: $e);
 
