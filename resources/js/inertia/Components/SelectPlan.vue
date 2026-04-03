@@ -77,11 +77,7 @@ const isPlanSelectionDisable = computed(() => {
   return false;
 });
 
-const isLocked = computed(
-  () =>
-    (quote?.is_quote_locked ?? false) &&
-    !(page.props.canBypassPlanLock ?? false),
-);
+const isLocked = quote?.is_quote_locked ?? false;
 
 const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
