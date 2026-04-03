@@ -5,26 +5,50 @@ namespace App\Http\Middleware;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Closure;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class CheckRouteAccess
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
+     * @return Response|RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, ?string $permissionPrefix = null)
     {
+
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
             return $next($request);
         }
 
         $routeName = $request->route()->getName();
         $methodName = $request->route()->getActionMethod();
+        $permissionSuffix = $this->mapMethodToPermissionSuffix($methodName);
 
-        $methodMapping = [
+        /**
+         * If a prefix like “corpline-quotes” is supplied, build the permission by combining
+         * that prefix with the mapped suffix (edit, list, etc.). When no prefix is provided
+         * we continue to fall back to the legacy behavior: replace the method name in the
+         * generated route name with the mapped suffix and check that permission.
+         */
+        $permissionName = $permissionPrefix
+            ? $this->buildPrefixPermission($permissionPrefix, $permissionSuffix)
+            : $this->mapRouteNameToPermission($routeName, $methodName, $permissionSuffix);
+
+        if (auth()->user()->can($permissionName) || $this->allowedViewAllLeads($permissionName) || $this->allowedViewAllReports($permissionName)) {
+            return $next($request);
+        }
+
+        abort(403, 'Unauthorized access');
+    }
+
+    private function mapMethodToPermissionSuffix(string $methodName): string
+    {
+        $mapping = [
             'store' => 'create',
             'update' => 'edit',
             'destroy' => 'delete',
@@ -32,15 +56,25 @@ class CheckRouteAccess
             'index' => 'list',
         ];
 
-        if (isset($methodMapping[$methodName])) {
-            $routeName = str_replace($methodName, $methodMapping[$methodName], $routeName);
+        return $mapping[$methodName] ?? $methodName;
+    }
+
+    private function mapRouteNameToPermission(?string $routeName, string $methodName, string $suffix): string
+    {
+        if (! $routeName) {
+            return $suffix;
         }
 
-        if (auth()->user()->can($routeName) || $this->allowedViewAllLeads($routeName) || $this->allowedViewAllReports($routeName)) {
-            return $next($request);
+        if ($methodName === $suffix) {
+            return $routeName;
         }
 
-        abort(403, 'Unauthorized access');
+        return Str::replaceFirst($methodName, $suffix, $routeName);
+    }
+
+    private function buildPrefixPermission(string $permissionPrefix, string $suffix): string
+    {
+        return trim("{$permissionPrefix}-{$suffix}");
     }
 
     private function allowedViewAllLeads($routeName)
