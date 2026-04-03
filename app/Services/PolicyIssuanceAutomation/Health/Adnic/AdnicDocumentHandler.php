@@ -253,8 +253,26 @@ class AdnicDocumentHandler
     public function modifyEmirateDocument($quoteUuid)
     {
         $umafResponse = HealthUMAFResponse::where('quote_uuid', $quoteUuid)->first();
-        $typeOfEID = collect($umafResponse->answers)->filter(function ($answer) {
-            return $answer['question_code'] == 'typeOfEID';
+
+        if ($umafResponse === null) {
+            LoggerService::info('Health UMAF response not found for quote', extra: [
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return null;
+        }
+
+        $answers = $umafResponse->answers ?? [];
+        if (! is_array($answers)) {
+            LoggerService::info('Health UMAF response has no answers array', extra: [
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return null;
+        }
+
+        $typeOfEID = collect($answers)->filter(function ($answer) {
+            return ($answer['question_code'] ?? null) == 'typeOfEID';
         })->values()->first();
 
         if (! $typeOfEID) {

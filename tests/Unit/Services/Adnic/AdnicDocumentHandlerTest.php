@@ -384,6 +384,17 @@ class AdnicDocumentHandlerTest extends TestCase
         $this->assertTrue(true, 'fetchDocumentContent returns raw content, base64 encoding is done in AdnicApiService');
     }
 
+    public function test_modify_emirate_document_returns_null_when_umaf_response_missing(): void
+    {
+        if (empty(config('database.connections.mongodb.dsn'))) {
+            $this->markTestSkipped('MongoDB is not configured; HealthUMAFResponse queries cannot run.');
+        }
+
+        $result = $this->handler->modifyEmirateDocument('00000000-0000-0000-0000-000000000099');
+
+        $this->assertNull($result);
+    }
+
     public function test_allowed_document_mime_types_constant_has_correct_values(): void
     {
         $reflection = new \ReflectionClass($this->handler);
