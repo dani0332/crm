@@ -54,7 +54,8 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 const isPlanSelectionDisable = computed(() => {
   const quoteType = props.quoteType?.toLowerCase();
   const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
-  const isSourceIMCRM = quote?.source == leadSourceEnum?.IMCRM;
+  const isSourceIMCRM =
+    page.props.quote?.source == leadSourceEnum?.IMCRM;
   const isALNCProvider =
     props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
 
