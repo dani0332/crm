@@ -639,27 +639,21 @@ class AMLController extends Controller
 
             $isHealthQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Health;
 
-            $policyIssuance = $quote->policyIssuance();
-
-            if ($isHealthQuote && $policyIssuance->exists()) {
-                app(AdnicInsuranceService::class)->retryPolicyIssuance($policyIssuance->first());
-            } else {
-                $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
-                $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
-                $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-                $isPolicyAutomationEnabled = $policyAutomation?->isPolicyIssuanceAutomationEnabled() ?? false;
-                LoggerService::info('Policy Automation AutoCapture Checks', extra: [
-                    'QuoteType' => $quoteType,
-                    'STP Case' => $isHealthQuote ? $quote?->isSTPCase() : false,
-                    'AML Status' => $quote?->aml_status,
-                    'KYC Status' => $quote?->kyc_decision,
-                    'Automation Enabled' => $isPolicyAutomationEnabled,
-                ]);
-                if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled) {
-                    $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
-                    $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
-                    $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
-                }
+            $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
+            $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
+            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $isPolicyAutomationEnabled = $policyAutomation?->isPolicyIssuanceAutomationEnabled() ?? false;
+            LoggerService::info('Policy Automation AutoCapture Checks', extra: [
+                'QuoteType' => $quoteType,
+                'STP Case' => $isHealthQuote ? $quote?->isSTPCase() : false,
+                'AML Status' => $quote?->aml_status,
+                'KYC Status' => $quote?->kyc_decision,
+                'Automation Enabled' => $isPolicyAutomationEnabled,
+            ]);
+            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled) {
+                $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+                $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
+                $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
             }
         }
 
