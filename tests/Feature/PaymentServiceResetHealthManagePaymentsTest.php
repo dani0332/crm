@@ -4,9 +4,11 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\QuoteStatusLog;
 use App\Services\PaymentService;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -21,7 +23,7 @@ it('removes health quote payments when resetting manage payments', function () {
         'first_name' => 'A',
         'last_name' => 'B',
         'email' => 'a@b.com',
-        'quote_status_id' => QuoteStatusEnum::ApplicationPending,
+        'quote_status_id' => QuoteStatusEnum::TransactionApproved,
         'is_quote_locked' => true,
     ]);
 
@@ -49,7 +51,10 @@ it('removes health quote payments when resetting manage payments', function () {
 
     $reason = 'Integration test reset reason here';
 
-    app(PaymentService::class)->resetHealthManagePayments($quote->fresh(), $reason);
+    // Avoid HealthQuoteObserver side effects (e.g. SLAService → sla_trackings) not covered by minimal test schema.
+    HealthQuote::withoutEvents(function () use ($quote, $reason) {
+        app(PaymentService::class)->resetHealthManagePayments($quote->fresh(), $reason);
+    });
 
     expect(Payment::where('code', $code)->count())->toBe(0);
     expect(PaymentSplits::where('code', $code)->count())->toBe(0);
@@ -59,4 +64,12 @@ it('removes health quote payments when resetting manage payments', function () {
     expect((bool) $quote->is_quote_locked)->toBeFalse();
     expect($quote->quote_status_id)->toBe(QuoteStatusEnum::ApplicationPending);
     expect($quote->reason_for_reset)->toBe($reason);
+
+    $statusLog = QuoteStatusLog::where('quote_request_id', $quote->id)
+        ->where('quote_type_id', QuoteTypeId::Health)
+        ->first();
+
+    expect($statusLog)->not->toBeNull();
+    expect($statusLog->current_quote_status_id)->toBe(QuoteStatusEnum::ApplicationPending);
+    expect($statusLog->previous_quote_status_id)->toBe(QuoteStatusEnum::TransactionApproved);
 });
