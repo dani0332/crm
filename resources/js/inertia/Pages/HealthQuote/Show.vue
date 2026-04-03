@@ -2035,9 +2035,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isLocked = computed(
-  () => props.quote?.is_quote_locked ?? false,
-);
+const isLocked = computed(() => props.quote?.is_quote_locked ?? false);
 
 const isPrimaryEmailLocked = computed(() => {
   return [
