@@ -283,7 +283,7 @@ class BorService
             ->first();
 
         if (! $documentType) {
-            throw new \Exception('Invalid document type for BOR upload: '.$documentTypeCode);
+            throw new \Exception('Invalid document type for BOR upload: '.implode(', ', $documentTypeCode));
         }
 
         DB::beginTransaction();
@@ -294,7 +294,7 @@ class BorService
 
             // Prepare data for existing upload logic
             $uploadData = [
-                'document_type_code' => $documentTypeCode,
+                'document_type_code' => $documentType->code,
                 'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
                 'document_category' => $borLog->bor_reference,
             ];
