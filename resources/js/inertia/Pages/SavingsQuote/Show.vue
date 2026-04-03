@@ -66,6 +66,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassSavings = 'App\\Models\\SavingsQuote';
 const genericRequestEnum = page.props.genericRequestEnum;
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -1312,7 +1313,7 @@ const handlePlanSelected = plan => {
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+    <ApiLogs :type="modelClassSavings" :id="$page.props.quote.savings_quote?.id" />
 
     <AuditLogs
       :quote-type="quoteType"
