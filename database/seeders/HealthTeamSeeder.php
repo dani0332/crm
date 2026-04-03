@@ -70,7 +70,7 @@ class HealthTeamSeeder extends Seeder
     private function updateNonAUHHealthTeamCategory(): void
     {
         // Update relevant teams category
-        Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP])
+        Team::whereIn('name', [QuoteTypeCode::EBP, QuoteTypeCode::RM_SPEED, QuoteTypeCode::RM_NB, TeamNameEnum::GBP])
             ->where('is_active', 1)
             ->where('type', TeamTypeEnum::TEAM)->update([
                 'category' => TeamCategoryEnum::NON_AUH,
