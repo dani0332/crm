@@ -59,6 +59,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\PolicyWording;
 use App\Models\QuoteBatches;
+use App\Models\QuoteDocument;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
@@ -2071,29 +2072,24 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
-        dd('working');
         $paymentCode = $request->payment_code;
         LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 
-        $draftLikeStatuses = [
+        $allowedPaymentStatuses = array_merge([
             PaymentStatusEnum::PENDING,
             PaymentStatusEnum::NEW,
             PaymentStatusEnum::DRAFT,
             PaymentStatusEnum::OVERDUE,
-        ];
-        $terminalFailureStatuses = PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses();
+        ], PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses());
 
-        $payment = Payment::where(
-            [
-                'id' => $request->payment_id,
-                'code' => $request->payment_code,
-                'paymentable_type' => TravelQuote::class,
-            ])
-            ->where(function ($query) use ($draftLikeStatuses, $terminalFailureStatuses) {
-                $query->whereIn('payment_status_id', $draftLikeStatuses)
-                    ->orWhereIn('payment_status_id', $terminalFailureStatuses);
-            })
+        $payment = Payment::where([
+            'id' => $request->payment_id,
+            'code' => $request->payment_code,
+            'paymentable_type' => TravelQuote::class,
+        ])
+            ->whereIn('payment_status_id', $allowedPaymentStatuses)
             ->first();
+
         if (! $payment) {
             LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
 
@@ -2101,15 +2097,8 @@ class CentralService extends BaseService
         }
 
         $quote = $payment->paymentable;
-        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
-        // $isTerminalFailure = in_array(
-        //     (int) $payment->payment_status_id,
-        //     $terminalFailureStatuses,
-        //     true
-        // );
 
-        // if (! $isTerminalFailure && ($quote->payments()->count() < 2 || ! $aboveAgeMembers)) {
-        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
+        if ($quote->payments()->count() < 2) {
             LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment cannot be deleted'];
@@ -2118,14 +2107,32 @@ class CentralService extends BaseService
         // Delete Payment and Payment Splits
         try {
             $maxAttempts = 2;
-            $this->handleWithDeadlockRetries(function () use ($request) {
-                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
-                foreach ($paymentSplits as $paymentSplit) {
-                    $paymentSplit->documents()->forceDelete();
-                }
-                PaymentSplits::where('code', $request->payment_code)->delete();
+            $this->handleWithDeadlockRetries(function () use ($request, $quote) {
+                // Load then delete per model so Auditable + Spatie activity log run (mass delete skips observers).
+                QuoteDocument::query()
+                    ->whereIn(
+                        'payment_split_id',
+                        PaymentSplits::query()
+                            ->select('id')
+                            ->where('code', $request->payment_code)
+                    )
+                    ->get()
+                    ->each(fn (QuoteDocument $document) => $document->forceDelete());
+
+                PaymentSplits::query()
+                    ->where('code', $request->payment_code)
+                    ->orderBy('id')
+                    ->get()
+                    ->each(fn (PaymentSplits $split) => $split->delete());
+
                 PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
-                Payment::where('id', $request->payment_id)->delete();
+
+                Payment::query()
+                    ->where('id', $request->payment_id)
+                    ->get()
+                    ->each(fn (Payment $payment) => $payment->delete());
+
+                $this->syncTravelQuoteAfterPaymentDeletion($quote);
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
         } catch (\Throwable $th) {
@@ -2136,6 +2143,105 @@ class CentralService extends BaseService
 
         return ['status' => true, 'message' => 'Delete payment processed'];
     }
+
+    /**
+     * After a travel parent/child payment is deleted, reload payments and align lead status when remaining payment are fully settled (same idea as SplitPaymentService::processMasterPaymentApprove).
+     */
+    private function syncTravelQuoteAfterPaymentDeletion($quote): void
+    {
+        $payment = $quote?->payments()->mainLeadPayment()->first();
+        $this->updateLeadStatusAfterPaymentDeletion($payment);
+
+        // Now need to update the payment code
+
+
+        
+
+        // if (! $this->travelQuoteRemainingPaymentsAreFullySettled($quote)) {
+        //     return;
+        // }
+
+        // $lockLeadSectionsDetails = $this->lockLeadSectionsDetails($quote);
+        // if ($lockLeadSectionsDetails['lead_status'] && $quote->quote_status_id !== QuoteStatusEnum::TransactionDeclined) {
+        //     return;
+        // }
+
+        // if ($quote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        //     return;
+        // }
+
+        // $oldQuoteStatus = $quote->quote_status_id;
+        // $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
+        // app(CRUDService::class)->calculateScore($quote, QuoteTypes::TRAVEL->value);
+        // $quote->save();
+
+        // QuoteStatusLog::create([
+        //     'quote_type_id' => QuoteTypeId::Travel,
+        //     'quote_request_id' => $quote->id,
+        //     'current_quote_status_id' => QuoteStatusEnum::TransactionApproved,
+        //     'previous_quote_status_id' => $oldQuoteStatus,
+        //     'created_at' => Carbon::now(),
+        //     'updated_at' => Carbon::now(),
+        // ]);
+
+        // LoggerService::info('fn:deletePayment - Travel quote '.$quote->code.' set to Transaction Approved; remaining payments are fully settled.');
+    }
+
+    private function updateLeadStatusAfterPaymentDeletion($payment): void
+    {
+        $quote = $payment?->paymentable;
+        if (! $quote) {
+            return;
+        }
+
+        if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+            $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
+            $quote->save();
+        }
+    }
+
+    // private function travelQuoteRemainingPaymentsAreFullySettled(TravelQuote $quote): bool
+    // {
+    //     if ($quote->payments->isEmpty()) {
+    //         return false;
+    //     }
+
+    //     foreach ($quote->payments as $payment) {
+    //         if (! $this->travelPaymentRecordIsFullySettled($payment)) {
+    //             return false;
+    //         }
+    //     }
+
+    //     return true;
+    // }
+
+    // private function travelPaymentRecordIsFullySettled(Payment $payment): bool
+    // {
+    //     $splits = $payment->paymentSplits;
+    //     $totalExpected = max(1, (int) $payment->total_payments);
+
+    //     if ($splits->isEmpty()) {
+    //         return in_array((int) $payment->getRawOriginal('payment_status_id'), PaymentStatusEnum::getPaidStatuses(), true);
+    //     }
+
+    //     $hasPartial = $splits->contains(
+    //         fn (PaymentSplits $split): bool => in_array((int) $split->payment_status_id, [
+    //             PaymentStatusEnum::PARTIAL_CAPTURED,
+    //             PaymentStatusEnum::PARTIALLY_PAID,
+    //         ], true)
+    //     );
+
+    //     if ($hasPartial) {
+    //         return false;
+    //     }
+
+    //     $paidSplits = $splits->whereIn('payment_status_id', [
+    //         PaymentStatusEnum::PAID,
+    //         PaymentStatusEnum::CAPTURED,
+    //     ])->count();
+
+    //     return $paidSplits === $totalExpected;
+    // }
 
     public function getPlansPaymentGateway($request, $quoteType)
     {
