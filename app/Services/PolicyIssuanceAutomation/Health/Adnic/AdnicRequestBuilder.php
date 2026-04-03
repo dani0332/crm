@@ -154,7 +154,7 @@ class AdnicRequestBuilder
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
                 'SponserCategory' => $sponsorCategory ?? '',
-                'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? $insuredInfoArray[0]['MaritalStatus']),
+                'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? data_get($insuredInfoArray, '0.MaritalStatus')),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $uidNo ?? '',
                 'MemberCategory' => $memberCategory ?? '',
