@@ -1892,7 +1892,6 @@ class HealthQuoteService extends BaseService
     {
         $planLockBypassQuoteStatusIds = [
             QuoteStatusEnum::TransactionApproved,
-            QuoteStatusEnum::ApplicationPending,
         ];
 
         $hasEligibleQuoteStatusForBypass = in_array($quote->quote_status_id, $planLockBypassQuoteStatusIds, true);
