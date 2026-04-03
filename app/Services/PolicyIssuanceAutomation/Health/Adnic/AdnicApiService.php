@@ -18,6 +18,7 @@ class AdnicApiService
         private AdnicResponseHandler $responseHandler,
         private AdnicDocumentHandler $documentHandler,
         private AdnicQuoteUpdaterService $quoteUpdater,
+        private AdnicValidationService $validationService,
     ) {}
 
     /**
@@ -100,11 +101,13 @@ class AdnicApiService
         $quoteDocumentTypeCodes = $documentsToUpload->keys()->toArray();
         $quoteDocuments = $this->documentHandler->getDocumentByType($quote, $quoteDocumentTypeCodes);
 
-        if (! $quoteDocuments || $quoteDocuments->isEmpty()) {
+        $documentValidation = $this->validationService->validateUploadDocuments($quote, $quoteDocuments, $insuredInfoDetails);
+        if (! $documentValidation['status']) {
             return $this->responseHandler->buildStepResponse(
                 AdnicEnum::STEP_UPLOAD_DOCUMENTS,
                 false,
-                'No documents found to upload. Please upload required documents before proceeding.'
+                $documentValidation['message'] ?? 'Document validation failed',
+                $documentValidation['error'] ?? null
             );
         }
 

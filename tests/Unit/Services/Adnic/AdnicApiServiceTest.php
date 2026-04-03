@@ -8,19 +8,21 @@ use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicResponseHandler;
-use Illuminate\Http\Client\Response;
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
 
 beforeEach(function () {
     $this->requestBuilderMock = Mockery::mock(AdnicRequestBuilder::class);
     $this->responseHandlerMock = Mockery::mock(AdnicResponseHandler::class);
     $this->documentHandlerMock = Mockery::mock(AdnicDocumentHandler::class);
     $this->quoteUpdaterMock = Mockery::mock(AdnicQuoteUpdaterService::class);
+    $this->validationServiceMock = Mockery::mock(AdnicValidationService::class);
 
     $this->service = new AdnicApiService(
         $this->requestBuilderMock,
         $this->responseHandlerMock,
         $this->documentHandlerMock,
-        $this->quoteUpdaterMock
+        $this->quoteUpdaterMock,
+        $this->validationServiceMock
     );
 });
 
