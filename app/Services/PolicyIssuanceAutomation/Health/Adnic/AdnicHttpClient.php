@@ -103,7 +103,10 @@ class AdnicHttpClient
                     }
 
                     return false;
-                }
+                },
+                // Do not convert failed HTTP responses (4xx/5xx) into exceptions; callers inspect Response.
+                // Connection/timeout failures still throw after retries (they never reach this throw path).
+                throw: false
             )
             ->withHeaders(array_merge($this->baseHeaders, $headers))
             ->asJson();
