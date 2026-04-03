@@ -38,11 +38,11 @@ class QuoteDocumentFactory extends Factory
     }
 
     /**
-     * Indicate that the document is OCR processed.
+     * Default attributes for a motor (CarQuote) document row.
      */
     public function carQuote(): static
     {
-        return [
+        return $this->state(fn (array $attributes) => [
             'quote_documentable_type' => CarQuote::class,
             'quote_documentable_id' => null,
             'document_type_code' => DocumentTypeCode::REGISTRATION_CARD_MULKIYA,
@@ -52,7 +52,7 @@ class QuoteDocumentFactory extends Factory
             'doc_uuid' => $this->faker->uuid(),
             'original_name' => 'document.pdf',
             'is_ocr_processed' => false,
-        ];
+        ]);
     }
 
     /**
