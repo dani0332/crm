@@ -61,6 +61,15 @@ class PolicyIssuanceTimeoutRetryJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        if ($policyIssuance->status !== PolicyIssuanceEnum::TIMEOUT_STATUS) {
+            LoggerService::info('ADNIC timeout retry job skipped: policy issuance is not in timeout status', [
+                'policy_issuance_id' => $policyIssuance->id,
+                'status' => $policyIssuance->status,
+            ]);
+
+            return;
+        }
+
         $maxRetries = $adnicInsuranceService->getAllowRetryForTimeout();
         $currentRetryCount = (int) ($policyIssuance->retry_count ?? 0);
 

@@ -26,12 +26,12 @@ class AdnicHttpClient
     {
         $this->apiTimeout = (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT);
 
-        $this->partnerId = config('constants.ADNIC_PARTNER_ID');
-        $this->partnerReferenceNo = config('constants.ADNIC_PARTNER_REFERENCE_NO');
-        $this->baseUrl = config('constants.ADNIC_API_BASE_URL', '').'/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical';
+        $this->partnerId = (string) (config('constants.ADNIC_PARTNER_ID') ?? '');
+        $this->partnerReferenceNo = (string) (config('constants.ADNIC_PARTNER_REFERENCE_NO') ?? '');
+        $this->baseUrl = (string) (config('constants.ADNIC_API_BASE_URL') ?? '').'/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical';
         $this->authParam = [
-            'Authorization' => config('constants.ADNIC_AUTHORIZATION_TOKEN'),
-            'Ocp-Apim-Subscription-Key' => config('constants.ADNIC_SUBSCRIPTION_KEY'),
+            'Authorization' => (string) (config('constants.ADNIC_AUTHORIZATION_TOKEN') ?? ''),
+            'Ocp-Apim-Subscription-Key' => (string) (config('constants.ADNIC_SUBSCRIPTION_KEY') ?? ''),
         ];
 
         $this->baseHeaders = [
