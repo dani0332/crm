@@ -28,7 +28,7 @@ class AdnicHttpClient
 
         $this->partnerId = (string) (config('constants.ADNIC_PARTNER_ID') ?? '');
         $this->partnerReferenceNo = (string) (config('constants.ADNIC_PARTNER_REFERENCE_NO') ?? '');
-        $this->baseUrl = (string) (config('constants.ADNIC_API_BASE_URL') ?? '').'/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical';
+        $this->baseUrl = (string) (config('constants.ADNIC_API_BASE_URL') ?? '').'/MedicalProductAPI/MedicalAPI.svc/API/Medical';
         $this->authParam = [
             'Authorization' => (string) (config('constants.ADNIC_AUTHORIZATION_TOKEN') ?? ''),
             'Ocp-Apim-Subscription-Key' => (string) (config('constants.ADNIC_SUBSCRIPTION_KEY') ?? ''),
