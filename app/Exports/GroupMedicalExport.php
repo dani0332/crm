@@ -62,7 +62,7 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function map($quote): array
     {
-        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
         return [

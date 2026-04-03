@@ -165,7 +165,7 @@ class BusinessQuoteRepository extends BaseRepository
             $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
 
-        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
         return $quote;

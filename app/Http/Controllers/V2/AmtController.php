@@ -141,6 +141,7 @@ class AmtController extends Controller
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'bqr.is_branch_applicable',
+                'bqr.emirate_of_registration_id',
                 'e.text as emirate_of_registration_text',
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
@@ -357,24 +358,9 @@ class AmtController extends Controller
      */
     private function postProcessAmtQuotes($quotes)
     {
-        // Extract quote IDs from the paginated collection
-        $quoteIds = $quotes->pluck('id')->toArray();
-
-        // Eager load all CustomerInsured records in a single query
-        $customerInsuredRecords = CustomerInsured::whereIn('quote_request_id', $quoteIds)
-            ->where('quote_type_id', QuoteTypeId::Business)
-            ->with('insured')
-            ->get()
-            ->groupBy('quote_request_id')
-            ->map(function ($records) {
-                // Get the latest record by updated_at for each quote_request_id
-                return $records->sortByDesc('updated_at')->first();
-            });
-
         // Map through quotes and add branch_name using pre-loaded data
-        return $quotes->map(function ($quote) use ($customerInsuredRecords) {
-            $customerInsured = $customerInsuredRecords->get($quote->id);
-            $emirateOfRegistrationId = $customerInsured?->insured?->emirate_of_registration_id ?? null;
+        return $quotes->map(function ($quote) {
+            $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
             return $quote;
