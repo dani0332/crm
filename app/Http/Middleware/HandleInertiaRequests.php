@@ -873,6 +873,12 @@ class HandleInertiaRequests extends Middleware
                                 route('admin.nationality-allocation-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
+                                'GBP Eligible Nationalities',
+                                route('admin.nationality-pool-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
                     );
             });
         }
