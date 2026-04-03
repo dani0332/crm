@@ -169,7 +169,7 @@ test('http client builds correct url', function () {
     $this->client->post('/TestEndpoint', ['key' => 'value']);
 
     Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'https://test-api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical/TestEndpoint');
+        return str_contains($request->url(), 'https://test-api.adnic.ae/MedicalProductAPI/MedicalAPI.svc/API/Medical/TestEndpoint');
     });
 });
 
@@ -215,7 +215,7 @@ test('http client handles 404 errors without retry', function () {
 
 test('get base url returns correct value', function () {
     expect($this->client->getBaseUrl())
-        ->toBe('https://test-api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical');
+        ->toBe('https://test-api.adnic.ae/MedicalProductAPI/MedicalAPI.svc/API/Medical');
 });
 
 test('get partner id returns correct value', function () {

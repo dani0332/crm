@@ -26,7 +26,7 @@ test('destroy does not delete document when policy is locked', function () {
         'quote_status_id' => 71,
     ]);
 
-    $document = QuoteDocument::factory()->forQuote($quote->id)->create();
+    $document = QuoteDocument::factory()->carQuote()->forQuote($quote->id)->create();
 
     $quoteDocumentService = Mockery::mock(QuoteDocumentService::class);
     $quoteDocumentService
@@ -57,7 +57,7 @@ test('destroy does not delete document when car advisor is not assigned to the q
         'quote_status_id' => 1,
     ]);
 
-    $document = QuoteDocument::factory()->forQuote($quote->id)->create();
+    $document = QuoteDocument::factory()->carQuote()->forQuote($quote->id)->create();
 
     $this->from('/quotes/car/test-uuid')
         ->post('/documents/delete', [
