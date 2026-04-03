@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AdnicEnum;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PolicyIssuanceEnum;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
@@ -73,4 +74,23 @@ test('get next step returns correct sequence', function () {
         ->and($this->service->getNextStep(AdnicEnum::STEP_ISSUE_POLICY))->toBe(AdnicEnum::STEP_UPLOAD_POLICY_DOCS)
         ->and($this->service->getNextStep(AdnicEnum::STEP_UPLOAD_POLICY_DOCS))->toBeNull()
         ->and($this->service->getNextStep('InvalidStep'))->toBeNull();
+});
+
+test('getInsurerAPIStatusByStep maps the next step after completed_step to insurer failure status ids', function () {
+    $policyIssuance = new \stdClass;
+
+    $policyIssuance->completed_step = null;
+    expect($this->service->getInsurerAPIStatusByStep($policyIssuance))
+        ->toBe(PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID);
+
+    $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_DOCUMENTS;
+    expect($this->service->getInsurerAPIStatusByStep($policyIssuance))
+        ->toBe(PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID);
+
+    $policyIssuance->completed_step = AdnicEnum::STEP_ISSUE_POLICY;
+    expect($this->service->getInsurerAPIStatusByStep($policyIssuance))
+        ->toBe(PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID);
+
+    $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_POLICY_DOCS;
+    expect($this->service->getInsurerAPIStatusByStep($policyIssuance))->toBeNull();
 });

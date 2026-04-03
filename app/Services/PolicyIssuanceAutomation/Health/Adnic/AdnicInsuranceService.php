@@ -20,8 +20,8 @@ use Exception;
 class AdnicInsuranceService implements PolicyIssuanceInterface
 {
     private array $stepHandlers = [
-        AdnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
         AdnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
+        AdnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
         AdnicEnum::STEP_UPLOAD_POLICY_DOCS => 'executeUploadPolicyDocumentsStep',
     ];
 
@@ -358,6 +358,22 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         ]);
 
         return $nextStep;
+    }
+
+    /**
+     * Map the next automation step (after the last completed step) to an insurer API failure status for stuck/failed flows.
+     */
+    public function getInsurerAPIStatusByStep($policyIssuance): ?int
+    {
+        $lastCompletedStep = $policyIssuance->completed_step;
+        $step = $this->getNextStep($lastCompletedStep);
+        $insurerApiStatus = [
+            AdnicEnum::STEP_UPLOAD_DOCUMENTS => PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            AdnicEnum::STEP_ISSUE_POLICY => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
+            AdnicEnum::STEP_UPLOAD_POLICY_DOCS => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+        ];
+
+        return $insurerApiStatus[$step] ?? null;
     }
 
     /**
