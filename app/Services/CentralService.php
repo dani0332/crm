@@ -2035,7 +2035,7 @@ class CentralService extends BaseService
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
         $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
         if ($workFlowEvent) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent, $messageData);
             LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
 
             return $response->status_code;
