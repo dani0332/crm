@@ -884,8 +884,8 @@ class TravelQuoteService extends BaseService
     public function getAboveAgeMembers($id)
     {
         return CustomerMembers::where('quote_id', $id)
-            ->where('quote_type', 'App\Models\TravelQuote')
-            ->whereDate('dob', '<=', now()->subYears(65))->count();
+            ->where('quote_type', TravelQuote::class)
+            ->whereDate('dob', '<=', now()->subYears(genericRequestEnum::TRAVEL_SENIOR_MEMBER_AGE))->count();
     }
 
     public function getDuplicateEntityByCode($code)
