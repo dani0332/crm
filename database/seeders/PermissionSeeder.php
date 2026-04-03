@@ -110,8 +110,8 @@ class PermissionSeeder extends Seeder
     }
 
     /**
-     * IMCRM: device policy issuance document re-trigger. Runs before DeviceQuoteSeeder; DeviceAdvisor/DeviceManager
-     * roles may not exist yet, so DeviceQuoteSeeder must assign this permission when it creates those roles.
+     * IMCRM: device policy issuance document re-trigger. Runs before DeviceQuoteSeeder; device quote roles
+     * may not exist yet, so DeviceQuoteSeeder must assign this permission when it creates those roles.
      */
     private function addReTriggerPolicyAutomationDevicePermission(): void
     {
@@ -129,6 +129,8 @@ class PermissionSeeder extends Seeder
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::DeviceManager,
+                RolesEnum::SmartPhoneAdvisor,
+                RolesEnum::SmartPhoneManager,
                 RolesEnum::DeviceAdvisor,
             ])
             ->get();

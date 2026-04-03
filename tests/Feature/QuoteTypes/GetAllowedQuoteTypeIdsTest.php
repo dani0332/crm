@@ -138,6 +138,12 @@ it('correctly checks access using advisorRoles method instead of string concaten
     // Test JETSKI advisor role
     $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor, ['email' => 'jetski@test.com']);
     expect(QuoteTypes::JETSKI->userHasAccess($jetskiAdvisor))->toBeTrue();
+
+    $deviceAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::DeviceAdvisor, ['email' => 'device@test.com']);
+    expect(QuoteTypes::DEVICE->userHasAccess($deviceAdvisor))->toBeTrue();
+
+    $smartPhoneAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'smartphone-advisor@test.com']);
+    expect(QuoteTypes::DEVICE->userHasAccess($smartPhoneAdvisor))->toBeTrue();
 });
 
 it('correctly checks manager roles for quote type access', function () {

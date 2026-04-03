@@ -177,6 +177,7 @@ class QuoteDocumentAccessService
             ],
             QuoteTypes::DEVICE => [
                 RolesEnum::DeviceManager,
+                RolesEnum::SmartPhoneManager,
             ],
             QuoteTypes::CYBER => [
                 RolesEnum::CyberManager,

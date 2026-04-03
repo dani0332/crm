@@ -144,7 +144,7 @@ class DeviceQuoteService extends BaseQuoteService
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
+            'canAddBatchNumber' => $this->hasAnyRole(Auth::user(), [RolesEnum::DeviceManager, RolesEnum::SmartPhoneManager]),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];

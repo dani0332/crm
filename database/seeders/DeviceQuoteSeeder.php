@@ -20,7 +20,7 @@ class DeviceQuoteSeeder extends Seeder
     {
         LoggerService::info('DeviceQuoteSeeder started');
         $this->upsertQuoteType();
-        $this->seedRoles([RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager]);
+        $this->seedRoles([RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
         $this->seedDevicePermissions();
         LoggerService::info('DeviceQuoteSeeder completed');
     }
@@ -53,6 +53,8 @@ class DeviceQuoteSeeder extends Seeder
             RolesEnum::Admin,
             RolesEnum::DeviceAdvisor,
             RolesEnum::DeviceManager,
+            RolesEnum::SmartPhoneAdvisor,
+            RolesEnum::SmartPhoneManager,
             RolesEnum::Engineering,
         ];
 

@@ -105,6 +105,8 @@ final class RolesEnum extends Enum
     public const CLIENTSUPPORT = 'OE_AE_CLIENT_SUPPORT';
     public const CLIENTSUPPORTLEAD = 'OE_AE_CLIENT_SUPPORT_LEAD';
     public const DeviceManager = 'DEVICE_MANAGER';
+    public const SmartPhoneManager = 'SMART_PHONE_MANAGER';
+    public const SmartPhoneAdvisor = 'SMART_PHONE_ADVISOR';
     public const DeviceAdvisor = 'DEVICE_ADVISOR';
     public const ClaimsManager = 'CLAIMS_MANAGER';
     public const CarClaimManager = 'CAR_CLAIM_MANAGER';

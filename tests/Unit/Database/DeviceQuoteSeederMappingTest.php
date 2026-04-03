@@ -19,6 +19,8 @@ final class DeviceQuoteSeederMappingTest extends TestCase
             RolesEnum::Admin,
             RolesEnum::DeviceAdvisor,
             RolesEnum::DeviceManager,
+            RolesEnum::SmartPhoneAdvisor,
+            RolesEnum::SmartPhoneManager,
             RolesEnum::Engineering,
         ];
 
