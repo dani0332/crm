@@ -47,7 +47,9 @@ it('removes health quote payments when resetting manage payments', function () {
         'payment_status_id' => PaymentStatusEnum::PENDING,
     ]);
 
-    app(PaymentService::class)->resetHealthManagePayments($quote->fresh(), 'Integration test reset reason here');
+    $reason = 'Integration test reset reason here';
+
+    app(PaymentService::class)->resetHealthManagePayments($quote->fresh(), $reason);
 
     expect(Payment::where('code', $code)->count())->toBe(0);
     expect(PaymentSplits::where('code', $code)->count())->toBe(0);
@@ -56,4 +58,5 @@ it('removes health quote payments when resetting manage payments', function () {
 
     expect((bool) $quote->is_quote_locked)->toBeFalse();
     expect($quote->quote_status_id)->toBe(QuoteStatusEnum::ApplicationPending);
+    expect($quote->reason_for_reset)->toBe($reason);
 });
