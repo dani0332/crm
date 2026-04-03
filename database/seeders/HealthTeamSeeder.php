@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Enums\QuoteTypeCode;
+use App\Enums\quoteTypeCode;
 use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
