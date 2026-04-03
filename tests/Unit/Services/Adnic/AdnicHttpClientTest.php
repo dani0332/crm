@@ -9,7 +9,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    // Mock ApplicationStorageService
     $mockService = Mockery::mock(ApplicationStorageService::class);
     $mockService->shouldReceive('getValueByKey')
         ->with(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT)
@@ -17,16 +16,30 @@ beforeEach(function () {
 
     app()->instance(ApplicationStorageService::class, $mockService);
 
-    // Set config values
+    // Non-production test doubles (RFC 2606 host); real AdnicHttpClient is wrapped below.
     config([
-        'constants.ADNIC_PARTNER_ID' => 'TEST_PARTNER_ID',
-        'constants.ADNIC_PARTNER_REFERENCE_NO' => 'TEST_REF_NO',
-        'constants.ADNIC_API_BASE_URL' => 'https://test-api.adnic.ae',
-        'constants.ADNIC_AUTHORIZATION_TOKEN' => 'Bearer test_token',
-        'constants.ADNIC_SUBSCRIPTION_KEY' => 'test_subscription_key',
+        'constants.ADNIC_PARTNER_ID' => 'unit-test-partner-id',
+        'constants.ADNIC_PARTNER_REFERENCE_NO' => 'unit-test-partner-ref',
+        'constants.ADNIC_API_BASE_URL' => 'https://example.test',
+        'constants.ADNIC_AUTHORIZATION_TOKEN' => 'Bearer unit-test-token',
+        'constants.ADNIC_SUBSCRIPTION_KEY' => 'unit-test-subscription-key',
     ]);
 
-    $this->client = new AdnicHttpClient;
+    $adnicHttpClient = new AdnicHttpClient;
+
+    $this->client = Mockery::mock(AdnicHttpClient::class);
+    $this->client->shouldReceive('post')->andReturnUsing(function (...$args) use ($adnicHttpClient) {
+        return $adnicHttpClient->post(...$args);
+    });
+    $this->client->shouldReceive('getBaseUrl')->andReturnUsing(function () use ($adnicHttpClient) {
+        return $adnicHttpClient->getBaseUrl();
+    });
+    $this->client->shouldReceive('getPartnerId')->andReturnUsing(function () use ($adnicHttpClient) {
+        return $adnicHttpClient->getPartnerId();
+    });
+    $this->client->shouldReceive('getPartnerReferenceNo')->andReturnUsing(function () use ($adnicHttpClient) {
+        return $adnicHttpClient->getPartnerReferenceNo();
+    });
 });
 
 afterEach(function () {
@@ -158,8 +171,8 @@ test('http client sends correct headers', function () {
     Http::assertSent(function ($request) {
         return $request->hasHeader('Content-Type', 'application/json')
             && $request->hasHeader('Accept', 'application/json')
-            && $request->hasHeader('Ocp-Apim-Subscription-Key', 'test_subscription_key')
-            && $request->hasHeader('Authorization', 'Bearer test_token');
+            && $request->hasHeader('Ocp-Apim-Subscription-Key', 'unit-test-subscription-key')
+            && $request->hasHeader('Authorization', 'Bearer unit-test-token');
     });
 });
 
@@ -169,7 +182,7 @@ test('http client builds correct url', function () {
     $this->client->post('/TestEndpoint', ['key' => 'value']);
 
     Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'https://test-api.adnic.ae/MedicalProductAPI/MedicalAPI.svc/API/Medical/TestEndpoint');
+        return str_contains($request->url(), 'https://example.test/MedicalProductAPI/MedicalAPI.svc/API/Medical/TestEndpoint');
     });
 });
 
@@ -215,15 +228,15 @@ test('http client handles 404 errors without retry', function () {
 
 test('get base url returns correct value', function () {
     expect($this->client->getBaseUrl())
-        ->toBe('https://test-api.adnic.ae/MedicalProductAPI/MedicalAPI.svc/API/Medical');
+        ->toBe('https://example.test/MedicalProductAPI/MedicalAPI.svc/API/Medical');
 });
 
 test('get partner id returns correct value', function () {
-    expect($this->client->getPartnerId())->toBe('TEST_PARTNER_ID');
+    expect($this->client->getPartnerId())->toBe('unit-test-partner-id');
 });
 
 test('get partner reference no returns correct value', function () {
-    expect($this->client->getPartnerReferenceNo())->toBe('TEST_REF_NO');
+    expect($this->client->getPartnerReferenceNo())->toBe('unit-test-partner-ref');
 });
 
 test('http client applies custom headers', function () {
@@ -234,7 +247,7 @@ test('http client applies custom headers', function () {
     Http::assertSent(function ($request) {
         return $request->hasHeader('X-Custom-Header', 'custom-value')
             && $request->hasHeader('Content-Type', 'application/json')
-            && $request->hasHeader('Authorization', 'Bearer test_token');
+            && $request->hasHeader('Authorization', 'Bearer unit-test-token');
     });
 });
 
