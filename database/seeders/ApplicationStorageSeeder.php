@@ -163,6 +163,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrUtilEnabled();
         $this->seedAdnicHealthAutomation();
         $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
@@ -1670,5 +1671,18 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         // endregion
+    }
+
+    private function seedHealthTeamRoutingEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }
