@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -46,18 +45,6 @@ class SendBookPolicyRequest extends FormRequest
         $sendPolicyType = $this->input('send_policy_type');
         $modelType = $this->input('model_type');
         $quote = $this->getQuoteObject($modelType, $this->input('quote_id'));
-
-        if (in_array($sendPolicyType, [SendPolicyTypeEnum::CUSTOMER, SendPolicyTypeEnum::SAGE], true)) {
-            $validator->after(function ($validator) use ($quote, $modelType) {
-                if (! $quote) {
-                    return;
-                }
-
-                if (! app(DocumentTypeRepository::class)->validateSendPolicyDocsUploaded($quote, ucwords((string) $modelType))) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
-                }
-            });
-        }
 
         if ($sendPolicyType == SendPolicyTypeEnum::CUSTOMER) {
             $validator->after(function ($validator) use ($quote) {

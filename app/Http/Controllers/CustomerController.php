@@ -15,6 +15,7 @@ use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentAccessService;
 use App\Services\SLA\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
@@ -35,13 +36,16 @@ class CustomerController extends Controller
     private $customerService;
     private $lookupService;
     private $slaService;
+    private QuoteDocumentAccessService $quoteDocumentAccessService;
+
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
         BerlinService $berlinService,
         CustomerService $customerService,
         LookupService $lookupService,
-        SLAService $slaService
+        SLAService $slaService,
+        QuoteDocumentAccessService $quoteDocumentAccessService,
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
@@ -49,6 +53,7 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
         $this->lookupService = $lookupService;
         $this->slaService = $slaService;
+        $this->quoteDocumentAccessService = $quoteDocumentAccessService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -259,6 +264,19 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if ($quoteObject) {
+            $user = auth()->user();
+            if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+                $authorizationMessage = 'You are not authorized to add additional contact for this quote.';
+                if ($request->isInertia) {
+                    vAbort($authorizationMessage);
+                }
+
+                return response()->json(['error' => [
+                    'message' => $authorizationMessage,
+                ]]);
+            }
+        }
         if ($key == GenericRequestEnum::EMAIL) {
             $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
                 ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
