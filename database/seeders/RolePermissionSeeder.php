@@ -649,7 +649,7 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
-        $role = Role::where('name', [RolesEnum::Engineering])->first();
+        $role = Role::where('name', RolesEnum::Engineering)->first();
 
         if ($role && ! $role->hasPermissionTo($permission)) {
             $role->givePermissionTo($permission);
