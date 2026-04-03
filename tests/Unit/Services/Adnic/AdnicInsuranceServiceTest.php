@@ -77,7 +77,7 @@ test('get next step returns correct sequence', function () {
 });
 
 test('getInsurerAPIStatusByStep maps the next step after completed_step to insurer failure status ids', function () {
-    $policyIssuance = new \stdClass;
+    $policyIssuance = new stdClass;
 
     $policyIssuance->completed_step = null;
     expect($this->service->getInsurerAPIStatusByStep($policyIssuance))

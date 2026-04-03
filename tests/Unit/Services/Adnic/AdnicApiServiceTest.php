@@ -74,7 +74,7 @@ test('api service has quote updater dependency', function () {
 test('uploadPolicyDocumentsToIMCRM returns error when PolicyDocumentInfo is missing', function () {
     $quote = (object) ['uuid' => 'test-quote-uuid'];
 
-    $log = new \stdClass;
+    $log = new stdClass;
     $log->response = json_encode(['data' => (object) []]);
 
     $logsQuery = new class($log)

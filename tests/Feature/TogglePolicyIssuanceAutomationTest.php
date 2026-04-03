@@ -8,6 +8,7 @@ use App\Models\InsuranceProvider;
 use App\Services\OCR\OCRService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -23,7 +24,7 @@ beforeEach(function () {
     $this->user->givePermissionTo($permission);
 
     // Clear permission cache to ensure permissions are available immediately
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $this->user->refresh();
 
     // Mock OCRService to avoid dependency resolution issues in HandleInertiaRequests middleware
@@ -250,7 +251,7 @@ test('handles exceptions and returns 500', function () {
     $mockService = Mockery::mock(PolicyIssuanceService::class);
     $mockService->shouldReceive('togglePolicyIssuanceAutomation')
         ->once()
-        ->andThrow(new \Exception('Something went wrong'));
+        ->andThrow(new Exception('Something went wrong'));
 
     $this->app->instance(PolicyIssuanceService::class, $mockService);
 

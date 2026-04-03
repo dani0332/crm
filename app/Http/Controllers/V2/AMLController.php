@@ -57,6 +57,8 @@ use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
@@ -106,7 +108,7 @@ class AMLController extends Controller
         return inertia('Aml/Show', $data);
     }
 
-    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
             $request->customer_type,
@@ -234,7 +236,7 @@ class AMLController extends Controller
                 ], $updateQuote);
 
                 LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate');
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if ($e->getCode() == '40001' || str_contains($e->getMessage(), 'Lock wait timeout')) {
                     LoggerService::warning('Lock timeout during AML screening process', [
                         'quote_id' => $quoteRequestId,
@@ -838,7 +840,7 @@ class AMLController extends Controller
     /**
      * Toggle policy issuance automation enabled status for a car quote
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
     {

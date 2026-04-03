@@ -393,7 +393,7 @@ class HealthEmailService extends BaseService
                 LoggerService::info('SIC Health Followups WA executed');
             }
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
         }
 
@@ -478,7 +478,7 @@ class HealthEmailService extends BaseService
             }
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::warning(self::class." - Error sending STP Advisor notification for UUID: {$lead->uuid}", exception: $e);
 
             return [

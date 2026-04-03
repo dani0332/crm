@@ -22,9 +22,11 @@ use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
@@ -194,7 +196,7 @@ class HealthQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function members()
     {
@@ -241,7 +243,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Health);
@@ -393,7 +395,7 @@ class HealthQuote extends Model implements AuditableContract
     }
 
     // Reminder::Get the active insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -480,7 +482,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all payments that have IPL splits
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getPaymentsWithInsurerPaymentLink()
     {
@@ -494,7 +496,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get the last payment with an IPL split
      *
-     * @return \App\Models\Payment|null
+     * @return Payment|null
      */
     public function getLastPaymentWithInsurerPaymentLink()
     {
@@ -509,7 +511,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all IPL payment splits across all payments
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAllInsurerPaymentLinkSplits()
     {

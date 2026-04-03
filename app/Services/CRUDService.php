@@ -38,6 +38,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -643,7 +644,7 @@ class CRUDService extends BaseService
                         );
                         LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
-                    } catch (\Illuminate\Database\QueryException $e) {
+                    } catch (QueryException $e) {
                         LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
                             LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');

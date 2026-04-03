@@ -35,14 +35,14 @@ test('request builder has http client dependency', function () {
 test('build upload documents payload creates correct structure', function () {
     $base64Content = base64_encode('test content');
 
-    $healthInsurerResponse = new \stdClass;
-    $healthInsurerResponse->QuoteInfo = new \stdClass;
+    $healthInsurerResponse = new stdClass;
+    $healthInsurerResponse->QuoteInfo = new stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'QUOTE123';
 
-    $insuredMember = new \stdClass;
+    $insuredMember = new stdClass;
     $insuredMember->MemberSeqNo = 1;
 
-    $quoteDocument = new \stdClass;
+    $quoteDocument = new stdClass;
     $quoteDocument->original_name = 'passport.pdf';
     $quoteDocument->doc_name = 'passport_copy.pdf';
 
@@ -71,14 +71,14 @@ test('build upload documents payload creates correct structure', function () {
 test('build upload documents payload uses doc name fallback', function () {
     $base64Content = base64_encode('test content');
 
-    $healthInsurerResponse = new \stdClass;
-    $healthInsurerResponse->QuoteInfo = new \stdClass;
+    $healthInsurerResponse = new stdClass;
+    $healthInsurerResponse->QuoteInfo = new stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'QUOTE123';
 
-    $insuredMember = new \stdClass;
+    $insuredMember = new stdClass;
     $insuredMember->MemberSeqNo = 1;
 
-    $quoteDocument = new \stdClass;
+    $quoteDocument = new stdClass;
     $quoteDocument->doc_name = 'passport_copy.pdf';
     // original_name is not set
 
@@ -97,10 +97,10 @@ test('build upload documents payload uses doc name fallback', function () {
 
 // CRITICAL TEST: Download document payload structure
 test('build download document payload creates correct structure', function () {
-    $generatePolicyResponse = new \stdClass;
-    $generatePolicyResponse->QuoteInfo = new \stdClass;
+    $generatePolicyResponse = new stdClass;
+    $generatePolicyResponse->QuoteInfo = new stdClass;
     $generatePolicyResponse->QuoteInfo->QuotationNo = 'QUOTE123';
-    $generatePolicyResponse->PolicyInfo = new \stdClass;
+    $generatePolicyResponse->PolicyInfo = new stdClass;
     $generatePolicyResponse->PolicyInfo->PolicyNo = 'POL123';
 
     $docId = 'DOC123';
@@ -193,14 +193,14 @@ test('mapping nationality returns correct adnic codes', function () {
 test('build upload documents payload includes iso formatted upload date', function () {
     $base64Content = base64_encode('test');
 
-    $healthInsurerResponse = new \stdClass;
-    $healthInsurerResponse->QuoteInfo = new \stdClass;
+    $healthInsurerResponse = new stdClass;
+    $healthInsurerResponse->QuoteInfo = new stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'Q123';
 
-    $insuredMember = new \stdClass;
+    $insuredMember = new stdClass;
     $insuredMember->MemberSeqNo = 1;
 
-    $quoteDocument = new \stdClass;
+    $quoteDocument = new stdClass;
     $quoteDocument->original_name = 'test.pdf';
 
     $result = $this->builder->buildUploadDocumentsPayload(

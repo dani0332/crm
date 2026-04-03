@@ -20,7 +20,7 @@ class AdnicServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind(\App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient::class, function () {
+        App::bind(AdnicHttpClient::class, function () {
             return new AdnicHttpClient;
         });
     }

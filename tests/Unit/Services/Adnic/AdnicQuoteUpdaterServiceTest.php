@@ -6,6 +6,7 @@ use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
+use Illuminate\Support\Carbon;
 
 beforeEach(function () {
     $this->service = new AdnicQuoteUpdaterService;
@@ -42,8 +43,8 @@ test('update quote from issue policy response updates policy fields', function (
         ->andReturn(true);
 
     // Create mock issue policy result
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL123';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
@@ -68,8 +69,8 @@ test('update quote from issue policy response filters null values', function () 
         }))
         ->andReturn(true);
 
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL456';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;
@@ -90,8 +91,8 @@ test('update quote from issue policy response sets correct status', function () 
         }))
         ->andReturn(true);
 
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL789';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
@@ -115,8 +116,8 @@ test('update quote from issue policy response handles missing policy info', func
         }))
         ->andReturn(true);
 
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = null;
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;
@@ -146,12 +147,12 @@ test('update quote from issue policy response sets quote status date', function 
         ->once()
         ->with(Mockery::on(function ($data) {
             return isset($data['quote_status_date'])
-                && $data['quote_status_date'] instanceof \Illuminate\Support\Carbon;
+                && $data['quote_status_date'] instanceof Carbon;
         }))
         ->andReturn(true);
 
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL999';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
@@ -178,8 +179,8 @@ test('update quote from issue policy response handles partial policy info', func
         }))
         ->andReturn(true);
 
-    $issuePolicyResult = new \stdClass;
-    $issuePolicyResult->PolicyInfo = new \stdClass;
+    $issuePolicyResult = new stdClass;
+    $issuePolicyResult->PolicyInfo = new stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL-PARTIAL';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;

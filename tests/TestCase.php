@@ -3,6 +3,8 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Facade;
+use Spatie\Permission\PermissionRegistrar;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -35,15 +37,15 @@ abstract class TestCase extends BaseTestCase
     protected function tearDown(): void
     {
         // Clear permission cache after each test to prevent state pollution
-        if (class_exists(\Spatie\Permission\PermissionRegistrar::class)) {
-            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        if (class_exists(PermissionRegistrar::class)) {
+            app()[PermissionRegistrar::class]->forgetCachedPermissions();
         }
 
         // Close Mockery to prevent mock state pollution between tests
         \Mockery::close();
 
         // Clear any resolved Facade instances to prevent state pollution
-        \Illuminate\Support\Facades\Facade::clearResolvedInstances();
+        Facade::clearResolvedInstances();
 
         parent::tearDown();
     }
