@@ -12,7 +12,9 @@ use App\Models\InsuranceProviderContact;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BorService
 {
@@ -259,7 +261,7 @@ class BorService
     /**
      * Upload a BOR document
      *
-     * @param  \Illuminate\Http\UploadedFile  $file
+     * @param  UploadedFile  $file
      * @param  int  $borLogId
      * @return array
      */
@@ -421,7 +423,7 @@ class BorService
     /**
      * Sign a BOR document
      *
-     * @param  \Illuminate\Http\UploadedFile|string|null  $file
+     * @param  UploadedFile|string|null  $file
      */
     public function signDocument(array $data, $file = null): array
     {
@@ -453,7 +455,7 @@ class BorService
             // Handle previous document deletion if new file is uploaded
             $previousDoc = $borLog->document;
             if ($previousDoc && $previousDoc->doc_url && $file) {
-                \Illuminate\Support\Facades\Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
+                Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
                 $previousDoc->delete();
             }
 
@@ -502,7 +504,7 @@ class BorService
     /**
      * Upload a quote document for BOR
      *
-     * @param  \Illuminate\Http\UploadedFile|string  $file
+     * @param  UploadedFile|string  $file
      */
     public function uploadQuoteDocument(array $data, $file): array
     {
