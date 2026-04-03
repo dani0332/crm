@@ -359,17 +359,17 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 
 **IMCRM → ADNIC (Upload)** — `AdnicDocumentHandler::getInsurerDocCodeForHealth()` / `getQuoteDocumentTypeCodessToUpload()`:
 
-| IMCRM / flow | ADNIC document type code | Notes |
-| ------------ | ------------------------ | ----- |
-| `HEA_EMIRATE_ID_COPY` (aggregated slot) | `3` | Emirates ID (single or combined) |
-| `HEA_INSURED_EMIRATES_ID_APPLICATION` | `2` | Insured Emirates ID Application |
-| `HEA_EID_FRONT` | `4` | Emirates ID front |
-| `HEA_EID_BACK` | `5` | Emirates ID back |
-| `HEA_VISA` | `6` | Visa |
-| `HEA_PAS` | `1` | Passport |
-| `HEA_BIRTH_CERTIFICATE` | `11` | Birth Certificate |
-| `HEA_MEDICAL_APPLICATION_FORM` | `18` | Medical Application Form |
-| `HEA_CUSTOMER_DUE_DILIGENCE` | `17` | Customer Due Diligence |
+| IMCRM / flow                            | ADNIC document type code | Notes                            |
+| --------------------------------------- | ------------------------ | -------------------------------- |
+| `HEA_EMIRATE_ID_COPY` (aggregated slot) | `3`                      | Emirates ID (single or combined) |
+| `HEA_INSURED_EMIRATES_ID_APPLICATION`   | `2`                      | Insured Emirates ID Application  |
+| `HEA_EID_FRONT`                         | `4`                      | Emirates ID front                |
+| `HEA_EID_BACK`                          | `5`                      | Emirates ID back                 |
+| `HEA_VISA`                              | `6`                      | Visa                             |
+| `HEA_PAS`                               | `1`                      | Passport                         |
+| `HEA_BIRTH_CERTIFICATE`                 | `11`                     | Birth Certificate                |
+| `HEA_MEDICAL_APPLICATION_FORM`          | `18`                     | Medical Application Form         |
+| `HEA_CUSTOMER_DUE_DILIGENCE`            | `17`                     | Customer Due Diligence           |
 
 **ADNIC → IMCRM (Download)**:
 
@@ -488,15 +488,15 @@ public function getStepsLockingStatus($quote, $throughAutomation = false): array
 
 **Locking Logic** (when `throughAutomation` is false, the UI uses this for **failed** automation or **incomplete step with empty status**; see `AdnicBookPolicyService` for exact conditions):
 
-| Scenario | `isEditPolicyDetailsDisabled` | Message (summary) |
-| -------- | ------------------------------- | ------------------- |
-| Through automation (`throughAutomation === true`) | No (editable) | All steps editable |
-| No `policyIssuance` record | No | All steps editable |
-| Failed, no `completed_step` | No | All steps editable |
-| Failed after `UploadDocuments` | No | Issue Policy and Update Booking Details are editable |
-| Failed after `IssuePolicy` | No | Policy document retrieval and Booking Details are editable |
-| Failed after `UploadPolicyDocumentsToIMCRM` | No | Booking Details is editable |
-| Other statuses (e.g. success in progress) | Yes (locked) | All steps are locked (default) |
+| Scenario                                          | `isEditPolicyDetailsDisabled` | Message (summary)                                          |
+| ------------------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| Through automation (`throughAutomation === true`) | No (editable)                 | All steps editable                                         |
+| No `policyIssuance` record                        | No                            | All steps editable                                         |
+| Failed, no `completed_step`                       | No                            | All steps editable                                         |
+| Failed after `UploadDocuments`                    | No                            | Issue Policy and Update Booking Details are editable       |
+| Failed after `IssuePolicy`                        | No                            | Policy document retrieval and Booking Details are editable |
+| Failed after `UploadPolicyDocumentsToIMCRM`       | No                            | Booking Details is editable                                |
+| Other statuses (e.g. success in progress)         | Yes (locked)                  | All steps are locked (default)                             |
 
 The response also includes `policyIssuance`, `insurer_api_status`, and a human-readable `message`.
 
@@ -1075,13 +1075,13 @@ finfo_close($finfo);
 
 These settings are managed via `ApplicationStorage` table and can be toggled without code deployment:
 
-| Key                                                 | Purpose                        | Type    |
-| --------------------------------------------------- | ------------------------------ | ------- |
-| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE`               | Master switch for automation   | boolean |
-| `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE` | Enable delayed retry when status becomes TIMEOUT | boolean |
+| Key                                                    | Purpose                                                     | Type    |
+| ------------------------------------------------------ | ----------------------------------------------------------- | ------- |
+| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE`                  | Master switch for automation                                | boolean |
+| `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE`    | Enable delayed retry when status becomes TIMEOUT            | boolean |
 | `ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES` | Minutes to wait before `PolicyIssuanceTimeoutRetryJob` runs | integer |
-| `ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT`       | Max times a timeout can be reset to PENDING via the job | integer |
-| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT`               | API timeout in seconds         | integer |
+| `ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT`            | Max times a timeout can be reset to PENDING via the job     | integer |
+| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT`                  | API timeout in seconds                                      | integer |
 
 **Access Method**:
 
