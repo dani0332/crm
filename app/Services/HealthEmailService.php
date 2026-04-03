@@ -413,6 +413,10 @@ class HealthEmailService extends BaseService
     public function sendSTPAdvisorNotification($lead, $isApiFailed, $automationFailureKey = null)
     {
         try {
+            $result = [
+                'success' => false,
+                'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification failed',
+            ];
             LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
             LoggerService::info(self::class." - Inside for UUID: {$lead->uuid}");
             $advisor = User::activeUser()->where('id', $lead->advisor_id)->first();
