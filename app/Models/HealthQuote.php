@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AdnicEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
@@ -15,9 +14,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
@@ -641,7 +640,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function insurerGenerateQuoteRequestResponse()
     {
-        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => AdnicEnum::STEP_GENERATE_QUOTE, 'status' => 'passed'])->latest();
+        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => HealthInsurerRequestResponse::EXECUTION_METHOD_GENERATE_QUOTE, 'status' => 'passed'])->latest();
     }
 
     public function healthUmafResponse()
