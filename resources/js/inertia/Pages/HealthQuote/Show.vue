@@ -2322,7 +2322,7 @@ const validateEmirateOfVisa = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUBTEAM</dt>
-                <dd>{{ quote.health_team_type }}</dd>
+                <dd>{{ quote.health_team_type ?? quote.notional_team }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -4648,6 +4648,8 @@ const validateEmirateOfVisa = () => {
       :type="'App\\Models\\InsuredKyc'"
       :id="props.quote?.insured_kyc_id"
     />
+
+    <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
