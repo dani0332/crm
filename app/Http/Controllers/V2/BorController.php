@@ -188,7 +188,8 @@ class BorController extends Controller
                 'max:10240',
                 'extensions:pdf,doc,docx,jpg,jpeg,png',
                 // No `mimes:zip`: we never treat “zip” as an allowed upload type. `.docx` is OOXML (zip) but must use a `.docx` name; finfo often reports application/zip — allowed in mimetypes only alongside extension whitelist + BorUploadFileContentValidator OOXML checks.
-                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/x-zip-compressed,image/jpeg,image/png,image/x-png',
+                // application/octet-stream: finfo sometimes returns this for valid uploads (e.g. legacy .doc); BorUploadFileContentValidator still enforces magic bytes + structure per extension.
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/x-zip-compressed,application/octet-stream,image/jpeg,image/png,image/x-png',
             ],
             'document_type_code' => 'nullable|string', // Will be auto-determined if not provided
             'bor_log_id' => $borLogId ? 'nullable' : 'required|exists:bor_logs,id',
