@@ -65,8 +65,8 @@ test('get steps locking status returns all editable for failed status with no st
         ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
 });
 
-// CRITICAL TEST: Failed policy issuance at upload documents step
-test('get steps locking status returns all editable for failed at upload documents', function () {
+// CRITICAL TEST: Failed policy issuance after upload documents step completed
+test('get steps locking status after upload documents step reflects next step is issue policy', function () {
     $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
     $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_DOCUMENTS;
@@ -80,7 +80,7 @@ test('get steps locking status returns all editable for failed at upload documen
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
+        ->and($result['message'])->toBe('Issue Policy and Update Booking Details are editable');
 });
 
 // CRITICAL TEST: Failed policy issuance at issue policy step
@@ -98,7 +98,7 @@ test('get steps locking status handles failed at issue policy step', function ()
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['message'])->toBe('Upload Documents and Update Booking Details are editable');
+        ->and($result['message'])->toBe('Policy document retrieval and Booking Details are editable');
 });
 
 // CRITICAL TEST: Failed policy issuance at upload policy docs step

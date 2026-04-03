@@ -52,18 +52,21 @@ class AdnicBookPolicyService
         );
 
         if ($shouldHandlePolicyIssuanceLogic) {
-            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === AdnicEnum::STEP_UPLOAD_DOCUMENTS) {
+            // Step order matches AdnicInsuranceService::getAPISteps(): UploadDocuments → IssuePolicy → UploadPolicyDocs
+            if (! $policyIssuance?->completed_step) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['message'] = AdnicEnum::ALL_STEPS_ARE_EDITABLE;
+            } elseif ($policyIssuance?->completed_step === AdnicEnum::STEP_UPLOAD_DOCUMENTS) {
+                $response['isEditPolicyDetailsDisabled'] = false;
+                $response['message'] = 'Issue Policy and Update Booking Details are editable';
             } elseif ($policyIssuance?->completed_step === AdnicEnum::STEP_ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
-                $response['message'] = 'Upload Documents and Update Booking Details are editable';
+                $response['message'] = 'Policy document retrieval and Booking Details are editable';
             } elseif ($policyIssuance?->completed_step === AdnicEnum::STEP_UPLOAD_POLICY_DOCS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
             }
 
-            // Single return for this group
             return $response;
         }
 

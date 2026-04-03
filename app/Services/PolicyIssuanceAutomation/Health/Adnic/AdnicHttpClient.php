@@ -103,8 +103,7 @@ class AdnicHttpClient
                     }
 
                     return false;
-                },
-                throw: false
+                }
             )
             ->withHeaders(array_merge($this->baseHeaders, $headers))
             ->asJson();
