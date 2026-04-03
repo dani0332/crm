@@ -192,6 +192,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->tag = 'dtt-initial-email';
                 $emailData->lob = QuoteTypes::CAR->id();
+                $emailData->whatsAppNumber = ! empty($carQuote?->mobile_no) ? formatMobileNo($carQuote->mobile_no) : '';
 
                 // Shifted to Bird Workflow, previous it was using Brevo
                 $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();

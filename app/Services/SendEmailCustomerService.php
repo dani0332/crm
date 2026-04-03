@@ -2117,6 +2117,17 @@ class SendEmailCustomerService extends BaseService
                 return 500;
             }
 
+            $quotePlansForBird = [];
+            if (isset($emailData->quotePlans)) {
+                $quotePlansForBird = $emailData->quotePlans;
+            } elseif (isset($emailData->plans)) {
+                $quotePlansForBird = $emailData->plans;
+            }
+
+            $refIdForBird = (isset($emailData->refID) && $emailData->refID !== '')
+                ? $emailData->refID
+                : ($emailData->carQuoteId ?? '');
+
             // Build Bird payload
             $payload = [
                 'to' => [
@@ -2129,11 +2140,11 @@ class SendEmailCustomerService extends BaseService
                 'quoteUID' => $emailData->uuid,
                 'customerEmail' => $emailData->customerEmail,
                 'customerName' => $emailData->customerName ?? ($emailData->customer->firstName ?? '').' '.($emailData->customer->lastName ?? ''),
-                'refID' => $emailData->refID ?? '',
+                'refID' => $refIdForBird,
                 'advisorName' => $emailData->advisorName ?? '',
                 'advisorEmail' => $emailData->advisorEmail ?? '',
-                'quotePlans' => $emailData->quotePlans ?? [],
-                'quotePlansCount' => is_countable($emailData->quotePlans ?? []) ? count($emailData->quotePlans) : 0,
+                'quotePlans' => $quotePlansForBird,
+                'quotePlansCount' => is_countable($quotePlansForBird) ? count($quotePlansForBird) : 0,
                 'subject' => $emailData->subject ?? '',
                 'tag' => $emailData->tag ?? 'car-revival-lead-creation',
                 'lob' => $emailData->lob ?? QuoteTypes::CAR->id(),
@@ -2151,6 +2162,12 @@ class SendEmailCustomerService extends BaseService
                 'customerEmail' => $emailData->customerEmail,
                 'workflowType' => $workflowType,
                 'workflowUrl' => $workflowUrl,
+                'payload_quotePlansCount' => is_countable($quotePlansForBird) ? count($quotePlansForBird) : 0,
+                'payload_refID' => $refIdForBird,
+            ]);
+
+            LoggerService::info('sendDttEmailViaBird - Complete Bird request payload (JSON)', [
+                'payload_json' => json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
             ]);
 
             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $payload);
