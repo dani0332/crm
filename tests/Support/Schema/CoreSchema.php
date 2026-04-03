@@ -644,6 +644,9 @@ class CoreSchema
                 $table->unsignedBigInteger('branch_id')->nullable();
                 $table->boolean('is_branch_applicable')->default(0);
                 $table->boolean('is_error_email_sent')->default(0);
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->boolean('is_quote_locked')->default(0);
+                $table->text('reason_for_reset')->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -999,6 +1002,11 @@ class CoreSchema
                 $table->id();
                 $table->unsignedBigInteger('current_payment_status_id')->nullable();
                 $table->unsignedBigInteger('previous_payment_status_id')->nullable();
+                $table->string('payment_code')->nullable();
+                $table->timestamps();
+            },
+            'payment_status_history' => function (Blueprint $table) {
+                $table->id();
                 $table->string('payment_code')->nullable();
                 $table->timestamps();
             },
