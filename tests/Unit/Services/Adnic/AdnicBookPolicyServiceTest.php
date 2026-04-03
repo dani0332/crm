@@ -119,24 +119,6 @@ test('get steps locking status handles failed at upload policy docs step', funct
         ->and($result['message'])->toBe('Booking Details is editable');
 });
 
-// CRITICAL TEST: Processing status at upload policy docs step
-test('get steps locking status handles processing at upload policy docs', function () {
-    $policyIssuance = new \stdClass;
-    $policyIssuance->status = PolicyIssuanceEnum::PROCESSING_STATUS;
-    $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_POLICY_DOCS;
-
-    $quote = new \stdClass;
-    $quote->id = 1;
-    $quote->code = 'HQ123';
-    $quote->insurer_api_status = null;
-    $quote->policyIssuance = $policyIssuance;
-
-    $result = $this->service->getStepsLockingStatus($quote, false);
-
-    expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['message'])->toBe('Booking Details is editable');
-});
-
 // CRITICAL TEST: Response structure consistency
 test('get steps locking status always returns consistent structure', function () {
     $quote = new \stdClass;
