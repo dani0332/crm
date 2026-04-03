@@ -271,8 +271,8 @@ class BorService
         $quoteObject = checkPersonalQuotes($quoteType) ? $personalQuote : $this->getQuoteObject($quoteType, $personalQuote->quote_id);
 
         // Auto-determine document type code based on the lead's LOB if not provided
-        $documentTypeCode = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
-        $documentTypeCodes = is_array($documentTypeCode) ? $documentTypeCode : [$documentTypeCode];
+        $documentTypeCodeValue = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
+        $documentTypeCode = is_array($documentTypeCodeValue) ? $documentTypeCodeValue : [$documentTypeCodeValue];
         // Get the document type for this LOB
         $documentType = DocumentType::whereIn('code', $documentTypeCode)
             ->where('is_active', 1)
