@@ -72,6 +72,9 @@ class SageApiEmbeddedProductService
         $sageRequest->quoteCode = $quote->code;
         $sageRequest->epShortCode = $epTransaction->product?->embeddedProduct?->short_code;
 
+        $sageRequest->bookingDate = Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
         $sageRequest->customerId = $this->sageApiService->verifySageCustomer($quote->customer_id, $data, $quote, 15);
 
