@@ -61,6 +61,21 @@ class quoteTypeCode extends Enum
     const CompanyCar = 'CompanyCar';
     const Device = 'Device';
     const CYBER = 'Cyber';
+    const HOME_APPLIANCE = 'HomeAppliance';
+
+    /**
+     * Map a URL route segment to a canonical quote type code string, or null if unknown.
+     * Home appliance only accepts the PascalCase segment {@see self::HOME_APPLIANCE}; snake_case
+     * and other slugs are not normalized here so callers can distinguish route style.
+     */
+    public static function normalizeRouteSegment(string $segment): ?string
+    {
+        if ($segment === self::HOME_APPLIANCE) {
+            return self::HOME_APPLIANCE;
+        }
+
+        return null;
+    }
 
     public static function getName($value)
     {
