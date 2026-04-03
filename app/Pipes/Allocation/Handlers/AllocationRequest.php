@@ -32,7 +32,7 @@ class AllocationRequest
     {
         return $this->source;
     }
-    
+
     public function getQuoteType()
     {
         return $this->quoteType;

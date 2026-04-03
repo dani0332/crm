@@ -10,11 +10,8 @@ use App\Models\LeadSource;
 use App\Models\QuoteType;
 use App\Models\Rule;
 use App\Models\RuleType;
-use App\Models\User;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
-use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
