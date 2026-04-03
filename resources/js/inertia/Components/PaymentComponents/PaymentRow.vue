@@ -87,7 +87,6 @@ const travelSeniorMemberAge = Number(
   genericRequestEnum?.TRAVEL_SENIOR_MEMBER_AGE ?? 65,
 );
 
-/** Matches travel master payment senior segment (e.g. TRA-1234-1). */
 const isSeniorSegmentPaymentCode = code => {
   if (code === null || code === undefined) {
     return false;
@@ -99,10 +98,7 @@ const activeTravelTravelers = computed(() =>
   Array.isArray(page.props.travelers) ? page.props.travelers : [],
 );
 
-/**
- * Count of travelers still on the quote for this payment's age segment (senior vs under-65).
- * Uses the same "-1" code rule as usePayment / TravelQuoteService.
- */
+
 const travelerCountForPaymentSegment = payment => {
   const seniorSegment = isSeniorSegmentPaymentCode(payment?.code);
   return activeTravelTravelers.value.filter(traveler => {
@@ -112,10 +108,6 @@ const travelerCountForPaymentSegment = payment => {
   }).length;
 };
 
-/**
- * Show orphan child-payment delete: the payment targets a segment that no longer has any travelers.
- * Requires `travelers` on the page (Travel quote show); omit on other contexts so we do not assume an empty list.
- */
 const hasRelevantMemberDeleted = payment => {
   if (props.quoteType !== quoteTypeCodeEnum.Travel) {
     return false;
