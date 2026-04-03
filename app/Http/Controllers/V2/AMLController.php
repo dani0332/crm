@@ -51,7 +51,6 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
@@ -648,9 +647,10 @@ class AMLController extends Controller
                 'STP Case' => $isHealthQuote ? $quote?->isSTPCase() : false,
                 'AML Status' => $quote?->aml_status,
                 'KYC Status' => $quote?->kyc_decision,
-                'Automation Enabled' => $isPolicyAutomationEnabled,
+                'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+                'insurerPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
             ]);
-            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled) {
+            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyIssuanceAutomationEnabled && $isPolicyAutomationEnabled) {
                 $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
                 $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
                 $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
