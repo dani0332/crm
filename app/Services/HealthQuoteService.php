@@ -1891,11 +1891,7 @@ class HealthQuoteService extends BaseService
      */
     public function canBypassPlanLock(object $quote, ?iterable $payments = null): bool
     {
-        $planLockBypassQuoteStatusIds = [
-            QuoteStatusEnum::TransactionApproved,
-        ];
-
-        $hasEligibleQuoteStatusForBypass = in_array($quote->quote_status_id, $planLockBypassQuoteStatusIds, true);
+        $hasEligibleQuoteStatusForBypass = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         $userCanEditPlanAfterTransactionApproval = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
 
         $mainPayment = $hasEligibleQuoteStatusForBypass && $userCanEditPlanAfterTransactionApproval
