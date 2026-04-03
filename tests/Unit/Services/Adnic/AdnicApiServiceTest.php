@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\AdnicEnum;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicApiService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
@@ -66,4 +67,58 @@ test('api service has quote updater dependency', function () {
     $property->setAccessible(true);
 
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicQuoteUpdaterService::class);
+});
+
+test('uploadPolicyDocumentsToIMCRM returns error when PolicyDocumentInfo is missing', function () {
+    $quote = (object) ['uuid' => 'test-quote-uuid'];
+
+    $log = new \stdClass;
+    $log->response = json_encode(['data' => (object) []]);
+
+    $logsQuery = new class($log)
+    {
+        public function __construct(private object $log) {}
+
+        public function where(array $conditions): self
+        {
+            return $this;
+        }
+
+        public function latest(): self
+        {
+            return $this;
+        }
+
+        public function first(): object
+        {
+            return $this->log;
+        }
+    };
+
+    $process = new class($logsQuery)
+    {
+        public function __construct(private object $logsQuery) {}
+
+        public int $id = 42;
+
+        public function policyIssuanceLogs(): object
+        {
+            return $this->logsQuery;
+        }
+    };
+
+    $this->responseHandlerMock->shouldReceive('buildStepResponse')
+        ->with(AdnicEnum::STEP_UPLOAD_POLICY_DOCS)
+        ->andReturn([
+            'status' => false,
+            'completed_step' => AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
+            'message' => null,
+            'error' => null,
+            'data' => null,
+        ]);
+
+    $result = $this->service->uploadPolicyDocumentsToIMCRM($quote, $process);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['error'])->toBe('Policy document list not found in policy issue response');
 });

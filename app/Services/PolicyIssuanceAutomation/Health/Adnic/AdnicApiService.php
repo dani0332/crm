@@ -216,7 +216,19 @@ class AdnicApiService
 
         $generatePolicyResponse = $generatePolicyResponse?->response ? json_decode($generatePolicyResponse->response) : null;
         $policyIssueResponse = $generatePolicyResponse?->data;
-        $policyDocuments = $policyIssueResponse?->PolicyDocumentInfo;
+        $policyDocuments = data_get($policyIssueResponse, 'PolicyDocumentInfo');
+
+        if ($policyDocuments === null) {
+            LoggerService::error('PolicyDocumentInfo missing from policy issue response', extra: [
+                'process_id' => $process->id,
+                'quote_uuid' => data_get($quote, 'uuid'),
+            ]);
+            $response['error'] = 'Policy document list not found in policy issue response';
+            $response['message'] = $response['error'];
+            $response['status'] = false;
+
+            return $response;
+        }
 
         foreach ($policyDocuments as $policyDocumentKey => $policyDocumentId) {
             $payload = $this->requestBuilder->buildDownloadDocumentPayload($policyIssueResponse, $policyDocumentId);
