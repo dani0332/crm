@@ -40,6 +40,7 @@ use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\NationalityAllocationConfigurationController;
+use App\Http\Controllers\NationalityGroupController;
 use App\Http\Controllers\NationalityPoolConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
@@ -98,6 +99,7 @@ use App\Http\Controllers\V2\HomeQuoteController;
 use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
+use App\Http\Controllers\V2\LifeRevivalQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
@@ -110,7 +112,6 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Controllers\NationalityGroupController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\CheckHandbookDocumentsJob;
 use App\Jobs\UniversalSearchDataMigration;
@@ -303,8 +304,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
             Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
 
-            // Life revival
-            Route::get('life-revival', function () {})->name('life-revival-quotes-list');
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
@@ -339,6 +338,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
+
+        Route::get('personal-quotes/life-revival', [LifeRevivalQuoteController::class, 'index'])->name('life-revival-quotes-list');
     });
 
     // Claims Management Routes
