@@ -190,6 +190,7 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
                 $table->softDeletes();
                 $table->timestamps();
             },
@@ -1209,6 +1210,10 @@ class CoreSchema
                 $table->string('accepted_files')->nullable();
                 $table->unsignedInteger('max_size')->nullable();
                 $table->unsignedInteger('max_files')->nullable();
+                $table->string('category')->nullable();
+                $table->boolean('is_required')->default(0);
+                $table->boolean('is_required_for_send_policy')->default(0);
+                $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
                 $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
@@ -1244,6 +1249,7 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->string('text_lms')->nullable();
+                $table->integer('sort_order')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->boolean('is_deleted')->default(0);
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
@@ -1278,6 +1284,7 @@ class CoreSchema
                 $table->string('status')->nullable();
                 $table->string('completed_step')->nullable();
                 $table->text('message')->nullable();
+                $table->unsignedInteger('retry_count')->nullable()->default(0);
                 $table->timestamps();
             },
             'policy_issuance_logs' => function (Blueprint $table) {
@@ -1298,6 +1305,12 @@ class CoreSchema
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'policy_issuance' => [
+                'retry_count' => fn (Blueprint $table) => $table->unsignedInteger('retry_count')->nullable()->default(0),
+            ],
         ]);
     }
 
