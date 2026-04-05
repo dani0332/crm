@@ -143,4 +143,90 @@ class MACRMService
 
         return $response;
     }
+
+    public static function getAuthToken(): ?string
+    {
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        $apiKey = config('constants.MACRM_API_KEY');
+        $apiSecret = config('constants.MACRM_API_SECRET');
+
+        if (blank($apiKey) || blank($apiSecret) || blank($baseUrl)) {
+            LoggerService::warning(self::class.'::getAuthToken missing configuration.', [
+                'has_macrm_api_endpoint' => filled($baseUrl),
+                'has_macrm_api_key' => filled($apiKey),
+                'has_macrm_api_secret' => filled($apiSecret),
+            ]);
+
+            return null;
+        }
+
+        try {
+            $response = Http::acceptJson()
+                ->asJson()
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->post(rtrim($baseUrl, '/').'/v1/auth/token', [
+                    'api_key' => $apiKey,
+                    'api_secret' => $apiSecret,
+                ]);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::getAuthToken HTTP client exception.', [], $e);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            LoggerService::warning(self::class.'::getAuthToken unsuccessful HTTP response.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+        }
+
+        $token = data_get($response->json(), 'data.token');
+
+        return is_string($token) && $token !== '' ? $token : null;
+    }
+
+    public static function createVoucher(array $payload): array
+    {
+        $token = self::getAuthToken();
+        if ($token === null) {
+            return ['ok' => false, 'reason' => 'auth_token_unavailable'];
+        }
+
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        if (blank($baseUrl)) {
+            LoggerService::warning(self::class.'::createVoucher MACRM_API_ENDPOINT is not configured.');
+
+            return ['ok' => false, 'reason' => 'missing_endpoint'];
+        }
+
+        $url = rtrim($baseUrl, '/').'/v1/vouchers';
+
+        try {
+            $response = Http::acceptJson()
+                ->asJson()
+                ->withToken($token)
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->post($url, $payload);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::createVoucher HTTP client exception.', [], $e);
+
+            return ['ok' => false, 'reason' => 'http_exception', 'message' => $e->getMessage()];
+        }
+
+        if (! $response->successful()) {
+            LoggerService::warning(self::class.'::createVoucher unsuccessful HTTP response.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        }
+
+        return [
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'json' => $response->json(),
+        ];
+    }
 }
