@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liva Car - System Architecture Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #805ad5;
+      }
+
+      .section h3 {
+        color: #805ad5;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #667eea;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .code-block {
+        background: #f8f9fa;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .code-block code {
+        color: #2c3e50;
+      }
+
+      .info-box {
+        background: #ede9fe;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .info-box strong {
+        color: #805ad5;
+      }
+
+      .method-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .method-list li {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border-left: 4px solid #805ad5;
+      }
+
+      .method-list li strong {
+        color: #805ad5;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .back-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+      }
+
+      .back-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .diagram {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: center;
+        border: 2px dashed #805ad5;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/liva/index.html">Liva (RSA)</a>
+        <span>></span>
+        <span>Architecture</span>
+      </div>
+
+      <div class="header">
+        <h1>🏗️ Liva Car Insurance - System Architecture</h1>
+        <p>
+          Comprehensive technical documentation of the automation system
+          architecture
+        </p>
+      </div>
+
+      <div class="section">
+        <h2>📋 Overview</h2>
+        <p>
+          The Liva Car Insurance Automation system follows a service-oriented
+          architecture pattern, implementing the
+          <strong>PolicyIssuanceInterface</strong> to provide a standardized
+          approach to policy issuance automation. The system is built using
+          Laravel's dependency injection container and follows SOLID principles.
+        </p>
+
+        <div class="info-box">
+          <strong>Key Architecture Principles:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px">
+            <li>
+              <strong>Strategy Pattern:</strong> Provider-specific
+              implementation via PolicyIssuanceInterface
+            </li>
+            <li>
+              <strong>Dependency Injection:</strong> All dependencies injected
+              through constructor
+            </li>
+            <li>
+              <strong>Single Responsibility:</strong> Each service handles a
+              specific concern
+            </li>
+            <li>
+              <strong>Interface Segregation:</strong> Clean interface contracts
+            </li>
+            <li>
+              <strong>Open/Closed:</strong> Extensible without modification
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔧 Core Service: LivaInsuranceService</h2>
+        <p>
+          The <strong>LivaInsuranceService</strong> is the main service class
+          that orchestrates the entire policy issuance automation workflow. It
+          implements the <strong>PolicyIssuanceInterface</strong> and handles
+          all interactions with the Liva API.
+        </p>
+
+        <h3>Class Structure</h3>
+        <div class="code-block">
+          <code>
+            namespace App\Services\PolicyIssuanceAutomation\Car; class
+            LivaInsuranceService implements PolicyIssuanceInterface { use
+            GenericQueriesAllLobs; private $className = 'livaInsuranceService';
+            private readonly string $baseUrl; public const INSURER_CODE =
+            InsuranceProvidersEnum::RSA; public const TYPE = quoteTypeCode::Car;
+            public const TYPE_ID = QuoteTypeId::Car; // Step Constants public
+            const UPLOAD_DOCUMENTS = 'UploadDocuments'; public const
+            ISSUE_POLICY = 'IssuePolicy'; public const
+            UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
+            public const BOOK_POLICY = 'BookPolicy'; private $appEnv; private
+            $apiTimeout; }
+          </code>
+        </div>
+
+        <h3>Key Methods</h3>
+        <ul class="method-list">
+          <li>
+            <strong>executeSteps($process)</strong>
+            <p>
+              Main entry point for executing the automation workflow. Handles
+              OAuth token retrieval, step sequencing, and error handling.
+            </p>
+          </li>
+          <li>
+            <strong
+              >executeStepSequence($quote, $process,
+              $nextStepToBeExecuted)</strong
+            >
+            <p>
+              Orchestrates the sequential execution of all 4 steps, handling
+              step transitions and error propagation.
+            </p>
+          </li>
+          <li>
+            <strong>getAccessToken()</strong>
+            <p>
+              Manages OAuth 2.0 authentication with Redis token caching.
+              Retrieves cached token or requests new one from Liva API.
+            </p>
+          </li>
+          <li>
+            <strong>httpCall($endPoint, $payload, $keyAPI)</strong>
+            <p>
+              Centralized HTTP client method that handles all API calls with
+              timeout configuration, error handling, and response parsing.
+            </p>
+          </li>
+          <li>
+            <strong>getNextStep($completedStep)</strong>
+            <p>
+              Determines the next step in the workflow based on the last
+              completed step, enabling resume functionality.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>🔄 Step Execution Methods</h2>
+
+        <h3>1. Upload Documents Step</h3>
+        <ul class="method-list">
+          <li>
+            <strong>executeUploadDocumentsStep($quote, $process)</strong>
+            <p>
+              Executes document upload step, validates response, and updates
+              process state.
+            </p>
+          </li>
+          <li>
+            <strong>uploadDocuments($quote)</strong>
+            <p>
+              Uploads required documents (Driving License, Emirates ID,
+              Registration Card) to Liva API using base64 encoding.
+            </p>
+          </li>
+        </ul>
+
+        <h3>2. Issue Policy Step</h3>
+        <ul class="method-list">
+          <li>
+            <strong>executeIssuePolicyStep($quote, $process)</strong>
+            <p>
+              Executes policy issuance step, updates quote status, and handles
+              policy creation response.
+            </p>
+          </li>
+          <li>
+            <strong>issuePolicy($quote, $process)</strong>
+            <p>
+              Creates policy with Liva API using quote and pre-captured payment
+              transaction details. Extracts policy number from
+              PolicyResponse->PolicyNumber and updates quote with policy
+              information.
+            </p>
+          </li>
+        </ul>
+
+        <h3>3. Upload Policy Documents Step</h3>
+        <ul class="method-list">
+          <li>
+            <strong
+              >executeUploadPolicyDocumentsStep($quote, $process,
+              $issuePolicyResponsePolicyNumber)</strong
+            >
+            <p>Executes policy document retrieval and upload step.</p>
+          </li>
+          <li>
+            <strong
+              >uploadPolicyDocumentsToIMCRM($quote, $process,
+              $issuePolicyResponsePolicyNumber)</strong
+            >
+            <p>
+              Retrieves policy documents from Liva API one at a time (with
+              toggle flags). Each document type is fetched individually with
+              RetrieveType: '6'. Documents are double base64 decoded before
+              storage.
+            </p>
+          </li>
+          <li>
+            <strong
+              >uploadAndAttachToQuoteDocuments($quote, $documentContent,
+              $documentCode, $originalName)</strong
+            >
+            <p>
+              Handles double base64 decoding (CRITICAL - Liva requirement) using
+              <code>base64_decode(base64_decode($documentContent))</code>.
+              Stores documents in Azure storage, attaches to quote. Updates
+              rta_upload_status to DONE when Policy Certificate is uploaded.
+            </p>
+          </li>
+        </ul>
+
+        <h3>4. Book Policy Step</h3>
+        <ul class="method-list">
+          <li>
+            <strong>executeBookPolicyStep($quote, $process)</strong>
+            <p>Executes final booking step with Sage integration.</p>
+          </li>
+          <li>
+            <strong>bookPolicy($quote)</strong>
+            <p>
+              Validates booking prerequisites, updates booking details, and
+              triggers Sage API integration.
+            </p>
+          </li>
+          <li>
+            <strong>updateBookingDetails($quote)</strong>
+            <p>Updates payment and booking information before final booking.</p>
+          </li>
+          <li>
+            <strong>validateBookPolicy($quote)</strong>
+            <p>Validates all prerequisites before booking policy.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>🔐 Authentication Architecture</h2>
+        <p>
+          The system uses OAuth 2.0 Client Credentials flow for authentication
+          with Liva API. Tokens are cached in Redis to minimize API calls.
+        </p>
+
+        <h3>OAuth Flow</h3>
+        <div class="diagram">
+          <p><strong>OAuth 2.0 Client Credentials Flow</strong></p>
+          <p style="margin-top: 15px">
+            1. Check Redis Cache → 2. If expired/missing → 3. Request Token → 4.
+            Cache Token → 5. Use Token
+          </p>
+        </div>
+
+        <h3>Token Management</h3>
+        <div class="code-block">
+          <code>
+            // Token Endpoint POST {LIVA_API_BASE_URL}/auth-token // Token Cache
+            Key const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY =
+            'RSA_POLICY_ISSUANCE_API_ACCESS_TOKEN'; // Token Request Headers
+            Content-Type: application/x-www-form-urlencoded // Token Request
+            Payload { 'client_id': config('constants.LIVA_CLIENT_ID'),
+            'client_secret': config('constants.LIVA_CLIENT_SECRET'),
+            'grant_type': 'client_credentials', 'scope':
+            config('constants.LIVA_SCOPE') } // API Request Headers (after token
+            retrieval) { 'Content-Type': 'application/json', 'Authorization':
+            'Basic {LIVA_BASIC_AUTH}', 'PartnerId': '{LIVA_PARENT_ID}',
+            'location': '{LIVA_LOCATION}', 'Authentication': 'Bearer
+            {access_token}', 'SubscriptionKey': '{LIVA_SUBSCRIPTION_KEY}' }
+          </code>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📦 Dependencies</h2>
+        <p>The service depends on several Laravel services and models:</p>
+
+        <h3>Service Dependencies</h3>
+        <ul class="method-list">
+          <li>
+            <strong>ApplicationStorageService</strong>
+            <p>
+              Manages feature toggles and configuration values (timeout,
+              enable/disable flags)
+            </p>
+          </li>
+          <li>
+            <strong>PolicyIssuanceService</strong>
+            <p>
+              Handles policy issuance logging, status updates, and process
+              management
+            </p>
+          </li>
+          <li>
+            <strong>SageApiService</strong>
+            <p>Integrates with Sage ERP for final booking process</p>
+          </li>
+          <li>
+            <strong>CentralService</strong>
+            <p>Updates booking details in the system</p>
+          </li>
+          <li>
+            <strong>LoggerService</strong>
+            <p>Comprehensive logging at every step of the automation</p>
+          </li>
+          <li>
+            <strong>AMLService</strong>
+            <p>Retrieves lookup values for Liva-specific configurations</p>
+          </li>
+        </ul>
+
+        <h3>Model Dependencies</h3>
+        <ul class="method-list">
+          <li>
+            <strong>CarQuoteRequestDetail</strong>
+            <p>Stores car-specific quote request details</p>
+          </li>
+          <li>
+            <strong>DocumentType</strong>
+            <p>Manages document type mappings and configurations</p>
+          </li>
+          <li>
+            <strong>Payment</strong>
+            <p>Handles payment information and updates</p>
+          </li>
+          <li>
+            <strong>InsuranceProvider</strong>
+            <p>Provider configuration and lookup</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>🔄 State Management</h2>
+        <p>
+          The system maintains state through the
+          <strong>PolicyIssuance</strong> model, tracking completed steps and
+          allowing resume from failures.
+        </p>
+
+        <h3>Step Sequence</h3>
+        <div class="code-block">
+          <code>
+            private function getAPISteps(): array { return [
+            self::UPLOAD_DOCUMENTS, // Step 1 self::ISSUE_POLICY, // Step 2
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, // Step 3 self::BOOK_POLICY,
+            // Step 4 ]; }
+          </code>
+        </div>
+
+        <h3>State Tracking</h3>
+        <ul class="method-list">
+          <li>
+            <strong>completed_step</strong>
+            <p>Stores the last successfully completed step</p>
+          </li>
+          <li>
+            <strong>status</strong>
+            <p>
+              Tracks overall process status (PROCESSING, SUCCESS, FAILED,
+              TIMEOUT)
+            </p>
+          </li>
+          <li>
+            <strong>Resume Capability</strong>
+            <p>System can resume from last completed step on retry</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>⚙️ Configuration Management</h2>
+        <p>
+          Configuration is managed through Laravel's config system and
+          ApplicationStorageService for runtime configuration.
+        </p>
+
+        <h3>Environment Configuration</h3>
+        <div class="code-block">
+          <code>
+            // Base URL LIVA_API_BASE_URL // OAuth Configuration LIVA_CLIENT_ID
+            LIVA_CLIENT_SECRET LIVA_SCOPE LIVA_BASIC_AUTH LIVA_PARENT_ID
+            LIVA_LOCATION LIVA_SUBSCRIPTION_KEY
+          </code>
+        </div>
+
+        <h3>Runtime Configuration (ApplicationStorage)</h3>
+        <ul class="method-list">
+          <li>
+            <strong>ENABLE_LIVA_CAR_POLICY_ISSUANCE</strong>
+            <p>Master toggle to enable/disable automation</p>
+          </li>
+          <li>
+            <strong>LIVA_AUTOMATION_API_TIMEOUT</strong>
+            <p>Configurable API timeout in seconds</p>
+          </li>
+          <li>
+            <strong>ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE</strong>
+            <p>Enable retry mechanism for timeout scenarios</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>📊 Error Handling & Logging</h2>
+        <p>
+          Comprehensive error handling and logging is implemented at every step
+          of the automation process.
+        </p>
+
+        <h3>Error Handling Strategy</h3>
+        <ul class="method-list">
+          <li>
+            <strong>Pre-validation</strong>
+            <p>
+              Validates prerequisites before API calls to prevent unnecessary
+              failures
+            </p>
+          </li>
+          <li>
+            <strong>Try-Catch Blocks</strong>
+            <p>All API calls wrapped in exception handling</p>
+          </li>
+          <li>
+            <strong>Status Updates</strong>
+            <p>Updates policy issuance status on failures</p>
+          </li>
+          <li>
+            <strong>Timeout Detection</strong>
+            <p>
+              Method: <code>livaPortalTimeoutResponse()</code> detects timeout
+              scenarios by checking for null status responses (<code
+                >'"status": false, "message": null'</code
+              >) and failed logs count &lt; 2. Updates status to TIMEOUT_STATUS
+              if detected.
+            </p>
+          </li>
+        </ul>
+
+        <h3>Logging</h3>
+        <ul class="method-list">
+          <li>
+            <strong>LoggerService Integration</strong>
+            <p>Comprehensive logging at every step with context</p>
+          </li>
+          <li>
+            <strong>Policy Issuance Logs</strong>
+            <p>Stores request/response for each API call</p>
+          </li>
+          <li>
+            <strong>Error Tracking</strong>
+            <p>Logs errors with full context for debugging</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <a href="/docs/policy-automation/car/liva/index.html" class="back-link"
+          >← Back to Overview</a
+        >
+      </div>
+    </div>
+  </body>
+</html>
