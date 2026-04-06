@@ -8,6 +8,7 @@ use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 
 class LifeRevivalCommand extends Command
 {
@@ -45,6 +46,9 @@ class LifeRevivalCommand extends Command
 
     private function processRevivalLeads($revivalLeads)
     {
+        $logPrefix = 'LifeRevivalCommand - ';
+
+        // Filter out the leads with null height or weight
         $jobs = $revivalLeads->filter(function ($lead) {
             return $lead->height != null && $lead->weight != null;
         })->values()
@@ -54,5 +58,24 @@ class LifeRevivalCommand extends Command
             ->all();
 
         LoggerService::info('Life Revival Leads Jobs Count: '.count($jobs));
+
+        // Execute leads creation jobs in batch
+        if ($jobs != null && count($jobs)) {
+            Bus::batch($jobs)
+                ->then(function () use ($logPrefix) {
+                    LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed");
+                })
+                ->catch(function () use ($logPrefix) {
+                    LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed");
+                })
+                ->finally(function () use ($logPrefix) {
+                    LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished");
+                })
+                ->allowFailures()
+                ->name('Life Revival Leads Jobs')
+                ->dispatch();
+        } else {
+            LoggerService::info('No Life Revival Leads Jobs Found');
+        }
     }
 }
