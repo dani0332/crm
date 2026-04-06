@@ -40,6 +40,7 @@ use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\NationalityAllocationConfigurationController;
+use App\Http\Controllers\NationalityPoolConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -109,6 +110,7 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Controllers\NationalityGroupController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\CheckHandbookDocumentsJob;
 use App\Jobs\UniversalSearchDataMigration;
@@ -701,7 +703,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-        Route::resource('business', BusinessQuoteController::class);
+        Route::resource('business', BusinessQuoteController::class)->middleware('check_route_access:corpline-quotes');
 
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
@@ -774,6 +776,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'generic'], function () {
         Route::resource('allocation-threshold', AllocationThresholdController::class);
+        Route::get('teams-by-category/{category}', [AllocationThresholdController::class, 'getTeams'])->name('getByCategory');
         Route::resource('team', TeamController::class);
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))
@@ -883,6 +886,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
+    Route::post('health-routing-logs', [AuditableController::class, 'loadHealthRoutingLogs']);
     Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
@@ -957,6 +961,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'admin.nationality-allocation-config.update',
         'destroy' => 'admin.nationality-allocation-config.destroy',
     ]);
+
+    // Nationality Pool Configuration Routes
+    Route::get('nationality-pool-config', [NationalityPoolConfigurationController::class, 'index'])->name('admin.nationality-pool-config.index');
+    Route::get('nationality-pool-config/data/{id?}', [NationalityPoolConfigurationController::class, 'getData'])->name('admin.nationality-pool-config.data');
+    Route::post('nationality-pool-config', [NationalityPoolConfigurationController::class, 'save'])->name('admin.nationality-pool-config.save');
+    Route::get('nationality-pool-audit-logs/{type}', [NationalityPoolConfigurationController::class, 'getAuditLogs'])->name('admin.nationality-pool-audit-logs');
+    Route::delete('nationality-pool-audit-logs/{id}', [NationalityPoolConfigurationController::class, 'deleteAuditLog'])->name('admin.nationality-pool-audit-logs.destroy');
+    Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
+    Route::post('group-nationalities', [NationalityGroupController::class, 'getGroupNationalities'])->name('admin.group-nationalities');
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])

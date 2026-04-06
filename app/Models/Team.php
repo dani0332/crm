@@ -24,6 +24,7 @@ class Team extends Model implements AuditableContract
         'min_price',
         'max_price',
         'allocation_threshold_enabled',
+        'category',
     ];
 
     public function getCreatedAtAttribute($date)
