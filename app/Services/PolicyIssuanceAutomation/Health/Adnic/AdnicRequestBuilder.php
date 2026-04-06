@@ -76,7 +76,6 @@ class AdnicRequestBuilder
         $sponsorCategory = AdnicEnum::SPONSER_CATEGORY_UAE;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
-        // $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
         $visaType = AdnicEnum::VISA_TYPE_EXISTING_VISA_HOLDER;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
         $memberCategory = AdnicEnum::MEMBER_CATEGORY_DUBAI_RESIDENCY; // Member Category is same as Sponsor Category
@@ -352,49 +351,4 @@ class AdnicRequestBuilder
 
         return $maritalStatusMapping[$maritalStatus] ?? null;
     }
-
-    private function getFullName($member): string
-    {
-        $firstName = $member->first_name ?? '';
-        $lastName = $member->last_name ?? '';
-
-        return trim($firstName.' '.$lastName);
-    }
-
-    private function getRelationCode($relation): string
-    {
-        $relationMapping = [
-            'self' => 'S',
-            'spouse' => 'SP',
-            'child' => 'C',
-            'parent' => 'P',
-        ];
-
-        return $relationMapping[strtolower($relation)] ?? 'S';
-    }
-
-    private function getSalutation($gender): string
-    {
-        if (in_array($gender, [GenericRequestEnum::FEMALE, strtolower(GenericRequestEnum::FEMALE), GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE, GenericRequestEnum::FEMALE_SINGLE_VALUE])) {
-            return 'Ms';
-        }
-        if (in_array($gender, [GenericRequestEnum::FEMALE_MARRIED, GenericRequestEnum::FEMALE_MARRIED_VALUE])) {
-            return 'Mrs';
-        }
-
-        return 'Mr';
-    }
-
-    private function getProductType($quote): string
-    {
-        // TODO:: Get this product type from the Health Plan Name, Extract the first word and convert it to uppercase
-        return 'SHIFA';
-    }
-
-    private function getPlanType($quote): string
-    {
-        // TODO:: Get this plan type from the Health Plan Name, Extract the first word and convert it to uppercase
-        return 'GO';
-    }
-
 }
