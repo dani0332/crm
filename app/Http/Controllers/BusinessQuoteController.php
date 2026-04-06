@@ -41,11 +41,8 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\EmailStatusService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -57,8 +54,6 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Response;
-use Inertia\ResponseFactory;
 
 class BusinessQuoteController extends Controller
 {
@@ -89,7 +84,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return Response|ResponseFactory
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function index(Request $request)
     {
@@ -164,7 +159,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return Response|ResponseFactory
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function create(Request $request)
     {
@@ -214,7 +209,7 @@ class BusinessQuoteController extends Controller
 
     /**
      * @param  $uuid
-     * @return Response|ResponseFactory
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
     {
@@ -321,14 +316,6 @@ class BusinessQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
-        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Business, $record->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $record->uuid,
-            QuoteTypeId::Business,
-            $record->id,
-            $record->email ?? null,
-            $emailStatuses
-        );
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -384,9 +371,6 @@ class BusinessQuoteController extends Controller
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
-            'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Business),
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
