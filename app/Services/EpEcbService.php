@@ -1128,6 +1128,18 @@ class EpEcbService extends EpBookingService
         $firstName = ($latestInsuredData?->first_name ?? $this->quote->customer?->insured_first_name) ?? '';
         $lastName = ($latestInsuredData?->last_name ?? $this->quote->customer?->insured_last_name) ?? '';
 
+        // For Company + Private Use, insured first/last names are unavailable.
+        // Derive names from company_name to avoid API validation failures.
+        $isCompanyPrivate = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE;
+
+        if ($isCompanyPrivate && ($firstName === '' || $lastName === '')) {
+            $companyName = trim($this->quote?->company_name ?? '');
+            $spacePos = strpos($companyName, ' ');
+            $firstName = $spacePos !== false ? substr($companyName, 0, $spacePos) : $companyName;
+            $lastName = $spacePos !== false ? substr($companyName, $spacePos + 1) : '';
+        }
+
         $customerDetails = [
             ...$customerTypeInfo,
             'customer_type' => null,
