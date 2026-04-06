@@ -981,16 +981,14 @@ class SageApiService
             LoggerService::info('--------------------------------Sage Policy Already Booked-------------------------------');
         }
 
-        $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
         $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
         foreach ($ePTransactions as $ePTransaction) {
             LoggerService::info('Embedded Product booking checks', extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
                 'epPTransaction' => $ePTransaction?->code,
-                'isTapPaymentGateway' => $isTapPaymentGateway,
             ]);
-            if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $isTapPaymentGateway) {
+            if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction) {
                 LoggerService::info('--------------------------------Embedded Product Sage booking process started-------------------------------');
                 $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
                 LoggerService::info('--------------------------------Embedded Product Sage booking process completed-------------------------------', extra : $embeddedProductSageBookingResponse);
@@ -3760,7 +3758,7 @@ class SageApiService
             $response['message'] = 'AR and AP Prepayments are posted to Sage';
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__." - Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra : [
                 'error' => $e->getMessage(),
             ]);

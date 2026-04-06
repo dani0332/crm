@@ -282,6 +282,24 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
+
+    /** Comma-separated BCC for Bird claim Google review email (non-health / default workflow) */
+    public const CLAIM_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for Bird claim health & group-medical Google review email workflow */
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for motor & general (non-health, non-life) claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL';
+
+    /** Comma-separated BCC for health & group-medical claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH';
+
+    /** Comma-separated BCC for life claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE';
+
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
     public const CPA_AUSTRALIA_SAVINGS_BCC_EMAILS = 'CPA_AUSTRALIA_SAVINGS_BCC_EMAILS';
@@ -334,6 +352,10 @@ final class ApplicationStorageEnums extends Enum
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
 
+    // Claim Intro Email
+    public const CLAIM_INTRO_EMAIL_SWITCH = 'CLAIM_INTRO_EMAIL_SWITCH';
+    public const CLAIM_INTRO_EMAIL_WORKFLOW = 'CLAIM_INTRO_EMAIL_WORKFLOW';
+
     /* Cyber OCB */
     public const BIRD_CYBER_OCB_INTRO_EMAIL = 'BIRD_CYBER_OCB_INTRO_EMAIL';
     public const BIRD_CYBER_AUTOMATED_FOLLOWUPS = 'BIRD_CYBER_AUTOMATED_FOLLOWUPS';
@@ -373,12 +395,22 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW = 'BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW';
     public const IT_SUPPORT_EMAIL = 'IT_SUPPORT_EMAIL';
 
+    /* Adnic Health Policy Issuance Automation */
+    public const ADNIC_HEALTH_AUTOMATION_API_TIMEOUT = 'ADNIC_HEALTH_AUTOMATION_API_TIMEOUT';
+    public const ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES = 'ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES';
+    public const ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT = 'ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT';
+
     // Car OCB Email Templates Update
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
     public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
     public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
+
+    // Health Team Routing
+    public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
 
     // Chief Deputy Officer Mobile Number
@@ -386,4 +418,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
 }
