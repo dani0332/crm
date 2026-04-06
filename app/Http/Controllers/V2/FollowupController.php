@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\GetEmailEventsRequest;
+use App\Http\Requests\EmailEventsRequest;
 use BaoPham\DynamoDb\Facades\DynamoDb;
 use Carbon\Carbon;
 
 class FollowupController extends Controller
 {
-    public function getEmailEvents(GetEmailEventsRequest $request)
+    public function getEmailEvents(EmailEventsRequest $request)
     {
         $response = DynamoDb::table(config('constants.DYNAMO_EMAIL_CONTENT_TABLE'))
             ->setKeyConditionExpression('#recipientEmail = :recipientEmail')

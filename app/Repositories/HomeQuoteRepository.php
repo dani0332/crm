@@ -31,13 +31,10 @@ use App\Models\PersonalQuote;
 use App\Models\SubArea;
 use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
-use App\Services\GoogleReviewCommunicationLogService;
-use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -48,7 +45,6 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -259,7 +255,7 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Apply the renewal filter to the query.
      *
-     * @param  Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
     private function applyRenewalFilter($query, array $requestParams = []): void
     {
@@ -407,13 +403,6 @@ class HomeQuoteRepository extends BaseRepository
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Home,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses
-        );
         $customerAddressData = $quote->customerAddressData ?: app(CustomerService::class)->getCustomerAddressData($quote);
         $lookUpData = $quote->lookUpData ?: app(LookupService::class)->getHomeLookUpData();
 
@@ -429,8 +418,6 @@ class HomeQuoteRepository extends BaseRepository
             'quoteTypeId' => QuoteTypeId::Home,
             'quoteStatuses' => $quoteStatuses,
             'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Home),
             'quote' => $quote,
             'activities' => $activities,
             'advisors' => UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value),
@@ -602,7 +589,7 @@ class HomeQuoteRepository extends BaseRepository
             LoggerService::info('Fields changed, Fetching quote plans', extra: [
                 'getLatestRating' => true,
             ]);
-            app(HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
+            app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
         }
 
         // Return the updated quote
@@ -666,12 +653,12 @@ class HomeQuoteRepository extends BaseRepository
     {
         // If no start date provided, use current date
         $from = $startDate
-            ? Carbon::parse($startDate)->startOfDay()->toDateTimeString()
+            ? \Carbon\Carbon::parse($startDate)->startOfDay()->toDateTimeString()
             : now()->startOfDay()->toDateTimeString();
 
         // If no end date provided, use current date
         $to = $endDate
-            ? Carbon::parse($endDate)->endOfDay()->toDateTimeString()
+            ? \Carbon\Carbon::parse($endDate)->endOfDay()->toDateTimeString()
             : now()->endOfDay()->toDateTimeString();
 
         return [$from, $to];
@@ -954,12 +941,12 @@ class HomeQuoteRepository extends BaseRepository
         // Add date filtering if present in request
         if (! empty($request['created_at_start']) || ! empty($request['created_at_end'])) {
             if (! empty($request['created_at_start'])) {
-                $startDate = Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
+                $startDate = \Carbon\Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
                 $query->where('createdAt', '>=', $startDate);
             }
 
             if (! empty($request['created_at_end'])) {
-                $endDate = Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
+                $endDate = \Carbon\Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
                 $query->where('createdAt', '<=', $endDate);
             }
         }
@@ -988,7 +975,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new Request($requestParams);
+            $request = new \Illuminate\Http\Request($requestParams);
         } else {
             $request = request();
         }
@@ -1074,7 +1061,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new Request($requestParams);
+            $request = new \Illuminate\Http\Request($requestParams);
         } else {
             $request = request();
         }
@@ -1164,7 +1151,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new Request($requestParams);
+            $request = new \Illuminate\Http\Request($requestParams);
         } else {
             $request = request();
         }
