@@ -121,6 +121,12 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $emailData->id = $this->dttRevival->id;
             $emailData->lob = QuoteTypes::CAR->id();
 
+            $emailData->carMake = (string) $lead?->car_make_id;
+            $emailData->carModel = (string) $lead?->car_model_id;
+            // call MACRM API to get the voucher code
+            $emailData->voucherCode = 'ABCDEFG';
+            $emailData->myAlfredurl = 'https://myalfred.com/voucher/ABCDEFG';
+
             $this->sendFollowUpEmail($emailData);
         }
 
