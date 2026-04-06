@@ -234,17 +234,20 @@ class EmbeddedProductService extends BaseService
             ? $transaction->first()
             : null;
 
-        $oldDocument = $embeddedTransaction !== null
-            ? $embeddedTransaction->documents()->withTrashed()->find($data['documentId'])
-            : null;
-
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
 
-        $documentType = $oldDocument !== null
-            ? DocumentType::where('code', $oldDocument->document_type_code)
-                ->where('quote_type_id', $quoteTypeId)
-                ->first()
+        $oldDocument = $embeddedTransaction !== null
+            ? $embeddedTransaction->documents()
+                ->withTrashed()
+                ->with([
+                    'documentType' => function ($query) use ($quoteTypeId): void {
+                        $query->where('quote_type_id', $quoteTypeId);
+                    },
+                ])
+                ->find($data['documentId'])
             : null;
+
+        $documentType = $oldDocument?->documentType;
 
         $quoteObject = $documentType !== null
             ? $this->getQuoteObject($data['modelType'], $data['quoteId'])
