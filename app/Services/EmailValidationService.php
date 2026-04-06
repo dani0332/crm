@@ -75,6 +75,11 @@ class EmailValidationService
      * Also normalises a few copy-paste issues: fullwidth @ (U+FF20) and
      * fullwidth period (U+FF0E), {@link mailto:} prefixes, NBSP and other Unicode
      * spaces, and a trailing dot after the domain (sentence or DNS-style paste).
+     * Leading {@link mailto:} (after whitespace trim only) is removed before
+     * spelled-out invisible sequences are stripped from the local part so values
+     * like {@code mailto:u200buser@example.com} are not left as {@code u200buser@…}.
+     * Broader end-junk trimming runs after that so {@code &#…;} entities are not
+     * broken by stripping {@code &} and {@code #} too early.
      *
      * Returns null when the resulting string is not a valid RFC 5322 address
      * so callers can skip it cleanly.
@@ -89,7 +94,9 @@ class EmailValidationService
 
         $cleaned = preg_replace(self::UNICODE_NOISE_PATTERN, '', $cleaned);
 
-        $cleaned = self::stripLiteralInvisibleEscapesInLocalPart((string) $cleaned);
+        $cleaned = self::stripLeadingMailtoAfterWhitespaceTrim((string) $cleaned);
+
+        $cleaned = self::stripLiteralInvisibleEscapesInLocalPart($cleaned);
 
         $cleaned = self::trimMailtoAndJunk($cleaned);
 
@@ -124,6 +131,29 @@ class EmailValidationService
         }
 
         return $local.'@'.$domain;
+    }
+
+    /**
+     * Remove {@link mailto:} after trimming ASCII/Unicode whitespace only. Used
+     * before {@see stripLiteralInvisibleEscapesInLocalPart} so the local part is
+     * not prefixed with {@code mailto:} (which would block literal-escape
+     * patterns). Does not use {@see LEADING_TRAILING_JUNK} so {@code &#…;}
+     * spellings stay intact for the next step.
+     */
+    private static function stripLeadingMailtoAfterWhitespaceTrim(string $value): string
+    {
+        $previous = null;
+
+        while ($previous !== $value) {
+            $previous = $value;
+            $value = trim($value);
+
+            if (preg_match('/^mailto:/i', $value) === 1) {
+                $value = (string) preg_replace('/^mailto:/i', '', $value, 1);
+            }
+        }
+
+        return $value;
     }
 
     private static function trimMailtoAndJunk(string $value): string

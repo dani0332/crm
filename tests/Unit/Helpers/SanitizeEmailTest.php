@@ -218,6 +218,11 @@ it('strips literal u200b-style prefixes in the local part (Brevo log / CRM expor
     expect(EmailValidationService::sanitize('U200Buser@example.com'))->toBe('user@example.com');
 });
 
+it('removes mailto before stripping spelled-out invisible prefixes on the local part', function (): void {
+    expect(EmailValidationService::sanitize('mailto:u200buser@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('  mailto:&#x200c;user@example.com  '))->toBe('user@example.com');
+});
+
 it('strips JSON-style and unicode-plus spellings of zero-width at the start of the local part', function (): void {
     expect(EmailValidationService::sanitize('\\u200buser@example.com'))->toBe('user@example.com');
     expect(EmailValidationService::sanitize('U+200Buser@example.com'))->toBe('user@example.com');
