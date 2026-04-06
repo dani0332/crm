@@ -63,6 +63,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthUMAFResponse;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -1259,6 +1260,10 @@ class CRUDController extends Controller
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
+                $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
+                $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
+                $record->append(['api_issuance_status', 'insurer_api_status']);
+
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
@@ -2447,7 +2452,7 @@ class CRUDController extends Controller
 
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR?->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
         if ($carQuote->isSuppressIntroEmail() && $carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
@@ -2455,7 +2460,6 @@ class CRUDController extends Controller
 
             return;
         }
-
         if ($isTransitionableLead) {
             $emailData->currentInsurer = '';
         }

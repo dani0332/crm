@@ -30,4 +30,13 @@ enum HealthPlanTypeEnum: int
         };
     }
 
+    public static function toTeamNameEnum(int $healthPlanTypeId): ?string
+    {
+        return match ($healthPlanTypeId) {
+            self::ENTRY_LEVEL->value => TeamNameEnum::EBP,
+            self::BEST->value => TeamNameEnum::RM_NB,
+            self::GOOD->value => TeamNameEnum::RM_SPEED,
+            default => null,
+        };
+    }
 }
