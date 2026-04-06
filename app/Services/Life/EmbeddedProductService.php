@@ -189,24 +189,16 @@ class EmbeddedProductService extends BaseService
             $embeddedTransaction->save();
             $oldDocument->delete();
 
-            $newDocument = $embeddedTransaction->documents()->create([
-                'doc_name' => $storedDocName,
-                'original_name' => $originalName,
-                'doc_url' => $filePathAzure,
-                'doc_mime_type' => 'application/pdf',
-                'document_type_code' => $documentType->code,
-                'document_type_text' => $documentType->text,
-                'doc_uuid' => $docUuid,
-                'created_by_id' => Auth::id(),
-                'is_manual_override' => true,
-                'override_remarks' => $data['remarks'],
-            ]);
-
-            if ($newDocument->exists && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
-                WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
-                    ->delay(now()->addSeconds(10))
-                    ->afterCommit();
-            }
+            $this->persistManualOverrideEpDocument(
+                $embeddedTransaction,
+                $storedDocName,
+                $originalName,
+                $filePathAzure,
+                $documentType,
+                $docUuid,
+                $data['remarks'],
+                $quoteObject
+            );
         });
 
         return true;
@@ -286,5 +278,38 @@ class EmbeddedProductService extends BaseService
             'quoteObject' => $quoteObject,
             'storedDocName' => $storedDocName,
         ];
+    }
+
+    /**
+     * Stores the manual-override document row and queues watermark processing when applicable.
+     */
+    private function persistManualOverrideEpDocument(
+        EmbeddedTransaction $embeddedTransaction,
+        string $storedDocName,
+        string $originalName,
+        string $filePathAzure,
+        DocumentType $documentType,
+        string $docUuid,
+        string $remarks,
+        object $quoteObject,
+    ): void {
+        $newDocument = $embeddedTransaction->documents()->create([
+            'doc_name' => $storedDocName,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => 'application/pdf',
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $documentType->text,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => Auth::id(),
+            'is_manual_override' => true,
+            'override_remarks' => $remarks,
+        ]);
+
+        if ($newDocument->exists && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
+                ->delay(now()->addSeconds(10))
+                ->afterCommit();
+        }
     }
 }
