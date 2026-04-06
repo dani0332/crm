@@ -119,7 +119,7 @@ class AdnicRequestBuilder
                 'EmiratesId' => $this->emiratesIdIfMinLength($emiratesId, 15),
                 'EidApplicationNo' => $this->emiratesIdIfMaxLengthExclusive($emiratesId, 15) ?? null,
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
-                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
+                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates
                 'MemberCategory' => $memberCategory ?? '',
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
