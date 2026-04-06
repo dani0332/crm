@@ -43,10 +43,12 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
@@ -59,7 +61,10 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Inertia\Response;
@@ -286,6 +291,15 @@ class TravelController extends Controller
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
 
+        $emailStatuses = $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $record->uuid,
+            QuoteTypeId::Travel,
+            $record->id,
+            $record->email ?? null,
+            $emailStatuses
+        );
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,
@@ -309,7 +323,9 @@ class TravelController extends Controller
             'documentTypes' => $documentTypes,
             'documentType' => $documentType,
             'memberCategories' => $this->lookupService->getMemberCategories(),
-            'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Travel),
             'activities' => $activities,
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
@@ -434,7 +450,7 @@ class TravelController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(StoreTravelRequest $request)
@@ -526,7 +542,7 @@ class TravelController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -630,7 +646,7 @@ class TravelController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {
