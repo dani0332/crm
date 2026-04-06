@@ -19,6 +19,8 @@ class LifeRevivalCommand extends Command
      */
     protected $signature = 'LifeRevival';
 
+    private $logPrefix = 'LifeRevivalCommand - ';
+
     /**
      * The console command description.
      *
@@ -33,49 +35,49 @@ class LifeRevivalCommand extends Command
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('DTT is not enabled from cms');
+            LoggerService::info("{$this->logPrefix} DTT is not enabled from cms");
 
             return false;
         }
 
         $revivalLeads = $allocationCreationService->executeLifeRevivalAllocation();
 
-        LoggerService::info('Life Revival Leads Count: '.count($revivalLeads));
         $this->processRevivalLeads($revivalLeads);
     }
 
     private function processRevivalLeads($revivalLeads)
     {
-        $logPrefix = 'LifeRevivalCommand - ';
-
         // Filter out the leads with null height or weight
-        $jobs = $revivalLeads->filter(function ($lead) {
-            return $lead->height != null && $lead->weight != null;
-        })->values()
+        $jobs = $revivalLeads->filter(fn ($lead) => $lead->height != null && $lead->weight != null)
+            ->values()
             ->map(function ($lead, $index) {
                 return (new LifeRevivalLeadsCreationJob($lead))->delay(now()->addSeconds(30 + ($index * 30)));
             })
             ->all();
 
-        LoggerService::info('Life Revival Leads Jobs Count: '.count($jobs));
-
-        // Execute leads creation jobs in batch
+        // Execute jobs in batch
         if ($jobs != null && count($jobs)) {
-            Bus::batch($jobs)
-                ->then(function () use ($logPrefix) {
-                    LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed");
-                })
-                ->catch(function () use ($logPrefix) {
-                    LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed");
-                })
-                ->finally(function () use ($logPrefix) {
-                    LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished");
-                })
-                ->allowFailures()
-                ->name('Life Revival Leads Jobs')
-                ->dispatch();
+            LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($jobs));
+           $this->executeJobsInBatch($jobs[0]);
         } else {
-            LoggerService::info('No Life Revival Leads Jobs Found');
+            LoggerService::info("{$this->logPrefix} No Life Revival Leads Jobs Found");
         }
+    }
+
+    private function executeJobsInBatch($jobs)
+    {
+        Bus::batch($jobs)
+            ->then(function () {
+                LoggerService::info("{$this->logPrefix} All Life Revival Leads Jobs Completed");
+            })
+            ->catch(function () {
+                LoggerService::error("{$this->logPrefix} Some of the Life Revival Leads Jobs Failed");
+            })
+            ->finally(function () {
+                LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Finished");
+            })
+            ->allowFailures()
+            ->name('Life Revival Leads Jobs')
+            ->dispatch();
     }
 }

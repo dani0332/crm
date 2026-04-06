@@ -8,10 +8,11 @@ use App\Facades\Capi;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Batchable;
 
 class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, Batchable;
 
     private $lead = null;
 
