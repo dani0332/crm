@@ -23,7 +23,6 @@ use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -31,6 +30,12 @@ use Illuminate\Support\Str;
 class EmbeddedProductService extends BaseService
 {
     use GenericQueriesAllLobs;
+
+    public function __construct(
+        private EmbeddedProductRepository $embeddedProductRepository
+    ) {
+        parent::__construct();
+    }
 
     public function byQuoteTypeId($quoteTypeId, $quoteRequestId)
     {
@@ -156,7 +161,7 @@ class EmbeddedProductService extends BaseService
 
         $uploadedFile = $data['file'];
         $originalName = $uploadedFile->getClientOriginalName();
-        $uniqueBlobName = $this->uniqueBlobNameFromOriginalName($originalName);
+        $uniqueBlobName = $this->embeddedProductRepository->uniqueBlobNameFromOriginalName($originalName);
         $azureObjectName = $quoteObject->uuid.'_'.$uniqueBlobName;
         $docUuid = uniqid();
 
@@ -222,7 +227,7 @@ class EmbeddedProductService extends BaseService
     {
         $ep = EmbeddedProduct::query()->with('prices')->where('id', $data['epId'])->first();
         $transaction = $ep !== null
-            ? $this->getEmbeddedProductTransactions($data['modelType'], $data['quoteId'], $ep, false)
+            ? $this->embeddedProductRepository->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false)
             : null;
 
         $embeddedTransaction = ($transaction !== null && $transaction->isNotEmpty())
@@ -273,46 +278,5 @@ class EmbeddedProductService extends BaseService
             'quoteObject' => $quoteObject,
             'storedDocName' => $storedDocName,
         ];
-    }
-
-    /**
-     * Embedded transactions for a quote and EP product (same query as EmbeddedProductRepository::fetchTransaction).
-     *
-     * @param  array<int, string>  $shortCodes
-     */
-    private function getEmbeddedProductTransactions(
-        string $modelType,
-        int $quoteId,
-        EmbeddedProduct $ep,
-        bool $selected = true,
-        array $shortCodes = []
-    ): Collection {
-        $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-        $transactions = EmbeddedTransaction::where([
-            ['quote_type_id', '=', $quoteTypeId],
-            ['quote_request_id', '=', $quoteId],
-        ])->whereIn('product_id', $optionsIds);
-
-        if ($selected) {
-            $transactions = $transactions->where('is_selected', true);
-        }
-
-        if (! empty($shortCodes)) {
-            $transactions = $transactions->whereHas('product.embeddedProduct', function ($query) use ($shortCodes) {
-                $query->whereIn('short_code', $shortCodes);
-            });
-        }
-
-        return $transactions->get();
-    }
-
-    /**
-     * Unique filename segment for blob storage: removes whitespace from uniqid + original basename.
-     */
-    private function uniqueBlobNameFromOriginalName(string $originalName): string
-    {
-        return (string) preg_replace('/\s+/', '', uniqid().'_'.$originalName);
     }
 }

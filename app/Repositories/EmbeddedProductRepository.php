@@ -895,7 +895,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $phoneNumber;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
+    public function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -1511,7 +1511,7 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * Unique filename segment for blob storage: removes whitespace from uniqid + original basename.
      */
-    private function uniqueBlobNameFromOriginalName(string $originalName): string
+    public function uniqueBlobNameFromOriginalName(string $originalName): string
     {
         return (string) preg_replace('/\s+/', '', uniqid().'_'.$originalName);
     }
