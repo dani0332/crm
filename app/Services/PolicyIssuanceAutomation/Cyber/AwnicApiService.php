@@ -162,7 +162,7 @@ class AwnicApiService
             }
         }
 
-        // this email is used to test the document download automation failure scenario
+        // this email is used to test the document upload automation failure scenario from insurer
         if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_UPLOAD || ! $allDocsUploaded) {
             $response['error'] = $response['error'] ?? 'Some documents failed to upload';
             $response['message'] = $response['error'];
@@ -241,7 +241,7 @@ class AwnicApiService
             'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
         ]);
 
-        // this email is used to test the document upload automation failure scenario
+        // this email is used to test the document download automation failure scenario from insurer to IMCRM
         if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty() || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::error('Failed to fetch/upload all documents', extra: [
