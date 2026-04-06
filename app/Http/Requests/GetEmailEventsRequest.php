@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class BirdStopWorkFlowRequest extends FormRequest
+class GetEmailEventsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,15 +15,13 @@ class BirdStopWorkFlowRequest extends FormRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'flowType' => 'required|string',
-            'uuid' => 'required|string',
-            'workflowId' => 'required|string',
-            'stop_source' => 'nullable|string|max:64',
+            'message_id' => 'required|string',
+            'customer_email' => 'required|string|email',
         ];
     }
 }

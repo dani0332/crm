@@ -41,8 +41,11 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -50,7 +53,9 @@ use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PetQuoteController extends Controller
 {
@@ -59,7 +64,7 @@ class PetQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -91,7 +96,7 @@ class PetQuoteController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create(Request $request)
     {
@@ -118,8 +123,8 @@ class PetQuoteController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
+     * @param  Request  $request
+     * @return RedirectResponse|Response
      */
     public function store(PetQuoteRequest $request)
     {
@@ -138,7 +143,7 @@ class PetQuoteController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($uuid)
     {
@@ -204,6 +209,15 @@ class PetQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Pet, $quote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $quote->uuid,
+            QuoteTypeId::Pet,
+            $quote->id,
+            $quote->email ?? null,
+            $emailStatuses,
+        );
+
         // dd($insuranceProviders);
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -250,6 +264,9 @@ class PetQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Pet),
         ]);
     }
 
@@ -257,7 +274,7 @@ class PetQuoteController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($uuid)
     {
@@ -276,9 +293,9 @@ class PetQuoteController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(PetQuoteRequest $request, $uuid)
     {

@@ -44,6 +44,7 @@ enum QuoteFlowType: int
     case CYBER_AUTOMATION_FAILED = 44;
     case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
+    case COURTESY_EMAIL = 50;
 
     public function label(): string
     {
@@ -87,6 +88,7 @@ enum QuoteFlowType: int
             QuoteFlowType::CYBER_AUTOMATION_FAILED => 'cyber_automation_failed',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION => 'health_stp_advisor_notification',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
+            QuoteFlowType::COURTESY_EMAIL => 'courtesy_email',
         };
     }
 
@@ -127,6 +129,7 @@ enum QuoteFlowType: int
             39 => QuoteFlowType::CAR_AI_ADVISOR_OCB,
             48 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION,
             49 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED,
+            50 => QuoteFlowType::COURTESY_EMAIL,
             40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
             45 => QuoteFlowType::SAVINGS_OCA_EMAIL,
             41 => QuoteFlowType::CYBER_OCB_INTRO_EMAIL,

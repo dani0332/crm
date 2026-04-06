@@ -3,6 +3,8 @@ import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScore
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import EmailStatus from '@/inertia/Components/EmailStatus.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
@@ -33,6 +35,18 @@ const props = defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  emailStatuses: {
+    type: Array,
+    default: () => [],
+  },
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -1433,6 +1447,18 @@ function handleOcrNotification(event) {
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="true"
     />
+
+    <EmailStatus
+      :emailStatuses="emailStatuses"
+      :expanded="sectionExpanded"
+      show-index
+    />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+      :expanded="sectionExpanded"
+    />
+    <x-divider class="my-4" />
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"

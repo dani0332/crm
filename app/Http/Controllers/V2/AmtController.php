@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -40,9 +41,12 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -53,10 +57,13 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class AmtController extends Controller
 {
@@ -324,8 +331,8 @@ class AmtController extends Controller
      * Post-process AMT quotes to add branch name information.
      * Uses eager loading to avoid N+1 query issues.
      *
-     * @param  \Illuminate\Contracts\Pagination\Paginator  $quotes
-     * @return \Illuminate\Contracts\Pagination\Paginator
+     * @param  Paginator  $quotes
+     * @return Paginator
      */
     private function postProcessAmtQuotes($quotes)
     {
@@ -356,7 +363,7 @@ class AmtController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -407,7 +414,7 @@ class AmtController extends Controller
 
     /**
      * @param  $uuid
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
@@ -507,6 +514,15 @@ class AmtController extends Controller
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Business, $record->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $record->uuid,
+            QuoteTypeId::Business,
+            $record->id,
+            $record->email ?? null,
+            $emailStatuses
+        );
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -557,6 +573,9 @@ class AmtController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'activities' => $activities,
             'advisors' => $advisors,
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Business),
         ]);
     }
 
@@ -643,7 +662,7 @@ class AmtController extends Controller
             'totalCount' => 0,
             'areBothTeamsPresent' => false,
             'is_renewal' => null,
-            'business_type_of_insurance_id' => \App\Enums\BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
+            'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
     }
 }
