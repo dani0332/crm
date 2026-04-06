@@ -17,7 +17,7 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     // createAdminUser seeds every PermissionsEnum value (including EP_DOCUMENT_MANUAL_OVERRIDE) onto the Admin role.
     $this->user = TestDataSeeder::createAdminUser();
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
 });
 
 afterEach(function () {
