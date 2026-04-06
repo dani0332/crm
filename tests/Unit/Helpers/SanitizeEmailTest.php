@@ -174,3 +174,61 @@ it('sanitizes the exact address seen in the Axiom production log', function (): 
     $raw = json_decode('"\u200ba.stratton@irefze.com"');
     expect(EmailValidationService::sanitize($raw))->toBe('a.stratton@irefze.com');
 });
+
+// ── mailto, unicode spaces, fullwidth chars, trailing dot ─────────────────────
+
+it('strips a case-insensitive mailto prefix and surrounding junk', function (string $dirty, string $expected): void {
+    expect(EmailValidationService::sanitize($dirty))->toBe($expected);
+})->with([
+    'mailto lower' => ['mailto:user@example.com', 'user@example.com'],
+    'MAILTO upper' => ['MAILTO:user@example.com', 'user@example.com'],
+    'wrapped mailto' => ['<mailto:user@example.com>', 'user@example.com'],
+    'spaces after scheme' => ['  mailto:  user@example.com  ', 'user@example.com'],
+]);
+
+it('strips non-breaking space (U+00A0) and narrow no-break space (U+202F) like normal spaces', function (): void {
+    expect(EmailValidationService::sanitize("\u{00A0}user@example.com\u{00A0}"))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize("user\u{00A0}@example.com"))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize("user@\u{202F}example.com"))->toBe('user@example.com');
+});
+
+it('normalises fullwidth commercial at (U+FF20) and full stop (U+FF0E)', function (): void {
+    expect(EmailValidationService::sanitize("user\u{FF20}example.com"))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize("first\u{FF0E}last@example.com"))->toBe('first.last@example.com');
+});
+
+it('removes a trailing dot after the domain (sentence or DNS-style paste)', function (): void {
+    expect(EmailValidationService::sanitize('user@example.com.'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('user@mail.example.com...'))->toBe('user@mail.example.com');
+});
+
+it('strips line and paragraph separators (U+2028 / U+2029) embedded in the address', function (): void {
+    expect(EmailValidationService::sanitize("user\u{2028}@example.com"))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize("user@\u{2029}example.com"))->toBe('user@example.com');
+});
+
+it('strips bidirectional marks that often wrap pasted RTL or mixed text', function (): void {
+    expect(EmailValidationService::sanitize("\u{200E}user@example.com\u{200F}"))->toBe('user@example.com');
+});
+
+// ── literal escape spellings (stored as ASCII "u200b", not real U+200B) ─────────
+
+it('strips literal u200b-style prefixes in the local part (Brevo log / CRM exports)', function (): void {
+    expect(EmailValidationService::sanitize('u200bzeeshan.haider@myalfred.com'))->toBe('zeeshan.haider@myalfred.com');
+    expect(EmailValidationService::sanitize('U200Buser@example.com'))->toBe('user@example.com');
+});
+
+it('strips JSON-style and unicode-plus spellings of zero-width at the start of the local part', function (): void {
+    expect(EmailValidationService::sanitize('\\u200buser@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('U+200Buser@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('u+200buser@example.com'))->toBe('user@example.com');
+});
+
+it('strips decimal and hex HTML entity spellings for zero-width space at the start of the local part', function (): void {
+    expect(EmailValidationService::sanitize('&#8203;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#x200b;user@example.com'))->toBe('user@example.com');
+});
+
+it('does not strip a legitimate local part that happens to contain u200b as intentional characters in the middle', function (): void {
+    expect(EmailValidationService::sanitize('theu200buser@example.com'))->toBe('theu200buser@example.com');
+});
