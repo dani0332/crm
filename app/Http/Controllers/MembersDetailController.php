@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Inertia\Middleware;
 
 class MembersDetailController extends Controller
 {
@@ -58,7 +59,7 @@ class MembersDetailController extends Controller
     }
 
     /**
-     * AML and other axios callers expect JSON, not an HTML redirect. Inertia visits use {@see \Inertia\Middleware} X-Inertia header and must receive a redirect + flash.
+     * AML and other axios callers expect JSON, not an HTML redirect. Inertia visits use {@see Middleware} X-Inertia header and must receive a redirect + flash.
      */
     private function memberLockResponseShouldBeJson(Request $request): bool
     {
