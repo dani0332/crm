@@ -748,6 +748,9 @@ class CoreSchema
                 $table->string('quote_request_type')->nullable();
                 $table->unsignedBigInteger('quote_type_id')->nullable();
                 $table->unsignedBigInteger('product_id')->nullable();
+                $table->string('certificate_number')->nullable();
+                $table->string('tax_invoice_no')->nullable();
+                $table->string('tax_invoice_buyer_no')->nullable();
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();

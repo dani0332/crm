@@ -179,3 +179,66 @@ test('fetchUpdateEpDocument soft-deletes the old row, persists the new document,
 
     Queue::assertPushed(WatermarkDocumentsJob::class);
 });
+
+test('fetchUpdateEpDocument keeps doc_name prefixed with certificate number for tax invoice documents', function () {
+    TestSchemaCreator::createMinimalSchema();
+    Storage::fake('azureIMPrivate');
+    Queue::fake();
+
+    $user = TestDataSeeder::createAdminUser();
+    Auth::login($user);
+
+    DocumentType::factory()->createOneQuietly([
+        'code' => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+        'quote_type_id' => QuoteTypeId::Car,
+        'text' => 'Car Tax Invoice',
+    ]);
+
+    $ep = EmbeddedProduct::factory()->createOneQuietly();
+    $option = EmbeddedProductOption::factory()->createOneQuietly(['embedded_product_id' => $ep->id]);
+    $carQuote = CarQuote::factory()->createOneQuietly();
+
+    $transaction = EmbeddedTransaction::factory()
+        ->forCarQuote($carQuote)
+        ->forProduct($option->id)
+        ->createOneQuietly([
+            'is_selected' => true,
+            'payment_status_id' => PaymentStatusEnum::CAPTURED,
+            'certificate_number' => 'CERT-KEEP-001',
+            'tax_invoice_no' => 'TAX-OLD-001',
+        ]);
+
+    $document = QuoteDocument::factory()->createOneQuietly([
+        'quote_documentable_type' => EmbeddedTransaction::class,
+        'quote_documentable_id' => $transaction->id,
+        'document_type_code' => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+        'doc_name' => 'CERT-KEEP-001_original.pdf',
+    ]);
+
+    $service = app(EmbeddedProductService::class);
+
+    $result = $service->updateEpDocument([
+        'epId' => $ep->id,
+        'modelType' => 'car',
+        'quoteId' => $carQuote->id,
+        'documentId' => $document->id,
+        'documentNumber' => 'TAX-NEW-002',
+        'file' => UploadedFile::fake()->create('tax-invoice.pdf', 100, 'application/pdf'),
+        'remarks' => 'Tax invoice manual override',
+    ]);
+
+    expect($result)->toBeTrue();
+
+    $transaction->refresh();
+
+    expect($transaction->tax_invoice_no)->toBe('TAX-NEW-002')
+        ->and($transaction->certificate_number)->toBe('CERT-KEEP-001');
+
+    $replacement = QuoteDocument::query()
+        ->where('quote_documentable_id', $transaction->id)
+        ->where('quote_documentable_type', EmbeddedTransaction::class)
+        ->whereNull('deleted_at')
+        ->sole();
+
+    expect($replacement->doc_name)->toBe('CERT-KEEP-001_original.pdf');
+});

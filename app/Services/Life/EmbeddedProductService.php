@@ -269,6 +269,11 @@ class EmbeddedProductService extends BaseService
         };
 
         $docNameSuffix = Str::after($oldDocument->doc_name, '_');
+
+        /**
+         * Keep insurer-document download naming aligned with existing behavior:
+         * doc_name is always prefixed by certificate_number for all EP insurer document types.
+         */
         $storedDocName = "{$embeddedTransaction->certificate_number}_{$docNameSuffix}";
 
         return [
