@@ -62,7 +62,7 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CarTypeInsurance;
-use App\Models\ClaimStatus;
+use App\Models\ClaimsStatus;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -99,6 +99,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
@@ -107,6 +108,7 @@ use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
@@ -778,6 +780,14 @@ class CRUDController extends Controller
             }
             $audits = [];
             $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
+            $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+                $record->uuid,
+                $quoteTypeId,
+                $record->id,
+                $record->email ?? null,
+                $emailStatuses
+            );
+            $showGoogleReviewCommunicationLog = CourtesyEmailService::isCourtesyEmailQuoteType($quoteTypeId);
             $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
             $advisor = isset($record->advisor_id) ? $this->userService->getUserById((int) $record->advisor_id) : null;
             $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
@@ -954,6 +964,8 @@ class CRUDController extends Controller
                     'isCustomerVerificationEnabled',
                     'isNewBusinessUser',
                     'emailStatuses',
+                    'googleReviewCommunicationLogs',
+                    'showGoogleReviewCommunicationLog',
                     'carPlanAddonsCodeEnum',
                     'tiersExceptTierR',
                     'isTierRAssigned',
@@ -1127,6 +1139,8 @@ class CRUDController extends Controller
 
                 return inertia('HomeQuote/Show', [
                     'storageUrl' => storageUrl(),
+                    'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+                    'showGoogleReviewCommunicationLog' => $showGoogleReviewCommunicationLog,
                     'quoteDocuments' => $quoteDocuments,
                     'quote' => $record,
                     'amlStatusName' => $amlStatusName,
@@ -1267,11 +1281,14 @@ class CRUDController extends Controller
 
                 $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
                 $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
-                $record->append(['api_issuance_status', 'insurer_api_status']);
+                $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
+                    'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+                    'showGoogleReviewCommunicationLog' => $showGoogleReviewCommunicationLog,
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
                     'hasPecTag' => $hasPecTag,
@@ -2547,7 +2564,7 @@ class CRUDController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  ClaimStatus  $claimsStatus
+     * @param  ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     private function getCarMakeDropdown()

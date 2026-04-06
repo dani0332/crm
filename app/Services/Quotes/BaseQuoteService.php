@@ -33,8 +33,10 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -167,6 +169,13 @@ abstract class BaseQuoteService extends BaseService
         }
 
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus($quoteType->id(), $quote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $quote->uuid,
+            $quoteType->id(),
+            $quote->id,
+            $quote->email ?? null,
+            $emailStatuses
+        );
 
         $planURL = $this->getEcomQuoteLink($quoteType, $quote->uuid);
 
@@ -215,6 +224,8 @@ abstract class BaseQuoteService extends BaseService
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType($quoteType->id()),
             'planURL' => $planURL,
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ];

@@ -8,6 +8,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 defineProps({
   quote: Object,
@@ -37,6 +38,14 @@ defineProps({
   bikeQuotePlanAddons: Array,
   yearsOfManufacture: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   carPlanTypeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanFeaturesCodeEnum: Object,
@@ -1477,6 +1486,10 @@ function capitalizeString(str) {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"

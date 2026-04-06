@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Facades\Capi;
+use App\Services\CourtesyEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,25 +19,31 @@ class CourtesyEmailJob implements ShouldQueue
     public $backoff = 360;
     private $quoteData;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($quoteData)
     {
         $this->quoteData = $quoteData;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
+    public function handle(CourtesyEmailService $courtesyEmailService): void
     {
-        if (isset($this->quoteData['quoteUID'])) {
-            LoggerService::startQuoteLogging($this->quoteData['quoteUID']);
+        $quoteUID = $this->quoteData['quoteUID'] ?? null;
+        $quoteTypeId = $this->quoteData['quoteTypeId'] ?? null;
+
+        if (! $quoteUID || ! $quoteTypeId) {
+            LoggerService::error('CourtesyEmailJob - Missing quoteUID or quoteTypeId', [
+                'quoteData' => $this->quoteData,
+            ]);
+
+            return;
         }
 
-        $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $this->quoteData);
+        LoggerService::startQuoteLogging($quoteUID);
 
-        info('Courtesy Email CAPI - Payload  : '.json_encode($this->quoteData).' - Response - : '.json_encode($response));
+        LoggerService::info('CourtesyEmailJob - Processing courtesy email workflow', [
+            'quoteUID' => $quoteUID,
+            'quoteTypeId' => $quoteTypeId,
+        ]);
+
+        $courtesyEmailService->processCourtesyEmailWorkflow($quoteUID, $quoteTypeId);
     }
 }

@@ -42,8 +42,11 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -51,13 +54,16 @@ use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class YachtQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -90,7 +96,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -117,7 +123,7 @@ class YachtQuoteController extends Controller
     /**
      * @param  $quoteTypeCode
      * @param  BikeQuoteRequest  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(YachtQuoteRequest $request)
     {
@@ -133,7 +139,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -149,7 +155,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
@@ -217,6 +223,15 @@ class YachtQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Yacht, $quote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $quote->uuid,
+            QuoteTypeId::Yacht,
+            $quote->id,
+            $quote->email ?? null,
+            $emailStatuses,
+        );
+
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => fn () => $quote,
@@ -259,6 +274,9 @@ class YachtQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Yacht),
         ]);
     }
 
