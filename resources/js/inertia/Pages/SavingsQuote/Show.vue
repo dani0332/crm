@@ -1,8 +1,6 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { createReusableTemplate } from '@vueuse/core';
 import { onMounted, reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
@@ -11,6 +9,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import AvailablePlans from './Partials/AvailablePlans.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -1230,10 +1229,6 @@ const handlePlanSelected = plan => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
-    <GoogleReviewCommunicationLog
-      :google-review-communication-logs="googleReviewCommunicationLogs"
-      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
-    />
 
     <QuoteActivities
       :can="can"

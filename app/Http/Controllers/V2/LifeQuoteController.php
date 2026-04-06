@@ -37,9 +37,7 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -47,7 +45,6 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class LifeQuoteController extends Controller
 {
@@ -56,7 +53,7 @@ class LifeQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
@@ -79,7 +76,7 @@ class LifeQuoteController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function create()
     {
@@ -91,7 +88,7 @@ class LifeQuoteController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function store(LifeQuoteRequest $request)
     {
@@ -108,7 +105,7 @@ class LifeQuoteController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function show($uuid)
     {
@@ -193,15 +190,6 @@ class LifeQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-        $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Life,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses
-        );
-
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
             'quoteType' => QuoteTypes::LIFE,
@@ -250,9 +238,6 @@ class LifeQuoteController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
-            'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Life),
         ]);
     }
 
@@ -260,7 +245,7 @@ class LifeQuoteController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function edit($uuid)
     {
@@ -276,7 +261,7 @@ class LifeQuoteController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return Response
+     * @return \Illuminate\Http\Response
      */
     public function update(LifeQuoteRequest $request, $uuid)
     {
