@@ -23,7 +23,7 @@ class LifeRevivalCommand extends Command
      *
      * @var string
      */
-    protected $description = 'This command will run the life revival process';
+    protected $description = 'This command will run the life leads revival process';
 
     /**
      * Execute the console command.
@@ -45,15 +45,13 @@ class LifeRevivalCommand extends Command
 
     private function processRevivalLeads($revivalLeads)
     {
-        $delayCounter = 0;
-        foreach ($revivalLeads as $lead) {
-            if ($lead->height == null || $lead->weight == null) {
-                continue;
-            }
-            
-            $jobs[] = (new LifeRevivalLeadsCreationJob($lead))->delay(now()->addSeconds(30 + $delayCounter));
-            $delayCounter += 30;
-        }
+        $jobs = $revivalLeads->filter(function ($lead) {
+            return $lead->height != null && $lead->weight != null;
+        })->values()
+            ->map(function ($lead, $index) {
+                return (new LifeRevivalLeadsCreationJob($lead))->delay(now()->addSeconds(30 + ($index * 30)));
+            })
+            ->all();
 
         LoggerService::info('Life Revival Leads Jobs Count: '.count($jobs));
     }
