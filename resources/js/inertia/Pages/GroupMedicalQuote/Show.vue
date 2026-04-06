@@ -267,7 +267,7 @@ const emirateOfRegistrationError = computed(() => {
   const value = customerProfileForm.emirate_of_registration_id;
   const isEmpty =
     value === null || value === undefined || value === '' || value === false;
-  if (enabledCustomerType === page.props.customerTypeEnum.Entity && isEmpty) {
+  if (enabledCustomerType === page.props.customerTypeEnum.Entity && isEmpty && !page.props.isEmirateOfRegistrationLocked) {
     return 'Emirate of registration is required.';
   }
   return null;
@@ -317,10 +317,9 @@ const customerProfileForm = useForm({
     page.props.quote?.quote_request_entity_mapping?.entity
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote?.quote_request_entity_mapping?.entity
-      ?.emirate_of_registration_id ??
-    page.props.quote?.emirate_of_registration_id ??
-    null,
+    page.props.quote?.emirate_of_registration_id ?? page.props.quote?.quote_request_entity_mapping?.entity
+    ?.emirate_of_registration_id ?? null,
+    
 });
 
 const resolvedEmirateOfRegistrationId = computed(
@@ -1200,13 +1199,34 @@ function handleOcrNotification(event) {
                     </x-tooltip>
                   </dt>
                   <dd>
+                    <x-tooltip
+                      v-if="props.isEmirateOfRegistrationLocked"
+                      placement="top"
+                      class="block w-full"
+                    >
+                      <x-select
+                        v-model="customerProfileForm.emirate_of_registration_id"
+                        :options="emiratesOptions"
+                        class="w-full"
+                        placeholder="SELECT EMIRATES OF REGISTRATION"
+                        filterable
+                        disabled
+                        :rules="[isRequired]"
+                        :error="emirateOfRegistrationError"
+                        required
+                      />
+                      <template #tooltip>
+                        Emirate of registration cannot be changed after the
+                        policy is booked.
+                      </template>
+                    </x-tooltip>
                     <x-select
+                      v-else
                       v-model="customerProfileForm.emirate_of_registration_id"
                       :options="emiratesOptions"
                       class="w-full"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       filterable
-                      :disabled="props.isEmirateOfRegistrationLocked"
                       :rules="[isRequired]"
                       :error="emirateOfRegistrationError"
                       required
