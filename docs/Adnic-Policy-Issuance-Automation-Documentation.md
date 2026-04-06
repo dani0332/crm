@@ -1252,9 +1252,7 @@ Representative constants (not exhaustive — see source for the full list):
 ```php
 class AdnicEnum
 {
-    // Default contact
-    public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae';
-    public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254';
+    // Responsible person `EmailId` / `MobileNo` in AdnicRequestBuilder use the health quote email and mobile (not enum defaults).
 
     // Steps (automation sequence uses the first three; STEP_BOOK_POLICY reserved for UI/booking flows)
     public const STEP_ISSUE_POLICY = 'IssuePolicy';

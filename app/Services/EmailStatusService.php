@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
@@ -11,16 +14,30 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class EmailStatusService extends BaseService
 {
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
-        return Cache::remember("email_statuses_{$quoteTypeId}_{$quoteId}", now()->endOfDay(), function () use ($quoteTypeId, $quoteId) {
-            return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-                ->orderBy('updated_at', 'desc')
-                ->get();
-        });
+        $quoteTypeId = (int) $quoteTypeId;
+        $quoteId = (int) $quoteId;
+        $key = $this->emailStatusListCacheKey($quoteTypeId, $quoteId);
+
+        $ids = Cache::remember(
+            $key,
+            now()->endOfDay(),
+            fn () => EmailStatus::query()
+                ->where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+                ->orderByDesc('updated_at')
+                ->pluck('id')
+                ->all()
+        );
+
+        return EmailStatus::query()
+            ->whereIn('id', $ids)
+            ->orderByDesc('updated_at')
+            ->get();
     }
 
     public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS, $reason = null)
@@ -35,56 +52,97 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_status = $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->reason = $reason;
+        $newEmailStatus->type = EmailStatusTypeEnum::Email;
+        $newEmailStatus->flow_type = $emailData->flow_type ?? null;
         $newEmailStatus->save();
-
-        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+        $this->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
 
         return $newEmailStatus->id;
     }
 
     public function addBirdEmailStatus($request)
     {
-        switch (request('quoteTypeId')) {
-            case QuoteTypeId::Car:
-                $quote = CarQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Health:
-                $quote = HealthQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Home:
-            case QuoteTypeId::Savings:
-            case QuoteTypeId::Life:
-            case QuoteTypeId::Cyber:
-                $quote = PersonalQuote::where('uuid', $request->uuid)->first();
-                break;
-            case QuoteTypeId::Travel:
-                $quote = TravelQuote::where('uuid', $request->uuid)->first();
-                break;
+        $quoteTypeId = (int) (
+            $request->route('quoteTypeId')
+            ?? $request->input('quoteTypeId')
+            ?? $request->input('quote_type_id')
+            ?? 0
+        );
+        $quoteType = QuoteTypes::getName($quoteTypeId);
 
-            default:
-                $quote = null;
-                break;
-        }
-        if (! $quote) {
+        if (! $quoteType) {
             LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
                 'uuid' => $request->uuid,
-                'quoteTypeId' => request('quoteTypeId'),
+                'quoteTypeId' => $quoteTypeId,
             ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
+
+        $model = $quoteType->model();
+        $query = $model::where('uuid', $request->route('uuid') ?? $request->input('uuid'));
+
+        if ($model instanceof PersonalQuote) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        $quote = $query->first();
+
+        if (! $quote) {
+            LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
+                'uuid' => $request->uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return (object) ['message' => 'lead not found', 'status' => false];
+        }
+
+        $mobileRaw = $request->input('mobile_no');
+        if (filled($mobileRaw) && is_string($mobileRaw) && trim($mobileRaw) !== '') {
+            return $this->addBirdWhatsAppStatus($request, $quote, $quoteTypeId, $mobileRaw);
+        }
+
         if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
-            ->where('quote_id', $quote->id)->exists()) {
+            ->where('quote_id', $quote->id)
+            ->where('type', EmailStatusTypeEnum::Email)
+            ->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
-            $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
+            $this->addEmailStatus($request, $request->message_id, $request->subject ?? '', ProcessStatusCode::SENT);
 
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
-        } else {
-
-            return (object) ['message' => 'Email event already logged', 'status' => true];
         }
+
+        return (object) ['message' => 'Email event already logged', 'status' => true];
+    }
+
+    private function addBirdWhatsAppStatus($request, $quote, int $quoteTypeId, string $mobileInput): object
+    {
+        $mobile = formatMobileNoWithoutPlus($mobileInput);
+
+        $exists = EmailStatus::where('msg_id', $request->message_id)
+            ->where('type', EmailStatusTypeEnum::WhatsApp)
+            ->where('mobile_no', $mobile)
+            ->where('email_status', ProcessStatusCode::SENT)
+            ->exists();
+
+        if ($exists) {
+            return (object) ['message' => 'WhatsApp event already logged', 'status' => true];
+        }
+
+        $newEmailStatus = new EmailStatus;
+        $newEmailStatus->type = EmailStatusTypeEnum::WhatsApp;
+        $newEmailStatus->mobile_no = $mobile;
+        $newEmailStatus->msg_id = $request->message_id;
+        $newEmailStatus->email_status = ProcessStatusCode::SENT;
+        $newEmailStatus->quote_type_id = $quoteTypeId;
+        $newEmailStatus->quote_id = $quote->id;
+        $newEmailStatus->flow_type = $request->flow_type;
+        $newEmailStatus->save();
+        $this->forgetEmailStatusListCache($quoteTypeId, (int) $quote->id);
+
+        return (object) ['message' => 'WhatsApp event logged successfully', 'status' => true];
     }
 
     public function updateEmailStatus($emailData, $status)
@@ -97,12 +155,10 @@ class EmailStatusService extends BaseService
         }
         $emailStatus->email_status = $status;
         $emailStatus->save();
+        $this->forgetEmailStatusListCache((int) $emailStatus->quote_type_id, (int) $emailStatus->quote_id);
         info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
     }
 
-    /**
-     * Update customer replied status in email_status table
-     */
     public function updateCustomerRepliedStatus(string $quoteUuid, int $quoteTypeId, string $emailSubject): object
     {
         try {
@@ -146,6 +202,7 @@ class EmailStatusService extends BaseService
             // Update the customer_replied field
             $emailStatus->customer_replied = true;
             $emailStatus->save();
+            $this->forgetEmailStatusListCache((int) $emailStatus->quote_type_id, (int) $emailStatus->quote_id);
 
             LoggerService::info(self::class.' - Customer replied status updated', [
                 'uuid' => $quoteUuid,
@@ -173,11 +230,6 @@ class EmailStatusService extends BaseService
         }
     }
 
-    /**
-     * Get quote by UUID and type
-     *
-     * @return mixed
-     */
     private function getQuoteByUuidAndType(string $uuid, int $quoteTypeId)
     {
         return match ($quoteTypeId) {
@@ -187,6 +239,38 @@ class EmailStatusService extends BaseService
             QuoteTypeId::Travel => TravelQuote::where('uuid', $uuid)->first(),
             default => null,
         };
+    }
+
+    public function logCourtesyWorkflowNotDispatched(
+        int $quoteTypeId,
+        int $quoteId,
+        string $customerEmail,
+        string $reason,
+        ?int $customerId = null,
+    ): void {
+        $email = new EmailStatus;
+        $email->quote_type_id = $quoteTypeId;
+        $email->quote_id = $quoteId;
+        $email->email_address = $customerEmail;
+        $email->msg_id = 'courtesy-not-dispatched-'.Str::uuid()->toString();
+        $email->email_subject = 'Google review courtesy';
+        $email->email_status = ProcessStatusCode::FAILED;
+        $email->reason = $reason;
+        $email->type = EmailStatusTypeEnum::Email;
+        $email->customer_id = $customerId;
+        $email->flow_type = QuoteFlowType::COURTESY_EMAIL;
+        $email->save();
+        $this->forgetEmailStatusListCache($quoteTypeId, $quoteId);
+    }
+
+    public function forgetEmailStatusListCache(int $quoteTypeId, int $quoteId): void
+    {
+        Cache::forget($this->emailStatusListCacheKey($quoteTypeId, $quoteId));
+    }
+
+    private function emailStatusListCacheKey(int $quoteTypeId, int $quoteId): string
+    {
+        return 'email_statuses:'.today()->toDateString().":{$quoteTypeId}:{$quoteId}";
     }
 
 }
