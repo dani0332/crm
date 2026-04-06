@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BuyLeads\BuyLeadService;
+use App\Services\BuyLeads\CatARevivalAllocationPriorityService;
 use App\Services\Logger\LoggerService;
 
 class RetryAllocationService
@@ -142,6 +143,14 @@ class RetryAllocationService
         LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
         $nationalityIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
 
+        if ($nationalityIds === []) {
+            LoggerService::warning(self::class.'::executeCarRevivalAllocation - No CAT A nationalities configured; skipping');
+
+            return;
+        }
+
+        $carValueOrderExpr = CatARevivalAllocationPriorityService::effectiveCarValueExpressionSql('car_quote_request');
+
         $leads = CarQuote::query()
             ->whereIn('nationality_id', $nationalityIds)
             ->where('source', LeadSourceEnum::REVIVAL)
@@ -162,7 +171,8 @@ class RetryAllocationService
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->orderByDesc('car_value')
+            ->orderByRaw('('.$carValueOrderExpr.') DESC')
+            ->orderBy('created_at', 'asc')
             ->take($chunkSize);
 
         $leads->logRawSql();
