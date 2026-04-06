@@ -230,7 +230,8 @@ const screeningFormDetails = useForm({
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
-  quoteRequest.emirate_of_registration_id ?? page.props.insuredDetails?.insured?.emirate_of_registration_id,
+    quoteRequest.emirate_of_registration_id ??
+    page.props.insuredDetails?.insured?.emirate_of_registration_id,
   lead_source: quoteRequest.source,
   insurance_provider_code:
     page.props.quoteRequest?.plan?.insurance_provider.code,
@@ -462,7 +463,7 @@ const searchInsuredDetails = customerType => {
             screeningFormDetails.industry_type_code =
               response.industry_type_code;
             screeningFormDetails.emirate_of_registration_id =
-               response.emirate_of_registration_id;
+              response.emirate_of_registration_id;
           }
 
           notification.success({
