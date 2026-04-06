@@ -149,7 +149,7 @@ class AdnicRequestBuilder
                 'DateOfBirth' => $quote->dob ? date('d-m-Y', strtotime($quote->dob)) : null,
                 'Gender' => $this->mappingGender($quote->gender ?? null),
                 'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
-                'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
+                'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
                 'SponserCategory' => $sponsorCategory ?? '',
