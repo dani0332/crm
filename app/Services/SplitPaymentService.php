@@ -574,7 +574,7 @@ class SplitPaymentService
 
         // for car quote with plan detail enabled, de-select embeded products & generate old url
         if ($quoteTypeId == QuoteTypeId::Car && $request->isPlanDetailEnabled) {
-            (new EmbeddedProductService)->deSelectEPTransactions($payment->paymentable_id);
+            app(EmbeddedProductService::class)->deSelectEPTransactions($payment->paymentable_id);
             $processNewUrl = false;
         }
 
