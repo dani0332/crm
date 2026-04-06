@@ -20,7 +20,10 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class EmbeddedProductController extends Controller
 {
@@ -33,7 +36,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -45,7 +48,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create()
     {
@@ -56,7 +59,7 @@ class EmbeddedProductController extends Controller
 
     /**
      * @param  $quoteTypeCode
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(EmbeddedProductRequest $request)
     {
@@ -66,7 +69,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($id)
     {
@@ -79,7 +82,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
@@ -157,7 +160,7 @@ class EmbeddedProductController extends Controller
     /**
      * Get the list of reports for embedded products.
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function reportsList()
     {
@@ -171,7 +174,7 @@ class EmbeddedProductController extends Controller
     /**
      * Report transactions for an embedded product.
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function reportTransactions(EmbeddedProduct $ep, Request $request)
     {
@@ -183,6 +186,7 @@ class EmbeddedProductController extends Controller
                 'detail' => $ep,
                 'transactions' => $dataset,
             ],
+            'reportLobFilterOptions' => EmbeddedProductRepository::quoteTypeReportLobFilterOptions($ep->short_code),
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
             'sage_statuses' => SageEmbeddedProductEnum::withLabels(),

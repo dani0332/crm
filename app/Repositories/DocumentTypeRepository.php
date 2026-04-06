@@ -4,11 +4,13 @@ namespace App\Repositories;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
 use App\Models\KycLog;
 use App\Services\ActivitiesService;
+use App\Services\QuoteDocumentService;
 
 class DocumentTypeRepository extends BaseRepository
 {
@@ -144,5 +146,39 @@ class DocumentTypeRepository extends BaseRepository
             'documentTypeCodes' => $documentTypeCodes,
             'requiredDocuments' => $requiredDocuments,
         ];
+    }
+
+    public function validateSendPolicyDocsUploaded($quote, $quoteType): bool
+    {
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+
+        $requiredDocuments = DocumentType::where('quote_type_id', $quoteTypeId)
+            ->where('is_required_for_send_policy', 1)
+            ->when($quoteTypeId == QuoteTypeId::Business, function ($query) use ($quote) {
+                return $query->where('business_type_of_insurance_id', $quote->business_type_of_insurance_id);
+            })
+            ->required()
+            ->active()
+            ->pluck('code')
+            ->toArray();
+
+        $uploadedDocumentCodes = $quote->documents()->pluck('document_type_code')->toArray();
+        $missingDocuments = array_diff($requiredDocuments, $uploadedDocumentCodes);
+
+        if (empty($missingDocuments)) {
+            return true;
+        }
+
+        $phbCodes = [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH];
+        $missingPhb = array_intersect($missingDocuments, $phbCodes);
+
+        if (! empty($missingPhb)) {
+            $hasHandbookDocuments = ! empty(app(QuoteDocumentService::class)->getHandBookDocuments($quote));
+            if ($hasHandbookDocuments) {
+                $missingDocuments = array_diff($missingDocuments, $phbCodes);
+            }
+        }
+
+        return empty($missingDocuments);
     }
 }

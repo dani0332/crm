@@ -346,7 +346,7 @@ class ClaimsController extends Controller
                     'user_id' => Auth::id(),
                     'claim' => $claim,
                 ]);
-                
+
                 if ($claim) {
                     $this->claimsService->assignClaim($claim, $managerId);
                     LoggerService::info(' Claim assigned successfully - UUID: '.$uuid, extra: [
