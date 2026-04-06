@@ -1,13 +1,13 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import EmailStatus from '@/inertia/Components/EmailStatus.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import EmailStatus from '@/inertia/Components/EmailStatus.vue';
-import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 
 const props = defineProps({
   quote: Object,
@@ -196,6 +196,14 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
+
+const isAdnic = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.ADNIC
+  );
+});
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -2312,7 +2320,7 @@ const validateEmirateOfVisa = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUBTEAM</dt>
-                <dd>{{ quote.health_team_type }}</dd>
+                <dd>{{ quote.health_team_type ?? quote.notional_team }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -2451,6 +2459,18 @@ const validateEmirateOfVisa = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS STP Case</dt>
+                <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
               </div>
             </dl>
           </div>
@@ -4620,6 +4640,21 @@ const validateEmirateOfVisa = () => {
       :quoteCode="$page.props.quote.code"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isAdnic"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
@@ -4632,6 +4667,8 @@ const validateEmirateOfVisa = () => {
       :type="'App\\Models\\InsuredKyc'"
       :id="props.quote?.insured_kyc_id"
     />
+
+    <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
