@@ -336,7 +336,8 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->addIf(
                         // CLAIM_ALLOCATION_DASHBOARD
-                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD),
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)
+                            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true),
                         'Claims',
                         route('claim-allocation-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
@@ -378,7 +379,8 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)) {
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)
+            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true)) {
             $nav = $nav->add('Services', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -464,6 +466,7 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::LifeQuotesList)
+                        || auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST)
                         || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
@@ -479,7 +482,7 @@ class HandleInertiaRequests extends Middleware
                             fn ($s) => $s->attributes(['icon' => 'life'])
                         )
                         ->addIf(
-                            auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_SHOW),
+                            auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST),
                             'Life Revival Quotes',
                             route('life-revival-quotes-list'),
                             fn ($s) => $s->attributes(['icon' => 'life'])
@@ -574,11 +577,11 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        auth()->user()->can(PermissionsEnum::TRANSAPP_SEARCH),
                         'Search Transaction',
                         route('home'),
                         fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
@@ -885,6 +888,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
+                                'GBP Eligible Nationalities',
+                                route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );
