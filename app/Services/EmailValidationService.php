@@ -41,8 +41,8 @@ class EmailValidationService
             |feff
             |3000
         )
-        |&\#x200[b];?
-        |&\#8203;?
+        |&\#x200[b-f];?
+        |&\#820[3-7];?
     )+/ix';
 
     private const LITERAL_INVISIBLE_TRAILING_PATTERN = '/(?:
@@ -61,8 +61,8 @@ class EmailValidationService
             |feff
             |3000
         )
-        |&\#x200[b];?
-        |&\#8203;?
+        |&\#x200[b-f];?
+        |&\#820[3-7];?
     )+$/ix';
 
     /**

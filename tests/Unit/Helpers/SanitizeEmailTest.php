@@ -224,9 +224,14 @@ it('strips JSON-style and unicode-plus spellings of zero-width at the start of t
     expect(EmailValidationService::sanitize('u+200buser@example.com'))->toBe('user@example.com');
 });
 
-it('strips decimal and hex HTML entity spellings for zero-width space at the start of the local part', function (): void {
+it('strips decimal and hex HTML entity spellings for U+200B–U+200F at the start of the local part', function (): void {
     expect(EmailValidationService::sanitize('&#8203;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#8204;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#8205;user@example.com'))->toBe('user@example.com');
     expect(EmailValidationService::sanitize('&#x200b;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#x200c;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#x200D;user@example.com'))->toBe('user@example.com');
+    expect(EmailValidationService::sanitize('&#x200f;user@example.com'))->toBe('user@example.com');
 });
 
 it('does not strip a legitimate local part that happens to contain u200b as intentional characters in the middle', function (): void {
