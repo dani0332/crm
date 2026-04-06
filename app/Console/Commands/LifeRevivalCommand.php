@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class LifeRevivalCommand extends Command
@@ -38,14 +39,22 @@ class LifeRevivalCommand extends Command
 
         $revivalLeads = $allocationCreationService->executeLifeRevivalAllocation();
 
+        LoggerService::info('Life Revival Leads Count: '.count($revivalLeads));
         $this->processRevivalLeads($revivalLeads);
     }
 
     private function processRevivalLeads($revivalLeads)
     {
+        $delayCounter = 0;
         foreach ($revivalLeads as $lead) {
-            LifeRevivalLeadsCreationJob::dispatch($lead);
-            exit;
+            if ($lead->height == null || $lead->weight == null) {
+                continue;
+            }
+            
+            $jobs[] = (new LifeRevivalLeadsCreationJob($lead))->delay(now()->addSeconds(30 + $delayCounter));
+            $delayCounter += 30;
         }
+
+        LoggerService::info('Life Revival Leads Jobs Count: '.count($jobs));
     }
 }

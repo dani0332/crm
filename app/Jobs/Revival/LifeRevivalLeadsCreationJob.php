@@ -21,6 +21,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
     public function __construct($lead)
     {
         $this->lead = $lead;
+        $this->onQueue('renewals');
     }
 
     /**
@@ -50,8 +51,8 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             'source' => LeadSourceEnum::REVIVAL,
             'referenceUrl' => 'IMCRM',
             'lang' => 'EN',
-            'height' => $this->lead->height,
-            'weight' => $this->lead,
+            'height' => $this->lead->height ?? 0,
+            'weight' => $this->lead->weight ?? 0,
             'typeOfInsurance' => 'Life Insurance',
             'whatsappConsent' => 1,
         ];
@@ -60,7 +61,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
         if ($capiResponse->errors) {
             LoggerService::error('Error Creating Life Revival Lead '.$this->lead->uuid, extra: [
-                'data' => $payload,
+                'payload' => $payload,
                 'url' => '/api/v2-save-life-quote',
                 'response' => $capiResponse,
             ]);
