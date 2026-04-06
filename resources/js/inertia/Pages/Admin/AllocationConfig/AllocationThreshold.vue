@@ -146,7 +146,7 @@ onMounted(() => {
 
   <!-- Disclaimer -->
   <p class="text-sm text-red-600 mt-2 mb-2">
-    <span class="font-semibold">Effective 9th March 2026:</span>
+    <span class="font-semibold">Effective 3rd April 2026:</span>
     price-threshold routing is disabled for Entry Level, Good, and Best teams.
     These leads will be routed based on customer intent. GBP routing continues
     based on threshold and GBP nationality pool.
