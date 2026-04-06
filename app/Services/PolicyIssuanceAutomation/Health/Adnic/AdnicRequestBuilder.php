@@ -144,8 +144,8 @@ class AdnicRequestBuilder
             'SponsorInfo' => [
                 'SponserType' => $healthInsurerRequest?->SponsorInfo?->SponserType,
                 'SponserName' => $healthInsurerRequest?->SponsorInfo?->SponserName,
-                'MobileNo' => AdnicEnum::RESPONSIBLE_PERSON_DEFAULT_MOBILE,
-                'EmailId' => AdnicEnum::RESPONSIBLE_PERSON_DEFAULT_EMAIL,
+                'MobileNo' => $quote?->mobile_no ?? '',
+                'EmailId' => $quote?->email ?? '',
                 'Address' => $quote->emirate?->text ?? '',
                 'DateOfBirth' => $quote->dob ? date('d-m-Y', strtotime($quote->dob)) : null,
                 'Gender' => $this->mappingGender($quote->gender ?? null),
