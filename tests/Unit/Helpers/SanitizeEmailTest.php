@@ -30,6 +30,21 @@ it('trims leading and trailing whitespace from a valid address', function (): vo
     expect(EmailValidationService::sanitize('  user@example.com  '))->toBe('user@example.com');
 });
 
+it('trims common wrapper characters from both ends without touching the local part', function (string $dirty, string $expected): void {
+    expect(EmailValidationService::sanitize($dirty))->toBe($expected);
+})->with([
+    'percent wildcards' => ['%zeeshan232@gmail.com%', 'zeeshan232@gmail.com'],
+    'asterisk' => ['*user@example.com*', 'user@example.com'],
+    'caret' => ['^user@example.com^', 'user@example.com'],
+    'ampersand' => ['&user@example.com&', 'user@example.com'],
+    'double quotes' => ['"user@example.com"', 'user@example.com'],
+    'angle brackets' => ['<user@example.com>', 'user@example.com'],
+    'parentheses' => ['(user@example.com)', 'user@example.com'],
+    'square brackets' => ['[user@example.com]', 'user@example.com'],
+    'pipe' => ['|user@example.com|', 'user@example.com'],
+    'comma list fragment' => [',user@example.com,', 'user@example.com'],
+]);
+
 // ── RFC 5322 special characters in the local part ────────────────────────────
 
 it('accepts all RFC 5322 allowed special characters in the local part', function (string $email): void {
