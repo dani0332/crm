@@ -75,6 +75,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'pec_marked_at',
             'branch_id',
             'is_branch_applicable',
+            'health_plan_type_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
