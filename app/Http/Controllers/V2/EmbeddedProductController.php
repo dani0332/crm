@@ -29,7 +29,7 @@ use Inertia\ResponseFactory;
 
 class EmbeddedProductController extends Controller
 {
-    public function __construct()
+    public function __construct(private EmbeddedProductService $embeddedProductService)
     {
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
@@ -329,7 +329,7 @@ class EmbeddedProductController extends Controller
     public function updateEpDocument(UpdateEpDocumentRequest $request)
     {
         try {
-            $result = app(EmbeddedProductService::class)->updateEpDocument($request->validated());
+            $result = $this->embeddedProductService->updateEpDocument($request->validated());
 
             if (! $result) {
                 return response()->json([

@@ -96,7 +96,7 @@ test('authorized user can update ep document', function () {
         'document_type_text' => 'EP Certificate',
     ]);
 
-    // fetchUpdateEpDocument is resolved via app() in the controller, so app->instance() mocking works.
+    // EmbeddedProductService is constructor-injected; app->instance() supplies the mock.
     $mockService = Mockery::mock(EmbeddedProductService::class)->makePartial();
     $mockService->shouldReceive('updateEpDocument')
         ->once()
