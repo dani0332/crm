@@ -23,7 +23,6 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\GroupMedicalType;
 use App\Models\HealthPlanType;

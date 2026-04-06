@@ -37,6 +37,14 @@
                     <td>Allows viewing the list of rule configurations.</td>
                 </tr>
                 <tr>
+                    <td><span class="permission-value">rule-config-create</span></td>
+                    <td>Allows creating new rule configurations (allocation rules).</td>
+                </tr>
+                <tr>
+                    <td><span class="permission-value">rule-config-update</span></td>
+                    <td>Allows editing existing rule configurations (allocation rules).</td>
+                </tr>
+                <tr>
                     <td><span class="permission-value">quad-config-list</span></td>
                     <td>Allows viewing the list of quad configurations.</td>
                 </tr>

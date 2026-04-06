@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
@@ -15,6 +16,14 @@ use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('index');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('show');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_CREATE)->only(['create', 'store']);
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_UPDATE)->only(['edit', 'update']);
+    }
+
     /**
      * Display a listing of the resource.
      */

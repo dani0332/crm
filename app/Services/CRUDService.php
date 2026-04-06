@@ -638,7 +638,7 @@ class CRUDService extends BaseService
                                 'is_fulfilled' => 0,
                                 'action_type' => 'CAPTURE',
                                 'amount' => $amount,
-                                'created_by' => $createdBy ?? auth()->user()->email,
+                                'created_by' => $createdBy ?? auth()->user()?->email,
                                 'is_manager_approved' => 1,
                             ]
                         );

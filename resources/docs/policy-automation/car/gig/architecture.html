@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIG Car - System Architecture Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #e53e3e;
+      }
+
+      .section h3 {
+        color: #e53e3e;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .section p {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.8;
+      }
+
+      .section ul,
+      .section ol {
+        margin-left: 30px;
+        margin-bottom: 20px;
+        color: #555;
+      }
+
+      .section li {
+        margin-bottom: 10px;
+        line-height: 1.7;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .code-inline {
+        background: #ffe5e5;
+        color: #e53e3e;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .service-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-left: 4px solid #e53e3e;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .service-card:hover {
+        transform: translateX(5px);
+      }
+
+      .service-card h4 {
+        color: #e53e3e;
+        margin-top: 0;
+        font-size: 1.3em;
+      }
+
+      .service-card .responsibility {
+        background: #ffe5e5;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .service-card .responsibility strong {
+        color: #2c3e50;
+      }
+
+      .pattern-badge {
+        display: inline-block;
+        background: #e53e3e;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        margin: 5px 5px 5px 0;
+        font-weight: 600;
+      }
+
+      .architecture-diagram {
+        background: #f8f9fa;
+        border: 2px solid #e53e3e;
+        border-radius: 10px;
+        padding: 25px;
+        margin: 25px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.8;
+        overflow-x: auto;
+      }
+
+      .info-box {
+        background: #ffe5e5;
+        border-left: 4px solid #e53e3e;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .info-box strong {
+        color: #e53e3e;
+      }
+
+      .warning-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .warning-box strong {
+        color: #856404;
+      }
+
+      .nav-links {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-links h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table th {
+        background: #e53e3e;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .section {
+          padding: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/gig/index.html">GIG (AXA)</a>
+        <span>></span>
+        <span>Architecture</span>
+      </div>
+
+      <div class="header">
+        <h1>🏗️ System Architecture</h1>
+        <p>
+          Complete Technical Architecture Documentation for GIG Car Policy
+          Issuance Automation
+        </p>
+      </div>
+
+      <div class="nav-links">
+        <h3>📚 Navigation</h3>
+        <a href="/docs/policy-automation/car/gig/index.html"
+          >← Back to Overview</a
+        >
+        <a href="/docs/policy-automation/car/gig/automation-flow.html"
+          >Automation Flow →</a
+        >
+        <a href="/docs/policy-automation/car/gig/api-integration.html"
+          >API Integration →</a
+        >
+        <a href="/docs/policy-automation/car/gig/configuration.html"
+          >Configuration →</a
+        >
+      </div>
+
+      <!-- Overview Section -->
+      <div class="section">
+        <h2>📋 Overview</h2>
+        <p>
+          The GIG Car Policy Issuance Automation system follows a monolithic
+          service architecture where <code>GIGInsuranceService</code> implements
+          the <code>PolicyIssuanceInterface</code> and handles all aspects of
+          the automation workflow. Unlike the ADNIC Health implementation which
+          uses multiple specialized services, GIG Car uses a single service
+          class with integrated OAuth authentication, HTTP communication, and
+          batch OCR processing.
+        </p>
+
+        <h3>Core Purpose</h3>
+        <ul>
+          <li>
+            Automate the entire car policy issuance lifecycle from document
+            upload to booked policy
+          </li>
+          <li>Provide OAuth 2.0 authentication with Redis token caching</li>
+          <li>Handle batch OCR processing for policy documents</li>
+          <li>
+            Maintain data integrity and audit trails throughout the automation
+            process
+          </li>
+          <li>Enable seamless integration with GIG Insurance APIs</li>
+        </ul>
+
+        <h3>Key Features</h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+          "
+        >
+          <div class="info-box">
+            <strong>OAuth 2.0 Authentication:</strong> Client credentials flow
+            with Redis token caching
+          </div>
+          <div class="info-box">
+            <strong>Monolithic Service:</strong> Single service class handling
+            all automation steps
+          </div>
+          <div class="info-box">
+            <strong>Batch OCR Processing:</strong> Laravel batch jobs for
+            parallel document processing
+          </div>
+          <div class="info-box">
+            <strong>Comprehensive Logging:</strong> Detailed audit trails using
+            LoggerService
+          </div>
+          <div class="info-box">
+            <strong>Retry Mechanisms:</strong> Handles timeouts and transient
+            failures
+          </div>
+          <div class="info-box">
+            <strong>Document Management:</strong> Azure Storage integration for
+            document handling
+          </div>
+          <div class="info-box">
+            <strong>Status Tracking:</strong> Real-time tracking of automation
+            progress
+          </div>
+          <div class="info-box">
+            <strong>Queue-based Processing:</strong> Asynchronous batch job
+            processing
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture Layers -->
+      <div class="section">
+        <h2>🏛️ Architecture Layers</h2>
+
+        <h3>1. Interface Layer</h3>
+        <div class="architecture-diagram">
+          PolicyIssuanceInterface ├── executeSteps($process) └──
+          createPolicyIssuanceSchedule($quote, $insurer)
+        </div>
+        <p>
+          <strong>Purpose:</strong> Defines the contract that all insurance
+          provider services must implement.
+        </p>
+        <p>
+          <strong>Implementation:</strong>
+          <code>GIGInsuranceService</code> implements this interface.
+        </p>
+
+        <h3>2. Service Layer Architecture</h3>
+        <div class="architecture-diagram">
+          PolicyIssuanceAutomation/ ├── PolicyIssuanceService # Core
+          orchestration service └── Car/ └── GIGInsuranceService # Monolithic
+          service (implements Interface) ├── OAuth Token Management # Redis
+          caching ├── HTTP Communication # Laravel Http facade ├── Step
+          Execution # Sequential workflow ├── Document Handling # Azure Storage
+          integration ├── OCR Batch Processing # Laravel batch jobs └── Booking
+          Integration # Sage ERP integration
+        </div>
+      </div>
+
+      <!-- Core Components -->
+      <div class="section">
+        <h2>🔧 Core Component: GIGInsuranceService</h2>
+
+        <div class="service-card">
+          <h4>
+            GIGInsuranceService <span class="pattern-badge">Main Service</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>
+                Implements
+                <code class="code-inline">PolicyIssuanceInterface</code>
+              </li>
+              <li>Manages OAuth 2.0 authentication with Redis caching</li>
+              <li>Handles all HTTP communication with GIG APIs</li>
+              <li>Executes sequential automation steps</li>
+              <li>Manages document upload/download operations</li>
+              <li>Coordinates batch OCR processing</li>
+              <li>Integrates with Sage ERP for booking</li>
+              <li>Tracks step progression and state management</li>
+            </ul>
+          </div>
+          <h4>Key Properties:</h4>
+          <div class="code-block">
+            <code
+              >private readonly string $className; private readonly string
+              $baseUrl; // GIG API base URL private readonly string $authUrl; //
+              OAuth token endpoint private readonly string $clientId; // OAuth
+              client ID private readonly string $clientSecret; // OAuth client
+              secret private ?string $accessToken = null; // Cached access
+              token</code
+            >
+          </div>
+          <h4>Key Methods:</h4>
+          <ul>
+            <li>
+              <code class="code-inline">createPolicyIssuanceSchedule()</code> -
+              Initiates automation schedule
+            </li>
+            <li>
+              <code class="code-inline">executeSteps()</code> - Main entry point
+              for step execution
+            </li>
+            <li>
+              <code class="code-inline">executeStepSequence()</code> -
+              Sequential step execution
+            </li>
+            <li>
+              <code class="code-inline">getNextStep()</code> - Determines next
+              step based on completed steps
+            </li>
+            <li>
+              <code class="code-inline">initializeAccessToken()</code> - OAuth
+              token initialization
+            </li>
+            <li>
+              <code class="code-inline">getAccessToken()</code> - Fetch OAuth
+              token from API
+            </li>
+            <li>
+              <code class="code-inline">httpCall()</code> - HTTP communication
+              wrapper
+            </li>
+            <li>
+              <code class="code-inline">UploadDocuments()</code> - Step 1:
+              Upload documents
+            </li>
+            <li>
+              <code class="code-inline">issuePolicy()</code> - Step 2: Issue
+              policy
+            </li>
+            <li>
+              <code class="code-inline"
+                >getAndUploadPolicyDocumentsToIMCRM()</code
+              >
+              - Step 3: Get and upload policy docs
+            </li>
+            <li>
+              <code class="code-inline">executeOCRProcessing()</code> - Step 4:
+              OCR batch processing
+            </li>
+            <li>
+              <code class="code-inline">bookPolicy()</code> - Step 5: Book
+              policy
+            </li>
+            <li>
+              <code class="code-inline"
+                >dispatchPopulateDocumentDataBatch()</code
+              >
+              - Dispatch OCR batch jobs
+            </li>
+            <li>
+              <code class="code-inline"
+                >isPolicyIssuanceAutomationEnabled()</code
+              >
+              - Feature toggle check
+            </li>
+            <li>
+              <code class="code-inline">getStepsLockingStatus()</code> - UI
+              locking status
+            </li>
+          </ul>
+          <p>
+            <strong>Pattern:</strong>
+            <span class="pattern-badge">Strategy Pattern</span>
+            <span class="pattern-badge">Monolithic Service</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- OAuth Authentication -->
+      <div class="section">
+        <h2>🔐 OAuth 2.0 Authentication</h2>
+
+        <h3>Token Management Flow</h3>
+        <div class="architecture-diagram">
+          1. Check Redis Cache for existing token ├── Token exists and valid →
+          Use cached token └── Token missing/expired → Fetch new token ├── Call
+          OAuth endpoint (/oauth/token) ├── Extract access_token and expires_in
+          ├── Cache token in Redis with TTL └── Return access token
+        </div>
+
+        <h3>OAuth Configuration</h3>
+        <div class="code-block">
+          <code
+            >// OAuth Endpoint authUrl: {GIG_API_AUTH_BASE_URL}/oauth/token //
+            Request Payload { 'client_id': {GIG_API_AUTH_CLIENT_ID},
+            'client_secret': {GIG_API_AUTH_CLIENT_SECRET}, 'grant_type':
+            'client_credentials', 'audience': 'integration-platform' } //
+            Response { 'access_token': '...', 'expires_in': 3600, 'token_type':
+            'Bearer' }</code
+          >
+        </div>
+
+        <h3>Token Caching</h3>
+        <ul>
+          <li>
+            <strong>Cache Key:</strong>
+            <code>AXA_POLICY_ISSUANCE_API_ACCESS_TOKEN</code>
+          </li>
+          <li><strong>Cache Store:</strong> Redis</li>
+          <li>
+            <strong>TTL:</strong> Set from <code>expires_in</code> response
+            field
+          </li>
+          <li>
+            <strong>Token Refresh:</strong> Automatic refresh when token expires
+            or missing
+          </li>
+        </ul>
+
+        <div class="info-box">
+          <strong>Benefits:</strong>
+          <ul>
+            <li>Reduces API calls to OAuth endpoint</li>
+            <li>
+              Improves performance by avoiding token fetch on every request
+            </li>
+            <li>Automatic token refresh ensures continuous operation</li>
+            <li>Redis caching provides fast token retrieval</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- HTTP Communication -->
+      <div class="section">
+        <h2>🌐 HTTP Communication</h2>
+
+        <h3>HTTP Client Configuration</h3>
+        <div class="code-block">
+          <code
+            >// Base URL baseUrl: {GIG_API_BASE_URL}/apis/gulf-motor-v3-vs/motor
+            // Standard Headers (for authenticated requests) { 'Authorization':
+            'Bearer {accessToken}', 'opCo': 'GULF', 'sourceApplication': 'OLS',
+            'Content-Type': 'application/json' } // Retry Configuration
+            maxRetries: 5 retryDelay: 10000ms (10 seconds) timeout: 30
+            seconds</code
+          >
+        </div>
+
+        <h3>HTTP Methods</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Usage</th>
+              <th>Retry</th>
+              <th>Content Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td>Download documents</td>
+              <td>5 retries</td>
+              <td>JSON</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td>Upload documents, issue policy</td>
+              <td>1 retry</td>
+              <td>JSON</td>
+            </tr>
+            <tr>
+              <td><code>PATCH</code></td>
+              <td>Update operations</td>
+              <td>5 retries</td>
+              <td>JSON</td>
+            </tr>
+            <tr>
+              <td><code>AUTH</code></td>
+              <td>OAuth token request</td>
+              <td>5 retries</td>
+              <td>Form URL-encoded</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Batch OCR Processing -->
+      <div class="section">
+        <h2>📄 Batch OCR Processing</h2>
+
+        <h3>OCR Batch Architecture</h3>
+        <div class="architecture-diagram">
+          executeOCRProcessing() ├── Get policy documents (TI, CTIRBB) ├──
+          Create PopulateDocumentData jobs │ ├── Job 1: Tax Invoice OCR │ ├──
+          Job 2: Tax Invoice by Buyer OCR │ └── ... ├── Dispatch Laravel Batch │
+          ├── then() callback → Update status on success │ ├── catch() callback
+          → Handle complete failure │ └── finally() callback → Log statistics
+          └── Return processing status
+        </div>
+
+        <h3>Batch Job Configuration</h3>
+        <div class="code-block">
+          <code
+            >Bus::batch($documentOCRJobs) ->then(function (Batch $batch) { //
+            All jobs completed successfully // Update process status to
+            BOOKING_PENDING_STATUS // Mark step as completed }) ->catch(function
+            (Batch $batch, Throwable $e) { // Complete batch failure // Update
+            status to FAILED_STATUS // Log error }) ->finally(function (Batch
+            $batch) { // Always executed // Log batch statistics })
+            ->allowFailures() // Allow partial failures ->onQueue('shared')
+            ->dispatch();</code
+          >
+        </div>
+
+        <h3>OCR Job Details</h3>
+        <ul>
+          <li><strong>Job Class:</strong> <code>PopulateDocumentData</code></li>
+          <li>
+            <strong>Parameters:</strong> Quote type, Quote model, Document type,
+            Document URL, MIME type, User ID
+          </li>
+          <li><strong>Queue:</strong> 'shared' queue for load distribution</li>
+          <li>
+            <strong>Failure Handling:</strong> Partial failures allowed,
+            complete failure triggers catch callback
+          </li>
+        </ul>
+      </div>
+
+      <!-- Design Patterns -->
+      <div class="section">
+        <h2>🎨 Design Patterns & Principles</h2>
+
+        <h3>1. Strategy Pattern</h3>
+        <p>
+          <code>GIGInsuranceService</code> implements
+          <code>PolicyIssuanceInterface</code>, providing a provider-specific
+          strategy for car insurance automation.
+        </p>
+
+        <h3>2. Monolithic Service Pattern</h3>
+        <p>
+          Unlike ADNIC's multi-service architecture, GIG uses a single service
+          class that handles all aspects of automation, providing simplicity and
+          cohesion.
+        </p>
+
+        <h3>3. Chain of Responsibility</h3>
+        <p>Step execution flows sequentially through the service:</p>
+        <div class="architecture-diagram">
+          executeSteps() → executeStepSequence() → executeUploadDocumentsStep()
+          → executeIssuePolicyStep() → ...
+        </div>
+
+        <h3>4. Facade Pattern</h3>
+        <p>
+          <code>httpCall()</code> method provides a simplified interface to
+          Laravel's HTTP client, abstracting retry logic, headers, and error
+          handling.
+        </p>
+
+        <h3>5. Builder Pattern</h3>
+        <p>
+          Payload construction methods build complex API request payloads
+          step-by-step (e.g., document upload payload, policy issuance payload).
+        </p>
+
+        <h3>6. Observer Pattern</h3>
+        <p>
+          Laravel batch jobs use callbacks (then, catch, finally) to observe
+          batch completion and update process state accordingly.
+        </p>
+      </div>
+
+      <!-- Integration Points -->
+      <div class="section">
+        <h2>🔌 Integration Points</h2>
+
+        <h3>1. Queue System</h3>
+        <p><strong>Job Dispatch:</strong></p>
+        <div class="code-block">
+          <code
+            >PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)
+            ->onQueue('policy-issuance-automation');</code
+          >
+        </div>
+
+        <h3>2. PolicyIssuanceService</h3>
+        <p><strong>Core service that manages all automation:</strong></p>
+        <ul>
+          <li>
+            <code class="code-inline">schedulePolicyIssuance()</code> - Create
+            automation schedule
+          </li>
+          <li>
+            <code class="code-inline">init()</code> - Factory method for
+            provider services
+          </li>
+          <li>
+            <code class="code-inline"
+              >executePolicyIssuanceAutomationSteps()</code
+            >
+            - Command handler
+          </li>
+          <li>
+            <code class="code-inline">storePolicyIssuanceLog()</code> - Audit
+            trail storage
+          </li>
+          <li>
+            <code class="code-inline">documentUploadPreChecks()</code> -
+            Document validation
+          </li>
+        </ul>
+
+        <h3>3. External Services Integration</h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+          "
+        >
+          <div class="info-box">
+            <strong>CentralService:</strong> Booking details updates, car quote
+            info sync
+          </div>
+          <div class="info-box">
+            <strong>SageApiService:</strong> Sage ERP integration for booking
+          </div>
+          <div class="info-box">
+            <strong>ManualCommissionUpdateService:</strong> Commission
+            calculation and updates
+          </div>
+          <div class="info-box">
+            <strong>ApplicationStorageService:</strong> Feature toggles and
+            configuration
+          </div>
+          <div class="info-box">
+            <strong>LoggerService:</strong> Centralized logging
+          </div>
+          <div class="info-box">
+            <strong>Azure Storage:</strong> Document storage and retrieval
+          </div>
+          <div class="info-box">
+            <strong>Redis Cache:</strong> OAuth token caching
+          </div>
+          <div class="info-box">
+            <strong>Laravel Batch:</strong> OCR job batch processing
+          </div>
+        </div>
+
+        <h3>4. Database Models</h3>
+        <ul>
+          <li><strong>PolicyIssuance:</strong> Automation process tracking</li>
+          <li><strong>PolicyIssuanceLog:</strong> API call audit logs</li>
+          <li><strong>PersonalQuote:</strong> Quote data storage</li>
+          <li><strong>Payment:</strong> Payment and commission data</li>
+          <li><strong>QuoteDocument:</strong> Document attachments</li>
+          <li>
+            <strong>CarQuoteRequestDetail:</strong> Car-specific quote details
+          </li>
+        </ul>
+      </div>
+
+      <!-- Key Implementation Details -->
+      <div class="section">
+        <h2>📝 Key Implementation Details</h2>
+
+        <h3>1. OAuth Token Initialization</h3>
+        <div class="code-block">
+          <code
+            >private function initializeAccessToken(): bool { // Check Redis
+            cache first $this->accessToken = Cache::store('redis')
+            ->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY); // Fetch new
+            token if not cached if (!$this->accessToken) { $this->accessToken =
+            $this->getAccessToken(); } return $this->accessToken !== null;
+            }</code
+          >
+        </div>
+
+        <h3>2. Step Execution Sequence</h3>
+        <div class="code-block">
+          <code
+            >private function executeStepSequence($quote, $process,
+            $nextStepToBeExecuted) { // Step 1: Upload Documents if
+            ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) { $response =
+            $this->executeUploadDocumentsStep($quote, $process); if
+            (!$response['status']) return $response; $nextStepToBeExecuted =
+            $this->getNextStep($process->completed_step); } // Step 2: Issue
+            Policy if ($nextStepToBeExecuted === self::ISSUE_POLICY) { // ...
+            continue with next steps } // Continue for all 5 steps... }</code
+          >
+        </div>
+
+        <h3>3. Document Type Mapping</h3>
+        <div class="code-block">
+          <code
+            >private function documentsToUpload() { return collect([
+            QuoteDocumentsEnum::CAR_REGISTRATION_CARD => [ 'insurerDocCode' =>
+            'DT01', 'insurerDocName' => 'Car Registration Document', ],
+            QuoteDocumentsEnum::DRIVING_LICENSE => [ 'insurerDocCode' => 'DT02',
+            'insurerDocName' => 'Driving License', ],
+            QuoteDocumentsEnum::CAR_EMIRATE_ID => [ 'insurerDocCode' => 'DT03',
+            'insurerDocName' => 'National ID', ], ]); }</code
+          >
+        </div>
+
+        <h3>4. Batch OCR Dispatch</h3>
+        <div class="code-block">
+          <code
+            >private function dispatchPopulateDocumentDataBatch($quote,
+            $uploadedDocuments, $process): void { $documentOCRJobs = []; foreach
+            ($uploadedDocuments as $document) { $documentOCRJobs[] = new
+            PopulateDocumentData( QuoteTypes::CAR, $quote, $documentType,
+            $document->doc_url, $document->doc_mime_type, $happinessUser->id );
+            } Bus::batch($documentOCRJobs) ->then(function (Batch $batch) use
+            ($quote, $process) { $process->update([ 'completed_step' =>
+            self::EXECUTE_OCR_PROCESSING, 'status' =>
+            PolicyIssuanceEnum::BOOKING_PENDING_STATUS, ]); }) ->allowFailures()
+            ->onQueue('shared') ->dispatch(); }</code
+          >
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong
+            >GIG Car Insurance Automation - System Architecture
+            Documentation</strong
+          >
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Architecture Version 1.0 | Last Updated: February 2026 | Production
+          Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

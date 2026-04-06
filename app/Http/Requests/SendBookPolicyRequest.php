@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\BusinessQuote;
+use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -45,45 +42,27 @@ class SendBookPolicyRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+        $sendPolicyType = $this->input('send_policy_type');
+        $modelType = $this->input('model_type');
+        $quote = $this->getQuoteObject($modelType, $this->input('quote_id'));
 
-        if ($quote?->quote_type_id == QuoteTypeId::Savings) {
+        if ($sendPolicyType == SendPolicyTypeEnum::CUSTOMER) {
             $validator->after(function ($validator) use ($quote) {
-                $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
-                $requiredDocuments = [
-                    DocumentTypeCode::PS_SAV,
-                    DocumentTypeCode::PC_SAV,
-                    DocumentTypeCode::AC_SAV,
-                ];
+                if ($quote) {
+                    if (! $quote?->advisor_id) {
+                        $validator->errors()->add('error', 'Please select advisor');
+                    }
 
-                // Check if all required documents are present in uploaded documents
-                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
+                    if (! $quote?->email) {
+                        $validator->errors()->add('error', 'Customer email is required');
+                    }
+                } else {
+                    $validator->errors()->add('error', 'Quote not found');
                 }
             });
         }
 
-        if ($quote instanceof BusinessQuote && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-            $validator->after(function ($validator) use ($quote) {
-                if (! $quote?->emirate_of_registration_id) {
-                    $validator->errors()->add('error', 'Posting blocked: Emirate of registration is required for financial processing.');
-                }
-            });
-        }
-
-        if (request()->send_policy_type == 'customer') {
-            $validator->after(function ($validator) use ($quote) {
-                if (! $quote?->advisor_id) {
-                    $validator->errors()->add('error', 'Please select advisor');
-                }
-
-                if (! $quote?->email) {
-                    $validator->errors()->add('error', 'Customer email is required');
-                }
-            });
-        }
-
-        if (request()->send_policy_type == 'sage') {
+        if ($sendPolicyType == SendPolicyTypeEnum::SAGE) {
             if (! request()->has('through_automation') && ! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
