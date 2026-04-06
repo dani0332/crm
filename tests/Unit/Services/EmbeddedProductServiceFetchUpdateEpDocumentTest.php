@@ -12,7 +12,7 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
-use App\Repositories\EmbeddedProductRepository;
+use App\Services\Life\EmbeddedProductService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
@@ -55,9 +55,9 @@ test('fetchUpdateEpDocument returns false when quote cannot be resolved via getQ
         'doc_name' => 'CERT_suffix.pdf',
     ]);
 
-    $repo = app(EmbeddedProductRepository::class);
+    $service = app(EmbeddedProductService::class);
 
-    $result = $repo->fetchUpdateEpDocument([
+    $result = $service->updateEpDocument([
         'epId' => $ep->id,
         'modelType' => 'car',
         'quoteId' => $orphanQuoteRequestId,
@@ -103,9 +103,9 @@ test('fetchUpdateEpDocument returns false when document type row is missing for 
         'doc_name' => 'CERT_suffix.pdf',
     ]);
 
-    $repo = app(EmbeddedProductRepository::class);
+    $service = app(EmbeddedProductService::class);
 
-    $result = $repo->fetchUpdateEpDocument([
+    $result = $service->updateEpDocument([
         'epId' => $ep->id,
         'modelType' => 'car',
         'quoteId' => $carQuote->id,
@@ -151,9 +151,9 @@ test('fetchUpdateEpDocument soft-deletes the old row, persists the new document,
         'doc_name' => 'CERT_original.pdf',
     ]);
 
-    $repo = app(EmbeddedProductRepository::class);
+    $service = app(EmbeddedProductService::class);
 
-    $result = $repo->fetchUpdateEpDocument([
+    $result = $service->updateEpDocument([
         'epId' => $ep->id,
         'modelType' => 'car',
         'quoteId' => $carQuote->id,

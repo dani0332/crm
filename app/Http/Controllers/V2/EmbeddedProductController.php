@@ -18,6 +18,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\Life\EmbeddedProductService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
@@ -328,7 +329,7 @@ class EmbeddedProductController extends Controller
     public function updateEpDocument(UpdateEpDocumentRequest $request)
     {
         try {
-            $result = app(EmbeddedProductRepository::class)->fetchUpdateEpDocument($request->validated());
+            $result = app(EmbeddedProductService::class)->updateEpDocument($request->validated());
 
             if (! $result) {
                 return response()->json([

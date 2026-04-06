@@ -5,7 +5,7 @@ use App\Enums\PermissionsEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\QuoteDocument;
-use App\Repositories\EmbeddedProductRepository;
+use App\Services\Life\EmbeddedProductService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Permission;
@@ -46,11 +46,11 @@ test('user with only EP_DOCUMENT_MANUAL_OVERRIDE can call update-ep-document wit
         'document_type_text' => 'EP Certificate',
     ]);
 
-    $mockRepo = Mockery::mock(EmbeddedProductRepository::class)->makePartial();
-    $mockRepo->shouldReceive('fetchUpdateEpDocument')
+    $mockService = Mockery::mock(EmbeddedProductService::class)->makePartial();
+    $mockService->shouldReceive('updateEpDocument')
         ->once()
         ->andReturn(true);
-    $this->app->instance(EmbeddedProductRepository::class, $mockRepo);
+    $this->app->instance(EmbeddedProductService::class, $mockService);
 
     $response = $this->postJson(route('embedded-products.update-ep-document'), [
         'epId' => $ep->id,
@@ -97,11 +97,11 @@ test('authorized user can update ep document', function () {
     ]);
 
     // fetchUpdateEpDocument is resolved via app() in the controller, so app->instance() mocking works.
-    $mockRepo = Mockery::mock(EmbeddedProductRepository::class)->makePartial();
-    $mockRepo->shouldReceive('fetchUpdateEpDocument')
+    $mockService = Mockery::mock(EmbeddedProductService::class)->makePartial();
+    $mockService->shouldReceive('updateEpDocument')
         ->once()
         ->andReturn(true);
-    $this->app->instance(EmbeddedProductRepository::class, $mockRepo);
+    $this->app->instance(EmbeddedProductService::class, $mockService);
 
     $response = $this->postJson(route('embedded-products.update-ep-document'), [
         'epId' => $ep->id,
@@ -116,23 +116,23 @@ test('authorized user can update ep document', function () {
     $response->assertStatus(200)
         ->assertJson(['success' => true, 'message' => 'Document updated successfully.']);
 
-    // WatermarkDocumentsJob is dispatched inside fetchUpdateEpDocument which is mocked here,
+    // WatermarkDocumentsJob is dispatched inside updateEpDocument, which is mocked here,
     // so no job is pushed in this test.
     Queue::assertNotPushed(WatermarkDocumentsJob::class);
 });
 
-test('controller returns 422 when repository reports failure', function () {
+test('controller returns 422 when service reports failure', function () {
     Queue::fake();
     $this->actingAs($this->user);
 
     $ep = EmbeddedProduct::factory()->createOneQuietly();
     $doc = QuoteDocument::factory()->createOneQuietly(['quote_documentable_id' => 1]);
 
-    $mockRepo = Mockery::mock(EmbeddedProductRepository::class)->makePartial();
-    $mockRepo->shouldReceive('fetchUpdateEpDocument')
+    $mockService = Mockery::mock(EmbeddedProductService::class)->makePartial();
+    $mockService->shouldReceive('updateEpDocument')
         ->once()
         ->andReturn(false);
-    $this->app->instance(EmbeddedProductRepository::class, $mockRepo);
+    $this->app->instance(EmbeddedProductService::class, $mockService);
 
     $response = $this->postJson(route('embedded-products.update-ep-document'), [
         'epId' => $ep->id,
