@@ -42,8 +42,9 @@ class QuoteDocumentAccessService
         if (! $quoteType instanceof QuoteTypes) {
             return false;
         }
-       
+
         $advisorId = $this->resolveAdvisorIdFromDocumentable($quoteDocumentable);
+
         return $this->userPassesLobManagerOrAssignedAdvisor(
             $user,
             $advisorId,
