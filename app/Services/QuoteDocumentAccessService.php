@@ -102,6 +102,7 @@ class QuoteDocumentAccessService
         if ($documentable instanceof SendUpdateLog) {
             $documentable->loadMissing('personalQuote');
             $advisorId = $documentable->personalQuote?->advisor_id;
+
             if ($advisorId !== null) {
                 return (int) $advisorId;
             }
@@ -111,12 +112,13 @@ class QuoteDocumentAccessService
             }
 
             $quoteType = QuoteTypes::getName((int) $documentable->quote_type_id);
+
             if (! $quoteType instanceof QuoteTypes) {
                 return null;
             }
 
             $linkedQuote = $this->sendUpdateLogService->getQuoteObjectBy(
-                $quoteType->value,
+                $this->quoteTypeLabelForGetQuoteObjectBy($quoteType),
                 $documentable->quote_uuid,
                 'uuid',
             );
@@ -137,6 +139,19 @@ class QuoteDocumentAccessService
         }
 
         return null;
+    }
+
+    /**
+     * {@see GenericQueriesAllLobs::getQuoteObjectBy()} loads {@see BusinessQuote} when the type string maps to the Business quote model.
+     * Corp-line and group-medical send-update logs use {@see QuoteTypes::CORPLINE} / {@see QuoteTypes::GROUP_MEDICAL}; their enum values
+     * would otherwise produce invalid `*Quote` class names and break linked-quote resolution.
+     */
+    private function quoteTypeLabelForGetQuoteObjectBy(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL => QuoteTypes::BUSINESS->value,
+            default => $quoteType->value,
+        };
     }
 
     /**
