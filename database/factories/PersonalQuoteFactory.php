@@ -2,71 +2,173 @@
 
 namespace Database\Factories;
 
+use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\Customer;
+use App\Models\CyberQuote;
+use App\Models\Emirate;
+use App\Models\Nationality;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
-use App\Models\QuoteType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PersonalQuoteFactory extends Factory
 {
     protected $model = PersonalQuote::class;
 
-    public function definition()
+    public function definition(): array
     {
-        $priceType = $this->faker->randomElement(['price_vat_applicable', 'price_vat_not_applicable']);
-        $commissionType = $this->faker->randomElement(['commission_vat_applicable', 'commission_vat_not_applicable']);
-        $table = $this->faker->randomElement(['car_quote_request', 'health_quote_request']);
-        var_dump($table);
+        return [
+            'uuid' => Str::upper(Str::random(6)),
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'mobile_no' => $this->faker->numerify('05########'),
+            'policy_number' => 'POL'.Str::upper(Str::random(5)),
+            'policy_start_date' => now()->toDateString(),
+            'policy_expiry_date' => now()->addYear()->toDateString(),
+            'policy_issuance_date' => now()->toDateString(),
+            'policy_issuance_status_id' => 1,
+            'price_vat_applicable' => 1000,
+            'price_with_vat' => 1100,
+            'vat' => 100,
+            'insurer_quote_number' => 'AWNIC-'.Str::upper(Str::random(4)),
+            'quote_status_id' => 1,
+            'quote_status_date' => now(),
+        ];
+    }
 
-        $record = DB::table($table)
-            ->join('payments', $table.'.id', '=', 'payments.paymentable_id')
-            ->whereNotExists(function ($query) use ($table) {
-                $query->select(DB::raw(1))
-                    ->from('personal_quotes')
-                    ->whereRaw($table.'.code = personal_quotes.code');
-            })
-            ->select($table.'.*')
-            ->inRandomOrder()
-            ->first();
+    /**
+     * Define the model's cyber quote state.
+     *
+     * @return array
+     */
+    public function cyberQuote()
+    {
+        return $this->state(fn (array $attributes) => [
+            'code' => 'CYB-'.$attributes['uuid'],
+            'quote_type_id' => QuoteTypeId::Cyber,
+        ]);
+    }
 
-        // Check if a record is found before accessing its properties
-        if ($record !== null) {
-            // Ensure that the QuoteType entry exists before assigning its ID
-            $quoteTypeShortCode = ($table === 'car_quote_request') ? 'CAR' : 'HEA';
-            $quoteType = QuoteType::where('short_code', $quoteTypeShortCode)->first();
-            var_dump(str($quoteType->id));
-            if ($quoteType !== null) {
+    public function withCyberDependencies(): static
+    {
+        return $this->cyberQuote()->afterCreating(function (PersonalQuote $quote) {
+            $nationality = Nationality::factory()->state([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => true,
+            ])->create();
 
-                var_dump($record->code);
-                // Check if a record with the same code already exists in personal_quotes
-                $personalQuote = PersonalQuote::where('code', $record->code)->first();
-                if ($personalQuote === null) {
-                    return [
-                        'uuid' => ''.$record->uuid.'',
-                        'advisor_id' => $record->advisor_id,
-                        'first_name' => ''.$record->first_name.'',
-                        'last_name' => ''.$record->last_name.'',
-                        'email' => ''.$record->email.'',
-                        'mobile_no' => ''.$record->mobile_no,
-                        'source' => ''.$record->source.'',
-                        'device' => ''.$record->device.'',
-                        'code' => ''.$record->code.'',
-                        'quote_type_id' => $quoteType->id,
-                        'policy_issuance_date' => ''.now().'',
-                        'policy_number' => ''.$this->faker->randomNumber().'',
-                        'customer_id' => $record->customer_id,
-                        'created_at' => ''.now().'',
-                        'updated_at' => ''.now().'',
-                        'price_vat_applicable' => $record->$priceType === 'price_vat_applicable' ? $this->faker->numberBetween(500, 10000) : 0,
-                        'price_vat_not_applicable' => $record->$priceType === 'price_vat_not_applicable' ? $this->faker->numberBetween(500, 10000) : 0,
-                        'commission_vat_applicable' => $record->$commissionType === 'commission_vat_applicable' ? $this->faker->numberBetween(500, 10000) : 0,
-                        'commission_vat_not_applicable' => $record->$commissionType === 'commission_vat_not_applicable' ? $this->faker->numberBetween(500, 10000) : 0,
-                    ];
-                }
-            }
-        }
+            $customer = Customer::withoutEvents(function () use ($quote, $nationality) {
+                return Customer::factory()->create([
+                    'first_name' => $quote->first_name,
+                    'last_name' => $quote->last_name,
+                    'email' => $quote->email,
+                    'mobile_no' => $quote->mobile_no,
+                    'dob' => '1990-01-01',
+                    'nationality_id' => $nationality->id,
+                ]);
+            });
 
-        // If $record is null or a record with the same code already exists, return an empty array to skip insertion
-        return [];
+            $quote->update([
+                'customer_id' => $customer->id,
+                'nationality_id' => $nationality->id,
+            ]);
+
+            $emirate = Emirate::factory()->state([
+                'text' => 'Dubai',
+                'is_active' => true,
+            ])->create();
+
+            CyberQuote::factory()->create([
+                'personal_quote_id' => $quote->id,
+                'emirate_of_registration_id' => $emirate->id,
+                'coverage_id' => 1,
+            ]);
+
+            $payment = Payment::factory()->cyberPayment($quote->code, $quote->id)->create();
+
+            PaymentSplits::factory()->cyberPaymentSplit($payment->code)->create();
+
+            $quote->setRelation('cyberPlanDetail', (object) [
+                'coverage' => 500000,
+                'planName' => 'Gold Plan',
+            ]);
+
+            $quote->documents()->create([
+                'document_type_code' => DocumentTypeCode::CYB_EID,
+                'doc_name' => 'EmiratesId.pdf',
+                'doc_url' => 'documents/eid.pdf',
+                'doc_mime_type' => 'application/pdf',
+            ]);
+        });
+    }
+
+    /**
+     * Cyber quote with payment authorized 24+ hours ago and no documents.
+     * Used for testing hasPaymentAuthorizedWithNoDocuments allocation flow.
+     *
+     * @param  Carbon|null  $authorizedAt  Override for testing (e.g. now()->subHours(12) for "less than 24h" case)
+     */
+    public function paymentAuthorizedWithNoDocuments(?Carbon $authorizedAt = null): static
+    {
+        $authorizedAt = $authorizedAt ?? now()->subHours(24);
+
+        return $this->cyberQuote()->afterCreating(function (PersonalQuote $quote) use ($authorizedAt) {
+            $nationality = Nationality::factory()->state([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => true,
+            ])->create();
+
+            $customer = Customer::withoutEvents(function () use ($quote, $nationality) {
+                return Customer::factory()->create([
+                    'first_name' => $quote->first_name,
+                    'last_name' => $quote->last_name,
+                    'email' => $quote->email,
+                    'mobile_no' => $quote->mobile_no,
+                    'dob' => '1990-01-01',
+                    'nationality_id' => $nationality->id,
+                ]);
+            });
+
+            $quote->update([
+                'customer_id' => $customer->id,
+                'nationality_id' => $nationality->id,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            $emirate = Emirate::factory()->state([
+                'text' => 'Dubai',
+                'is_active' => true,
+            ])->create();
+
+            CyberQuote::factory()->create([
+                'personal_quote_id' => $quote->id,
+                'emirate_of_registration_id' => $emirate->id,
+                'coverage_id' => 1,
+            ]);
+
+            $payment = Payment::factory()->cyberPayment($quote->code, $quote->id)->create([
+                'authorized_at' => $authorizedAt,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            PaymentSplits::factory()->cyberPaymentSplit($payment->code)->create([
+                'authorized_at' => $authorizedAt,
+                'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            ]);
+
+            $quote->setRelation('cyberPlanDetail', (object) [
+                'coverage' => 500000,
+                'planName' => 'Gold Plan',
+            ]);
+            // Intentionally no documents - tests hasPaymentAuthorizedWithNoDocuments flow
+        });
     }
 }

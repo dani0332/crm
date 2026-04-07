@@ -217,11 +217,13 @@ class ManagementReport
         if ($lobs->isEmpty()) {
             $lobs = $this->getUserProducts($user->id)->pluck('name');
         }
+        $lobs = $lobs->map(fn ($item) => quoteTypeCode::getQuoteTypeCodeFromProductName($item));
         $lobsIds = $lobs->map(fn ($item) => (
             in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
                 ? QuoteTypeId::Business
                 : QuoteTypes::getIdFromValue($item
                 )))
+            ->filter()
             ->toArray();
         $lobs = $lobs->toArray();
 
@@ -247,7 +249,8 @@ class ManagementReport
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
 
-        if ($request['lob'] && in_array(quoteTypeCode::Health, $request['lob']) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+        $lob = isset($request['lob']) ? (is_array($request['lob']) ? $request['lob'] : [$request['lob']]) : [];
+        if (! empty($lob) && in_array(quoteTypeCode::Health, $lob) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
             if ($request['pec_flag'] == '1') {
                 $query->whereExists(function ($subQuery) {
                     $subQuery->select(DB::raw(1))
@@ -670,6 +673,7 @@ class ManagementReport
             10 => 'cycle-quotes-show',
             11 => 'jetski-quotes-show',
             18 => 'savings-quotes-show',
+            19 => 'cyber-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];

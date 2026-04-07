@@ -1,0 +1,559 @@
+---
+description: Claim module specific patterns and business rules
+globs:
+  - "app/Http/Controllers/*Claims*"
+  - "app/Services/*Claims*"
+  - "app/Models/ClaimRequest*"
+  - "app/Models/CustomerBankAccount.php"
+  - "app/Http/Requests/Claim*"
+  - "app/Observers/ClaimRequest*"
+  - "app/Enums/ClaimsEnum.php"
+  - "resources/js/inertia/Pages/Claims/**"
+alwaysApply: false
+---
+
+# Claim Module Specific Rules
+
+## LOB-Based Validation Rules
+
+### Car Claims (QuoteTypes::CAR->id() == 1)
+- Required fields: `plate_number`, `car_make`, `car_model`, `model_year`
+- Plate number validation: `/^[A-Za-z0-9\-\s]+$/` (actual pattern from ClaimDetailsUpdateRequest)
+- Model year range: 1900 to current year + 1
+- Conditional validation in `validateCarFields()` method
+- All car fields are interdependent - if one is provided, all must be provided
+- Plate number is automatically converted to uppercase in `prepareForValidation()`
+
+### Health Claims (QuoteTypes::HEALTH->id() == 3)
+- Required fields: `claim_request_type_id`, `service_type_id`
+- Service type required when claim request type is `pending-approvals`
+- Conditional validation in `validateHealthFields()` method
+- Uses lookup validation against `lookups` table
+- Supports three request types: reimbursement, pending-approvals, ask-a-question
+
+### Life Claims (QuoteTypeId::Life)
+- Simplified closure logic with only `CLAIM_PAID` and `CLAIM_DENIED` statuses
+- Different sub-status transition rules from Car and Health
+
+### Status Transitions
+- Claims start with auto-set `sub_status` = `CLAIM_REGISTERED` or `CLAIM_REGISTERED_AWAITING_INSPECTION` for Car claims
+- Observer monitors `sub_status` changes for closure triggers
+- Auto-closure when `sub_status` reaches predefined closure states based on LOB
+- Observer also monitors approval amounts (repair, total loss, cash loss) for automatic sub-status updates
+
+## Claim-Specific Method Requirements
+
+### ClaimsController
+- `index(ClaimSearchRequest $request): Response` - Claims listing with filtering using validated search request
+- `create()` - Show claim creation form
+- `store(ClaimStoreRequest $request)` - Store new claim via CAPI
+- `show($uuid)` - Display claim details with all relationships
+- `edit($uuid)` - Show claim edit form
+- `update(ClaimUpdateRequest $request, $uuid): RedirectResponse` - Update claim
+- `searchPolicies(SearchPoliciesRequest $request): JsonResponse` - CAPI integration for claim creation only
+- `updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): RedirectResponse` - internal system
+- `updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse` - internal system using ClaimStatusesService
+- `optimizeMessage(ClaimOptimizeMessageRequest $request): JsonResponse` - AI message optimization with validation
+- `sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse` - send notifications with validation
+- `updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)` - Update complaint status using ClaimStatusesService
+- `updateNextFollowUp(ClaimNextFollowUpUpdateRequest $request, ClaimRequest $claim)` - Update next follow-up
+- `makeAdditionalContactPrimary(ClaimMakeAdditionalContactPrimaryRequest $request, ClaimRequest $claim)` - Make additional contact primary
+- `export(ClaimExportValidationRequest $request)` - Export claims data
+
+### ClaimLogController (Separated Log Retrieval)
+- `getClaimLeadHistory(ClaimRequest $claim): JsonResponse` - Fetch all claim status history for client-side pagination
+- `getClaimSubStatusLogs(ClaimRequest $claim): JsonResponse` - Fetch all sub-status changes for client-side pagination using ClaimStatusesService
+- `getComplaintStatusLogs(ClaimRequest $claim): JsonResponse` - Get complaint status logs using ClaimStatusesService
+- `getNextFollowUpLogs(ClaimRequest $claim): JsonResponse` - Get next follow-up logs
+
+### ClaimsService
+- `getClaimsData(Request $request)` - Get claims data with filtering and pagination
+- `getClaimsDataForExport(array $requestParams = [])` - Get claims data for export
+- `applyFilters($query, $filters)` - Apply filters to claim query (supports code, names, emails, status, dates, car details)
+- `getFilters(Request $request)` - Extract filterable parameters from request
+- `getClaimById($uuid)` - Get single claim by UUID with relationships
+- `searchActivePolicies(?string $email, ?string $policyNumber, ?int $quoteTypeId, int $page)` - Search active policies for claim creation
+- `createClaim(array $data)` - Create claim via CAPI integration
+- `updateClaim($uuid, array $data): ClaimRequest` - Update existing claim with dynamic field handling
+- `updateClaimDetails(ClaimRequest $claimRequest, array $data): ClaimRequest` - Update specific claim details with filtered fields
+- `isRequiredFieldsFilled(ClaimRequest $claimRequest): bool` - Check if required fields are filled based on LOB
+- `sendNotification(ClaimRequest $claimRequest, $request)` - Send notification, update sub-status, and trigger closure if needed
+- `optimizeMessageWithAI(string $message, string $claimUuid)` - AI message optimization via InstantWriter
+- `getClaimLeadHistory(int $claimId)` - Fetch all claim status history (main statuses) for client-side pagination
+- `updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes): ClaimRequest` - Update next follow-up datetime and notes
+- `getNextFollowUpLogs(int $claimId)` - Get next follow-up logs from audit trail with JSON extraction
+- `uploadClaimDocuments(ClaimRequest $claim, array $files, array $documentData): array` - Upload multiple documents with error handling
+- `deleteClaimDocument(ClaimRequest $claim, $documentId): bool` - Delete claim document with business validation
+- `createDocumentsZip(ClaimRequest $claim): array` - Create ZIP file of all claim documents with Azure Storage integration
+- `dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void` - Dispatch Google review email job for closed claims
+- `getDropdownData(): array` - Get all dropdown data for forms (LOB, types, statuses, managers, car data) - uses ClaimStatusesService
+- `getLineOfBusinessOptions(): array` - Get active quote types for LOB dropdown
+- `getClaimTypes(): array` - Get claim types from lookups
+- `getClaimsManagers(): array` - Get users with ClaimsManager role
+- `getClaimRequestTypes(): array` - Get health claim request types from lookups
+- `getClaimServiceTypes(): array` - Get health service types from lookups
+- `getCarMake(): array` - Get active car makes
+- `getCarModelYear(): array` - Get years of manufacture
+- `getClaimDocumentTypes($quoteTypeId)` - Get LOB-specific document types
+
+### ClaimStatusesService (Separated Status Management)
+- `getClaimStatuses(): array` - Get main claim statuses from claim_statuses table with caching
+- `getClaimSubStatuses(): array` - Get sub-statuses from claim_statuses table with caching
+- `getClaimComplaintStatuses(): array` - Get complaint statuses from claim_statuses table with caching
+- `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim): void` - Set appropriate registered status based on LOB
+- `checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool` - Check closure logic based on LOB
+- `markClaimAsReOpen(ClaimRequest $claimRequest): void` - Mark claim as reopened when complaint is opened
+- `markClaimAsClosed(ClaimRequest $claimRequest): void` - Mark claim as closed
+- `updateClaimStatus($claimRequest, $request)` - Update claim status and create activity
+- `updateClaimSubStatus(ClaimRequest $claimRequest, $claimStatus): void` - Update claim sub-status with saveQuietly
+- `isClaimStatusClosed(?int $statusId): bool` - Check if given status ID represents closed status
+- `getClaimSubStatusLogs(int $claimId)` - Fetch all sub-status changes for client-side pagination
+- `updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime, ?string $notes): ClaimRequest` - Update complaint status with auto-reopen logic
+- `getComplaintStatusLogs(int $claimId)` - Get complaint status logs from audit trail with JSON extraction
+
+### ClaimRequest Model
+- `scopeAssignedTo($query, $userId)` - Filter by assigned manager
+- `scopeUnassigned($query)` - Filter unassigned claims
+- `scopeByQuoteType($query, $quoteTypeId)` - Filter by line of business
+- `scopeByStatus($query, $statusId)` - Filter by claim status
+- `scopeBySource($query, $source)` - Filter by source
+- `scopeWithWhatsAppConsent($query)` - Filter with WhatsApp consent
+- `getFullNameAttribute(): string` - Get customer full name
+- `getIsAssignedAttribute(): bool` - Check if claim is assigned
+- `assignManager(int $managerId): void` - Assign manager with timestamp
+- `updateStatus(int $statusId, ?int $subStatusId = null): void` - Update claim status
+- `setWhatsAppConsent(bool $consent): void` - Set WhatsApp consent
+- `updateComplaintStatus(?int $complaintStatusId, ?string $complaintDatetime, ?string $notes): void` - Update complaint status
+- `updateNextFollowUp($nextFollowupDatetime, $notes = null): void` - Update next follow-up
+- `isCarOrBikeLOB(): bool` - Check if claim is for Car or Bike LOB
+
+#### ClaimRequest Relationships
+- `customerBankAccounts()` - hasOne relationship to CustomerBankAccount (filtered by type='claim')
+  - Maps `uuid` to `claim_uuid`
+  - Only returns bank accounts with type='claim' for this specific claim
+  - Used to store claim-specific banking information for payouts
+
+### ClaimRequestDetail Model
+- `scopeByClaimRequest($query, $claimRequestId)` - Filter by claim request
+- `scopeByServiceType($query, $serviceTypeId)` - Filter by service type
+- `scopeByCarMake($query, $carMake)` - Filter by car make
+- `scopeByCarModel($query, $carModel)` - Filter by car model
+- `getVehicleInfoAttribute(): string` - Get combined vehicle info
+- `getHasVehicleInfoAttribute(): bool` - Check if has vehicle info
+- `updateVehicleInfo(string $carMake, string $carModel): void` - Update vehicle info
+- `updateServiceType(int $serviceTypeId): void` - Update service type
+
+### ClaimActivity Model
+- `scopeForClaimRequest(Builder $query, int $claimRequestId): Builder` - Filter by claim request
+- `scopeForClaimUuid(Builder $query, string $claimUuid): Builder` - Filter by claim UUID
+- `scopeByStatus(Builder $query, array $statusIds): Builder` - Filter by status
+- `scopeCreatedBy(Builder $query, int $userId): Builder` - Filter by creator
+- `createForClaim(int $claimRequestId, string $claimUuid, int $statusId, ?string $comment, ?string $commentAi, ?int $createdById): self` - Static method to create claim activity
+
+### CustomerBankAccount Model
+**Purpose**: Stores customer banking information associated with claims for payout processing
+
+#### Database Schema
+- `id` - Primary key
+- `customer_id` - Foreign key to customers table
+- `type` - Type of bank account usage (e.g., 'claim', 'quote')
+- `claim_uuid` - UUID linking to claim request
+- `bank_name` - Name of the bank
+- `account_name` - Account holder name
+- `iban` - International Bank Account Number
+- `swift_code` - SWIFT/BIC code for international transfers
+- `created_at`, `updated_at` - Timestamps
+
+#### Relationships
+- `customer()` - BelongsTo relationship with Customer model
+- `claimRequest()` - BelongsTo relationship with ClaimRequest model
+  - Maps `claim_uuid` to `uuid` on ClaimRequest
+  - Allows linking bank account to specific claim
+
+#### Scopes
+- `byType($type)` - Filter by account type (e.g., 'claim')
+
+#### Features
+- Implements `Auditable` trait for comprehensive audit logging
+- Uses `FilterCriteria` trait for advanced filtering
+- Strict typing with `declare(strict_types=1)`
+- Filterable by: customer_id, claim_uuid, type, bank_name, account_name, iban
+
+#### Business Logic Pattern
+- Multiple bank accounts can exist for a customer
+- Bank accounts are type-scoped (claim, quote, etc.)
+- ClaimRequest uses hasOne relationship filtered by type='claim'
+- Customer has hasMany relationship to all bank accounts
+
+## Claim Data Management Patterns
+
+### Filter Implementation
+The ClaimsService implements comprehensive filtering through `applyFilters()` method supporting:
+- **Exact Matches**: code, email, mobile_no, policy_number
+- **Partial Matches**: first_name, last_name (LIKE queries)
+- **Status Filters**: claim_status_id, claim_sub_status_id, complaint_status_id
+- **Assignment Filters**: manager_id, assigned_status ('assigned'/'un-assigned')
+- **Date Filters**: created_at (between), manager_assigned_date, next_followup_datetime
+- **LOB Filters**: quote_type_id
+- **Car Detail Filters**: Nested whereHas queries on claimRequestDetails (car_make, car_model, model_year, plate_number)
+
+### Bank Account Management
+- **Type-Based Segregation**: Bank accounts are filtered by `type` field ('claim', 'quote', etc.)
+- **Claim-Specific Banking**: Each claim can have one associated bank account via hasOne relationship
+- **UUID-Based Linking**: Bank accounts linked to claims using `claim_uuid` to `uuid` mapping
+- **Customer Aggregation**: Customers can have multiple bank accounts across different types via hasMany
+- **Audit Trail**: All bank account changes tracked via Auditable trait
+
+### Relationship Pattern - hasOne with Type Filtering
+```php
+// ClaimRequest Model
+public function customerBankAccounts()
+{
+    return $this->hasOne(CustomerBankAccount::class, 'claim_uuid', 'uuid')
+                ->where('type', 'claim');
+}
+```
+This pattern:
+- Uses hasOne for single bank account per claim
+- Applies type filtering to segregate claim-specific data
+- Maps custom keys (uuid to claim_uuid) for flexible relationships
+- Allows same customer to have different bank accounts per claim/quote
+
+## Claim-Specific Validation Rules
+
+### Request Validation Classes
+- `ClaimStoreRequest` - Initial claim creation validation with comprehensive field validation
+- `ClaimUpdateRequest` - General claim update validation
+- `ClaimDetailsUpdateRequest` - Claim information updates with LOB-specific rules
+- `ClaimStatusUpdateRequest` - Status transition validation (status_type = 'statuses')
+- `ClaimSendNotificationRequest` - Notification sending with AI message optimization validation
+- `ClaimComplaintStatusUpdateRequest` - Complaint status update validation
+- `ClaimNextFollowUpUpdateRequest` - Next follow-up update validation
+- `ClaimMakeAdditionalContactPrimaryRequest` - Make additional contact primary validation
+- `ClaimDocumentRequest` - Document upload validation
+- `ClaimExportValidationRequest` - Export validation
+- `ClaimSearchRequest` - Claims listing search and filtering validation
+- `ClaimOptimizeMessageRequest` - AI message optimization request validation
+- `SearchPoliciesRequest` - Policy search validation for CAPI integration
+
+### Validation Implementation
+- Car LOB check: `$quoteTypeId == QuoteTypes::CAR->id()`
+- Health LOB check: `$quoteTypeId == QuoteTypes::HEALTH->id()`
+- Conditional field validation using `withValidator()` method
+- Uses `filled()` method to check field presence
+- Comprehensive logging of validation failures with `LoggerService`
+- Custom error messages and attributes for user-friendly feedback
+
+### Validation Patterns
+- Plate number: `/^[A-Za-z0-9\-\s]+$/` (actual pattern from ClaimDetailsUpdateRequest)
+- Name validation: `/^[a-zA-Z\s\'-\.]+$/` for first and last names
+- Phone validation: `/^[\+]?[0-9\s\-\(\)]+$/` for mobile numbers
+- Standard field trimming in `prepareForValidation()`
+- Uppercase transformation for plate numbers
+- Email normalization to lowercase
+
+### ClaimStoreRequest Validation
+- Required: first_name, last_name, mobile_no, email, quote_type_id, claim_type_id
+- Optional: customer_id, insurance_provider_id, claim_number, policy_number, incident_date, incident_story
+- Car fields: plate_number, car_make, car_model, model_year
+- Health fields: claim_request_type_id, service_type_id, request_reference_number
+- Financial fields: approved_repair_amount, approved_total_loss_amount, approved_cash_loss_amount
+
+### ClaimDetailsUpdateRequest Validation
+- Required: claim_number, incident_date (must be before today)
+- Car-specific interdependent validation: if one car field (plate_number, car_make, car_model, model_year) is provided, all must be provided
+- Health-specific: claim_request_type_id required, service_type_id required when claim_request_type_id is 'pending-approvals'
+- Conditional validation based on LOB using `validateCarFields()` and `validateHealthFields()` methods in `withValidator()`
+- Special handling for claim_decline_reason: triggers automatic claim closure when filled
+
+### ClaimSendNotificationRequest Validation
+- Required fields: `customer_message`, `ai_optimized_message`, `claim_sub_status_id`
+- Sub-status validation: must exist in `claim_statuses` table with `status_type` = 'sub-statuses'
+- Message validation: both customer and AI optimized messages required as strings
+
+## Observer-Specific Business Logic
+
+### ClaimRequestObserver Requirements
+- Auto-set `sub_status` to `CLAIM_REGISTERED` or `CLAIM_REGISTERED_AWAITING_INSPECTION` (for Car LOB) on creation
+- Monitor `claim_number` changes: auto-update sub-status when claim number is entered
+- Monitor `claim_sub_status_id` changes for auto-closure triggers
+- Monitor approval amounts: `approved_repair_amount`, `approved_total_loss_amount`, `approved_cash_loss_amount`
+- Auto-update sub-statuses based on approval amounts for Car/Bike LOB
+- Monitor `claim_status_id` changes for Google review email dispatch (currently commented out)
+- Log all status transitions with user context using ClaimsService methods
+
+### Monitored Fields for Business Rules
+- `claim_number` - When changed from empty to filled, triggers sub-status update to "Claim registered" or "Claim registered and awaiting inspection" (Car LOB)
+- `claim_sub_status_id` - Triggers closure logic based on LOB-specific closure states using `checkSubStatusForClaimClosure()`
+- `approved_repair_amount` - Car/Bike LOB only: When changed from empty to filled, triggers "Repair approved & work in progress" status
+- `approved_total_loss_amount` - Car/Bike LOB only: When changed from empty to filled, triggers "Total Loss Offer Letter shared" status
+- `approved_cash_loss_amount` - Car/Bike LOB only: When changed from empty to filled, triggers "Cash loss approved" status
+- `claim_status_id` - Prepared for Google review email dispatch via `dispatchGoogleReviewEmail()` (currently commented out in observer)
+
+### Observer Business Logic Methods (from ClaimStatusesService)
+- `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim)` - Sets "Claims registered" for general or "Claim registered and awaiting inspection" for Car LOB
+- `checkSubStatusForClaimClosure(ClaimRequest $claim, $newClaimSubStatusId)` - Returns bool; checks if new sub-status is in closure list for claim's LOB
+- `markClaimAsClosed(ClaimRequest $claim)` - Updates claim_status_id to "Closed" status using updateQuietly
+- `markClaimAsReOpen(ClaimRequest $claim)` - Updates claim_status_id to "Reopen" status when complaint opened
+- `updateClaimSubStatus(ClaimRequest $claim, $claimStatus)` - Sets sub-status using saveQuietly to prevent observer loops
+- `isClaimStatusClosed(?int $statusId)` - Checks if status ID matches "Closed" status text
+
+### Observer Business Logic Methods (from ClaimsService)
+- `updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claim)` - Sets "Repair approved & work in progress" status
+- `updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claim)` - Sets "Total Loss Offer Letter shared" status
+- `updateClaimSubStatusToCashLossApproved(ClaimRequest $claim)` - Sets "Cash loss approved" status
+- `dispatchGoogleReviewEmail(ClaimRequest $claim)` - Dispatches SendGoogleReviewEmailJob for closed claims
+
+## CAPI Integration Requirements
+
+### Policy Search for Claim Creation Only
+- `ClaimsService::searchActivePolicies()` method for claim creation workflow
+- CAPI integration only used during initial claim creation process
+- Handle CAPI timeout/error scenarios gracefully during claim creation
+- All other claim operations (updates, status changes, details) handled within current system
+
+### Controller Integration
+- `searchPolicies()` endpoint for AJAX policy lookup during claim creation
+- JSON response format for frontend claim creation forms
+
+## Frontend Claim-Specific Patterns
+
+### Component Organization
+- `ClaimDetails.vue` - Claim information display and editing
+- `ClaimStatus.vue` - Status management component
+- `ClaimDocuments.vue` - Document upload and management
+- `ClaimFilters.vue` - Claims listing filters
+
+### Permission-Based Rendering
+- `claims.view`, `claims.create`, `claims.update`, `claims.delete`
+- Conditional display of actions based on user permissions
+- CAPI policy search only available during claim creation process
+
+### Event Communication
+- `updateClaimDetails`, `updateClaimStatus`, `documentUploaded` events
+- Parent-child component communication patterns
+- Policy search events only during claim creation workflow
+
+### Vue Components Structure
+- `Show.vue` - Main claim details page with all components
+- `Index.vue` - Claims listing with filtering and pagination
+- `Create.vue` - Claim creation form
+- `Edit.vue` - Claim editing form
+- `Form.vue` - Reusable form component for create/edit
+
+#### Component Architecture
+- `ClaimDetails.vue` - Main claim information display and editing with LOB-specific fields
+- `ClaimStatus.vue` - Status management by team lead (main claim status)
+- `ClaimSubStatusAndCustomerUpdate.vue` - Sub-status updates and customer notifications with AI optimization
+- `ClaimDocuments.vue` - Document upload, view, and management with S3 integration
+- `CustomerDetails.vue` - Customer information display
+- `ClaimLeadHistory.vue` - DataTable showing parent status transitions with client-side pagination
+- `ClaimSubStatusLogs.vue` - DataTable showing sub-status changes with client-side pagination
+- `NextFollowUpUpdate.vue` - Next follow-up scheduling component
+- `NextFollowUpLogs.vue` - Next follow-up history logs
+- `ComplaintStatus.vue` - Complaint status management
+- `ComplaintStatusLogs.vue` - Complaint status history logs
+- `CustomerAdditionalContacts.vue` - Additional customer contacts management
+
+#### Frontend Patterns
+- Uses Composition API with `<script setup>` syntax
+- Implements permission checks using `useCan()` and `useCanAny()` composables
+- Event-driven architecture with component communication via events
+- Form validation mirrors backend validation rules
+- Comprehensive error handling with toast notifications
+- Client-side pagination for history/logs components
+- Real-time updates using Inertia.js partial reloads
+- AI message optimization integration with loading states
+
+## Required Routes and Permissions
+
+### Claim Routes (by name) - All under prefix '/claim'
+**Basic CRUD:**
+- `claims.index` - Claims listing page (GET /claim)
+- `claims.create` - Claim creation form (GET /claim/create)
+- `claims.store` - Store new claim (POST /claim)
+- `claims.show` - Individual claim view (GET /claim/{uuid})
+- `claims.edit` - Claim editing form (GET /claim/{uuid}/edit)
+- `claims.update` - Update claim (PUT /claim/{uuid})
+
+**Policy Search & Export:**
+- `claims.search-policies` - CAPI policy search for creation (POST /claim/search-policies)
+- `claims.export` - Export claims data to CSV/email (POST /claim/export)
+
+**Claim Updates (UUID binding):**
+- `claims.update.details` - Update claim details (POST /claim/{claim:uuid}/update-details)
+- `claims.update.status` - Update main claim status (POST /claim/{claim:uuid}/update-status)
+- `claims.update.complaint-status` - Update complaint status (POST /claim/{claim:uuid}/update-complaint-status)
+- `claims.update.next-follow-up` - Update next follow-up (POST /claim/{claim:uuid}/update-next-follow-up)
+- `claims.send-notification` - Send notification with sub-status update (POST /claim/{claim:uuid}/send-notification)
+- `claims.make-additional-contact-primary` - Make additional contact primary (POST /claim/{claim:uuid}/make-additional-contact-primary)
+
+**AI & Communication:**
+- `claims.optimize-message` - AI message optimization (POST /claim/{claimStatus}/optimize-message)
+
+**History & Logs (returns JSON for DataTables):**
+- `claims.lead-history` - Get main status history (GET /claim/{claim:uuid}/lead-history)
+- `claims.sub-status-logs` - Get sub-status changes (GET /claim/{claim:uuid}/sub-status-logs)
+- `claims.complaint-status-logs` - Get complaint logs from audit (GET /claim/{claim:uuid}/complaint-status-logs)
+- `claims.next-follow-up-logs` - Get follow-up logs from audit (GET /claim/{claim:uuid}/next-follow-up-logs)
+
+**Document Management:**
+- `claims.documents.store` - Upload claim documents (POST /claim/{claim:uuid}/documents)
+- `claims.documents.destroy` - Delete claim document (DELETE /claim/{claim:uuid}/documents/{document})
+- `claims.documents.get-s3-temp-url` - Get Azure Storage temp URL (POST /claim/documents/get-s3-temp-url)
+- `claims.documents.download-all` - Download all documents as ZIP (GET /claim/{claim:uuid}/documents/download-all)
+
+### Required Permissions (PermissionsEnum)
+- `CLAIM_LIST` - View claims listing
+- `CLAIM_CREATE` - Create new claims  
+- `CLAIM_EDIT` - Edit existing claims
+- `CLAIM_SHOW` - View individual claims
+- `CLAIMS_EXPORT_DATA` - Export claim data
+- `CLAIMS_STATUS_UPDATE` - Update claim status
+- `CLAIMS_SUB_STATUS_UPDATE` - Update claim sub-status
+- `CLAIM_DOCUMENT_UPLOAD` - Upload claim documents
+- `CLAIM_DOCUMENT_DELETE` - Delete claim documents
+- `CLAIM_DOCUMENT_S3_URL` - Get S3 temporary URLs for document access
+- `CLAIM_DOWNLOAD_ALL_DOCUMENTS` - Download all claim documents as ZIP
+
+### ClaimsEnum Constants
+
+#### Key Patterns
+- **Status Type Keys**: `CLAIM_STATUSES_STATUS_KEY`, `CLAIM_STATUSES_SUB_STATUS_KEY`, `CLAIM_STATUSES_COMPLAINT_STATUS_KEY`
+- **Lookup Keys**: `CLAIM_TYPES_KEY`, `CLAIM_REQUEST_TYPES_KEY`, `CLAIM_SERVICE_TYPES_KEY`
+- **Main Statuses**: `CLAIM_STATUS_OPEN`, `CLAIM_STATUS_CLOSED`
+- **Code Patterns**: All codes use kebab-case (e.g., `own-damage-claim`, `pending-approvals`)
+
+#### Helper Method Patterns
+- `getClaimTypeCodes(): array` - Returns all claim type codes
+- `getClaimRequestTypeCodes(): array` - Returns health request type codes  
+- `getClaimServiceTypeCodes(): array` - Returns health service type codes
+- `getClaimSubStatuses(): array` - Returns all sub-status values
+- LOB-specific methods: `getMotorClaimSubStatuses()`, `getHealthReimbursementClaimSubStatuses()`, etc.
+
+#### Status Categories
+- **General**: NEW_CLAIM, CLAIM_REGISTERED, CLAIM_PAID, CLAIM_DENIED, CLAIM_WITHDRAWN
+- **Motor-Specific**: REPAIR_*, TOTAL_LOSS_*, CASH_LOSS_* patterns
+- **Health-Specific**: REQUEST_*, UNDER_EVALUATION, ANSWERED_AND_CLOSED patterns
+- **Document-Related**: ADDITIONAL_DOCUMENTS_AWAITED, DOCUMENTS_UPLOADED
+
+*See Claims-Module-Documentation.md for complete status lists and transitions*
+
+## Email Notifications
+
+### SendClaimSubStatusUpdateNotificationEmailJob
+**Purpose**: Queued job to send claim sub-status update notification emails to customers
+
+#### Job Configuration
+- **Queue**: Default queue with 3 attempts
+- **Timeout**: 100 seconds
+- **Backoff**: 300 seconds (5 minutes between retries)
+- **Parameters**: `$claimRequestUuid`, `$customerMessage`
+
+#### Job Flow
+1. **Find Claim**: Retrieves ClaimRequest by UUID
+2. **Eligibility Check**: Verifies customer is eligible using `isEligibleForReviewEmail()`
+3. **Send Email**: Dispatches email via `sendClaimSubStatusCustomerUpdateEmail()`
+4. **Response Logging**: Logs success (200/201) or failure responses
+5. **Error Handling**: Re-throws exceptions to mark job as failed
+
+#### Integration Points
+- **Triggered By**: ClaimsService `sendNotification()` method
+- **Email Service**: ClaimRequestEmailService
+- **Logging**: Comprehensive LoggerService integration with CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL feature
+- **Failure Handling**: Implements `failed()` method for permanent failure logging
+
+## Implementation-Specific Notes
+
+### Service Method Return Patterns
+- Most service methods return model instances for chaining: `ClaimRequest`, `ClaimActivity`
+- History/log methods return collections/arrays for frontend DataTables
+- Upload methods return associative arrays with success/error counts
+- Boolean methods for validation: `isRequiredFieldsFilled()`, `checkSubStatusForClaimClosure()`, `isClaimStatusClosed()`
+
+### Service Separation Pattern
+- **ClaimsService**: Core business logic for claim creation, updates, documents, and notifications
+- **ClaimStatusesService**: Isolated status management logic with caching for statuses, sub-statuses, complaint statuses
+- **ClaimLogController**: Separated log retrieval endpoints from main ClaimsController for cleaner architecture
+- **Caching Strategy**: ClaimStatusesService uses CacheManager for status dropdown data with CacheKeyEnum keys
+
+### Observer Trigger Conditions
+- **Empty to Filled**: `if (empty($original) && !empty($new))` pattern prevents duplicate triggers
+- **LOB Check**: `$claim->isCarOrBikeLOB()` method for conditional approval monitoring
+- **Service Instantiation**: Observer creates new ClaimsService instance for each event
+- **No Transaction Management**: Observer relies on Eloquent's transaction handling
+
+### Query Optimization Patterns
+- Pre-configured queries in constructor with 22 specific fields
+- Relationship eager loading: 5 relationships for list, 7 for detail
+- Nested eager loading with field selection: `'claimRequestDetails' => function($query) { $query->with('serviceType:id,code,text'); }`
+- Conditional joins for Car LOB fields in policy search
+
+### Filtering Architecture
+- `getFilters()`: Extracts filterable params from request (17 fields)
+- `applyFilters()`: Applies conditions to query builder
+- Supports exact, partial (LIKE), date range, status array, and nested relationship filters
+- Assignment status special handling: 'assigned'/'un-assigned' mapped to whereNull/whereNotNull
+
+### Document Management Flow
+1. Upload: Controller validates → Service creates array → QuoteDocumentService handles storage
+2. Delete: Controller binds model → Service validates → Model delete with Auditable trait
+3. ZIP: Service queries documents → Validates on Azure → Creates ZIP → Returns path
+4. View: Frontend requests temp URL → QuoteDocumentService generates Azure signed URL
+
+## Automated Update Protocol
+
+**SYSTEM**: This rule file and documentation auto-update when significant claim module changes are detected.
+
+**Last Manual Update**: February 6, 2026
+**Sync Status**: ✓ Synced with Implementation
+**Implementation Version**: Production (v2.1)
+
+### Auto-Detection Triggers
+1. **File Modifications** - Changes to claim-related files trigger analysis:
+   - `app/Http/Controllers/ClaimsController.php`
+   - `app/Http/Controllers/ClaimLogController.php`
+   - `app/Services/ClaimsService.php`
+   - `app/Services/ClaimStatusesService.php`
+   - `app/Jobs/SendClaimSubStatusUpdateNotificationEmailJob.php`
+   - `app/Models/ClaimRequest*.php`
+   - `app/Models/CustomerBankAccount.php`
+   - `app/Http/Requests/Claim*.php`
+   - `app/Observers/ClaimRequestObserver.php`
+   - `app/Enums/ClaimsEnum.php`
+   - `resources/js/inertia/Pages/Claims/**`
+   - `routes/web.php` (claim routes section)
+
+2. **Pattern Analysis** - System detects:
+   - New public methods in claim classes
+   - Route additions/modifications with 'claim' prefix
+   - New permission constants containing 'CLAIM'
+   - Enum constant additions in ClaimsEnum
+   - Validation rule changes in claim requests
+   - Observer method modifications
+   - Vue component structural changes
+
+3. **Semantic Changes** - AI identifies:
+   - New business logic patterns
+   - Modified validation workflows
+   - Changed status transition rules
+   - Updated integration patterns
+   - New component relationships
+
+### Auto-Update Process
+1. **Change Detection** - Monitor claim module files for modifications
+2. **Pattern Extraction** - Analyze changes for architectural significance
+3. **Rule Generation** - Update `.cursor/rules/claim-module-architecture.mdc`:
+   - Add new method signatures and patterns
+   - Update route names and permission lists
+   - Modify validation rules and LOB requirements
+   - Refresh enum constants and business rules
+
+4. **Documentation Sync** - Update `docs/Claims-Module-Documentation.md`:
+   - Generate new architecture diagrams
+   - Update component relationship descriptions
+   - Refresh API endpoint documentation
+   - Sync business rule explanations
+
+5. **Consistency Check** - Validate cross-references between files
+6. **Version Control** - Commit updates with descriptive change messages

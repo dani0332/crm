@@ -91,6 +91,7 @@ class HealthQuoteService extends BaseService
             'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',
+            'hqr.notional_team',
             'hqr.has_home',
             'hqr.premium',
             'hqr.policy_number',
@@ -479,7 +480,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
-        $healthQuote->premium = $request->premium;
         // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
@@ -639,6 +639,7 @@ class HealthQuoteService extends BaseService
             'is_ecommerce' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_start_date' => 'input|date',
             'plan_type_id' => 'select|title',
+            'payment_status_id' => 'select|title',
         ];
     }
 

@@ -40,12 +40,14 @@ class RolePermissionSeeder extends Seeder
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
         $this->addExportHomePuaUpdatesPermission();
+        $this->addClaimsPermissions(); // Add claims permissions
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
         $this->sageProcessTrackerPermissions();
         $this->addBranchesPermission();
         $this->addCarLegacyKycSkipInsurerApiPermission();
         $this->addCarDriverEmiratesIdUpdatePermission();
+        $this->addRuleConfigWritePermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -214,6 +216,7 @@ class RolePermissionSeeder extends Seeder
             PermissionsEnum::CORPLINE_LEADPOOL,
             PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
             PermissionsEnum::SAVINGS_LEADPOOL,
+            PermissionsEnum::CYBER_LEADPOOL,
         ];
 
         foreach ($permissions as $permission) {
@@ -313,6 +316,65 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addClaimsPermissions(): void
+    {
+        $roleClaimsManager = Role::firstOrCreate([
+            'name' => RolesEnum::ClaimsManager,
+            'guard_name' => 'web',
+        ]);
+
+        $roleClaimsLead = Role::firstOrCreate([
+            'name' => RolesEnum::CLAIM_LEAD,
+            'guard_name' => 'web',
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::CLAIM_LEAD])->get();
+
+        $claimsPermissions = PermissionsEnum::getClaimsPermissions();
+
+        foreach ($claimsPermissions['claimLead'] as $permissionName) {
+            $permission = Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
+            }
+
+        }
+
+        $roles = Role::whereIn('name', [RolesEnum::ClaimsManager])->get();
+
+        foreach ($claimsPermissions['claimManager'] as $permissionName) {
+            $permission = Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
+            }
+
+        }
     }
 
     private function addAssignClientSupportPermission(): void
@@ -575,6 +637,53 @@ class RolePermissionSeeder extends Seeder
                 if (! $role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
+            }
+        }
+    }
+
+    /**
+     * Grant rule-config-create and rule-config-update to every role that already has rule-config-list
+     * so existing behavior is preserved until administrators narrow role permissions.
+     */
+    private function addRuleConfigWritePermissions(): void
+    {
+        $create = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RULE_CONFIG_CREATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $update = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RULE_CONFIG_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RULE_CONFIG_LIST,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $rolesWithList = Role::query()
+            ->whereHas('permissions', function ($query): void {
+                $query->where('name', PermissionsEnum::RULE_CONFIG_LIST);
+            })
+            ->get();
+
+        foreach ($rolesWithList as $role) {
+            if (! $role->hasPermissionTo($create)) {
+                $role->givePermissionTo($create);
+            }
+
+            if (! $role->hasPermissionTo($update)) {
+                $role->givePermissionTo($update);
             }
         }
     }

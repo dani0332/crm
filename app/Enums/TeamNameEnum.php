@@ -18,6 +18,7 @@ final class TeamNameEnum extends Enum
     public const AFFINITY = 'Affinity';
     public const ORGANIC = 'Organic';
     public const PCP = 'PCP';
+    public const TPL = 'TPL';
     public const EBP = 'Entry-Level';
     public const RM_NB = 'Best';
     public const RM_SPEED = 'Good';
@@ -45,6 +46,9 @@ final class TeamNameEnum extends Enum
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
     public const TRAVEL_TEAM = 'Travel - Team';
     public const GBP = 'GBP';
+    public const PEC = 'PEC';
+    public const AUH = 'AUH';
+    public const CYBER = 'Cyber Insurance';
 
     /**
      * Get team ID by team name

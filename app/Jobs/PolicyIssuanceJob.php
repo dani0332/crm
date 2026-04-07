@@ -43,6 +43,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'process_id' => $processId,
             ]);
         }
+        $this->onQueue('policy-issuance-automation');
     }
 
     public function handle(): void
@@ -307,7 +308,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         LoggerService::error('Exception occurred during policy issuance automation', [
             'process_id' => $this->process->id ?? $this->processId,
             'quote_code' => $quoteCode,
-        ], exception: $e);
+            'exception' => $e,
+        ]);
     }
 
     private function isTimeoutError(string $message): bool

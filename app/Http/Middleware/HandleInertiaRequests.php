@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\ClaimsEnum;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -35,6 +36,7 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
@@ -113,6 +115,7 @@ class HandleInertiaRequests extends Middleware
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),
+            'quoteTypeIds' => QuoteTypeId::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
@@ -149,6 +152,7 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'claimsEnum' => ClaimsEnum::asArray(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
@@ -260,6 +264,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
@@ -328,6 +333,20 @@ class HandleInertiaRequests extends Middleware
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        // CLAIM_ALLOCATION_DASHBOARD
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)
+                            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true),
+                        'Claims',
+                        route('claim-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD),
+                        'Cyber',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
+                        fn ($s) => $s->attributes(['icon' => 'cyber'])
                     );
             });
         }
@@ -358,6 +377,19 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)
+            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true)) {
+            $nav = $nav->add('Services', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CLAIM_LIST),
+                        'Claims',
+                        route('claims.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
@@ -451,6 +483,7 @@ class HandleInertiaRequests extends Middleware
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
                 ->addIf((auth()->user()->can(PermissionsEnum::YachtQuotesList) || (userHasProduct(quoteTypeCode::Yacht) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf((auth()->user()->can(PermissionsEnum::CYBER_QUOTES_LIST) || (userHasProduct(quoteTypeCode::CYBER) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cyber Quotes', route('cyber-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cyber']))
                 ->addIf((auth()->user()->can(PermissionsEnum::JetskiQuotesList) || (userHasProduct(quoteTypeCode::Jetski) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
         });
         /* personal quotes section end */
@@ -527,11 +560,11 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        auth()->user()->can(PermissionsEnum::TRANSAPP_SEARCH),
                         'Search Transaction',
                         route('home'),
                         fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
@@ -731,12 +764,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'Allocation Audit',
                         route('admin.allocation-audit.index'),
@@ -844,6 +871,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
+                                'GBP Eligible Nationalities',
+                                route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

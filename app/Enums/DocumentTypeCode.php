@@ -30,6 +30,7 @@ class DocumentTypeCode extends Enum
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
     const SEND_UPDATE_AUDIT_RECORD = 'SUAR'; // Send Update Audit Record
     const QUOTE = 'QUOTE';
+    const CLAIM = 'CLAIM';
     const MEMBER = 'MEMBER';
     const ENDORSEMENT_DOCUMENTS = 'ENDORSEMENT_DOCUMENTS';
     const SEND_UPDATE = 'SEND_UPDATE';
@@ -96,6 +97,17 @@ class DocumentTypeCode extends Enum
     const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
     const POLICY_CERTIFICATE = 'CPC';
     const POLICY_SCHEDULE = 'CPS';
+
+    // CYBER document types
+    const CYB_EID = 'CYB_EID';
+    const CYB_KYC = 'CYB_KYC';
+    const CYB_PC = 'CYB_PC';
+    const CYB_PS = 'CYB_PS';
+    const CYB_TI = 'CYB_TI';
+    const CYB_TIRBB = 'CYB_TIRBB';
+    const CYB_CYPDR = 'CYPDR';
+    const CYB_CPD = 'CPD';
+    const CYBER_DISCOUNT_PROOF = 'CYDPDR';
 
     // BAL
     const BAL = 'BAL';

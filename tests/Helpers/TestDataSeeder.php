@@ -4,12 +4,16 @@ namespace Tests\Helpers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AuthGuardEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
 use App\Models\Nationality;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\PermissionRegistrar;
 
 class TestDataSeeder
 {
@@ -41,7 +45,7 @@ class TestDataSeeder
         $user = self::createUser($attributes);
 
         // Create role if it doesn't exist using DB facade
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $roleId = $db->table('roles')
             ->where('name', $roleName)
             ->where('guard_name', AuthGuardEnum::Web->value)
@@ -72,7 +76,7 @@ class TestDataSeeder
      */
     public static function seedRolePermissions(string $roleName, array $permissionNames): void
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         $guardName = AuthGuardEnum::Web->value;
 
@@ -121,7 +125,7 @@ class TestDataSeeder
         }
 
         // Ensure Spatie doesn't serve stale permission mappings in the same process. Ensures cache is cleared so new/updated roles and permissions are recognized immediately
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     /**
@@ -132,7 +136,7 @@ class TestDataSeeder
     public static function seedLifeQuoteLookups(): array
     {
         // Use DB facade to insert directly and avoid mass assignment issues
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         // Create Nationality
         $nationalityId = $db->table('nationality')->where('text', 'Test Nationality')->value('id');
@@ -205,14 +209,14 @@ class TestDataSeeder
     {
         $user = self::createUser($attributes);
 
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $roleId = $db->table('roles')
-            ->where('name', \App\Enums\RolesEnum::Admin)
+            ->where('name', RolesEnum::Admin)
             ->where('guard_name', AuthGuardEnum::Web->value)
             ->value('id');
         if (! $roleId) {
             $roleId = $db->table('roles')->insertGetId([
-                'name' => \App\Enums\RolesEnum::Admin,
+                'name' => RolesEnum::Admin,
                 'guard_name' => AuthGuardEnum::Web->value,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -231,7 +235,7 @@ class TestDataSeeder
             ? $permissionNames
             : array_values(PermissionsEnum::asArray());
 
-        self::seedRolePermissions(\App\Enums\RolesEnum::Admin, $permissionsToSeed);
+        self::seedRolePermissions(RolesEnum::Admin, $permissionsToSeed);
 
         return $user;
     }
@@ -322,13 +326,13 @@ class TestDataSeeder
      */
     public static function seedCarQuoteLookups(): array
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         // Create Insurance Provider (RSA)
-        $insuranceProviderId = $db->table('insurance_provider')->where('code', \App\Enums\InsuranceProvidersEnum::RSA)->value('id');
+        $insuranceProviderId = $db->table('insurance_provider')->where('code', InsuranceProvidersEnum::RSA)->value('id');
         if (! $insuranceProviderId) {
             $insuranceProviderId = $db->table('insurance_provider')->insertGetId([
-                'code' => \App\Enums\InsuranceProvidersEnum::RSA,
+                'code' => InsuranceProvidersEnum::RSA,
                 'text' => 'RSA Insurance',
                 'is_active' => 1,
                 'created_at' => now(),
@@ -368,7 +372,7 @@ class TestDataSeeder
             ->values()
             ->all();
 
-        \Illuminate\Support\Facades\DB::connection('sqlite')
+        DB::connection('sqlite')
             ->table('application_storage')
             ->insertOrIgnore($rows);
     }
@@ -380,11 +384,11 @@ class TestDataSeeder
      */
     public static function seedTeamHierarchy(): array
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         $productTeamId = (int) $db->table('teams')->insertGetId([
             'name' => 'TEST_PRODUCT',
-            'type' => \App\Enums\TeamTypeEnum::PRODUCT,
+            'type' => TeamTypeEnum::PRODUCT,
             'is_active' => 1,
             'parent_team_id' => null,
             'created_at' => now(),
@@ -393,7 +397,7 @@ class TestDataSeeder
 
         $teamId = (int) $db->table('teams')->insertGetId([
             'name' => 'TEST_TEAM',
-            'type' => \App\Enums\TeamTypeEnum::TEAM,
+            'type' => TeamTypeEnum::TEAM,
             'is_active' => 1,
             'parent_team_id' => $productTeamId,
             'created_at' => now(),
@@ -401,5 +405,70 @@ class TestDataSeeder
         ]);
 
         return compact('productTeamId', 'teamId');
+    }
+
+    /**
+     * Seed required lookup data for Cyber Quote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedCyberQuoteLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        // Create Nationality
+        $nationalityId = $db->table('nationality')->where('text', 'United Arab Emirates')->value('id');
+        if (! $nationalityId) {
+            $nationalityId = $db->table('nationality')->insertGetId([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Emirate (note: table is "emirates" not "emirate")
+        $emirateId = $db->table('emirates')->where('text', 'Dubai')->value('id');
+        if (! $emirateId) {
+            $emirateId = $db->table('emirates')->insertGetId([
+                'text' => 'Dubai',
+                'code' => 'DXB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'nationality_id' => $nationalityId,
+            'emirate_id' => $emirateId,
+        ];
+    }
+
+    /**
+     * Seed required lookup data for HealthQuote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedHealthQuoteLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        // Create Nationality
+        $nationalityId = $db->table('nationality')->where('text', 'United Arab Emirates')->value('id');
+        if (! $nationalityId) {
+            $nationalityId = $db->table('nationality')->insertGetId([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'nationality_id' => $nationalityId,
+        ];
     }
 }

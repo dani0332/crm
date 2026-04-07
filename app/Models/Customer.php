@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -24,7 +25,7 @@ class Customer extends Model implements AuditableContract
     /**
      * customer detail relation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function getAuditables()
     {
@@ -118,7 +119,7 @@ class Customer extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function additionalContacts()
     {
@@ -149,7 +150,7 @@ class Customer extends Model implements AuditableContract
     public static function formattedPcpTagCase($tableAlias = 'c'): string
     {
         return '
-            CASE 
+            CASE
                 WHEN '.$tableAlias.".pcp_tag = 1 THEN 'Yes'
                 WHEN ".$tableAlias.".pcp_tag = 0 THEN 'Ex-PC'
                 ELSE 'No'
@@ -160,5 +161,10 @@ class Customer extends Model implements AuditableContract
     public function personalQuote(): HasMany
     {
         return $this->hasMany(PersonalQuote::class, 'customer_id', 'id');
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(CustomerBankAccount::class, 'customer_id', 'id');
     }
 }

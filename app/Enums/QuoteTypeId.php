@@ -27,6 +27,10 @@ final class QuoteTypeId extends Enum
     const GroupMedical = 102;
     const Savings = 18;
     const CompanyCar = 15;
+    const TradeCredit = 12;
+    const JobLoss = 16;
+    const JBLS = 17;
+    const Cyber = 19;
 
     public static function getOptions()
     {
@@ -38,5 +42,34 @@ final class QuoteTypeId extends Enum
         }
 
         return $retval;
+    }
+
+    /**
+     * Get display name for quote type ID
+     */
+    public static function getDisplayName(?int $quoteTypeId): ?string
+    {
+        $options = self::getOptions();
+
+        return $options[$quoteTypeId] ?? null;
+
+    }
+
+    /**
+     * Get all quote type IDs for claim documents
+     */
+    public static function getClaimDocumentQuoteTypes(): array
+    {
+        return [
+            self::Yacht,
+            self::Travel,
+            self::Pet,
+            self::Cycle,
+            self::Life,
+            self::Home,
+            self::Health,
+            self::Business,
+            self::Jetski,
+        ];
     }
 }

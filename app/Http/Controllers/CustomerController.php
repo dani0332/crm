@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Http\Requests\CustomerPrimaryEmailRequest;
+use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
@@ -12,11 +13,13 @@ use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentAccessService;
 use App\Services\SLA\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -30,13 +33,16 @@ class CustomerController extends Controller
     private $customerService;
     private $lookupService;
     private $slaService;
+    private QuoteDocumentAccessService $quoteDocumentAccessService;
+
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
         BerlinService $berlinService,
         CustomerService $customerService,
         LookupService $lookupService,
-        SLAService $slaService
+        SLAService $slaService,
+        QuoteDocumentAccessService $quoteDocumentAccessService,
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
@@ -44,6 +50,7 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
         $this->lookupService = $lookupService;
         $this->slaService = $slaService;
+        $this->quoteDocumentAccessService = $quoteDocumentAccessService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -51,7 +58,7 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -73,7 +80,7 @@ class CustomerController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Customer  $carquote
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($uuid)
     {
@@ -89,7 +96,7 @@ class CustomerController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  \App\Customer  $customer
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($uuid)
     {
@@ -103,7 +110,7 @@ class CustomerController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \App\Customer  $customer
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $uuid)
     {
@@ -143,7 +150,7 @@ class CustomerController extends Controller
     /**
      * Store a newly uploaded customer.
      *
-     * @param \Illuminate\Http\Response
+     * @param Response
      */
     public function processCustomerUpload(Request $request)
     {
@@ -167,35 +174,39 @@ class CustomerController extends Controller
         return view('customers.upload');
     }
 
-    public function deleteAdditionalContact($id, Request $request)
+    public function deleteAdditionalContact($id, DeleteAdditionalContactRequest $request)
     {
-        $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
-
-        if ($deleteCustomerAdditionalContact) {
-            Log::info('Customer additional contact deleted. ID: '.$id);
-            $deleteCustomerAdditionalContact->delete();
-        }
+        $result = $this->customerService->deleteCustomerAdditionalContacts($id);
 
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
         }
 
-        return response()->json(['data' => [
-            'message' => 'Additional Contact Deleted.',
-        ]]);
+        if ($result['success']) {
+            return response()->json(['data' => ['message' => $result['message']]], 200);
+        }
+
+        return response()->json(['error' => ['message' => $result['message']]], 404);
     }
 
     public function makeAdditionalContactPrimary(CustomerPrimaryEmailRequest $request)
     {
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
+        if (! $quoteObject) {
+            if (isset($request->isInertia) && $request->isInertia) {
+                return redirect()->back()->with('error', 'Quote not found.');
+            }
 
-        if ($quoteObject) {
-            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+            return response()->json(['error' => ['message' => 'Quote not found.']], 404);
         }
 
+        $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
+
+        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, (bool) $keepExistingPrimaryEmail);
+        $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with('success', 'Primary Contact Updated');
         }
 
         return response()->json(['data' => [
@@ -224,6 +235,19 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if ($quoteObject) {
+            $user = auth()->user();
+            if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+                $authorizationMessage = 'You are not authorized to add additional contact for this quote.';
+                if ($request->isInertia) {
+                    vAbort($authorizationMessage);
+                }
+
+                return response()->json(['error' => [
+                    'message' => $authorizationMessage,
+                ]]);
+            }
+        }
         if ($key == GenericRequestEnum::EMAIL) {
             $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
                 ->where('value', $request->additional_contact_val)->where('key', 'email')->first();

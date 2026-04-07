@@ -66,10 +66,10 @@ class SageApiService
     public function __construct()
     {
         // Guzzle was not working for post request
-        $this->sageLogin = env('SAGE_300_LOGIN');
-        $this->sagePassword = env('SAGE_300_PASSWORD');
-        $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
-        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
+        $this->sageLogin = config('constants.SAGE_300_LOGIN');
+        $this->sagePassword = config('constants.SAGE_300_PASSWORD');
+        $this->sageRequestUrl = config('constants.SAGE_300_BASE_URL').config('constants.SAGE_300_VERSION');
+        $this->sageDBName = config('constants.SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -981,16 +981,14 @@ class SageApiService
             LoggerService::info('--------------------------------Sage Policy Already Booked-------------------------------');
         }
 
-        $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
         $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
         foreach ($ePTransactions as $ePTransaction) {
             LoggerService::info('Embedded Product booking checks', extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
                 'epPTransaction' => $ePTransaction?->code,
-                'isTapPaymentGateway' => $isTapPaymentGateway,
             ]);
-            if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $isTapPaymentGateway) {
+            if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction) {
                 LoggerService::info('--------------------------------Embedded Product Sage booking process started-------------------------------');
                 $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
                 LoggerService::info('--------------------------------Embedded Product Sage booking process completed-------------------------------', extra : $embeddedProductSageBookingResponse);
@@ -1671,7 +1669,7 @@ class SageApiService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -1862,12 +1860,13 @@ class SageApiService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (empty($postedResponse['BatchNumber'])) {
+        if (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber'])) {
             $errorMessage = 'ar split payment failed from sage';
             $message = 'createARInvoiceSplitPayments  failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceSplitPayments, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
+
         LoggerService::info('AR Invoice Premium and Commission non upfront batch number - '.$postedResponse['BatchNumber']);
         $batchNumber = $postedResponse['BatchNumber'];
         if ($isLiveApiCallStep2) {
@@ -1887,16 +1886,19 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
             }
             LoggerService::info('Preparing patch payload for split payments');
+            $sageDateFormat = SagePayloadFactory::instanceData()->sage_api_date_format;
+            $bookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format($sageDateFormat);
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                 $paymentSplit = $paymentSplits[$key];
                 // Note: Discount invoices are no longer created, so we don't include discount in amount due
-                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
                 $dueAmount = roundNumber($paymentSplit['payment_amount']);
 
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                    $dueDate = $invoicePaymentSchedulesDueDate;
+                    $dueDate = $bookingDateFormatted;
                 } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                    $dueDate = $paymentSplit['sr_no'] == 1
+                        ? $bookingDateFormatted
+                        : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
                 }
 
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1907,20 +1909,15 @@ class SageApiService
                 LoggerService::info('SAGE API :  Skip Patch payload for Commission Splits  for '.$quote->code);
             } else {
                 LoggerService::info('SAGE API :  Prepare Patch payload for Commission Splits  for '.$quote->code);
-
                 foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                     $paymentSplit = $paymentSplits[$key];
                     $commissionSplit = $paymentSplit['commission_vat_applicable'];
                     $vatOnCommission = $paymentSplit['commission_vat'];
-
                     $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-
-                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
-                    // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                        $dueDate = $invoicePaymentSchedulesDueDate;
+                        $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -2172,7 +2169,7 @@ class SageApiService
                 $postedResponse = json_decode($resp, true);
             }
 
-            if (! empty($postedResponse['BatchNumber'])) {
+            if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
                 LoggerService::info('AP Invoice Premium batch number - '.$postedResponse['BatchNumber']);
                 if ($isLiveApiCallStep5) {
                     $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2364,9 +2361,8 @@ class SageApiService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (! empty($postedResponse['BatchNumber'])) {
+        if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
             $apBatchNumber = $postedResponse['BatchNumber'];
-            $url = 'AP/APInvoiceBatches('.$apBatchNumber.')';
             LoggerService::info('AP Invoice Split Payments batch number - '.$apBatchNumber);
             if ($isLiveApiCallStep6) {
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2393,17 +2389,17 @@ class SageApiService
 
                     if ($aPInvoicePaymentsScheduleResponse['status']) {
                         $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+                        $bookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
                         foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
                             // Note: Discount invoices are no longer created, so we don't include discount in amount due
                             $dueAmount = roundNumber($paymentSplits[$key]['payment_amount']);
-                            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                                $dueDate = $invoicePaymentSchedulesDueDate;
+                                $dueDate = $bookingDateFormatted;
                             } else {
-                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
                             }
 
-                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
                             $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                             $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
                             $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
@@ -2664,7 +2660,7 @@ class SageApiService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = 'Error while making split prepayments to sage';
             $message = 'createPaymentReceiptOneInvoice failed';
 
@@ -2847,7 +2843,7 @@ class SageApiService
             $response = json_decode($resp, true);
         }
 
-        if (isset($response['error'])) {
+        if (isset($response['error']) || (! isset($response['BatchNumber']) || empty($response['BatchNumber']))) {
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = ' arSplitPrepaymentPayload failed';
 
@@ -3034,7 +3030,7 @@ class SageApiService
             $response = json_decode($resp, true);
         }
 
-        if (isset($response['error'])) {
+        if (isset($response['error']) || (! isset($response['BatchNumber']) || empty($response['BatchNumber']))) {
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = 'arSplitPrepaymentPayload failed';
 
@@ -3521,7 +3517,8 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {
+                $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]) || $isCyberLob) {
                     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
                 } else {
                     // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -3761,7 +3758,7 @@ class SageApiService
             $response['message'] = 'AR and AP Prepayments are posted to Sage';
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__." - Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra : [
                 'error' => $e->getMessage(),
             ]);
@@ -3981,7 +3978,7 @@ class SageApiService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
 
             $commissionDocumentNumber = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             if ($commissionDocumentNumber) {
@@ -4135,7 +4132,7 @@ class SageApiService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = 'Error while making split prepayments to sage';
             $message = 'createUpfrontApplyPaymentAPInvoice failed';
 
@@ -4253,7 +4250,7 @@ class SageApiService
             $response = json_decode($resp, true);
         }
 
-        if (isset($response['error'])) {
+        if (isset($response['error']) || (! isset($response['BatchNumber']) || empty($response['BatchNumber']))) {
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = ' createSplitApplyPaymentAPInvoice failed';
 
@@ -4375,7 +4372,7 @@ class SageApiService
             $response = json_decode($resp, true);
         }
 
-        if (isset($response['error'])) {
+        if (isset($response['error']) || (! isset($response['BatchNumber']) || empty($response['BatchNumber']))) {
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = 'apSplitPrepaymentPayload failed';
 
@@ -4539,5 +4536,4 @@ class SageApiService
     {
         return [InsuranceProviderEnum::OIC->value, InsuranceProviderEnum::NGI->value];
     }
-
 }

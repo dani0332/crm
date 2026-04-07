@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
@@ -12,9 +13,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -521,6 +525,59 @@ class HealthQuote extends Model implements AuditableContract
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 
+    public function isPECLead(): bool
+    {
+        return ! empty($this->has_pec_tag);
+    }
+
+    public function isSIC1(): bool
+    {
+        return ! $this->health_plan_type_id;
+    }
+
+    public function isSIC2(): bool
+    {
+        $sicConfig = SICConfig::where('quote_type_id', QuoteTypeId::Health)->first();
+
+        if (! $sicConfig) {
+            return false;
+        }
+
+        // Only use age-based classification when DOB is present; null DOB must not be treated as age 0
+        if (! empty($this->dob)) {
+            $age = Carbon::parse($this->dob)->age;
+            LoggerService::info('Lead applicant age', ['age' => $age]);
+
+            if ($age >= $sicConfig->min_age && $age <= $sicConfig->max_age) {
+                return true;
+            }
+        }
+
+        if (! empty($this->price_starting_from)) {
+            if ($this->price_starting_from < $sicConfig->price_starting_from) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isEcommerce(): bool
+    {
+        LoggerService::info("isEcommerce check for lead source {$this->source}", ['source' => $this->source]);
+        $appStorageValue = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE);
+        LoggerService::info("App storage Value for lead source {$appStorageValue}", ['appStorageValue' => $appStorageValue]);
+
+        $host = parse_url($this->source, PHP_URL_HOST);
+        $domains = explode(',', $appStorageValue);
+
+        if (! in_array($host, $domains)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function hasPecTag(): Attribute
     {
         return Attribute::make(
@@ -559,5 +616,18 @@ class HealthQuote extends Model implements AuditableContract
     public function branch()
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    /**
+     * ADNIC non-STP flag from MongoDB health-umaf-responses (stp_rating.is_non_stp).
+     */
+    public function hasAdnicPlan(): bool
+    {
+        $umaf = HealthUMAF::where('quote_uuid', $this->uuid)->first();
+        if (! $umaf || ! $umaf?->isADNIC()) {
+            return false;
+        }
+
+        return $umaf?->isADNIC() ? true : false;
     }
 }

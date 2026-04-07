@@ -394,9 +394,9 @@ class RenewalsUploadService
      *
      * @return mixed|string|null
      */
-    public function getPlans($id)
+    public function getPlans($id, $isRenewalHistorical = false, $process = '')
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true);
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true, $isRenewalHistorical, $process);
 
         if (isset($quotePlans->quotes)) {
             return true;
@@ -496,64 +496,8 @@ class RenewalsUploadService
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
-
-        if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
-            if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
-                $message = 'can not proceed with quote as payment is already in process. ';
-                LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-                $renewalQuoteProcess->update(['step_errors' => [$message], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
-
-                return false;
-            }
-
-            if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
-
-                if (is_int($planResponse) && $planResponse == 200) {
-                    LoggerService::info($logPrefix.' plan created successfully', extra: [
-                        'UUID' => $quote->uuid,
-                    ]);
-                } else {
-                    $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
-
-                    if (isset($planResponse->message)) {
-                        $error = 'Error: '.$planResponse->message;
-                    }
-
-                    LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
-                        'UUID' => $quote->uuid,
-                    ]);
-                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-                    $renewalQuoteProcess->update(['step_errors' => ['plan creation failed. API Response'], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
-
-                    return false;
-                }
-            }
-
-            $plansResponse = $this->getPlans($quote->uuid);
-            if ($plansResponse === true) {
-                LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
-                    'UUID' => $quote->uuid,
-                ]);
-                // update status to plans fetched
-                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
-            } else {
-                LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
-
-                // Properly extract or stringify $plansResponse for step_errors so Vue renders useful info.
-                if (is_string($plansResponse)) {
-                    $errorMsg = $plansResponse;
-                } elseif (is_object($plansResponse) || is_array($plansResponse)) {
-                    $errorMsg = json_encode($plansResponse);
-                } else {
-                    $errorMsg = strval($plansResponse);
-                }
-                $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-            }
-        } else {
+        $quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first();
+        if (! $quoteObject || ! $quote) {
             $message = 'QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number;
             LoggerService::info($logPrefix.' '.$message);
             $renewalQuoteProcess->update([
@@ -561,7 +505,75 @@ class RenewalsUploadService
                 'retry_count' => $renewalQuoteProcess->retry_count + 1,
             ]);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+
+            return false;
         }
+
+        $leadValidationErrors = collect();
+        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists() && $isGenesisLead['status'];
+
+        if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
+            $message = 'can not proceed with quote as payment is already in process. ';
+            LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            $renewalQuoteProcess->update(['step_errors' => [$message], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+
+            return false;
+        }
+
+        if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
+            $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead, $isRenewalHistorical);
+
+            if (is_int($planResponse) && $planResponse == 200) {
+                LoggerService::info($logPrefix.' plan created successfully', extra: [
+                    'UUID' => $quote->uuid,
+                ]);
+            } else {
+                $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
+
+                if (isset($planResponse->message)) {
+                    $error = 'Error: '.$planResponse->message;
+                }
+
+                LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
+                    'UUID' => $quote->uuid,
+                ]);
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                $renewalQuoteProcess->update(['step_errors' => ['plan creation failed. API Response'], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+
+                return false;
+            }
+        }
+
+        $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical, 'renewalsUpload');
+        if ($plansResponse === true) {
+            LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
+                'UUID' => $quote->uuid,
+            ]);
+            // update status to plans fetched
+            $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
+        } else {
+            LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+
+            // Properly extract or stringify $plansResponse for step_errors so Vue renders useful info.
+            if (is_string($plansResponse)) {
+                $errorMsg = $plansResponse;
+            } elseif (is_object($plansResponse) || is_array($plansResponse)) {
+                $errorMsg = json_encode($plansResponse);
+            } else {
+                $errorMsg = strval($plansResponse);
+            }
+            $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        }
+
     }
 
     /**
@@ -1654,25 +1666,19 @@ class RenewalsUploadService
     }
 
     /**
-     * create manual plan for Car.
+     * Create manual plan for Car.
      *
      * @return void
      */
-    public function createPlan($data, $quote, $createdById)
+    public function createPlan($data, $quote, $createdById, $isGenesisLead, $isRenewalHistorical)
     {
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
 
-        $leadValidationErrors = collect();
-        $leadData = (object) $data;
-        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
-
         // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
         $provider = $isGenesisLead['insuranceProvider'];
-
-        // This is added for production error where sometime user change the plan name or repair type after the batch upload
         if (! $provider) {
-            LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', extra: [
+            LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', [
                 'provider' => $data['provider_name'] ?? null,
                 'quote_uuid' => $quote->uuid,
             ]);
@@ -1680,7 +1686,36 @@ class RenewalsUploadService
             return 'Provider not found: '.($data['provider_name'] ?? 'N/A');
         }
 
-        $carPlan = CarPlan::where([
+        $carPlan = $this->findCarPlan($data, $provider);
+        if (! $carPlan) {
+            LoggerService::warning($logPrefix.' Plan not found', [
+                'provider' => $data['provider_name'] ?? null,
+                'plan' => $data['plan_name'] ?? null,
+                'plan_type' => $data['plan_type'] ?? null,
+                'provider_id' => $provider->id,
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return 'Car plan not found for provider: '.($data['provider_name'] ?? 'N/A').
+                ', plan: '.($data['plan_name'] ?? 'N/A').
+                ', type: '.($data['plan_type'] ?? 'N/A');
+        }
+
+        $planData = $this->preparePlanData($quote, $createdById, $isRenewalHistorical);
+        $plan = $this->preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote);
+
+        $plan['addons'] = $this->buildPlanAddons($data, $carPlan, $logPrefix);
+
+        $planData['plans'][] = $plan;
+
+        LoggerService::info($logPrefix.' PlanData: '.json_encode($planData));
+
+        return $this->carQuoteService->renewalCreatePlan($planData);
+    }
+
+    private function findCarPlan($data, $provider)
+    {
+        return CarPlan::where([
             'text' => $data['plan_name'],
             'repair_type' => $data['plan_type'],
             'provider_id' => $provider->id,
@@ -1693,32 +1728,28 @@ class RenewalsUploadService
                 CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
+    }
 
-        if (! $carPlan) {
-            LoggerService::warning($logPrefix.' Plan not found', extra: [
-                'provider' => $data['provider_name'] ?? null,
-                'plan' => $data['plan_name'] ?? null,
-                'plan_type' => $data['plan_type'] ?? null,
-                'provider_id' => $provider->id,
-                'quote_uuid' => $quote->uuid,
-            ]);
-
-            return 'Car plan not found for provider: '.($data['provider_name'] ?? 'N/A').', plan: '.($data['plan_name'] ?? 'N/A').', type: '.($data['plan_type'] ?? 'N/A');
-        }
-
-        $planData = [
+    private function preparePlanData($quote, $createdById, $isRenewalHistorical)
+    {
+        return [
             'quoteUID' => $quote->uuid,
             'update' => false,
+            'isRenewalHistorical' => $isRenewalHistorical,
             'url' => strval(request()->current_url),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
             'userId' => strval($createdById),
         ];
+    }
 
+    private function preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote)
+    {
         $plan = [
             'planId' => $carPlan->id,
             'isDisabled' => false,
             'isManualUpdate' => $isGenesisLead['status'] ? true : false,
+            'isGenesis' => $isGenesisLead['status'] ? true : false,
             'actualPremium' => $data['premium'] ?? 0,
             'discountPremium' => $data['premium'] ?? 0,
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
@@ -1728,26 +1759,41 @@ class RenewalsUploadService
         if (! empty($data['insurer_quote_no'])) {
             $plan['insurerQuoteNo'] = strval($data['insurer_quote_no']);
         }
-
-        // excess will be used for comp or agency repair type
-        if ($data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY) {
+        if ($this->shouldSetExcess($data)) {
             $plan['excess'] = $data['excess'];
         }
-
-        // trim is optional
         if (! empty($data['trim'])) {
-            if ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) {
-                if (! empty($valuation->insurer_available_trims)) {
-                    $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-                    if (! empty($trims[$data['trim']]['admeId'])) {
-                        $plan['insurerTrimId'] = $trims[$data['trim']]['admeId'];
-                    }
-                }
+            $trimId = $this->findInsurerTrimId($quote->id, $provider->id, $data['trim']);
+            if ($trimId) {
+                $plan['insurerTrimId'] = $trimId;
             }
         }
 
-        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
+        return $plan;
+    }
 
+    private function shouldSetExcess($data)
+    {
+        return $data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY;
+    }
+
+    private function findInsurerTrimId($quoteId, $providerId, $trim)
+    {
+        $valuation = CarQuoteValuation::where('quote_request_id', $quoteId)
+            ->where('provider_id', $providerId)
+            ->first();
+        if ($valuation && ! empty($valuation->insurer_available_trims)) {
+            $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+
+            return ! empty($trims[$trim]['admeId']) ? $trims[$trim]['admeId'] : null;
+        }
+
+        return null;
+    }
+
+    private function buildPlanAddons($data, $carPlan, $logPrefix)
+    {
+        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
         $addons = [
             'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
             'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
@@ -1755,38 +1801,44 @@ class RenewalsUploadService
             'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
             'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
         ];
-
+        $selectedAddons = [];
         foreach ($addons as $key => $addonCode) {
-            if (isset($planAddons[$addonCode]) && ! empty($data[$key])) {
-                $addon = $planAddons[$addonCode];
-
-                foreach ($addon['car_addon_options'] as $option) {
-                    if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
-                        $price = $data[$key.'_amount'];
-
-                        $planDataAddon = [
-                            'addonId' => $option['addon_id'],
-                            'addonOptionId' => $option['id'],
-                            'price' => $price,
-                            'isSelected' => ($price == 0),
-                        ];
-
-                        $plan['addons'][] = $planDataAddon;
-                        break;
-                    } else {
-                        LoggerService::info($logPrefix.'('.$option['value'].') not found in sheet', ['addonCode' => $addonCode, 'addonOptionValueFromSheet' => $data[$key]]);
-                    }
-                }
-            } else {
+            if (! isset($planAddons[$addonCode]) || empty($data[$key])) {
                 LoggerService::info($logPrefix.'('.$addonCode.') not found');
+
+                continue;
+            }
+            $addon = $planAddons[$addonCode];
+            $selected = $this->findMatchingAddonOption($addon['car_addon_options'], $data, $key, $addonCode, $logPrefix);
+            if ($selected) {
+                $selectedAddons[] = $selected;
             }
         }
 
-        $planData['plans'][] = $plan;
+        return $selectedAddons;
+    }
 
-        LoggerService::info($logPrefix.' PlanData: '.json_encode($planData));
+    private function findMatchingAddonOption($options, $data, $key, $addonCode, $logPrefix)
+    {
+        foreach ($options as $option) {
+            if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
+                $price = $data[$key.'_amount'];
 
-        return $this->carQuoteService->renewalCreatePlan($planData);
+                return [
+                    'addonId' => $option['addon_id'],
+                    'addonOptionId' => $option['id'],
+                    'price' => $price,
+                    'isSelected' => ($price == 0),
+                ];
+            } else {
+                LoggerService::info($logPrefix.'('.$option['value'].') not found in sheet', [
+                    'addonCode' => $addonCode,
+                    'addonOptionValueFromSheet' => $data[$key],
+                ]);
+            }
+        }
+
+        return null;
     }
 
     public function getquoteStatusIdbyCode($quoteStatus)
@@ -1836,7 +1888,20 @@ class RenewalsUploadService
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
-                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true) : [];
+                $leadValidationErrors = collect();
+                $leadData = (object) $renewalQuoteProcess->data ?? [];
+                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+
+                $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
+                    'quote_id' => $carQuote->id,
+                    'quote_type' => QuoteTypeShortCode::CAR,
+                    'status' => RenewalProcessStatuses::PLANS_FETCHED,
+                    'type' => RenewalsUploadType::UPDATE_LEADS,
+                    'email_sent' => true,
+                    'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+                ])->exists() && $checkGenesisLead['status'];
+
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
                 if ($this->isCommercialRenewalQuote($carQuote)) {
@@ -1862,13 +1927,12 @@ class RenewalsUploadService
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                $leadData = (object) $renewalQuoteProcess?->data ?? [];
-                $leadValidationErrors = collect();
-                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+
                 // if the lead is a Genesis lead, then set the current insurer to empty
                 if ($checkGenesisLead['status']) {
                     $emailData->currentInsurer = '';
                 }
+
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
@@ -1974,7 +2038,7 @@ class RenewalsUploadService
      */
     private function attachPdfIfNeeded($carQuote, $listQuotePlans, &$emailData)
     {
-        if (count($listQuotePlans) > 0) {
+        if (is_countable($listQuotePlans) && count($listQuotePlans) > 0) {
             $pdfData = [
                 'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $carQuote->uuid,
