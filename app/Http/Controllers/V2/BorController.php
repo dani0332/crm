@@ -10,6 +10,7 @@ use App\Http\Requests\Bor\BorFormRequest;
 use App\Models\BorLog;
 use App\Services\Bor\BorPdfService;
 use App\Services\Bor\BorService;
+use App\Services\Bor\BorUploadFileContentValidator;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -23,11 +24,14 @@ class BorController extends Controller
     use GenericQueriesAllLobs;
 
     protected $borService;
+    protected $borUploadFileContentValidator;
 
     public function __construct(
         BorService $borService,
+        BorUploadFileContentValidator $borUploadFileContentValidator,
     ) {
         $this->borService = $borService;
+        $this->borUploadFileContentValidator = $borUploadFileContentValidator;
         // Apply BOR document upload permission to upload method
         $this->middleware('permission:'.PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
     }
@@ -76,7 +80,7 @@ class BorController extends Controller
                 'newBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             LoggerService::error('BOR request creation failed', [
                 'error' => $e->getMessage(),
@@ -105,7 +109,7 @@ class BorController extends Controller
                 'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to update BOR request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -178,10 +182,20 @@ class BorController extends Controller
         $borLogId = $id ?? $request->input('bor_log_id');
 
         $validated = $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
+            'file' => [
+                'required',
+                'file',
+                'max:10240',
+                'extensions:pdf,doc,docx,jpg,jpeg,png',
+                // No `mimes:zip`: we never treat “zip” as an allowed upload type. `.docx` is OOXML (zip) but must use a `.docx` name; finfo often reports application/zip — allowed in mimetypes only alongside extension whitelist + BorUploadFileContentValidator OOXML checks.
+                // application/octet-stream: finfo sometimes returns this for valid uploads (e.g. legacy .doc); BorUploadFileContentValidator still enforces magic bytes + structure per extension.
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/x-zip-compressed,application/octet-stream,image/jpeg,image/png,image/x-png',
+            ],
             'document_type_code' => 'nullable|string', // Will be auto-determined if not provided
             'bor_log_id' => $borLogId ? 'nullable' : 'required|exists:bor_logs,id',
         ]);
+
+        $this->borUploadFileContentValidator->validate($request->file('file'));
 
         try {
             $result = $this->borService->uploadBorDocument(
@@ -197,7 +211,7 @@ class BorController extends Controller
                 'document' => $result['document'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('BOR document upload failed', [
                 'bor_log_id' => $borLogId ?? $request->input('bor_log_id'),
                 'error' => $e->getMessage(),
@@ -240,7 +254,7 @@ class BorController extends Controller
                 'message' => 'BOR PDF generated successfully for viewing',
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to generate BOR PDF for viewing', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -272,7 +286,7 @@ class BorController extends Controller
                 'updatedBorLog' => $result['borLog'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($e->getCode() !== 200) {
                 LoggerService::error('BOR cancellation failed', [
                     'bor_id' => $id,
@@ -306,7 +320,7 @@ class BorController extends Controller
                 'updatedBorLog' => $result['borLog'],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('BOR completion failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
