@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\Team;
 use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,14 +17,18 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
 {
     public function getReportData($request)
     {
-        info("before parent::getReportData");
-        $baseReportData = collect(parent::getReportData($request));
+        $builder = $this->getReportQueryBuilder($request);
+        if ($builder === null) {
+            return [];
+        }
+
+        LoggerService::sql(self::class.' - Conversion Optimization Report (base query)', $builder);
+
+        $baseReportData = $this->mapAdvisorConversionQueryResults(collect($builder->get()));
 
         if ($baseReportData->isEmpty()) {
             return [];
         }
-
-        info("before applyPostQueryCalculations");
 
         return $this->applyPostQueryCalculations($baseReportData, (array) $request->all())->values()->all();
     }
@@ -106,42 +111,48 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         });
 
         $capPercentage = $this->resolveCapPercentage($filters['cap_percentage'] ?? null);
-        $cohorts = $normalizedRows->groupBy(fn ($row) => $this->resolveCohortKey($row, $filters));
 
-        foreach ($cohorts as $cohortRows) {
-            $rankedRows = $cohortRows
-                ->sort(function ($leftRow, $rightRow) {
-                    $conversionComparison = $rightRow->conversion <=> $leftRow->conversion;
+        /** Commented for future use for multiple groups */
+        // Former multi-cohort grouping: ranked separately per resolveCohortKey() (e.g. by sub-team when team filters empty).
+        // Product requirement: one ranked list for the entire filtered dataset (filters already narrow rows).
+        // $cohorts = $normalizedRows->groupBy(fn ($row) => $this->resolveCohortKey($row, $filters));
+        //
+        // foreach ($cohorts as $cohortRows) {
+        $cohortRows = $normalizedRows;
 
-                    if ($conversionComparison !== 0) {
-                        return $conversionComparison;
-                    }
+        $rankedRows = $cohortRows
+            ->sort(function ($leftRow, $rightRow) {
+                $conversionComparison = $rightRow->conversion <=> $leftRow->conversion;
 
-                    $advisorNameComparison = strcmp((string) ($leftRow->advisor_name ?? ''), (string) ($rightRow->advisor_name ?? ''));
-
-                    if ($advisorNameComparison !== 0) {
-                        return $advisorNameComparison;
-                    }
-
-                    return ((int) ($leftRow->quote_batch_id ?? 0)) <=> ((int) ($rightRow->quote_batch_id ?? 0));
-                })
-                ->values();
-
-            $teamAverage = round((float) $rankedRows->avg(fn ($row) => (float) $row->conversion), 2);
-
-            foreach ($rankedRows as $index => $row) {
-                $row->ranking = $index + 1;
-                $row->team_average = $teamAverage;
-
-                if ((float) $row->conversion < $teamAverage && (float) $row->total_leads > 0) {
-                    $row->expected_sales = round(((float) $row->total_leads * $teamAverage) / 100, 2);
-                    $row->required_sales = round($row->expected_sales - (float) $row->sale_leads, 2);
-                    $row->new_conversion = round(($row->expected_sales / (float) $row->total_leads) * 100, 2);
+                if ($conversionComparison !== 0) {
+                    return $conversionComparison;
                 }
-            }
 
-            $this->applyCapLimitCalculations($rankedRows, $capPercentage);
+                $advisorNameComparison = strcmp((string) ($leftRow->advisor_name ?? ''), (string) ($rightRow->advisor_name ?? ''));
+
+                if ($advisorNameComparison !== 0) {
+                    return $advisorNameComparison;
+                }
+
+                return ((int) ($leftRow->quote_batch_id ?? 0)) <=> ((int) ($rightRow->quote_batch_id ?? 0));
+            })
+            ->values();
+
+        $teamAverage = round((float) $rankedRows->avg(fn ($row) => (float) $row->conversion), 2);
+
+        foreach ($rankedRows as $index => $row) {
+            $row->ranking = $index + 1;
+            $row->team_average = $teamAverage;
+
+            if ((float) $row->conversion < $teamAverage && (float) $row->total_leads > 0) {
+                $row->expected_sales = round(((float) $row->total_leads * $teamAverage) / 100, 2);
+                $row->required_sales = round($row->expected_sales - (float) $row->sale_leads, 2);
+                $row->new_conversion = round(($row->expected_sales / (float) $row->total_leads) * 100, 2);
+            }
         }
+
+        $this->applyCapLimitCalculations($rankedRows, $capPercentage);
+        // } // end of foreach $cohorts
 
         if ($normalizedRows->isNotEmpty()) {
             $datasetAverageConversion = round(
@@ -207,6 +218,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         return QuoteTypeRepository::where('code', $normalizedLob)->value('id');
     }
 
+    /*
     private function resolveCohortKey(object $row, array $filters): string
     {
         $selectedSubTeams = $this->normalizeSelectedIds($filters['sub_teams'] ?? []);
@@ -239,6 +251,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
             ->values()
             ->all();
     }
+    */
 
     private function resolveCapPercentage(mixed $capPercentage): ?int
     {

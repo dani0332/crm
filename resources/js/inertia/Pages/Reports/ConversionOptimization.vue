@@ -1064,12 +1064,8 @@ onMounted(async () => {
           </td>
           <td></td>
           <td></td>
-          <td class="direction-center">
-            {{ calculateTotalSum('expected_sales') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum('required_sales') }}
-          </td>
+          <td class="direction-center"></td>
+          <td class="direction-center"></td>
           <td></td>
           <td></td>
         </tr>
