@@ -105,12 +105,12 @@ class AssignTeamPipe extends BaseAllocationPipe
                 ->triggerAUHTierRouting($this->lead);
         } else {
             LoggerService::info('Lead is Non AUH lead, triggering Non AUH tier routing',
-                ['emirates_of_visa' => $this->lead->emirate->text, 'source' => $this->source, 'uuid' => $this->lead->uuid]);
+                ['emirates_of_visa' => $this->lead->emirate?->text, 'source' => $this->source, 'uuid' => $this->lead->uuid]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'Lead is Non AUH lead, triggering Non AUH tier routing',
-                    'emirates_of_visa' => $this->lead->emirate->text,
+                    'emirates_of_visa' => $this->lead->emirate?->text,
                     'step' => 'Non AUH check',
                     'is_auh' => false,
                     'source' => $this->source,
