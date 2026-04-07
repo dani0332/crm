@@ -37,9 +37,7 @@ function formatActionEvent(value) {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Event Tracking
-          </h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Event Tracking</h3>
         </div>
       </template>
       <template #body>
@@ -54,7 +52,9 @@ function formatActionEvent(value) {
             hide-footer
           >
             <template #item-action_event="item">
-              <span class="text-sm">{{ formatActionEvent(item.action_event) }}</span>
+              <span class="text-sm">{{
+                formatActionEvent(item.action_event)
+              }}</span>
             </template>
           </DataTable>
         </div>
