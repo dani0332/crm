@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\SendUpdateLog;
 use App\Services\QuoteDocumentAccessService;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -49,4 +50,17 @@ test('service allows car manager when not assigned as advisor on quote', functio
     $service = new QuoteDocumentAccessService;
 
     expect($service->userCanAccessQuoteDocumentable($manager, $quote))->toBeTrue();
+});
+
+test('service allows car advisor on send update log resolved via linked quote uuid', function () {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
+    $quote = CarQuote::factory()->create(['advisor_id' => $advisor->id]);
+    $sendUpdateLog = SendUpdateLog::factory()->create([
+        'quote_uuid' => $quote->uuid,
+        'quote_type_id' => 1,
+    ]);
+
+    $service = new QuoteDocumentAccessService;
+
+    expect($service->userCanAccessQuoteDocumentable($advisor, $sendUpdateLog))->toBeTrue();
 });
