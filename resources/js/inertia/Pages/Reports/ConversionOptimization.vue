@@ -298,7 +298,7 @@ const loadTeams = async selectedLob => {
     });
 
     teamOptions.value = (response.data ?? []).map(team => ({
-      value: team.id.toString(),
+      value: parseInt(String(team.id), 10),
       label: team.name,
     }));
   } finally {
@@ -642,12 +642,8 @@ const formatValue = value => {
 
 onMounted(async () => {
   setDefaultValues();
-  setQueryStringFiltersUtil(params, filters);
+  setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams'] });
   await onLobChange(filters.lob, true);
-
-
-  console.log("filters.sub_teams",filters.sub_teams);
-  console.log("filters.sub_teams",filters.sub_teams);
 
   if (filters.teams?.length > 0 && filters.sub_teams?.length < 1) {
     await loadSubTeams(filters.teams);
