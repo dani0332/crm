@@ -20,7 +20,6 @@ class BikeCQFValidationService extends BaseCQFValidationService
                 ->where('previous_quote_policy_number', $quote->policy_number)
                 ->where('previous_policy_expiry_date', $quote->policy_expiry_date)
                 ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
-                ->where('quote_type_id', QuoteTypeId::Bike)
                 ->exists();
         }
 
