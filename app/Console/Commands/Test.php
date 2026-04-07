@@ -41,6 +41,8 @@ class Test extends Command
             return self::FAILURE;
         }
 
-        dd($voucherCode);
+        $this->info('Voucher code: '.$voucherCode);
+
+        return self::SUCCESS;
     }
 }

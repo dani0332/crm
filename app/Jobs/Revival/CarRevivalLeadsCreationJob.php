@@ -206,17 +206,17 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 // Shifted to Bird Workflow, previous it was using Brevo
                 $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
-                if ($workflowUrl && ! empty($workflowUrl->value)) {
+                if (! $workflowUrl || empty($workflowUrl->value)) {
+                    LoggerService::warning('CarRevivalLeadsCreationJob - Bird workflow URL not configured; legacy Brevo send disabled', [
+                        'uuid' => $revivalCarQuoteUUID,
+                    ]);
+                    $response = 0;
+                } else {
                     $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
                         $emailData,
                         WorkflowTypeEnum::MOTOR_REVIVAL_OCB,
                         $workflowUrl->value
                     );
-                } else {
-                    LoggerService::warning('CarRevivalLeadsCreationJob - Bird workflow URL not found, falling back to legacy', [
-                        'uuid' => $revivalCarQuoteUUID,
-                    ]);
-                    $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 }
 
                 if ($response == 201) {

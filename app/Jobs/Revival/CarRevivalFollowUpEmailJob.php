@@ -20,7 +20,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\MACRMService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
-use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -73,8 +72,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             return false;
         }
 
-        $today = Carbon::today();
-
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
         $leadStatusArray = [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake];
@@ -85,12 +82,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
         // or if the source is Revival Paid or if the lead is assigned to an advisor
         if ($lead && ! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
-            $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
-            $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
-            $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
-            $afterTwentyDays = Carbon::parse($created_at)->addDays(20)->startOfDay();
-            $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
-
             try {
                 $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
             } catch (\Exception $exception) {
@@ -98,8 +89,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
                 return false;
             }
-
-            $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
             $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
@@ -141,16 +130,19 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         // Migrate to Bird workflow - frequency is managed by Bird, but we update count here
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
-                $emailData,
-                WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP,
-                $workflowUrl->value
-            );
-        } else {
-            // Fallback to legacy if Bird workflow URL not found
-            $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            LoggerService::warning('CarRevivalFollowUpEmailJob - Bird workflow URL not configured; legacy Brevo send disabled', [
+                'uuid' => $this->dttRevival->uuid,
+            ]);
+
+            return;
         }
+
+        $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
+            $emailData,
+            WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP,
+            $workflowUrl->value
+        );
 
         if ($response == 201) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');

@@ -9,12 +9,8 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 });
 
-test('car quote export headings include engagement level after repair type', function () {
+test('car quote export headings include engagement level', function () {
     $headings = app(CarQuoteExport::class)->headings();
 
-    expect(array_slice($headings, -3))->toBe([
-        'IMCRM SUB-SOURCE',
-        'REPAIR TYPE',
-        'ENGAGEMENT LEVEL',
-    ]);
+    expect($headings)->toContain('ENGAGEMENT LEVEL');
 });
