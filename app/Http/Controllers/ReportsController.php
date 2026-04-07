@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\ExportTypeEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -25,6 +26,7 @@ use App\Services\ConversionAsAtReportService;
 use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\AdvisorConversionReportService;
+use App\Services\Reports\ConversionOptimizationReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
@@ -51,7 +53,7 @@ class ReportsController extends Controller
     public function __construct()
     {
         $advisorConverionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
-        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport', 'renderConversionOptimizationReport']]);
 
         $advisorDistributionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
@@ -67,6 +69,19 @@ class ReportsController extends Controller
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
+        ]);
+    }
+
+    public function renderConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
+    {
+        $defaultFilters = $conversionOptimizationReportService->getDefaultFilters();
+        $reportRequest = $conversionOptimizationReportService->mergeDefaultsIntoRequest($request, $defaultFilters);
+
+        return inertia('Reports/ConversionOptimization', [
+            'reportData' => $conversionOptimizationReportService->getReportData($request),
+            'filtersByLob' => $conversionOptimizationReportService->getFiltersByLob(),
+            'filterOptions' => $conversionOptimizationReportService->getFilterOptions(),
+            'defaultFilters' => $conversionOptimizationReportService->getDefaultFilters(),
         ]);
     }
 
@@ -595,6 +610,20 @@ class ReportsController extends Controller
 
         // Default to CSV download using the trait's download method
         return $exportClass->download('Conversion As At Report');
+    }
+
+    public function exportConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
+    {
+        $exportClass = new \App\Exports\Reports\ConversionOptimizationReportExport($conversionOptimizationReportService, $request->all());
+
+        if ($request->exportType === ExportTypeEnum::Email->value) {
+            LoggerService::info('Email CSV');
+            $request['exportTitle'] = 'Conversion Optimization Report';
+
+            return $exportClass->emailCSV('Conversion Optimization Report', $request->all());
+        }
+
+        return $exportClass->download('Conversion Optimization Report');
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)

@@ -150,6 +150,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             'App\\Exports\\Reports\\EndorsementReportExport',
             'App\\Exports\\Reports\\InstallmentReportExport',
             'App\\Exports\\Reports\\ConversionAsAtReportExport',
+            'App\\Exports\\Reports\\ConversionOptimizationReportExport',
             'App\\Exports\\ClaimsExport',
         ];
 
