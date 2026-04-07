@@ -10,10 +10,6 @@ use App\Services\Logger\LoggerService;
 
 class CarRevivalService
 {
-    /**
-     * Set motor revival engagement to {@see MotorRevivalEnum::COMMS_TRIGGERED} so IMCRM can reflect it via quote sync
-     * ({@see \App\Observers\CarQuoteDetailObserver} → {@see \App\Traits\PersonalQuoteSyncTrait::syncQuote}).
-     */
     public function markRevivalCommsTriggered(string $quoteUuid): void
     {
         $carQuote = CarQuote::query()->where('uuid', $quoteUuid)->first();

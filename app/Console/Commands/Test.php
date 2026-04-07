@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\CarQuote;
 use App\Services\MACRMService;
 use Illuminate\Console\Command;
 
@@ -26,8 +27,24 @@ class Test extends Command
      */
     public function handle()
     {
+        $carQuote = CarQuote::query()->where('uuid', 'P7ZP5J23')->first();
+        if (! $carQuote) {
+            $this->warn('Car quote not found.');
+
+            return self::FAILURE;
+        }
+
+        $quoteUuid = $carQuote->uuid;
+
+        $voucherCode = MACRMService::motorRevivalVoucherCodeIfAvailable($quoteUuid);
+        if ($voucherCode === null) {
+            $this->warn('Voucher code already registered in MACRM for this quote UUID (see logs).');
+
+            return self::FAILURE;
+        }
+
         $payload = [
-            'voucher_code' => 'test123bc',
+            'voucher_code' => $voucherCode,
             'voucher_type' => 'trial_membership',
             'duration_days' => 1,
             'amount' => 10,

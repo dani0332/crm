@@ -14,6 +14,8 @@ class MACRMService
 {
     use Macrmable;
 
+    public const MOTOR_REVIVAL_VOUCHER_CODE_PREFIX = 'MA_FREE7_';
+
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
         try {
@@ -228,5 +230,82 @@ class MACRMService
             'status' => $response->status(),
             'json' => $response->json(),
         ];
+    }
+
+    public static function voucherCodeExists(string $code): ?bool
+    {
+        $token = self::getAuthToken();
+        if ($token === null) {
+            LoggerService::warning(self::class.'::voucherCodeExists auth token unavailable.', [
+                'code' => $code,
+            ]);
+
+            return null;
+        }
+
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        if (blank($baseUrl)) {
+            LoggerService::warning(self::class.'::voucherCodeExists MACRM_API_ENDPOINT is not configured.');
+
+            return null;
+        }
+
+        $url = rtrim($baseUrl, '/').'/v1/vouchers/code/'.rawurlencode($code);
+
+        try {
+            $response = Http::acceptJson()
+                ->withToken($token)
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->get($url);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::voucherCodeExists HTTP client exception.', [
+                'code' => $code,
+            ], $e);
+
+            return null;
+        }
+
+        if ($response->status() === 404) {
+            return false;
+        }
+
+        if ($response->successful()) {
+            $json = $response->json();
+            if (data_get($json, 'status') === true && filled(data_get($json, 'data'))) {
+                return true;
+            }
+
+            return false;
+        }
+
+        LoggerService::warning(self::class.'::voucherCodeExists unexpected HTTP response.', [
+            'code' => $code,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        return null;
+    }
+
+    public static function buildMotorRevivalVoucherCodeFromQuoteUuid(string $quoteUuid): string
+    {
+        return self::MOTOR_REVIVAL_VOUCHER_CODE_PREFIX.$quoteUuid;
+    }
+
+    public static function motorRevivalVoucherCodeIfAvailable(string $quoteUuid): ?string
+    {
+        $code = self::buildMotorRevivalVoucherCodeFromQuoteUuid($quoteUuid);
+        $exists = self::voucherCodeExists($code);
+
+        if ($exists === true) {
+            LoggerService::info(self::class.'::motorRevivalVoucherCodeIfAvailable - voucher code already exists in MACRM.', [
+                'voucher_code' => $code,
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return null;
+        }
+
+        return $code;
     }
 }
