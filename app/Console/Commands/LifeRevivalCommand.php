@@ -58,7 +58,7 @@ class LifeRevivalCommand extends Command
         // Execute jobs in batch
         if ($jobs != null && count($jobs)) {
             LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($jobs));
-           $this->executeJobsInBatch($jobs[0]);
+            $this->executeJobsInBatch($jobs[0]);
         } else {
             LoggerService::info("{$this->logPrefix} No Life Revival Leads Jobs Found");
         }
@@ -66,15 +66,17 @@ class LifeRevivalCommand extends Command
 
     private function executeJobsInBatch($jobs)
     {
+        $logPrefix = $this->logPrefix;
+
         Bus::batch($jobs)
-            ->then(function () {
-                LoggerService::info("{$this->logPrefix} All Life Revival Leads Jobs Completed");
+            ->then(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed");
             })
-            ->catch(function () {
-                LoggerService::error("{$this->logPrefix} Some of the Life Revival Leads Jobs Failed");
+            ->catch(function () use ($logPrefix) {
+                LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed");
             })
-            ->finally(function () {
-                LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Finished");
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished");
             })
             ->allowFailures()
             ->name('Life Revival Leads Jobs')

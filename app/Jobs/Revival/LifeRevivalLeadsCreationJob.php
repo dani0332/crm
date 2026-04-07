@@ -6,13 +6,14 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Services\Logger\LoggerService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Bus\Batchable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 
 class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Queueable, Batchable;
+    use Batchable, Dispatchable, Queueable;
 
     private $lead = null;
 
@@ -60,7 +61,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
         $capiResponse = Capi::request('/api/v2-save-life-quote', 'post', $payload);
 
-        if ($capiResponse->errors) {
+        if (isset($capiResponse->errors)) {
             LoggerService::error('Error Creating Life Revival Lead '.$this->lead->uuid, extra: [
                 'payload' => $payload,
                 'url' => '/api/v2-save-life-quote',
