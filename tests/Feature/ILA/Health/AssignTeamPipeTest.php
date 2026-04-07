@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CanonicalNationality;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\NationalityPool;
 use App\Models\QuoteType;
@@ -119,6 +120,12 @@ test('assigns GBP team for AUH lead', function () {
         'updated_at' => now(),
     ]);
 
+    // Create Dubai emirate for relationship
+    Emirate::factory()->create([
+        'id' => EmirateEnum::ABU_DHABI,
+        'text' => 'Dubai',
+    ]);
+
     $healthQuote = HealthQuote::find($lead);
     $healthQuote->setConnection('sqlite');
 
@@ -155,6 +162,12 @@ test('assigns GBP for non-AUH', function () {
         'updated_at' => now(),
     ]);
 
+    // Create Dubai emirate for relationship
+    Emirate::factory()->create([
+        'id' => EmirateEnum::DUBAI,
+        'text' => 'Dubai',
+    ]);
+
     $healthQuote = HealthQuote::find($lead);
     $healthQuote->setConnection('sqlite');
 
@@ -189,6 +202,12 @@ test('assigns team based on health plan type for non-AUH lead with GOOD plan', f
         'advisor_id' => null,
         'created_at' => now(),
         'updated_at' => now(),
+    ]);
+
+    // Create Dubai emirate for relationship
+    Emirate::factory()->create([
+        'id' => EmirateEnum::DUBAI,
+        'text' => 'Dubai',
     ]);
 
     $healthQuote = HealthQuote::find($lead);
