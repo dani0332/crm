@@ -245,13 +245,15 @@ class HealthTeamRoutingService
                 $lead->save();
 
                 // Terminate with logs about storing notional team
-                LoggerService::info("Non PEC lead identified, Notional team: {$notionalTeam}", ['source' => $this->source]);
+                LoggerService::info("Non PEC lead identified, Notional team: {$notionalTeam}",
+                    ['source' => $this->source, 'pec_marked_at' => $lead->pec_marked_at]);
                 $this->healthTeamRoutingLogService->log(
                     HealthRoutingLogTypeEnum::ROUTING,
                     [
                         'message' => "Non PEC lead identified, Team: {$notionalTeam}",
                         'step' => 'Non PEC lead check',
                         'is_non_pec' => true,
+                        'pec_marked_at' => $lead->pec_marked_at,
                         'source' => $this->source,
                     ],
                     $lead->id,
