@@ -1147,7 +1147,7 @@ class EpEcbService extends EpBookingService
             && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE;
 
         if ($isCompanyPrivate && ($firstName === '' || $lastName === '')) {
-            $companyName = trim($this->quote?->company_name ?? '');
+            $companyName = trim($latestInsuredData?->company_name ?? $this->quote?->company_name ?? '');
             $spacePos = strpos($companyName, ' ');
             $firstName = $spacePos !== false ? substr($companyName, 0, $spacePos) : $companyName;
             $lastName = $spacePos !== false ? substr($companyName, $spacePos + 1) : '';
