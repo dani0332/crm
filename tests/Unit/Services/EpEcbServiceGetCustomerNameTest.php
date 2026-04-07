@@ -125,6 +125,9 @@ test('personal registration uses insured first and last name without modificatio
         ->and($result['customer_lname'])->toBe('Smith');
 });
 
+// Mechanical edge case only: single-token company_name yields empty customer_lname, which would
+// fail EpEcbService validatePayload (customer_lname required). Business has confirmed production
+// company names for this path are always multi-word (at least one space).
 test('company private use with single word company name sets first name to company name and last name to empty string', function () {
     $quote = makeQuote([
         'registration_type' => CarRegistrationType::COMPANY,
