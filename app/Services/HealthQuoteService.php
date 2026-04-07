@@ -1885,7 +1885,9 @@ class HealthQuoteService extends BaseService
 
     /**
      * Whether the user may edit plan despite {@see HealthQuote::$is_quote_locked}
-     * when the quote status allows bypass, main lead payment is insurer payment, and the user has the permission.
+     * when the quote is transaction-approved, the user has {@see PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL},
+     * the first pre-loaded payment has splits loaded, {@see Payment::$total_payments} matches the split row count,
+     * and every split uses insurer payment ({@see PaymentMethodsEnum::InsurerPayment}).
      *
      * @param  iterable<int, Payment>|null  $payments  Pre-loaded payments for the quote (e.g. from CRUD show). When null, resolves via {@see HealthQuote::payments()} when $quote is a {@see HealthQuote}.
      */
@@ -1894,13 +1896,30 @@ class HealthQuoteService extends BaseService
         $hasEligibleQuoteStatusForBypass = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         $userCanEditPlanAfterTransactionApproval = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
 
-        $mainPayment = $hasEligibleQuoteStatusForBypass && $userCanEditPlanAfterTransactionApproval
-            ? $payments?->first()
+        $firstPayment = collect($payments)->first();
+        $mainPayment = $hasEligibleQuoteStatusForBypass && $userCanEditPlanAfterTransactionApproval && $firstPayment instanceof Payment
+            ? $firstPayment
             : null;
 
-        $isMainLeadInsurerPayment = $mainPayment && $mainPayment->payment_methods_code === PaymentMethodsEnum::InsurerPayment;
+        $qualifiesByInsurerOnlySplits = $this->hasInsurerOnlySplits($mainPayment);
 
-        return $userCanEditPlanAfterTransactionApproval && $isMainLeadInsurerPayment;
+        return $userCanEditPlanAfterTransactionApproval && $qualifiesByInsurerOnlySplits;
+    }
+
+    private function hasInsurerOnlySplits(?Payment $mainPayment): bool
+    {
+        if (! $mainPayment) {
+            return false;
+        }
+
+        $paymentSplits = $mainPayment->paymentSplits;
+        if ($paymentSplits === null || $paymentSplits->isEmpty()) {
+            return false;
+        }
+
+        $splitCount = $paymentSplits->count();
+
+        return $paymentSplits->where('payment_method', PaymentMethodsEnum::InsurerPayment)->count() === $splitCount;
     }
 
     private function getTransactionApprovedDates($request)
