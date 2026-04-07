@@ -126,7 +126,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->nationality?->text,
             Carbon::parse($quote->dob)->age,
             $quote->customer_type,
-            $quote->health_plan_type_id ? HealthPlanTypeEnum::typeText($quote->health_plan_type_id) : '',
+            HealthPlanTypeEnum::typeText($quote->health_plan_type_id),
             $quote->plan?->text,
             $quote->insuranceProvider?->text,
             $quote->renewalBatchModel?->name,
