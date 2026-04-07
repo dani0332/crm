@@ -7,6 +7,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\Traits\Macrmable;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 
@@ -19,6 +20,7 @@ class MACRMService
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
         try {
+            /** @var Response $response */
             $response = Http::baseUrl(config('constants.MACRM_API_ENDPOINT'))
                 ->withBasicAuth(
                     config('constants.MACRM_BASIC_AUTH_USERNAME'),
@@ -163,6 +165,7 @@ class MACRMService
         }
 
         try {
+            /** @var Response $response */
             $response = Http::acceptJson()
                 ->asJson()
                 ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
@@ -207,6 +210,7 @@ class MACRMService
         $url = rtrim($baseUrl, '/').'/v1/vouchers';
 
         try {
+            /** @var Response $response */
             $response = Http::acceptJson()
                 ->asJson()
                 ->withToken($token)
@@ -253,6 +257,7 @@ class MACRMService
         $url = rtrim($baseUrl, '/').'/v1/vouchers/code/'.rawurlencode($code);
 
         try {
+            /** @var Response $response */
             $response = Http::acceptJson()
                 ->withToken($token)
                 ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
