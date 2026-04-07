@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CarQuote;
 use App\Services\MACRMService;
 use Illuminate\Console\Command;
 
@@ -27,20 +26,19 @@ class Test extends Command
      */
     public function handle()
     {
-        $carQuote = CarQuote::where('uuid', 'NKTETUTW')->first();
         $payload = [
-            'voucher_code' => 'string',
+            'voucher_code' => 'test123bc',
             'voucher_type' => 'trial_membership',
             'duration_days' => 1,
-            'amount' => 0,
-            'valid_from' => '2019-08-24T14:15:22Z',
-            'valid_till' => '2019-08-24T14:15:22Z',
-            'email' => 'user@example.com',
-            'customer_id' => $carQuote->customer_id,
+            'amount' => 10,
+            'valid_from' => '2026-04-01 14:15:22',
+            'valid_till' => '2026-08-01 14:15:22',
+            'email' => 'syed.saad@myalfred.com',
+            'customer_id' => null,
             'max_claims' => 1,
-            'promotional_text' => 'string',
-            'description' => 'string',
-            'source' => 'string',
+            'promotional_text' => 'Test Voucher 1',
+            'description' => 'Get your 7 days trail',
+            'source' => 'imcrm',
             'is_active' => true,
             'auto_claim' => true,
         ];
