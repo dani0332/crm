@@ -17,6 +17,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\MACRMService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Carbon\Carbon;
@@ -123,9 +124,12 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
             $emailData->carMake = (string) $lead?->car_make_id;
             $emailData->carModel = (string) $lead?->car_model_id;
-            // call MACRM API to get the voucher code
-            $emailData->voucherCode = 'ABCDEFG';
-            $emailData->myAlfredurl = 'https://myalfred.com/voucher/ABCDEFG';
+
+            $voucherCode = MACRMService::generateMotorRevivalVoucherForQuote($lead);
+            $emailData->voucherCode = $voucherCode ?? '';
+            $emailData->myAlfredurl = filled($voucherCode)
+                ? 'https://myalfred.com/voucher/'.rawurlencode($voucherCode)
+                : '';
 
             $this->sendFollowUpEmail($emailData);
         }
