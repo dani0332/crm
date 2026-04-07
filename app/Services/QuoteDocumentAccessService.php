@@ -25,6 +25,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuoteDocumentAccessService
 {
+    public function __construct(
+        private readonly SendUpdateLogService $sendUpdateLogService,
+    ) {}
+
     /**
      * @param  Model  $quoteDocumentable  Quote model, {@see PersonalQuote}, {@see BusinessQuote}, or {@see SendUpdateLog} (morph target for send-update documents).
      */
@@ -42,8 +46,9 @@ class QuoteDocumentAccessService
         if (! $quoteType instanceof QuoteTypes) {
             return false;
         }
-       
+
         $advisorId = $this->resolveAdvisorIdFromDocumentable($quoteDocumentable);
+
         return $this->userPassesLobManagerOrAssignedAdvisor(
             $user,
             $advisorId,
@@ -110,7 +115,7 @@ class QuoteDocumentAccessService
                 return null;
             }
 
-            $linkedQuote = app(SendUpdateLogService::class)->getQuoteObjectBy(
+            $linkedQuote = $this->sendUpdateLogService->getQuoteObjectBy(
                 $quoteType->value,
                 $documentable->quote_uuid,
                 'uuid',
