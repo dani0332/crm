@@ -2201,7 +2201,7 @@ class SendEmailCustomerService extends BaseService
                 return $response->status_code ?? 500;
             }
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             LoggerService::error('sendDttEmailViaBird - Exception occurred', [
                 'uuid' => $emailData->uuid ?? 'unknown',
                 'exception' => $exception->getMessage(),

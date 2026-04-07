@@ -1026,7 +1026,7 @@ class CRUDController extends Controller
                     'rtaConfigurationData',
                     'LIVAEnums',
                     'carTypeofInsurance',
-                    'communicationEventLogs'
+                    'communicationEventLogs',
                 ]));
             }
 
