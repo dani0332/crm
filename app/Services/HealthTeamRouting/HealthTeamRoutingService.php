@@ -102,13 +102,14 @@ class HealthTeamRoutingService
         // Check if PEC lead identified
         if ($lead->isPECLead()) {
             // Do not terminate just add logs
-            LoggerService::info('PEC lead identified', ['source' => $this->source]);
+            LoggerService::info('PEC lead identified', ['source' => $this->source, 'pec_marked_at' => $lead->pec_marked_at]);
             $this->healthTeamRoutingLogService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'PEC lead identified',
                     'step' => 'PEC lead check',
                     'is_pec' => true,
+                    'pec_marked_at' => $lead->pec_marked_at,
                     'source' => $this->source,
                 ],
                 $lead->id,
@@ -144,6 +145,7 @@ class HealthTeamRoutingService
 
         LoggerService::info('Assigned AUH team', [
             'source' => $this->source,
+            'pec_marked_at' => $lead->pec_marked_at,
             'premium' => $lead->price_starting_from,
             'team_name' => $team->name,
             'min_price' => $team->min_price,
@@ -154,6 +156,7 @@ class HealthTeamRoutingService
             [
                 'message' => 'Assigned AUH team',
                 'step' => 'AUH team check',
+                'pec_marked_at' => $lead->pec_marked_at,
                 'premium' => $lead->price_starting_from,
                 'team_name' => $team->name,
                 'min_price' => $team->min_price,
@@ -300,6 +303,7 @@ class HealthTeamRoutingService
 
             LoggerService::info('PEC lead identified, assigned Non AUH PEC team', [
                 'source' => $this->source,
+                'pec_marked_at' => $lead->pec_marked_at,
                 'team_name' => TeamNameEnum::PEC,
             ]);
             $this->healthTeamRoutingLogService->log(
@@ -308,6 +312,7 @@ class HealthTeamRoutingService
                     'message' => 'PEC lead identified, assigned Non AUH PEC team',
                     'step' => 'PEC lead check',
                     'is_pec' => true,
+                    'pec_marked_at' => $lead->pec_marked_at,
                     'source' => $this->source,
                     'team_name' => TeamNameEnum::PEC,
                 ],
@@ -327,7 +332,8 @@ class HealthTeamRoutingService
 
         LoggerService::info("{$team} team assigned based on plan type", [
             'source' => $this->source,
-            'health_plan_type' => $lead->health_plan_type_id,
+            'health_plan_type_id' => $lead->health_plan_type_id,
+            'health_plan_type' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
             'team_name' => $team,
         ]);
         $this->healthTeamRoutingLogService->log(
@@ -335,7 +341,8 @@ class HealthTeamRoutingService
             [
                 'message' => "{$team} team assigned based on plan type",
                 'step' => 'health_plan_type_check',
-                'health_plan_type' => $lead->health_plan_type_id,
+                'health_plan_type_id' => $lead->health_plan_type_id,
+                'health_plan_type' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
                 'team_name' => $team,
                 'source' => $this->source,
             ],
