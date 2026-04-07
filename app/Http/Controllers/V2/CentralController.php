@@ -940,7 +940,7 @@ class CentralController extends Controller
             ];
             $status = 404;
         } else {
-            $quote->load('payments');
+            $quote->load(['payments.paymentSplits']);
             $payments = $quote->payments;
 
             if (! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {

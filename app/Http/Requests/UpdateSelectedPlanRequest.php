@@ -52,7 +52,7 @@ class UpdateSelectedPlanRequest extends FormRequest
             $rule->validate($validator, $code);
 
             if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
-                $quote = HealthQuote::where('code', request()->code)->with('payments')->first();
+                $quote = HealthQuote::where('code', request()->code)->with(['payments.paymentSplits'])->first();
                 if (! $quote) {
                     $validator->errors()->add('error', 'Quote not found');
 
