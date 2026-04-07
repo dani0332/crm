@@ -123,7 +123,7 @@ test('assigns GBP team for AUH lead', function () {
     // Create Dubai emirate for relationship
     Emirate::factory()->create([
         'id' => EmirateEnum::ABU_DHABI,
-        'text' => 'Dubai',
+        'text' => 'Abu Dhabi',
     ]);
 
     $healthQuote = HealthQuote::find($lead);

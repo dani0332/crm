@@ -82,7 +82,7 @@ class AssignTeamPipe extends BaseAllocationPipe
         // AUH path
         if ($isAUHLead) {
             LoggerService::info('Lead is AUH lead, triggering AUH tier routing', [
-                'emirates_of_visa' => $this->lead->emirate->text,
+                'emirates_of_visa' => $this->lead->emirate?->text,
                 'source' => $this->source,
                 'uuid' => $this->lead->uuid,
             ]);
@@ -90,7 +90,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'Lead is AUH lead, triggering AUH tier routing',
-                    'emirates_of_visa' => $this->lead->emirate->text,
+                    'emirates_of_visa' => $this->lead->emirate?->text,
                     'step' => 'AUH check',
                     'is_auh' => true,
                     'source' => $this->source,
