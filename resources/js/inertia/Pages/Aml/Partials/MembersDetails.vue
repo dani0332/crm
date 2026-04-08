@@ -519,7 +519,7 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
       {{ dob ? dateFormat(dob) : 'N/A' }}
     </template>
     <template #item-relation="{ relation, is_policy_holder }">
-      {{ is_policy_holder == 1 ? 'N/A' : relation?.text }}
+      {{ is_policy_holder == 1 ? 'Self' : relation?.text }}
     </template>
     <template #item-nationality="{ nationality }">
       {{ nationality?.text ?? 'N/A' }}

@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\MemberCategory;
+use App\Traits\SeedsFirstOrCreateIfMissing;
 use Illuminate\Database\Seeder;
 
 class MemberCategorySeeder extends Seeder
 {
+    use SeedsFirstOrCreateIfMissing;
+
     /**
      * Run the database seeds.
      */
@@ -24,62 +27,56 @@ class MemberCategorySeeder extends Seeder
 
     private function createMemberCategory(): void
     {
-        $memberCategory = [
+        $now = now();
+        $this->seedFirstOrCreateIfMissing(MemberCategory::class, [
             [
                 'code' => 'DIPLOMAT_PASSPORT',
                 'text' => 'Diplomat-Passport',
                 'is_active' => 1,
                 'sort_order' => 19,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'EXPAT_DUBAI_VISA',
                 'text' => 'Expat (Dubai Visa)',
                 'is_active' => 1,
                 'sort_order' => 20,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'EXPAT_NON_DUBAI_VISA',
                 'text' => 'Expat (Non-Dubai Visa)',
                 'is_active' => 1,
                 'sort_order' => 21,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'GCC_NATIONAL',
                 'text' => 'GCC National',
                 'is_active' => 1,
                 'sort_order' => 22,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'UAE_NATIONAL',
                 'text' => 'UAE National',
                 'is_active' => 1,
                 'sort_order' => 23,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'NEWBORN',
                 'text' => 'Newborn',
                 'is_active' => 1,
                 'sort_order' => 24,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        foreach ($memberCategory as $memberCategoryItem) {
-            MemberCategory::firstOrCreate(
-                ['code' => $memberCategoryItem['code']],
-                $memberCategoryItem
-            );
-        }
+        ]);
     }
 }

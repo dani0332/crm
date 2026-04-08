@@ -3,17 +3,20 @@
 namespace Database\Seeders;
 
 use App\Enums\ClaimsEnum;
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Traits\SeedsFirstOrCreateIfMissing;
 use Illuminate\Database\Seeder;
 
 class LookupSeeder extends Seeder
 {
+    use SeedsFirstOrCreateIfMissing;
+
     /**
      * Run the database seeds.
      *
@@ -748,184 +751,188 @@ class LookupSeeder extends Seeder
 
     private function healthInsure(): void
     {
-        $insures = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_INSURE_OPTIONS, [
             [
-                'text' => 'Only Myself',
                 'code' => 'ONLY_MYSELF',
-                'sort_order' => 1,
-            ],
-            [
-                'text' => 'Only My Family Members',
-                'code' => 'ONLY_MY_FAMILY_MEMBERS',
-                'sort_order' => 2,
-            ],
-            [
-                'text' => 'Myself & My Family Members',
-                'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
-                'sort_order' => 3,
-            ],
-        ];
-
-        foreach ($insures as $insure) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::HEALTH_INSURE_OPTIONS,
-                'code' => $insure['code'],
-                'text' => $insure['text'],
-            ], [
+                'text' => 'Only Myself',
                 'is_active' => 1,
-                'sort_order' => $insure['sort_order'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'ONLY_MY_FAMILY_MEMBERS',
+                'text' => 'Only My Family Members',
+                'is_active' => 1,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
+                'text' => 'Myself & My Family Members',
+                'is_active' => 1,
+                'sort_order' => 3,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
     }
 
     private function healthPolicyHolder(): void
     {
-        $policyHolders = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_OPTIONS, [
             [
-                'text' => 'Me',
                 'code' => 'ME',
+                'text' => 'Me',
+                'is_active' => 1,
                 'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Other Adult Family Member',
                 'code' => 'OTHER_ADULT_FAMILY_MEMBER',
-                'sort_order' => 2,
-            ],
-        ];
-
-        foreach ($policyHolders as $policyHolder) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::POLICY_HOLDER_OPTIONS,
-                'code' => $policyHolder['code'],
-                'text' => $policyHolder['text'],
-            ], [
+                'text' => 'Other Adult Family Member',
                 'is_active' => 1,
-                'sort_order' => $policyHolder['sort_order'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
     }
 
     private function healthPolicyHolderCategory(): void
     {
-        $policyHolderCategories = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_CATEGORY, [
             [
-                'text' => 'Resident',
                 'code' => 'RESIDENT',
-            ],
-            [
-                'text' => 'UAE Citizen',
-                'code' => 'UAE_CITIZEN',
-            ],
-            [
-                'text' => 'Establishment/Company/Corporate',
-                'code' => 'ESTABLISHMENT_COMPANY_CORPORATE',
-            ],
-            [
-                'text' => 'Investor Visa',
-                'code' => 'INVESTOR_VISA',
-            ],
-            [
-                'text' => 'GCC Citizen',
-                'code' => 'GCC_CITIZEN',
-            ],
-        ];
-
-        foreach ($policyHolderCategories as $policyHolderCategory) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::POLICY_HOLDER_CATEGORY,
-                'code' => $policyHolderCategory['code'],
-                'text' => $policyHolderCategory['text'],
-            ], [
+                'text' => 'Resident',
                 'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'UAE_CITIZEN',
+                'text' => 'UAE Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'ESTABLISHMENT_COMPANY_CORPORATE',
+                'text' => 'Establishment/Company/Corporate',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'INVESTOR_VISA',
+                'text' => 'Investor Visa',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'GCC_CITIZEN',
+                'text' => 'GCC Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
     }
 
     private function gender(): void
     {
-        $genders = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::GENDER, [
             [
-                'text' => GenericRequestEnum::MALE_SINGLE,
                 'code' => GenericRequestEnum::MALE_SINGLE_VALUE,
+                'text' => GenericRequestEnum::MALE_SINGLE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => GenericRequestEnum::FEMALE,
                 'code' => GenericRequestEnum::FEMALE_SHORT_VALUE,
+                'text' => GenericRequestEnum::FEMALE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        foreach ($genders as $gender) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::GENDER,
-                'code' => $gender['code'],
-                'text' => $gender['text'],
-            ]);
-        }
+        ]);
     }
 
     private function healthMemberRelation(): void
     {
-        $memberRelations = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_MEMBER_RELATION, [
             [
-                'text' => 'Dependent Spouse',
                 'code' => 'relSpouse',
+                'text' => 'Dependent Spouse',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Dependent Child',
                 'code' => 'relChild',
+                'text' => 'Dependent Child',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Dependent Parent',
                 'code' => 'relParent',
+                'text' => 'Dependent Parent',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Dependent Sibling / Other Relatives',
                 'code' => 'relSiblingOrRelatives',
+                'text' => 'Dependent Sibling / Other Relatives',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        foreach ($memberRelations as $memberRelation) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::HEALTH_MEMBER_RELATION,
-                'code' => $memberRelation['code'],
-                'text' => $memberRelation['text'],
-            ]);
-        }
+        ]);
     }
 
     private function domesticWorkerRelation(): void
     {
-        $domesticWorkerRelations = [
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::DOMESTIC_WORKER_RELATION, [
             [
-                'text' => 'Domestic Worker',
                 'code' => 'relDomesticWorker',
+                'text' => 'Domestic Worker',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Maid',
                 'code' => 'relMaid',
+                'text' => 'Maid',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Driver',
                 'code' => 'relDriver',
+                'text' => 'Driver',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'text' => 'Nanny',
                 'code' => 'relNanny',
+                'text' => 'Nanny',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        foreach ($domesticWorkerRelations as $domesticWorkerRelation) {
-            Lookup::firstOrCreate([
-                'key' => LookupsEnum::DOMESTIC_WORKER_RELATION,
-                'code' => $domesticWorkerRelation['code'],
-                'text' => $domesticWorkerRelation['text'],
-            ]);
-        }
+        ]);
     }
 }

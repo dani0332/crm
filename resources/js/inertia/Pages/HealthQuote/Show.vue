@@ -130,10 +130,17 @@ const {
   isFamily_Other,
   isSelfAndFamily_Me,
   isSelfAndFamily_Other,
+  showIncludePolicyholderField,
+  showAdditionalFields,
+  showMemberCategoryField,
 } = useHealthQuoteFlags({
   getCoverForId: () => page.props.quote.cover_for_id,
   getInsureCode: () => page.props.quote.insure_code,
   getPolicyHolderCode: () => page.props.quote.policy_holder_code,
+  getIsCustomerTypeIndividual: () =>
+    (page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual) ===
+    page.props.customerTypeEnum.Individual,
+  getIncludePolicyholder: () => isIncludePolicyholder.value,
 });
 
 const coverForText = computed(() => {
@@ -146,14 +153,6 @@ const coverForText = computed(() => {
     }
   }
   return text;
-});
-
-const showIncludePolicyholderField = computed(() => {
-  return isFamily_Other.value || isSelfAndFamily_Other.value;
-});
-
-const showAdditionalFields = computed(() => {
-  return isSelf_Me.value || isSelfAndFamily_Me.value || (isIncludePolicyholder.value && showIncludePolicyholderField.value);
 });
 
 const dateFormat = date =>
@@ -412,13 +411,6 @@ const memberRelationOptions = computed(() => {
       label: relation.text,
     }));
   }
-});
-
-const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
-    value: em.id,
-    label: em.text,
-  }));
 });
 
 const salaryBandsOptions = computed(() => {
@@ -2410,7 +2402,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">SALARY BAND</dt>
                   <dd>{{ quote.salary_band_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="showAdditionalFields">
+                <div class="grid sm:grid-cols-2" v-if="showMemberCategoryField">
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
                 </div>
@@ -2423,7 +2415,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">Visa Category</dt>
                   <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="!showAdditionalFields">
+                <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField">
                   <dt class="font-medium">Policyholder Category</dt>
                   <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
                 </div>
@@ -2485,7 +2477,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
-                      :options="emiratesOptions"
+                      :options="emirates"
                       class="w-full"
                       filterable
                       filterPlaceholder="Filter Emirate of Registration...."
@@ -2657,7 +2649,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :nationalities="nationalityOptions"
       :memberCategories="memberCategoriesOptions"
       :memberRelations="memberRelationOptions"
-      :emirates="emiratesOptions"
+      :emirates="emirates"
       :salaryBands="salaryBandsOptions"
       :genderOptions="genderSelect"
       :maritalStatusOptions="maritalStatusOptions.map(item => ({

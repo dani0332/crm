@@ -111,7 +111,7 @@ class CustomerMembers extends Model
     private static function resolveCreatedEvent(array $transformedNew): string
     {
         if (($transformedNew['is_policy_holder'] ?? null) == 'true') {
-            return 'member_added (Policy Holder)';
+            return 'member_added (Policyholder)';
         }
 
         if (($transformedNew['is_principal'] ?? null) == 'true') {
@@ -141,11 +141,11 @@ class CustomerMembers extends Model
 
         $event = match (true) {
             ! empty($transformedNew['deleted_at']) => 'member_deleted',
-            $oldPolicyHolder === 'true' && $newPolicyHolder === 'false' => 'member_updated (Policy Holder Removed)',
-            $oldPolicyHolder === 'false' && $newPolicyHolder === 'true' => 'member_updated (Policy Holder Added)',
+            $oldPolicyHolder === 'true' && $newPolicyHolder === 'false' => 'member_updated (Policyholder Removed)',
+            $oldPolicyHolder === 'false' && $newPolicyHolder === 'true' => 'member_updated (Policyholder Added)',
             $oldPrincipal === 'true' && $newPrincipal === 'false' => 'member_updated (Principal Removed)',
             $oldPrincipal === 'false' && $newPrincipal === 'true' => 'member_updated (Principal Added)',
-            $model?->is_policy_holder == 1 => 'member_updated (Policy Holder)',
+            $model?->is_policy_holder == 1 => 'member_updated (Policyholder)',
             $model?->is_principal == 1 => 'member_updated (Principal)',
             default => 'member_updated',
         };

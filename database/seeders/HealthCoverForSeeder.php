@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\HealthCoverFor;
+use App\Traits\SeedsFirstOrCreateIfMissing;
 use Illuminate\Database\Seeder;
 
 class HealthCoverForSeeder extends Seeder
 {
+    use SeedsFirstOrCreateIfMissing;
+
     /**
      * Run the database seeds.
      */
@@ -24,47 +27,35 @@ class HealthCoverForSeeder extends Seeder
 
     private function createHealthCoverFor(): void
     {
-        $healthCoverForUpdates = [
+        $now = now();
+        HealthCoverFor::updateOrCreate(
+            ['code' => 'MY_COMPANY'],
             [
                 'code' => 'MY_COMPANY',
                 'text' => 'Group of Employees',
                 'is_active' => 1,
                 'sort_order' => 3,
-                'updated_at' => now(),
-            ],
-        ];
+                'updated_at' => $now,
+            ]
+        );
 
-        foreach ($healthCoverForUpdates as $healthCoverForItem) {
-            HealthCoverFor::updateOrCreate(
-                ['code' => $healthCoverForItem['code']],
-                $healthCoverForItem
-            );
-        }
-
-        $healthCoverFor = [
+        $this->seedFirstOrCreateIfMissing(HealthCoverFor::class, [
             [
                 'code' => 'INDIVIDUAL_AND_FAMILIES',
                 'text' => 'Individual & Families',
                 'is_active' => 1,
                 'sort_order' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
                 'code' => 'DOMESTIC_HELPER',
                 'text' => 'Domestic Helper',
                 'is_active' => 1,
                 'sort_order' => 2,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        foreach ($healthCoverFor as $healthCoverForItem) {
-            HealthCoverFor::firstOrCreate(
-                ['code' => $healthCoverForItem['code']],
-                $healthCoverForItem
-            );
-        }
+        ]);
     }
 }

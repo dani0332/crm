@@ -65,7 +65,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'SOURCE',
             'LEAD TYPE',
             'MEMBER CATEGORY',
-            'POLICY HOLDER CATEGORY',
+            'POLICYHOLDER CATEGORY',
             'VISA CATEGORY',
             'GENDER',
             'MARITAL STATUS',

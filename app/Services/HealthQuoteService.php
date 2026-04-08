@@ -27,7 +27,6 @@ use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
-use App\Models\CustomerMembers;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
@@ -49,6 +48,7 @@ use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
+use App\Traits\HealthServiceUtils;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
@@ -67,7 +67,7 @@ class HealthQuoteService extends BaseService
     const SELECT_TITLE_MULTIPLE = 'select|title|multiple';
     const APPLICATION_JSON = 'application/json';
 
-    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, HealthServiceUtils, RolePermissionConditions;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder, protected SLAService $slaService)
     {
@@ -453,36 +453,6 @@ class HealthQuoteService extends BaseService
                 return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
             }
         }
-    }
-
-    /**
-     * Normalise a member array or model into the camelCase shape expected by CAPI/Ken payloads.
-     *
-     * @param  \App\Models\CustomerMembers|array<string, mixed>  $member
-     */
-    private function prepareMemberDetailPayload(CustomerMembers|array $member): array
-    {
-        $id = $member['id'] ?? 'temp-';
-        $dob = ! empty($member['dob']) ? Carbon::parse($member['dob'])->toDateString() : null;
-
-        return [
-            'id' => str_starts_with((string) ($id), 'temp-') ? null : $id,
-            'firstName' => $member['first_name'] ?? null,
-            'lastName' => $member['last_name'] ?? null,
-            'dob' => $dob,
-            'gender' => $member['gender'] ?? null,
-            'nationalityId' => $member['nationality_id'] ?? null,
-            'emirateOfYourVisaId' => $member['emirate_of_your_visa_id'] ?? null,
-            'salaryBandId' => $member['salary_band_id'] ?? null,
-            'memberCategoryId' => $member['member_category_id'] ?? null,
-            'visaCategoryId' => $member['visa_category_id'] ?? null,
-            'relationCode' => $member['relation_code'] ?? null,
-            'maritalStatusId' => $member['marital_status_id'] ?? null,
-            'isInsured' => ($member['is_insured'] ?? null) == 1,
-            'isPolicyHolder' => ($member['is_policy_holder'] ?? null) == 1,
-            'isPrincipal' => ($member['is_principal'] ?? null) == 1,
-            'isPecMarked' => ($member['pec'] ?? $member['is_pec_marked'] ?? null) == 1,
-        ];
     }
 
     private function getQuerySuffix($item)
@@ -1555,66 +1525,6 @@ class HealthQuoteService extends BaseService
         }
 
         return $response;
-    }
-
-    public function refreshPlans($request)
-    {
-        $quoteId = $request->quoteId ?? null;
-        $quote = HealthQuote::where('uuid', $quoteId)->with('members')->first();
-
-        if (! $quote) {
-            return [
-                'status' => false,
-                'message' => 'Quote not found',
-            ];
-        }
-
-        try {
-            $dataArray = [
-                'firstName' => $quote->first_name,
-                'lastName' => $quote->last_name,
-                'email' => $quote->email,
-                'mobileNo' => $quote->mobile_no,
-                'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->toDateString() : null,
-                'gender' => $quote->gender,
-                'emirateOfYourVisaId' => $quote->emirate_of_your_visa_id,
-                'salaryBandId' => $quote->salary_band_id,
-                'memberCategoryId' => $quote->member_category_id,
-                'nationalityId' => $quote->nationality_id,
-                'quoteUID' => $quote->uuid,
-                'healthPlanTypeId' => $quote->health_plan_type_id,
-                'quoteStatusId' => $quote->quote_status_id,
-                'maritalStatusId' => $quote->marital_status_id,
-                'filters' => [],
-                'callSource' => strtolower(LeadSourceEnum::IMCRM),
-                'userId' => auth()->user()->id,
-                'customerType' => $quote->customer_type,
-            ];
-
-            $dataArray['memberDetails'] = $quote->activeMembers
-                ->filter(function ($member) {
-                    return $member->is_third_party_payer == 0;
-                })
-                ->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
-
-            LoggerService::info('Health quote refresh plans - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
-
-            $response = Ken::request('/get-revised-health-quote-plans', 'POST', $dataArray);
-
-            LoggerService::info('Health quote refresh plans - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
-
-            return $response;
-        } catch (\Exception $e) {
-            LoggerService::error('HealthQuoteService - refreshPlans - Error', extra: [
-                'uuid' => $quoteId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'status' => false,
-                'message' => 'Failed to refresh plans',
-            ];
-        }
     }
 
     /**

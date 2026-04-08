@@ -21,6 +21,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\HealthQuoteRefreshPlansService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -32,8 +33,11 @@ class HealthQuoteController extends Controller
     protected $healthQuoteService;
     protected $slaService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, SLAService $slaService)
-    {
+    public function __construct(
+        HealthQuoteService $healthQuoteService,
+        SLAService $slaService,
+        protected HealthQuoteRefreshPlansService $healthQuoteRefreshPlansService,
+    ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->slaService = $slaService;
     }
@@ -253,7 +257,7 @@ class HealthQuoteController extends Controller
     public function refreshPlans(RefreshPlansRequest $request)
     {
 
-        $response = $this->healthQuoteService->refreshPlans($request);
+        $response = $this->healthQuoteRefreshPlansService->refreshPlans($request);
 
         if (($response['status'] ?? true) !== false) {
             $key = 'success';

@@ -6,12 +6,10 @@ const props = defineProps({
   membersDetail: {
     type: Array,
     required: true,
-    default: () => ([]),
   },
   quote: {
     type: Object,
     required: true,
-    default: () => ({}),
   },
   isManualPlansCount: {
     type: Number,
@@ -50,8 +48,8 @@ const props = defineProps({
     default: () => ([]),
   },
   genderOptions: {
-    type: Object,
-    default: () => ({}),
+    type: Array,
+    default: () => ([]),
   },
   maritalStatusOptions: {
     type: Array,
@@ -83,6 +81,11 @@ const props = defineProps({
   },
 });
 
+const HEALTH_PEC_YES = 1;
+const HEALTH_PEC_NO = 2;
+const MAX_ALLOWED_INSURED_MEMBERS = 8;
+const MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION = 18;
+const MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER = 1;
 const isCreate = computed(() => {
   return route().current().includes('create');
 });
@@ -101,7 +104,6 @@ const page = usePage();
 const notification = useToast();
 
 const {
-  isIndividualAndFamilies,
   isDomesticHelper,
   isSelf_Me,
   isSelf_Other,
@@ -137,9 +139,9 @@ const localMembers = ref([]);
 
 const loadLocalMembers = () => {
   localMembers.value = props.membersDetail.map(m => ({
-      ...m,
-      pec: m.is_pec_marked == 1 ? 1 : 2,
-    }));
+    ...m,
+    pec: m.is_pec_marked == 1 ? HEALTH_PEC_YES : HEALTH_PEC_NO,
+  }));
 };
 
 onMounted(() => {
@@ -158,16 +160,6 @@ watch(
   },
   { deep: true }
 );
-
-const memberHealthRegulationAuthority = computed(() => {
-  return memberForm.emirate_of_your_visa_id === page.props.emirateEnum.ABU_DHABI
-    ? 'DoH'
-    : 'DHA';
-});
-
-const memberPecErrorMessage = computed(() => {
-  return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
-});
 
 const genderText = gender =>
   computed(() => {
@@ -316,6 +308,16 @@ const memberForm = useForm({
   quoteId: props.quote?.uuid,
 });
 
+const memberHealthRegulationAuthority = computed(() => {
+  return memberForm.emirate_of_your_visa_id === page.props.emirateEnum.ABU_DHABI
+    ? 'DoH'
+    : 'DHA';
+});
+
+const memberPecErrorMessage = computed(() => {
+  return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
+});
+
 const refreshPlansForm = useForm({
   quoteId: props.quote?.uuid,
 });
@@ -368,7 +370,7 @@ function updateMemberForm(data) {
   memberForm.first_name = data.first_name;
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
-  memberForm.pec = data.is_pec_marked ? 1 : 2;
+  memberForm.pec = data.is_pec_marked == 1 ? HEALTH_PEC_YES : HEALTH_PEC_NO;
   memberForm.is_principal = data.is_principal;
   memberForm.is_policy_holder = data.is_policy_holder;
   memberForm.is_insured = data.is_insured;
@@ -380,7 +382,7 @@ function buildMemberFromForm() {
   return {
     ...memberForm,
     id: memberForm.id ?? `temp-${Date.now()}`,
-    is_pec_marked: memberForm.pec === 1, 
+    is_pec_marked: memberForm.pec === HEALTH_PEC_YES,
   };
 }
 
@@ -575,7 +577,7 @@ const memberPrincipalConfirmed = () => {
     }
     
     notification.success({
-      title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policy Holder' : 'Principal'}`,
+      title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
       position: 'top',
     });
     modals.memberPrincipal = false;
@@ -588,7 +590,7 @@ const memberPrincipalConfirmed = () => {
       const flash_messages = response.props.flash;
       if (!flash_messages.error) {
         notification.success({
-          title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policy Holder' : 'Principal'}`,
+          title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
           position: 'top',
         });
         emit('memberUpdated');
@@ -638,10 +640,8 @@ watch(
   ],
   () => {
     if (isCreate.value || isEdit.value) {
-      if (isSelf_Me.value || isSelfAndFamily_Me.value ||
-        (props.includePolicyHolder == 1 && (isFamily_Other.value || isSelfAndFamily_Other.value))
-      ) {
-        const memberData = {
+
+      const memberData = {
           id: `temp-${Date.now()}`,
           first_name: props.quoteForm.first_name || null,
           last_name: props.quoteForm.last_name || null,
@@ -653,7 +653,7 @@ watch(
           member_category_id: props.quoteForm.member_category_id || null,
           marital_status_id: props.quoteForm.marital_status_id || null,
           visa_category_id: props.quoteForm.visa_category_id || null,
-          is_pec_marked: props.quoteForm.pec === 1,
+          is_pec_marked: props.quoteForm.pec === HEALTH_PEC_YES,
           pec: props.quoteForm.pec || null,
           is_principal: 1,
           is_policy_holder: 1,
@@ -661,6 +661,53 @@ watch(
           relation_code: null,
           quote_request_id: props.quote.id,
         };
+
+      // Cover is for family/dependants (policyholder ≠ insured principal flows).
+      if (isFamily_Other.value || isSelfAndFamily_Other.value) {
+        // Policyholder is insured on the quote: keep one insured PH row from the form when missing.
+        if (props.includePolicyHolder == 1) {
+          // Drop shadow rows where PH is not insured (not covered on the policy).
+          localMembers.value = localMembers.value.filter(
+            m => !(m.is_policy_holder == 1 && m.is_insured == 0),
+          );
+
+          const existingInsuredPh = localMembers.value.find(
+            m => m.is_policy_holder == 1 && m.is_insured == 1,
+          );
+
+          // If insured PH already exists, leave members as-is (no duplicate row, no flag reset).
+          if (!existingInsuredPh) {
+            localMembers.value = localMembers.value.map(m => ({
+              ...m,
+              is_principal: 0,
+              is_policy_holder: 0,
+            }));
+
+            localMembers.value.push(memberData);
+          }
+        } else {
+          // Policyholder not insured: remove insured PH row; first insured becomes sole principal.
+          localMembers.value = localMembers.value.filter(
+            m => !(m.is_policy_holder == 1 && m.is_insured == 1),
+          );
+          let principalAssigned = false;
+          localMembers.value = localMembers.value.map(m => {
+            if (m.is_insured != 1) {
+              return { ...m, is_principal: 0 };
+            }
+            if (!principalAssigned) {
+              principalAssigned = true;
+              return { ...m, is_principal: 1 };
+            }
+            return { ...m, is_principal: 0 };
+          });
+          const newPrincipal = localMembers.value.find(m => m.is_principal === 1);
+          if (newPrincipal) {
+            syncPrincipalToQuoteForm(newPrincipal);
+          }
+        }
+      } else if (isSelf_Me.value || isSelfAndFamily_Me.value) {
+      
         localMembers.value = [memberData];
       } else {
         localMembers.value = [];
@@ -701,7 +748,7 @@ watch(
         principalMember.member_category_id = props.quoteForm.member_category_id || null;
         principalMember.marital_status_id = props.quoteForm.marital_status_id || null;
         principalMember.visa_category_id = props.quoteForm.visa_category_id || null;
-        principalMember.is_pec_marked = props.quoteForm.pec === 1;
+        principalMember.is_pec_marked = props.quoteForm.pec === HEALTH_PEC_YES;
         principalMember.pec = props.quoteForm.pec || null;
       }
 
@@ -721,7 +768,7 @@ defineExpose({
   <x-accordion show-icon>
     <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
       <h3 class="font-semibold text-primary-800 text-lg">
-        Member Details
+        Insured Member Details
         <x-tag size="sm">{{ localMembersFiltered.length || 0 }}</x-tag>
       </h3>
       <template #content>
@@ -734,9 +781,9 @@ defineExpose({
             :disabled="isDisabled 
             || isLocked 
             || isSelf_Me
-            || (isSelf_Other && localMembersFiltered.length === 1)
-            || (isDomesticHelper && localMembersFiltered.length === 1)
-            || localMembersFiltered.length >= 8
+            || (isSelf_Other && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
+            || (isDomesticHelper && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
+            || localMembersFiltered.length >= MAX_ALLOWED_INSURED_MEMBERS
             "
             v-if="readOnlyMode.isDisable === true"
           >
@@ -756,18 +803,6 @@ defineExpose({
             </template>
           </x-tooltip>
           <AddMemButtonReuseTemplate v-else />
-          <x-button
-            @click.prevent="onRefreshPlans"
-            size="sm"
-            color="primary"
-            outlined
-            :disabled="refreshPlansForm.processing || isLocked"
-            :loading="refreshPlansForm.processing"
-            class="ml-2"
-            v-if="isView && props.quote?.is_quote_revisable == 1"
-          >
-            View Quote
-          </x-button>
         </div>
         <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
           <x-button
@@ -799,10 +834,10 @@ defineExpose({
             color="primary"
             outlined
             @click.prevent="memberPrincipal(item)"
-            v-if="! (item.is_principal || calculateAge(item.dob) < 18)"
+            v-if="! (item.is_principal || calculateAge(item.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION)"
             :disabled="isLocked"
           >
-            Make {{ makeActionName === 'policyholder' ? 'Policy Holder' : 'Principal' }}
+            Make {{ makeActionName === 'policyholder' ? 'Policyholder' : 'Principal' }}
           </x-button>
         </PrincipalMemberButtonTemplate>
         <DataTable
@@ -815,7 +850,7 @@ defineExpose({
         >
           <template #item-first_name="{ first_name, last_name, is_principal, is_policy_holder }">
             {{ (first_name ?? '') + ' ' + (last_name ?? '') }}
-            {{ is_policy_holder === 1 ? '(Policy Holder)' : is_principal === 1 ? '(Principal)' : '' }}
+            {{ is_policy_holder === 1 ? '(Policyholder)' : is_principal === 1 ? '(Principal)' : '' }}
           </template>
 
           <template #item-is_pec_marked="{ is_pec_marked }">
@@ -835,7 +870,7 @@ defineExpose({
           </template>
 
           <template #item-relation="{ is_policy_holder, relation_code }">
-            {{ is_policy_holder === 1 ? 'N/A' : relationText(relation_code).value }}
+            {{ is_policy_holder === 1 ? 'Self' : relationText(relation_code).value }}
           </template>
 
           <template #item-nationality="{ nationality_id }">
@@ -928,6 +963,20 @@ defineExpose({
             </div>
           </template>
         </DataTable>
+
+        <div class="mt-10 flex justify-end">
+          <x-button
+              @click.prevent="onRefreshPlans"
+              size="sm"
+              color="emerald"
+              :disabled="refreshPlansForm.processing || isLocked || props.quote?.is_quote_revisable == 0"
+              :loading="refreshPlansForm.processing"
+              v-if="isView"
+            >
+              View Quote
+          </x-button>
+        </div>
+        <div v-if="isView && props.quote?.is_quote_revisable == 1" class="mx-2 text-right mt-2">*Add all members to view the final quote under Available Plans Section.</div>
 
         <x-modal
           v-model="modals.member"
@@ -1089,9 +1138,15 @@ defineExpose({
             </div>
             <div>
               <x-form-group v-model="memberForm.pec">
-                <x-radio :value="1" label="Yes" />
-                <x-radio :value="2" label="No" />
+                <x-radio :value="HEALTH_PEC_YES" label="Yes" />
+                <x-radio :value="HEALTH_PEC_NO" label="No" />
               </x-form-group>
+              <div
+                v-if="memberForm.pec === HEALTH_PEC_YES"
+                class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2"
+              >
+                <b>Please note:</b> Declaring a health condition doesn't mean it's automatically covered. It helps us assess eligibility. Premiums shown next are indicative. Your advisor will confirm coverage details for any pre-existing conditions.
+              </div>
               <div
                 v-if="memberPecValidationError"
                 class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
@@ -1179,7 +1234,7 @@ defineExpose({
 
         <x-modal
           v-model="modals.memberPrincipal"
-          :title="`Confirm ${makeActionName === 'policyholder' ? 'Policy Holder' : 'Principal'} Member`"
+          :title="`Confirm ${makeActionName === 'policyholder' ? 'Policyholder' : 'Principal'} Member`"
           show-close
           backdrop
         >
@@ -1209,7 +1264,7 @@ defineExpose({
               </div>
             </div>
           </div>
-          <p>Are you sure you want to make this member {{ makeActionName === 'policyholder' ? 'Policy Holder' : 'Principal' }}?</p>
+          <p>Are you sure you want to make this member {{ makeActionName === 'policyholder' ? 'Policyholder' : 'Principal' }}?</p>
           <template #actions>
             <div class="text-right space-x-4">
               <x-button

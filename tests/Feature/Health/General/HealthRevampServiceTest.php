@@ -7,6 +7,7 @@ use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\VisaCategory;
 use App\Services\CapiRequestService;
+use App\Services\HealthQuoteRefreshPlansService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -360,14 +361,14 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
 // SECTION 3: refreshPlans service method
 // ============================================================================
 
-describe('HealthQuoteService refreshPlans', function () {
+describe('HealthQuoteRefreshPlansService refreshPlans', function () {
     test('returns status false when quote is not found', function () {
         Ken::swap(Mockery::mock()->shouldReceive('request')->never()->getMock());
 
         $request = new Request;
         $request->merge(['quoteId' => 'non-existent-uuid']);
 
-        $result = app(HealthQuoteService::class)->refreshPlans($request);
+        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
 
         expect($result['status'])->toBeFalse()
             ->and($result['message'])->toBe('Quote not found');
@@ -387,7 +388,7 @@ describe('HealthQuoteService refreshPlans', function () {
         $request = new Request;
         $request->merge(['quoteId' => $quote->uuid]);
 
-        $result = app(HealthQuoteService::class)->refreshPlans($request);
+        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
 
         expect($result)->not->toBeFalsy()
             ->and($result->status)->toBeTrue();
@@ -415,7 +416,7 @@ describe('HealthQuoteService refreshPlans', function () {
         $request = new Request;
         $request->merge(['quoteId' => $quote->uuid]);
 
-        app(HealthQuoteService::class)->refreshPlans($request);
+        app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
 
         expect($capturedPayload)->not->toBeNull()
             ->and($capturedPayload['quoteUID'])->toBe($quote->uuid)
@@ -436,7 +437,7 @@ describe('HealthQuoteService refreshPlans', function () {
         $request = new Request;
         $request->merge(['quoteId' => $quote->uuid]);
 
-        $result = app(HealthQuoteService::class)->refreshPlans($request);
+        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
 
         expect($result['status'])->toBeFalse()
             ->and($result['message'])->toBe('Failed to refresh plans');

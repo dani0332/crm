@@ -128,7 +128,7 @@ class DropdownSourceService extends BaseService
                 $data = HealthCoverFor::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'emirate_of_your_visa_id':
-                $data = Emirate::select('id', 'text')->where('is_active', true)->get();
+                $data = Emirate::select('id', 'text')->where('is_active', true)->orderBy('sort_order')->get();
                 break;
             case 'tier_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();

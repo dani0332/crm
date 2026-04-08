@@ -321,7 +321,7 @@ class CRUDController extends Controller
             $this->healthQuoteService->postProcessHealthQuotes($gridData);
 
             $quote_status = $dropdownSource['quote_status_id'];
-            $emirates = Emirate::getOptions();
+            $emirates = Emirate::getOptions(sort: true);
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
@@ -1198,7 +1198,7 @@ class CRUDController extends Controller
                 $memberRelations = $this->dropdownSourceService->getDropdownSource(LookupsEnum::HEALTH_MEMBER_RELATION->value);
                 $domesticWorkerRelations = $this->dropdownSourceService->getDropdownSource(LookupsEnum::DOMESTIC_WORKER_RELATION->value);
                 $nationalities = Nationality::getActiveNationalities();
-                $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+                $emirates = Emirate::getOptions('id', 'text', true, sort: true);
                 $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
                 $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
                 $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
@@ -1577,7 +1577,7 @@ class CRUDController extends Controller
             return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
         }
 
-        return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' lead has been updated');
     }
 
     public function cardsViewHome(Request $request)

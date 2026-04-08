@@ -600,7 +600,8 @@ class CRUDService extends BaseService
     public function getGenderOptions($quoteTypeId = null)
     {
         if ($quoteTypeId == QuoteTypeId::Health) {
-            return Lookup::where('key', LookupsEnum::GENDER)
+            return app(LookupService::class)
+                ->getGender()
                 ->pluck('text', 'code')
                 ->all();
         }

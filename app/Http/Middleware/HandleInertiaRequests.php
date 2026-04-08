@@ -23,6 +23,7 @@ use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MemberCategoryEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
@@ -176,6 +177,7 @@ class HandleInertiaRequests extends Middleware
             'healthPolicyHolderEnum' => array_column(HealthPolicyHolderEnum::cases(), 'value', 'name'),
             'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
         ];
     }
 
