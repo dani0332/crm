@@ -253,21 +253,14 @@ class CourtesyEmailService extends BaseService
 
             return ['message' => 'Processed workflow successfully', 'success' => true];
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             LoggerService::error('CourtesyEmailService - Error processing workflow', [
                 'quoteTypeId' => $quoteTypeId,
                 'quoteUID' => $quoteUID,
                 'error' => $e->getMessage(),
             ], $e);
-            if ($quote !== null && filled($quote->email)) {
-                $this->logCourtesyNotDispatched(
-                    $quote,
-                    $quoteTypeId,
-                    'Courtesy workflow error: '.$e->getMessage(),
-                );
-            }
 
-            return ['message' => 'Error processing workflow: '.$e->getMessage(), 'success' => false];
+            throw $e;
         }
     }
 

@@ -46,4 +46,19 @@ class CourtesyEmailJob implements ShouldQueue
 
         $courtesyEmailService->processCourtesyEmailWorkflow($quoteUID, $quoteTypeId);
     }
+
+    /**
+     * Log once after all queue retries are exhausted (transient errors are not logged here on each attempt).
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        if ($exception === null) {
+            return;
+        }
+
+        LoggerService::error('CourtesyEmailJob - Failed after all retries', [
+            'quoteData' => $this->quoteData,
+            'error' => $exception->getMessage(),
+        ], $exception);
+    }
 }
