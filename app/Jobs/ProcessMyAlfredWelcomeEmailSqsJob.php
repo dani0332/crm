@@ -22,13 +22,15 @@ class ProcessMyAlfredWelcomeEmailSqsJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 60;
+
     public function __construct(
         public string $email,
         public string $code,
         public ?string $source = null,
         public ?string $tag = null,
     ) {
-        $this->onConnection('sqs');
+        $this->onConnection('sqs_myalfred');
     }
 
     public function handle(MyAlfredWelcomeEmailInboundService $welcomeEmailInboundService): void
