@@ -109,7 +109,7 @@ class HealthQuotesExport implements CsvExportableInterface
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->healthQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->healthQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-            $quote->health_team_type,
+            $quote->health_team_type ?? $quote->notional_team,
             $quote->healthQuoteRequestDetail?->transapp_code,
             $quote->healthQuoteRequestDetail?->lostReason?->text,
             $quote->price_starting_from,

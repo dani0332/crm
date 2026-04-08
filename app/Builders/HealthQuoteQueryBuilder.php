@@ -28,6 +28,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'source',
             'sub_source_id',
             'health_team_type',
+            'notional_team',
             'premium',
             'policy_number',
             'support_user_id',
