@@ -13,7 +13,7 @@ class AllocationCreationService
     public function executeLifeRevivalAllocation(): Collection
     {
         // Step 1: Get all LIFE quotes eligible for revival
-        $leadsToRevive = PersonalQuote::with('lifeQuote')
+        $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->get();
