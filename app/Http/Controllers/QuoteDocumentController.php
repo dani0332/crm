@@ -511,7 +511,7 @@ class QuoteDocumentController extends Controller
      */
     protected function authorizeQuoteDocumentableOrRedirect(Model $quoteDocumentable): ?RedirectResponse
     {
-        if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable(auth()->user(), $quoteDocumentable)) {
+        if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable(auth()->user(), $quoteDocumentable, forQuoteDocumentDestroy: true)) {
             return redirect()->back()->with('error', 'You are not authorized to perform this action on this quote.');
         }
 
