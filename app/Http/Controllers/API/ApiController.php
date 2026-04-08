@@ -70,7 +70,6 @@ use App\Services\WhatsAppHookService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
-use Illuminate\Http\Client\Response as HttpClientResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -226,16 +225,24 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $birdResponse = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
-        if ($birdResponse === false) {
+        if ($birdResponse === false || (int) data_get($birdResponse, 'status_code', 200) >= 300) {
             return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
         }
 
-        $bodyString = $birdResponse instanceof HttpClientResponse
-            ? $birdResponse->body()
-            : (string) ($birdResponse->body ?? '');
+        $bodyString = (string) data_get($birdResponse, 'body', '');
 
         $decoded = json_decode($bodyString, true) ?? [];
         $result = $decoded['result'] ?? [];
+        if (is_array($result) && array_is_list($result)) {
+            $result = collect($result)->mapWithKeys(static function (mixed $row): array {
+                if (! is_array($row)) {
+                    return [];
+                }
+                $id = (string) ($row['id'] ?? $row['run_id'] ?? $row['runId'] ?? '');
+
+                return $id !== '' ? [$id => $row['status'] ?? $row['state'] ?? ''] : [];
+            })->all();
+        }
         $c = collect($result);
         $confirmed = $c->contains(fn ($s, $id) => (string) $id === (string) $workflow->flow_id && strtolower((string) $s) === 'cancelled');
         $data = ['action' => $decoded['action'] ?? 'cancel', 'runs' => $c->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all()];
