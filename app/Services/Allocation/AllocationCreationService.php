@@ -18,7 +18,6 @@ class AllocationCreationService
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->get();
 
-        // echo count($leadsToRevive->toArray());exit;
         // Step 2: Filter duplicate insured
         $filteredLeads = $this->filterDuplicateInsured($leadsToRevive);
 
