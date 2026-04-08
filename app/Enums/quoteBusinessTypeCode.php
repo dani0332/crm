@@ -48,6 +48,7 @@ final class quoteBusinessTypeCode extends Enum
     const goodsInTransit = 'Goods In Transit';
     const MedicalMalpracticeInsurance = 'Medical Malpractice Insurance';
     const marineCargo = 'Marine Cargo';
+    const politicalViolenceAndTerrorism = 'Political Violence & Terrorism Insurance';
 
     public static function getId($value): int
     {
@@ -89,6 +90,7 @@ final class quoteBusinessTypeCode extends Enum
             quoteBusinessTypeCode::holidayHomes => 34,
             quoteBusinessTypeCode::fidelityGuarantee => 35,
             quoteBusinessTypeCode::goodsInTransit => 36,
+            quoteBusinessTypeCode::politicalViolenceAndTerrorism => 37,
         };
     }
 }

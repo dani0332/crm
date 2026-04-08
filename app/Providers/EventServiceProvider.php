@@ -9,6 +9,7 @@ use App\Events\Device\DevicePaymentAuthorised;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\NationalityPoolCreated;
 use App\Events\QuoteEmailUpdated;
 use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
@@ -19,6 +20,7 @@ use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleBookPolicyJobFailed;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
+use App\Listeners\HandleNationalityPoolCreated;
 use App\Listeners\HandleTravelAdvisorUpdated;
 use App\Listeners\Health\HandleHealthTransactionApproved;
 use App\Listeners\Impersonation\HandleImpersonatedSession;
@@ -117,6 +119,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         QuotePolicyBooked::class => [
             TriggerConversionApis::class,
+        ],
+        NationalityPoolCreated::class => [
+            HandleNationalityPoolCreated::class,
         ],
 
     ];

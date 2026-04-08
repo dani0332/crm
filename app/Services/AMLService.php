@@ -2441,7 +2441,7 @@ class AMLService
         return $response;
     }
 
-    public function autoCaptureAMLValidationCheck($quote)
+    public function autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase = false)
     {
         if ($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
@@ -2449,7 +2449,7 @@ class AMLService
             return false;
         }
 
-        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared && ! $isHealthAndSTPCase) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
 
             return false;

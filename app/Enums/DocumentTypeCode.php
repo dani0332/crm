@@ -84,6 +84,7 @@ class DocumentTypeCode extends Enum
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
     const MTL_EID = 'MTL_EID';
+    public const TIRBB = 'TIRBB'; // tax invoice raised by buyer
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -163,4 +164,15 @@ class DocumentTypeCode extends Enum
     const DEVICE_SMARTPHONE_TAX_INVOICE = 'DEV_SP_TI';
     const DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER = 'DEV_SP_TIRBB';
     const DEVICE_SMARTPHONE_POLICY_HANDBOOK = 'DEV_SP_PHB';
+    /* Health Quote */
+    const HEA_EID = 'HEAEID'; // Emirates ID
+    const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
+    const HEA_EID_BACK = 'HEAEIDB'; // Emirates ID Back
+    public const HEA_VISA = 'VISA_Hlth'; // Visa
+    public const HEA_PAS = 'MEPP'; // Passport
+    public const HEA_BIRTH_CERTIFICATE = 'MEBC'; // Birth Certificate
+    public const HEA_MEDICAL_APPLICATION_FORM = 'MED_HLTH'; // medical application form
+    public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
+    public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
+    public const HEA_INSURED_EMIRATES_ID_APPLICATION = 'HEAEIDA'; // Insured Emirates ID Application
 }

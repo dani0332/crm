@@ -18,11 +18,13 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -52,6 +54,10 @@ class PolicyIssuanceService
             },
             QuoteTypes::DEVICE->value => match ($insurerCode) {
                 InsuranceProvidersEnum::NGI => app(NgiInsuranceService::class),
+                default => null,
+            },
+            QuoteTypes::HEALTH->value => match ($insurerCode) {
+                InsuranceProvidersEnum::ADNIC => app(AdnicInsuranceService::class),
                 default => null,
             },
             QuoteTypes::CYBER->value => match ($insurerCode) {
@@ -301,6 +307,7 @@ class PolicyIssuanceService
 
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
         $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+
         if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
             $this->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         } else {
@@ -408,6 +415,8 @@ class PolicyIssuanceService
         return match ($quoteType) {
             QuoteTypes::DEVICE->value => $insuranceProvider->code === InsuranceProvidersEnum::NGI,
             QuoteTypes::CYBER->value => $insuranceProvider->code === InsuranceProvidersEnum::AWNI,
+            QuoteTypes::CAR->value => in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]),
+            QuoteTypes::HEALTH->value => $insuranceProvider->code === InsuranceProvidersEnum::ADNIC,
             default => false,
         };
     }
@@ -448,7 +457,7 @@ class PolicyIssuanceService
 
         $statusAPIFailed = null;
 
-        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
@@ -530,6 +539,8 @@ class PolicyIssuanceService
             )->onQueue('policy-issuance-automation');
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+        } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
+            app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
 
         if ($advisorId) {

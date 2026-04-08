@@ -2403,9 +2403,10 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $isHealthAndSTPCase = $quoteTypeId == QuoteTypeId::Health && $quote->isSTPCase();
 
-        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase)) {
             $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
             $statusAPIFailed = 'Quote Referred To Insurer UW';
 
@@ -2427,7 +2428,7 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
-        if ($premiumCheckEnabled) {
+        if ($premiumCheckEnabled && ! $isHealthAndSTPCase) {
             $captureAmount = $payment->total_amount;
             if (
                 $quoteType->code == QuoteTypes::CAR->value &&
