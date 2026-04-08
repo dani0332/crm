@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\AuthGuardEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -10,6 +12,7 @@ use App\Models\SendUpdateLog;
 use App\Services\QuoteDocumentAccessService;
 use App\Services\SendUpdateLogService;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -58,6 +61,30 @@ test('service allows car manager when not assigned as advisor on quote', functio
     $service = app(QuoteDocumentAccessService::class);
 
     expect($service->userCanAccessQuoteDocumentable($manager, $quote))->toBeTrue();
+});
+
+test('service allows document-delete permission when destroy flag is true', function () {
+    $assignedAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, ['email' => 'assigned-doc-del@example.com']);
+    $user = TestDataSeeder::createUser(['email' => 'document-delete-holder@example.com']);
+    Permission::findOrCreate(PermissionsEnum::DOCUMENT_DELETE, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::DOCUMENT_DELETE);
+
+    $quote = CarQuote::factory()->create(['advisor_id' => $assignedAdvisor->id]);
+    $service = app(QuoteDocumentAccessService::class);
+
+    expect($service->userCanAccessQuoteDocumentable($user, $quote, forQuoteDocumentDestroy: true))->toBeTrue();
+});
+
+test('service does not apply document-delete permission when destroy flag is false', function () {
+    $assignedAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, ['email' => 'assigned-no-flag@example.com']);
+    $user = TestDataSeeder::createUser(['email' => 'document-delete-only@example.com']);
+    Permission::findOrCreate(PermissionsEnum::DOCUMENT_DELETE, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::DOCUMENT_DELETE);
+
+    $quote = CarQuote::factory()->create(['advisor_id' => $assignedAdvisor->id]);
+    $service = app(QuoteDocumentAccessService::class);
+
+    expect($service->userCanAccessQuoteDocumentable($user, $quote))->toBeFalse();
 });
 
 test('service allows car advisor on send update log resolved via linked quote uuid', function () {
