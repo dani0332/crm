@@ -164,6 +164,7 @@ class DocumentTypeCode extends Enum
     const DEVICE_SMARTPHONE_TAX_INVOICE = 'DEV_SP_TI';
     const DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER = 'DEV_SP_TIRBB';
     const DEVICE_SMARTPHONE_POLICY_HANDBOOK = 'DEV_SP_PHB';
+
     /* Health Quote */
     const HEA_EID = 'HEAEID'; // Emirates ID
     const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
