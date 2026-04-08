@@ -94,5 +94,5 @@ final class WorkflowTypeEnum extends Enum
 
     // Courtesy Email
     public const COURTESY_EMAIL_WORKFLOW = 'courtesy_email_workflow';
-    public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS= 'car_intro_email_without_vehicle_details';
+    public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS = 'car_intro_email_without_vehicle_details';
 }
