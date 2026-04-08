@@ -221,8 +221,8 @@ class LifeRevivalService
             'leadStatuses' => $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Life),
             'nationalities' => Nationality::query()->withActive()->select(['id', 'text'])->get(),
             'gender' => $this->crudService->getGenderOptions(),
-            'purposeOfInsurance' => LifePurposeOfInsurance::query()->where('is_active', true)->select(['id', 'text'])->get(),
-            'insuranceTenures' => LifeInsuranceTenure::query()->where('is_active', true)->select(['id', 'text'])->get(),
+            'purposeOfInsurance' => LifePurposeOfInsurance::query()->select(['id', 'text'])->get(),
+            'insuranceTenures' => LifeInsuranceTenure::query()->select(['id', 'text'])->get(),
             'insurerAmlStatuses' => $insurerAmlStatuses,
             'currencies' => CurrencyType::query()->withActive()->select(['id', 'text'])->get(),
         ];
