@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MotorRevivalVoucherCode;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Services\Logger\LoggerService;
@@ -15,8 +16,6 @@ use Illuminate\Support\Facades\Http;
 class MACRMService
 {
     use Macrmable;
-
-    public const MOTOR_REVIVAL_VOUCHER_CODE_PREFIX = 'MA_FREE7_';
 
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
@@ -321,15 +320,10 @@ class MACRMService
         return null;
     }
 
-    public static function buildMotorRevivalVoucherCodeFromQuoteUuid(string $quoteUuid): string
-    {
-        return self::MOTOR_REVIVAL_VOUCHER_CODE_PREFIX.strtoupper($quoteUuid);
-    }
-
     public static function generateMotorRevivalVoucherForQuote(CarQuote $carQuote): ?string
     {
         $quoteUuid = $carQuote->uuid;
-        $voucherCode = self::buildMotorRevivalVoucherCodeFromQuoteUuid($quoteUuid);
+        $voucherCode = MotorRevivalVoucherCode::TrialSevenDay->codeForQuoteUuid($quoteUuid);
 
         try {
             LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote start', [
