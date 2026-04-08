@@ -366,6 +366,7 @@ class MACRMService
                 'source' => 'imcrm',
                 'is_active' => true,
                 'auto_claim' => true,
+                'ctaLink' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
             ];
 
             $result = self::createVoucher($payload);
