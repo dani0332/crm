@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Http\Controllers\QuoteDocumentController;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -32,7 +33,7 @@ class QuoteDocumentAccessService
 
     /**
      * @param  Model  $quoteDocumentable  Quote model, {@see PersonalQuote}, {@see BusinessQuote}, or {@see SendUpdateLog} (morph target for send-update documents).
-     * @param  bool  $forQuoteDocumentDestroy  When true (e.g. {@see \App\Http\Controllers\QuoteDocumentController::destroy()}), users with {@see PermissionsEnum::DOCUMENT_DELETE} are allowed without LOB manager/advisor checks.
+     * @param  bool  $forQuoteDocumentDestroy  When true (e.g. {@see QuoteDocumentController::destroy()}), users with {@see PermissionsEnum::DOCUMENT_DELETE} are allowed without LOB manager/advisor checks.
      */
     public function userCanAccessQuoteDocumentable(?User $user, Model $quoteDocumentable, bool $forQuoteDocumentDestroy = false): bool
     {
