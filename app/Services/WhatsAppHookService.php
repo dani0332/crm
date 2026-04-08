@@ -17,132 +17,105 @@ class WhatsAppHookService
 
     public function handleInbound(Request $request): JsonResponse
     {
-        try {
-            LoggerService::info(self::class.' - handleInbound: WhatsApp inbound webhook received', [
-                'time' => now()->toIso8601String(),
-            ]);
-
-            $payload = $request->input('payload', []);
-            if (empty($payload)) {
-                LoggerService::warning(self::class.' - handleInbound: Payload is empty');
-
-                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook payload is empty.');
-            }
-
-            $messageId = $payload['messageId'] ?? null;
-            $status = $payload['type'] ?? $payload['status'] ?? 'inbound';
-            $mobile = $this->extractMobile($payload);
-
-            if (! $messageId || ! $mobile) {
-                LoggerService::warning(self::class.' - handleInbound: Required fields missing', [
-                    'messageId' => $messageId,
-                    'hasMobile' => ! empty($mobile),
-                ]);
-
-                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: messageId and mobile are required.');
-            }
-
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
-            LoggerService::info(self::class.' - handleInbound: Webhook processed successfully', [
-                'messageId' => $messageId,
-                'mobile' => $mobile,
-            ]);
-
-            return apiResponse([], Response::HTTP_OK, 'Webhook received successfully.');
-        } catch (\Throwable $th) {
-            LoggerService::error(self::class.' - handleInbound: Exception occurred', [
-                'message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
-                'trace' => $th->getTraceAsString(),
-            ]);
-            throw $th;
-        }
+        return $this->processWebhook(
+            $request,
+            'handleInbound',
+            'inbound',
+            static function (array $payload): array {
+                return [
+                    'messageId' => $payload['messageId'] ?? null,
+                    'status' => $payload['type'] ?? $payload['status'] ?? 'inbound',
+                ];
+            },
+            requireExplicitStatus: false,
+            invalidFieldsMessage: 'Invalid payload: messageId and mobile are required.',
+        );
     }
 
     public function handleOutbound(Request $request): JsonResponse
     {
-        try {
-            LoggerService::info(self::class.' - handleOutbound: WhatsApp outbound webhook received', [
-                'time' => now()->toIso8601String(),
-            ]);
-
-            $payload = $request->input('payload', []);
-            if (empty($payload)) {
-                LoggerService::warning(self::class.' - handleOutbound: Payload is empty');
-
-                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook payload is empty.');
-            }
-
-            $messageId = $payload['id'] ?? null;
-            $status = $payload['status'] ?? null;
-            $mobile = $this->extractMobile($payload);
-
-            if (! $messageId || ! $status || ! $mobile) {
-                LoggerService::warning(self::class.' - handleOutbound: Required fields missing', [
-                    'messageId' => $messageId,
-                    'status' => $status,
-                    'hasMobile' => ! empty($mobile),
-                ]);
-
-                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: id, status and mobile are required.');
-            }
-
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
-            LoggerService::info(self::class.' - handleOutbound: Webhook processed successfully', [
-                'messageId' => $messageId,
-                'mobile' => $mobile,
-            ]);
-
-            return apiResponse([], Response::HTTP_OK, 'Webhook received successfully.');
-        } catch (\Throwable $th) {
-            LoggerService::error(self::class.' - handleOutbound: Exception occurred', [
-                'message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
-                'trace' => $th->getTraceAsString(),
-            ]);
-            throw $th;
-        }
+        return $this->processWebhook(
+            $request,
+            'handleOutbound',
+            'outbound',
+            static function (array $payload): array {
+                return [
+                    'messageId' => $payload['id'] ?? null,
+                    'status' => $payload['status'] ?? null,
+                ];
+            },
+            requireExplicitStatus: true,
+            invalidFieldsMessage: 'Invalid payload: id, status and mobile are required.',
+        );
     }
 
     public function handleInteraction(Request $request): JsonResponse
     {
+        return $this->processWebhook(
+            $request,
+            'handleInteraction',
+            'interaction',
+            static function (array $payload): array {
+                return [
+                    'messageId' => $payload['messageId'] ?? null,
+                    'status' => $payload['type'] ?? $payload['status'] ?? null,
+                ];
+            },
+            requireExplicitStatus: true,
+            invalidFieldsMessage: 'Invalid payload: messageId, status, and mobile are required.',
+        );
+    }
+
+    /**
+     * @param  callable(array<string, mixed>): array{messageId: ?string, status: ?string}  $extractMessageFields
+     */
+    private function processWebhook(
+        Request $request,
+        string $handlerLabel,
+        string $channelDescriptor,
+        callable $extractMessageFields,
+        bool $requireExplicitStatus,
+        string $invalidFieldsMessage,
+    ): JsonResponse {
         try {
-            LoggerService::info(self::class.' - handleInteraction: WhatsApp interaction webhook received', [
+            LoggerService::info(self::class." - {$handlerLabel}: WhatsApp {$channelDescriptor} webhook received", [
                 'time' => now()->toIso8601String(),
             ]);
 
             $payload = $request->input('payload', []);
             if (empty($payload)) {
-                LoggerService::warning(self::class.' - handleInteraction: Payload is empty');
+                LoggerService::warning(self::class." - {$handlerLabel}: Payload is empty");
 
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook payload is empty.');
             }
 
-            $messageId = $payload['messageId'] ?? null;
-            $status = $payload['type'] ?? $payload['status'] ?? null;
+            $extracted = $extractMessageFields($payload);
+            $messageId = $extracted['messageId'] ?? null;
+            $status = $extracted['status'] ?? null;
             $mobile = $this->extractMobile($payload);
 
-            if (! $messageId || ! $status || ! $mobile) {
-                LoggerService::warning(self::class.' - handleInteraction: Required fields missing', [
+            $statusInvalid = $requireExplicitStatus && ($status === null || $status === '');
+            $missingCore = ! $messageId || ! $mobile || $statusInvalid;
+
+            if ($missingCore) {
+                LoggerService::warning(self::class." - {$handlerLabel}: Required fields missing", [
                     'messageId' => $messageId,
                     'status' => $status,
                     'hasMobile' => ! empty($mobile),
                 ]);
 
-                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload: messageId, status, and mobile are required.');
+                return apiResponse([], Response::HTTP_BAD_REQUEST, $invalidFieldsMessage);
             }
 
-            $this->dispatchJob($messageId, $status, $mobile, $payload['reason'] ?? null);
-            LoggerService::info(self::class.' - handleInteraction: Webhook processed successfully', [
+            $this->dispatchJob((string) $messageId, (string) $status, $mobile, $payload['reason'] ?? null);
+            LoggerService::info(self::class." - {$handlerLabel}: Webhook processed successfully", [
                 'messageId' => $messageId,
                 'mobile' => $mobile,
             ]);
 
             return apiResponse([], Response::HTTP_OK, 'Webhook received successfully.');
         } catch (\Throwable $th) {
-            LoggerService::error(self::class.' - handleInteraction: Exception occurred', [
+            LoggerService::error(self::class." - {$handlerLabel}: Exception occurred", [
                 'message' => $th->getMessage(),
                 'line' => $th->getLine(),
                 'file' => $th->getFile(),
