@@ -57,6 +57,8 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class BusinessQuoteController extends Controller
 {
@@ -87,7 +89,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index(Request $request)
     {
@@ -162,7 +164,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -212,7 +214,7 @@ class BusinessQuoteController extends Controller
 
     /**
      * @param  $uuid
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
