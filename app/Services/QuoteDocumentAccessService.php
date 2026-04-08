@@ -17,6 +17,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\SavingsQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -24,6 +25,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuoteDocumentAccessService
 {
+    public function __construct(
+        private readonly SendUpdateLogService $sendUpdateLogService,
+    ) {}
+
+    /**
+     * @param  Model  $quoteDocumentable  Quote model, {@see PersonalQuote}, {@see BusinessQuote}, or {@see SendUpdateLog} (morph target for send-update documents).
+     */
     public function userCanAccessQuoteDocumentable(?User $user, Model $quoteDocumentable): bool
     {
         if (! $user) {
@@ -51,6 +59,14 @@ class QuoteDocumentAccessService
 
     private function resolveQuoteTypeFromDocumentable(Model $documentable): ?QuoteTypes
     {
+        if ($documentable instanceof SendUpdateLog) {
+            if ($documentable->quote_type_id === null) {
+                return null;
+            }
+
+            return QuoteTypes::getName((int) $documentable->quote_type_id);
+        }
+
         if ($documentable instanceof PersonalQuote) {
             if ($documentable->quote_type_id === null) {
                 return null;
@@ -83,17 +99,59 @@ class QuoteDocumentAccessService
 
     private function resolveAdvisorIdFromDocumentable(Model $documentable): ?int
     {
+        if ($documentable instanceof SendUpdateLog) {
+            $documentable->loadMissing('personalQuote');
+            $advisorId = $documentable->personalQuote?->advisor_id;
+
+            if ($advisorId !== null) {
+                return (int) $advisorId;
+            }
+
+            if ($documentable->quote_uuid === null || $documentable->quote_type_id === null) {
+                return null;
+            }
+
+            $quoteType = QuoteTypes::getName((int) $documentable->quote_type_id);
+
+            if (! $quoteType instanceof QuoteTypes) {
+                return null;
+            }
+
+            $linkedQuote = $this->sendUpdateLogService->getQuoteObjectBy(
+                $this->quoteTypeLabelForGetQuoteObjectBy($quoteType),
+                $documentable->quote_uuid,
+                'uuid',
+            );
+
+            if ($linkedQuote instanceof Model && ! $linkedQuote instanceof SendUpdateLog) {
+                return $this->resolveAdvisorIdFromDocumentable($linkedQuote);
+            }
+
+            return null;
+        }
+
         try {
             if (isset($documentable->advisor_id) && $documentable->advisor_id !== null) {
                 return (int) $documentable->advisor_id;
             }
-
         } catch (\Exception $e) {
             return null;
         }
 
         return null;
+    }
 
+    /**
+     * {@see GenericQueriesAllLobs::getQuoteObjectBy()} loads {@see BusinessQuote} when the type string maps to the Business quote model.
+     * Corp-line and group-medical send-update logs use {@see QuoteTypes::CORPLINE} / {@see QuoteTypes::GROUP_MEDICAL}; their enum values
+     * would otherwise produce invalid `*Quote` class names and break linked-quote resolution.
+     */
+    private function quoteTypeLabelForGetQuoteObjectBy(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL => QuoteTypes::BUSINESS->value,
+            default => $quoteType->value,
+        };
     }
 
     /**
