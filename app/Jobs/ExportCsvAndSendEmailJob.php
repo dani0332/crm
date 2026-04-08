@@ -84,12 +84,17 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                 ]);
             }
 
-            // Process CSV and send email
+            // Process CSV and send email (optional ccRecipients in requestParams; see EmailExportService)
+            $ccRecipients = $this->requestParams['ccRecipients'] ?? [];
+            if (! is_array($ccRecipients)) {
+                $ccRecipients = array_filter(array_map('trim', explode(',', (string) $ccRecipients)));
+            }
+
             $exportInstance->sendEmailWithCSVAttachment(
                 $this->requestParams['recipientEmail'],
                 $this->requestParams['subject'],
                 $this->requestParams,
-                [],
+                $ccRecipients,
                 $this->requestParams['fileName'],
             );
 

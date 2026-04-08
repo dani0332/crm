@@ -441,6 +441,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS],
+            [
+                'value' => '', /* It saves a configuration via JSON see sample at app/Services/Reports/ConversionOptimizationScheduledExportService.php:230 */
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedHomeAdvisors()
