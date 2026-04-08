@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\CarQuote;
@@ -62,11 +63,15 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function resolveLead()
     {
-        $modelDetails = $this->allocationRequest->getQuoteType()->modelDetail();
-
         $leadQuery = $this->allocationRequest->model()
             ->where('uuid', $this->allocationRequest->getQuoteUUID())
-            ->when($modelDetails !== [], fn ($query) => $query->with($modelDetails));
+            ->when(
+                $this->allocationRequest->getQuoteType() === QuoteTypes::CAR
+                    && ! $this->allocationRequest->getQuoteType()->isPersonalQuote(),
+                fn ($query) => $query->with([
+                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at',
+                ])
+            );
 
         $lead = $leadQuery->first();
 

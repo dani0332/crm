@@ -375,15 +375,15 @@ trait QuoteAllocatable
             return false;
         }
 
-        $partial = $this->carQuoteRequestDetailPartial;
+        $detail = $this->carQuoteRequestDetail;
 
-        if (! filled($partial?->engagement_level) || ! filled($partial?->engagement_level_updated_at)) {
+        if (! filled($detail?->engagement_level) || ! filled($detail?->engagement_level_updated_at)) {
             return false;
         }
 
-        $updatedAt = Carbon::parse($partial->engagement_level_updated_at);
+        $updatedAt = Carbon::parse($detail->engagement_level_updated_at);
 
-        return match ($partial->engagement_level) {
+        return match ($detail->engagement_level) {
             MotorRevivalEnum::INTENT_HIGH->value => now()->greaterThan($updatedAt->copy()->addMinutes(15)),
             MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addHours(3)),
             default => false,

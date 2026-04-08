@@ -47,7 +47,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         } elseif ($lead->isRevivalCommsIntentHighOrMedium()) {
             $teamName = TeamNameEnum::ORGANIC;
             LoggerService::info('Lead is a Revival lead and has intent high or medium. Assigning to Organic team.', [
-                'engagement_level' => $lead->carQuoteRequestDetailPartial->engagement_level,
+                'engagement_level' => $lead->carQuoteRequestDetail?->engagement_level,
             ]);
         } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested() && ! in_array($lead->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;

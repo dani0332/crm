@@ -659,17 +659,6 @@ class CarQuote extends BaseModel
         return ! empty($this->car_value) && $this->car_value > 0;
     }
 
-    public function carQuoteRequestDetailPartial()
-    {
-        return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id')
-            ->select([
-                'id',
-                'car_quote_request_id',
-                'engagement_level',
-                'engagement_level_updated_at',
-            ]);
-    }
-
     public function scopeWhereRevivalIntentEligible(Builder $query): Builder
     {
         return $query->whereHas('carQuoteRequestDetail', function ($q) {
