@@ -508,7 +508,7 @@ class QuoteDocumentController extends Controller
      * Ensure the authenticated user may act on quote documents for the given morph parent.
      *
      * By default uses LOB manager/assigned-advisor checks (plus admin/engineering). When the second argument is true
-     * (delete flows only), users with {@see \App\Enums\PermissionsEnum::DOCUMENT_DELETE} are also allowed. Do not pass true
+     * (delete flows only), users with {@see PermissionsEnum::DOCUMENT_DELETE} are also allowed. Do not pass true
      * for upload or other document mutations, or those users would be over-authorized.
      *
      * @param  bool  $forQuoteDocumentDestroy  When true, {@see QuoteDocumentAccessService::userCanAccessQuoteDocumentable()} applies delete permission bypass.
