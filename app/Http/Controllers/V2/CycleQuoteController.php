@@ -42,8 +42,11 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -228,6 +231,15 @@ class CycleQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Cycle, $quote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $quote->uuid,
+            QuoteTypeId::Cycle,
+            $quote->id,
+            $quote->email ?? null,
+            $emailStatuses,
+        );
+
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => fn () => $quote,
@@ -272,6 +284,9 @@ class CycleQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Cycle),
         ]);
     }
 

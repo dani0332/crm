@@ -40,9 +40,12 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -507,6 +510,15 @@ class AmtController extends Controller
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Business, $record->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $record->uuid,
+            QuoteTypeId::Business,
+            $record->id,
+            $record->email ?? null,
+            $emailStatuses
+        );
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -557,6 +569,9 @@ class AmtController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'activities' => $activities,
             'advisors' => $advisors,
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Business),
         ]);
     }
 

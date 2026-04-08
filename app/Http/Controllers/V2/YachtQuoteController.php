@@ -42,8 +42,11 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -217,6 +220,15 @@ class YachtQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Yacht, $quote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $quote->uuid,
+            QuoteTypeId::Yacht,
+            $quote->id,
+            $quote->email ?? null,
+            $emailStatuses,
+        );
+
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => fn () => $quote,
@@ -259,6 +271,9 @@ class YachtQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Yacht),
         ]);
     }
 

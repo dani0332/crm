@@ -40,7 +40,9 @@ use App\Services\BaseService;
 use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
+use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
+use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\KenService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -473,6 +475,13 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
+        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
+            $lifeQuote->uuid,
+            QuoteTypeId::Life,
+            $lifeQuote->id,
+            $lifeQuote->email ?? null,
+            $emailStatuses
+        );
         $lifeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_CUT_OFF_DATE)->first()->value ?? null;
 
         return [
@@ -524,6 +533,8 @@ class LifeQuoteService extends BaseService
             'lifeRiders' => $lifeRiders,
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
+            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
+            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Life),
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'lifeCutOffDate' => $lifeCutOffDate,
