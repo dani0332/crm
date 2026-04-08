@@ -34,7 +34,12 @@ class CallBackNotification extends Command
      */
     protected $description = 'InstantAlfred CallBack and Whatsapp Notification';
 
-    protected $allowedQuoteTypeIds = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike];
+    protected $allowedQuoteTypeIds = [
+        QuoteTypeId::Car,
+        QuoteTypeId::Travel,
+        QuoteTypeId::Bike,
+        QuoteTypeId::Device,
+    ];
 
     /**
      * Create a new command instance.
@@ -72,7 +77,7 @@ class CallBackNotification extends Command
                         $quoteTypeCode = strtolower($modelType->code);
                         $record = $this->getQuoteObjectBy($quoteTypeCode, $activity->quote_request_id, 'id');
                         if ($record) {
-                            if ($modelType->code == QuoteTypeCode::Business) {
+                            if ($modelType->code == quoteTypeCode::Business) {
                                 $path = "quotes/business/$record->uuid";
                             } elseif (checkPersonalQuotes($modelType->code)) {
                                 $path = "personal-quotes/$quoteTypeCode/$record->uuid";
@@ -114,9 +119,10 @@ class CallBackNotification extends Command
     private function isAllowedQuoteType($quoteTypeCode)
     {
         return in_array($quoteTypeCode, [
-            QuoteTypeCode::Car,
-            QuoteTypeCode::Travel,
-            QuoteTypeCode::Bike,
+            quoteTypeCode::Car,
+            quoteTypeCode::Travel,
+            quoteTypeCode::Bike,
+            quoteTypeCode::Device,
         ]);
     }
 

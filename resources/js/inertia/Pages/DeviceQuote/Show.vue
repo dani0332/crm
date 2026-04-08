@@ -1,14 +1,15 @@
 <script setup>
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import CustomerChatLogs from '@/inertia/Components/CustomerChatLogs.vue';
 import { createReusableTemplate } from '@vueuse/core';
 import { reactive } from 'vue';
+import OcrLogs from '../../Components/OcrLogs.vue';
 import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import OcrLogs from '../../Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -1781,6 +1782,13 @@ const formatToDateTime = dateString => {
     />
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'DEVICE'"
+      :expanded="sectionExpanded"
+    />
 
     <AuditLogs
       :quote-type="quoteType"
