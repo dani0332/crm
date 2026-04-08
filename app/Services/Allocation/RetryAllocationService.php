@@ -168,6 +168,7 @@ class RetryAllocationService
                 'advisor_id',
                 'tier_id',
                 'car_value',
+                'created_at',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -180,9 +181,21 @@ class RetryAllocationService
         $teamId = getTeamId(TeamNameEnum::ORGANIC);
 
         $leads = $leads->get();
-        LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' leads to process');
+        LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' CAT A Revival leads to process');
 
-        foreach ($leads as $lead) {
+        if ($leads->isNotEmpty()) {
+            LoggerService::info(self::class.':executeCarRevivalAllocation: Priority queue (highest car value first)', extra: [
+                'queue' => $leads->map(fn ($l, $index) => [
+                    'priority' => $index + 1,
+                    'uuid' => $l->uuid,
+                    'effective_car_value' => CatARevivalAllocationPriorityService::effectiveCarValue($l),
+                    'car_value' => $l->car_value,
+                    'created_at' => $l->created_at,
+                ])->values()->all(),
+            ]);
+        }
+
+        foreach ($leads as $index => $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
@@ -191,7 +204,13 @@ class RetryAllocationService
                 continue;
             }
 
-            LoggerService::info(self::class.': Processing car quote allocation', extra: [
+            LoggerService::info(self::class.': Processing CAT A Revival car quote allocation', extra: [
+                'priority_position' => $index + 1,
+                'total_in_queue' => $leads->count(),
+                'uuid' => $lead->uuid,
+                'effective_car_value' => CatARevivalAllocationPriorityService::effectiveCarValue($lead),
+                'car_value' => $lead->car_value,
+                'car_value_tier' => $lead->car_value_tier,
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,

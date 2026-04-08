@@ -36,14 +36,21 @@ class DeferLowerPriorityCatARevivalLeadPipe extends BaseAllocationPipe
             return $next($request);
         }
 
+        $effectiveCarValue = CatARevivalAllocationPriorityService::effectiveCarValue($lead);
+
         if (CatARevivalAllocationPriorityService::hasHigherPriorityUnassignedLead($lead)) {
             LoggerService::info(self::class.'::handle - Deferring allocation: higher car value Revival CAT A lead exists in queue', [
                 'uuid' => $lead->uuid,
-                'effective_car_value' => CatARevivalAllocationPriorityService::effectiveCarValue($lead),
+                'effective_car_value' => $effectiveCarValue,
             ]);
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor assignment is in progress and will be assigned shortly', self::OK);
         }
+
+        LoggerService::info(self::class.'::handle - Proceeding as highest priority CAT A Revival lead in queue', [
+            'uuid' => $lead->uuid,
+            'effective_car_value' => $effectiveCarValue,
+        ]);
 
         return $next($request);
     }

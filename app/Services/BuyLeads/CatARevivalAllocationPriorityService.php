@@ -39,8 +39,11 @@ class CatARevivalAllocationPriorityService
         return "CASE WHEN {$table}.car_value IS NOT NULL AND {$table}.car_value > 0 THEN {$table}.car_value WHEN {$table}.car_value_tier IS NOT NULL AND {$table}.car_value_tier > 0 THEN {$table}.car_value_tier ELSE 0 END";
     }
 
+    public const LOOKBACK_DAYS = 15;
+
     /**
      * Unassigned Revival leads eligible for CAT A buy allocation (nationality from configuration).
+     * Only considers leads created within the last {@see self::LOOKBACK_DAYS} days.
      */
     public static function unassignedRevivalCatABaseQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -48,7 +51,8 @@ class CatARevivalAllocationPriorityService
 
         $query = CarQuote::query()
             ->where('car_quote_request.source', LeadSourceEnum::REVIVAL)
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('car_quote_request.created_at', '>=', now()->subDays(self::LOOKBACK_DAYS)->startOfDay());
 
         if ($nationalityIds === []) {
             return $query->whereRaw('0 = 1');
