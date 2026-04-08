@@ -337,12 +337,15 @@ function applyDerivedMemberCategoryIfHidden() {
   if (showMemberCategoryField.value) {
     return;
   }
-  quoteForm.member_category_id = deriveMemberCategoryIdWhenHidden();
+
+  if(quoteForm.nationality_id || quoteForm.emirate_of_your_visa_id) {
+    quoteForm.member_category_id = deriveMemberCategoryIdWhenHidden();
+  }
 }
 
 watch(
   [
-    showMemberCategoryField,
+    () => !showMemberCategoryField.value,
     () => quoteForm.nationality_id,
     () => quoteForm.emirate_of_your_visa_id,
   ],
