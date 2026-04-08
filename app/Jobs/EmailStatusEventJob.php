@@ -69,6 +69,8 @@ class EmailStatusEventJob implements ShouldQueue
                 if (! empty($emailStatusData)) {
                     if (! empty($emailStatusData->quote_type_id) && ! empty($emailStatusData->quote_id)) {
                         $newEmailStatus = new EmailStatus;
+                        $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
+                        $newEmailStatus->quote_id = $emailStatusData->quote_id;
                         $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
                         $newEmailStatus->msg_id = $this->emailData->message_id;
                         $newEmailStatus->email_status = $this->emailData->status;
@@ -77,9 +79,9 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
                         $newEmailStatus->save();
 
-                        info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
+                        $emailStatusService->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
 
-                        $this->storeEmailStatusEvent($emailStatusData, $emailStatusService);
+                        info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
                     } else {
                         info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                     }
@@ -98,22 +100,6 @@ class EmailStatusEventJob implements ShouldQueue
             info('EmailStatusEventJob - Error: '.$th->getMessage().' on line: '.$th->getLine().' in file: '.$th->getFile().' | '.PHP_EOL.$th->getTraceAsString());
             throw $th;
         }
-    }
-
-    public function storeEmailStatusEvent($emailStatusData, EmailStatusService $emailStatusService)
-    {
-        $newEmailStatus = new EmailStatus;
-        $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
-        $newEmailStatus->quote_id = $emailStatusData->quote_id;
-        $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
-        $newEmailStatus->msg_id = $this->emailData->message_id;
-        $newEmailStatus->email_status = $this->emailData->status;
-        $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
-        $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
-        $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
-        $newEmailStatus->save();
-        $emailStatusService->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
-        info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
     }
 
 }
