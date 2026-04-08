@@ -124,9 +124,9 @@ function parseMobileNoForInitial(raw) {
     return { dial: '+971', national: '' };
   }
   const str = String(raw).trim();
-  const digitsOnly = str.replace(/\D/g, '');
+  const digitsOnly = str.replaceAll(/\D/g, '');
   const withPlus = str.startsWith('+')
-    ? `+${str.slice(1).replace(/\D/g, '')}`
+    ? `+${str.slice(1).replaceAll(/\D/g, '')}`
     : `+${digitsOnly}`;
   const dials = [...mobileDialCodeOptions.map(o => o.value)].sort(
     (a, b) => b.length - a.length,
@@ -135,7 +135,7 @@ function parseMobileNoForInitial(raw) {
     if (withPlus.startsWith(d)) {
       return {
         dial: d,
-        national: withPlus.slice(d.length).replace(/\D/g, ''),
+        national: withPlus.slice(d.length).replaceAll(/\D/g, ''),
       };
     }
   }
@@ -145,8 +145,8 @@ function parseMobileNoForInitial(raw) {
 
 function stripDialToDigits(dial) {
   return String(dial || '')
-    .replace(/^\+/, '')
-    .replace(/\D/g, '');
+    .replaceAll(/^\+/g, '')
+    .replaceAll(/\D/g, '');
 }
 
 const initialMobile = parseMobileNoForInitial(
@@ -158,7 +158,7 @@ const mobileNationalNo = ref(initialMobile.national);
 
 function buildQuoteFormMobileNo() {
   const dialDigits = stripDialToDigits(mobileDialCode.value);
-  const nationalDigits = String(mobileNationalNo.value || '').replace(/\D/g, '');
+  const nationalDigits = String(mobileNationalNo.value || '').replaceAll(/\D/g, '');
   if (!nationalDigits) {
     return '';
   }
@@ -169,7 +169,7 @@ const isMobileNationalPartLength = v => {
   if (v == null || v === '') {
     return true;
   }
-  const d = String(v).replace(/\D/g, '');
+  const d = String(v).replaceAll(/\D/g, '');
   if (d.length < 9) {
     return 'Phone number must be at least 9 digits';
   }

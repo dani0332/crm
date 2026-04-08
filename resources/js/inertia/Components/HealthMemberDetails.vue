@@ -627,6 +627,84 @@ const localMembersFiltered = computed(() => {
   return localMembers.value.filter(m => !((m.is_policy_holder == 1 && m.is_insured == 0) || (m.is_third_party_payer == 1)));
 });
 
+function buildPrincipalMemberDataFromQuoteForm() {
+  return {
+    id: `temp-${Date.now()}`,
+    first_name: props.quoteForm.first_name || null,
+    last_name: props.quoteForm.last_name || null,
+    gender: props.quoteForm.gender || null,
+    dob: props.quoteForm.dob || null,
+    nationality_id: props.quoteForm.nationality_id || null,
+    salary_band_id: props.quoteForm.salary_band_id || null,
+    emirate_of_your_visa_id: props.quoteForm.emirate_of_your_visa_id || null,
+    member_category_id: props.quoteForm.member_category_id || null,
+    marital_status_id: props.quoteForm.marital_status_id || null,
+    visa_category_id: props.quoteForm.visa_category_id || null,
+    is_pec_marked: props.quoteForm.pec === HEALTH_PEC_YES,
+    pec: props.quoteForm.pec || null,
+    is_principal: 1,
+    is_policy_holder: 1,
+    is_insured: 1,
+    relation_code: null,
+    quote_request_id: props.quote.id,
+  };
+}
+
+function syncMembersWhenFamilyOtherWithInsuredPh(memberData) {
+  localMembers.value = localMembers.value.filter(
+    m => !(m.is_policy_holder == 1 && m.is_insured == 0),
+  );
+
+  const existingInsuredPh = localMembers.value.find(
+    m => m.is_policy_holder == 1 && m.is_insured == 1,
+  );
+
+  if (existingInsuredPh) {
+    return;
+  }
+
+  localMembers.value = localMembers.value.map(m => ({
+    ...m,
+    is_principal: 0,
+    is_policy_holder: 0,
+  }));
+
+  localMembers.value.push(memberData);
+}
+
+function syncMembersWhenFamilyOtherWithoutInsuredPh() {
+  localMembers.value = localMembers.value.filter(
+    m => !(m.is_policy_holder == 1 && m.is_insured == 1),
+  );
+
+  let principalAssigned = false;
+  localMembers.value = localMembers.value.map(m => {
+    if (m.is_insured != 1) {
+      return { ...m, is_principal: 0 };
+    }
+    if (!principalAssigned) {
+      principalAssigned = true;
+      return { ...m, is_principal: 1 };
+    }
+    return { ...m, is_principal: 0 };
+  });
+
+  const newPrincipal = localMembers.value.find(m => m.is_principal === 1);
+  if (newPrincipal) {
+    syncPrincipalToQuoteForm(newPrincipal);
+  }
+}
+
+function syncMembersForFamilyOtherFlows(memberData) {
+  if (props.includePolicyHolder == 1) {
+    syncMembersWhenFamilyOtherWithInsuredPh(memberData);
+
+    return;
+  }
+
+  syncMembersWhenFamilyOtherWithoutInsuredPh();
+}
+
 watch(
   () => [
     isSelf_Me.value,
@@ -639,82 +717,27 @@ watch(
     props.coverForId,
   ],
   () => {
-    if (isCreate.value || isEdit.value) {
-
-      const memberData = {
-          id: `temp-${Date.now()}`,
-          first_name: props.quoteForm.first_name || null,
-          last_name: props.quoteForm.last_name || null,
-          gender: props.quoteForm.gender || null,
-          dob: props.quoteForm.dob || null,
-          nationality_id: props.quoteForm.nationality_id || null,
-          salary_band_id: props.quoteForm.salary_band_id || null,
-          emirate_of_your_visa_id: props.quoteForm.emirate_of_your_visa_id || null,
-          member_category_id: props.quoteForm.member_category_id || null,
-          marital_status_id: props.quoteForm.marital_status_id || null,
-          visa_category_id: props.quoteForm.visa_category_id || null,
-          is_pec_marked: props.quoteForm.pec === HEALTH_PEC_YES,
-          pec: props.quoteForm.pec || null,
-          is_principal: 1,
-          is_policy_holder: 1,
-          is_insured: 1,
-          relation_code: null,
-          quote_request_id: props.quote.id,
-        };
-
-      // Cover is for family/dependants (policyholder ≠ insured principal flows).
-      if (isFamily_Other.value || isSelfAndFamily_Other.value) {
-        // Policyholder is insured on the quote: keep one insured PH row from the form when missing.
-        if (props.includePolicyHolder == 1) {
-          // Drop shadow rows where PH is not insured (not covered on the policy).
-          localMembers.value = localMembers.value.filter(
-            m => !(m.is_policy_holder == 1 && m.is_insured == 0),
-          );
-
-          const existingInsuredPh = localMembers.value.find(
-            m => m.is_policy_holder == 1 && m.is_insured == 1,
-          );
-
-          // If insured PH already exists, leave members as-is (no duplicate row, no flag reset).
-          if (!existingInsuredPh) {
-            localMembers.value = localMembers.value.map(m => ({
-              ...m,
-              is_principal: 0,
-              is_policy_holder: 0,
-            }));
-
-            localMembers.value.push(memberData);
-          }
-        } else {
-          // Policyholder not insured: remove insured PH row; first insured becomes sole principal.
-          localMembers.value = localMembers.value.filter(
-            m => !(m.is_policy_holder == 1 && m.is_insured == 1),
-          );
-          let principalAssigned = false;
-          localMembers.value = localMembers.value.map(m => {
-            if (m.is_insured != 1) {
-              return { ...m, is_principal: 0 };
-            }
-            if (!principalAssigned) {
-              principalAssigned = true;
-              return { ...m, is_principal: 1 };
-            }
-            return { ...m, is_principal: 0 };
-          });
-          const newPrincipal = localMembers.value.find(m => m.is_principal === 1);
-          if (newPrincipal) {
-            syncPrincipalToQuoteForm(newPrincipal);
-          }
-        }
-      } else if (isSelf_Me.value || isSelfAndFamily_Me.value) {
-      
-        localMembers.value = [memberData];
-      } else {
-        localMembers.value = [];
-      }
+    if (!isCreate.value && !isEdit.value) {
+      return;
     }
+
+    const memberData = buildPrincipalMemberDataFromQuoteForm();
+
+    if (isFamily_Other.value || isSelfAndFamily_Other.value) {
+      syncMembersForFamilyOtherFlows(memberData);
+
+      return;
+    }
+
+    if (isSelf_Me.value || isSelfAndFamily_Me.value) {
+      localMembers.value = [memberData];
+
+      return;
+    }
+
+    localMembers.value = [];
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(
