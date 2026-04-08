@@ -254,6 +254,7 @@ class HealthTeamRoutingService
                         'step' => 'Non PEC lead check',
                         'is_non_pec' => true,
                         'pec_marked_at' => $lead->pec_marked_at,
+                        'team_name' => $notionalTeam,
                         'source' => $this->source,
                     ],
                     $lead->id,
