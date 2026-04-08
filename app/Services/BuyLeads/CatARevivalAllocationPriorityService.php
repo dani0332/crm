@@ -8,22 +8,9 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
-use Carbon\Carbon;
 
 class CatARevivalAllocationPriorityService
 {
-    public static function lookbackDays(): int
-    {
-        $days = (int) config('constants.CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS', 15);
-
-        return max(1, $days);
-    }
-
-    public static function revivalWindowStart(): Carbon
-    {
-        return now()->subDays(self::lookbackDays())->startOfDay();
-    }
-
     /**
      * Matches SQL in {@see self::effectiveCarValueExpressionSql()} for ordering and comparisons.
      */
@@ -61,8 +48,7 @@ class CatARevivalAllocationPriorityService
 
         $query = CarQuote::query()
             ->where('car_quote_request.source', LeadSourceEnum::REVIVAL)
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->where('car_quote_request.created_at', '>=', self::revivalWindowStart());
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
         if ($nationalityIds === []) {
             return $query->whereRaw('0 = 1');
