@@ -964,7 +964,7 @@ defineExpose({
           </template>
         </DataTable>
 
-        <div class="mt-10 flex justify-end">
+        <div class="mt-2 flex justify-end">
           <x-button
               @click.prevent="onRefreshPlans"
               size="sm"
