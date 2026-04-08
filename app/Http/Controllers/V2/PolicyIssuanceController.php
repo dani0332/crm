@@ -23,6 +23,8 @@ class PolicyIssuanceController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(private PolicyIssuanceService $policyIssuanceService) {}
+
     public function triggerPolicyIssuance($policyIssuanceId, Request $request)
     {
         $policyIssuance = PolicyIssuance::find($policyIssuanceId);
@@ -82,14 +84,14 @@ class PolicyIssuanceController extends Controller
             return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (! app(PolicyIssuanceService::class)->shouldOfferReTriggerPolicyAutomation($policyIssuance)) {
+        if (! $this->policyIssuanceService->shouldOfferReTriggerPolicyAutomation($policyIssuance)) {
             return response()->json(['message' => 'Policy issuance is not eligible for re-trigger.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
             $policyIssuance->refresh();
 
-            app(PolicyIssuanceService::class)->reTriggerPolicyAutomation($policyIssuance);
+            $this->policyIssuanceService->reTriggerPolicyAutomation($policyIssuance);
         } catch (ModelNotFoundException $exception) {
             return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {

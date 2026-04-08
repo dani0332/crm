@@ -31,8 +31,10 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct(private BaseService $baseService)
-    {
+    public function __construct(
+        private BaseService $baseService,
+        private PolicyIssuanceService $policyIssuanceService,
+    ) {
         $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
     }
 
@@ -112,7 +114,7 @@ class AuditableController extends Controller
         $reTriggerPolicyAutomationEligible = false;
         if ($policyIssuance) {
             $policyIssuance->loadMissing('insuranceProvider');
-            $reTriggerPolicyAutomationEligible = app(PolicyIssuanceService::class)
+            $reTriggerPolicyAutomationEligible = $this->policyIssuanceService
                 ->shouldOfferReTriggerPolicyAutomation($policyIssuance);
         }
 
