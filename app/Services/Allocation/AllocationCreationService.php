@@ -4,7 +4,8 @@ namespace App\Services\Allocation;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Models\LifeQuote;
+use App\Enums\QuoteTypeId;
+use App\Models\PersonalQuote;
 use Illuminate\Support\Collection;
 
 class AllocationCreationService
@@ -12,10 +13,12 @@ class AllocationCreationService
     public function executeLifeRevivalAllocation(): Collection
     {
         // Step 1: Get all LIFE quotes eligible for revival
-        $leadsToRevive = LifeQuote::whereNot('source', LeadSourceEnum::REVIVAL)
+        $leadsToRevive = PersonalQuote::with('lifeQuote')
+            ->where('quote_type_id', QuoteTypeId::Life)->whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->get();
 
+        // echo count($leadsToRevive->toArray());exit;
         // Step 2: Filter duplicate insured
         $filteredLeads = $this->filterDuplicateInsured($leadsToRevive);
 
