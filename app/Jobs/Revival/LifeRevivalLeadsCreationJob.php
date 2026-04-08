@@ -72,6 +72,6 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         }
 
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
-        LoggerService::info("Life Revival Lead {$this->lead->uuid} created successfully with quote UUID {$lifeRevivalQuoteUUID}");
+        LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
     }
 }
