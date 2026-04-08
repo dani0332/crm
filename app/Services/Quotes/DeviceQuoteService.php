@@ -120,7 +120,6 @@ class DeviceQuoteService extends BaseQuoteService
                         'documents' => function ($q) {
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
-                        'latestInsured.insuredKyc',
                     ])->select([
                         'personal_quotes.*',
                     ])->selectRaw("
