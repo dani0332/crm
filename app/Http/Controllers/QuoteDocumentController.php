@@ -309,7 +309,7 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('error', 'Quote not found for this document.');
         }
 
-        if ($response = $this->authorizeQuoteDocumentableOrRedirect($quoteDocumentable)) {
+        if ($response = $this->authorizeQuoteDocumentableOrRedirect($quoteDocumentable, forQuoteDocumentDestroy: true)) {
             return $response;
         }
 
@@ -505,13 +505,18 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * Ensure the authenticated user may change documents on this quote (manager, assigned advisor, admin, or engineering).
+     * Ensure the authenticated user may act on quote documents for the given morph parent.
      *
+     * By default uses LOB manager/assigned-advisor checks (plus admin/engineering). When the second argument is true
+     * (delete flows only), users with {@see \App\Enums\PermissionsEnum::DOCUMENT_DELETE} are also allowed. Do not pass true
+     * for upload or other document mutations, or those users would be over-authorized.
+     *
+     * @param  bool  $forQuoteDocumentDestroy  When true, {@see QuoteDocumentAccessService::userCanAccessQuoteDocumentable()} applies delete permission bypass.
      * @return RedirectResponse|null Redirect with error when access is denied; null when allowed.
      */
-    protected function authorizeQuoteDocumentableOrRedirect(Model $quoteDocumentable): ?RedirectResponse
+    protected function authorizeQuoteDocumentableOrRedirect(Model $quoteDocumentable, bool $forQuoteDocumentDestroy = false): ?RedirectResponse
     {
-        if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable(auth()->user(), $quoteDocumentable, forQuoteDocumentDestroy: true)) {
+        if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable(auth()->user(), $quoteDocumentable, $forQuoteDocumentDestroy)) {
             return redirect()->back()->with('error', 'You are not authorized to perform this action on this quote.');
         }
 
