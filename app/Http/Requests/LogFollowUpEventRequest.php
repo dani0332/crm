@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteFlowType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class LogFollowUpEventRequest extends FormRequest
@@ -36,7 +38,7 @@ class LogFollowUpEventRequest extends FormRequest
             'customer_email' => 'nullable|string|email',
             'mobile_no' => ['nullable', 'string', 'regex:/^\+?[0-9]{10,20}$/'],
             'subject' => 'nullable|string',
-            'flow_type' => 'nullable|integer',
+            'flow_type' => ['nullable', 'integer', Rule::enum(QuoteFlowType::class)],
         ];
     }
 
