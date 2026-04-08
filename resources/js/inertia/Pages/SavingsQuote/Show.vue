@@ -54,6 +54,14 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lookUpData: Object,

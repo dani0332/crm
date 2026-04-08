@@ -24,7 +24,8 @@ afterEach(function () {
 
 test('isCourtesyEmailQuoteType returns true for an allowed line of business and false otherwise', function () {
     expect(CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Car))->toBeTrue()
-        ->and(CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Cyber))->toBeFalse();
+        ->and(CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Cyber))->toBeTrue()
+        ->and(CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Jetski))->toBeFalse();
 });
 
 test('getGoogleReviewFlowLogContext returns not applicable when quote type is not eligible for courtesy email', function () {
@@ -32,7 +33,7 @@ test('getGoogleReviewFlowLogContext returns not applicable when quote type is no
 
     $result = $service->getGoogleReviewFlowLogContext(
         'any-uuid',
-        QuoteTypeId::Cyber,
+        QuoteTypeId::Jetski,
         'customer@example.com',
     );
 
@@ -57,7 +58,7 @@ test('getGoogleReviewFlowLogContext returns eligible when pre-fetched courtesy f
 test('processCourtesyEmailWorkflow rejects a quote type that is not allowed for courtesy email', function () {
     $service = app(CourtesyEmailService::class);
 
-    $result = $service->processCourtesyEmailWorkflow('any-uuid', QuoteTypeId::Cyber);
+    $result = $service->processCourtesyEmailWorkflow('any-uuid', QuoteTypeId::Jetski);
 
     expect($result['success'])->toBeFalse()
         ->and($result['message'])->toBe('Quote type not allowed for courtesy email');

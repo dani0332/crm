@@ -1,5 +1,6 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import GoogleReviewCommunicationLog from '@/inertia/Components/GoogleReviewCommunicationLog.vue';
 import { createReusableTemplate } from '@vueuse/core';
 import { reactive } from 'vue';
 import OcrLogs from '../../Components/OcrLogs.vue';
@@ -54,6 +55,14 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  googleReviewCommunicationLogs: {
+    type: Array,
+    default: () => [],
+  },
+  showGoogleReviewCommunicationLog: {
+    type: Boolean,
+    default: false,
+  },
   isFuncsEnabled: Object,
   amlStatusName: String,
 });
@@ -1709,6 +1718,11 @@ const formatDob = dob => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+
+    <GoogleReviewCommunicationLog
+      :google-review-communication-logs="googleReviewCommunicationLogs"
+      :show-google-review-communication-log="showGoogleReviewCommunicationLog"
+    />
 
     <QuoteActivities
       :can="can"
