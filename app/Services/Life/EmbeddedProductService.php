@@ -24,6 +24,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -197,7 +198,9 @@ class EmbeddedProductService extends BaseService
                 $documentType,
                 $docUuid,
                 $data['remarks'],
-                $quoteObject
+                $quoteObject,
+                $data['epId'],
+                $data['modelType'],
             );
         });
 
@@ -281,7 +284,7 @@ class EmbeddedProductService extends BaseService
     }
 
     /**
-     * Stores the manual-override document row and queues watermark processing when applicable.
+     * Stores the manual-override document row and queues watermark processing and sending document when applicable.
      */
     private function persistManualOverrideEpDocument(
         EmbeddedTransaction $embeddedTransaction,
@@ -292,6 +295,8 @@ class EmbeddedProductService extends BaseService
         string $docUuid,
         string $remarks,
         object $quoteObject,
+        int $epId,
+        string $modelType,
     ): void {
         $newDocument = $embeddedTransaction->documents()->create([
             'doc_name' => $storedDocName,
@@ -307,9 +312,24 @@ class EmbeddedProductService extends BaseService
         ]);
 
         if ($newDocument->exists && $documentType->code !== QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
-            WatermarkDocumentsJob::dispatch($newDocument->id, $quoteObject->uuid, $documentType->id)
-                ->delay(now()->addSeconds(10))
-                ->afterCommit();
+            $watermarkJob = new WatermarkDocumentsJob($newDocument->id, $quoteObject->uuid, $documentType->id);
+            $watermarkJob->afterCommit();
+
+            $documentTypeCode = $documentType->code;
+            $quoteId = $quoteObject->id;
+
+            Bus::chain([
+                $watermarkJob,
+                function () use ($documentTypeCode, $quoteId, $epId, $modelType): void {
+                    if (in_array($documentTypeCode, QuoteDocumentsEnum::getEpSentToCustomerDocTypes(), true)) {
+                        EmbeddedProductRepository::sendDocument([
+                            'epId' => $epId,
+                            'modelType' => $modelType,
+                            'quoteId' => $quoteId,
+                        ]);
+                    }
+                },
+            ])->delay(now()->addSeconds(10))->dispatch();
         }
     }
 }
