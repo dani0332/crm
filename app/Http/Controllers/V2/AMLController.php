@@ -642,7 +642,7 @@ class AMLController extends Controller
 
             $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
             $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
-            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
             $isPolicyAutomationEnabled = $policyAutomation?->isPolicyIssuanceAutomationEnabled() ?? false;
             LoggerService::info('Policy Automation AutoCapture Checks', extra: [
                 'QuoteType' => $quoteType,
