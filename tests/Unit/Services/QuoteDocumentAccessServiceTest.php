@@ -66,7 +66,7 @@ test('service allows device manager for device personal quote without being assi
         'quote_status_id' => 1,
     ]);
 
-    $service = new QuoteDocumentAccessService;
+    $service = app(QuoteDocumentAccessService::class);
 
     expect($service->userCanAccessQuoteDocumentable($manager, $quote))->toBeTrue();
 });
@@ -82,7 +82,7 @@ test('service allows smartphone manager for device personal quote without being 
         'quote_status_id' => 1,
     ]);
 
-    $service = new QuoteDocumentAccessService;
+    $service = app(QuoteDocumentAccessService::class);
 
     expect($service->userCanAccessQuoteDocumentable($manager, $quote))->toBeTrue();
 });
@@ -97,7 +97,7 @@ test('service allows device advisor when assigned to device personal quote', fun
         'quote_status_id' => 1,
     ]);
 
-    $service = new QuoteDocumentAccessService;
+    $service = app(QuoteDocumentAccessService::class);
 
     expect($service->userCanAccessQuoteDocumentable($advisor, $quote))->toBeTrue();
 });
@@ -113,7 +113,7 @@ test('service denies device advisor when not assigned to device personal quote',
         'quote_status_id' => 1,
     ]);
 
-    $service = new QuoteDocumentAccessService;
+    $service = app(QuoteDocumentAccessService::class);
 
     expect($service->userCanAccessQuoteDocumentable($advisor, $quote))->toBeFalse();
 });
