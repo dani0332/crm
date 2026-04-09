@@ -602,7 +602,6 @@ class CRUDService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Health) {
             return app(LookupService::class)
                 ->getGender()
-                ->keyBy('code')
                 ->pluck('text', 'code')
                 ->all();
         }
