@@ -131,6 +131,7 @@ class CyberQuoteService extends BaseQuoteService
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $q->with([
+                    'previousQuote:id,uuid,code',
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',

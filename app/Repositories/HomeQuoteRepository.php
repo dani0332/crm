@@ -811,6 +811,7 @@ class HomeQuoteRepository extends BaseRepository
         $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($columnUUID, $uuid)
             ->with([
+                'previousQuote:id,uuid,code',
                 'insuranceProvider',
                 'insuranceProviderPlan',
                 'quoteDetail.lostReason',
@@ -900,6 +901,7 @@ class HomeQuoteRepository extends BaseRepository
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
         }
+
     }
 
     private function appendExternalData($quote)

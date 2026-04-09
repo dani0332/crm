@@ -157,6 +157,7 @@ class BikeQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'bikeQuote' => function ($q) {
                     $q->with(['uaeLicenseHeldFor', 'bikeQuoteRequestDetail', 'backHomeLicenseHeldFor', 'bikeMake', 'bikeModel', 'carTypeInsurance', 'claimHistory', 'emirates']);
                 },

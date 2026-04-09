@@ -286,6 +286,8 @@ class TravelController extends Controller
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
 
+        $record->load('previousQuote:id,uuid,code');
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,

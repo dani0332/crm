@@ -134,6 +134,7 @@ class YachtQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'yachtQuote',
                 'advisor',
                 'advisor.primaryBranch',

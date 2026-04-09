@@ -98,6 +98,7 @@ class BusinessQuoteRepository extends BaseRepository
     {
         $quote = $this->where($queryWhere)
             ->with([
+                'previousQuote:id,uuid,code',
                 'advisor',
                 'advisor.primaryBranch',
                 'supportUser',

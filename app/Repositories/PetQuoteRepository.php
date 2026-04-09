@@ -275,6 +275,7 @@ class PetQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'petQuote.accomodationType:id,text',
                 'petQuote.possessionType:id,text',
                 'petQuote.petAge:id,text',

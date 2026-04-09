@@ -15,6 +15,7 @@ use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -135,6 +136,11 @@ class TravelQuote extends Model implements AuditableContract
     public function parent()
     {
         return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
     }
 
     public function child()

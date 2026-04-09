@@ -62,6 +62,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -1254,6 +1255,10 @@ class CRUDController extends Controller
                 $hasPecTag = $lead->has_pec_tag;
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
+
+                $record->previous_quote = $record->previous_quote_id
+                    ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+                    : null;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

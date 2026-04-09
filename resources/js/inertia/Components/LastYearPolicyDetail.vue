@@ -20,9 +20,130 @@ const props = defineProps({
   },
 });
 
+/**
+ * Normalize modelType when parent passes a string or a serialized enum-like object.
+ */
+function rawModelTypeLabel() {
+  const m = props.modelType;
+  if (m == null) {
+    return '';
+  }
+  if (typeof m === 'object' && m !== null && 'name' in m) {
+    return String(m.name);
+  }
+  return String(m);
+}
+
+const modelTypeLabel = computed(() => rawModelTypeLabel());
+
+/**
+ * Resolve uuid + display label for the prior-year lead from props only (no extra API).
+ */
+function extractPreviousLeadMeta(quote, previousQuoteProp) {
+  if (previousQuoteProp?.uuid) {
+    return {
+      uuid: previousQuoteProp.uuid,
+      label: previousQuoteProp.code || previousQuoteProp.uuid,
+    };
+  }
+
+  const q = quote || {};
+  const nested = q.previous_quote || q.previousQuote;
+  if (nested?.uuid) {
+    return {
+      uuid: nested.uuid,
+      label: nested.code || nested.uuid,
+    };
+  }
+
+  const summary = q.previous_lead_summary || q.previousLeadSummary;
+  if (summary?.uuid) {
+    return {
+      uuid: summary.uuid,
+      label: summary.code || summary.uuid,
+    };
+  }
+
+  if (q.previous_quote_uuid) {
+    return {
+      uuid: q.previous_quote_uuid,
+      label:
+        q.previous_quote_code ||
+        q.previous_quote_ref_id ||
+        q.previous_quote_uuid,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * CRM show URL for the previous lead, based on LOB (matches Ziggy route names / legacy car path).
+ */
+function resolvePreviousLeadUrl(modelType, uuid, pageProps) {
+  const typeCode = pageProps?.typeCode;
+  if (typeCode === 'Group Medical' && typeof route === 'function') {
+    try {
+      return route('amt.show', uuid);
+    } catch {
+      // Fall through.
+    }
+  }
+
+  const mt = String(modelType || '');
+  if (mt === 'Car' || mt === 'car') {
+    return `/quotes/car/${uuid}`;
+  }
+
+  const routeByModel = {
+    Bike: 'bike-quotes-show',
+    Yacht: 'yacht-quotes-show',
+    Cycle: 'cycle-quotes-show',
+    Jetski: 'jetski-quotes-show',
+    Pet: 'pet-quotes-show',
+    Savings: 'savings-quotes-show',
+    Cyber: 'cyber-quotes-show',
+    Home: 'home-quotes-show',
+    Life: 'life-quotes-show',
+    Travel: 'travel.show',
+    Health: 'health.show',
+    Business: 'business.show',
+  };
+
+  const routeName = routeByModel[mt];
+  if (routeName && typeof route === 'function') {
+    try {
+      return route(routeName, uuid);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+const previousLeadLink = computed(() => {
+  const meta = extractPreviousLeadMeta(props.quote, props.previousQuote);
+  if (!meta?.uuid || !meta.label) {
+    return null;
+  }
+
+  const href = resolvePreviousLeadUrl(
+    modelTypeLabel.value,
+    meta.uuid,
+    page.props,
+  );
+
+  if (!href) {
+    return null;
+  }
+
+  return { href, label: meta.label };
+});
+
 // Computed properties
 const isMotorLob = computed(() => {
-  return ['car', 'bike', 'Car', 'Bike'].includes(props.modelType);
+  return ['car', 'bike', 'Car', 'Bike'].includes(modelTypeLabel.value);
 });
 
 const can = permission => useCan(permission);
@@ -57,7 +178,7 @@ const allowEdit = computed(() => {
   if (
     (props.quote.renewal_batch === '' || props.quote.renewal_batch == null) &&
     props.canAddBatchNumber == true &&
-    props.modelType == 'Car'
+    modelTypeLabel.value == 'Car'
   )
     return true;
 
@@ -99,7 +220,7 @@ const { isRequired, isNumber, isEmail } = useRules();
 
 // Initialize form with reactive data
 const initializeFormData = () => ({
-  model_type: props?.modelType,
+  model_type: rawModelTypeLabel(),
   quote_id: props?.quote?.id,
   renewal_batch: props?.quote?.renewal_batch || null,
   previous_policy_expiry_date: formatDateForInput(
@@ -358,15 +479,17 @@ onMounted(() => {
                   {{ props?.quote?.previous_advisor_id_text || 'N/A' }}
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="previousQuote?.code">
-                <div class="font-medium">Previous Ref-ID</div>
+              <div class="grid sm:grid-cols-2" v-if="previousLeadLink">
+                <div class="font-medium">Previous Lead Ref-ID</div>
                 <div>
-                  <Link
-                    :href="`/quotes/car/${previousQuote?.uuid}`"
+                  <a
+                    :href="previousLeadLink.href"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="text-primary-600 hover:underline font-semibold"
                   >
-                    {{ previousQuote?.code }}
-                  </Link>
+                    {{ previousLeadLink.label }}
+                  </a>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">

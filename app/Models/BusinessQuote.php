@@ -14,6 +14,7 @@ use Config;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -120,6 +121,11 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'advisor_id');
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function previousAdvisor()
     {
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
