@@ -130,7 +130,7 @@ class AdnicApiService
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $allDocsDownloaded = true;
+        $allInsurerUploadsSucceeded = true;
 
         foreach ($insuredInfoDetails as $memberIndex => $insuredMember) {
             $memberSeqNo = $insuredMember?->MemberSeqNo ?? $memberIndex;
@@ -172,13 +172,13 @@ class AdnicApiService
                         'message' => $uploadDocResponse['message'] ?? 'Document upload failed',
                     ]);
 
-                    $allDocsDownloaded = false;
+                    $allInsurerUploadsSucceeded = false;
                     break 2;
                 }
             }
         }
 
-        if (! $allDocsDownloaded) {
+        if (! $allInsurerUploadsSucceeded) {
             $response['message'] = 'Some documents failed to upload';
             $response['error'] = 'Some documents failed to upload';
             $response['status'] = false;
