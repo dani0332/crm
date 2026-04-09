@@ -312,7 +312,19 @@ class SageCustomApiService
                                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                     $dueDate = $apBookingDateFormatted;
                                 } else {
-                                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $apBookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                    if ($paymentSplits[$key]['sr_no'] == 1) {
+                                        $dueDate = $apBookingDateFormatted;
+                                    } else {
+                                        $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+                                        $resolvedBookingDate = Carbon::parse($apBookingDateFormatted)->startOfDay();
+                                        
+                                        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+                                            $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
+                                        } else {
+                                            $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
+                                        }
+                                    }
                                 }
 
                                 $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
