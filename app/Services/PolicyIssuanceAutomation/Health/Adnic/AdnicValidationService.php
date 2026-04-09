@@ -9,8 +9,6 @@ use App\Services\Logger\LoggerService;
 
 class AdnicValidationService
 {
-    public function __construct() {}
-
     /**
      * Validate required data for policy issuance
      *
