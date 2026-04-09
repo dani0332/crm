@@ -11,6 +11,10 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   lookUpData: Object,
   localLookups: Object,
+  payments: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -196,6 +200,20 @@ const onToggleHidePlan = async () => {
 
 const onUpdateIndividualPlan = async () => {
   if (!props.planDetails) return;
+
+  const planId = props.planDetails.planId || props.planDetails.id;
+  const selectedPlanId = props.quote?.plan_id;
+
+  if (selectedPlanId && planId && props.payments?.length > 0) {
+    if (String(selectedPlanId) === String(planId)) {
+      notification.error({
+        title: 'Plan is already selected and payment has been added.',
+        position: 'top',
+        timeout: 3000,
+      });
+      return;
+    }
+  }
 
   planForm.processing = true;
   try {

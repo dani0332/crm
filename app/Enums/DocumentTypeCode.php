@@ -30,6 +30,7 @@ class DocumentTypeCode extends Enum
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
     const SEND_UPDATE_AUDIT_RECORD = 'SUAR'; // Send Update Audit Record
     const QUOTE = 'QUOTE';
+    const CLAIM = 'CLAIM';
     const MEMBER = 'MEMBER';
     const ENDORSEMENT_DOCUMENTS = 'ENDORSEMENT_DOCUMENTS';
     const SEND_UPDATE = 'SEND_UPDATE';
@@ -83,6 +84,7 @@ class DocumentTypeCode extends Enum
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
     const MTL_EID = 'MTL_EID';
+    public const TIRBB = 'TIRBB'; // tax invoice raised by buyer
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -150,4 +152,16 @@ class DocumentTypeCode extends Enum
     const COMP_Polic = 'COMP_Polic'; // Holiday Homes Policy Schedule
     const FIDEL_POS = 'FIDEL_POS'; // Goods In Transit Policy Schedule
     const IND_PS = 'IND_PS'; // Group Travel Policy Schedule
+
+    /* Health Quote */
+    const HEA_EID = 'HEAEID'; // Emirates ID
+    const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
+    const HEA_EID_BACK = 'HEAEIDB'; // Emirates ID Back
+    public const HEA_VISA = 'MEV'; // Visa
+    public const HEA_PAS = 'MEPP'; // Passport
+    public const HEA_BIRTH_CERTIFICATE = 'MEBC'; // Birth Certificate
+    public const HEA_MEDICAL_APPLICATION_FORM = 'MED_HLTH'; // medical application form
+    public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
+    public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
+    public const HEA_INSURED_EMIRATES_ID_APPLICATION = 'HEAEIDA'; // Insured Emirates ID Application
 }

@@ -63,6 +63,7 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -79,6 +80,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -143,6 +146,8 @@ class CentralService extends BaseService
             $model = $quoteType->model();
             if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
                 $parentRecord = $model::with('lifeQuote')->find($entityId);
+            } elseif (strtolower($parentType) == strtolower(quoteTypeCode::Home)) {
+                $parentRecord = $model::with('homeQuote')->find($entityId);
             } else {
                 $parentRecord = $model::find($entityId);
             }
@@ -153,6 +158,8 @@ class CentralService extends BaseService
             if ($repository) {
                 if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
                     $parentRecord = PersonalQuote::with('lifeQuote')->where('id', $entityId)->first();
+                } elseif (strtolower($parentType) == strtolower(quoteTypeCode::Home)) {
+                    $parentRecord = PersonalQuote::with('homeQuote')->where('id', $entityId)->first();
                 } else {
                     $parentRecord = $repository::where('id', $entityId)->first();
                 }
@@ -201,6 +208,11 @@ class CentralService extends BaseService
                 ])) {
                     $lifeDataArr = $this->prepareLifeQuoteDuplicateData($parentRecord);
                     $response = app(LifeQuoteService::class)->saveLifeQuote($lifeDataArr);
+                } elseif (in_array($lob, [
+                    quoteTypeCode::Home,
+                ])) {
+                    $homeDataArr = $this->prepareHomeQuoteDuplicateData($parentRecord);
+                    $response = app(HomeQuoteService::class)->saveHomeQuote($homeDataArr);
                 } else {
                     $repository = $this->getRepositoryObject(ucfirst($lob));
 
@@ -214,7 +226,7 @@ class CentralService extends BaseService
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
-                    if (in_array($lob, [quoteTypeCode::Life])) {
+                    if (in_array($lob, [quoteTypeCode::Life, quoteTypeCode::Home])) {
                         $record = PersonalQuote::where('uuid', $response->quoteUID)->first();
                     } else {
                         $record = $repository::where('uuid', $response->quoteUID)->first();
@@ -406,8 +418,9 @@ class CentralService extends BaseService
         $repository = getRepositoryObject($quoteType);
         $quote = $repository::where('code', $code)->firstOrFail();
 
-        $priceVatApp = $data->price_vat_applicable ?? 0;
-        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $priceVatApp = (float) ($data->price_vat_applicable ?? 0);
+        $priceVatNotApp = (float) ($data->price_vat_not_applicable ?? 0);
+        $vatPercentage = (float) $vatPercentage;
         $vatAmount = ($priceVatApp / 100) * $vatPercentage;
         LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
@@ -1122,7 +1135,7 @@ class CentralService extends BaseService
             }
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -1147,7 +1160,7 @@ class CentralService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1844,7 +1857,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name ?? '';
-            $emailData->corplineDetails = $quote->brief_details;
+            $emailData->corplineDetails = $quote?->brief_details ?? '';
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = '-'; // need to confirm.
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
@@ -2206,9 +2219,10 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $isHealthAndSTPCase = $quoteTypeId == QuoteTypeId::Health && $quote->isSTPCase();
 
-        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase)) {
             $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
             $statusAPIFailed = 'Quote Referred To Insurer UW';
 
@@ -2230,7 +2244,7 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
-        if ($premiumCheckEnabled) {
+        if ($premiumCheckEnabled && ! $isHealthAndSTPCase) {
             $captureAmount = $payment->total_amount;
             if (
                 $quoteType->code == QuoteTypes::CAR->value &&
@@ -2446,11 +2460,11 @@ class CentralService extends BaseService
     /**
      * Find renewal batch by expiry date for non-motor LOBs
      */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
     {
-        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+        $expiryDate = Carbon::parse($expiryDate);
 
-        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();
@@ -2500,4 +2514,58 @@ class CentralService extends BaseService
 
         return $lifeDataArr;
     }
+
+    private function prepareHomeQuoteDuplicateData($parentRecord): array
+    {
+        $homeDataArr = [
+            'first_name' => $parentRecord->first_name,
+            'last_name' => $parentRecord->last_name,
+            'email' => $parentRecord->email,
+            'mobile_no' => $parentRecord->mobile_no,
+        ];
+
+        if ($parentRecord instanceof PersonalQuote && $parentRecord->quote_type_id == QuoteTypeId::Home && $parentRecord->homeQuote) {
+            $homeQuote = $parentRecord->homeQuote;
+            $homeDataArr['has_contents'] = $homeQuote->has_contents ?? 0;
+            $homeDataArr['has_building'] = $homeQuote->has_building ?? 0;
+            $homeDataArr['have_claimed_losses'] = $homeQuote->has_claimed_losses ?? 0;
+            $homeDataArr['building_aed'] = $homeQuote->building_value ?? null;
+            $homeDataArr['has_personal_belongings'] = $homeQuote->has_personal_belongings ?? 0;
+            $homeDataArr['owner_occupancy_type_id'] = $homeQuote->owner_occupancy_type_id ?? null;
+            $homeDataArr['ilivein_accommodation_type_id'] = $homeQuote->ilivein_accommodation_type_id ?? null;
+            $homeDataArr['iam_possesion_type_id'] = $homeQuote->iam_possesion_type_id ?? null;
+            $homeDataArr['sub_area_id'] = $homeQuote->sub_area_id ?? null;
+            $homeDataArr['contents_aed'] = $homeQuote->contents_value_id ?? null;
+            $homeDataArr['personal_belongings_aed'] = $homeQuote->personal_belongings_value_id ?? null;
+            $homeDataArr['type_of_coverage_you_need'] = $homeQuote->coverage_type_id ?? null;
+            $homeDataArr['address'] = $homeQuote->address ?? $parentRecord->address ?? null;
+            $homeDataArr['dob'] = $homeQuote->dob ?? $parentRecord->dob ?? null;
+            $homeDataArr['nationality_id'] = $homeQuote->nationality_id ?? $parentRecord->nationality_id ?? null;
+            $homeDataArr['gender'] = $homeQuote->gender ?? $parentRecord->gender ?? null;
+            $homeDataArr['company_name'] = $homeQuote->company_name ?? null;
+            $homeDataArr['company_address'] = $homeQuote->company_address ?? null;
+        } else {
+            $homeDataArr['has_contents'] = 0;
+            $homeDataArr['has_building'] = 0;
+            $homeDataArr['have_claimed_losses'] = 0;
+            $homeDataArr['building_aed'] = null;
+            $homeDataArr['has_personal_belongings'] = 0;
+            $homeDataArr['owner_occupancy_type_id'] = null;
+            $homeDataArr['ilivein_accommodation_type_id'] = null;
+            $homeDataArr['iam_possesion_type_id'] = null;
+            $homeDataArr['sub_area_id'] = null;
+            $homeDataArr['contents_aed'] = null;
+            $homeDataArr['personal_belongings_aed'] = null;
+            $homeDataArr['type_of_coverage_you_need'] = null;
+            $homeDataArr['address'] = $parentRecord->address ?? null;
+            $homeDataArr['dob'] = $parentRecord->dob ?? null;
+            $homeDataArr['nationality_id'] = $parentRecord->nationality_id ?? null;
+            $homeDataArr['gender'] = $parentRecord->gender ?? null;
+            $homeDataArr['company_name'] = null;
+            $homeDataArr['company_address'] = null;
+        }
+
+        return $homeDataArr;
+    }
+
 }

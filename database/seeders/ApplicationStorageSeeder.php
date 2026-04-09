@@ -44,7 +44,91 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        $isProd = config('app.env') === 'production';
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
+            [
+                'value' => $isProd ? 0 : 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+
         $this->seedBirdWorkflowUrls();
+        $this->claimGoogleReviewEmail();
+        $this->seedClaimSubStatusCustomerEmailBcc();
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+        //     [
+        //         'value' => '2024-12-01',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+        //     [
+        //         'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+        //     [
+        //         'value' => 'newleadpool@insurancemarket.ae',
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
+        // $this->seedAmlAutomation();
+
+        // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
@@ -77,10 +161,13 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCyberConfigurations();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
+        $this->seedAdnicHealthAutomation();
         $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedNonMotorCQFRenewals();
+        $this->seedDisableClaimsModule();
     }
 
     private function livaCarAutomationSeed()
@@ -109,6 +196,60 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAdnicHealthAutomation()
+    {
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES],
+            [
+                'value' => 5,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT],
+            [
+                'value' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -264,11 +405,11 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
+        $isProd = config('app.env') === 'production';
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL],
+            ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync',
+                'value' => $isProd ? 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/dc85dec3-4bc3-4030-9214-7a8909ecbc7b/invoke-sync' : 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/07d270c5-5121-441c-b048-9e4b1e2478f1/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -748,6 +889,75 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/e6b4f8c2-74d7-4cc2-a1dd-d9e18d8b4655/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function claimGoogleReviewEmail(): void
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
+            [
+                'value' => $isProd ? 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/82c9e316-bd96-4cbd-9b78-0962478a2473/invoke-sync' : 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+    }
+
+    private function seedClaimSubStatusCustomerEmailBcc(): void
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,ashmy.arackal@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,surabhi.singh@insurancemarket.ae,healthclaims@insurancemarket.ae' : '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE],
+            [
+                'value' => $isProd ? 'claims@insurancemarket.ae,santhosh.ganesan@insurancemarket.ae,life.admin@insurancemarket.ae' : '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1410,34 +1620,11 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedNonMotorCQFRenewals()
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
-            [
-                'value' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
-            [
-                'value' => 120,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
-
     // region Advisor Payment Notification
 
     private function seedAdvisorPaymentNotificationWorkflowUrl()
     {
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR],
             [
                 'value' => true,
@@ -1452,7 +1639,7 @@ class ApplicationStorageSeeder extends Seeder
             $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/bdfeeeee-4101-4d9d-97b2-22f51b82ba26/invoke-sync';
         }
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL],
             [
                 'value' => $birdWorkflowUrl,
@@ -1462,7 +1649,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS],
             [
                 'value' => 30,
@@ -1472,5 +1659,18 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         // endregion
+    }
+
+    private function seedHealthTeamRoutingEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

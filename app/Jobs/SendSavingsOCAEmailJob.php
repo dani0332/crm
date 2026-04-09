@@ -15,40 +15,31 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
-    protected string $quoteUID;
-    protected array $data;
+    public int $uniqueFor = 640;
+    public int $timeout = 60;
+    public int $tries = 4;
+    public array $backoff = [30, 60, 120];
+    protected ?string $uniqueIdOverride = null;
 
-    /**
-     * The number of seconds after which the job's unique lock will be released.
-     *
-     * @var int
-     */
-    public $uniqueFor = 300; // 5 minutes
+    public function __construct(
+        protected string $quoteUID,
+        protected array $data = []
+    ) {
+        $this->onQueue('shared');
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(string $quoteUID, array $data = [])
-    {
-        $this->quoteUID = $quoteUID;
-        $this->data = $data;
+        if ($this->data['force_send'] ?? false) {
+            $this->uniqueIdOverride = "savings-oca-email-{$this->quoteUID}-force-".uniqid('', true);
+        }
     }
 
-    /**
-     * The unique ID of the job.
-     */
     public function uniqueId(): string
     {
-        return "savings-oca-email-{$this->quoteUID}";
+        return $this->uniqueIdOverride ?? "savings-oca-email-{$this->quoteUID}";
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         LoggerService::startQuoteLogging($this->quoteUID);
-
         LoggerService::info('Savings OCA email job started');
 
         app(SavingsEmailService::class)->sendOCAEmail($this->quoteUID, $this->data);
@@ -56,14 +47,10 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
         LoggerService::info('Savings OCA email sent');
     }
 
-    /**
-     * Handle a job failure.
-     */
     public function failed(Throwable $exception): void
     {
         LoggerService::startQuoteLogging($this->quoteUID);
-
-        $exceptionDetails = [
+        LoggerService::error('Savings OCA email failed', [
             'quote_uuid' => $this->quoteUID,
             'exception_class' => get_class($exception),
             'exception_message' => $exception->getMessage(),
@@ -71,8 +58,6 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
             'exception_line' => $exception->getLine(),
             'exception_code' => $exception->getCode(),
             'exception_trace' => $exception->getTraceAsString(),
-        ];
-
-        LoggerService::error('Savings OCA email failed', $exceptionDetails, $exception);
+        ], $exception);
     }
 }

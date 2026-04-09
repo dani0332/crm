@@ -72,7 +72,13 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $continueAssignment = true;
         } elseif ($lead->isPaid()) {
             // for cyber we do not assign if the lead is paid, as it was requested by business
-            LoggerService::info(self::class.' - Lead is paid, skipping assignment');
+            // Exception: payment authorized 24h ago with no documents - assign advisor anyway
+            if ($lead->hasPaymentAuthorizedWithNoDocuments()) {
+                LoggerService::info(self::class.' - Lead is paid but has payment authorized 24h ago with no documents, continuing assignment');
+                $continueAssignment = true;
+            } else {
+                LoggerService::info(self::class.' - Lead is paid, skipping assignment');
+            }
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class.' - Lead is SIC and advisor is requested, continuing assignment');
             $continueAssignment = true;
@@ -125,6 +131,10 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         if ($this->lead->isAutomationCompleted()) {
             $this->allocationRequest->set('isCHSAdvisor', true);
             LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed so proceed with allocation');
+            $allowAllocation = true;
+        } elseif ($this->lead->hasPaymentAuthorizedWithNoDocuments()) {
+            // Do NOT set isCHSAdvisor - it will assign to normal advisor, not to Hapex User
+            LoggerService::info(self::class.':fetchLead - it is AWNI and automation not completed, but lead has payment authorized 24h ago with no documents, proceeding with normal advisor allocation');
             $allowAllocation = true;
         } else {
             LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed, skipping allocation');

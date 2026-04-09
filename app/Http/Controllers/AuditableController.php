@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
@@ -9,6 +10,7 @@ use App\Models\CyberQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
+use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -29,15 +31,18 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(private BaseService $baseService)
+    {
+        $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
+    }
+
     public function loadAuditableComponent(Request $request)
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;
 
         if ($request->jsonData) {
-            $service = app()->make(BaseService::class);
-
-            return response()->json($service->audits($auditableId, $auditableType));
+            return response()->json($this->baseService->audits($auditableId, $auditableType));
         }
 
         return view('auditable', compact('auditableId', 'auditableType'));
@@ -90,7 +95,9 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::CYBER->value)) {
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value];
+
+        if (empty($quote) || empty($quoteType) || ! in_array($quoteType, $allowedQuoteTypes)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
@@ -192,8 +199,7 @@ class AuditableController extends Controller
             case CyberQuote::class:
                 return CyberInsurerRequestResponses::with('insuranceProvider');
             case HealthQuote::class:
-                return HealthInsurerRequestResponse::with('insuranceProvider')
-                    ->whereNotIn('call_type', ['oAuth', 'login']);
+                return HealthInsurerRequestResponse::with('insuranceProvider')->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }
@@ -239,6 +245,35 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load OCR logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadHealthRoutingLogs(Request $request)
+    {
+        try {
+            $logs = HealthRoutingLog::with('user')
+                ->where('type', $request->type)
+                ->when($request->team_category, function ($query) use ($request) {
+                    $query->where('team_category', $request->team_category);
+                })
+                ->when($request->quote_request_id, function ($query) use ($request) {
+                    $query->where('quote_request_id', $request->quote_request_id);
+                })
+                ->orderByDesc('id')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load Health Routing Logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

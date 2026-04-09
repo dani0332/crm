@@ -9,6 +9,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -18,6 +19,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
@@ -30,6 +34,7 @@ use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\RenewalQuoteProcess;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
@@ -1218,7 +1223,23 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        $plans = $this->getPlans($carQuote->uuid, true, true, true);
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+            $leadValidationErrors = collect();
+            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
+            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
+            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        }
+
+        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
+            'quote_id' => $carQuote->id,
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists() && $carQuote->isGenesisLead;
+
+        $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
         $totalPlans = is_countable($plans) ? count($plans) : 0;
 
@@ -1241,25 +1262,16 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
-        }
-
         $carQuote->plans = $plans;
 
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false, $process = '')
     {
-        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
-            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
@@ -2435,7 +2447,7 @@ class CarQuoteService extends BaseService
     {
         try {
             // Cache the PCP team ID for 24 hours since it rarely changes
-            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+            $pcpTeamId = getTeamId(TeamNameEnum::PCP);
 
             // If $pcpTeamId is null or empty, the function will return false
             return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
