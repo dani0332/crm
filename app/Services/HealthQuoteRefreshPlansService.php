@@ -17,7 +17,7 @@ class HealthQuoteRefreshPlansService extends BaseService
     public function refreshPlans(Request $request): array|object
     {
         $quoteId = $request->quoteId ?? null;
-        $quote = HealthQuote::where('uuid', $quoteId)->with('members')->first();
+        $quote = HealthQuote::where('uuid', $quoteId)->with('activeMembers')->first();
 
         if (! $quote) {
             return [
