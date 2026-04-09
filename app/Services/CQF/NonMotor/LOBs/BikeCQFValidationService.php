@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
-use App\Models\PersonalQuote;
 use App\Services\CQF\BaseCQFValidationService;
 use Illuminate\Database\Eloquent\Model;
 

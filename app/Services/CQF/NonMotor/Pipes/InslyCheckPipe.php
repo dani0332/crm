@@ -15,9 +15,10 @@ class InslyCheckPipe
         }
 
         if (! $context->validator->checkInslyRenewal($context->quote)) {
-            LoggerService::info(self::class . ' - Insly renewal criteria not met for policy number. Skipping processing', [
+            LoggerService::info(self::class.' - Insly renewal criteria not met for policy number. Skipping processing', [
                 'policy_number' => $context->quote->policy_number,
             ]);
+
             return $context->fail([
                 'policy_number' => 'Insly renewal criteria not met for policy number: '.$context->quote->policy_number,
             ]);

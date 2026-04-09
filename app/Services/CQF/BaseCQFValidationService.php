@@ -116,20 +116,20 @@ class BaseCQFValidationService implements CQFValidationInterface
             foreach ($sendUpdateLogs as $log) {
                 if ($log->isEndorsementFinancial()) {
                     $endorsementFinancial = true;
-                    LoggerService::info(self::class . ' - Endorsement financial found', [
+                    LoggerService::info(self::class.' - Endorsement financial found', [
                         'policy_number' => $quote->policy_number,
                     ]);
                 }
 
                 if ($log->isPolicyPeriodExtension()) {
-                    LoggerService::info(self::class . ' - Policy period extension found', [
+                    LoggerService::info(self::class.' - Policy period extension found', [
                         'policy_number' => $quote->policy_number,
                     ]);
                     $policyPeriodExtension = true;
                 }
 
                 if ($log->isUpdateBooked()) {
-                    LoggerService::info(self::class . ' - Update booked found', [
+                    LoggerService::info(self::class.' - Update booked found', [
                         'policy_number' => $quote->policy_number,
                     ]);
                     $isUpdateBooked = true;
