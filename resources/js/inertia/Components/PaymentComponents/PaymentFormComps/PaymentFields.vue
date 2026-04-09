@@ -133,6 +133,13 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
+
+/** Start of today (local) — used to disable past days in the picker and align with validation. */
+const minCollectionDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
 </script>
 
 <template>
@@ -151,7 +158,8 @@ const isMasterPaymentPaid = computed(() => {
           v-if="!isFieldReadonly"
           name="collection_date"
           v-model="paymentMethodsForm.collection_date"
-          :rules="[rules.isRequired]"
+          :rules="[rules.isRequired, rules.collectionDateOnOrAfterToday]"
+          :min-date="minCollectionDate"
         />
       </x-field>
     </div>
