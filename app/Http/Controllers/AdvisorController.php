@@ -28,7 +28,7 @@ class AdvisorController extends Controller
             });
         }
 
-        $users->activeUser()
+        $users = $users->activeUser()
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
