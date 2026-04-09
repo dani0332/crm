@@ -611,7 +611,7 @@ class HandleInertiaRequests extends Middleware
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->addIf(auth()->user()->can(PermissionsEnum::LEADS_BY_EMAIL), 'Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->canAny([PermissionsEnum::LEADS_BY_EMAIL, PermissionsEnum::CustomersList]), 'Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
