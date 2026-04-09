@@ -214,6 +214,7 @@ class Kernel extends ConsoleKernel
             )
             ->mondays()
             ->at('10:00')
+            ->timezone('Asia/Dubai')
             ->onOneServer()
             ->withoutOverlapping();
 
