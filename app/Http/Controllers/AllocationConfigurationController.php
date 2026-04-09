@@ -10,6 +10,7 @@ use App\Models\Allocation\AllocationConfiguration;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\Department;
 use App\Models\HealthPlanType;
+use App\Models\SubArea;
 use App\Models\Team;
 use App\Services\AllocationConfiguration\AllocationConfigurationService;
 use Illuminate\Http\Request;
@@ -150,7 +151,7 @@ class AllocationConfigurationController extends Controller
     public function getSubAreas()
     {
         try {
-            $subAreas = \App\Models\SubArea::orderBy('text')
+            $subAreas = SubArea::orderBy('text')
                 ->get(['id', 'text as name']);
 
             return response()->json([
