@@ -279,44 +279,38 @@ class AdnicDocumentHandler
         ]);
     }
 
-    public function modifyEmirateDocument($quoteUuid)
+    public function modifyEmirateDocument($quoteUuid): ?int
     {
+        $result = null;
+
         $umafResponse = HealthUMAFResponse::where('quote_uuid', $quoteUuid)->first();
 
         if ($umafResponse === null) {
             LoggerService::info('Health UMAF response not found for quote', extra: [
                 'quote_uuid' => $quoteUuid,
             ]);
+        } else {
+            $answers = $umafResponse->answers ?? [];
+            if (! is_array($answers)) {
+                LoggerService::info('Health UMAF response has no answers array', extra: [
+                    'quote_uuid' => $quoteUuid,
+                ]);
+            } else {
+                $typeOfEID = collect($answers)->filter(function ($answer) {
+                    return ($answer['question_code'] ?? null) == 'typeOfEID';
+                })->values()->first();
 
-            return null;
+                if (! $typeOfEID) {
+                    LoggerService::info('Type of EID not found');
+                } elseif ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
+                    $result = AdnicEnum::EMIRATES_ID_CODE;
+                } elseif ($typeOfEID['answer_text'] == AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_TEXT) {
+                    $result = AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE;
+                }
+            }
         }
 
-        $answers = $umafResponse->answers ?? [];
-        if (! is_array($answers)) {
-            LoggerService::info('Health UMAF response has no answers array', extra: [
-                'quote_uuid' => $quoteUuid,
-            ]);
-
-            return null;
-        }
-
-        $typeOfEID = collect($answers)->filter(function ($answer) {
-            return ($answer['question_code'] ?? null) == 'typeOfEID';
-        })->values()->first();
-
-        if (! $typeOfEID) {
-            LoggerService::info('Type of EID not found');
-
-            return null;
-        }
-
-        if ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
-            return AdnicEnum::EMIRATES_ID_CODE;
-        } elseif ($typeOfEID['answer_text'] == AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_TEXT) {
-            return AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE;
-        }
-
-        return null;
+        return $result;
     }
 
     /**
