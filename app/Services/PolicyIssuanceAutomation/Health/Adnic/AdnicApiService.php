@@ -284,6 +284,13 @@ class AdnicApiService
             }
         }
 
+        /*
+         * ADNIC issue-policy returns PolicyDocumentInfo with exactly three document slots (policy document,
+         * commission note, tax invoice — see AdnicEnum::INSURER_DOCUMENT_KEY_*). The literal 3 is intentional:
+         * we only treat the step as complete when all three downloads succeed. If ADNIC changes the number of
+         * documents, this check fails so the integration mismatch is visible in logs and monitoring. Do not
+         * replace with count($policyDocuments) unless the insurer contract and IMCRM mappings are updated together.
+         */
         $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
         LoggerService::info('Document processing completed', extra: [
