@@ -212,7 +212,6 @@ class Kernel extends ConsoleKernel
             ->command(
                 'reports:conversion-optimization-scheduled-export '.ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS
             )
-            ->environments(['production'])
             ->mondays()
             ->at('10:00')
             ->onOneServer()

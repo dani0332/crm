@@ -515,6 +515,7 @@ function onSubmit(isValid, isOnMounted = false) {
 
   router.visit('/reports/conversion-optimization', {
     method: 'get',
+    only: ['reportData'],
     data: {
       ...payload,
       ...(payload.batches && {
@@ -563,6 +564,7 @@ function onReset() {
 
   router.visit('/reports/conversion-optimization', {
     method: 'get',
+    only: ['reportData'],
     data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
@@ -1048,7 +1050,10 @@ onMounted(async () => {
       </template>
 
       <template #body-append>
-        <tr v-if="props.reportData?.length > 0" class="total-row">
+        <tr
+          v-if="props.reportData?.length > 0"
+          class="total-row"
+        >
           <td class="direction-left">Total</td>
           <td></td>
           <td></td>
@@ -1058,7 +1063,6 @@ onMounted(async () => {
           <td class="direction-center">
             {{ formatPercentage(props.reportData[0]?.total_average) }}
           </td>
-          <td></td>
           <td></td>
           <td class="direction-center"></td>
           <td class="direction-center"></td>
