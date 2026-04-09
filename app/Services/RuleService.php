@@ -270,9 +270,6 @@ class RuleService extends BaseService
             ->where('rules.quote_type_id', $quoteType->id())
             ->where('rules.is_active', 1)
             ->distinct()
-            ->when($quoteType === QuoteTypes::CAR && $excludeVehicleUseRule, function ($query) {
-                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
-            })
             ->pluck('rule_users.user_id')
             ->toArray();
     }
