@@ -242,3 +242,28 @@ test('fetchUpdateEpDocument keeps doc_name prefixed with certificate number for 
 
     expect($replacement->doc_name)->toBe('CERT-KEEP-001_original.pdf');
 });
+
+test('queued EP send assertion throws RuntimeException when fetchSendDocument returns failure', function () {
+    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+
+    expect(fn () => $method->invoke(null, ['success' => false, 'message' => 'Documents cannot be sent'], 10, 20, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
+        ->toThrow(\RuntimeException::class, 'Documents cannot be sent');
+});
+
+test('queued EP send assertion throws when result is null or non-success without message', function () {
+    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+
+    expect(fn () => $method->invoke(null, null, 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
+        ->toThrow(\RuntimeException::class, 'Embedded product document send failed');
+
+    expect(fn () => $method->invoke(null, ['success' => false], 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
+        ->toThrow(\RuntimeException::class, 'Embedded product document send failed');
+});
+
+test('queued EP send assertion does not throw when send result is successful', function () {
+    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+
+    $method->invoke(null, ['success' => true, 'message' => 'Certificate sent successfully'], 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE);
+
+    expect(true)->toBeTrue();
+});

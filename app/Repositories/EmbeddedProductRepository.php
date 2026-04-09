@@ -816,6 +816,13 @@ class EmbeddedProductRepository extends BaseRepository
         } elseif ($isECB) {
             return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
+
+        LoggerService::info('fetchSendDocument - Unsupported embedded product type for customer document send', extra: [
+            'ep_id' => $epId,
+            'short_code' => $short_code,
+        ], context: ['ref_id' => $quoteObject->code]);
+
+        return ['success' => false, 'message' => 'Unsupported embedded product for document send'];
     }
 
     private function fetchAttachments($ep, $isAlfredProtect, $isSalama)

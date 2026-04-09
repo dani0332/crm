@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class EmbeddedProductService extends BaseService
 {
@@ -322,14 +323,52 @@ class EmbeddedProductService extends BaseService
                 $watermarkJob,
                 function () use ($documentTypeCode, $quoteId, $epId, $modelType): void {
                     if (in_array($documentTypeCode, QuoteDocumentsEnum::getEpSentToCustomerDocTypes(), true)) {
-                        EmbeddedProductRepository::sendDocument([
+                        $sendResult = EmbeddedProductRepository::sendDocument([
                             'epId' => $epId,
                             'modelType' => $modelType,
                             'quoteId' => $quoteId,
                         ]);
+                        self::ensureQueueEmbeddedProductSendSucceeded(
+                            $sendResult,
+                            $quoteId,
+                            $epId,
+                            $modelType,
+                            $documentTypeCode
+                        );
                     }
                 },
             ])->delay(now()->addSeconds(10))->dispatch();
         }
+    }
+
+    /**
+     * Fails the queued chain job when auto-send returns a non-success payload so the job can retry and the failure is visible.
+     *
+     * @param  array<string, mixed>|null  $sendResult
+     */
+    private static function ensureQueueEmbeddedProductSendSucceeded(
+        ?array $sendResult,
+        int $quoteId,
+        int $epId,
+        string $modelType,
+        string $documentTypeCode,
+    ): void {
+        if (is_array($sendResult) && ($sendResult['success'] ?? false) === true) {
+            return;
+        }
+
+        $message = is_array($sendResult)
+            ? (string) ($sendResult['message'] ?? 'Embedded product document send failed')
+            : 'Embedded product document send failed';
+
+        LoggerService::error('EP auto-send after manual document override failed', extra: [
+            'quote_id' => $quoteId,
+            'ep_id' => $epId,
+            'model_type' => $modelType,
+            'document_type_code' => $documentTypeCode,
+            'message' => $message,
+        ]);
+
+        throw new RuntimeException($message);
     }
 }
