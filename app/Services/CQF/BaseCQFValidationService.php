@@ -98,6 +98,9 @@ class BaseCQFValidationService implements CQFValidationInterface
 
     public function checkInslyRenewal(Model $quote): bool
     {
+        if($quote->source !== LeadSourceEnum::INSLY) {
+            return true; // Only apply Insly renewal criteria for quotes from Insly
+        }
         // Check if the quote has at least one status of policy issued
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
