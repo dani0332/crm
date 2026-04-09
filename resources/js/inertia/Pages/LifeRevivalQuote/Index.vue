@@ -476,7 +476,7 @@ const fixedValue = numberString => {
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="route('life-quotes-show', uuid)"
+          :href="route('life-revival-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

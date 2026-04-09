@@ -124,6 +124,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\Routing\Router;
 
 /*
 |--------------------------------------------------------------------------
@@ -340,6 +341,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('personal-quotes/life-revival', [LifeRevivalQuoteController::class, 'index'])->name('life-revival-quotes-list');
+        Route::get('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'show'])->name('life-revival-quotes-show');
     });
 
     // Claims Management Routes
