@@ -1,0 +1,1714 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC Health - Configuration Management Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #27ae60;
+      }
+
+      .section h3 {
+        color: #27ae60;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .config-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .config-table thead {
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+      }
+
+      .config-table th,
+      .config-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .config-table th {
+        font-weight: 600;
+        font-size: 0.95em;
+      }
+
+      .config-table tbody tr:hover {
+        background: #f8f9fa;
+      }
+
+      .config-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .code-block .keyword {
+        color: #3498db;
+      }
+
+      .code-block .string {
+        color: #2ecc71;
+      }
+
+      .code-block .comment {
+        color: #95a5a6;
+        font-style: italic;
+      }
+
+      .code-block .function {
+        color: #e74c3c;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border-left: 4px solid #27ae60;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .info-box h4 {
+        color: #27ae60;
+        margin-bottom: 10px;
+      }
+
+      .warning-box {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border-left: 4px solid #ff9800;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .warning-box h4 {
+        color: #f57c00;
+        margin-bottom: 10px;
+      }
+
+      .success-badge {
+        display: inline-block;
+        background: #27ae60;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-left: 10px;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .feature-list li {
+        padding: 10px 0;
+        padding-left: 30px;
+        position: relative;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+
+      .feature-list li:before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #27ae60;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .config-table {
+          font-size: 0.85em;
+        }
+
+        .config-table th,
+        .config-table td {
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/adnic/index.html">ADNIC</a>
+        <span>></span>
+        <span>Configuration</span>
+      </div>
+
+      <div class="header">
+        <h1>⚙️ Configuration Management</h1>
+        <p>
+          Complete guide to configuring ADNIC Health Policy Issuance Automation
+        </p>
+        <span class="success-badge">Production Ready</span>
+      </div>
+
+      <!-- Environment Configuration -->
+      <div class="section">
+        <h2>1. Environment Configuration</h2>
+        <p>
+          All ADNIC API credentials and base URLs are configured through
+          environment variables and accessed via
+          <code>config/constants.php</code>.
+        </p>
+
+        <h3>1.1 Environment Variables (.env)</h3>
+        <p>Add the following variables to your <code>.env</code> file:</p>
+        <div class="code-block">
+          <code
+            ><span class="comment"># ADNIC API Configuration</span>
+            <span class="keyword">ADNIC_API_BASE_URL</span>=<span class="string"
+              >https://api.adnic.ae</span
+            >
+            <span class="keyword">ADNIC_PARTNER_ID</span>=<span class="string"
+              >your_partner_id</span
+            >
+            <span class="keyword">ADNIC_PARTNER_REFERENCE_NO</span>=<span
+              class="string"
+              >your_reference_number</span
+            >
+            <span class="keyword">ADNIC_AUTHORIZATION_TOKEN</span>=<span
+              class="string"
+              >Bearer your_token_here</span
+            >
+            <span class="keyword">ADNIC_SUBSCRIPTION_KEY</span>=<span
+              class="string"
+              >your_subscription_key</span
+            >
+
+            <span class="comment"
+              ># Azure Storage (for document management)</span
+            >
+            <span class="keyword">AZURE_IM_STORAGE_URL</span>=<span
+              class="string"
+              >https://yourstorage.blob.core.windows.net</span
+            >
+            <span class="keyword">AZURE_IM_STORAGE_CONTAINER</span>=<span
+              class="string"
+              >your_container_name</span
+            ></code
+          >
+        </div>
+
+        <h3>1.2 Constants Configuration (config/constants.php)</h3>
+        <p>
+          The following ADNIC constants are defined in
+          <code>config/constants.php</code>:
+        </p>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Constant Key</th>
+              <th>Environment Variable</th>
+              <th>Purpose</th>
+              <th>Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ADNIC_API_BASE_URL</code></td>
+              <td><code>ADNIC_API_BASE_URL</code></td>
+              <td>Base URL for ADNIC API endpoints</td>
+              <td>✅ Yes</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_PARTNER_ID</code></td>
+              <td><code>ADNIC_PARTNER_ID</code></td>
+              <td>Partner identification for API authentication</td>
+              <td>✅ Yes</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_PARTNER_REFERENCE_NO</code></td>
+              <td><code>ADNIC_PARTNER_REFERENCE_NO</code></td>
+              <td>Partner reference number for API requests</td>
+              <td>✅ Yes</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_AUTHORIZATION_TOKEN</code></td>
+              <td><code>ADNIC_AUTHORIZATION_TOKEN</code></td>
+              <td>Bearer token for API authentication</td>
+              <td>✅ Yes</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_SUBSCRIPTION_KEY</code></td>
+              <td><code>ADNIC_SUBSCRIPTION_KEY</code></td>
+              <td>Azure API Management subscription key</td>
+              <td>✅ Yes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="code-block">
+          <code
+            ><span class="comment">// config/constants.php</span>
+            <span class="keyword">return</span> [
+            <span class="comment">// ... other constants</span>
+
+            <span class="comment"
+              >// Adnic Policy Issuance API Credentials</span
+            >
+            <span class="string">'ADNIC_API_BASE_URL'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_API_BASE_URL'</span
+            >), <span class="string">'ADNIC_PARTNER_ID'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_PARTNER_ID'</span
+            >), <span class="string">'ADNIC_PARTNER_REFERENCE_NO'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_PARTNER_REFERENCE_NO'</span
+            >), <span class="string">'ADNIC_AUTHORIZATION_TOKEN'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_AUTHORIZATION_TOKEN'</span
+            >), <span class="string">'ADNIC_SUBSCRIPTION_KEY'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_SUBSCRIPTION_KEY'</span
+            >), ];</code
+          >
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Accessing Configuration</h4>
+          <p>
+            Use Laravel's <code>config()</code> helper to access these values:
+          </p>
+          <div class="code-block">
+            <code
+              >$baseUrl = <span class="function">config</span>(<span
+                class="string"
+                >'constants.ADNIC_API_BASE_URL'</span
+              >); $token = <span class="function">config</span>(<span
+                class="string"
+                >'constants.ADNIC_AUTHORIZATION_TOKEN'</span
+              >);</code
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Runtime Configuration -->
+      <div class="section">
+        <h2>2. Runtime Configuration via ApplicationStorage</h2>
+        <p>
+          Runtime configuration allows you to enable/disable features and adjust
+          settings without code deployment. All runtime settings are stored in
+          the <code>application_storage</code> table and accessed via
+          <code>ApplicationStorageService</code>.
+        </p>
+
+        <h3>2.1 Feature Toggles</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Storage Key</th>
+              <th>Enum Constant</th>
+              <th>Purpose</th>
+              <th>Type</th>
+              <th>Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE</code></td>
+              <td>
+                <code
+                  >ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE</code
+                >
+              </td>
+              <td>Master switch to enable/disable automation</td>
+              <td>boolean</td>
+              <td>false</td>
+            </tr>
+            <tr>
+              <td>
+                <code>ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE</code>
+              </td>
+              <td>
+                <code
+                  >ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE</code
+                >
+              </td>
+              <td>Enable retry mechanism for timeout failures</td>
+              <td>boolean</td>
+              <td>false</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_HEALTH_AUTOMATION_API_TIMEOUT</code></td>
+              <td>
+                <code
+                  >ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT</code
+                >
+              </td>
+              <td>API timeout in seconds for HTTP requests</td>
+              <td>integer</td>
+              <td>30</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>2.2 Accessing Runtime Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">use</span>
+            App\Services\ApplicationStorageService;
+            <span class="keyword">use</span> App\Enums\ApplicationStorageEnums;
+
+            <span class="comment">// Check if automation is enabled</span>
+            <span class="keyword">public function</span>
+            <span class="function">isPolicyIssuanceAutomationEnabled</span>():
+            <span class="keyword">bool</span>
+            {
+            <span class="keyword">return</span>
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE); }
+
+            <span class="comment">// Get API timeout</span>
+            <span class="keyword">private int</span> $apiTimeout = (<span
+              class="keyword"
+              >int</span
+            >)
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT);
+
+            <span class="comment">// Check retry enabled</span>
+            <span class="keyword">public function</span>
+            <span class="function"
+              >isPolicyIssuanceAutomationRetryEnabledForTimeout</span
+            >(): <span class="keyword">bool</span>
+            {
+            <span class="keyword">return</span> (<span class="keyword"
+              >bool</span
+            >)
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE);
+            }</code
+          >
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Runtime Configuration Benefits</h4>
+          <ul class="feature-list">
+            <li>Enable/disable automation without code deployment</li>
+            <li>Adjust API timeouts based on network conditions</li>
+            <li>Control retry mechanisms for troubleshooting</li>
+            <li>A/B testing capabilities</li>
+            <li>Emergency shutdown capability</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- AdnicEnum Constants -->
+      <div class="section">
+        <h2>3. AdnicEnum Constants</h2>
+        <p>
+          The <code>AdnicEnum</code> class contains all step identifiers,
+          response keys, and default values used throughout the automation
+          system.
+        </p>
+
+        <h3>3.1 Step Constants</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Constant</th>
+              <th>Value</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>STEP_UPLOAD_DOCUMENTS</code></td>
+              <td><code>'UploadDocuments'</code></td>
+              <td>Step identifier for per-member document upload</td>
+            </tr>
+            <tr>
+              <td><code>STEP_ISSUE_POLICY</code></td>
+              <td><code>'IssuePolicy'</code></td>
+              <td>
+                Step identifier for policy issuance (with pre-captured payment)
+              </td>
+            </tr>
+            <tr>
+              <td><code>STEP_UPLOAD_POLICY_DOCS</code></td>
+              <td><code>'UploadPolicyDocumentsToIMCRM'</code></td>
+              <td>
+                Step identifier for downloading and uploading all 3 policy
+                documents
+              </td>
+            </tr>
+            <tr>
+              <td><code>STEP_BOOK_POLICY</code></td>
+              <td><code>'BookPolicy'</code></td>
+              <td>
+                Constant exists but not used in automation flow (booking handled
+                separately)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3.2 Response Constants</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Constant</th>
+              <th>Value</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>RESPONSE_POLICY</code></td>
+              <td><code>'PolicyResponse'</code></td>
+              <td>Response key for policy issuance API</td>
+            </tr>
+            <tr>
+              <td><code>RESPONSE_UPLOAD_DOCUMENTS</code></td>
+              <td><code>'UploadDocumentsResponse'</code></td>
+              <td>Response key for document upload API</td>
+            </tr>
+            <tr>
+              <td><code>RESPONSE_DOWNLOAD_DOCUMENT</code></td>
+              <td><code>'DownloadDocumentResponse'</code></td>
+              <td>Response key for document download API</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3.3 Insurer Document Keys</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Constant</th>
+              <th>Value</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>INSURER_DOCUMENT_KEY_POLICY_DOCUMENT</code></td>
+              <td><code>'PolicyDocumentId'</code></td>
+              <td>Key for policy document ID in API response</td>
+            </tr>
+            <tr>
+              <td><code>INSURER_DOCUMENT_KEY_COMMISION_NOTE</code></td>
+              <td><code>'CommisionNoteDocumentId'</code></td>
+              <td>Key for commission note document ID</td>
+            </tr>
+            <tr>
+              <td><code>INSURER_DOCUMENT_KEY_TAX_INVOICE</code></td>
+              <td><code>'TaxInvoiceDocumentId'</code></td>
+              <td>Key for tax invoice document ID</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3.4 Default Values</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Constant</th>
+              <th>Value</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DEFAULT_EMIRATE_OF_YOUR_VISA</code></td>
+              <td><code>2</code></td>
+              <td>Default emirate code for visa</td>
+            </tr>
+            <tr>
+              <td><code>LOADING_TYPE</code></td>
+              <td><code>'PER'</code></td>
+              <td>Loading type for policy payload</td>
+            </tr>
+            <tr>
+              <td><code>LOADING_VALUE</code></td>
+              <td><code>0</code></td>
+              <td>Loading value for policy payload</td>
+            </tr>
+            <tr>
+              <td><code>LOADING_AMOUNT</code></td>
+              <td><code>0</code></td>
+              <td>Loading amount for policy payload</td>
+            </tr>
+            <tr>
+              <td><code>PAYMENT_TYPE</code></td>
+              <td><code>5</code></td>
+              <td>Payment type code</td>
+            </tr>
+            <tr>
+              <td><code>CUSTOMER_CLASSIFICATION_NATURAL_PERSONS</code></td>
+              <td><code>1</code></td>
+              <td>Customer classification for natural persons</td>
+            </tr>
+            <tr>
+              <td><code>NO</code></td>
+              <td><code>'NO'</code></td>
+              <td>Default "NO" value for boolean fields</td>
+            </tr>
+            <tr>
+              <td><code>UNKNOWN_ERROR</code></td>
+              <td><code>'Unknown error'</code></td>
+              <td>Default error message</td>
+            </tr>
+            <tr>
+              <td><code>ALL_STEPS_ARE_EDITABLE</code></td>
+              <td><code>'All Steps are editable'</code></td>
+              <td>Message when all steps are editable</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="code-block">
+          <code
+            ><span class="comment">// app/Enums/AdnicEnum.php</span>
+            <span class="keyword">class</span> AdnicEnum {
+            <span class="comment">// Step Names</span>
+            <span class="keyword">public const</span> STEP_UPLOAD_DOCUMENTS =
+            <span class="string">'UploadDocuments'</span>;
+            <span class="keyword">public const</span> STEP_ISSUE_POLICY =
+            <span class="string">'IssuePolicy'</span>;
+            <span class="keyword">public const</span> STEP_UPLOAD_POLICY_DOCS =
+            <span class="string">'UploadPolicyDocumentsToIMCRM'</span>;
+            <span class="comment"
+              >// Note: STEP_BOOK_POLICY exists but is not used in automation
+              flow</span
+            >
+
+            <span class="comment">// Response Keys</span>
+            <span class="keyword">public const</span> RESPONSE_POLICY =
+            <span class="string">'PolicyResponse'</span>;
+            <span class="keyword">public const</span> RESPONSE_UPLOAD_DOCUMENTS
+            = <span class="string">'UploadDocumentsResponse'</span>;
+            <span class="keyword">public const</span> RESPONSE_DOWNLOAD_DOCUMENT
+            = <span class="string">'DownloadDocumentResponse'</span>;
+
+            <span class="comment">// Insurer Document Keys</span>
+            <span class="keyword">public const</span>
+            INSURER_DOCUMENT_KEY_POLICY_DOCUMENT =
+            <span class="string">'PolicyDocumentId'</span>;
+            <span class="keyword">public const</span>
+            INSURER_DOCUMENT_KEY_COMMISION_NOTE =
+            <span class="string">'CommisionNoteDocumentId'</span>;
+            <span class="keyword">public const</span>
+            INSURER_DOCUMENT_KEY_TAX_INVOICE =
+            <span class="string">'TaxInvoiceDocumentId'</span>;
+
+            <span class="comment"
+              >// Default Values (responsible person email/mobile come from the
+              quote in AdnicRequestBuilder)</span
+            >
+            <span class="keyword">public const</span>
+            DEFAULT_EMIRATE_OF_YOUR_VISA = <span class="string">2</span>;
+            <span class="keyword">public const</span> LOADING_TYPE =
+            <span class="string">'PER'</span>;
+            <span class="keyword">public const</span> LOADING_VALUE =
+            <span class="string">0</span>;
+            <span class="keyword">public const</span> LOADING_AMOUNT =
+            <span class="string">0</span>;
+            <span class="keyword">public const</span> PAYMENT_TYPE =
+            <span class="string">5</span>;
+            <span class="keyword">public const</span>
+            CUSTOMER_CLASSIFICATION_NATURAL_PERSONS =
+            <span class="string">1</span>;
+            <span class="keyword">public const</span> NO =
+            <span class="string">'NO'</span>;
+            <span class="keyword">public const</span> UNKNOWN_ERROR =
+            <span class="string">'Unknown error'</span>;
+            <span class="keyword">public const</span> ALL_STEPS_ARE_EDITABLE =
+            <span class="string">'All Steps are editable'</span>; }</code
+          >
+        </div>
+      </div>
+
+      <!-- Feature Toggle Management -->
+      <div class="section">
+        <h2>4. Feature Toggle Management</h2>
+        <p>
+          Feature toggles provide runtime control over automation functionality
+          without requiring code deployment.
+        </p>
+
+        <h3>4.1 Enabling/Disabling Automation</h3>
+        <p>
+          To enable or disable the automation, update the
+          <code>application_storage</code> table:
+        </p>
+        <div class="code-block">
+          <code
+            ><span class="comment">-- Enable automation</span>
+            <span class="keyword">UPDATE</span> application_storage
+            <span class="keyword">SET</span> value =
+            <span class="string">'1'</span>
+            <span class="keyword">WHERE</span> key =
+            <span class="string">'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE'</span>;
+
+            <span class="comment">-- Disable automation</span>
+            <span class="keyword">UPDATE</span> application_storage
+            <span class="keyword">SET</span> value =
+            <span class="string">'0'</span>
+            <span class="keyword">WHERE</span> key =
+            <span class="string">'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE'</span
+            >;</code
+          >
+        </div>
+
+        <h3>4.2 Checking Feature Toggle Status</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">use</span>
+            App\Services\ApplicationStorageService;
+            <span class="keyword">use</span> App\Enums\ApplicationStorageEnums;
+
+            <span class="comment">// In AdnicInsuranceService</span>
+            <span class="keyword">public function</span>
+            <span class="function">isPolicyIssuanceAutomationEnabled</span>():
+            <span class="keyword">bool</span>
+            {
+            <span class="keyword">return</span>
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE); }
+
+            <span class="comment">// Usage in automation flow</span>
+            <span class="keyword">if</span> (!$this-><span class="function"
+              >isPolicyIssuanceAutomationEnabled</span
+            >()) { LoggerService::<span class="function">warning</span>(<span
+              class="string"
+              >'Automation is disabled'</span
+            >, extra: [ <span class="string">'toggle'</span> =>
+            ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE, ]);
+            <span class="keyword">return</span>
+            <span class="keyword">false</span>; }</code
+          >
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Feature Toggle Best Practices</h4>
+          <ul class="feature-list">
+            <li>Always check feature toggle before executing automation</li>
+            <li>Log when automation is disabled for monitoring</li>
+            <li>Use feature toggles for gradual rollout</li>
+            <li>Monitor toggle status in application logs</li>
+            <li>Document toggle changes in deployment notes</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Retry Mechanism Configuration -->
+      <div class="section">
+        <h2>5. Retry Mechanism Configuration</h2>
+        <p>
+          The retry mechanism handles timeout failures and transient errors by
+          automatically retrying failed operations.
+        </p>
+
+        <h3>5.1 Enabling Retry for Timeouts</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">-- Enable retry mechanism</span>
+            <span class="keyword">UPDATE</span> application_storage
+            <span class="keyword">SET</span> value =
+            <span class="string">'1'</span>
+            <span class="keyword">WHERE</span> key =
+            <span class="string"
+              >'ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE'</span
+            >;</code
+          >
+        </div>
+
+        <h3>5.2 Checking Retry Status</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">public function</span>
+            <span class="function"
+              >isPolicyIssuanceAutomationRetryEnabledForTimeout</span
+            >(): <span class="keyword">bool</span>
+            {
+            <span class="keyword">return</span> (<span class="keyword"
+              >bool</span
+            >)
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE);
+            }
+
+            <span class="comment">// Usage in error handling</span>
+            <span class="keyword">if</span> ($this-><span class="function"
+              >isPolicyIssuanceAutomationRetryEnabledForTimeout</span
+            >() && $isTimeout) {
+            <span class="comment">// Mark process for retry</span>
+            $process-><span class="function">update</span>([<span class="string"
+              >'status'</span
+            >
+            => PolicyIssuanceEnum::TIMEOUT_STATUS]); LoggerService::<span
+              class="function"
+              >info</span
+            >(<span class="string"
+              >'Process marked for retry due to timeout'</span
+            >); }</code
+          >
+        </div>
+
+        <div class="warning-box">
+          <h4>⚠️ Retry Considerations</h4>
+          <p>When enabling retry mechanisms:</p>
+          <ul class="feature-list">
+            <li>Monitor retry attempts to prevent infinite loops</li>
+            <li>Set maximum retry limits</li>
+            <li>Log all retry attempts for debugging</li>
+            <li>Consider exponential backoff for retries</li>
+            <li>Review failed retries regularly</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- API Timeout Settings -->
+      <div class="section">
+        <h2>6. API Timeout Settings</h2>
+        <p>
+          API timeout configuration controls how long the system waits for API
+          responses before timing out.
+        </p>
+
+        <h3>6.1 Configuring API Timeout</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">-- Set API timeout to 60 seconds</span>
+            <span class="keyword">UPDATE</span> application_storage
+            <span class="keyword">SET</span> value =
+            <span class="string">'60'</span>
+            <span class="keyword">WHERE</span> key =
+            <span class="string">'ADNIC_HEALTH_AUTOMATION_API_TIMEOUT'</span
+            >;</code
+          >
+        </div>
+
+        <h3>6.2 Using Timeout in HTTP Client</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// In AdnicHttpClient constructor</span>
+            <span class="keyword">public function</span>
+            <span class="function">__construct</span>() {
+            <span class="keyword">$this</span>->apiTimeout = (<span
+              class="keyword"
+              >int</span
+            >)
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT);
+
+            <span class="comment">// ... other initialization</span>
+            }
+
+            <span class="comment">// Applying timeout to HTTP requests</span>
+            <span class="keyword">public function</span>
+            <span class="function">post</span>(<span class="keyword"
+              >string</span
+            >
+            $endPoint, <span class="keyword">array</span> $payload = [],
+            <span class="keyword">array</span> $headers = []): Response {
+            <span class="keyword">return</span> Http::<span class="function"
+              >timeout</span
+            >(<span class="keyword">$this</span>->apiTimeout) -><span
+              class="function"
+              >withHeaders</span
+            >(<span class="keyword">$this</span>->baseHeaders) -><span
+              class="function"
+              >post</span
+            >($url, $payload); }</code
+          >
+        </div>
+
+        <h3>6.3 Recommended Timeout Values</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>API Endpoint</th>
+              <th>Recommended Timeout</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Generate Policy</td>
+              <td>60 seconds</td>
+              <td>Policy generation may take longer</td>
+            </tr>
+            <tr>
+              <td>Upload Document</td>
+              <td>45 seconds</td>
+              <td>Document upload depends on file size</td>
+            </tr>
+            <tr>
+              <td>Download Document</td>
+              <td>45 seconds</td>
+              <td>Document download depends on file size</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <h4>💡 Timeout Best Practices</h4>
+          <ul class="feature-list">
+            <li>Set timeouts based on API response time expectations</li>
+            <li>Consider network latency and document sizes</li>
+            <li>Monitor timeout occurrences in logs</li>
+            <li>Adjust timeouts based on production metrics</li>
+            <li>Use retry mechanism for timeout failures</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Document Type Mappings -->
+      <div class="section">
+        <h2>7. Document Type Mappings</h2>
+        <p>
+          Document type mappings translate between IMCRM document codes and
+          ADNIC insurer document codes.
+        </p>
+
+        <h3>7.1 IMCRM to ADNIC Document Mapping</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>IMCRM Document Code</th>
+              <th>ADNIC Document Code</th>
+              <th>Document Name</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>HEAEID</code></td>
+              <td><code>'3'</code></td>
+              <td>Emirates ID (Front & Back)</td>
+              <td>Customer identification</td>
+            </tr>
+            <tr>
+              <td><code>VISA_Hlth</code></td>
+              <td><code>'6'</code></td>
+              <td>Visa</td>
+              <td>Residency verification</td>
+            </tr>
+            <tr>
+              <td><code>HlthPAS</code></td>
+              <td><code>'1'</code></td>
+              <td>Passport</td>
+              <td>Identity verification</td>
+            </tr>
+            <tr>
+              <td><code>HEAEID</code></td>
+              <td><code>'4'</code></td>
+              <td>Emirates ID Front</td>
+              <td>Front side of Emirates ID</td>
+            </tr>
+            <tr>
+              <td><code>HEAEID</code></td>
+              <td><code>'5'</code></td>
+              <td>Emirates ID Back</td>
+              <td>Back side of Emirates ID</td>
+            </tr>
+            <tr>
+              <td><code>MEBC</code></td>
+              <td><code>'11'</code></td>
+              <td>Birth Certificate</td>
+              <td>Date of birth verification</td>
+            </tr>
+            <tr>
+              <td><code>MED_HLTH</code></td>
+              <td><code>'18'</code></td>
+              <td>Medical Application Form</td>
+              <td>Medical application</td>
+            </tr>
+            <tr>
+              <td><code>OTH_Hlth</code></td>
+              <td><code>'17'</code></td>
+              <td>Customer Due Diligence</td>
+              <td>Compliance documentation</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>7.2 Insurer Document to IMCRM Mapping</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Insurer Document Key</th>
+              <th>IMCRM Document Code</th>
+              <th>Document Name</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PolicyDocumentId</code></td>
+              <td><code>POLC</code></td>
+              <td>Policy Schedule</td>
+              <td>Policy document from insurer</td>
+            </tr>
+            <tr>
+              <td><code>CommisionNoteDocumentId</code></td>
+              <td><code>TIRBB</code></td>
+              <td>Debit Note</td>
+              <td>Commission note from insurer</td>
+            </tr>
+            <tr>
+              <td><code>TaxInvoiceDocumentId</code></td>
+              <td><code>TI</code></td>
+              <td>Tax Invoice</td>
+              <td>Tax invoice from insurer</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>7.3 Document Mapping Implementation</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment"
+              >// Map IMCRM document types to ADNIC codes</span
+            >
+            <span class="keyword">public function</span>
+            <span class="function">getInsurerDocCodeForHealth</span>(<span
+              class="keyword"
+              >string</span
+            >
+            $documentType): ?<span class="keyword">string</span>
+            {
+            <span class="keyword">return</span>
+            <span class="function">match</span> ($documentType) {
+            DocumentTypeCode::HEA_EID => <span class="string">'3'</span>,
+            <span class="comment">// Emirates ID</span>
+            DocumentTypeCode::HEA_VISA => <span class="string">'6'</span>,
+            <span class="comment">// Visa</span> DocumentTypeCode::HEA_PAS =>
+            <span class="string">'1'</span>,
+            <span class="comment">// Passport</span>
+            DocumentTypeCode::HEA_EID_FRONT => <span class="string">'4'</span>,
+            <span class="comment">// EID Front</span>
+            DocumentTypeCode::HEA_EID_BACK => <span class="string">'5'</span>,
+            <span class="comment">// EID Back</span>
+            DocumentTypeCode::HEA_BIRTH_CERTIFICATE =>
+            <span class="string">'11'</span>,
+            <span class="comment">// Birth Certificate</span>
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM =>
+            <span class="string">'18'</span>,
+            <span class="comment">// Medical Form</span>
+            DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE =>
+            <span class="string">'17'</span>,
+            <span class="comment">// Due Diligence</span>
+            <span class="keyword">default</span> =>
+            <span class="keyword">null</span>
+            }; }
+
+            <span class="comment">// Map insurer documents to IMCRM codes</span>
+            <span class="keyword">public function</span>
+            <span class="function">getDocTypeCodeForIMCRM</span>($quote):
+            <span class="keyword">array</span>
+            {
+            <span class="keyword">return</span> [
+            AdnicEnum::INSURER_DOCUMENT_KEY_POLICY_DOCUMENT =>
+            DocumentTypeCode::POLC,
+            AdnicEnum::INSURER_DOCUMENT_KEY_COMMISION_NOTE =>
+            DocumentTypeCode::TIRBB, AdnicEnum::INSURER_DOCUMENT_KEY_TAX_INVOICE
+            => DocumentTypeCode::TI, ]; }</code
+          >
+        </div>
+      </div>
+
+      <!-- Service Provider Registration -->
+      <div class="section">
+        <h2>8. Service Provider Registration</h2>
+        <p>
+          Service providers register ADNIC services with Laravel's service
+          container for dependency injection.
+        </p>
+
+        <h3>8.1 AdnicServiceProvider Implementation</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment"
+              >// app/Providers/AdnicServiceProvider.php</span
+            >
+            <span class="keyword">namespace</span> App\Providers;
+
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicBookPolicyService;
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicResponseHandler;
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicStepExecutor;
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
+            <span class="keyword">use</span> Illuminate\Support\Facades\App;
+            <span class="keyword">use</span> Illuminate\Support\ServiceProvider;
+
+            <span class="keyword">class</span> AdnicServiceProvider
+            <span class="keyword">extends</span> ServiceProvider {
+            <span class="comment">/** * Register services. */</span>
+            <span class="keyword">public function</span>
+            <span class="function">register</span>():
+            <span class="keyword">void</span> { App::<span class="function"
+              >bind</span
+            >(<span class="string">'AdnicHttpClient'</span>,
+            <span class="keyword">function</span> () {
+            <span class="keyword">return</span>
+            <span class="keyword">new</span> AdnicHttpClient; }); }
+
+            <span class="comment">/** * Bootstrap services. */</span>
+            <span class="keyword">public function</span>
+            <span class="function">boot</span>():
+            <span class="keyword">void</span> { App::<span class="function"
+              >bind</span
+            >(AdnicInsuranceService::<span class="keyword">class</span>,
+            <span class="keyword">function</span> ($app) {
+            <span class="keyword">return</span>
+            <span class="keyword">new</span> AdnicInsuranceService( $app-><span
+              class="function"
+              >make</span
+            >(AdnicStepExecutor::<span class="keyword">class</span>),
+            $app-><span class="function">make</span
+            >(AdnicValidationService::<span class="keyword">class</span>),
+            $app-><span class="function">make</span
+            >(AdnicBookPolicyService::<span class="keyword">class</span>),
+            $app-><span class="function">make</span>(AdnicResponseHandler::<span
+              class="keyword"
+              >class</span
+            >), ); }); } }</code
+          >
+        </div>
+
+        <h3>8.2 Registering in config/app.php</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// config/app.php</span>
+            <span class="string">'providers'</span> => [
+            <span class="comment">// ... other providers</span>
+            App\Providers\AdnicServiceProvider::<span class="keyword"
+              >class</span
+            >, ],</code
+          >
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Service Provider Benefits</h4>
+          <ul class="feature-list">
+            <li>Centralized service registration</li>
+            <li>Dependency injection support</li>
+            <li>Lazy loading of services</li>
+            <li>Easy testing with mock bindings</li>
+            <li>Consistent service instantiation</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Facade Registration -->
+      <div class="section">
+        <h2>9. Facade Registration</h2>
+        <p>
+          Facades provide a static interface to HTTP client services,
+          simplifying API calls throughout the application.
+        </p>
+
+        <h3>9.1 AdnicHttpFacade Implementation</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// app/Facades/AdnicHttpFacade.php</span>
+            <span class="keyword">namespace</span> App\Facades;
+
+            <span class="keyword">use</span>
+            App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
+            <span class="keyword">use</span> Illuminate\Support\Facades\Facade;
+
+            <span class="keyword">class</span> AdnicHttpFacade
+            <span class="keyword">extends</span> Facade {
+            <span class="keyword">protected static function</span>
+            <span class="function">getFacadeAccessor</span>() {
+            <span class="keyword">return</span> AdnicHttpClient::<span
+              class="keyword"
+              >class</span
+            >; } }</code
+          >
+        </div>
+
+        <h3>9.2 Using the Facade</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">use</span> App\Facades\AdnicHttpFacade;
+
+            <span class="comment">// Make API call using facade</span>
+            $response = AdnicHttpFacade::<span class="function">post</span
+            >($endPoint, $payload, $headers);
+
+            <span class="comment">// Get base URL</span>
+            $baseUrl = AdnicHttpFacade::<span class="function">getBaseUrl</span
+            >();</code
+          >
+        </div>
+
+        <h3>9.3 Facade Methods</h3>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Parameters</th>
+              <th>Return Type</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>post()</code></td>
+              <td>
+                <code>string $endPoint, array $payload, array $headers</code>
+              </td>
+              <td><code>Response</code></td>
+              <td>Make POST request to ADNIC API</td>
+            </tr>
+            <tr>
+              <td><code>getBaseUrl()</code></td>
+              <td>None</td>
+              <td><code>string</code></td>
+              <td>Get configured API base URL</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <h4>💡 Facade Benefits</h4>
+          <ul class="feature-list">
+            <li>Simplified API calls without dependency injection</li>
+            <li>Static interface for HTTP operations</li>
+            <li>Easy to mock in tests</li>
+            <li>Consistent API across the application</li>
+            <li>Reduced boilerplate code</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Configuration Management Best Practices -->
+      <div class="section">
+        <h2>10. Configuration Management Best Practices</h2>
+        <p>
+          Follow these best practices to ensure secure, maintainable, and
+          scalable configuration management.
+        </p>
+
+        <h3>10.1 Security Best Practices</h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Never commit secrets:</strong> Store all sensitive
+            credentials in environment variables
+          </li>
+          <li>
+            <strong>Use .env.example:</strong> Document required environment
+            variables without exposing values
+          </li>
+          <li>
+            <strong>Rotate credentials:</strong> Regularly update API tokens and
+            keys
+          </li>
+          <li>
+            <strong>Restrict access:</strong> Limit who can modify
+            application_storage configuration
+          </li>
+          <li>
+            <strong>Audit changes:</strong> Log all configuration changes for
+            security auditing
+          </li>
+        </ul>
+
+        <h3>10.2 Environment-Specific Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment"
+              >// Use different values per environment</span
+            >
+            <span class="comment">// .env.local (Development)</span>
+            ADNIC_API_BASE_URL=<span class="string"
+              >https://api-dev.adnic.ae</span
+            >
+
+            <span class="comment">// .env.staging (Staging)</span>
+            ADNIC_API_BASE_URL=<span class="string"
+              >https://api-staging.adnic.ae</span
+            >
+
+            <span class="comment">// .env.production (Production)</span>
+            ADNIC_API_BASE_URL=<span class="string"
+              >https://api.adnic.ae</span
+            ></code
+          >
+        </div>
+
+        <h3>10.3 Configuration Validation</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment"
+              >// Validate configuration on service initialization</span
+            >
+            <span class="keyword">public function</span>
+            <span class="function">__construct</span>() {
+            <span class="keyword">$this</span>->baseUrl =
+            <span class="function">config</span>(<span class="string"
+              >'constants.ADNIC_API_BASE_URL'</span
+            >);
+
+            <span class="keyword">if</span> (empty(<span class="keyword"
+              >$this</span
+            >->baseUrl)) {
+            <span class="keyword">throw new</span> \RuntimeException(<span
+              class="string"
+              >'ADNIC_API_BASE_URL is not configured'</span
+            >); }
+
+            <span class="comment">// ... validate other required configs</span>
+            }</code
+          >
+        </div>
+
+        <h3>10.4 Configuration Documentation</h3>
+        <ul class="feature-list">
+          <li>
+            Document all configuration variables in README or architecture docs
+          </li>
+          <li>Include default values and acceptable ranges</li>
+          <li>Document environment-specific requirements</li>
+          <li>Provide examples for common configurations</li>
+          <li>Update documentation when adding new configuration</li>
+        </ul>
+
+        <h3>10.5 Monitoring Configuration</h3>
+        <ul class="feature-list">
+          <li>Monitor feature toggle changes in application logs</li>
+          <li>Alert on configuration errors or missing values</li>
+          <li>Track timeout occurrences and adjust accordingly</li>
+          <li>Review retry success rates</li>
+          <li>Monitor API response times vs timeout settings</li>
+        </ul>
+      </div>
+
+      <!-- Adding New Configuration -->
+      <div class="section">
+        <h2>11. How to Add New Configuration</h2>
+        <p>
+          Follow these steps to add new configuration options to the ADNIC
+          automation system.
+        </p>
+
+        <h3>11.1 Adding Environment Variable</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// 1. Add to .env file</span>
+            <span class="keyword">ADNIC_NEW_CONFIG</span>=<span class="string"
+              >value</span
+            >
+
+            <span class="comment">// 2. Add to config/constants.php</span>
+            <span class="string">'ADNIC_NEW_CONFIG'</span> =>
+            <span class="function">env</span>(<span class="string"
+              >'ADNIC_NEW_CONFIG'</span
+            >),
+
+            <span class="comment">// 3. Access in code</span>
+            $value = <span class="function">config</span>(<span class="string"
+              >'constants.ADNIC_NEW_CONFIG'</span
+            >);</code
+          >
+        </div>
+
+        <h3>11.2 Adding Runtime Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// 1. Add enum constant</span>
+            <span class="comment"
+              >// app/Enums/ApplicationStorageEnums.php</span
+            >
+            <span class="keyword">public const</span> ADNIC_NEW_RUNTIME_CONFIG =
+            <span class="string">'ADNIC_NEW_RUNTIME_CONFIG'</span>;
+
+            <span class="comment"
+              >// 2. Insert into application_storage table</span
+            >
+            <span class="keyword">INSERT INTO</span> application_storage (key,
+            value, description) <span class="keyword">VALUES</span> (<span
+              class="string"
+              >'ADNIC_NEW_RUNTIME_CONFIG'</span
+            >, <span class="string">'default_value'</span>,
+            <span class="string">'Description of new config'</span>);
+
+            <span class="comment">// 3. Access in code</span>
+            $value =
+            <span class="function">app</span>(ApplicationStorageService::<span
+              class="keyword"
+              >class</span
+            >) -><span class="function">getValueByKey</span
+            >(ApplicationStorageEnums::ADNIC_NEW_RUNTIME_CONFIG);</code
+          >
+        </div>
+
+        <h3>11.3 Adding Enum Constant</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// app/Enums/AdnicEnum.php</span>
+            <span class="keyword">class</span> AdnicEnum {
+            <span class="keyword">public const</span> NEW_CONSTANT =
+            <span class="string">'NewValue'</span>;
+
+            <span class="comment">// Use in code</span>
+            <span class="keyword">if</span> ($step === AdnicEnum::NEW_CONSTANT)
+            {
+            <span class="comment">// Handle new constant</span>
+            } }</code
+          >
+        </div>
+
+        <h3>11.4 Checklist for New Configuration</h3>
+        <ul class="feature-list">
+          <li>✅ Add environment variable to .env.example</li>
+          <li>✅ Add constant to config/constants.php</li>
+          <li>✅ Add enum constant if needed</li>
+          <li>✅ Add runtime config to ApplicationStorageEnums</li>
+          <li>✅ Insert default value into application_storage</li>
+          <li>✅ Update this documentation</li>
+          <li>✅ Add validation if required</li>
+          <li>✅ Write tests for new configuration</li>
+        </ul>
+      </div>
+
+      <!-- Testing Configuration -->
+      <div class="section">
+        <h2>12. Testing Configuration</h2>
+        <p>
+          Properly test configuration to ensure the automation system works
+          correctly with different settings.
+        </p>
+
+        <h3>12.1 Testing Environment Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment"
+              >// tests/Unit/Services/Adnic/AdnicHttpClientTest.php</span
+            >
+            <span class="keyword">public function</span>
+            <span class="function">test_http_client_uses_config_base_url</span
+            >(): <span class="keyword">void</span>
+            {
+            <span class="function">config</span>([<span class="string"
+              >'constants.ADNIC_API_BASE_URL'</span
+            >
+            => <span class="string">'https://test.api.com'</span>]); $client =
+            <span class="keyword">new</span> AdnicHttpClient;
+
+            <span class="keyword">$this</span>-><span class="function"
+              >assertStringContainsString</span
+            >(<span class="string">'test.api.com'</span>, $client-><span
+              class="function"
+              >getBaseUrl</span
+            >()); }
+
+            <span class="keyword">public function</span>
+            <span class="function"
+              >test_http_client_throws_exception_on_missing_config</span
+            >(): <span class="keyword">void</span>
+            {
+            <span class="function">config</span>([<span class="string"
+              >'constants.ADNIC_API_BASE_URL'</span
+            >
+            => <span class="keyword">null</span>]);
+
+            <span class="keyword">$this</span>-><span class="function"
+              >expectException</span
+            >(\RuntimeException::<span class="keyword">class</span>);
+
+            <span class="keyword">new</span> AdnicHttpClient; }</code
+          >
+        </div>
+
+        <h3>12.2 Testing Feature Toggles</h3>
+        <div class="code-block">
+          <code
+            ><span class="comment">// Mock ApplicationStorageService</span>
+            <span class="keyword">public function</span>
+            <span class="function"
+              >test_automation_disabled_when_toggle_off</span
+            >(): <span class="keyword">void</span> { $storageService =
+            Mockery::<span class="function">mock</span
+            >(ApplicationStorageService::<span class="keyword">class</span>);
+            $storageService-><span class="function">shouldReceive</span>(<span
+              class="string"
+              >'getValueByKey'</span
+            >) -><span class="function">with</span
+            >(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE)
+            -><span class="function">andReturn</span>(<span class="keyword"
+              >false</span
+            >);
+
+            <span class="function">app</span>()-><span class="function"
+              >instance</span
+            >(ApplicationStorageService::<span class="keyword">class</span>,
+            $storageService); $service =
+            <span class="function">app</span>(AdnicInsuranceService::<span
+              class="keyword"
+              >class</span
+            >);
+
+            <span class="keyword">$this</span>-><span class="function"
+              >assertFalse</span
+            >($service-><span class="function"
+              >isPolicyIssuanceAutomationEnabled</span
+            >()); }</code
+          >
+        </div>
+
+        <h3>12.3 Testing Timeout Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">public function</span>
+            <span class="function">test_http_client_uses_runtime_timeout</span
+            >(): <span class="keyword">void</span> { $storageService =
+            Mockery::<span class="function">mock</span
+            >(ApplicationStorageService::<span class="keyword">class</span>);
+            $storageService-><span class="function">shouldReceive</span>(<span
+              class="string"
+              >'getValueByKey'</span
+            >) -><span class="function">with</span
+            >(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT)
+            -><span class="function">andReturn</span>(<span class="string"
+              >'60'</span
+            >);
+
+            <span class="function">app</span>()-><span class="function"
+              >instance</span
+            >(ApplicationStorageService::<span class="keyword">class</span>,
+            $storageService); Http::<span class="function">fake</span>();
+            $client = <span class="keyword">new</span> AdnicHttpClient;
+            $client-><span class="function">post</span>(<span class="string"
+              >'/test'</span
+            >, []);
+
+            <span class="comment">// Verify timeout was applied</span>
+            Http::<span class="function">assertSent</span>(<span class="keyword"
+              >function</span
+            >
+            ($request) { <span class="keyword">return</span> $request-><span
+              class="function"
+              >hasTimeout</span
+            >() && $request-><span class="function">timeout</span>() ===
+            <span class="string">60</span>; }); }</code
+          >
+        </div>
+
+        <h3>12.4 Testing Document Type Mapping</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">public function</span>
+            <span class="function"
+              >test_document_type_mapping_returns_correct_codes</span
+            >(): <span class="keyword">void</span> { $handler =
+            <span class="keyword">new</span> AdnicDocumentHandler;
+
+            <span class="keyword">$this</span>-><span class="function"
+              >assertEquals</span
+            >(<span class="string">'3'</span>, $handler-><span class="function"
+              >getInsurerDocCodeForHealth</span
+            >(DocumentTypeCode::HEA_EID));
+            <span class="keyword">$this</span>-><span class="function"
+              >assertEquals</span
+            >(<span class="string">'6'</span>, $handler-><span class="function"
+              >getInsurerDocCodeForHealth</span
+            >(DocumentTypeCode::HEA_VISA));
+            <span class="keyword">$this</span>-><span class="function"
+              >assertNull</span
+            >($handler-><span class="function">getInsurerDocCodeForHealth</span
+            >(<span class="string">'INVALID_TYPE'</span>)); }</code
+          >
+        </div>
+
+        <h3>12.5 Configuration Test Checklist</h3>
+        <ul class="feature-list">
+          <li>✅ Test with valid configuration values</li>
+          <li>✅ Test with missing configuration (should fail gracefully)</li>
+          <li>✅ Test with invalid configuration values</li>
+          <li>✅ Test feature toggle enable/disable</li>
+          <li>✅ Test timeout configuration application</li>
+          <li>✅ Test retry mechanism configuration</li>
+          <li>✅ Test document type mappings</li>
+          <li>✅ Test service provider registration</li>
+          <li>✅ Test facade functionality</li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>ADNIC Health Configuration Management Documentation</strong>
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

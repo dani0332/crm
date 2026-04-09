@@ -499,6 +499,7 @@ final class PermissionsEnum extends Enum
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+    public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     public static function getAdvisorConversionReportPermissions()
     {

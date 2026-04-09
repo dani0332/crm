@@ -8,6 +8,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -48,6 +49,7 @@ use App\Services\AML\AMLQueryService;
 use App\Services\AML\AMLQuoteDetailsService;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
@@ -55,6 +57,8 @@ use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
@@ -104,7 +108,7 @@ class AMLController extends Controller
         return inertia('Aml/Show', $data);
     }
 
-    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
             $request->customer_type,
@@ -232,7 +236,7 @@ class AMLController extends Controller
                 ], $updateQuote);
 
                 LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate');
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if ($e->getCode() == '40001' || str_contains($e->getMessage(), 'Lock wait timeout')) {
                     LoggerService::warning('Lock timeout during AML screening process', [
                         'quote_id' => $quoteRequestId,
@@ -627,8 +631,31 @@ class AMLController extends Controller
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
+
             if (! $isPolicyIssuanceAutomationEnabled) {
                 $response['message'] = 'Please Capture and Issue Policy Manually.';
+            }
+
+            $quote = $quote->refresh();
+
+            $isHealthQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Health;
+
+            $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
+            $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
+            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
+            $isPolicyAutomationEnabled = $policyAutomation?->isPolicyIssuanceAutomationEnabled() ?? false;
+            LoggerService::info('Policy Automation AutoCapture Checks', extra: [
+                'QuoteType' => $quoteType,
+                'STP Case' => $isHealthQuote ? $quote?->isSTPCase() : false,
+                'AML Status' => $quote?->aml_status,
+                'KYC Status' => $quote?->kyc_decision,
+                'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+                'insurerPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
+            ]);
+            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyIssuanceAutomationEnabled && $isPolicyAutomationEnabled) {
+                $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+                $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
+                $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
             }
         }
 
@@ -813,7 +840,7 @@ class AMLController extends Controller
     /**
      * Toggle policy issuance automation enabled status for a car quote
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
     {

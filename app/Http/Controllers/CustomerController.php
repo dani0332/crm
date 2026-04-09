@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\RolesEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Http\Requests\CustomerPrimaryEmailRequest;
 use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Models\BusinessQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Services\BerlinService;
@@ -20,6 +22,7 @@ use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -199,6 +202,15 @@ class CustomerController extends Controller
 
             return response()->json(['error' => ['message' => 'Quote not found.']], 404);
         }
+        if ($quoteObject instanceof BusinessQuote) {
+            if (! $this->checkBusinessQuotePermission($quoteObject->advisor_id)) {
+                if (isset($request->isInertia) && $request->isInertia) {
+                    return redirect()->back()->with('error', 'You are not authorized to update the primary contact for this quote.');
+                }
+
+                return response()->json(['error' => ['message' => 'You are not authorized to update the primary contact for this quote.']], 403);
+            }
+        }
 
         $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
 
@@ -212,6 +224,23 @@ class CustomerController extends Controller
         return response()->json(['data' => [
             'message' => 'Primary Contact Updated',
         ]]);
+    }
+    public function checkBusinessQuotePermission($advisorId)
+    {
+        $user = Auth::user();
+        if ($user->hasRole(RolesEnum::Admin) || $user->hasRole(RolesEnum::Engineering)) {
+            return true;
+        }
+
+        if ($user->hasRole([RolesEnum::CorplineRenewalManager, RolesEnum::CorplineClaimManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMClaimManager, RolesEnum::GMDeputyManager, RolesEnum::GMManager, RolesEnum::GMRenewalManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager])) {
+            return true;
+        }
+
+        if ($user->hasRole([RolesEnum::CorpLineRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor, RolesEnum::EBPAdvisor])) {
+            return $user->id == $advisorId ? true : false;
+        }
+
+        return false;
     }
 
     public function addAdditionalContact(Request $request)

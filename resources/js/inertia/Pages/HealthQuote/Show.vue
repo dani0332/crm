@@ -204,6 +204,13 @@ const emailTableColumns = reactive({
   ],
 });
 
+const isAdnic = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.ADNIC
+  );
+});
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -2460,6 +2467,18 @@ const validateEmirateOfVisa = () => {
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS STP Case</dt>
+                <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -4632,6 +4651,21 @@ const validateEmirateOfVisa = () => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isAdnic"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs
