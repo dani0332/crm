@@ -42,13 +42,13 @@ class AllocationConfigurationService
                 'volume_profiles' => $data['volume_profiles'] ?? [],
             ],
             QuoteTypes::GROUP_MEDICAL => [
-                GroupMedicalRegionEnum::AUH => [
-                    'micro_brackets' => $data[GroupMedicalRegionEnum::AUH]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH]['micro_brackets'] ?? [],
-                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::AUH]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH]['non_micro_brackets'] ?? [],
+                GroupMedicalRegionEnum::AUH->value => [
+                    'micro_brackets' => $data[GroupMedicalRegionEnum::AUH->value]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH->value]['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::AUH->value]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::AUH->value]['non_micro_brackets'] ?? [],
                 ],
-                GroupMedicalRegionEnum::NON_AUH => [
-                    'micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH]['micro_brackets'] ?? [],
-                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH]['non_micro_brackets'] ?? [],
+                GroupMedicalRegionEnum::NON_AUH->value => [
+                    'micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH->value]['micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH->value]['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data[GroupMedicalRegionEnum::NON_AUH->value]['non_micro_brackets'] ?? $existingConfig[GroupMedicalRegionEnum::NON_AUH->value]['non_micro_brackets'] ?? [],
                 ],
             ],
             default => [],

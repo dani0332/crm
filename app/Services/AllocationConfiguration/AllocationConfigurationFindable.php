@@ -257,8 +257,10 @@ trait AllocationConfigurationFindable
             ? GroupMedicalRegionEnum::AUH
             : GroupMedicalRegionEnum::NON_AUH;
 
-        if (isset($config[$regionKey]) && is_array($config[$regionKey])) {
-            return $config[$regionKey];
+        $regionConfigKey = $regionKey->value;
+
+        if (isset($config[$regionConfigKey]) && is_array($config[$regionConfigKey])) {
+            return $config[$regionConfigKey];
         }
 
         return [];
