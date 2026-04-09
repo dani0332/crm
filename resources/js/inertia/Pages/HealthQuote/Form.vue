@@ -849,7 +849,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   :rules="[isRequired]"
                   :options="coverForOptions"
                   class="w-full"
-                  label="Select who the health insurance coverage is for?"
+                  label="SELECT WHO THE HEALTH INSURANCE COVERAGE IS FOR?"
                   required
                   :disabled="!isCreate"
                   @update:model-value="requestQuoteCategoryFieldUpdate('cover_for_id', $event)"
