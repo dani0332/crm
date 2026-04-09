@@ -140,7 +140,6 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
-
 </script>
 
 <template>

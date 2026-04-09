@@ -216,7 +216,6 @@ const isPolicySendUpdateBooked = option => {
   }
   return isCCAndInsurer && isPolicyBooked && !props.sendUpdate;
 };
-
 </script>
 
 <template>
