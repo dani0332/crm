@@ -52,8 +52,10 @@ use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusHistory;
+use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -2108,7 +2110,6 @@ class CentralService extends BaseService
         try {
             $maxAttempts = 2;
             $this->handleWithDeadlockRetries(function () use ($request, $quote) {
-                // Load then delete per model so Auditable + Spatie activity log run (mass delete skips observers).
                 QuoteDocument::query()
                     ->whereIn(
                         'payment_split_id',
@@ -2132,7 +2133,11 @@ class CentralService extends BaseService
                     ->get()
                     ->each(fn (Payment $payment) => $payment->delete());
 
-                $this->syncTravelQuoteAfterPaymentDeletion($quote);
+                if ($quote->quote_type_id == QuoteTypeId::Travel) {
+                    $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
+                    $this->updateQuoteStatusAfterPaymentDeletion($quote);
+                }
+
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
         } catch (\Throwable $th) {
@@ -2144,104 +2149,59 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Delete payment processed'];
     }
 
-    /**
-     * After a travel parent/child payment is deleted, reload payments and align lead status when remaining payment are fully settled (same idea as SplitPaymentService::processMasterPaymentApprove).
-     */
-    private function syncTravelQuoteAfterPaymentDeletion($quote): void
+    private function updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion(TravelQuote $quote): void
     {
-        $payment = $quote?->payments()->mainLeadPayment()->first();
-        $this->updateLeadStatusAfterPaymentDeletion($payment);
+        $quote->refresh();
 
-        // Now need to update the payment code
-
-
-        
-
-        // if (! $this->travelQuoteRemainingPaymentsAreFullySettled($quote)) {
-        //     return;
-        // }
-
-        // $lockLeadSectionsDetails = $this->lockLeadSectionsDetails($quote);
-        // if ($lockLeadSectionsDetails['lead_status'] && $quote->quote_status_id !== QuoteStatusEnum::TransactionDeclined) {
-        //     return;
-        // }
-
-        // if ($quote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
-        //     return;
-        // }
-
-        // $oldQuoteStatus = $quote->quote_status_id;
-        // $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
-        // app(CRUDService::class)->calculateScore($quote, QuoteTypes::TRAVEL->value);
-        // $quote->save();
-
-        // QuoteStatusLog::create([
-        //     'quote_type_id' => QuoteTypeId::Travel,
-        //     'quote_request_id' => $quote->id,
-        //     'current_quote_status_id' => QuoteStatusEnum::TransactionApproved,
-        //     'previous_quote_status_id' => $oldQuoteStatus,
-        //     'created_at' => Carbon::now(),
-        //     'updated_at' => Carbon::now(),
-        // ]);
-
-        // LoggerService::info('fn:deletePayment - Travel quote '.$quote->code.' set to Transaction Approved; remaining payments are fully settled.');
-    }
-
-    private function updateLeadStatusAfterPaymentDeletion($payment): void
-    {
-        $quote = $payment?->paymentable;
-        if (! $quote) {
+        $payments = $quote->payments()->get();
+        if ($payments->count() !== 1) {
             return;
         }
 
-        if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+        $payment = $payments->first();
+        $oldCode = (string) ($payment->code ?? '');
+        $newCode = $quote->code;
+        $expectedChildCode = $newCode.'-1';
+
+        if ($oldCode === '' || $oldCode !== $expectedChildCode) {
+            return;
+        }
+
+        PaymentSplits::query()
+            ->where('code', $oldCode)
+            ->update(['code' => $newCode]);
+
+        PaymentAction::query()
+            ->where('payment_code', $oldCode)
+            ->update(['payment_code' => $newCode]);
+
+        PaymentStatusHistory::query()
+            ->where('payment_code', $oldCode)
+            ->update(['payment_code' => $newCode]);
+
+        PaymentStatusLog::query()
+            ->where('payment_code', $oldCode)
+            ->update(['payment_code' => $newCode]);
+
+        $payment->code = $newCode;
+        $payment->save();
+
+        LoggerService::info('fn:updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion - Updated travel payment code from '.$oldCode.' to '.$newCode.' for quote '.$quote->code);
+    }
+
+    /**
+     * Align travel quote status with the main-lead payment after a payment row was removed.
+     */
+    private function updateQuoteStatusAfterPaymentDeletion(TravelQuote $quote): void
+    {
+        $payment = $quote?->payments()->mainLeadPayment()->first();
+        $paymentStatus = $payment?->payment_status_id;
+
+        if ($paymentStatus == PaymentStatusEnum::PAID) {
             $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
             $quote->save();
         }
     }
-
-    // private function travelQuoteRemainingPaymentsAreFullySettled(TravelQuote $quote): bool
-    // {
-    //     if ($quote->payments->isEmpty()) {
-    //         return false;
-    //     }
-
-    //     foreach ($quote->payments as $payment) {
-    //         if (! $this->travelPaymentRecordIsFullySettled($payment)) {
-    //             return false;
-    //         }
-    //     }
-
-    //     return true;
-    // }
-
-    // private function travelPaymentRecordIsFullySettled(Payment $payment): bool
-    // {
-    //     $splits = $payment->paymentSplits;
-    //     $totalExpected = max(1, (int) $payment->total_payments);
-
-    //     if ($splits->isEmpty()) {
-    //         return in_array((int) $payment->getRawOriginal('payment_status_id'), PaymentStatusEnum::getPaidStatuses(), true);
-    //     }
-
-    //     $hasPartial = $splits->contains(
-    //         fn (PaymentSplits $split): bool => in_array((int) $split->payment_status_id, [
-    //             PaymentStatusEnum::PARTIAL_CAPTURED,
-    //             PaymentStatusEnum::PARTIALLY_PAID,
-    //         ], true)
-    //     );
-
-    //     if ($hasPartial) {
-    //         return false;
-    //     }
-
-    //     $paidSplits = $splits->whereIn('payment_status_id', [
-    //         PaymentStatusEnum::PAID,
-    //         PaymentStatusEnum::CAPTURED,
-    //     ])->count();
-
-    //     return $paidSplits === $totalExpected;
-    // }
 
     public function getPlansPaymentGateway($request, $quoteType)
     {
