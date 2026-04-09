@@ -154,9 +154,9 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
      * Execute automation steps
      *
      * @param  mixed  $process
-     * @return array
+     * @return array<string, mixed>
      */
-    public function executeSteps($process)
+    public function executeSteps($process): array
     {
         if (! $this->isPolicyIssuanceAutomationEnabled()) {
             LoggerService::warning('Automation is disabled', extra: [
@@ -183,51 +183,55 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             'completed_step' => $process->completed_step,
         ]);
 
+        $shouldLogExecutionCompleted = true;
+
         try {
             $validationResult = $this->validationService->validateRequiredData($quote);
             if (! $validationResult['status']) {
-                return $validationResult;
-            }
+                $response = $validationResult;
+                $shouldLogExecutionCompleted = false;
+            } else {
+                $lastCompletedStep = $process->completed_step;
+                $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
 
-            $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
+                LoggerService::info('Starting step sequence execution', extra: [
+                    'process_id' => $process->id,
+                    'last_completed_step' => $lastCompletedStep,
+                    'next_step' => $nextStepToBeExecuted,
+                ]);
 
-            LoggerService::info('Starting step sequence execution', extra: [
-                'process_id' => $process->id,
-                'last_completed_step' => $lastCompletedStep,
-                'next_step' => $nextStepToBeExecuted,
-            ]);
+                $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
-            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
+                $response['status'] = $executeStepSequence['status'];
+                $response['message'] = $executeStepSequence['message'];
+                $response['error'] = $executeStepSequence['error'];
 
-            $response['status'] = $executeStepSequence['status'];
-            $response['message'] = $executeStepSequence['message'];
-            $response['error'] = $executeStepSequence['error'];
-
-            $stepMessage = $executeStepSequence['message'] ?? null;
-            if (
-                is_string($stepMessage) &&
-                str_contains($stepMessage, AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)
-            ) {
-                $response['timeout'] = true;
+                $stepMessage = $executeStepSequence['message'] ?? null;
+                if (
+                    is_string($stepMessage) &&
+                    str_contains($stepMessage, AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)
+                ) {
+                    $response['timeout'] = true;
+                }
             }
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
+            $shouldLogExecutionCompleted = false;
             LoggerService::error('Exception occurred during execution', extra: [
                 'process_id' => $process->id,
                 'quote_id' => $quote->id,
                 'quote_type' => QuoteTypes::HEALTH->value,
                 'quote_code' => $quote->code,
             ], exception: $e);
-
-            return $response;
         }
 
-        LoggerService::info('Execution completed', extra: [
-            'process_id' => $process->id,
-            'final_status' => $response['status'],
-            'message' => $response['message'],
-        ]);
+        if ($shouldLogExecutionCompleted) {
+            LoggerService::info('Execution completed', extra: [
+                'process_id' => $process->id,
+                'final_status' => $response['status'],
+                'message' => $response['message'],
+            ]);
+        }
 
         return $response;
     }
@@ -238,15 +242,16 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
      * @param  mixed  $quote
      * @param  mixed  $process
      * @param  string  $nextStepToBeExecuted
-     * @return array
+     * @return array<string, mixed>
      */
-    private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted): array
     {
         $currentStep = $nextStepToBeExecuted;
         $allSteps = $this->getAPISteps();
         $stepsExecuted = [];
+        $failureResponse = null;
 
-        while ($currentStep !== null) {
+        while ($currentStep !== null && $failureResponse === null) {
             if (! in_array($currentStep, $allSteps, true)) {
                 $error = 'Unknown step encountered: '.$currentStep;
                 LoggerService::error('Invalid step', extra: [
@@ -256,7 +261,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $failureResponse = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             $handler = $this->getStepHandler($currentStep);
@@ -269,7 +275,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $failureResponse = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             LoggerService::info('Executing step', extra: [
@@ -289,11 +296,16 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                     'error' => $response['error'] ?? AdnicEnum::UNKNOWN_ERROR,
                 ]);
 
-                return $response;
+                $failureResponse = $response;
+                break;
             }
 
             $this->updateProcessWithStep($process, $response);
             $currentStep = $this->getNextStep($process->completed_step);
+        }
+
+        if ($failureResponse !== null) {
+            return $failureResponse;
         }
 
         LoggerService::info('All steps completed successfully', extra: [
