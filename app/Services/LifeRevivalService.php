@@ -194,6 +194,14 @@ class LifeRevivalService
             }
         );
 
+        $query->when($request->filled('created_at_start') && $request->filled('created_at_end'),
+            function ($q) use ($request): void {
+                $start = Carbon::parse((string) $request->created_at_start)->startOfDay()->toDateTimeString();
+                $end = Carbon::parse((string) $request->created_at_end)->endOfDay()->toDateTimeString();
+                $q->whereBetween('personal_quotes.created_at', [$start, $end]);
+            }
+        );
+
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         if (Auth::user()->hasRole(RolesEnum::LifeAdvisor)) {
