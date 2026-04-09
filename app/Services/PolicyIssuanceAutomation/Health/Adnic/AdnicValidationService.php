@@ -85,7 +85,6 @@ class AdnicValidationService
             DocumentTypeCode::HEA_EMIRATE_ID_COPY, // Emirates ID
             DocumentTypeCode::HEA_PAS, // Passport
             DocumentTypeCode::HEA_VISA, // Visa
-            DocumentTypeCode::HEA_BIRTH_CERTIFICATE, // Birth Certificate
         ];
 
         // Group uploaded documents by type code
