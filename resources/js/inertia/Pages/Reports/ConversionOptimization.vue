@@ -617,7 +617,13 @@ const onDataExport = async (exportType = EXPORT_TYPES.DOWNLOAD) => {
 
   try {
     const payload = cleanFilters(filters);
-    const data = { ...payload, exportType };
+    const exportPayload = { ...payload };
+
+    /** removing page, which removes the case where page=1 and advisorAssignedDate
+     * both requested causing less-constrained export which can lead to memory exhaustion. */
+    delete exportPayload.page;
+
+    const data = { ...exportPayload, exportType };
     const url = route('conversion-optimization-export');
     const finalUrl = `${url}?${useObjToUrl(data)}`;
 
@@ -675,9 +681,6 @@ onMounted(async () => {
   setDefaultValues();
   setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams','sub_teams'] });
   await onLobChange(filters.lob, true);
-
-  console.log("filters.teams?.length",filters.teams?.length);
-  console.log("filters.teams?.length",filters.sub_teams?.length);
 
   if (filters.teams?.length > 0 && filters.sub_teams?.length < 1) {
     await loadSubTeams(filters.teams);

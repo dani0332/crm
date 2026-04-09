@@ -165,7 +165,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
             }
         }
 
-        return $normalizedRows;
+        return $rankedRows;
     }
 
     protected function getAdvisorMetadata(array $advisorIds, ?string $lob): Collection

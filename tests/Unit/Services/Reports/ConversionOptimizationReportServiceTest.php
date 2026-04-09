@@ -160,3 +160,97 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
         ->and($result[1]->total_average)->toBe(30.0)
         ->and($result[3]->total_average)->toBe(30.0);
 });
+
+test('it returns rows sorted by conversion descending so ranking matches row order', function () {
+    $service = new class(collect([
+        1 => (object) [
+            'id' => 1,
+            'team_id' => 11,
+            'team_name' => 'Organic',
+            'sub_team_id' => null,
+            'sub_team_name' => null,
+            'max_capacity' => 20,
+        ],
+        2 => (object) [
+            'id' => 2,
+            'team_id' => 11,
+            'team_name' => 'Organic',
+            'sub_team_id' => null,
+            'sub_team_name' => null,
+            'max_capacity' => 20,
+        ],
+        3 => (object) [
+            'id' => 3,
+            'team_id' => 11,
+            'team_name' => 'Organic',
+            'sub_team_id' => null,
+            'sub_team_name' => null,
+            'max_capacity' => 20,
+        ],
+    ])) extends ConversionOptimizationReportService {
+        public function __construct(private Collection $advisorMetadata)
+        {
+            parent::__construct();
+        }
+
+        protected function getAdvisorMetadata(array $advisorIds, ?string $lob): Collection
+        {
+            return $this->advisorMetadata;
+        }
+    };
+
+    $rows = collect([
+        (object) [
+            'advisorId' => 3,
+            'advisor_name' => 'Charlie',
+            'quote_batch_id' => 1,
+            'batch_name' => 'Batch 1',
+            'start_date' => '01-01-2026',
+            'end_date' => '07-01-2026',
+            'total_leads' => 100,
+            'sale_leads' => 10,
+            'bad_leads' => 0,
+            'net_conversion' => 10.0,
+        ],
+        (object) [
+            'advisorId' => 1,
+            'advisor_name' => 'Alice',
+            'quote_batch_id' => 1,
+            'batch_name' => 'Batch 1',
+            'start_date' => '01-01-2026',
+            'end_date' => '07-01-2026',
+            'total_leads' => 100,
+            'sale_leads' => 90,
+            'bad_leads' => 0,
+            'net_conversion' => 90.0,
+        ],
+        (object) [
+            'advisorId' => 2,
+            'advisor_name' => 'Bob',
+            'quote_batch_id' => 1,
+            'batch_name' => 'Batch 1',
+            'start_date' => '01-01-2026',
+            'end_date' => '07-01-2026',
+            'total_leads' => 100,
+            'sale_leads' => 50,
+            'bad_leads' => 0,
+            'net_conversion' => 50.0,
+        ],
+    ]);
+
+    $result = $service->applyPostQueryCalculations($rows, [
+        'lob' => 'Car',
+        'cap_percentage' => '',
+    ])->values();
+
+    expect($result)->toHaveCount(3)
+        ->and($result[0]->advisorId)->toBe(1)
+        ->and($result[0]->conversion)->toBe(90.0)
+        ->and($result[0]->ranking)->toBe(1)
+        ->and($result[1]->advisorId)->toBe(2)
+        ->and($result[1]->conversion)->toBe(50.0)
+        ->and($result[1]->ranking)->toBe(2)
+        ->and($result[2]->advisorId)->toBe(3)
+        ->and($result[2]->conversion)->toBe(10.0)
+        ->and($result[2]->ranking)->toBe(3);
+});
