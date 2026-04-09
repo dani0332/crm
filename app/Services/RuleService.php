@@ -263,7 +263,7 @@ class RuleService extends BaseService
             ->toArray();
     }
 
-    public function getRuleUserIds(QuoteTypes $quoteType, bool $excludeVehicleUseRule = false): mixed
+    public function getRuleUserIds(QuoteTypes $quoteType): mixed
     {
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
