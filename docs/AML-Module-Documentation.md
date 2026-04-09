@@ -51,11 +51,11 @@ When matches require human review, compliance users work from CRM screens backed
 
 Typical compliance outcomes:
 
-| Decision | Effect (conceptual) |
-|----------|---------------------|
-| **False positive** | Match dismissed; treated as **Pass** in evaluation mapping; lead can move forward when AML is cleared. |
-| **True match, accept risk** | Risk accepted; treated as **Pass**; AML can be cleared; lead proceeds. |
-| **True match, reject risk** | **Rejected**; lead must not proceed; AML remains failed. |
+| Decision                    | Effect (conceptual)                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **False positive**          | Match dismissed; treated as **Pass** in evaluation mapping; lead can move forward when AML is cleared. |
+| **True match, accept risk** | Risk accepted; treated as **Pass**; AML can be cleared; lead proceeds.                                 |
+| **True match, reject risk** | **Rejected**; lead must not proceed; AML remains failed.                                               |
 
 Implementation touches `AMLDecisionStatusEnum` values such as `FALSE_POSITIVE`, `TRUE_MATCH_ACCEPT_RISK`, `TRUE_MATCH_REJECT_RISK`, and persistence on `kyc_logs` (e.g. `decision`, notes, PEP/sanctions fields). Updates may also sync with external portal APIs (`AMLService::updateAMLDecisionLexisNexis` and related paths).
 
@@ -63,14 +63,14 @@ Implementation touches `AMLDecisionStatusEnum` values such as `FALSE_POSITIVE`, 
 
 Routes live under the **`kyc`** prefix (see `routes/web.php`). Examples:
 
-| Action | Illustrative route | Role |
-|--------|-------------------|------|
-| AML inbox / filters | `GET /kyc/aml` | `index` — Inertia `Aml/Index`; data via `AMLQueryService` |
-| Quote AML detail | `GET /kyc/aml/{quoteTypeId}/details/{quoteRequestId}` | `amlQuoteDetails` — `AMLQuoteDetailsService` |
-| Screening result / compliance UI | `GET /kyc/aml/{aml}/{insuredId?}/{customerId?}` | `show` — `AMLDisplayService::prepareShowData()` |
-| Run screening / refresh | `GET .../quoteUpdate` | `quoteUpdate` — prepares data, runs `BridgerAMLJob`, updates status logs |
-| Compliance / portal decision | `GET .../quoteStatusUpdate/{quoteTypeCode}` | `quoteStatusUpdate` — LexisNexis portal and `updateAMLStatusAgainstDecision` when applicable |
-| Export | `GET /kyc/export` | `export` — `AMLExportService` (permission-gated) |
+| Action                           | Illustrative route                                    | Role                                                                                         |
+| -------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| AML inbox / filters              | `GET /kyc/aml`                                        | `index` — Inertia `Aml/Index`; data via `AMLQueryService`                                    |
+| Quote AML detail                 | `GET /kyc/aml/{quoteTypeId}/details/{quoteRequestId}` | `amlQuoteDetails` — `AMLQuoteDetailsService`                                                 |
+| Screening result / compliance UI | `GET /kyc/aml/{aml}/{insuredId?}/{customerId?}`       | `show` — `AMLDisplayService::prepareShowData()`                                              |
+| Run screening / refresh          | `GET .../quoteUpdate`                                 | `quoteUpdate` — prepares data, runs `BridgerAMLJob`, updates status logs                     |
+| Compliance / portal decision     | `GET .../quoteStatusUpdate/{quoteTypeCode}`           | `quoteStatusUpdate` — LexisNexis portal and `updateAMLStatusAgainstDecision` when applicable |
+| Export                           | `GET /kyc/export`                                     | `export` — `AMLExportService` (permission-gated)                                             |
 
 Additional JSON endpoints include insured lookup, entity fetch/link, Bridger response POST, skip Bridger, CTF export, insurer quote details, and travel AML requirement checks.
 
@@ -82,18 +82,18 @@ Large orchestration service: migration-aware quote resolution (`isDataMigrated`,
 
 ### `app/Services/AML/*`
 
-| Class | Responsibility |
-|-------|----------------|
-| `AMLQueryService` | Paginated AML list queries per quote type; personal quote migration table selection |
-| `AMLQuoteDetailsService` | Detail page payload for a quote under AML |
-| `AMLDisplayService` | Show page: AML model, processed results, quote + insured context, enums for UI |
-| `AMLResultsProcessor` | Shape/normalize Bridger-style results for display |
-| `AMLInsuredService` | Insured + KYC resolution for individual context |
-| `AMLEntityService` | Entity lookup and linking |
-| `AMLInsurerService` | Insurer AML integration surface used by controller |
-| `AMLExportService` | AML log export |
-| `AMLLookupsService` | Lookup-driven AML data |
-| `AMLBusinessPayloadService` | Business LOB screening payloads |
+| Class                       | Responsibility                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| `AMLQueryService`           | Paginated AML list queries per quote type; personal quote migration table selection |
+| `AMLQuoteDetailsService`    | Detail page payload for a quote under AML                                           |
+| `AMLDisplayService`         | Show page: AML model, processed results, quote + insured context, enums for UI      |
+| `AMLResultsProcessor`       | Shape/normalize Bridger-style results for display                                   |
+| `AMLInsuredService`         | Insured + KYC resolution for individual context                                     |
+| `AMLEntityService`          | Entity lookup and linking                                                           |
+| `AMLInsurerService`         | Insurer AML integration surface used by controller                                  |
+| `AMLExportService`          | AML log export                                                                      |
+| `AMLLookupsService`         | Lookup-driven AML data                                                              |
+| `AMLBusinessPayloadService` | Business LOB screening payloads                                                     |
 
 ### Async / integration
 
@@ -132,4 +132,4 @@ Inertia pages under the `Aml/*` namespace (e.g. `Aml/Index`, `Aml/DetailPage`, `
 
 ---
 
-*Last updated to reflect the AML controller, `AMLService`, and `app/Services/AML` layout in this repository.*
+_Last updated to reflect the AML controller, `AMLService`, and `app/Services/AML` layout in this repository._
