@@ -82,6 +82,26 @@ it('returns false when any split is not insurer payment', function () {
     expect($service->canBypassPlanLock($quote, collect([$payment])))->toBeFalse();
 });
 
+it('returns false when total_payments is null even if splits exist', function () {
+    $payment = new Payment(['total_payments' => null, 'send_update_log_id' => null]);
+    $payment->setRelation('paymentSplits', collect([
+        new PaymentSplits(['payment_method' => PaymentMethodsEnum::InsurerPayment]),
+    ]));
+
+    $quote = Mockery::mock(HealthQuote::class)->makePartial();
+    $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
+    $quote->shouldReceive('payments')->never();
+
+    $user = Mockery::mock(User::class);
+    $user->shouldReceive('can')->with(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL)->once()->andReturn(true);
+
+    Auth::shouldReceive('user')->once()->andReturn($user);
+
+    $service = app(HealthQuoteService::class);
+
+    expect($service->canBypassPlanLock($quote, collect([$payment])))->toBeFalse();
+});
+
 it('returns false when total_payments does not match split count', function () {
     $payment = new Payment(['total_payments' => 3, 'send_update_log_id' => null]);
     $payment->setRelation('paymentSplits', collect([

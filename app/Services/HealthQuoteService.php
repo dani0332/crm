@@ -1921,6 +1921,11 @@ class HealthQuoteService extends BaseService
 
         $splitCount = $paymentSplits->count();
 
+        $expectedSplitCount = $mainPayment->total_payments;
+        if ($expectedSplitCount === null || (int) $expectedSplitCount !== $splitCount) {
+            return false;
+        }
+
         return $paymentSplits->where('payment_method', PaymentMethodsEnum::InsurerPayment)->count() === $splitCount;
     }
 
