@@ -111,6 +111,17 @@ class AdnicApiService
             );
         }
 
+        return $this->uploadDocumentsAfterValidation($quote, $process, $healthInsurerResponse, $insuredInfoDetails, $quoteDocuments);
+    }
+
+    /**
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  mixed  $healthInsurerResponse
+     * @param  mixed  $quoteDocuments
+     */
+    private function uploadDocumentsAfterValidation($quote, $process, $healthInsurerResponse, array $insuredInfoDetails, $quoteDocuments): array
+    {
         $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 
@@ -211,14 +222,25 @@ class AdnicApiService
             return $response;
         }
 
+        return $this->uploadPolicyDocumentsToIMCRMFromIssueLog($quote, $process, $generatePolicyResponse, $response);
+    }
+
+    /**
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  mixed  $issuePolicyLog
+     * @param  array<string, mixed>  $response
+     */
+    private function uploadPolicyDocumentsToIMCRMFromIssueLog($quote, $process, $issuePolicyLog, array $response): array
+    {
         $endPoint = '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();
 
         // validation added before hitting api to awnic for downloading document
 
-        $generatePolicyResponse = $generatePolicyResponse?->response ? json_decode($generatePolicyResponse->response) : null;
-        $policyIssueResponse = $generatePolicyResponse?->data;
+        $decodedIssuePolicy = $issuePolicyLog?->response ? json_decode($issuePolicyLog->response) : null;
+        $policyIssueResponse = $decodedIssuePolicy?->data;
         $policyDocuments = data_get($policyIssueResponse, 'PolicyDocumentInfo');
 
         if ($policyDocuments === null) {
