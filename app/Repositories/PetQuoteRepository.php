@@ -285,7 +285,7 @@ class PetQuoteRepository extends BaseRepository
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'transactionType',
                 'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
@@ -338,7 +338,7 @@ class PetQuoteRepository extends BaseRepository
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;

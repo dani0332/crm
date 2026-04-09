@@ -815,7 +815,7 @@ class HomeQuoteRepository extends BaseRepository
                 'insuranceProvider',
                 'insuranceProviderPlan',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'quoteStatus',
                 'advisor',
                 'advisor.primaryBranch.branch:id,name',
@@ -894,7 +894,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Use null coalescing for safely accessing possibly undefined array keys
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         // Check if payments property exists before using it

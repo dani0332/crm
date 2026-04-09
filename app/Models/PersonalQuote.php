@@ -130,6 +130,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(self::class, 'previous_quote_id');
     }
 
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
     /**
      * @return BelongsTo
      */
