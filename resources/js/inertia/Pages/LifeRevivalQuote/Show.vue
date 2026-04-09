@@ -1449,7 +1449,7 @@ const getDisplayPriceInAED = item => {
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link
               v-if="!isDisabled"
-              :href="route('life-quotes-edit', quote.uuid)"
+              :href="route('life-revival-quotes-edit', quote.uuid)"
             >
               <x-button size="sm" tag="div">Edit</x-button>
             </Link>
@@ -2881,7 +2881,6 @@ const getDisplayPriceInAED = item => {
       </Collapsible>
     </div>
 
-    <!--
     <LazyCreatePlan
       v-model="modals.createPlan"
       :uuid="quote.uuid"
@@ -2893,7 +2892,6 @@ const getDisplayPriceInAED = item => {
       @success="onCreatePlan"
       @error="onPlanError"
     />
-
 
     <CreatePlanVariant
       v-model="modals.createPlanVariant"
@@ -2907,8 +2905,6 @@ const getDisplayPriceInAED = item => {
       @success="onCreateVariant"
       @error="onPlanError"
     />
-
--->
 
     <template>
       <EditPlan

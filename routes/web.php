@@ -342,6 +342,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('personal-quotes/life-revival', [LifeRevivalQuoteController::class, 'index'])->name('life-revival-quotes-list');
         Route::get('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'show'])->name('life-revival-quotes-show');
+        Route::get('personal-quotes/life-revival/{uuid}/edit', [LifeRevivalQuoteController::class, 'edit'])->name('life-revival-quotes-edit');
+        Route::put('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'update'])->name('life-revival-quotes-update');
     });
 
     // Claims Management Routes
