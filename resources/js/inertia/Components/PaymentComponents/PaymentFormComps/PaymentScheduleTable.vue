@@ -210,6 +210,13 @@ const isPolicySendUpdateBooked = option => {
   }
   return isCCAndInsurer && isPolicyBooked && !props.sendUpdate;
 };
+
+/** Start of today (local) — disables past days on split due date pickers. */
+const minDueDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
 </script>
 
 <template>
@@ -845,9 +852,10 @@ const isPolicySendUpdateBooked = option => {
               <DatePicker
                 v-model="dueDateModels[count]"
                 class="w-full"
-                :rules="[rules.isRequired]"
+                :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
                 placeholder="dd-mm-yyyy"
                 :disabled="isPaymentLocked"
+                :min-date="minDueDate"
               />
             </template>
           </div>

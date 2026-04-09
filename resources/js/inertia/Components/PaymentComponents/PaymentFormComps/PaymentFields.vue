@@ -158,7 +158,7 @@ const minCollectionDate = computed(() => {
           v-if="!isFieldReadonly"
           name="collection_date"
           v-model="paymentMethodsForm.collection_date"
-          :rules="[rules.isRequired, rules.collectionDateOnOrAfterToday]"
+          :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
           :min-date="minCollectionDate"
         />
       </x-field>

@@ -336,22 +336,20 @@ const rules = {
       return 'Please enter a valid URL';
     }
   },
-  collectionDateOnOrAfterToday: v => {
+  /** Collection date, split due dates, etc. — not earlier than today (local calendar day). */
+  dateOnOrAfterToday: v => {
     if (!v) {
       return true;
     }
     const parsed = new Date(v);
     if (Number.isNaN(parsed.getTime())) {
-      return 'Collection date is invalid';
+      return 'Date is invalid';
     }
     const selected = new Date(parsed);
     selected.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return (
-      selected >= today ||
-      'Collection date cannot be earlier than today'
-    );
+    return selected >= today || 'Date cannot be earlier than today';
   },
 };
 
