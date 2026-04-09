@@ -30,6 +30,7 @@ class CourtesyEmailService extends BaseService
         QuoteTypeId::Cyber,
         QuoteTypeId::Health,
         QuoteTypeId::Home,
+        QuoteTypeId::Jetski,
         QuoteTypeId::Life,
         QuoteTypeId::Pet,
         QuoteTypeId::Savings,
