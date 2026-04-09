@@ -44,7 +44,6 @@ class UpdateRuleNameSeederCompany extends Seeder
                     ]
                 );
 
-              
                 LoggerService::info('Commercial rule created successfully for rule name: '.RuleEnum::COMPANY_USE->value.' | Time: '.now());
             }
 
@@ -57,11 +56,10 @@ class UpdateRuleNameSeederCompany extends Seeder
                 ]);
             }
 
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LoggerService::warning('Company Use rule creation failed for rule name: '.RuleEnum::COMPANY_USE->value.' | Time: '.now());
-            LoggerService::warning('Exception: ' . $e->getMessage() . ' | Line: ' . $e->getLine() . ' | Trace: ' . $e->getFile());
-       
-        }   
+            LoggerService::warning('Exception: '.$e->getMessage().' | Line: '.$e->getLine().' | Trace: '.$e->getFile());
+
+        }
     }
 }
