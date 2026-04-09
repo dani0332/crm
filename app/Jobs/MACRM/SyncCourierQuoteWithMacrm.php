@@ -30,7 +30,7 @@ class SyncCourierQuoteWithMacrm implements ShouldQueue
             LoggerService::info(self::class." - Syncing Courier Quote with MACRM for UUID: {$this->quote->uuid} and QuoteTypeId: {$this->quoteTypeId}");
             MACRMService::syncCourierQuote($this->quote, $this->quoteTypeId);
         } catch (Exception $e) {
-            LoggerService::error(self::class." - Error: {$e->getMessage()}");
+            LoggerService::error(self::class." - Error while syncing Courier Quote with MACRM for UUID: {$this->quote->uuid} and QuoteTypeId: {$this->quoteTypeId}", exception: $e);
         }
     }
 
