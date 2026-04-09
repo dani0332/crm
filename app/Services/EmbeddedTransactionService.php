@@ -288,7 +288,7 @@ class EmbeddedTransactionService extends BaseService
 
         $oldDocument = $embeddedTransaction !== null
             ? $embeddedTransaction->documents()
-                ->withTrashed()
+                ->withoutTrashed()
                 ->with([
                     'documentType' => function ($query) use ($quoteTypeId): void {
                         $query->where('quote_type_id', $quoteTypeId);
