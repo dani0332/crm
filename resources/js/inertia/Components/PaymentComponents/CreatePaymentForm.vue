@@ -336,6 +336,23 @@ const rules = {
       return 'Please enter a valid URL';
     }
   },
+  collectionDateOnOrAfterToday: v => {
+    if (!v) {
+      return true;
+    }
+    const parsed = new Date(v);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Collection date is invalid';
+    }
+    const selected = new Date(parsed);
+    selected.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (
+      selected >= today ||
+      'Collection date cannot be earlier than today'
+    );
+  },
 };
 
 const isPaymentLocked = computed(() => {
