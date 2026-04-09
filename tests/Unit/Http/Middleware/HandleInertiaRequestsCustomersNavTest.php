@@ -24,7 +24,7 @@ function inertiaNavigationTree(User $user): array
     Auth::login($user);
 
     $middleware = app(HandleInertiaRequests::class);
-    $method = new \ReflectionMethod(HandleInertiaRequests::class, 'buildNavigation');
+    $method = new ReflectionMethod(HandleInertiaRequests::class, 'buildNavigation');
     $method->setAccessible(true);
     /** @var Navigation $nav */
     $nav = $method->invoke($middleware);
