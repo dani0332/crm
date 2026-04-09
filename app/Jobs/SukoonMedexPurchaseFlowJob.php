@@ -23,7 +23,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     private $quoteObject;
     private $quoteTypeId;
     private $transaction;
-    private $isSendEmail = false;
+    private $isSendEmail = true;
     private string $logPrefix = 'SukoonMedex - PurchaseFlowJob:';
     private array $logExtra = [];
 
