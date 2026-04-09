@@ -335,39 +335,32 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     public function getNextStep($completedStep = null): ?string
     {
         $allSteps = $this->getAPISteps();
+        $nextStep = null;
 
         if (! $completedStep) {
             $nextStep = $allSteps[0];
             LoggerService::info('No previous step, starting from beginning', extra: [
                 'next_step' => $nextStep,
             ]);
-
-            return $nextStep;
+        } else {
+            $completedStepIndex = array_search($completedStep, $allSteps, true);
+            if ($completedStepIndex === false) {
+                LoggerService::warning('Completed step not found in valid steps', extra: [
+                    'completed_step' => $completedStep,
+                    'valid_steps' => $allSteps,
+                ]);
+            } elseif ($completedStepIndex === count($allSteps) - 1) {
+                LoggerService::info('All steps completed', extra: [
+                    'last_completed_step' => $completedStep,
+                ]);
+            } else {
+                $nextStep = $allSteps[$completedStepIndex + 1];
+                LoggerService::info('Next step determined', extra: [
+                    'completed_step' => $completedStep,
+                    'next_step' => $nextStep,
+                ]);
+            }
         }
-
-        $completedStepIndex = array_search($completedStep, $allSteps);
-        if ($completedStepIndex === false) {
-            LoggerService::warning('Completed step not found in valid steps', extra: [
-                'completed_step' => $completedStep,
-                'valid_steps' => $allSteps,
-            ]);
-
-            return null;
-        }
-
-        if ($completedStepIndex === count($allSteps) - 1) {
-            LoggerService::info('All steps completed', extra: [
-                'last_completed_step' => $completedStep,
-            ]);
-
-            return null;
-        }
-
-        $nextStep = $allSteps[$completedStepIndex + 1];
-        LoggerService::info('Next step determined', extra: [
-            'completed_step' => $completedStep,
-            'next_step' => $nextStep,
-        ]);
 
         return $nextStep;
     }
