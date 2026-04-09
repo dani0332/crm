@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -105,6 +106,7 @@ class AmtController extends Controller
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
+                DB::raw('DATE_FORMAT(bqrd.advisor_assigned_date, "%d-%b-%Y %r") as advisor_assigned_date'),
                 'bqr.policy_number',
                 'bqr.renewal_batch',
                 'rb.name as renewal_batch_text',
@@ -132,6 +134,15 @@ class AmtController extends Controller
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'bqr.is_branch_applicable',
+                DB::raw('(CASE
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SYSTEM_ASSIGNED.' THEN "System Assigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SYSTEM_REASSIGNED.' THEN "System Reassigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::MANUAL_ASSIGNED.' THEN "Manual Assigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::MANUAL_REASSIGNED.' THEN "Manual Reassigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::BOUGHT_LEAD.' THEN "Bought Lead"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD.' THEN "Reassigned as Bought Lead"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
+                    ELSE "" END) as assignment_type_text'),
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -165,7 +176,8 @@ class AmtController extends Controller
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
+            && (! $request->filled('assignment_type') || strtolower((string) $request->assignment_type) === 'all')) {
             $data->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (isset($request->company_name)) {
@@ -271,6 +283,10 @@ class AmtController extends Controller
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
+        if ($request->filled('assignment_type') && strtolower((string) $request->assignment_type) !== 'all') {
+            $data->where('bqr.assignment_type', $request->assignment_type);
+        }
+
         // Apply authorize_date filter
         if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
             $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
@@ -317,7 +333,9 @@ class AmtController extends Controller
 
         $subSources = app(LookupService::class)->getSubSource();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
+        $assignmentTypes = AssignmentTypeEnum::withLabels();
+
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'assignmentTypes'));
     }
 
     /**
@@ -415,7 +433,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */
