@@ -321,7 +321,7 @@ class EmbeddedProductService extends BaseService
 
             Bus::chain([
                 $watermarkJob,
-                function () use ($documentTypeCode, $quoteId, $epId, $modelType): void {
+                static function () use ($documentTypeCode, $quoteId, $epId, $modelType): void {
                     if (in_array($documentTypeCode, QuoteDocumentsEnum::getEpSentToCustomerDocTypes(), true)) {
                         $sendResult = EmbeddedProductRepository::sendDocument([
                             'epId' => $epId,

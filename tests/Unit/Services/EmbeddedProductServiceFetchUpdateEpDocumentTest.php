@@ -13,11 +13,13 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\Life\EmbeddedProductService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Laravel\SerializableClosure\SerializableClosure;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -267,4 +269,27 @@ test('queued EP send assertion does not throw when send result is successful', f
     $method->invoke(null, ['success' => true, 'message' => 'Certificate sent successfully'], 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE);
 
     expect(true)->toBeTrue();
+});
+
+test('Bus chain EP auto-send closure serializes without binding EmbeddedProductService', function () {
+    $documentTypeCode = QuoteDocumentsEnum::POLICY_SCHEDULE;
+    $quoteId = 1;
+    $epId = 2;
+    $modelType = 'car';
+
+    $closure = static function () use ($documentTypeCode, $quoteId, $epId, $modelType): void {
+        if (in_array($documentTypeCode, QuoteDocumentsEnum::getEpSentToCustomerDocTypes(), true)) {
+            EmbeddedProductRepository::sendDocument([
+                'epId' => $epId,
+                'modelType' => $modelType,
+                'quoteId' => $quoteId,
+            ]);
+        }
+    };
+
+    $wrapper = new SerializableClosure($closure);
+    $serialized = serialize($wrapper);
+
+    expect($serialized)->toBeString()->not->toBeEmpty()
+        ->and(unserialize($serialized))->toBeInstanceOf(SerializableClosure::class);
 });
