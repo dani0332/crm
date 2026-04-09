@@ -60,57 +60,58 @@ class AdnicValidationService
 
     public function validateUploadDocuments($quote, $quoteDocuments, $insuredInfoDetails): array
     {
+        $result = ['status' => true];
+
         if (! $quoteDocuments || $quoteDocuments->isEmpty()) {
-            return [
+            $result = [
                 'status' => false,
                 'error' => 'Required documents not uploaded',
                 'message' => 'Required documents not uploaded',
             ];
-        }
-
-        if (! $insuredInfoDetails || empty($insuredInfoDetails)) {
-            return [
+        } elseif (! $insuredInfoDetails || empty($insuredInfoDetails)) {
+            $result = [
                 'status' => false,
                 'error' => 'Insured info details not found',
                 'message' => 'Insured info details not found',
             ];
-        }
+        } else {
+            // Define mandatory document types based on ADNIC requirements
+            $mandatoryDocuments = [
+                DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM, // Medical application form
+                DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE, // Others (Customer Due Diligence)
+                DocumentTypeCode::HEA_EMIRATE_ID_COPY, // Emirates ID
+                DocumentTypeCode::HEA_PAS, // Passport
+                DocumentTypeCode::HEA_VISA, // Visa
+                DocumentTypeCode::HEA_BIRTH_CERTIFICATE, // Birth Certificate
+            ];
 
-        // Define mandatory document types based on ADNIC requirements
-        $mandatoryDocuments = [
-            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM, // Medical application form
-            DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE, // Others (Customer Due Diligence)
-            DocumentTypeCode::HEA_EMIRATE_ID_COPY, // Emirates ID
-            DocumentTypeCode::HEA_PAS, // Passport
-            DocumentTypeCode::HEA_VISA, // Visa
-        ];
+            // Group uploaded documents by type code
+            $uploadedDocumentCodes = $quoteDocuments->pluck('document_type_code')->unique()->toArray();
 
-        // Group uploaded documents by type code
-        $uploadedDocumentCodes = $quoteDocuments->pluck('document_type_code')->unique()->toArray();
+            // Check for missing mandatory documents
+            $missingDocuments = [];
+            foreach ($mandatoryDocuments as $docCode) {
+                if (! in_array($docCode, $uploadedDocumentCodes, true)) {
+                    $missingDocuments[] = $docCode;
+                }
+            }
 
-        // Check for missing mandatory documents
-        $missingDocuments = [];
-        foreach ($mandatoryDocuments as $docCode) {
-            if (! in_array($docCode, $uploadedDocumentCodes, true)) {
-                $missingDocuments[] = $docCode;
+            if (! empty($missingDocuments)) {
+                $missingList = implode(', ', $missingDocuments);
+                LoggerService::error('Missing mandatory documents for ADNIC policy issuance', extra: [
+                    'quote_uuid' => $quote->uuid ?? null,
+                    'missing_documents' => $missingDocuments,
+                    'uploaded_documents' => $uploadedDocumentCodes,
+                ]);
+
+                $result = [
+                    'status' => false,
+                    'error' => "Missing required documents: {$missingList}",
+                    'message' => "Missing required documents: {$missingList}",
+                ];
             }
         }
 
-        if (! empty($missingDocuments)) {
-            $missingList = implode(', ', $missingDocuments);
-            LoggerService::error('Missing mandatory documents for ADNIC policy issuance', extra: [
-                'quote_uuid' => $quote->uuid ?? null,
-                'missing_documents' => $missingDocuments,
-                'uploaded_documents' => $uploadedDocumentCodes,
-            ]);
-
-            return [
-                'status' => false,
-                'error' => "Missing required documents: {$missingList}",
-                'message' => "Missing required documents: {$missingList}",
-            ];
-        }
-
-        return ['status' => true];
+        return $result;
     }
 }
