@@ -74,14 +74,16 @@ class ReportsController extends Controller
 
     public function renderConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
     {
-        $defaultFilters = $conversionOptimizationReportService->getDefaultFilters();
-        $reportRequest = $conversionOptimizationReportService->mergeDefaultsIntoRequest($request, $defaultFilters);
+        $requestForReport = $conversionOptimizationReportService->mergeDefaultsIntoRequest(
+            $request,
+            $conversionOptimizationReportService->getDefaultFilters()
+        );
 
         return inertia('Reports/ConversionOptimization', [
-            'reportData' => $conversionOptimizationReportService->getReportData($request),
-            'filtersByLob' => $conversionOptimizationReportService->getFiltersByLob(),
-            'filterOptions' => $conversionOptimizationReportService->getFilterOptions(),
-            'defaultFilters' => $conversionOptimizationReportService->getDefaultFilters(),
+            'reportData' => fn () => $conversionOptimizationReportService->getReportData($requestForReport),
+            'filtersByLob' => fn () => $conversionOptimizationReportService->getFiltersByLob(),
+            'filterOptions' => fn () => $conversionOptimizationReportService->getFilterOptions(),
+            'defaultFilters' => fn () => $conversionOptimizationReportService->getDefaultFilters(),
         ]);
     }
 

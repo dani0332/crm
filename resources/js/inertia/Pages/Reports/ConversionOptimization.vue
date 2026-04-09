@@ -2,7 +2,7 @@
 import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
 
 const props = defineProps({
-  reportData: Array,
+  reportData: { type: Array, default: () => [] },
   filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
@@ -268,11 +268,40 @@ const getAdvisorLabel = () => {
   return label;
 };
 
+const INTEGER_DEFAULT_FILTER_KEYS = new Set(['page']);
+const INTEGER_ID_ARRAY_DEFAULT_FILTER_KEYS = new Set([
+  'teams',
+  'sub_teams',
+  'advisors',
+]);
+
+const parseDefaultFilterInt = raw => {
+  if (raw === '' || raw === null || raw === undefined) {
+    return raw;
+  }
+
+  const parsed = Number.parseInt(String(raw), 10);
+
+  return Number.isNaN(parsed) ? raw : parsed;
+};
+
+const coerceDefaultFilterValue = (key, value) => {
+  if (INTEGER_DEFAULT_FILTER_KEYS.has(key)) {
+    return parseDefaultFilterInt(value);
+  }
+
+  if (INTEGER_ID_ARRAY_DEFAULT_FILTER_KEYS.has(key) && Array.isArray(value)) {
+    return value.map(v => parseDefaultFilterInt(v));
+  }
+
+  return value;
+};
+
 const setDefaultValues = () => {
   if (props.defaultFilters && !params.page) {
     Object.keys(props.defaultFilters).forEach(key => {
       if (Object.prototype.hasOwnProperty.call(filters, key)) {
-        filters[key] = props.defaultFilters[key];
+        filters[key] = coerceDefaultFilterValue(key, props.defaultFilters[key]);
       }
     });
   }
@@ -325,7 +354,7 @@ const loadSubTeams = async selectedTeams => {
     });
 
     subteamOptions.value = (response.data ?? []).map(subTeam => ({
-      value: subTeam.id.toString(),
+      value: parseInt(String(subTeam.id), 10),
       label: subTeam.name,
     }));
   } finally {
@@ -644,8 +673,11 @@ const formatValue = value => {
 
 onMounted(async () => {
   setDefaultValues();
-  setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams'] });
+  setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams','sub_teams'] });
   await onLobChange(filters.lob, true);
+
+  console.log("filters.teams?.length",filters.teams?.length);
+  console.log("filters.teams?.length",filters.sub_teams?.length);
 
   if (filters.teams?.length > 0 && filters.sub_teams?.length < 1) {
     await loadSubTeams(filters.teams);
@@ -658,7 +690,6 @@ onMounted(async () => {
   isMounted.value = true;
 
   if (filters.lob) {
-    onSubmit(true, true);
     canExportReport.value = true;
   }
 });
