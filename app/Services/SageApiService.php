@@ -1896,9 +1896,20 @@ class SageApiService
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     $dueDate = $bookingDateFormatted;
                 } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1
-                        ? $bookingDateFormatted
-                        : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+
+                    if ($paymentSplit['sr_no'] == 1) {
+                        $dueDate = $bookingDateFormatted;
+                    } else {
+                        $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+                        $resolvedBookingDate = Carbon::parse($bookingDateFormatted)->startOfDay();
+                        
+                        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+                            $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
+                        } else {
+                            $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
+                        }
+                    }
                 }
 
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1917,7 +1928,19 @@ class SageApiService
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        if ($paymentSplit['sr_no'] == 1) {
+                            $dueDate = $bookingDateFormatted;
+                        } else {
+                            $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                            $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+                            $resolvedBookingDate = Carbon::parse($bookingDateFormatted)->startOfDay();
+                            
+                            if ($resolvedDueDate->lt($resolvedBookingDate)) {
+                                $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
+                            } else {
+                                $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
+                            }
+                        }
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
