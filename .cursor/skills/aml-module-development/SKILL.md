@@ -19,14 +19,14 @@ Use for changes touching anti–money laundering screening: CRM AML UI, Bridger 
 
 ## Architecture (where code lives)
 
-| Area | Location |
-|------|----------|
-| HTTP layer (Inertia + JSON) | `app/Http/Controllers/V2/AMLController.php` |
-| Orchestration & cross-LOB logic | `app/Services/AMLService.php` |
-| Focused AML services | `app/Services/AML/*.php` |
-| Async Bridger call | `app/Jobs/BridgerAMLJob.php` → `BridgerInsightService::searchAMLResult()` |
-| Decision / status enums | `AMLDecisionStatusEnum`, `AMLStatusCode`, `CustomerTypeEnum` |
-| Routes | `routes/web.php` group `prefix: kyc` (paths like `/kyc/aml/...`) |
+| Area                            | Location                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| HTTP layer (Inertia + JSON)     | `app/Http/Controllers/V2/AMLController.php`                               |
+| Orchestration & cross-LOB logic | `app/Services/AMLService.php`                                             |
+| Focused AML services            | `app/Services/AML/*.php`                                                  |
+| Async Bridger call              | `app/Jobs/BridgerAMLJob.php` → `BridgerInsightService::searchAMLResult()` |
+| Decision / status enums         | `AMLDecisionStatusEnum`, `AMLStatusCode`, `CustomerTypeEnum`              |
+| Routes                          | `routes/web.php` group `prefix: kyc` (paths like `/kyc/aml/...`)          |
 
 Long-form product and technical notes: [docs/AML-Module-Documentation.md](../../../docs/AML-Module-Documentation.md).
 
