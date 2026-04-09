@@ -83,17 +83,24 @@ class AdnicDocumentHandler
      * Get document by type from quote documents
      *
      * @param  mixed  $quote
-     * @return Collection|null
      */
-    public function getDocumentByType($quote, array $documentTypeCodes)
+    public function getDocumentByType($quote, array $documentTypeCodes): ?Collection
     {
         $documents = collect($quote->documents ?? []);
         $documents = $documents->whereIn('document_type_code', $documentTypeCodes);
 
-        if ($documents->isEmpty() || $documents->count() === 0) {
+        if ($documents->isEmpty()) {
             return null;
         }
 
+        return $this->finalizeDocumentsAfterTypeFilter($quote, $documents, $documentTypeCodes);
+    }
+
+    /**
+     * @param  mixed  $quote
+     */
+    private function finalizeDocumentsAfterTypeFilter($quote, Collection $documents, array $documentTypeCodes): ?Collection
+    {
         $emirateIdType = null;
         if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
             $emirateIdType = $this->modifyEmirateDocument($quote->uuid);
@@ -105,56 +112,78 @@ class AdnicDocumentHandler
             return null;
         }
 
-        // Handle Emirates ID document splitting logic
-        if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
-            // Filter only HEA_EMIRATE_ID_COPY documents
-            $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
+        if (! in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
+            return $documents;
+        }
 
-            // If type is 3 (Emirates ID) and there are multiple documents with HEA_EMIRATE_ID_COPY
-            if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE) {
-                $documentsArray = $documents->values()->all();
+        return $this->applyEmiratesIdCopyDocumentRules($documents, $emirateIdType);
+    }
 
-                // Find indices of HEA_EMIRATE_ID_COPY documents
-                $emirateIdIndices = [];
-                foreach ($documentsArray as $index => $doc) {
-                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
-                        $emirateIdIndices[] = $index;
-                    }
-                }
+    /**
+     * Adjust HEA_EMIRATE_ID_COPY rows for physical EID (front/back) or insured application flow.
+     */
+    private function applyEmiratesIdCopyDocumentRules(Collection $documents, ?int $emirateIdType): Collection
+    {
+        if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE) {
+            return $this->splitPhysicalEmiratesIdIntoFrontAndBack($documents);
+        }
 
-                if ($emirateIdDocuments->count() > 1) {
-                    // Modify first HEA_EMIRATE_ID_COPY document as front
-                    if (isset($emirateIdIndices[0])) {
-                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
-                    }
-
-                    // Modify second HEA_EMIRATE_ID_COPY document as back
-                    if (isset($emirateIdIndices[1])) {
-                        $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
-                    }
-                } else {
-                    if (isset($emirateIdIndices[0])) {
-                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EMIRATE_ID_COPY;
-                    }
-                }
-
-                return collect($documentsArray);
-            } elseif ($emirateIdType === AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE) {
-                $documentsArray = $documents->values()->all();
-
-                // Find first HEA_EMIRATE_ID_COPY document and modify its insurerDocCode
-                foreach ($documentsArray as $index => $doc) {
-                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
-                        $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
-                        break;
-                    }
-                }
-
-                return collect($documentsArray);
-            }
+        if ($emirateIdType === AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE) {
+            return $this->rewriteFirstEmirateIdCopyAsInsuredApplication($documents);
         }
 
         return $documents;
+    }
+
+    /**
+     * Map first/second HEA_EMIRATE_ID_COPY to front/back when two files exist; otherwise keep copy code.
+     *
+     * @return array<int, int>
+     */
+    private function indicesOfEmirateIdCopyDocuments(array $documentsArray): array
+    {
+        $indices = [];
+        foreach ($documentsArray as $index => $doc) {
+            if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                $indices[] = $index;
+            }
+        }
+
+        return $indices;
+    }
+
+    private function splitPhysicalEmiratesIdIntoFrontAndBack(Collection $documents): Collection
+    {
+        $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
+        $documentsArray = $documents->values()->all();
+        $emirateIdIndices = $this->indicesOfEmirateIdCopyDocuments($documentsArray);
+
+        if ($emirateIdDocuments->count() > 1) {
+            if (isset($emirateIdIndices[0])) {
+                $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
+            }
+            if (isset($emirateIdIndices[1])) {
+                $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
+            }
+        } elseif (isset($emirateIdIndices[0])) {
+            $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EMIRATE_ID_COPY;
+        }
+
+        return collect($documentsArray);
+    }
+
+    private function rewriteFirstEmirateIdCopyAsInsuredApplication(Collection $documents): Collection
+    {
+        $documentsArray = $documents->values()->all();
+
+        foreach ($documentsArray as $index => $doc) {
+            if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
+                break;
+            }
+        }
+
+        return collect($documentsArray);
     }
 
     /**
