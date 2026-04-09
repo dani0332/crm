@@ -58,6 +58,7 @@ final class PermissionsEnum extends Enum
     public const TransAppCreate = 'transapp-create';
     public const TransAppEdit = 'transapp-edit';
     public const TransAppDelete = 'transapp-delete';
+    public const TRANSAPP_SEARCH = 'transapp-search';
     public const ClaimList = 'claim-list';
     public const ClaimCreate = 'claim-create';
     public const ClaimEdit = 'claim-edit';
@@ -182,6 +183,8 @@ final class PermissionsEnum extends Enum
     public const CAR_LEAD_ALLOCATION_DASHBOARD = 'car-lead-allocation-dashboard';
     public const HEALTH_LEAD_ALLOCATION_DASHBOARD = 'health-lead-allocation-dashboard';
     public const RULE_CONFIG_LIST = 'rule-config-list';
+    public const RULE_CONFIG_CREATE = 'rule-config-create';
+    public const RULE_CONFIG_UPDATE = 'rule-config-update';
     public const QUAD_CONFIG_LIST = 'quad-config-list';
     public const TIER_CONFIG_LIST = 'tier-config-list';
     public const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
@@ -427,6 +430,7 @@ final class PermissionsEnum extends Enum
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
+    public const NATIONALITY_POOL_CONFIG = 'nationality-pool-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
@@ -448,7 +452,22 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
     public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
+
     // End of Savings Permissions
+    // Claims Permissions
+    public const CLAIM_LIST = 'claim-list';
+    public const CLAIM_CREATE = 'claim-create';
+    public const CLAIM_EDIT = 'claim-edit';
+    public const CLAIM_SHOW = 'claim-show';
+    public const CLAIMS_EXPORT_DATA = 'claim-export-data';
+    public const CLAIMS_STATUS_UPDATE = 'claim-status-update';
+    public const CLAIMS_SUB_STATUS_UPDATE = 'claim-sub-status-update';
+    public const CLAIM_DOCUMENT_UPLOAD = 'claim-document-upload';
+    public const CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
+    public const CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
+    public const CLAIM_DOWNLOAD_ALL_DOCUMENTS = 'claim-download-all-documents';
+    public const CLAIMS_MANUAL_ASSIGN = 'claim-manual-assign';
+    // End of Claims Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
@@ -476,6 +495,10 @@ final class PermissionsEnum extends Enum
     public const CYBER_LEADPOOL = 'cyber-leadpool';
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
+
+    // Claim Allocation Permissions
+    public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+    public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -540,6 +563,37 @@ final class PermissionsEnum extends Enum
             /*self::VIEW_BULK_POLICY_BOOKING_LIST,
             self::BOOK_BULK_POLICY_ON_SAGE,*/
             self::BOOKING_FAILED_EDIT,
+        ];
+    }
+
+    public static function getClaimsPermissions()
+    {
+        return [
+            'claimManager' => [
+                self::CLAIM_LIST,
+                self::CLAIM_CREATE,
+                self::CLAIM_EDIT,
+                self::CLAIM_SHOW,
+                self::CLAIMS_EXPORT_DATA,
+                self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIM_DOCUMENT_UPLOAD,
+                self::CLAIM_DOCUMENT_S3_URL,
+                self::CLAIMS_MANUAL_ASSIGN,
+            ],
+            'claimLead' => [
+                self::CLAIM_LIST,
+                self::CLAIM_CREATE,
+                self::CLAIM_EDIT,
+                self::CLAIM_SHOW,
+                self::CLAIMS_EXPORT_DATA,
+                self::CLAIMS_STATUS_UPDATE,
+                self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIMS_MANUAL_ASSIGN,
+                self::CLAIM_DOCUMENT_UPLOAD,
+                self::CLAIM_DOCUMENT_DELETE,
+                self::CLAIM_DOCUMENT_S3_URL,
+                self::CLAIM_DOWNLOAD_ALL_DOCUMENTS,
+            ],
         ];
     }
 }

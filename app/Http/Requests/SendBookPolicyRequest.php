@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -26,7 +26,7 @@ class SendBookPolicyRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -42,39 +42,27 @@ class SendBookPolicyRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+        $sendPolicyType = $this->input('send_policy_type');
+        $modelType = $this->input('model_type');
+        $quote = $this->getQuoteObject($modelType, $this->input('quote_id'));
 
-        if ($quote?->quote_type_id == QuoteTypeId::Savings) {
+        if ($sendPolicyType == SendPolicyTypeEnum::CUSTOMER) {
             $validator->after(function ($validator) use ($quote) {
-                $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
-                $requiredDocuments = [
-                    DocumentTypeCode::PS_SAV,
-                    DocumentTypeCode::PC_SAV,
-                    DocumentTypeCode::AC_SAV,
-                ];
+                if ($quote) {
+                    if (! $quote?->advisor_id) {
+                        $validator->errors()->add('error', 'Please select advisor');
+                    }
 
-                // Check if all required documents are present in uploaded documents
-                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                    $validator->errors()->add('error', 'Required documents are not uploaded');
-                }
-
-                // TODO : need to also check for Policy Handbook from Savings plan section.
-            });
-        }
-
-        if (request()->send_policy_type == 'customer') {
-            $validator->after(function ($validator) use ($quote) {
-                if (! $quote?->advisor_id) {
-                    $validator->errors()->add('error', 'Please select advisor');
-                }
-
-                if (! $quote?->email) {
-                    $validator->errors()->add('error', 'Customer email is required');
+                    if (! $quote?->email) {
+                        $validator->errors()->add('error', 'Customer email is required');
+                    }
+                } else {
+                    $validator->errors()->add('error', 'Quote not found');
                 }
             });
         }
 
-        if (request()->send_policy_type == 'sage') {
+        if ($sendPolicyType == SendPolicyTypeEnum::SAGE) {
             if (! request()->has('through_automation') && ! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',

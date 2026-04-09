@@ -559,14 +559,14 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
     function getPersonalQuoteTypeIds()
     {
         return [
-            QuoteTypeId::Home,
-            QuoteTypeId::Life,
             QuoteTypeId::Bike,
-            QuoteTypeId::Yacht,
-            QuoteTypeId::Pet,
             QuoteTypeId::Cycle,
             QuoteTypeId::Jetski,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Yacht,
             QuoteTypeId::Savings,
+            QuoteTypeId::Home,
+            QuoteTypeId::Life,
             QuoteTypeId::Cyber,
         ];
     }
@@ -638,6 +638,9 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
     {
         // Remove spaces from the mobile number
         $mobile = str_replace(' ', '', $mobile);
+
+        // Strip leading/trailing quotes (e.g. Excel CSV text markers)
+        $mobile = trim($mobile, "'\"");
 
         // If the number starts with +971, 971,+92, 92, or +91 91, return it as is
         if (preg_match('/^(?:\+?971|971|\+?92|\+?91|92|91)/', $mobile)) {
@@ -1464,6 +1467,7 @@ if (! function_exists('getCourierQuote')) {
     function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
+            LoggerService::info("Helper::getCourierQuote - Getting courier quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
             $quoteModel = get_class($quote);
             $model = app($quoteModel);
             $table = $model->getTable();
