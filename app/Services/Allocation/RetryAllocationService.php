@@ -168,6 +168,7 @@ class RetryAllocationService
                 'advisor_id',
                 'tier_id',
                 'car_value',
+                'car_value_tier',
                 'created_at',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
