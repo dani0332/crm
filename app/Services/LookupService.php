@@ -365,7 +365,9 @@ class LookupService extends BaseService
         return Cache::remember(
             CacheKeyEnum::GENDER_KEY->value,
             CacheKeyEnum::GENDER_KEY->expiry(),
-            fn () => Lookup::where('key', LookupsEnum::GENDER)->get()
+            fn () => Lookup::where('key', LookupsEnum::GENDER)
+                ->select('text', 'code')
+                ->get()
         );
     }
 

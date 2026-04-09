@@ -766,21 +766,6 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   label="LEAD TYPE"
                 />
 
-                <x-input v-model="quoteForm.details" class="w-full" label="DETAILS" />
-
-                <x-select
-                  v-if="!isEdit"
-                  v-model="quoteForm.currently_insured_with_id"
-                  :options="
-                    dropdownSource.currently_insured_with_id.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  label="CURRENTLY INSURED WITH"
-                />
-
                 <x-select
                   required
                   v-model="quoteForm.plan_type_id"
@@ -796,11 +781,26 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   label="TYPE OF PLAN"
                 />
 
+                <x-select
+                  v-if="!isEdit"
+                  v-model="quoteForm.currently_insured_with_id"
+                  :options="
+                    dropdownSource.currently_insured_with_id.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  class="w-full"
+                  label="CURRENTLY INSURED WITH"
+                />
+
                 <x-input
                   v-model="quoteForm.policy_number"
                   class="w-full"
                   label="POLICY NUMBER"
                 />
+
+                <x-input v-model="quoteForm.details" class="w-full" label="DETAILS" />
 
                 <x-input
                   v-model="quoteForm.preference"
@@ -840,7 +840,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   label="ADDITIONAL NOTES"
                   :error="quoteForm.errors.additional_notes"
                   :disabled="!canEditSubSourceFields"
-                  class="w-full sm:col-span-2"
+                  class="w-full"
                   rows="3"
                 />
 
@@ -987,7 +987,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   required
                 /> 
 
-                <div class="w-full sm:col-span-2">
+                <div class="w-full">
                   <div
                     class="flex flex-row flex-nowrap items-stretch gap-3 w-full min-w-0"
                   >
