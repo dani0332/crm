@@ -80,7 +80,7 @@ it('does not add Customers nav section when user has none of customers-list, cus
     expect(findNavSectionByTitle($tree, 'Customers'))->toBeNull();
 });
 
-it('adds Customers section with Search when user has only customers-list', function () {
+it('adds Customers section with Search and Leads by Email when user has only customers-list', function () {
     ensureCustomerNavPermissionsExist();
     $user = TestDataSeeder::createUser(['email' => fake()->unique()->safeEmail()]);
     $user->givePermissionTo(PermissionsEnum::CustomersList);
@@ -88,7 +88,10 @@ it('adds Customers section with Search when user has only customers-list', funct
     $section = findNavSectionByTitle(inertiaNavigationTree($user), 'Customers');
 
     expect($section)->not->toBeNull()
-        ->and(customerNavChildTitles($section))->toBe(['Search']);
+        ->and(customerNavChildTitles($section))->toBe([
+            'Search',
+            'Leads by Email',
+        ]);
 });
 
 it('adds Customers section with Uploads when user has only customers-upload', function () {
