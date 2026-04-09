@@ -867,25 +867,6 @@ onMounted(() => {
   showLackingPayment();
 });
 
-const isChildPaymentDeletable = computed(() => {
-  if (props.payments.length !== 2) return false;
-
-  const childPaymentNotAuthorised = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.DRAFT,
-    paymentStatusEnum.OVERDUE,
-    paymentStatusEnum.CANCELLED,
-    paymentStatusEnum.DECLINED,
-    paymentStatusEnum.FAILED,
-  ].includes(props.payments[1].payment_status_id);
-
-  return (
-    props.quoteType == quoteTypeCodeEnum.Travel &&
-    childPaymentNotAuthorised
-  );
-});
-
 const setPaymentInitialPrice = () => {
   if (paymentMethodsFormReplicated.value.status !== 'edit') {
     if (props.isPlanDetailEnabled) {
@@ -1210,7 +1191,6 @@ watch(
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
-                    :isChildPaymentDeletable="isChildPaymentDeletable"
                     :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmedReplicated"
                     :capturePaymentValidationInProcess="
