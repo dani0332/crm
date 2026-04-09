@@ -35,7 +35,6 @@ const props = defineProps({
   payment: Object,
   index: Number,
   isExpanded: Boolean,
-  isChildPaymentDeletable: Boolean,
   isLackingPayment: Boolean,
   isApproveConfirmed: Boolean,
   capturePaymentValidationInProcess: Boolean,
@@ -108,8 +107,26 @@ const travelerCountForPaymentSegment = payment => {
   }).length;
 };
 
-const hasRelevantMemberDeleted = payment => {
+const travelPaymentStatusesEligibleForDelete = new Set([
+  paymentStatusEnum.PENDING,
+  paymentStatusEnum.NEW,
+  paymentStatusEnum.DRAFT,
+  paymentStatusEnum.OVERDUE,
+  paymentStatusEnum.CANCELLED,
+  paymentStatusEnum.DECLINED,
+  paymentStatusEnum.FAILED,
+]);
+
+const isTravelPaymentDeletableByStatus = payment =>
+  travelPaymentStatusesEligibleForDelete.has(
+    payment?.payment_status_id,
+  );
+
+const isTravelDeleteForEmptyMemberSegment = payment => {
   if (props.quoteType !== quoteTypeCodeEnum.Travel) {
+    return false;
+  }
+  if (!isTravelPaymentDeletableByStatus(payment)) {
     return false;
   }
   if (!Array.isArray(page.props.travelers)) {
@@ -524,7 +541,9 @@ const amlAndKycTooltip = computed(() => {
             Edit
           </x-button>
         </template>
-        <template v-if="index == 1 && isChildPaymentDeletable && hasRelevantMemberDeleted(payment)">
+        <template
+          v-if="isTravelDeleteForEmptyMemberSegment(payment)"
+        >
           <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete
           </x-button>
