@@ -21,9 +21,13 @@ function handleFileUpload(event) {
 }
 
 function onRetriggerNonCQF() {
-  router.post(route('renewals-non-motor-retrigger'), {}, {
-    preserveScroll: true,
-  });
+  router.post(
+    route('renewals-non-motor-retrigger'),
+    {},
+    {
+      preserveScroll: true,
+    },
+  );
 }
 
 function onSubmit(isValid) {
