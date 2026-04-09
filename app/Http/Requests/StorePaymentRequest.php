@@ -46,7 +46,7 @@ class StorePaymentRequest extends FormRequest
                 'payment.frequency' => 'required|string|in:upfront,monthly,quarterly,semi_annual,split_payments,custom',
                 'payment.collection_type' => 'required|string|in:broker,insurer',
                 'payment.total_amount' => 'required|numeric|min:0',
-                'payment.collection_date' => 'required|date',
+                'payment.collection_date' => 'required|date|after_or_equal:today',
                 'payment.discount_value' => 'nullable|numeric|min:0',
                 'payment.payment_methods' => 'required|string',
                 'payment.payment_splits.*.sr_no' => 'required|integer|min:1',
