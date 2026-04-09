@@ -154,7 +154,7 @@ test('updateEpDocument throws EmbeddedProductDocumentUploadFailedException when 
         'doc_name' => 'CERT_original.pdf',
     ]);
 
-    $uploadedFile = \Mockery::mock(UploadedFile::class);
+    $uploadedFile = Mockery::mock(UploadedFile::class);
     $uploadedFile->shouldReceive('getClientOriginalName')->andReturn('cert.pdf');
     $uploadedFile->shouldReceive('storeAs')->once()->andReturn(false);
 
@@ -297,14 +297,14 @@ test('updateEpDocument keeps doc_name prefixed with certificate number for tax i
 });
 
 test('queued EP send assertion throws EmbeddedProductDocumentSendFailedException when send returns failure', function () {
-    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     expect(fn () => $method->invoke(null, ['success' => false, 'message' => 'Documents cannot be sent'], 10, 20, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
         ->toThrow(EmbeddedProductDocumentSendFailedException::class, 'Documents cannot be sent');
 });
 
 test('queued EP send assertion throws when result is null or non-success without message', function () {
-    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     expect(fn () => $method->invoke(null, null, 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
         ->toThrow(EmbeddedProductDocumentSendFailedException::class, 'Embedded product document send failed');
@@ -314,7 +314,7 @@ test('queued EP send assertion throws when result is null or non-success without
 });
 
 test('queued EP send assertion does not throw when send result is successful', function () {
-    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     $method->invoke(null, ['success' => true, 'message' => 'Certificate sent successfully'], 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE);
 
