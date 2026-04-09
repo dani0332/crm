@@ -3,16 +3,15 @@
 declare(strict_types=1);
 
 use App\Models\CustomerMembers;
-use App\Models\HealthQuote;
 use App\Models\Nationality;
+use App\Traits\AuditTransformLookupCache;
 use App\Traits\TransformsAuditables;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    CustomerMembers::flushAuditTransformLookupCaches();
-    HealthQuote::flushAuditTransformLookupCaches();
+    AuditTransformLookupCache::flush();
 });
 
 afterEach(function () {
@@ -47,6 +46,35 @@ function makeModel(int $is_policy_holder = 0, int $is_principal = 0, string $fir
 // ============================================================================
 // Trait wiring
 // ============================================================================
+
+describe('AuditTransformLookupCache', function () {
+    test('flush clears both lookup stores', function () {
+        $ref = new \ReflectionClass(AuditTransformLookupCache::class);
+        $auditable = $ref->getProperty('auditableByKey');
+        $auditable->setAccessible(true);
+        $related = $ref->getProperty('relatedByKey');
+        $related->setAccessible(true);
+
+        $auditable->setValue(null, ['probe' => null]);
+        $related->setValue(null, ['probe' => null]);
+
+        AuditTransformLookupCache::flush();
+
+        expect($auditable->getValue())->toBe([]);
+        expect($related->getValue())->toBe([]);
+    });
+
+    test('flushAuditTransformLookupCaches on model delegates to unified cache', function () {
+        $ref = new \ReflectionClass(AuditTransformLookupCache::class);
+        $auditable = $ref->getProperty('auditableByKey');
+        $auditable->setAccessible(true);
+        $auditable->setValue(null, ['delegated' => null]);
+
+        CustomerMembers::flushAuditTransformLookupCaches();
+
+        expect($auditable->getValue())->toBe([]);
+    });
+});
 
 describe('TransformsAuditables trait', function () {
     test('is used by CustomerMembers model', function () {

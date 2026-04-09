@@ -4,20 +4,9 @@ namespace App\Traits;
 
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
-use Illuminate\Database\Eloquent\Model;
 
 trait TransformsAuditables
 {
-    /**
-     * @var array<string, Model|null>
-     */
-    private static array $auditTransformAuditableByKey = [];
-
-    /**
-     * @var array<string, Model|null>
-     */
-    private static array $auditTransformRelatedByKey = [];
-
     public function transformAuditables($data): array
     {
         $data = $this->performAuditTransformation($data);
@@ -42,7 +31,7 @@ trait TransformsAuditables
         ];
         $modelName = $apiModelMap[$audit->auditable_type] ?? $audit->auditable_type;
 
-        $model = self::auditTransformRememberAuditable($modelName, $auditableId);
+        $model = AuditTransformLookupCache::rememberAuditable($modelName, $auditableId);
 
         $relationMap = $this->auditRelationMap ?? [];
 
@@ -59,12 +48,12 @@ trait TransformsAuditables
             }
 
             if (isset($transformedOld[$foreignKey]) && $relatedModelClass) {
-                $relatedOld = self::auditTransformRememberRelated($relatedModelClass, $transformedOld[$foreignKey]);
+                $relatedOld = AuditTransformLookupCache::rememberRelated($relatedModelClass, $transformedOld[$foreignKey]);
                 $transformedOld[$relationName] = $relatedOld?->$fieldName ?? null;
             }
 
             if (isset($transformedNew[$foreignKey]) && $relatedModelClass) {
-                $relatedNew = self::auditTransformRememberRelated($relatedModelClass, $transformedNew[$foreignKey]);
+                $relatedNew = AuditTransformLookupCache::rememberRelated($relatedModelClass, $transformedNew[$foreignKey]);
                 $transformedNew[$relationName] = $relatedNew?->$fieldName ?? null;
             }
         }
@@ -98,47 +87,10 @@ trait TransformsAuditables
     }
 
     /**
-     * @param  class-string<Model>  $modelName
-     */
-    private static function auditTransformRememberAuditable(string $modelName, mixed $auditableId): ?Model
-    {
-        if ($auditableId === null || $auditableId === '') {
-            return null;
-        }
-
-        $key = $modelName.'|'.$auditableId;
-
-        if (! array_key_exists($key, self::$auditTransformAuditableByKey)) {
-            self::$auditTransformAuditableByKey[$key] = app($modelName)->newQuery()->whereKey($auditableId)->first();
-        }
-
-        return self::$auditTransformAuditableByKey[$key];
-    }
-
-    /**
-     * @param  class-string<Model>  $relatedModelClass
-     */
-    private static function auditTransformRememberRelated(string $relatedModelClass, mixed $id): ?Model
-    {
-        if ($id === null || $id === '' || ! class_exists($relatedModelClass)) {
-            return null;
-        }
-
-        $key = $relatedModelClass.'|'.$id;
-
-        if (! array_key_exists($key, self::$auditTransformRelatedByKey)) {
-            self::$auditTransformRelatedByKey[$key] = $relatedModelClass::query()->find($id);
-        }
-
-        return self::$auditTransformRelatedByKey[$key];
-    }
-
-    /**
      * Clears in-memory lookup caches (auditable row + related FK). Call between tests or when data may change.
      */
     public static function flushAuditTransformLookupCaches(): void
     {
-        self::$auditTransformAuditableByKey = [];
-        self::$auditTransformRelatedByKey = [];
+        AuditTransformLookupCache::flush();
     }
 }

@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\Payment;
+use App\Traits\AuditTransformLookupCache;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
@@ -125,7 +126,9 @@ class AuditRepository extends BaseRepository
         }
         $results = $query->orderBy('created_at', 'desc')->get();
 
-        $results->transform(function ($audit) use ($quoteObject) {
+        $auditTransformCacheActive = false;
+
+        $results->transform(function ($audit) use ($quoteObject, $quoteType, &$auditTransformCacheActive) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -200,6 +203,8 @@ class AuditRepository extends BaseRepository
             $modelClass = self::API_MODEL_MAP[$audit->auditable_type] ?? $audit->auditable_type;
             $model = class_exists($modelClass) ? app($modelClass) : $quoteObject;
             if (method_exists($model, 'transformAuditables')) {
+                $auditTransformCacheActive = true;
+
                 $data = [
                     'audit' => $audit,
                     'transformedOld' => $transformedOld,
@@ -216,6 +221,10 @@ class AuditRepository extends BaseRepository
 
             return $audit;
         });
+
+        if ($auditTransformCacheActive) {
+            AuditTransformLookupCache::flush();
+        }
 
         return $results;
     }
