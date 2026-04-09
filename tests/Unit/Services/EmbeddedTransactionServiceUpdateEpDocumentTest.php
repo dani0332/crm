@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Exceptions\EmbeddedProductDocumentSendFailedException;
+use App\Exceptions\EmbeddedProductDocumentUploadFailedException;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
@@ -119,6 +120,55 @@ test('updateEpDocument returns false when document type row is missing for reque
     ]);
 
     expect($result)->toBeFalse();
+});
+
+test('updateEpDocument throws EmbeddedProductDocumentUploadFailedException when blob store returns false', function () {
+    TestSchemaCreator::createMinimalSchema();
+    Storage::fake('azureIMPrivate');
+
+    $user = TestDataSeeder::createAdminUser();
+    Auth::login($user);
+
+    DocumentType::factory()->createOneQuietly([
+        'code' => QuoteDocumentsEnum::EP,
+        'quote_type_id' => QuoteTypeId::Car,
+        'text' => 'EP Document',
+    ]);
+
+    $ep = EmbeddedProduct::factory()->createOneQuietly();
+    $option = EmbeddedProductOption::factory()->createOneQuietly(['embedded_product_id' => $ep->id]);
+    $carQuote = CarQuote::factory()->createOneQuietly();
+
+    $transaction = EmbeddedTransaction::factory()
+        ->forCarQuote($carQuote)
+        ->forProduct($option->id)
+        ->createOneQuietly([
+            'is_selected' => true,
+            'payment_status_id' => PaymentStatusEnum::CAPTURED,
+        ]);
+
+    $document = QuoteDocument::factory()->createOneQuietly([
+        'quote_documentable_type' => EmbeddedTransaction::class,
+        'quote_documentable_id' => $transaction->id,
+        'document_type_code' => QuoteDocumentsEnum::EP,
+        'doc_name' => 'CERT_original.pdf',
+    ]);
+
+    $uploadedFile = \Mockery::mock(UploadedFile::class);
+    $uploadedFile->shouldReceive('getClientOriginalName')->andReturn('cert.pdf');
+    $uploadedFile->shouldReceive('storeAs')->once()->andReturn(false);
+
+    $service = app(EmbeddedTransactionService::class);
+
+    expect(fn () => $service->updateEpDocument([
+        'epId' => $ep->id,
+        'modelType' => 'car',
+        'quoteId' => $carQuote->id,
+        'documentId' => $document->id,
+        'documentNumber' => 'DOC-001',
+        'file' => $uploadedFile,
+        'remarks' => 'Replacement upload',
+    ]))->toThrow(EmbeddedProductDocumentUploadFailedException::class, EmbeddedProductRepository::ERROR_UPLOADING_DOCUMENT);
 });
 
 test('updateEpDocument soft-deletes the old row, persists the new document, and dispatches watermark inside transaction', function () {
