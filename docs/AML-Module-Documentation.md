@@ -120,13 +120,15 @@ Inertia pages under the `Aml/*` namespace (e.g. `Aml/Index`, `Aml/DetailPage`, `
 
 ## Historic KYC logs vs `customer_insured` (production hardening)
 
-`kyc_logs` (exposed as the `AML` model) can exist for a quote even when there is **no active `customer_insured`** row for that `quote_type_id` and `quote_request_id` (historic data or incomplete linkage). In that case the AML **detail** page cannot resolve an insured for compliance actions; the **View** link on `Aml/DetailPage.vue` could emit a URL with the literal segment `null`, which caused a type error on `AMLController::show` → `AMLDisplayService::prepareShowData()` (see Sentry issue 7384911772 / BLANKA-4QD).
+`kyc_logs` (exposed as the `AML` model) can exist for a quote even when there is **no active `customer_insured`** row for that `quote_type_id` and `quote_request_id` (historic data or incomplete linkage). In that case the AML **detail** page cannot resolve an insured for compliance actions; the **View** link on `Aml/DetailPage.vue` could emit a URL with the literal segment `null`, which led to failures in `AMLController::show` → `AMLDisplayService::prepareShowData()` / insured loading (see Sentry issue 7384911772 / BLANKA-4QD).
 
-**Behaviour in code:**
+**Behaviour in code (current):**
 
-- The **AML list** query in `AMLQueryService::getAMLQuotes()` only returns quotes that have an **active** `customer_insured` mapping (`constrainToActiveCustomerInsuredMapping()`), so the inbox does not list unmappable quotes.
-- **`AMLController::show()`** normalizes optional route IDs (`normalizeAmlRouteIntId`) so string `null` and numeric strings are safe for `?int` parameters.
-- **`Aml/DetailPage.vue`** shows the per-log **View** link only when `insuredId` is present and avoids an empty last path segment when `customerId` is absent.
+- The **AML list** (`AMLQueryService::getAMLQuotes()`) is **not** filtered by `customer_insured`; quotes can appear even when there is no active mapping for insured-based AML detail links.
+- **`AMLController::show()`** forwards optional `{insuredId}` / `{customerId}` route segments into `AMLDisplayService::prepareShowData()` and `AMLInsuredService::getInsuredWithKyc()` as **`mixed`** (values come from the URL as strings). `getInsuredWithKyc()` only checks truthiness before `Insured::find()`, so a literal string `"null"` is still truthy and can produce incorrect lookups; `customerId` is passed through to Inertia as provided unless normalized elsewhere.
+- **`Aml/DetailPage.vue`** should only emit **View** URLs with real numeric ids and omit optional trailing segments when `customerId` is absent.
+
+**Possible hardening (not required by current code):** optional `whereExists` on active `customer_insured` in `getAMLQuotes()`, and/or normalizing route segments in AML display/insured services so `"null"` and non-numeric values never reach `Insured::find()` or Inertia as bogus ids. **Documentation rule:** describe only helpers and methods that exist in the repo (e.g. verify signatures on `AMLController` and under `app/Services/AML/` before referring to them).
 
 ---
 

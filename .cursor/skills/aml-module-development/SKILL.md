@@ -57,15 +57,17 @@ Portal/LexisNexis updates may flow through `AMLService::updateAMLDecisionLexisNe
 
 **Symptom (prod):** [Sentry 7384911772](https://insurancemarket-ae.sentry.io/issues/7384911772) / **BLANKA-4QD** — `AMLDisplayService::prepareShowData()` received a non-integer for `$insuredId` (e.g. URL segment literally `null` from `/kyc/aml/{aml}/null/{customerId}`).
 
-**Root cause:** `kyc_logs` rows can exist for a quote from historic or edge flows while **no active `customer_insured`** row exists for that `quote_type_id` + `quote_request_id`. The AML detail page (`Aml/DetailPage.vue`) builds the compliance **View** link from `insuredDetails?.insured?.id`; when mapping is missing, that value is missing and the client puts the string `null` in the path. There is no insured to resolve for screening UI.
+**Root cause:** `kyc_logs` rows can exist for a quote from historic or edge flows while **no active `customer_insured`** row exists for that `quote_type_id` + `quote_request_id`. The AML detail page (`Aml/DetailPage.vue`) builds the compliance **View** link from `insuredDetails?.insured?.id`; when mapping is missing, that value is missing and the client can put the string `null` in the path. There is no insured to resolve for screening UI.
 
-**Resolution implemented in app:**
+**Backend / list behaviour (as of this repo):** `AMLQueryService::getAMLQuotes()` does **not** filter by `customer_insured`; the AML inbox can still show quotes with orphan KYC relative to mapping. `AMLController::show()` passes optional route segments into `AMLDisplayService::prepareShowData()` / `AMLInsuredService::getInsuredWithKyc()` as **`mixed`** (URL segments are strings). `getInsuredWithKyc()` only uses truthiness before `Insured::find()`, so a literal `"null"` string stays truthy and can still cause bad lookups unless the client avoids bad URLs or services add explicit parsing.
 
-1. **AML inbox list** — `AMLQueryService::getAMLQuotes()` applies `constrainToActiveCustomerInsuredMapping()`: only quotes with an **active** `customer_insured` row matching `quote_request_id` = quote table `id` and `quote_type_id` appear in the paginated AML list. This avoids surfacing quotes that cannot produce a valid insured-based `aml.show` link.
-2. **`aml.show` hardening** — `AMLController::show()` passes route segments through `normalizeAmlRouteIntId()` so literal `null` / empty / numeric strings satisfy `?int` for `AMLDisplayService`.
-3. **Detail page UI** — `Aml/DetailPage.vue` only renders the compliance **View** button when `insuredId` is set, and omits a trailing `/customerId` segment when `customerId` is null (avoids bogus URLs).
+**Recommended mitigations (implement when prioritised):**
 
-Do **not** remove the list constraint without addressing orphan KYC data or fixing the View link generation in the Vue layer.
+1. **Frontend** — `Aml/DetailPage.vue`: only render the compliance **View** link when a numeric `insuredId` is present; omit optional `/customerId` when absent (avoids `/…/null/…` URLs).
+2. **Optional inbox filter** — constrain `getAMLQuotes()` with a `whereExists` on active `customer_insured` matching `quote_type_id` and the quote row’s request id (for Pet, align with `personal_quote_id` vs `id` as stored in `customer_insured.quote_request_id`).
+3. **Optional service-layer ID parsing** — accept route segments as `mixed` and normalize literal `"null"` / non-numeric values to `null` before `Insured::find()`, and pass a clean `?int` `customerId` to Inertia (avoids leaking the string `"null"` to the client).
+
+If you add strict handling for optional `aml.show` route IDs, implement it with explicit validation or small helpers under `app/Services/AML/` (or form requests where appropriate). Keep skills and docs aligned with **real** controller and service APIs—do not describe helpers or methods that are not present in the codebase.
 
 ## Conventions for agents
 
@@ -73,7 +75,7 @@ Do **not** remove the list constraint without addressing orphan KYC data or fixi
 - Use existing **enums** (`AMLDecisionStatusEnum`, `AMLStatusCode`) instead of string literals in new code.
 - **Form requests** already exist for several actions (`AMLCheckRequest`, `AMLRequest`, etc.); extend them rather than validating inline in the controller.
 - **Logging** — use `LoggerService` with `LoggerFeatureEnum::AML_SCREENING` where screening is involved (see existing controller/service calls).
-- **`customer_insured` invariant for AML list** — treat an active quote↔insured mapping as required for AML list rows; align any new AML entry points with `AMLQueryService` filtering.
+- **Orphan KYC vs list** — the AML list is not currently gated on `customer_insured`; if product requires “only mappable quotes” in the inbox, add an explicit query constraint and tests rather than assuming it already exists.
 - Run **Pest tests** for behavioural changes; run `vendor/bin/pint --dirty` on touched PHP.
 
 ## Related permissions
