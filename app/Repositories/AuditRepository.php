@@ -128,7 +128,7 @@ class AuditRepository extends BaseRepository
 
         $auditTransformCacheActive = false;
 
-        $results->transform(function ($audit) use ($quoteObject, $quoteType, &$auditTransformCacheActive) {
+        $results->transform(function ($audit) use ($quoteObject, &$auditTransformCacheActive) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
