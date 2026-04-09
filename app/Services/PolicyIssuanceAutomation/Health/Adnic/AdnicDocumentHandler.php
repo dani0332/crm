@@ -357,12 +357,9 @@ class AdnicDocumentHandler
     /**
      * Map document types to IMCRM document type codes
      */
-    public function getDocTypeCodeForIMCRM($quote): array
+    public function getDocTypeCodeForIMCRM(): array
     {
         return [
-            /*  DocumentTypeCode::HEA_EID => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::CTIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::POLICY_SCHEDULE => $quote->insurer_policy_doc_id, */
             AdnicEnum::INSURER_DOCUMENT_KEY_POLICY_DOCUMENT => DocumentTypeCode::POLC,
             AdnicEnum::INSURER_DOCUMENT_KEY_COMMISION_NOTE => DocumentTypeCode::TIRBB,
             AdnicEnum::INSURER_DOCUMENT_KEY_TAX_INVOICE => DocumentTypeCode::TI,
