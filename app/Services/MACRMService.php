@@ -50,6 +50,7 @@ class MACRMService
         try {
             if (! self::verifySyncPreChecks($quote, $quoteTypeId, $leadData)) {
                 LoggerService::warning(self::class." - Pre-checks failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
+
                 return false;
             }
 
