@@ -7,6 +7,13 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const permissionEnum = page.props.permissionsEnum;
 const { formatDate, formatAmount, formatString } = usePayment();
 
+/** Local start of today — use with DatePicker `min-date` so past calendar days are disabled. */
+const minSelectableDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
+
 const emit = defineEmits([
   'handle-collection-type-change',
   'handle-frequency-change',
@@ -134,12 +141,6 @@ const isMasterPaymentPaid = computed(() => {
   return false;
 });
 
-/** Start of today (local) — used to disable past days in the picker and align with validation. */
-const minCollectionDate = computed(() => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-});
 </script>
 
 <template>
@@ -159,7 +160,7 @@ const minCollectionDate = computed(() => {
           name="collection_date"
           v-model="paymentMethodsForm.collection_date"
           :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
-          :min-date="minCollectionDate"
+          :min-date="minSelectableDate"
         />
       </x-field>
     </div>

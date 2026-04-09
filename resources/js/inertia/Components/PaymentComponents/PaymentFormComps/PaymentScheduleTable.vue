@@ -100,6 +100,12 @@ const handlePaymentOptions = count => {
 
 const { formatDate, formatAmount, formatString } = usePayment();
 
+const minSelectableDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
+
 const getPaymentTypeLabel = code => {
   const paymentType = props.paymentTypes.find(item => item.value === code);
   if (paymentType) {
@@ -211,12 +217,6 @@ const isPolicySendUpdateBooked = option => {
   return isCCAndInsurer && isPolicyBooked && !props.sendUpdate;
 };
 
-/** Start of today (local) — disables past days on split due date pickers. */
-const minDueDate = computed(() => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-});
 </script>
 
 <template>
@@ -855,7 +855,7 @@ const minDueDate = computed(() => {
                 :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
                 placeholder="dd-mm-yyyy"
                 :disabled="isPaymentLocked"
-                :min-date="minDueDate"
+                :min-date="minSelectableDate"
               />
             </template>
           </div>
