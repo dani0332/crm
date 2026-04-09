@@ -75,11 +75,6 @@ class NonMotorCQFRegistry
             'mapper' => HomeCQFQuoteMappingService::class,
             'storage' => HomeCQFQuoteStorageService::class,
         ],
-        QuoteTypes::LIFE->value => [
-            'validator' => LifeCQFValidationService::class,
-            'mapper' => LifeCQFQuoteMappingService::class,
-            'storage' => LifeCQFQuoteStorageService::class,
-        ],
         QuoteTypes::BUSINESS->value => [
             'validator' => BusinessCQFValidationService::class,
             'mapper' => BusinessCQFQuoteMappingService::class,
