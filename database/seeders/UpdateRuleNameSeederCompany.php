@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\RuleEnum;
 use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
@@ -39,12 +40,13 @@ class UpdateRuleNameSeederCompany extends Seeder
                     ],
                     [
                         'is_active' => 1,
+                        'quote_type_id' => QuoteTypeId::Car,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]
                 );
 
-                LoggerService::info('Commercial rule created successfully for rule name: '.RuleEnum::COMPANY_USE->value.' | Time: '.now());
+                LoggerService::info('Commercial rule created successfully for rule name: '.RuleEnum::COMPANY_USE->value);
             }
 
             $existingDetail = DB::table('rule_details')->where('rule_id', $commercialRule->id)->first();
@@ -57,7 +59,7 @@ class UpdateRuleNameSeederCompany extends Seeder
             }
 
         } catch (\Exception $e) {
-            LoggerService::warning('Company Use rule creation failed for rule name: '.RuleEnum::COMPANY_USE->value.' | Time: '.now());
+            LoggerService::warning('Company Use rule creation failed for rule name: '.RuleEnum::COMPANY_USE->value);
             LoggerService::warning('Exception: '.$e->getMessage().' | Line: '.$e->getLine().' | Trace: '.$e->getFile());
 
         }
