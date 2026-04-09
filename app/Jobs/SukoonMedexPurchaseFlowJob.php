@@ -30,7 +30,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteObject, $quoteTypeId, $transaction, $isSendEmail = false)
+    public function __construct($quoteObject, $quoteTypeId, $transaction, $isSendEmail = true)
     {
         $this->quoteObject = $quoteObject;
         $this->quoteTypeId = $quoteTypeId;

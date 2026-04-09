@@ -143,7 +143,7 @@ class SukoonMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      */
-    public function processPurchaseFlow($isSendEmail = false)
+    public function processPurchaseFlow($isSendEmail = true)
     {
         try {
             // EmbeddedTransaction policy_status
