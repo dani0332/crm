@@ -18,7 +18,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\Life\EmbeddedProductService;
+use App\Services\EmbeddedTransactionService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
@@ -29,8 +29,9 @@ use Inertia\ResponseFactory;
 
 class EmbeddedProductController extends Controller
 {
-    public function __construct(private EmbeddedProductService $embeddedProductService)
-    {
+    public function __construct(
+        private EmbeddedTransactionService $embeddedTransactionService,
+    ) {
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
         $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
@@ -329,7 +330,7 @@ class EmbeddedProductController extends Controller
     public function updateEpDocument(UpdateEpDocumentRequest $request)
     {
         try {
-            $result = $this->embeddedProductService->updateEpDocument($request->validated());
+            $result = $this->embeddedTransactionService->updateEpDocument($request->validated());
 
             if (! $result) {
                 return response()->json([

@@ -14,7 +14,7 @@ use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\Life\EmbeddedProductService;
+use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
@@ -23,7 +23,7 @@ use Laravel\SerializableClosure\SerializableClosure;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
-test('fetchUpdateEpDocument returns false when quote cannot be resolved via getQuoteObject', function () {
+test('updateEpDocument returns false when quote cannot be resolved via getQuoteObject', function () {
     TestSchemaCreator::createMinimalSchema();
     Storage::fake('azureIMPrivate');
 
@@ -58,7 +58,7 @@ test('fetchUpdateEpDocument returns false when quote cannot be resolved via getQ
         'doc_name' => 'CERT_suffix.pdf',
     ]);
 
-    $service = app(EmbeddedProductService::class);
+    $service = app(EmbeddedTransactionService::class);
 
     $result = $service->updateEpDocument([
         'epId' => $ep->id,
@@ -73,7 +73,7 @@ test('fetchUpdateEpDocument returns false when quote cannot be resolved via getQ
     expect($result)->toBeFalse();
 });
 
-test('fetchUpdateEpDocument returns false when document type row is missing for request LOB', function () {
+test('updateEpDocument returns false when document type row is missing for request LOB', function () {
     TestSchemaCreator::createMinimalSchema();
     Storage::fake('azureIMPrivate');
 
@@ -106,7 +106,7 @@ test('fetchUpdateEpDocument returns false when document type row is missing for 
         'doc_name' => 'CERT_suffix.pdf',
     ]);
 
-    $service = app(EmbeddedProductService::class);
+    $service = app(EmbeddedTransactionService::class);
 
     $result = $service->updateEpDocument([
         'epId' => $ep->id,
@@ -121,7 +121,7 @@ test('fetchUpdateEpDocument returns false when document type row is missing for 
     expect($result)->toBeFalse();
 });
 
-test('fetchUpdateEpDocument soft-deletes the old row, persists the new document, and dispatches watermark inside transaction', function () {
+test('updateEpDocument soft-deletes the old row, persists the new document, and dispatches watermark inside transaction', function () {
     TestSchemaCreator::createMinimalSchema();
     Storage::fake('azureIMPrivate');
     Queue::fake();
@@ -154,7 +154,7 @@ test('fetchUpdateEpDocument soft-deletes the old row, persists the new document,
         'doc_name' => 'CERT_original.pdf',
     ]);
 
-    $service = app(EmbeddedProductService::class);
+    $service = app(EmbeddedTransactionService::class);
 
     $result = $service->updateEpDocument([
         'epId' => $ep->id,
@@ -183,7 +183,7 @@ test('fetchUpdateEpDocument soft-deletes the old row, persists the new document,
     Queue::assertPushed(WatermarkDocumentsJob::class);
 });
 
-test('fetchUpdateEpDocument keeps doc_name prefixed with certificate number for tax invoice documents', function () {
+test('updateEpDocument keeps doc_name prefixed with certificate number for tax invoice documents', function () {
     TestSchemaCreator::createMinimalSchema();
     Storage::fake('azureIMPrivate');
     Queue::fake();
@@ -218,7 +218,7 @@ test('fetchUpdateEpDocument keeps doc_name prefixed with certificate number for 
         'doc_name' => 'CERT-KEEP-001_original.pdf',
     ]);
 
-    $service = app(EmbeddedProductService::class);
+    $service = app(EmbeddedTransactionService::class);
 
     $result = $service->updateEpDocument([
         'epId' => $ep->id,
@@ -247,14 +247,14 @@ test('fetchUpdateEpDocument keeps doc_name prefixed with certificate number for 
 });
 
 test('queued EP send assertion throws EmbeddedProductDocumentSendFailedException when send returns failure', function () {
-    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     expect(fn () => $method->invoke(null, ['success' => false, 'message' => 'Documents cannot be sent'], 10, 20, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
         ->toThrow(EmbeddedProductDocumentSendFailedException::class, 'Documents cannot be sent');
 });
 
 test('queued EP send assertion throws when result is null or non-success without message', function () {
-    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     expect(fn () => $method->invoke(null, null, 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE))
         ->toThrow(EmbeddedProductDocumentSendFailedException::class, 'Embedded product document send failed');
@@ -264,14 +264,14 @@ test('queued EP send assertion throws when result is null or non-success without
 });
 
 test('queued EP send assertion does not throw when send result is successful', function () {
-    $method = new \ReflectionMethod(EmbeddedProductService::class, 'ensureQueueEmbeddedProductSendSucceeded');
+    $method = new \ReflectionMethod(EmbeddedTransactionService::class, 'ensureQueueEmbeddedProductSendSucceeded');
 
     $method->invoke(null, ['success' => true, 'message' => 'Certificate sent successfully'], 1, 2, 'car', QuoteDocumentsEnum::POLICY_SCHEDULE);
 
     expect(true)->toBeTrue();
 });
 
-test('Bus chain EP auto-send closure serializes without binding EmbeddedProductService', function () {
+test('Bus chain EP auto-send closure serializes without binding EmbeddedTransactionService', function () {
     $documentTypeCode = QuoteDocumentsEnum::POLICY_SCHEDULE;
     $quoteId = 1;
     $epId = 2;
