@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\Pipes\DuplicateCheckPipe;
+use App\Services\CQF\NonMotor\Pipes\InslyCheckPipe;
 use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\LOBValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\StoragePipe;
@@ -160,6 +161,7 @@ class NonMotorCQFRenewalExecutionService
         $pipes = [
             app(LOBValidationPipe::class),
             app(DuplicateCheckPipe::class),
+            app(InslyCheckPipe::class),
             app(ForeignKeyValidationPipe::class),
             app(StoragePipe::class),
         ];

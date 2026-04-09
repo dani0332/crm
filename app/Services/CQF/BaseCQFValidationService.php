@@ -6,7 +6,9 @@ namespace App\Services\CQF;
 
 use App\Enums\LeadSourceEnum;
 use App\Models\PersonalQuote;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\CQF\Contracts\CQFValidationInterface;
+use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
@@ -92,5 +94,49 @@ class BaseCQFValidationService implements CQFValidationInterface
             'email.email' => 'Customer email must be a valid email address.',
             'mobile_no.required' => 'Customer mobile is required.',
         ];
+    }
+
+    public function checkInslyRenewal(Model $quote): bool
+    {
+        // Check if the quote has at least one status of policy issued
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if (! $hasPolicyIssuedStatus) {
+            return false;
+        }
+
+        // Retrieve send update options and logs
+        $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+
+        $endorsementFinancial = false;
+        $policyPeriodExtension = false;
+        $isUpdateBooked = false;
+
+        if ($quote->source === LeadSourceEnum::INSLY && ! empty($sendUpdateLogs)) {
+            foreach ($sendUpdateLogs as $log) {
+                if ($log->isEndorsementFinancial()) {
+                    $endorsementFinancial = true;
+                    LoggerService::info(self::class . ' - Endorsement financial found', [
+                        'policy_number' => $quote->policy_number,
+                    ]);
+                }
+
+                if ($log->isPolicyPeriodExtension()) {
+                    LoggerService::info(self::class . ' - Policy period extension found', [
+                        'policy_number' => $quote->policy_number,
+                    ]);
+                    $policyPeriodExtension = true;
+                }
+
+                if ($log->isUpdateBooked()) {
+                    LoggerService::info(self::class . ' - Update booked found', [
+                        'policy_number' => $quote->policy_number,
+                    ]);
+                    $isUpdateBooked = true;
+                }
+            }
+        }
+
+        return $endorsementFinancial && $policyPeriodExtension && $isUpdateBooked;
     }
 }

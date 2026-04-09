@@ -21,6 +21,11 @@ interface CQFValidationInterface
     public function isDuplicateQuote(Model $quote): bool;
 
     /**
+     * Check if quote is an Insly renewal and if the renewal criteria is met.
+     */
+    public function checkInslyRenewal(Model $quote): bool;
+
+    /**
      * Custom validation messages keyed by rule.
      *
      * @return array<string, string>
