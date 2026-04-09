@@ -9,6 +9,7 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Exceptions\EmbeddedProductDocumentSendFailedException;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
@@ -27,7 +28,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class EmbeddedProductService extends BaseService
 {
@@ -369,6 +369,6 @@ class EmbeddedProductService extends BaseService
             'message' => $message,
         ]);
 
-        throw new RuntimeException($message);
+        throw new EmbeddedProductDocumentSendFailedException($message);
     }
 }
