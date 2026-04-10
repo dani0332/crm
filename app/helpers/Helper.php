@@ -776,8 +776,14 @@ if (! function_exists('getIMLogo')) {
 
 if (! function_exists('profilePhotoDataUriForPdf')) {
     /**
-     * Build a data URI for embedding advisor photos in PDFs. Remote URLs (e.g. Google avatars) are fetched with
-     * the HTTP client so failures do not throw; local filesystem paths are read when the file exists.
+     * Build a data URI for embedding advisor photos in PDFs. Remote URLs are fetched with the HTTP client so
+     * failures do not throw; local filesystem paths are read when the file exists.
+     *
+     * Security (SSRF): {@see FILTER_VALIDATE_URL} accepts many schemes/hosts; a malicious stored URL could in
+     * theory cause this server to request internal or metadata endpoints. In Blanka, {@see User::$profile_photo_path}
+     * is populated with Google profile photo URLs (e.g. lh3.googleusercontent.com) for advisors—not arbitrary
+     * user-supplied targets—so this risk is treated as mitigated at the data layer. No additional URL allowlist
+     * is applied here by product decision.
      *
      * @return string|null A data URI (e.g. data:image/jpeg;base64,...) or null when the image cannot be loaded.
      */
@@ -788,6 +794,7 @@ if (! function_exists('profilePhotoDataUriForPdf')) {
         if ($path !== null && $path !== '') {
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 try {
+                    // Outbound fetch: trusted inputs are Google-hosted avatars only (see function docblock).
                     $response = Http::timeout(8)
                         ->withOptions(['allow_redirects' => true])
                         ->get($path);
