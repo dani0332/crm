@@ -261,68 +261,6 @@ class AdnicRequestBuilder
         return $salaryBandMapping[$salaryBand] ?? null;
     }
 
-    private function mappingNationality($nationality): ?int
-    {
-        if (is_null($nationality)) {
-            return null;
-        }
-
-        $nationalityMapping = [
-            'EMIRATI' => 1,
-            'JORDANIAN' => 11,
-            'LEBANESE' => 12,
-            'SYRIAN' => 13,
-            'EGYPTIAN' => 14,
-            'ANTIGUAN' => 100,
-            'ARGENTINE' => 101,
-            'AUSTRIAN' => 102,
-            'AZERBAIJANI' => 103,
-            'BAHAMIAN' => 104,
-            'BARBADIAN' => 105,
-            'BELARUSIAN' => 106,
-            'BELGIAN' => 107,
-            'BELIZEAN' => 108,
-            'BENINESE' => 109,
-            'BHUTANESE' => 110,
-            'BOLIVIAN' => 111,
-            'MOTSWANA' => 112,
-            'BRUNEIAN' => 113,
-            'BULGARIAN' => 114,
-            'BURKINABE' => 115,
-            'BURUNDIAN' => 116,
-            'CAMBODIAN' => 117,
-            'CAMEROONIAN' => 118,
-            'CAPE VERDEAN' => 119,
-            'CENTRAL AFRICAN' => 120,
-            'CHADIAN' => 121,
-            'CHILEAN' => 122,
-            'CHINESE' => 123,
-            'COLOMBIAN' => 124,
-            'COMORAN' => 125,
-            'COOK ISLANDER' => 127,
-            'COSTA RICAN' => 128,
-            'IVORIAN' => 129,
-            'CROATIAN' => 130,
-            'CUBAN' => 131,
-            'CYPRIOT' => 132,
-            'CZECH' => 133,
-            'CONGOLESE' => 135,
-            'DANISH' => 136,
-            'DOMINICAN1' => 137,
-            'DOMINICAN' => 138,
-            'ECUADORIAN' => 139,
-            'SALVADORAN' => 140,
-            'EQUATOGUINEAN' => 141,
-            'ESTONIAN' => 142,
-            'FIJIAN' => 143,
-            'GABONESE' => 144,
-            'GAMBIAN' => 145,
-            'GEORGIAN' => 146,
-        ];
-
-        return $nationalityMapping[ucwords($nationality)] ?? null;
-    }
-
     private function mappingGender($gender): string
     {
         if (in_array($gender, [
