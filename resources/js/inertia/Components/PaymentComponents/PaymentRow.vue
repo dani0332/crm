@@ -97,13 +97,14 @@ const activeTravelTravelers = computed(() =>
   Array.isArray(page.props.travelers) ? page.props.travelers : [],
 );
 
-
 const travelerCountForPaymentSegment = payment => {
   const seniorSegment = isSeniorSegmentPaymentCode(payment?.code);
   return activeTravelTravelers.value.filter(traveler => {
     const rawAge = calculateAge(traveler.dob);
     const age = Number.isFinite(rawAge) ? rawAge : 0;
-    return seniorSegment ? age >= travelSeniorMemberAge : age < travelSeniorMemberAge;
+    return seniorSegment
+      ? age >= travelSeniorMemberAge
+      : age < travelSeniorMemberAge;
   }).length;
 };
 
@@ -118,9 +119,7 @@ const travelPaymentStatusesEligibleForDelete = new Set([
 ]);
 
 const isTravelPaymentDeletableByStatus = payment =>
-  travelPaymentStatusesEligibleForDelete.has(
-    payment?.payment_status_id,
-  );
+  travelPaymentStatusesEligibleForDelete.has(payment?.payment_status_id);
 
 const isTravelDeleteForEmptyMemberSegment = payment => {
   if (props.quoteType !== quoteTypeCodeEnum.Travel) {
@@ -541,9 +540,7 @@ const amlAndKycTooltip = computed(() => {
             Edit
           </x-button>
         </template>
-        <template
-          v-if="isTravelDeleteForEmptyMemberSegment(payment)"
-        >
+        <template v-if="isTravelDeleteForEmptyMemberSegment(payment)">
           <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete
           </x-button>

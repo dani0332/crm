@@ -182,7 +182,9 @@ export const usePayment = () => {
     const memberIsSenior = memberAge >= TRAVEL_MEMBER_SENIOR_AGE;
 
     return payments.filter(p => {
-      return memberIsSenior ? isSeniorMemberPayment(p.code) : !isSeniorMemberPayment(p.code);
+      return memberIsSenior
+        ? isSeniorMemberPayment(p.code)
+        : !isSeniorMemberPayment(p.code);
     });
   };
 

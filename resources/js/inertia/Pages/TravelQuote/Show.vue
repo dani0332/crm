@@ -609,8 +609,7 @@ const deleteTraveler = id => {
     },
     onError: errors => {
       const raw =
-        errors?.travel_member_delete ??
-        Object.values(errors ?? {})[0];
+        errors?.travel_member_delete ?? Object.values(errors ?? {})[0];
       const message = Array.isArray(raw) ? raw[0] : raw;
       notification.error({
         title: message,
@@ -2748,7 +2747,10 @@ const fullAddress = computed(() => {
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
             <!-- Show button with tooltip when payment is authorized and not cancelled -->
             <x-tooltip
-              v-if="isAuthorizedPayment.hasAuthorized && ! memberPaymentCancelled(item)"
+              v-if="
+                isAuthorizedPayment.hasAuthorized &&
+                !memberPaymentCancelled(item)
+              "
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">
