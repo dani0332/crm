@@ -146,7 +146,7 @@ const validateSumAssured = value => {
   if (!Number.isInteger(sumAssured)) {
     return 'Sum Assured must be an integer (no decimal allowed)';
   }
-
+  
   if (sumAssured < 1 || sumAssured > 100000000) {
     return 'Sum Assured must be between 1 and 100,000,000';
   }
@@ -164,14 +164,9 @@ const validateAlphaOnly = value => {
 
 function onSubmit(isValid) {
   if (isValid) {
-    let method = editMode.value ? 'put' : 'post';
-    let url = editMode.value
-      ? route('life-quotes-update', props.quote.uuid)
-      : route('life-quotes-store');
-
-    quoteForm.submit(method, url, {
+    quoteForm.submit('put', route('life-revival-quotes-update', props.quote.uuid), {
       onError: errors => {
-        console.log(quoteForm.setError(errors));
+        quoteForm.setError(errors);
       },
     });
   }
@@ -209,10 +204,10 @@ watch(
     <Head title="Life Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
-        Life Quote <span v-if="quote">{{ quote?.uuid }}</span>
+        Edit Life Revival <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link :href="route('life-quotes-list')">
+        <Link :href="route('life-revival-quotes-list')">
           <x-button size="sm" color="#ff5e00"> Life Quotes List</x-button>
         </Link>
       </div>
