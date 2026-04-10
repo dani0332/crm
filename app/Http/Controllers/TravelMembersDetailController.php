@@ -13,6 +13,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class TravelMembersDetailController extends Controller
@@ -21,7 +22,7 @@ class TravelMembersDetailController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(TravelMemberDetailRequest $request)
     {
@@ -84,7 +85,7 @@ class TravelMembersDetailController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
@@ -97,7 +98,7 @@ class TravelMembersDetailController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update(TravelMemberDetailRequest $request, $id)
     {

@@ -63,7 +63,7 @@ final class PaymentStatusEnum extends Enum
             self::PAID,
             self::CAPTURED,
             self::PARTIAL_CAPTURED,
-            self::PARTIALLY_PAID
+            self::PARTIALLY_PAID,
         ];
     }
 
