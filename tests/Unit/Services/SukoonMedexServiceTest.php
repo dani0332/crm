@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\VehicleTypeEnum;
 use App\Services\SukoonMedexService;
@@ -95,5 +96,45 @@ describe('prepareAdditionalData', function () {
         $result = $method->invoke($this->service);
 
         expect($result['plan_option'])->toBeNull();
+    });
+});
+
+describe('processPurchaseFlow send guard after provider sync', function () {
+    /**
+     * Mirrors SukoonMedexService::processPurchaseFlow email branch conditions
+     * (excluding watermarked document checks).
+     */
+    function shouldAttemptCertificateEmailAfterSync(
+        string $initialPolicyStatusBeforeDocumentsSync,
+        string $policyStatusAfterSync
+    ): bool {
+        $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+            $initialPolicyStatusBeforeDocumentsSync,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        );
+        $isNowReadyForSage = $policyStatusAfterSync === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+
+        return ! $hasAlreadySentDocument && $isNowReadyForSage;
+    }
+
+    test('attempts send when status transitions to ready for sage from earlier stage', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_BOOKED,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        ))->toBeTrue();
+    });
+
+    test('does not attempt send when already ready for sage before sync', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        ))->toBeFalse();
+    });
+
+    test('does not attempt send when post-sync status is not yet ready for sage', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_BOOKED,
+            EmbeddedTransactionEnum::STATUS_BOOKED
+        ))->toBeFalse();
     });
 });

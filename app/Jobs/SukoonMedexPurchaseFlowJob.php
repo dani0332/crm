@@ -23,14 +23,14 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     private $quoteObject;
     private $quoteTypeId;
     private $transaction;
-    private $isSendEmail = true;
+    private $isSendEmail = false;
     private string $logPrefix = 'SukoonMedex - PurchaseFlowJob:';
     private array $logExtra = [];
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteObject, $quoteTypeId, $transaction, $isSendEmail = true)
+    public function __construct($quoteObject, $quoteTypeId, $transaction, $isSendEmail = false)
     {
         $this->quoteObject = $quoteObject;
         $this->quoteTypeId = $quoteTypeId;

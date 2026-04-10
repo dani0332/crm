@@ -143,7 +143,7 @@ class SukoonMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      */
-    public function processPurchaseFlow($isSendEmail = true)
+    public function processPurchaseFlow($isSendEmail = false)
     {
         try {
             // EmbeddedTransaction policy_status
@@ -185,6 +185,9 @@ class SukoonMedexService
 
             }
 
+            // Capture before sync mutates policy_status (e.g. via updateTransaction).
+            $initialPolicyStatusBeforeDocumentsSync = $this->policyStatus;
+
             // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncAndProcessSukoonDocuments();
@@ -198,7 +201,22 @@ class SukoonMedexService
 
                 // make sure email required watermarked documents is not missing
                 if (empty($missingReqWatermarkedDocTypes)) {
-                    $this->sendDocuments();
+                    $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+                        $initialPolicyStatusBeforeDocumentsSync,
+                        EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                    );
+                    $isNowReadyForSage = $this->policyStatus === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+
+                    if (! $hasAlreadySentDocument && $isNowReadyForSage) {
+                        $this->sendDocuments();
+
+                    } else {
+                        LoggerService::info("{$this->logPrefix} Skipping sendDocuments", extra: [
+                            'hasAlreadySentDocument' => $hasAlreadySentDocument,
+                            'isNowReadyForSage' => $isNowReadyForSage,
+                            'initialPolicyStatusBeforeDocumentsSync' => $initialPolicyStatusBeforeDocumentsSync,
+                        ]);
+                    }
                 } else {
                     LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
                 }
