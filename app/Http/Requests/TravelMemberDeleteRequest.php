@@ -45,6 +45,8 @@ class TravelMemberDeleteRequest extends FormRequest
             $quote = TravelQuote::find($member->quote_id);
             if (! $quote) {
                 $validator->errors()->add('travel_member_delete', 'Quote not found.');
+
+                return;
             }
 
             $travelQuoteService = app(TravelQuoteService::class);
