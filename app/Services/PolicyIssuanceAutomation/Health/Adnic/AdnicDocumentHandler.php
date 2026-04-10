@@ -83,17 +83,24 @@ class AdnicDocumentHandler
      * Get document by type from quote documents
      *
      * @param  mixed  $quote
-     * @return Collection|null
      */
-    public function getDocumentByType($quote, array $documentTypeCodes)
+    public function getDocumentByType($quote, array $documentTypeCodes): ?Collection
     {
         $documents = collect($quote->documents ?? []);
         $documents = $documents->whereIn('document_type_code', $documentTypeCodes);
 
-        if ($documents->isEmpty() || $documents->count() === 0) {
+        if ($documents->isEmpty()) {
             return null;
         }
 
+        return $this->finalizeDocumentsAfterTypeFilter($quote, $documents, $documentTypeCodes);
+    }
+
+    /**
+     * @param  mixed  $quote
+     */
+    private function finalizeDocumentsAfterTypeFilter($quote, Collection $documents, array $documentTypeCodes): ?Collection
+    {
         $emirateIdType = null;
         if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
             $emirateIdType = $this->modifyEmirateDocument($quote->uuid);
@@ -105,56 +112,78 @@ class AdnicDocumentHandler
             return null;
         }
 
-        // Handle Emirates ID document splitting logic
-        if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
-            // Filter only HEA_EMIRATE_ID_COPY documents
-            $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
+        if (! in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
+            return $documents;
+        }
 
-            // If type is 3 (Emirates ID) and there are multiple documents with HEA_EMIRATE_ID_COPY
-            if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE) {
-                $documentsArray = $documents->values()->all();
+        return $this->applyEmiratesIdCopyDocumentRules($documents, $emirateIdType);
+    }
 
-                // Find indices of HEA_EMIRATE_ID_COPY documents
-                $emirateIdIndices = [];
-                foreach ($documentsArray as $index => $doc) {
-                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
-                        $emirateIdIndices[] = $index;
-                    }
-                }
+    /**
+     * Adjust HEA_EMIRATE_ID_COPY rows for physical EID (front/back) or insured application flow.
+     */
+    private function applyEmiratesIdCopyDocumentRules(Collection $documents, ?int $emirateIdType): Collection
+    {
+        if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE) {
+            return $this->splitPhysicalEmiratesIdIntoFrontAndBack($documents);
+        }
 
-                if ($emirateIdDocuments->count() > 1) {
-                    // Modify first HEA_EMIRATE_ID_COPY document as front
-                    if (isset($emirateIdIndices[0])) {
-                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
-                    }
-
-                    // Modify second HEA_EMIRATE_ID_COPY document as back
-                    if (isset($emirateIdIndices[1])) {
-                        $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
-                    }
-                } else {
-                    if (isset($emirateIdIndices[0])) {
-                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EMIRATE_ID_COPY;
-                    }
-                }
-
-                return collect($documentsArray);
-            } elseif ($emirateIdType === AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE) {
-                $documentsArray = $documents->values()->all();
-
-                // Find first HEA_EMIRATE_ID_COPY document and modify its insurerDocCode
-                foreach ($documentsArray as $index => $doc) {
-                    if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
-                        $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
-                        break;
-                    }
-                }
-
-                return collect($documentsArray);
-            }
+        if ($emirateIdType === AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE) {
+            return $this->rewriteFirstEmirateIdCopyAsInsuredApplication($documents);
         }
 
         return $documents;
+    }
+
+    /**
+     * Map first/second HEA_EMIRATE_ID_COPY to front/back when two files exist; otherwise keep copy code.
+     *
+     * @return array<int, int>
+     */
+    private function indicesOfEmirateIdCopyDocuments(array $documentsArray): array
+    {
+        $indices = [];
+        foreach ($documentsArray as $index => $doc) {
+            if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                $indices[] = $index;
+            }
+        }
+
+        return $indices;
+    }
+
+    private function splitPhysicalEmiratesIdIntoFrontAndBack(Collection $documents): Collection
+    {
+        $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
+        $documentsArray = $documents->values()->all();
+        $emirateIdIndices = $this->indicesOfEmirateIdCopyDocuments($documentsArray);
+
+        if ($emirateIdDocuments->count() > 1) {
+            if (isset($emirateIdIndices[0])) {
+                $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
+            }
+            if (isset($emirateIdIndices[1])) {
+                $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
+            }
+        } elseif (isset($emirateIdIndices[0])) {
+            $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EMIRATE_ID_COPY;
+        }
+
+        return collect($documentsArray);
+    }
+
+    private function rewriteFirstEmirateIdCopyAsInsuredApplication(Collection $documents): Collection
+    {
+        $documentsArray = $documents->values()->all();
+
+        foreach ($documentsArray as $index => $doc) {
+            if ($this->getDocumentTypeCode($doc) === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
+                break;
+            }
+        }
+
+        return collect($documentsArray);
     }
 
     /**
@@ -250,44 +279,38 @@ class AdnicDocumentHandler
         ]);
     }
 
-    public function modifyEmirateDocument($quoteUuid)
+    public function modifyEmirateDocument($quoteUuid): ?int
     {
+        $result = null;
+
         $umafResponse = HealthUMAFResponse::where('quote_uuid', $quoteUuid)->first();
 
         if ($umafResponse === null) {
             LoggerService::info('Health UMAF response not found for quote', extra: [
                 'quote_uuid' => $quoteUuid,
             ]);
+        } else {
+            $answers = $umafResponse->answers ?? [];
+            if (! is_array($answers)) {
+                LoggerService::info('Health UMAF response has no answers array', extra: [
+                    'quote_uuid' => $quoteUuid,
+                ]);
+            } else {
+                $typeOfEID = collect($answers)->filter(function ($answer) {
+                    return ($answer['question_code'] ?? null) == 'typeOfEID';
+                })->values()->first();
 
-            return null;
+                if (! $typeOfEID) {
+                    LoggerService::info('Type of EID not found');
+                } elseif ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
+                    $result = AdnicEnum::EMIRATES_ID_CODE;
+                } elseif ($typeOfEID['answer_text'] == AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_TEXT) {
+                    $result = AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE;
+                }
+            }
         }
 
-        $answers = $umafResponse->answers ?? [];
-        if (! is_array($answers)) {
-            LoggerService::info('Health UMAF response has no answers array', extra: [
-                'quote_uuid' => $quoteUuid,
-            ]);
-
-            return null;
-        }
-
-        $typeOfEID = collect($answers)->filter(function ($answer) {
-            return ($answer['question_code'] ?? null) == 'typeOfEID';
-        })->values()->first();
-
-        if (! $typeOfEID) {
-            LoggerService::info('Type of EID not found');
-
-            return null;
-        }
-
-        if ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
-            return AdnicEnum::EMIRATES_ID_CODE;
-        } elseif ($typeOfEID['answer_text'] == AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_TEXT) {
-            return AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE;
-        }
-
-        return null;
+        return $result;
     }
 
     /**
@@ -334,12 +357,9 @@ class AdnicDocumentHandler
     /**
      * Map document types to IMCRM document type codes
      */
-    public function getDocTypeCodeForIMCRM($quote): array
+    public function getDocTypeCodeForIMCRM(): array
     {
         return [
-            /*  DocumentTypeCode::HEA_EID => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::CTIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::POLICY_SCHEDULE => $quote->insurer_policy_doc_id, */
             AdnicEnum::INSURER_DOCUMENT_KEY_POLICY_DOCUMENT => DocumentTypeCode::POLC,
             AdnicEnum::INSURER_DOCUMENT_KEY_COMMISION_NOTE => DocumentTypeCode::TIRBB,
             AdnicEnum::INSURER_DOCUMENT_KEY_TAX_INVOICE => DocumentTypeCode::TI,
