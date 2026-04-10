@@ -55,11 +55,6 @@ class NonMotorCQFRegistry
             'mapper' => YachtCQFQuoteMappingService::class,
             'storage' => YachtCQFQuoteStorageService::class,
         ],
-        QuoteTypes::JETSKI->value => [
-            'validator' => JetskiCQFValidationService::class,
-            'mapper' => JetskiCQFQuoteMappingService::class,
-            'storage' => JetskiCQFQuoteStorageService::class,
-        ],
         QuoteTypes::CYCLE->value => [
             'validator' => CycleCQFValidationService::class,
             'mapper' => CycleCQFQuoteMappingService::class,
@@ -79,12 +74,7 @@ class NonMotorCQFRegistry
             'validator' => BusinessCQFValidationService::class,
             'mapper' => BusinessCQFQuoteMappingService::class,
             'storage' => BusinessCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::SAVINGS->value => [
-            'validator' => SavingsCQFValidationService::class,
-            'mapper' => SavingsCQFQuoteMappingService::class,
-            'storage' => SavingsCQFQuoteStorageService::class,
-        ],
+        ]
     ];
 
     public function __construct(
