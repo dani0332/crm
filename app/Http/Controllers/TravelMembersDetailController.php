@@ -159,10 +159,18 @@ class TravelMembersDetailController extends Controller
     public function destroy(TravelMemberDeleteRequest $request): RedirectResponse
     {
         $travelCustomerMember = CustomerMembers::find($request->validated('travel_member_id'));
-        
+
+        if (! $travelCustomerMember) {
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'travel_member_delete' => 'The selected member could not be found.',
+                ]);
+        }
+
         TravelQuote::find($travelCustomerMember->quote_id)?->update(['primary_member_id' => null, 'quote_updated_at' => Carbon::now()]);
         $travelCustomerMember->delete();
-        
+
         return redirect()->back();
     }
 
