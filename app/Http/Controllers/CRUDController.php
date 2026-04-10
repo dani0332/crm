@@ -67,6 +67,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthUMAFResponse;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -1264,6 +1265,11 @@ class CRUDController extends Controller
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
+                $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
+                $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
+                $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
+
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
@@ -2438,21 +2444,22 @@ class CRUDController extends Controller
             return response()->json(['success' => 'OCB email sent to customer']);
         }
 
-        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
             $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
             $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
             $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
         }
-        
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
-            'quote_id' => $carQuote->id,
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
-        
+
+        $isRenewalHistorical = $carQuote->latestUpdateRenewalQuoteProcess
+            && RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
+                'quote_id' => $carQuote->id,
+                'quote_type' => QuoteTypeShortCode::CAR,
+                'status' => RenewalProcessStatuses::PLANS_FETCHED,
+                'type' => RenewalsUploadType::UPDATE_LEADS,
+                'email_sent' => true,
+                'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+            ])->exists() && $carQuote->isGenesisLead;
+
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
 
@@ -2465,7 +2472,7 @@ class CRUDController extends Controller
 
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR?->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
         if ($carQuote->isSuppressIntroEmail() && $carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
@@ -2473,8 +2480,8 @@ class CRUDController extends Controller
 
             return;
         }
-        
-        if($carQuote->isGenesisLead) {
+
+        if ($carQuote->isGenesisLead) {
             $emailData->currentInsurer = '';
         }
 
