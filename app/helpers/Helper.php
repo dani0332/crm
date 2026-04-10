@@ -783,49 +783,40 @@ if (! function_exists('profilePhotoDataUriForPdf')) {
      */
     function profilePhotoDataUriForPdf(?string $path): ?string
     {
-        if ($path === null || $path === '') {
-            return null;
-        }
+        $result = null;
 
-        if (filter_var($path, FILTER_VALIDATE_URL)) {
-            try {
-                $response = Http::timeout(8)
-                    ->withOptions(['allow_redirects' => true])
-                    ->get($path);
+        if ($path !== null && $path !== '') {
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                try {
+                    $response = Http::timeout(8)
+                        ->withOptions(['allow_redirects' => true])
+                        ->get($path);
 
-                if (! $response->successful()) {
-                    return null;
+                    if ($response->successful()) {
+                        $binary = $response->body();
+                        if ($binary !== '') {
+                            $mime = $response->header('Content-Type') ?? 'image/jpeg';
+                            $mime = trim(explode(';', $mime)[0]);
+                            $result = 'data:'.$mime.';base64,'.base64_encode($binary);
+                        }
+                    }
+                } catch (\Throwable) {
+                    // Leave $result null on transport or HTTP errors.
                 }
+            } elseif (is_file($path)) {
+                $binary = @file_get_contents($path);
+                if ($binary !== false && $binary !== '') {
+                    $mime = @mime_content_type($path);
+                    if ($mime === false || $mime === '') {
+                        $mime = 'image/png';
+                    }
 
-                $binary = $response->body();
-                if ($binary === '') {
-                    return null;
+                    $result = 'data:'.$mime.';base64,'.base64_encode($binary);
                 }
-
-                $mime = $response->header('Content-Type') ?? 'image/jpeg';
-                $mime = trim(explode(';', $mime)[0]);
-
-                return 'data:'.$mime.';base64,'.base64_encode($binary);
-            } catch (\Throwable) {
-                return null;
             }
         }
 
-        if (! is_file($path)) {
-            return null;
-        }
-
-        $binary = @file_get_contents($path);
-        if ($binary === false || $binary === '') {
-            return null;
-        }
-
-        $mime = @mime_content_type($path);
-        if ($mime === false || $mime === '') {
-            $mime = 'image/png';
-        }
-
-        return 'data:'.$mime.';base64,'.base64_encode($binary);
+        return $result;
     }
 }
 
