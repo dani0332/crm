@@ -348,7 +348,7 @@ class BikeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'previousAdvisor', 'nationality', 'customer'])
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
