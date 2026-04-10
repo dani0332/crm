@@ -3,7 +3,6 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -213,7 +212,8 @@ trait Carable
 
     private function getRulesForVehicleUse($lead)
     {
-       LoggerService::info(self::class."- Applying company use rules for lead with Ref-ID: {$lead->uuid} and source: {$lead->source}");
+        LoggerService::info(self::class."- Applying company use rules for lead with Ref-ID: {$lead->uuid} and source: {$lead->source}");
+
         return $this->getCompanyUsageRules($lead, RuleEnum::COMPANY_USE->value);
     }
 

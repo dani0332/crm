@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\CarRegistrationType;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
@@ -46,7 +45,7 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
     private function applyRuleExclusions($rules, $tierUserIds, $lead)
     {
         if ($rules->isEmpty()) {
-        
+
             $ruleUserIds = $this->getRuleUsers();
             LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
