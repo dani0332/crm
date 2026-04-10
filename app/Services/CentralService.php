@@ -2098,25 +2098,28 @@ class CentralService extends BaseService
             if ($quote->payments()->count() < 2) {
                 LoggerService::info('Payment cannot be deleted its the only associated payment with this quote', extra: ['paymentCode' => $paymentCode]);
                 $result = ['status' => false, 'message' => 'Payment cannot be deleted'];
-            
+
             } else {
                 try {
-                    // delete payment and sync dependencies
-                    LoggerService::info('Deleting payment and sync dependencies', extra: ['paymentCode' => $paymentCode]);
-                    $this->deletePaymentAndSyncDependencies($request, $quote);
+                    LoggerService::info('Deleting travel payment with related updates in a single transaction', extra: ['paymentCode' => $paymentCode]);
 
-                    if ($payment->paymentable_type == TravelQuote::class) {
-                        // update payment code and sync dependencies after payment deletion
-                        LoggerService::info('Updating payment code and sync dependencies after payment deletion', extra: ['paymentCode' => $paymentCode]);
-                        $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
-                        
-                        LoggerService::info('Updating quote status after payment deletion', extra: ['paymentCode' => $paymentCode]);
-                        $this->updateQuoteStatusAfterPaymentDeletion($quote);
+                    $maxAttempts = 2;
+                    $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote, $payment) {
+                        $this->performDeletePaymentAndSyncDependencies($request);
+
+                        if ($payment->paymentable_type === TravelQuote::class) {
+                            $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
+                            $this->updateQuoteStatusAfterPaymentDeletion($quote);
+                        }
+                    }, $maxAttempts);
+
+                    if (is_array($retryResult)) {
+                        throw new \RuntimeException((string) ($retryResult['message'] ?? 'Payment deletion failed'));
                     }
 
                     $result = ['status' => true, 'message' => 'Delete payment processed'];
                 } catch (\Throwable $th) {
-                    LoggerService::warning('Payment deletion failed', extra: ['paymentCode' => $paymentCode]);
+                    LoggerService::warning('Payment deletion failed', extra: ['paymentCode' => $paymentCode], exception: $th);
                     $result = ['status' => false, 'message' => 'Payment deletion failed'];
                 }
             }
@@ -2128,38 +2131,38 @@ class CentralService extends BaseService
         return $result;
     }
 
-    private function deletePaymentAndSyncDependencies($request, $quote): void
+    /**
+     * Remove payment rows and related splits/history for the given request.
+     * Must run inside an active transaction (see {@see deletePayment}).
+     */
+    private function performDeletePaymentAndSyncDependencies($request): void
     {
-        $maxAttempts = 2;
-        $this->handleWithDeadlockRetries(function () use ($request, $quote) {
-            QuoteDocument::query()
-                ->whereIn(
-                    'payment_split_id',
-                    PaymentSplits::query()
-                        ->select('id')
-                        ->where('code', $request->payment_code)
-                )
-                ->get()
-                ->each(fn (QuoteDocument $document) => $document->forceDelete());
+        QuoteDocument::query()
+            ->whereIn(
+                'payment_split_id',
+                PaymentSplits::query()
+                    ->select('id')
+                    ->where('code', $request->payment_code)
+            )
+            ->get()
+            ->each(fn (QuoteDocument $document) => $document->forceDelete());
 
-            PaymentSplits::query()
-                ->where('code', $request->payment_code)
-                ->orderBy('id')
-                ->get()
-                ->each(fn (PaymentSplits $split) => $split->delete());
+        PaymentSplits::query()
+            ->where('code', $request->payment_code)
+            ->orderBy('id')
+            ->get()
+            ->each(fn (PaymentSplits $split) => $split->delete());
 
-            PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
+        PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
 
-            Payment::query()
-                ->where('id', $request->payment_id)
-                ->get()
-                ->each(fn (Payment $payment) => $payment->delete());
-        }, $maxAttempts);
+        Payment::query()
+            ->where('id', $request->payment_id)
+            ->get()
+            ->each(fn (Payment $paymentRow) => $paymentRow->delete());
     }
 
     private function updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion(TravelQuote $quote): void
     {
-
         $quote->refresh();
 
         $payments = $quote->payments()->get();
