@@ -53,7 +53,14 @@ class ReportsController extends Controller
     public function __construct()
     {
         $advisorConverionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
-        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport', 'renderConversionOptimizationReport']]);
+
+        $conversionOptimizationReportPermissions = implode('|', [
+            PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
+            PermissionsEnum::VIEW_ALL_REPORTS,
+        ]);
+
+        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+        $this->middleware(['permission:'.$conversionOptimizationReportPermissions], ['only' => ['renderConversionOptimizationReport', 'exportConversionOptimizationReport']]);
 
         $advisorDistributionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);

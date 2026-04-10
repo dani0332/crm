@@ -227,6 +227,7 @@ class HandleInertiaRequests extends Middleware
                 PermissionsEnum::UtmLeadsSalesReport,
                 PermissionsEnum::RENEWAL_BATCH_REPORT,
                 PermissionsEnum::CONVERSION_AS_AT_REPORT,
+                PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
                 PermissionsEnum::MANAGEMENT_REPORT,
                 PermissionsEnum::VIEW_ALL_REPORTS,
             ],
@@ -237,7 +238,7 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Conversion', route('advisor-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS])), 'Conversion Optimization', route('conversion-optimization-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Conversion Optimization Engine', route('conversion-optimization-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Advisor Performance', route('advisor-performance-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Distribution', route('advisor-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
