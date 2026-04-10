@@ -537,40 +537,62 @@ class UserService extends BaseService
      */
     public function profilePhotoDataUriForPdf(?string $path): ?string
     {
-        $result = null;
-
-        if ($path !== null && $path !== '') {
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                try {
-                    $response = Http::timeout(8)
-                        ->withOptions(['allow_redirects' => true])
-                        ->get($path);
-
-                    if ($response->successful()) {
-                        $binary = $response->body();
-                        if ($binary !== '') {
-                            $mime = $response->header('Content-Type') ?? 'image/jpeg';
-                            $mime = trim(explode(';', $mime)[0]);
-                            $result = 'data:'.$mime.';base64,'.base64_encode($binary);
-                        }
-                    }
-                } catch (\Throwable) {
-                    // Leave $result null on transport or HTTP errors.
-                }
-            } elseif (is_file($path)) {
-                $binary = @file_get_contents($path);
-                if ($binary !== false && $binary !== '') {
-                    $mime = @mime_content_type($path);
-                    if ($mime === false || $mime === '') {
-                        $mime = 'image/png';
-                    }
-
-                    $result = 'data:'.$mime.';base64,'.base64_encode($binary);
-                }
-            }
+        if ($path === null || $path === '') {
+            return null;
         }
 
-        return $result;
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $this->profilePhotoDataUriFromRemoteUrl($path);
+        }
+
+        return $this->profilePhotoDataUriFromLocalFile($path);
+    }
+
+    /**
+     * @return string|null Data URI or null when the remote image cannot be loaded.
+     */
+    private function profilePhotoDataUriFromRemoteUrl(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(8)
+                ->withOptions(['allow_redirects' => true])
+                ->get($url);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $binary = $response->successful() ? $response->body() : '';
+
+        if ($binary === '') {
+            return null;
+        }
+
+        $mime = $response->header('Content-Type') ?? 'image/jpeg';
+        $mime = trim(explode(';', $mime)[0]);
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
+    }
+
+    /**
+     * @return string|null Data URI or null when the path is not a readable file.
+     */
+    private function profilePhotoDataUriFromLocalFile(string $path): ?string
+    {
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $binary = @file_get_contents($path);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        $mime = @mime_content_type($path);
+        if ($mime === false || $mime === '') {
+            $mime = 'image/png';
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
     }
 
 }
