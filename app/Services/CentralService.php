@@ -92,6 +92,9 @@ class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
 
+    private const MESSAGE_PAYMENT_NOT_FOUND = 'Payment not found';
+    private const MESSAGE_PAYMENT_DELETION_FAILED = 'Payment deletion failed';
+
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
         $allowedLeadTypes = [
@@ -1485,9 +1488,9 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process started for payment code: '.$paymentCode);
         $payment = Payment::where('code', $paymentCode)->first();
         if (! $payment) {
-            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$paymentCode);
+            LoggerService::info('fn:voidPayment - '.self::MESSAGE_PAYMENT_NOT_FOUND.'. - Payment Code:'.$paymentCode);
 
-            return ['status' => false, 'message' => 'Payment not found'];
+            return ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
@@ -2104,27 +2107,27 @@ class CentralService extends BaseService
                     LoggerService::info('Deleting travel payment with related updates in a single transaction', extra: ['paymentCode' => $paymentCode]);
 
                     $maxAttempts = 2;
-                    $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote, $payment) {
-                        
+                    $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote) {
+
                         $this->performDeletePaymentAndSyncDependencies($request);
                         $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
                         $this->updateQuoteStatusAfterPaymentDeletion($quote);
-                    
+
                     }, $maxAttempts);
 
                     if (is_array($retryResult)) {
-                        throw new \RuntimeException((string) ($retryResult['message'] ?? 'Payment deletion failed'));
+                        throw new \RuntimeException((string) ($retryResult['message'] ?? self::MESSAGE_PAYMENT_DELETION_FAILED));
                     }
 
                     $result = ['status' => true, 'message' => 'Delete payment processed'];
                 } catch (\Throwable $th) {
-                    LoggerService::warning('Payment deletion failed', extra: ['paymentCode' => $paymentCode], exception: $th);
-                    $result = ['status' => false, 'message' => 'Payment deletion failed'];
+                    LoggerService::warning(self::MESSAGE_PAYMENT_DELETION_FAILED, extra: ['paymentCode' => $paymentCode], exception: $th);
+                    $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_DELETION_FAILED];
                 }
             }
         } else {
-            LoggerService::warning('Payment not found', extra: ['paymentCode' => $paymentCode]);
-            $result = ['status' => false, 'message' => 'Payment not found'];
+            LoggerService::warning(self::MESSAGE_PAYMENT_NOT_FOUND, extra: ['paymentCode' => $paymentCode]);
+            $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
         return $result;
