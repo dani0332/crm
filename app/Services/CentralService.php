@@ -2105,12 +2105,11 @@ class CentralService extends BaseService
 
                     $maxAttempts = 2;
                     $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote, $payment) {
+                        
                         $this->performDeletePaymentAndSyncDependencies($request);
-
-                        if ($payment->paymentable_type === TravelQuote::class) {
-                            $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
-                            $this->updateQuoteStatusAfterPaymentDeletion($quote);
-                        }
+                        $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
+                        $this->updateQuoteStatusAfterPaymentDeletion($quote);
+                    
                     }, $maxAttempts);
 
                     if (is_array($retryResult)) {
