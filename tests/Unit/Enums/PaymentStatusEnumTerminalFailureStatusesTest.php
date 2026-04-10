@@ -13,7 +13,7 @@ test('cancelled declined and failed statuses are grouped for travel member and p
 });
 
 test('authorized payment statuses are grouped for travel member delete guard', function () {
-    expect(PaymentStatusEnum::getAuthorizedPaymentStatuses())->toBe([
+    expect(PaymentStatusEnum::getConfirmedOrSettledPaymentStatuses())->toBe([
         PaymentStatusEnum::AUTHORISED,
         PaymentStatusEnum::PAID,
         PaymentStatusEnum::CAPTURED,
