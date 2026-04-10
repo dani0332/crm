@@ -19,7 +19,10 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
     public function getRules(): array
     {
         return array_merge(
-            ...array_map(fn (string $key) => $this->buildRegionRules($key), GroupMedicalRegionEnum::regionKeys()),
+            ...array_map(
+                fn (GroupMedicalRegionEnum $region) => $this->buildRegionRules($region->value),
+                GroupMedicalRegionEnum::cases(),
+            ),
         );
     }
 
@@ -144,7 +147,8 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
     {
         $hasAnyRegion = false;
 
-        foreach (GroupMedicalRegionEnum::regionKeys() as $regionKey) {
+        foreach (GroupMedicalRegionEnum::cases() as $region) {
+            $regionKey = $region->value;
             $regionProvided = array_key_exists($regionKey, $data);
             $region = $this->resolveRegionConfig($data, $regionKey);
             $hasBrackets = (! empty($region['micro_brackets']) && count($region['micro_brackets']) > 0) ||
