@@ -44,7 +44,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'othersInfo' => '',
             'isSmoker' => false,
-            'sumInsuredValue' => $this->lead->lifeQuote->sum_insured_value,
+            'sumInsuredValue' => (int)$this->lead->lifeQuote->sum_insured_value,
             'sumInsuredCurrencyId' => $this->lead->lifeQuote->sum_insured_currency_id,
             'maritalStatusId' => $this->lead->lifeQuote->marital_status_id,
             'purposeOfInsuranceId' => $this->lead->lifeQuote->purpose_of_insurance_id,
