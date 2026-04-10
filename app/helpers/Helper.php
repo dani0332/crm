@@ -807,7 +807,7 @@ if (! function_exists('profilePhotoDataUriForPdf')) {
                             $result = 'data:'.$mime.';base64,'.base64_encode($binary);
                         }
                     }
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     // Leave $result null on transport or HTTP errors.
                 }
             } elseif (is_file($path)) {
