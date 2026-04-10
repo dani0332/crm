@@ -1432,10 +1432,10 @@ class TravelQuoteService extends BaseService
             return false;
         }
 
-        $authorizedStatuses = PaymentStatusEnum::getAuthorizedPaymentStatuses();
+        $confirmedOrSettledStatuses = PaymentStatusEnum::getConfirmedOrSettledPaymentStatuses();
 
-        return $relevantPayments->contains(function (Payment $payment) use ($authorizedStatuses): bool {
-            return in_array((int) $payment->payment_status_id, $authorizedStatuses, true);
+        return $relevantPayments->contains(function (Payment $payment) use ($confirmedOrSettledStatuses): bool {
+            return in_array((int) $payment->payment_status_id, $confirmedOrSettledStatuses, true);
         });
     }
 }

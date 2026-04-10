@@ -56,7 +56,7 @@ final class PaymentStatusEnum extends Enum
         ];
     }
 
-    public static function getAuthorizedPaymentStatuses(): array
+    public static function getConfirmedOrSettledPaymentStatuses(): array
     {
         return [
             self::AUTHORISED,
