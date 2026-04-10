@@ -213,15 +213,8 @@ trait Carable
 
     private function getRulesForVehicleUse($lead)
     {
-        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
-            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
-
-            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
-        } else {
-            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
-
-            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
-        }
+       LoggerService::info(self::class."- Applying company use rules for lead with Ref-ID: {$lead->uuid} and source: {$lead->source}");
+        return $this->getCompanyUsageRules($lead, RuleEnum::COMPANY_USE->value);
     }
 
     private function getCompanyUsageRules($lead, $ruleName = null)

@@ -46,12 +46,8 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
     private function applyRuleExclusions($rules, $tierUserIds, $lead)
     {
         if ($rules->isEmpty()) {
-            if ($lead->registration_type == CarRegistrationType::PERSONAL) {
-                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
-            } else {
-                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: false);
-            }
-
+        
+            $ruleUserIds = $this->getRuleUsers();
             LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
@@ -64,8 +60,8 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
         }
     }
 
-    private function getRuleUsers($excludeVehicleUseRule = true): mixed
+    private function getRuleUsers()
     {
-        return app(RuleService::class)->getRuleUserIds($this->allocationRequest->getQuoteType(), $excludeVehicleUseRule);
+        return app(RuleService::class)->getRuleUserIds($this->allocationRequest->getQuoteType());
     }
 }
