@@ -19,6 +19,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Services\SageApiService;
 use Carbon\Carbon;
 use stdClass;
 
@@ -511,15 +512,7 @@ class SagePayloadFactory
                 if ($item->sr_no == 1) {
                     $dueDate = $bookingDate;
                 } else {
-                    $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($item->due_date));
-                    $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
-                    $resolvedBookingDate = Carbon::parse($bookingDate)->startOfDay();
-                    
-                    if ($resolvedDueDate->lt($resolvedBookingDate)) {
-                        $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
-                    } else {
-                        $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
-                    }
+                    $dueDate = app(SageApiService::class)->resolveInstallmentDueDateAgainstBookingDate($item->due_date, $bookingDate);
                 }
             }
 
