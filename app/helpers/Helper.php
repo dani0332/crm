@@ -774,6 +774,61 @@ if (! function_exists('getIMLogo')) {
     }
 }
 
+if (! function_exists('profilePhotoDataUriForPdf')) {
+    /**
+     * Build a data URI for embedding advisor photos in PDFs. Remote URLs (e.g. Google avatars) are fetched with
+     * the HTTP client so failures do not throw; local filesystem paths are read when the file exists.
+     *
+     * @return string|null A data URI (e.g. data:image/jpeg;base64,...) or null when the image cannot be loaded.
+     */
+    function profilePhotoDataUriForPdf(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            try {
+                $response = Http::timeout(8)
+                    ->withOptions(['allow_redirects' => true])
+                    ->get($path);
+
+                if (! $response->successful()) {
+                    return null;
+                }
+
+                $binary = $response->body();
+                if ($binary === '') {
+                    return null;
+                }
+
+                $mime = $response->header('Content-Type') ?? 'image/jpeg';
+                $mime = trim(explode(';', $mime)[0]);
+
+                return 'data:'.$mime.';base64,'.base64_encode($binary);
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $binary = @file_get_contents($path);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        $mime = @mime_content_type($path);
+        if ($mime === false || $mime === '') {
+            $mime = 'image/png';
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
+    }
+}
+
 if (! function_exists('getFavicon')) {
     /**
      * Get Insurance Market favicon URL
