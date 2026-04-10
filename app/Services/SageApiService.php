@@ -1900,15 +1900,7 @@ class SageApiService
                     if ($paymentSplit['sr_no'] == 1) {
                         $dueDate = $bookingDateFormatted;
                     } else {
-                        $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
-                        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
-                        $resolvedBookingDate = Carbon::parse($bookingDateFormatted)->startOfDay();
-                        
-                        if ($resolvedDueDate->lt($resolvedBookingDate)) {
-                            $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
-                        } else {
-                            $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
-                        }
+                        $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
                     }
                 }
 
@@ -1931,15 +1923,7 @@ class SageApiService
                         if ($paymentSplit['sr_no'] == 1) {
                             $dueDate = $bookingDateFormatted;
                         } else {
-                            $installmentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
-                            $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
-                            $resolvedBookingDate = Carbon::parse($bookingDateFormatted)->startOfDay();
-                            
-                            if ($resolvedDueDate->lt($resolvedBookingDate)) {
-                                $dueDate = $resolvedBookingDate->format(config('constants.DATE_FORMAT_ONLY'));
-                            } else {
-                                $dueDate = $resolvedDueDate->format(config('constants.DATE_FORMAT_ONLY'));
-                            }
+                            $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
                         }
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
@@ -2419,7 +2403,11 @@ class SageApiService
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                 $dueDate = $bookingDateFormatted;
                             } else {
-                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                if ($paymentSplits[$key]['sr_no'] == 1) {
+                                    $dueDate = $bookingDateFormatted;
+                                } else {
+                                    $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplits[$key]['due_date'], $bookingDateFormatted);
+                                }
                             }
 
                             $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
@@ -4558,5 +4546,19 @@ class SageApiService
     public function allowedProviderForSageEPBooking()
     {
         return [InsuranceProviderEnum::OIC->value, InsuranceProviderEnum::NGI->value];
+    }
+
+    public function resolveInstallmentDueDateAgainstBookingDate(string|int $rawInstallmentDueDate, string $bookingDate): string
+    {
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $installmentDueDate = date($dateFormat, strtotime((string) $rawInstallmentDueDate));
+        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+        $resolvedBookingDate = Carbon::parse($bookingDate)->startOfDay();
+
+        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+            return $resolvedBookingDate->format($dateFormat);
+        }
+
+        return $resolvedDueDate->format($dateFormat);
     }
 }
