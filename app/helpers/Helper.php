@@ -774,59 +774,6 @@ if (! function_exists('getIMLogo')) {
     }
 }
 
-if (! function_exists('profilePhotoDataUriForPdf')) {
-    /**
-     * Build a data URI for embedding advisor photos in PDFs. Remote URLs are fetched with the HTTP client so
-     * failures do not throw; local filesystem paths are read when the file exists.
-     *
-     * Security (SSRF): {@see FILTER_VALIDATE_URL} accepts many schemes/hosts; a malicious stored URL could in
-     * theory cause this server to request internal or metadata endpoints. In Blanka, {@see User::$profile_photo_path}
-     * is populated with Google profile photo URLs (e.g. lh3.googleusercontent.com) for advisors—not arbitrary
-     * user-supplied targets—so this risk is treated as mitigated at the data layer. No additional URL allowlist
-     * is applied here by product decision.
-     *
-     * @return string|null A data URI (e.g. data:image/jpeg;base64,...) or null when the image cannot be loaded.
-     */
-    function profilePhotoDataUriForPdf(?string $path): ?string
-    {
-        $result = null;
-
-        if ($path !== null && $path !== '') {
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                try {
-                    // Outbound fetch: trusted inputs are Google-hosted avatars only (see function docblock).
-                    $response = Http::timeout(8)
-                        ->withOptions(['allow_redirects' => true])
-                        ->get($path);
-
-                    if ($response->successful()) {
-                        $binary = $response->body();
-                        if ($binary !== '') {
-                            $mime = $response->header('Content-Type') ?? 'image/jpeg';
-                            $mime = trim(explode(';', $mime)[0]);
-                            $result = 'data:'.$mime.';base64,'.base64_encode($binary);
-                        }
-                    }
-                } catch (\Throwable) {
-                    // Leave $result null on transport or HTTP errors.
-                }
-            } elseif (is_file($path)) {
-                $binary = @file_get_contents($path);
-                if ($binary !== false && $binary !== '') {
-                    $mime = @mime_content_type($path);
-                    if ($mime === false || $mime === '') {
-                        $mime = 'image/png';
-                    }
-
-                    $result = 'data:'.$mime.';base64,'.base64_encode($binary);
-                }
-            }
-        }
-
-        return $result;
-    }
-}
-
 if (! function_exists('getFavicon')) {
     /**
      * Get Insurance Market favicon URL
