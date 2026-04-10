@@ -1,11 +1,14 @@
 <?php
 
+use App\Services\UserService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 it('returns null for empty path', function () {
-    expect(profilePhotoDataUriForPdf(null))->toBeNull();
-    expect(profilePhotoDataUriForPdf(''))->toBeNull();
+    $userService = app(UserService::class);
+
+    expect($userService->profilePhotoDataUriForPdf(null))->toBeNull();
+    expect($userService->profilePhotoDataUriForPdf(''))->toBeNull();
 });
 
 it('returns null when remote response is unsuccessful', function () {
@@ -13,7 +16,7 @@ it('returns null when remote response is unsuccessful', function () {
         'https://example.com/avatar.jpg' => Http::response('', 503),
     ]);
 
-    expect(profilePhotoDataUriForPdf('https://example.com/avatar.jpg'))->toBeNull();
+    expect(app(UserService::class)->profilePhotoDataUriForPdf('https://example.com/avatar.jpg'))->toBeNull();
 });
 
 it('returns null when remote request throws', function () {
@@ -21,7 +24,7 @@ it('returns null when remote request throws', function () {
         throw new ConnectionException('Network is unreachable');
     });
 
-    expect(profilePhotoDataUriForPdf('https://lh3.googleusercontent.com/test'))->toBeNull();
+    expect(app(UserService::class)->profilePhotoDataUriForPdf('https://lh3.googleusercontent.com/test'))->toBeNull();
 });
 
 it('builds data uri from successful remote response', function () {
@@ -29,7 +32,7 @@ it('builds data uri from successful remote response', function () {
         'https://example.com/avatar.jpg' => Http::response('fake-bytes', 200, ['Content-Type' => 'image/jpeg']),
     ]);
 
-    $uri = profilePhotoDataUriForPdf('https://example.com/avatar.jpg');
+    $uri = app(UserService::class)->profilePhotoDataUriForPdf('https://example.com/avatar.jpg');
 
     expect($uri)->toStartWith('data:image/jpeg;base64,');
     $b64 = substr($uri, strlen('data:image/jpeg;base64,'));
@@ -40,7 +43,7 @@ it('builds data uri from local file', function () {
     $path = sys_get_temp_dir().DIRECTORY_SEPARATOR.'blanka-pdf-photo-test.png';
     file_put_contents($path, 'png-bytes');
 
-    $uri = profilePhotoDataUriForPdf($path);
+    $uri = app(UserService::class)->profilePhotoDataUriForPdf($path);
 
     @unlink($path);
 
@@ -49,5 +52,5 @@ it('builds data uri from local file', function () {
 });
 
 it('returns null for missing local path', function () {
-    expect(profilePhotoDataUriForPdf('/nonexistent/path/to/nothing.png'))->toBeNull();
+    expect(app(UserService::class)->profilePhotoDataUriForPdf('/nonexistent/path/to/nothing.png'))->toBeNull();
 });
