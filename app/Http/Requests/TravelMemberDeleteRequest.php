@@ -38,6 +38,8 @@ class TravelMemberDeleteRequest extends FormRequest
 
             if (! $member) {
                 $validator->errors()->add('travel_member_delete', 'The selected member could not be found.');
+
+                return;
             }
 
             $quote = TravelQuote::find($member->quote_id);
