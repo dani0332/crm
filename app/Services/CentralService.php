@@ -431,6 +431,7 @@ class CentralService extends BaseService
         }
 
         $data->vat = $vatAmount;
+        $data->premium = $data->price_with_vat;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
