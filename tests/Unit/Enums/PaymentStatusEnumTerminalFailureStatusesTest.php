@@ -11,3 +11,13 @@ test('cancelled declined and failed statuses are grouped for travel member and p
         PaymentStatusEnum::FAILED,
     ]);
 });
+
+test('authorized payment statuses are grouped for travel member delete guard', function () {
+    expect(PaymentStatusEnum::getAuthorizedPaymentStatuses())->toBe([
+        PaymentStatusEnum::AUTHORISED,
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED,
+        PaymentStatusEnum::PARTIAL_CAPTURED,
+        PaymentStatusEnum::PARTIALLY_PAID,
+    ]);
+});
