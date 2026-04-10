@@ -13,6 +13,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class TravelMembersDetailController extends Controller
 {
@@ -168,8 +169,13 @@ class TravelMembersDetailController extends Controller
                 ]);
         }
 
-        TravelQuote::find($travelCustomerMember->quote_id)?->update(['primary_member_id' => null, 'quote_updated_at' => Carbon::now()]);
-        $travelCustomerMember->delete();
+        DB::transaction(function () use ($travelCustomerMember): void {
+            TravelQuote::find($travelCustomerMember->quote_id)?->update([
+                'primary_member_id' => null,
+                'quote_updated_at' => Carbon::now(),
+            ]);
+            $travelCustomerMember->delete();
+        });
 
         return redirect()->back();
     }
