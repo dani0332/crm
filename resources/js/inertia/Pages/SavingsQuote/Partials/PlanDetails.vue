@@ -1,5 +1,8 @@
 <script setup>
-import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import {
+  isSukoonPurpleInvestmentPlan,
+  useSavingsPlans,
+} from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 
 const emit = defineEmits(['update', 'close']);
@@ -148,15 +151,12 @@ const isLumpsumFrequency = computed(() => {
 });
 
 // Sukoon Purple Investment — lump sum from KEN instead of local calculator
-const isSukoonPurpleInvestment = computed(() => {
-  const p = props.planDetails;
-  const codes = page.props.insuranceProviderCodeEnum;
-  return (
-    p?.providerCode === codes?.OIC &&
-    p?.instantPolicy === true &&
-    p?.name?.trim() === 'Purple Investment'
-  );
-});
+const isSukoonPurpleInvestment = computed(() =>
+  isSukoonPurpleInvestmentPlan(
+    props.planDetails,
+    page.props.insuranceProviderCodeEnum,
+  ),
+);
 
 const calculatePlanLoading = ref(false);
 

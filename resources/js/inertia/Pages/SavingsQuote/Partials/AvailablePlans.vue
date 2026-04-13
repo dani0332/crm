@@ -1,7 +1,10 @@
 <script setup>
 import SavingsCalculator from '@/inertia/Components/SavingsCalculator.vue';
 import SelectPlan from '@/inertia/Components/SelectPlan.vue';
-import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import {
+  isSukoonPurpleInvestmentPlan,
+  useSavingsPlans,
+} from '@/inertia/Composables/useSavingsPlans';
 import { router } from '@inertiajs/vue3';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
@@ -257,13 +260,10 @@ const copyPlanURL = item => {
 };
 
 // Sukoon Purple Investment (instant policy) - same logic as MetLife for Life, without questionnaire
-const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const isSukoonPurpleInvestment = item =>
-  item?.providerCode === insuranceProviderCodeEnum?.OIC &&
-  item?.instantPolicy === true &&
-  item?.name?.trim() === 'Purple Investment';
+  isSukoonPurpleInvestmentPlan(item, page.props.insuranceProviderCodeEnum);
 
 const canSelectSukoonPurplePlan = computed(() => {
   const q = props.quote;
