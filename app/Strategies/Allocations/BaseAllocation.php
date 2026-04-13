@@ -358,7 +358,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function verifyLeadPreChecks(): bool
     {
-        if (! in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs())) {
+        if (! in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) && $this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
             return true;
         }
 
