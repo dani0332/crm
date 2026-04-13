@@ -8,6 +8,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FetchSavingsProviderPlanRequest;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Jobs\SendSavingsOCAEmailJob;
@@ -250,25 +251,37 @@ class SavingsQuoteController extends Controller
     }
 
     /**
-     * Proxy to KEN /fetch-savings-provider-plan (lump sum etc.). Request body is forwarded; quote UID comes from the route.
+     * Proxy to KEN /fetch-savings-provider-plan (lump sum etc.). Validated body is forwarded; quote UID comes from the route.
      */
-    public function fetchSavingsProviderPlan(Request $request, string $quoteUuId)
+    public function fetchSavingsProviderPlan(FetchSavingsProviderPlanRequest $request, string $quoteUuId)
     {
-        $payload = $request->all();
-        $payload['quoteUID'] = $quoteUuId;
+        try {
+            LoggerService::info('SavingsQuoteController - fetchSavingsProviderPlan', [
+                'quote_uuid' => $quoteUuId,
+            ]);
 
-        $result = $this->savingsQuoteService->fetchSavingsProviderPlan($payload);
+            $payload = $request->validated();
+            $payload['quoteUID'] = $quoteUuId;
 
-        if (! $result['success']) {
-            $status = $result['status'] ?? 422;
+            $result = $this->savingsQuoteService->fetchSavingsProviderPlan($payload);
 
-            return response()->json(
-                ['message' => $result['message'] ?? 'Request failed'],
-                is_int($status) && $status >= 400 && $status < 600 ? $status : 422
-            );
+            if (! $result['success']) {
+                $status = $result['status'] ?? 422;
+
+                return response()->json(
+                    ['message' => $result['message'] ?? 'Request failed'],
+                    is_int($status) && $status >= 400 && $status < 600 ? $status : 422
+                );
+            }
+
+            return response()->json($result['data'], 200);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - fetchSavingsProviderPlan failed', exception: $e);
+
+            return response()->json([
+                'message' => 'Failed to fetch savings provider plan: '.$e->getMessage(),
+            ], 500);
         }
-
-        return response()->json($result['data'], 200);
     }
 
     /**

@@ -29,6 +29,7 @@ use App\Services\LookupService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -735,15 +736,25 @@ class SavingsQuoteService extends BaseQuoteService
             'planId' => $payload['planId'] ?? null,
         ]);
 
-        $response = Http::withBasicAuth($apiUserName, $apiPassword)
-            ->withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'x-api-token' => $apiToken,
-            ])
-            ->timeout($apiTimeout)
-            ->asJson()
-            ->post($url, $payload);
+        try {
+            $response = Http::withBasicAuth($apiUserName, $apiPassword)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'x-api-token' => $apiToken,
+                ])
+                ->timeout($apiTimeout)
+                ->asJson()
+                ->post($url, $payload);
+        } catch (ConnectionException $e) {
+            LoggerService::error('SavingsQuoteService - fetchSavingsProviderPlan connection failed', exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'Unable to reach the savings provider service. Please try again later.',
+                'status' => 503,
+            ];
+        }
 
         if ($response->successful()) {
             return ['success' => true, 'data' => $response->json()];
