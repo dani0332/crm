@@ -7,10 +7,10 @@ use App\Enums\MotorRevivalEnum;
 // ============================================================================
 
 test('maps stored engagement_level values to business labels', function () {
-    expect(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::COMMS_TRIGGERED->value))->toBe('Comms triggered')
-        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::INTENT_LOW->value))->toBe('Low intent')
-        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::MEDIUM_INTENT->value))->toBe('Medium intent')
-        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::INTENT_HIGH->value))->toBe('High intent');
+    expect(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::COMMS_TRIGGERED->value))->toBe('Revival Comms Triggered')
+        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::INTENT_LOW->value))->toBe('Revival Intent Low')
+        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::MEDIUM_INTENT->value))->toBe('Revival Intent Medium')
+        ->and(MotorRevivalEnum::getEngagementLevelLabel(MotorRevivalEnum::INTENT_HIGH->value))->toBe('Revival Intent High');
 });
 
 test('returns empty string for blank stored engagement_level values', function () {

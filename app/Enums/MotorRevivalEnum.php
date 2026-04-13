@@ -32,10 +32,10 @@ enum MotorRevivalEnum: string
         }
 
         return match ($storedValue) {
-            self::COMMS_TRIGGERED->value => 'Comms triggered',
-            self::INTENT_LOW->value => 'Low intent',
-            self::MEDIUM_INTENT->value => 'Medium intent',
-            self::INTENT_HIGH->value => 'High intent',
+            self::COMMS_TRIGGERED->value => 'Revival Comms Triggered',
+            self::INTENT_LOW->value => 'Revival Intent Low',
+            self::MEDIUM_INTENT->value => 'Revival Intent Medium',
+            self::INTENT_HIGH->value => 'Revival Intent High',
             default => Str::headline(str_replace(['_', '-'], ' ', $storedValue)),
         };
     }
