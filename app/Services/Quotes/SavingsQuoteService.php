@@ -4,6 +4,7 @@ namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -26,6 +27,9 @@ use App\Services\KenService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -413,7 +417,7 @@ class SavingsQuoteService extends BaseQuoteService
             'callSource' => 'imcrm',
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -439,7 +443,7 @@ class SavingsQuoteService extends BaseQuoteService
                 return $getdecodeContents;
 
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -502,7 +506,7 @@ class SavingsQuoteService extends BaseQuoteService
     /**
      * Toggle visibility for multiple savings plans (Show/Hide)
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return int|string
      */
     public function updateManualPlansBulk($request)
@@ -619,9 +623,9 @@ class SavingsQuoteService extends BaseQuoteService
 
         // Determine investment frequency based on the plan source
         $investmentFrequency = match ($planSource) {
-            'regular' => \App\Enums\InvestmentFrequencyEnum::REGULAR->value,
-            'lumpsum' => \App\Enums\InvestmentFrequencyEnum::LUMPSUM->value,
-            default => \App\Enums\InvestmentFrequencyEnum::REGULAR->value
+            'regular' => InvestmentFrequencyEnum::REGULAR->value,
+            'lumpsum' => InvestmentFrequencyEnum::LUMPSUM->value,
+            default => InvestmentFrequencyEnum::REGULAR->value
         };
 
         // Extract eligibility values
