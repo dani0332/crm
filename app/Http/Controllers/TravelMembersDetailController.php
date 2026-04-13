@@ -162,14 +162,6 @@ class TravelMembersDetailController extends Controller
     {
         $travelCustomerMember = CustomerMembers::find($request->validated('travel_member_id'));
 
-        if (! $travelCustomerMember) {
-            return redirect()
-                ->back()
-                ->withErrors([
-                    'travel_member_delete' => 'The selected member could not be found.',
-                ]);
-        }
-
         DB::transaction(function () use ($travelCustomerMember): void {
             TravelQuote::find($travelCustomerMember->quote_id)?->update([
                 'primary_member_id' => null,
