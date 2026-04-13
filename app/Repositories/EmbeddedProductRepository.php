@@ -1049,6 +1049,15 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
         $subject = "Thank you for your purchase of {$ep->product_name} with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}";
 
+        $resolvedQuoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $postmarkMetadata = [
+            'quote_id' => (string) $quoteObject->id,
+            'subject' => $subject,
+        ];
+        if ($resolvedQuoteTypeId !== false) {
+            $postmarkMetadata['quote_type_id'] = (string) $resolvedQuoteTypeId;
+        }
+
         $body = json_encode([
             'From' => config('constants.IM_FROM_EMAIL'),
             'ReplyTo' => $advisorData['email'] ?? null,
@@ -1067,6 +1076,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => $subject,
             ],
+            'Metadata' => $postmarkMetadata,
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
