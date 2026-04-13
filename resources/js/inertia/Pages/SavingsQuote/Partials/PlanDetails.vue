@@ -31,6 +31,7 @@ const {
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
   calculatePlanPayout,
+  fetchSavingsProviderPlanLumpSum,
   // Riders
   ridersData,
   showRiders,
@@ -146,8 +147,54 @@ const isLumpsumFrequency = computed(() => {
   return checkIsLumpsumFrequency(freq);
 });
 
-// Calculate functionality using composable helper
-const calculatePlan = () => {
+// Sukoon Purple Investment — lump sum from KEN instead of local calculator
+const isSukoonPurpleInvestment = computed(() => {
+  const p = props.planDetails;
+  const codes = page.props.insuranceProviderCodeEnum;
+  return (
+    p?.providerCode === codes?.OIC &&
+    p?.instantPolicy === true &&
+    p?.name?.trim() === 'Purple Investment'
+  );
+});
+
+const calculatePlanLoading = ref(false);
+
+// Calculate functionality using composable helper (or KEN for Purple Investment)
+const calculatePlan = async () => {
+  if (isSukoonPurpleInvestment.value) {
+    calculatePlanLoading.value = true;
+    try {
+      const lumpSum = await fetchSavingsProviderPlanLumpSum(
+        props.planDetails,
+        props.quote.uuid,
+      );
+      if (lumpSum != null) {
+        props.planDetails.lumpSumPayout = lumpSum;
+        notification.success({
+          title: `Lumpsum Payout: ${formatPrice(lumpSum)}`,
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Could not read lump sum from the response',
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        title:
+          error.response?.data?.message ||
+          'Failed to calculate lump sum payout',
+        position: 'top',
+      });
+    } finally {
+      calculatePlanLoading.value = false;
+    }
+
+    return;
+  }
+
   const result = calculatePlanPayout(props.planDetails);
   if (result) {
     props.planDetails.lumpSumPayout = result.payout;
@@ -617,6 +664,7 @@ watch(
                         color="orange"
                         size="sm"
                         type="button"
+                        :loading="calculatePlanLoading"
                         @click="calculatePlan"
                       >
                         Calculate

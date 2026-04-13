@@ -250,6 +250,28 @@ class SavingsQuoteController extends Controller
     }
 
     /**
+     * Proxy to KEN /fetch-savings-provider-plan (lump sum etc.). Request body is forwarded; quote UID comes from the route.
+     */
+    public function fetchSavingsProviderPlan(Request $request, string $quoteUuId)
+    {
+        $payload = $request->all();
+        $payload['quoteUID'] = $quoteUuId;
+
+        $result = $this->savingsQuoteService->fetchSavingsProviderPlan($payload);
+
+        if (! $result['success']) {
+            $status = $result['status'] ?? 422;
+
+            return response()->json(
+                ['message' => $result['message'] ?? 'Request failed'],
+                is_int($status) && $status >= 400 && $status < 600 ? $status : 422
+            );
+        }
+
+        return response()->json($result['data'], 200);
+    }
+
+    /**
      * Create a new savings plan manually
      */
     public function savingsPlanManualProcess(Request $request, string $quoteUuId)

@@ -264,6 +264,64 @@ export function useSavingsPlans(options = {}) {
     };
   };
 
+  const extractLumpSumFromProviderPlanResponse = data => {
+    if (data == null || typeof data !== 'object') {
+      return null;
+    }
+    const pick = v => {
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    if (data.lumpSumPayout != null) {
+      return pick(data.lumpSumPayout);
+    }
+    // KEN /fetch-savings-provider-plan returns { plan: { lumpSumPayout, ... } }
+    if (data.plan?.lumpSumPayout != null) {
+      return pick(data.plan.lumpSumPayout);
+    }
+    if (data.lumpSum != null) {
+      return pick(data.lumpSum);
+    }
+    if (data.planData?.lumpSumPayout != null) {
+      return pick(data.planData.lumpSumPayout);
+    }
+
+    return null;
+  };
+
+  const fetchSavingsProviderPlanLumpSum = async (planDetails, quoteUuid) => {
+    const investmentFrequencyOption = findInvestmentFrequencyOption(
+      planDetails.investmentFrequency,
+    );
+    const processedRiders = processRidersForAPI(ridersData.value);
+    const { data } = await axios.post(
+      `/quotes/savings/${quoteUuid}/fetch-savings-provider-plan`,
+      {
+        planId: planDetails.id || planDetails.planId,
+        providerCode: planDetails.providerCode,
+        isIndividualLoading: true,
+        lang: 'en',
+        planData: {
+          investmentAmount: parseFloat(planDetails.actualPremium) || 0,
+          currency: planDetails.currency || 'AED',
+          currencyId: planDetails.currencyId,
+          paymentTerm: parseInt(planDetails.paymentTerm, 10) || 0,
+          tenure: planDetails.tenure,
+          tenureId: planDetails.tenureId,
+          investmentFrequency:
+            investmentFrequencyOption?.label ||
+            planDetails.investmentFrequency ||
+            'Regular',
+          investmentFrequencyId:
+            investmentFrequencyOption?.id || planDetails.investmentFrequencyId,
+          riders: processedRiders,
+        },
+      },
+    );
+
+    return extractLumpSumFromProviderPlanResponse(data);
+  };
+
   const showRiders = computed(() => {
     return ridersData.value.length > 0;
   });
@@ -912,6 +970,7 @@ export function useSavingsPlans(options = {}) {
     findCurrencyOption,
     findInvestmentFrequencyOption,
     calculatePlanPayout,
+    fetchSavingsProviderPlanLumpSum,
     showRiders,
     totalRiderPrice,
     getRiderDetails,

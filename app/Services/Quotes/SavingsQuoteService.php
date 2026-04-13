@@ -29,6 +29,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -709,6 +710,55 @@ class SavingsQuoteService extends BaseQuoteService
         $found = collect($eligibility)->firstWhere('code', $code);
 
         return $found ? $found->value : 'N/A';
+    }
+
+    /**
+     * Call KEN to fetch savings provider plan data (e.g. lump sum for Purple Investment).
+     *
+     * @param  array<string, mixed>  $payload  Body for /fetch-savings-provider-plan (quoteUID is set by the controller).
+     * @return array{success: bool, data?: mixed, message?: string, status?: int}
+     */
+    public function fetchSavingsProviderPlan(array $payload): array
+    {
+        $url = config('constants.KEN_API_ENDPOINT').'/fetch-savings-provider-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = (int) config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        LoggerService::info('SavingsQuoteService - fetchSavingsProviderPlan', [
+            'quoteUID' => $payload['quoteUID'] ?? null,
+            'planId' => $payload['planId'] ?? null,
+        ]);
+
+        $response = Http::withBasicAuth($apiUserName, $apiPassword)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'x-api-token' => $apiToken,
+            ])
+            ->timeout($apiTimeout)
+            ->asJson()
+            ->post($url, $payload);
+
+        if ($response->successful()) {
+            return ['success' => true, 'data' => $response->json()];
+        }
+
+        $json = $response->json();
+        $message = 'Failed to fetch savings provider plan';
+        if (is_array($json)) {
+            $message = $json['message'] ?? $json['msg'] ?? $json['error'] ?? $message;
+            if (! is_string($message)) {
+                $message = 'Failed to fetch savings provider plan';
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => $message,
+            'status' => $response->status(),
+        ];
     }
 
     /**
