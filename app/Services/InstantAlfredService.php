@@ -307,13 +307,13 @@ class InstantAlfredService extends BaseService
         $mongoPipeline = $this->createPipeline($request, $uuids, $request->report ?? 'consolidated');
 
         try {
-            // Get MongoDB results for this chunk
+            // Get MongoDB results for this chunk — keyed by quote_id for O(1) lookup
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
-            $mongoResultsCollection = collect($mongoResults);
+            $mongoResultsCollection = collect($mongoResults)->keyBy('id');
 
             // Merge SQL and MongoDB data
             foreach ($sqlRecords as $sqlRecord) {
-                $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
+                $relatedMongoRecord = $mongoResultsCollection->get($sqlRecord->uuid);
 
                 // Set quote type
                 $sqlRecord->quote_type = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';

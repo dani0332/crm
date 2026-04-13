@@ -40,6 +40,7 @@ use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\NationalityAllocationConfigurationController;
+use App\Http\Controllers\NationalityGroupController;
 use App\Http\Controllers\NationalityPoolConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
@@ -110,7 +111,6 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Controllers\NationalityGroupController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\CheckHandbookDocumentsJob;
 use App\Jobs\UniversalSearchDataMigration;
@@ -250,6 +250,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
     Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
     Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
+   
+    Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->name('leads-by-email') ->middleware('permission:'.PermissionsEnum::CustomersList.'|'.PermissionsEnum::LEADS_BY_EMAIL);
 
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
@@ -305,7 +307,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
-        Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->can(PermissionsEnum::CustomersList);
+       
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
