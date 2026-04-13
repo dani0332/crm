@@ -680,7 +680,7 @@ const sendPolicyToClient = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ENGAGEMENT LEVEL</dt>
-            <dd>{{ quote.engagement_level ?? '-' }}</dd>
+            <dd>{{ quote.engagement_level_display ?? '-' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ENGAGEMENT LEVEL LAST UPDATED</dt>

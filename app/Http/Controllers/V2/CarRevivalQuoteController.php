@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -134,6 +135,11 @@ class CarRevivalQuoteController extends Controller
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $storageUrl = storageUrl();
         $paymentStatusEnum = PaymentStatusEnum::asArray();
+
+        if (is_object($record)) {
+            $engagementLabel = MotorRevivalEnum::getEngagementLevelLabel($record->engagement_level ?? null);
+            $record->engagement_level_display = $engagementLabel === '' ? null : $engagementLabel;
+        }
 
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,

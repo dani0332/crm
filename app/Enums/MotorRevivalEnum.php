@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum MotorRevivalEnum: string
 {
     // engagement triggered cases
@@ -22,4 +24,19 @@ enum MotorRevivalEnum: string
     case EMAIL = 'Email';
     case WHATSAPP = 'WhatsApp';
     case MY_ALFRED = 'myAlfred';
+
+    public static function getEngagementLevelLabel(?string $storedValue): string
+    {
+        if (blank($storedValue)) {
+            return '';
+        }
+
+        return match ($storedValue) {
+            self::COMMS_TRIGGERED->value => 'Comms triggered',
+            self::INTENT_LOW->value => 'Low intent',
+            self::MEDIUM_INTENT->value => 'Medium intent',
+            self::INTENT_HIGH->value => 'High intent',
+            default => Str::headline(str_replace(['_', '-'], ' ', $storedValue)),
+        };
+    }
 }
