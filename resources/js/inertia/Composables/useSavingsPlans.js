@@ -356,7 +356,11 @@ export function useSavingsPlans(options = {})
           currency: planDetails.currency || 'AED',
           currencyId: planDetails.currencyId,
           paymentTerm: parseInt(planDetails.paymentTerm, 10) || 0,
-          tenure: planDetails.tenure,
+          tenure:
+            planDetails.tenure != null &&
+            typeof planDetails.tenure === 'number'
+              ? String(planDetails.tenure)
+              : planDetails.tenure,
           tenureId: planDetails.tenureId,
           investmentFrequency:
             investmentFrequencyOption?.label ||
