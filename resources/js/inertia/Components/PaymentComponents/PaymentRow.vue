@@ -439,7 +439,6 @@ const amlAndKycTooltip = computed(() => {
     return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
   }
 });
-
 </script>
 
 <template>
