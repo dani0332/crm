@@ -2211,7 +2211,7 @@ class CentralService extends BaseService
         $payment = $quote?->payments()->mainLeadPayment()->first();
         $paymentStatus = $payment?->payment_status_id;
 
-        if ($paymentStatus == PaymentStatusEnum::PAID) {
+        if (in_array($paymentStatus, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
             $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
             $quote->save();
         }

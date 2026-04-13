@@ -440,22 +440,6 @@ const amlAndKycTooltip = computed(() => {
   }
 });
 
-// const isTravelTerminalFailurePaymentRow = computed(() => {
-//   if (props.quoteType !== quoteTypeCodeEnum.Travel) {
-//     return false;
-//   }
-//   return [
-//     paymentStatusEnum.CANCELLED,
-//     paymentStatusEnum.FAILED,
-//     paymentStatusEnum.DECLINED,
-//   ].includes(props.payment.payment_status_id);
-// });
-
-// const showDeleteParentPaymentButton = computed(
-//   () =>
-//     (props.index === 1 && props.isChildPaymentDeletable) ||
-//     isTravelTerminalFailurePaymentRow.value,
-// );
 </script>
 
 <template>
