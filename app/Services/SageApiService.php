@@ -912,7 +912,7 @@ class SageApiService
 
         // Dispatch the policy document job first, before any policy booking operations
         $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Travel, QuoteTypeId::Cyber])) {
             $quote->load('policyIssuance');
             if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
