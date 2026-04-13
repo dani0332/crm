@@ -31,7 +31,10 @@ class LifeAllocation extends BaseAllocation
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::LifeAdvisor])
             ->whereIn('users.email', $emails)
-            ->where('users.id', '!=', $parentLeadAdvisorId)
+            ->when(
+                $parentLeadAdvisorId !== null,
+                fn ($query) => $query->where('users.id', '!=', $parentLeadAdvisorId)
+            )
             ->logRawSql()
             ->first();
     }

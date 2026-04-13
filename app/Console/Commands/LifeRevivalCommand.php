@@ -58,7 +58,7 @@ class LifeRevivalCommand extends Command
         // Execute jobs in batch
         if ($jobs != null && count($jobs)) {
             LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($jobs));
-            $this->executeJobsInBatch($jobs[0]);
+            $this->executeJobsInBatch($jobs);
         } else {
             LoggerService::info("{$this->logPrefix} No Life Revival Leads Jobs Found");
         }
