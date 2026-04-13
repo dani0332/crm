@@ -654,7 +654,7 @@ onMounted(() => {
                 <template #tooltip>Expected return on investment</template>
               </x-tooltip>
             </template>
-            <template #header-lumpsumAmount>
+            <template #header-lumpSumPayout>
               <x-tooltip placement="bottom">
                 <span class="underline decoration-dotted decoration-primary-700"
                   >Lumpsum Amount</span
@@ -773,8 +773,12 @@ onMounted(() => {
                 item.expectedRor ? `${item.expectedRor}%` : 'N/A'
               }}</span>
             </template>
-            <template #item-lumpsumAmount="item">
-              <span>{{ item.lumpsumAmount || 'N/A' }}</span>
+            <template #item-lumpSumPayout="item">
+              <span>{{
+                item.lumpSumPayout != null && item.lumpSumPayout !== ''
+                  ? fmt(item.lumpSumPayout)
+                  : 'N/A'
+              }}</span>
             </template>
             <template #item-totalAnnualPrice="item">
               <span>{{

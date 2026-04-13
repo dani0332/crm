@@ -23,6 +23,9 @@ const props = defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MMM-YYYY hh:mma').value : '-';
+
 // Initialize useSavingsPlans composable
 const {
   // Lookup Options
@@ -657,7 +660,9 @@ watch(
                     </div>
                     <div class="text-sm text-gray-600 mb-4">
                       <span class="font-medium">Updated At:</span>
-                      <span class="ml-1">{{ quote.updated_at }}</span>
+                      <span class="ml-1">{{
+                        dateFormat(planDetails.updatedAt)
+                      }}</span>
                     </div>
                     <div class="space-x-3">
                       <x-button
