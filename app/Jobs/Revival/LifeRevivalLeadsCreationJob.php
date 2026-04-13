@@ -5,7 +5,10 @@ namespace App\Jobs\Revival;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
+use App\Models\PersonalQuote;
+use App\Services\DTTRevivalService;
 use App\Services\Logger\LoggerService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,10 +16,9 @@ use Illuminate\Foundation\Queue\Queueable;
 
 class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, Queueable;
+    use Batchable, Dispatchable, GenericQueriesAllLobs, Queueable;
 
     private $lead = null;
-
     /**
      * Create a new job instance.
      */
@@ -44,7 +46,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'othersInfo' => '',
             'isSmoker' => false,
-            'sumInsuredValue' => (int)$this->lead->lifeQuote->sum_insured_value,
+            'sumInsuredValue' => (int) $this->lead->lifeQuote->sum_insured_value,
             'sumInsuredCurrencyId' => $this->lead->lifeQuote->sum_insured_currency_id,
             'maritalStatusId' => $this->lead->lifeQuote->marital_status_id,
             'purposeOfInsuranceId' => $this->lead->lifeQuote->purpose_of_insurance_id,
@@ -73,5 +75,14 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
         LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
+
+        // Save DTT revival record
+        $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
+
+        $dttRevivalService = app(DTTRevivalService::class);
+        $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $this->lead->id, QuoteTypes::LIFE->id());
+
+        // Mark life quote as revived
+        $this->lead->update(['is_revived' => true]);
     }
 }
