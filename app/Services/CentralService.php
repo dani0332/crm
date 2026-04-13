@@ -86,6 +86,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
@@ -2181,31 +2182,26 @@ class CentralService extends BaseService
             return;
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        PaymentSplits::query()
-            ->where('code', $oldCode)
-            ->update(['code' => $newCode]);
+        Schema::withoutForeignKeyConstraints(function () use ($oldCode, $newCode, $payment): void {
+            PaymentSplits::query()
+                ->where('code', $oldCode)
+                ->update(['code' => $newCode]);
 
-        PaymentAction::query()
-            ->where('payment_code', $oldCode)
-            ->update(['payment_code' => $newCode]);
+            PaymentAction::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
 
-        PaymentStatusHistory::withoutTimestamps(function () use ($oldCode, $newCode): void {
             PaymentStatusHistory::query()
                 ->where('payment_code', $oldCode)
-                ->get()
-                ->each(function (PaymentStatusHistory $history) use ($newCode): void {
-                    $history->update(['payment_code' => $newCode]);
-                });
+                ->update(['payment_code' => $newCode]);
+
+            PaymentStatusLog::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            $payment->code = $newCode;
+            $payment->save();
         });
-
-        PaymentStatusLog::query()
-            ->where('payment_code', $oldCode)
-            ->update(['payment_code' => $newCode]);
-
-        $payment->code = $newCode;
-        $payment->save();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         LoggerService::info('fn:updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion - Updated travel payment code from '.$oldCode.' to '.$newCode.' for quote '.$quote->code);
     }
