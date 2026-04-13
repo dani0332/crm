@@ -14,6 +14,7 @@ use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
+use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
@@ -51,39 +52,44 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
-            if ($this->lead && $this->shouldHandleDuplicateLead()) {
+            if (! $this->lead) {
+                LoggerService::info(self::class.' - execute: Lead not found');
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+            if (! $this->verifyLeadPreChecks()) {
+                LoggerService::info(self::class.' - execute: Lead not found - excluded from non motor renewal leads');
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+            if ($this->shouldHandleDuplicateLead()) {
                 $this->resolveDuplicateLeadInfo();
             }
 
-            if (! $this->lead) {
-                LoggerService::info(self::class.' - execute: Lead not found');
-                $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            $advisor = null;
+            if ($this->hasDuplicateLead) {
+                $advisor = $this->getAdvisorForDuplicateLeadAssignment();
+                LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
+                    'found_advisor' => $advisor ? true : false,
+                    'advisor_id' => $advisor?->id,
+                ]);
+            }
+
+            if (! $advisor) {
+                $advisor = $this->fetchAvailableAdvisor();
+            }
+
+            // if advisor still not found, then we need to fail the lead allocation
+            if (! $advisor) {
+                $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                $this->sendNonAdvisorEmail();
+
+                LoggerService::info(self::class.' - execute: No advisor found');
+
+                $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = null;
-                if ($this->hasDuplicateLead) {
-                    $advisor = $this->getAdvisorForDuplicateLeadAssignment();
-                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
-                        'found_advisor' => $advisor ? true : false,
-                        'advisor_id' => $advisor?->id,
-                    ]);
-                }
-
-                if (! $advisor) {
-                    $advisor = $this->fetchAvailableAdvisor();
-                }
-
-                // if advisor still not found, then we need to fail the lead allocation
-                if (! $advisor) {
-                    $this->leadAllocationFailed($this->uuid, $this->quoteType);
-                    $this->sendNonAdvisorEmail();
-
-                    LoggerService::info(self::class.' - execute: No advisor found');
-
-                    $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
-                } else {
-                    $this->assignLead($advisor);
-                    $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
-                }
+                $this->assignLead($advisor);
+                $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
             }
         } catch (\Throwable $th) {
             $this->leadAllocationFailed($this->uuid, $this->quoteType);
@@ -348,5 +354,14 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $excludedAdvisorIds = array_values($excludedAdvisorIds);
 
         return $excludedAdvisorIds;
+    }
+
+    protected function verifyLeadPreChecks(): bool
+    {
+        if (! in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs())) {
+            return true;
+        }
+
+        return false;
     }
 }
