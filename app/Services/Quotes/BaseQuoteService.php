@@ -5,6 +5,7 @@ namespace App\Services\Quotes;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -179,6 +180,7 @@ abstract class BaseQuoteService extends BaseService
             'embeddedProducts' => $embeddedProducts,
             'advisors' => $advisors,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'activities' => $activities,

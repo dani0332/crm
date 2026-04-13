@@ -703,6 +703,7 @@ class SavingsQuoteService extends BaseQuoteService
             'insurerQuoteNo' => $plan->insurerQuoteNo ?? '',
             'isDisabled' => $plan->isDisabled ?? false,
             'isManualUpdate' => $plan->isManualUpdate ?? false,
+            'instantPolicy' => (bool) ($plan->instantPolicy ?? false),
         ];
     }
 
