@@ -227,6 +227,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'quote_code' => $quoteCode,
                 'provider' => $insuranceProvider->text,
                 'quote_type' => $quoteType,
+                'automation' => json_encode($automation),
             ]);
 
             $this->process->update([
