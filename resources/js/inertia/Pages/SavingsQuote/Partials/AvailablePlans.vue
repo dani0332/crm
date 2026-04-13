@@ -289,7 +289,7 @@ const confirmSendOCAEmail = () => {
     return;
   }
 
-  if (selectedPlans.value.length > 6) {
+  if (selectedPlans.value.length > 5) {
     notification.error({
       title: 'Maximum 5 plans can be selected',
       position: 'top',
@@ -301,9 +301,11 @@ const confirmSendOCAEmail = () => {
   const last_name = props.quote.last_name || '';
   processingOCAEmail.value = true;
 
+  const planIds = selectedPlans.value.map(p => p.id);
+
   axios
     .post(
-      `/quotes/savings/${props.quote.uuid}/send-oca`,
+      route('savingsSendOCAEmail', { quoteUuId: props.quote.uuid }),
       {
         quote_type_id: page.props.quoteTypeId,
         quote_id: props.quote.id,
@@ -316,6 +318,7 @@ const confirmSendOCAEmail = () => {
         advisor_email: props.quote.advisor?.email || null,
         advisor_mobile_no: props.quote.advisor?.mobile_no || null,
         advisor_landline_no: props.quote.advisor?.landline_no || null,
+        plan_ids: planIds,
       },
       {
         responseType: 'json',
@@ -323,7 +326,7 @@ const confirmSendOCAEmail = () => {
     )
     .then(response => {
       notification.success({
-        title: response.data.success || 'OCA email sent successfully',
+        title: 'OCA email sent successfully',
         position: 'top',
       });
       isOcaButtonDisabled.value = true;
@@ -469,7 +472,13 @@ onMounted(() => {
           <!-- Right side buttons -->
           <div class="flex gap-3">
             <!-- Send OCA Email Button -->
-            <x-tooltip v-if="false" placement="top" align="left">
+            <x-tooltip
+              v-if="
+                availablePlansTable.data && availablePlansTable.data.length > 0
+              "
+              placement="top"
+              align="left"
+            >
               <x-button
                 @click.prevent="modals.sendConfirm = true"
                 size="sm"
@@ -868,7 +877,6 @@ onMounted(() => {
 
         <!-- Send OCA Email Confirmation Modal -->
         <x-modal
-          v-if="false"
           v-model="modals.sendConfirm"
           title="Send OCA Email"
           show-close

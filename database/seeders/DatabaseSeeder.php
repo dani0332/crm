@@ -17,10 +17,14 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             BuyLeadsRevivalPermissionSeeder::class,
             RolePermissionSeeder::class,
+            UpdateRuleNameSeederCompany::class,
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
+            ClaimAllocationConfigManagersSeeder::class,
+            ClaimStatusesSeeder::class, // ClaimStatusesSeeder is dependent on LookupSeeder
             SavingsQuoteDataSeeder::class,
+            GenericDocumentTypesSeeder::class,
             CyberQuoteDataSeeder::class,
             CyberLeadAllocationSeeder::class,
             // ILAGMPermissionSeeder::class,
@@ -53,6 +57,12 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
+            HealthTeamSeeder::class,
+            NationalityPoolConfigSeeder::class,
+            HealthNationalityGroupSeeder::class,
+            CanonicalNationalitySeeder::class,
+            HealthGroupNationalitySeeder::class,
+            ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
         ]);
     }

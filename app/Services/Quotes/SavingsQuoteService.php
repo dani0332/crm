@@ -156,7 +156,7 @@ class SavingsQuoteService extends BaseQuoteService
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, true);
+            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, false);
         }
 
         return $response;
@@ -938,6 +938,13 @@ class SavingsQuoteService extends BaseQuoteService
         ]);
 
         $quote = SavingsQuote::where('uuid', $quoteUID)->first();
+
+        if (! $quote) {
+            LoggerService::error('fn: updateExchangeRate - Quote not found', extra: ['quoteUID' => $quoteUID]);
+
+            return null;
+        }
+
         $quote->exchange_rate = $exchangeRate;
         if ($quote->save()) {
             LoggerService::info('fn: updateExchangeRate - Exchange rate updated successfully');
