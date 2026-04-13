@@ -318,8 +318,7 @@ export function useSavingsPlans(options = {}) {
           currencyId: planDetails.currencyId,
           paymentTerm: parseInt(planDetails.paymentTerm, 10) || 0,
           tenure:
-            planDetails.tenure != null &&
-            typeof planDetails.tenure === 'number'
+            planDetails.tenure != null && typeof planDetails.tenure === 'number'
               ? String(planDetails.tenure)
               : planDetails.tenure,
           tenureId: planDetails.tenureId,
