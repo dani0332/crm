@@ -1,7 +1,7 @@
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useFormatPrice } from '@/inertia/Composables/utilities';
 import axios from 'axios';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, toRaw } from 'vue';
 
 const modals = reactive({
   planDetails: false,
@@ -454,7 +454,9 @@ export function useSavingsPlans(options = {}) {
         plan => plan.id === planId,
       );
       if (foundPlan) {
-        return foundPlan;
+        // Deep clone so PlanDetails edits (Calculate, v-models) do not mutate
+        // the row object in availablePlansTable by reference.
+        return structuredClone(toRaw(foundPlan));
       }
 
       const { data } = await axios.get(
