@@ -11,6 +11,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Jobs\SendSavingsOCAEmailJob;
+use App\Models\DTTRevival;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
@@ -38,6 +40,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     private function getQuoteTypeId()
     {
         return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
+    }
+
+    protected function getParentLeadAdvisorId(): ?int
+    {
+        $revivalLead = DTTRevival::where('uuid', $this->lead->uuid)->select('previous_quote_id')->first();
+
+        if (! $revivalLead) {
+            return null;
+        }
+
+        $parentLead = PersonalQuote::where('id', $revivalLead->previous_quote_id)->select('advisor_id')->first();
+
+        return $parentLead?->advisor_id;
     }
 
     public function execute()
