@@ -137,6 +137,7 @@ class CarRevivalQuoteController extends Controller
 
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,
+            'quoteTypeId' => $quoteTypeId,
             'leadStatuses' => array_values($leadStatuses->toArray()),
             'advisors' => $advisors,
             'documentTypes' => $documentTypes,
