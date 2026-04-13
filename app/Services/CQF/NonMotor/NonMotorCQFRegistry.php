@@ -20,18 +20,9 @@ use App\Services\CQF\NonMotor\LOBs\CycleCQFValidationService;
 use App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\HomeCQFValidationService;
-use App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteMappingService;
-use App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteStorageService;
-use App\Services\CQF\NonMotor\LOBs\JetskiCQFValidationService;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService;
 use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\PetCQFValidationService;
-use App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteMappingService;
-use App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteStorageService;
-use App\Services\CQF\NonMotor\LOBs\SavingsCQFValidationService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFValidationService;
@@ -39,7 +30,7 @@ use Illuminate\Contracts\Container\Container;
 
 /**
  * Registry of LOB-specific CQF services for Non-motor renewals (PersonalQuote-based LOBs).
- * Excludes Health (Phase 1) and Business (runs from BusinessQuote, not PersonalQuote).
+ * Only quote types listed in {@see self::$lobMap} are supported; others resolve via {@see hasLOB()}.
  */
 class NonMotorCQFRegistry
 {
@@ -74,7 +65,7 @@ class NonMotorCQFRegistry
             'validator' => BusinessCQFValidationService::class,
             'mapper' => BusinessCQFQuoteMappingService::class,
             'storage' => BusinessCQFQuoteStorageService::class,
-        ]
+        ],
     ];
 
     public function __construct(

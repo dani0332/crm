@@ -12,9 +12,9 @@ use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\CQFRenewalContext;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService;
-use App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService;
+use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\PetCQFValidationService;
 use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
 use Illuminate\Database\Eloquent\Model;
 use Tests\Helpers\TestSchemaCreator;
@@ -58,14 +58,14 @@ it('fails when PersonalQuote has non-existent insurance_provider_id', function (
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Life,
+        'quote_type_id' => QuoteTypeId::Pet,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => 99999999,
         'policy_expiry_date' => now()->addMonths(2),
     ]);
     $renewalsUploadLeads = RenewalsUploadLeads::create([
-        'quote_type' => 'Life',
+        'quote_type' => 'Pet',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
         'file_path' => null,
@@ -74,11 +74,11 @@ it('fails when PersonalQuote has non-existent insurance_provider_id', function (
     $context = new CQFRenewalContext(
         quote: $quote,
         renewalsUploadLeads: $renewalsUploadLeads,
-        quoteType: QuoteTypes::LIFE,
+        quoteType: QuoteTypes::PET,
         renewalDaysThreshold: 120,
-        validator: app(LifeCQFValidationService::class),
-        mapper: app(LifeCQFQuoteMappingService::class),
-        storage: app(LifeCQFQuoteStorageService::class)
+        validator: app(PetCQFValidationService::class),
+        mapper: app(PetCQFQuoteMappingService::class),
+        storage: app(PetCQFQuoteStorageService::class)
     );
 
     $result = $this->pipe->handle($context, fn ($c) => $c);
@@ -97,14 +97,14 @@ it('fails when PersonalQuote has null insurance_provider_id', function () {
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Life,
+        'quote_type_id' => QuoteTypeId::Pet,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => null,
         'policy_expiry_date' => now()->addMonths(2),
     ]);
     $renewalsUploadLeads = RenewalsUploadLeads::create([
-        'quote_type' => 'Life',
+        'quote_type' => 'Pet',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
         'file_path' => null,
@@ -113,11 +113,11 @@ it('fails when PersonalQuote has null insurance_provider_id', function () {
     $context = new CQFRenewalContext(
         quote: $quote,
         renewalsUploadLeads: $renewalsUploadLeads,
-        quoteType: QuoteTypes::LIFE,
+        quoteType: QuoteTypes::PET,
         renewalDaysThreshold: 120,
-        validator: app(LifeCQFValidationService::class),
-        mapper: app(LifeCQFQuoteMappingService::class),
-        storage: app(LifeCQFQuoteStorageService::class)
+        validator: app(PetCQFValidationService::class),
+        mapper: app(PetCQFQuoteMappingService::class),
+        storage: app(PetCQFQuoteStorageService::class)
     );
 
     $result = $this->pipe->handle($context, fn ($c) => $c);
@@ -137,14 +137,14 @@ it('passes when PersonalQuote has all required FKs existing', function () {
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Life,
+        'quote_type_id' => QuoteTypeId::Pet,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => $insuranceProvider->id,
         'policy_expiry_date' => now()->addMonths(2),
     ]);
     $renewalsUploadLeads = RenewalsUploadLeads::create([
-        'quote_type' => 'Life',
+        'quote_type' => 'Pet',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
         'file_path' => null,
@@ -153,11 +153,11 @@ it('passes when PersonalQuote has all required FKs existing', function () {
     $context = new CQFRenewalContext(
         quote: $quote,
         renewalsUploadLeads: $renewalsUploadLeads,
-        quoteType: QuoteTypes::LIFE,
+        quoteType: QuoteTypes::PET,
         renewalDaysThreshold: 120,
-        validator: app(LifeCQFValidationService::class),
-        mapper: app(LifeCQFQuoteMappingService::class),
-        storage: app(LifeCQFQuoteStorageService::class)
+        validator: app(PetCQFValidationService::class),
+        mapper: app(PetCQFQuoteMappingService::class),
+        storage: app(PetCQFQuoteStorageService::class)
     );
 
     $result = $this->pipe->handle($context, fn ($c) => $c);
