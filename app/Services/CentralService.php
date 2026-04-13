@@ -2181,6 +2181,7 @@ class CentralService extends BaseService
             return;
         }
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         PaymentSplits::query()
             ->where('code', $oldCode)
             ->update(['code' => $newCode]);
@@ -2189,9 +2190,14 @@ class CentralService extends BaseService
             ->where('payment_code', $oldCode)
             ->update(['payment_code' => $newCode]);
 
-        PaymentStatusHistory::query()
-            ->where('payment_code', $oldCode)
-            ->update(['payment_code' => $newCode]);
+        PaymentStatusHistory::withoutTimestamps(function () use ($oldCode, $newCode): void {
+            PaymentStatusHistory::query()
+                ->where('payment_code', $oldCode)
+                ->get()
+                ->each(function (PaymentStatusHistory $history) use ($newCode): void {
+                    $history->update(['payment_code' => $newCode]);
+                });
+        });
 
         PaymentStatusLog::query()
             ->where('payment_code', $oldCode)
@@ -2199,6 +2205,7 @@ class CentralService extends BaseService
 
         $payment->code = $newCode;
         $payment->save();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         LoggerService::info('fn:updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion - Updated travel payment code from '.$oldCode.' to '.$newCode.' for quote '.$quote->code);
     }
