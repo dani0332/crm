@@ -33,9 +33,9 @@ class LifeRevivalCommand extends Command
      */
     public function handle(AllocationCreationService $allocationCreationService)
     {
-        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_LIFE_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            LoggerService::info("{$this->logPrefix} DTT is not enabled from cms");
+            LoggerService::info("{$this->logPrefix} DTT Life Revival is not enabled from cms");
 
             return false;
         }
