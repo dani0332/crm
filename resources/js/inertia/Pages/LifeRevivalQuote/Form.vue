@@ -6,6 +6,7 @@ const page = usePage();
 const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const props = defineProps({
+  model: String,
   quote: { type: Object, default: null },
   nationalities: Object,
   currency: Object,
