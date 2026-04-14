@@ -2529,7 +2529,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">Visa Category</dt>
                   <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="!showAdditionalFields">
+                <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField">
                   <dt class="font-medium">Policyholder Category</dt>
                   <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
                 </div>

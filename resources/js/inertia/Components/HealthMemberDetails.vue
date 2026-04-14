@@ -390,7 +390,7 @@ const onAddMemberModal = () => {
   memberForm.reset();
   memberActionEdit.value = false;
   modals.member = true;
-  memberForm.nationality_id = props.quote.nationality_id;
+  memberForm.nationality_id = null;
   memberForm.is_principal = localMembers.value.length === 0 ? 1 : 0;
   memberForm.is_policy_holder = 0;
   memberForm.is_insured = 1;
@@ -801,12 +801,16 @@ defineExpose({
             @click.prevent="onAddMemberModal"
             size="sm"
             color="orange"
-            :disabled="isDisabled 
-            || isLocked 
+            :disabled="isDisabled
+            || isLocked
             || isSelf_Me
             || (isSelf_Other && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
             || (isDomesticHelper && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
             || localMembersFiltered.length >= MAX_ALLOWED_INSURED_MEMBERS
+            || (
+                !isView
+                && (!props.coverForId || !props.healthInsureCode || !props.policyHolderCode)
+              )
             "
             v-if="readOnlyMode.isDisable === true"
           >

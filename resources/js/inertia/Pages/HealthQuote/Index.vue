@@ -1423,6 +1423,36 @@ const paymentStatusOptions = computed(() => {
           {{ item.renewal_batch_text }}
         </p>
       </template>
+      <template #item-member_category.text="item">
+        <p>
+          {{ item.member_category?.text ?? 'N/A' }}
+        </p>
+      </template>
+      <template #item-policy_holder_category.text="item">
+        <p>
+          {{ item.policy_holder_category?.text ?? 'N/A' }}
+        </p>
+      </template>
+      <template #item-visa_category.text="item">
+        <p>
+          {{ item.visa_category?.text ?? 'N/A' }}
+        </p>
+      </template>
+      <template #item-gender_lookup.text="item">
+        <p>
+          {{ item.gender_lookup?.text ?? 'N/A' }}
+        </p>
+      </template>
+      <template #item-marital_status.text="item">
+        <p>
+          {{ item.marital_status?.text ?? 'N/A' }}
+        </p>
+      </template>
+      <template #item-salary_band.text="item">
+        <p>
+          {{ item.salary_band?.text ?? 'N/A' }}
+        </p>
+      </template>
     </DataTable>
 
     <Pagination

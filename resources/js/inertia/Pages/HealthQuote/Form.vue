@@ -1002,7 +1002,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     />
                     <x-input
                       v-model="mobileNationalNo"
-                      type="tel"
+                      type="number"
                       maxLength="10"
                       :rules="[isRequired, isMobileNationalPartLength]"
                       class="flex-1 min-w-0"
