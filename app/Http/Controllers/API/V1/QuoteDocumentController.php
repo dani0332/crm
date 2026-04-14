@@ -15,7 +15,9 @@ use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class QuoteDocumentController extends Controller
 {
@@ -31,7 +33,7 @@ class QuoteDocumentController extends Controller
     /**
      * return list of quote documents.
      *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return JsonResponse|AnonymousResourceCollection
      */
     public function index($quoteType, $quoteUuid)
     {
@@ -45,15 +47,16 @@ class QuoteDocumentController extends Controller
     /**
      * get list of active document types can be presented to customer to upload documents.
      *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return AnonymousResourceCollection
      */
     public function getQuoteDocumentsToReceive(Request $request, $quoteType, ActivitiesService $activitiesService)
     {
+        $documentTypeCategory = $request->category;
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
         $registrationType = $request->input('registration_type');
         $vehicleUse = $request->input('vehicle_use');
 
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse, $documentTypeCategory);
 
         return DocumentTypeResource::collection($documentTypes);
     }
@@ -64,7 +67,7 @@ class QuoteDocumentController extends Controller
      * @param$type
      *
      * @param  QuoteDocumentService  $quoteDocumentService
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store($quoteType, QuoteDocumentRequest $request)
     {
@@ -81,7 +84,7 @@ class QuoteDocumentController extends Controller
 
         $result = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
 
-        if ($result instanceof \Illuminate\Http\JsonResponse) {
+        if ($result instanceof JsonResponse) {
             return $result;
         }
 
@@ -95,7 +98,7 @@ class QuoteDocumentController extends Controller
     /**
      * delete quote document.
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function destroy($quoteType, DeleteQuoteDocumentRequest $request)
     {
@@ -130,5 +133,19 @@ class QuoteDocumentController extends Controller
         $result = $metLifeApiService->handleDocumentUpload($validatedData, $quote);
 
         return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     *
+     * @return JsonResponse
+     */
+    public function getClaimDocuments()
+    {
+        $data = $this->quoteDocumentService->getClaimDocuments();
+
+        return response()->json([
+            'data' => $data,
+        ]);
     }
 }

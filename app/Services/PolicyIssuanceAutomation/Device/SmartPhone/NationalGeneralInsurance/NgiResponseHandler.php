@@ -107,15 +107,15 @@ class NgiResponseHandler
         $errorMessage = $apiKey.' '.self::API_FAILED;
 
         if (isset($responseObject?->statusMessage) && ! empty($responseObject->statusMessage)) {
-            $errorMessage .= ' ' . $responseObject->statusMessage;
+            $errorMessage .= ' '.$responseObject->statusMessage;
         }
 
         if (isset($responseObject?->errorCode) && ! empty($responseObject->errorCode)) {
-            $errorMessage .= ' ' . $responseObject->errorCode;
+            $errorMessage .= ' '.$responseObject->errorCode;
         }
 
         if (isset($responseObject?->message)) {
-            $errorMessage .= ' ' . $responseObject->message;
+            $errorMessage .= ' '.$responseObject->message;
         }
 
         return $errorMessage;

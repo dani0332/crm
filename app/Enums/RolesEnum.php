@@ -106,11 +106,23 @@ final class RolesEnum extends Enum
     public const CLIENTSUPPORTLEAD = 'OE_AE_CLIENT_SUPPORT_LEAD';
     public const DeviceManager = 'DEVICE_MANAGER';
     public const DeviceAdvisor = 'DEVICE_ADVISOR';
+    public const ClaimsManager = 'CLAIMS_MANAGER';
+    public const CarClaimManager = 'CAR_CLAIM_MANAGER';
+    public const HealthClaimManager = 'HEALTH_CLAIM_MANAGER';
+    public const GMClaimManager = 'GM_CLAIM_MANAGER';
+    public const LifeClaimManager = 'LIFE_CLAIM_MANAGER';
+    public const TravelClaimManager = 'TRAVEL_CLAIM_MANAGER';
+    public const HomeClaimManager = 'HOME_CLAIM_MANAGER';
+    public const PetClaimManager = 'PET_CLAIM_MANAGER';
+    public const YachtClaimManager = 'YACHT_CLAIM_MANAGER';
+    public const CycleClaimManager = 'CYCLE_CLAIM_MANAGER';
+    public const JetskiClaimManager = 'JETSKI_CLAIM_MANAGER';
+    public const CorplineClaimManager = 'CORPLINE_CLAIM_MANAGER';
+    public const CLAIM_LEAD = 'CLAIMS_LEAD';
 
     /* Cyber Roles */
     public const CyberAdvisor = 'CYBER_ADVISOR';
     public const CyberManager = 'CYBER_MANAGER';
     public const SmartPhoneManager = 'SMART_PHONE_MANAGER';
     public const SmartPhoneAdvisor = 'SMART_PHONE_ADVISOR';
-
 }

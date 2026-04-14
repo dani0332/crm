@@ -10,7 +10,7 @@ class PolicyIssuance extends Model
     use HasFactory;
 
     protected $table = 'policy_issuance';
-    protected $fillable = ['insurance_provider_id', 'model_type', 'model_id', 'quote_type', 'completed_step', 'message', 'status'];
+    protected $fillable = ['insurance_provider_id', 'model_type', 'model_id', 'quote_type', 'completed_step', 'message', 'status', 'retry_count'];
 
     public function model()
     {
@@ -27,4 +27,10 @@ class PolicyIssuance extends Model
         return $this->hasMany(PolicyIssuanceLog::class);
     }
 
+    protected function casts(): array
+    {
+        return [
+            'retry_count' => 'integer',
+        ];
+    }
 }

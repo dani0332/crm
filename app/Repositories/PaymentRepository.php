@@ -557,7 +557,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the decline of a payment by updating the payment record with the decline reason,
      * updating the status of the quote model, and logging the transaction decline.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return string The result of the transaction processing.
      */
     private function handlePaymentDecline($request)
@@ -592,7 +592,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the approval of a payment by updating the collected amount for split payments,
      * logging the approval process, and calling the appropriate service to handle the approval.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
     public function handlePaymentApprove($request)
@@ -812,7 +812,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments with an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateUpfrontStatus($payment)
@@ -845,7 +845,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments that do not have an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateNonUpfrontStatus($payment)
@@ -999,7 +999,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function getPaymentsCountByLeadCode($quoteCode)
     {
-        return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
+        return $this->where('code', 'LIKE', "{$quoteCode}%")->count();
     }
 
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)

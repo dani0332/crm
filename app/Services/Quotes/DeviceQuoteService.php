@@ -5,6 +5,7 @@ namespace App\Services\Quotes;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\NgiEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
@@ -13,10 +14,16 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\DeviceMake;
+use App\Models\PolicyIssuance;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -133,52 +140,52 @@ class DeviceQuoteService extends BaseQuoteService
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
                 $q->leftJoin('lookups as lu', 'lu.id', '=', 'personal_quotes.transaction_type_id')
-                ->with([
-                    'quoteStatus',
-                    'advisor',
-                    'advisor.primaryBranch',
-                    'branch:id,name',
-                    'paymentStatus',
-                    'quoteDetail',
-                    'quoteDetail.lostReason',
-                    'renewalBatchModel',
-                    'nationality',
-                    'customer',
-                    'customer.additionalContactInfo',
-                    'insuranceProviderPlan',
-                    'insuranceProvider',
-                    'latestInsured',
-                    'latestInsured.insuredKyc' => function ($query) {
-                        $query->select([
-                            'id',
-                            'insured_id',        // advisor primary key
-                            'id_expiry_date',
-                        ]);
-                    },
-                    'payments' => function ($q) {
-                        $q->with([
-                            'paymentStatus',
-                            'personalPlan',
-                            'paymentMethod',
-                            'paymentStatusLogs',
-                            'insuranceProvider',
-                            'paymentSplits' => function ($q) {
-                                $q->with([
-                                    'paymentStatus',
-                                    'paymentMethod',
-                                    'documents',
-                                    'verifiedByUser',
-                                    'paymentCharges',
-                                    'processJob',
-                                ])
-                                    ->orderBy('sr_no', 'asc');
-                            },
-                        ]);
-                    },
-                    'documents' => function ($q) {
-                        $q->with('createdBy')->orderBy('created_at', 'desc');
-                    },
-                ])->select([
+                    ->with([
+                        'quoteStatus',
+                        'advisor',
+                        'advisor.primaryBranch',
+                        'branch:id,name',
+                        'paymentStatus',
+                        'quoteDetail',
+                        'quoteDetail.lostReason',
+                        'renewalBatchModel',
+                        'nationality',
+                        'customer',
+                        'customer.additionalContactInfo',
+                        'insuranceProvider:id,text,code',
+                        'insuranceProviderPlan.insuranceProvider',
+                        'latestInsured',
+                        'latestInsured.insuredKyc' => function ($query) {
+                            $query->select([
+                                'id',
+                                'insured_id',        // advisor primary key
+                                'id_expiry_date',
+                            ]);
+                        },
+                        'payments' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'personalPlan',
+                                'paymentMethod',
+                                'paymentStatusLogs',
+                                'insuranceProvider',
+                                'paymentSplits' => function ($q) {
+                                    $q->with([
+                                        'paymentStatus',
+                                        'paymentMethod',
+                                        'documents',
+                                        'verifiedByUser',
+                                        'paymentCharges',
+                                        'processJob',
+                                    ])
+                                        ->orderBy('sr_no', 'asc');
+                                },
+                            ]);
+                        },
+                        'documents' => function ($q) {
+                            $q->with('createdBy')->orderBy('created_at', 'desc');
+                        },
+                    ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
                 IF(
@@ -209,8 +216,9 @@ class DeviceQuoteService extends BaseQuoteService
         if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
             $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;
         }
+
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
+            'canAddBatchNumber' => $this->hasAnyRole(Auth::user(), [RolesEnum::DeviceManager, RolesEnum::SmartPhoneManager]),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];
@@ -255,7 +263,7 @@ class DeviceQuoteService extends BaseQuoteService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         try {
             $kenRequest = $client->post(
                 $plansApiEndPoint,
@@ -279,7 +287,7 @@ class DeviceQuoteService extends BaseQuoteService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -293,11 +301,11 @@ class DeviceQuoteService extends BaseQuoteService
             }
 
             return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        } catch (ConnectException $e) {
             $responseBodyAsString = 'Connection error occurred.';
 
             return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             $responseBodyAsString = 'Request error occurred.';
 
             return $responseBodyAsString;
@@ -409,14 +417,15 @@ class DeviceQuoteService extends BaseQuoteService
         $payload = [];
         if ($isBookingFailure) {
             $payload = $this->getProductionApprovalTeamRecipient();
-        }elseif ($quote?->advisor) {
+        } elseif ($quote?->advisor) {
             $payload = ['recipientEmail' => $quote?->advisor?->email, 'recipientName' => $quote?->advisor?->name];
-        }else{
+        } else {
             $payload = $this->getDeviceNgiFallbackRecipient();
         }
         $ccEmails = $this->parseCommaSeparatedEmails(
             getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
         );
+
         return array_merge($payload, ['cc' => $ccEmails, 'processInvolved' => $processInvolved]);
     }
 
@@ -470,6 +479,50 @@ class DeviceQuoteService extends BaseQuoteService
         $rawEmails = preg_split('/[,\s]+/', trim($value));
 
         return array_values(array_filter($rawEmails, static fn ($email) => ! empty($email)));
+    }
+
+    /**
+     * IMCRM manual recovery: eligible when create-policy succeeded but GetAndUploadPolicyDocs failed at least three times.
+     */
+    public function isEligibleForReTriggerGetAndUploadPolicyDocuments(PolicyIssuance $policyIssuance): bool
+    {
+        if ($policyIssuance->completed_step !== NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE) {
+            return false;
+        }
+
+        if ($policyIssuance->status !== PolicyIssuanceEnum::FAILED_STATUS) {
+            return false;
+        }
+
+        $failedDocAttempts = $policyIssuance->policyIssuanceLogs()
+            ->where('step', NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM)
+            ->where('status', PolicyIssuanceEnum::FAILED_STATUS)
+            ->count();
+
+        return $failedDocAttempts >= 3;
+    }
+
+    /**
+     * Mark issuance pending for queue visibility, then dispatch immediate NGI document fetch/upload job (no initial delay).
+     * Status is persisted before dispatch so sync drivers cannot overwrite the job's final status.
+     *
+     * @throws \InvalidArgumentException When eligibility checks fail
+     */
+    public function reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures(PolicyIssuance $policyIssuance): void
+    {
+        if (! $this->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance)) {
+            throw new \InvalidArgumentException('Policy issuance is not eligible for document sync re-trigger.');
+        }
+
+        $policyIssuance->update([
+            'status' => PolicyIssuanceEnum::PENDING_STATUS,
+        ]);
+
+        NgiGetPolicyDocumentsJob::dispatch($policyIssuance->id);
+
+        LoggerService::info('Device NGI: manual re-trigger dispatched GetAndUploadPolicyDocs job without initial delay', extra: [
+            'policy_issuance_id' => $policyIssuance->id,
+        ]);
     }
 
 }

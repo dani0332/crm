@@ -7,6 +7,7 @@ use App\Models\DeviceQuote;
 use App\Models\PersonalQuote;
 use App\Services\CapiService;
 use Mockery;
+use Mockery\MockInterface;
 
 class DeviceQuoteMockHelper
 {
@@ -15,8 +16,8 @@ class DeviceQuoteMockHelper
      * When the service calls Capi::request('/api/v1/device/create', 'post', $data),
      * we create PersonalQuote + DeviceQuote locally and return success with uuid.
      */
-    public static function mockCapiDeviceCreate(string $testUuid): \Mockery\MockInterface
-    {
+     public static function mockCapiDeviceCreate(string $testUuid): MockInterface
+     {
         $mock = Mockery::mock(CapiService::class)->makePartial();
         $mock->shouldAllowMockingProtectedMethods();
         $mock->shouldReceive('request')

@@ -63,6 +63,7 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -73,13 +74,15 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
-use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -1146,7 +1149,7 @@ class CentralService extends BaseService
             }
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -1171,7 +1174,7 @@ class CentralService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1990,7 +1993,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name ?? '';
-            $emailData->corplineDetails = $quote->brief_details;
+            $emailData->corplineDetails = $quote?->brief_details ?? '';
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = '-'; // need to confirm.
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
@@ -2400,9 +2403,10 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $isHealthAndSTPCase = $quoteTypeId == QuoteTypeId::Health && $quote->isSTPCase();
 
-        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase)) {
             $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
             $statusAPIFailed = 'Quote Referred To Insurer UW';
 
@@ -2424,7 +2428,7 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
-        if ($premiumCheckEnabled) {
+        if ($premiumCheckEnabled && ! $isHealthAndSTPCase) {
             $captureAmount = $payment->total_amount;
             if (
                 $quoteType->code == QuoteTypes::CAR->value &&
@@ -2640,11 +2644,11 @@ class CentralService extends BaseService
     /**
      * Find renewal batch by expiry date for non-motor LOBs
      */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
     {
-        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+        $expiryDate = Carbon::parse($expiryDate);
 
-        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();

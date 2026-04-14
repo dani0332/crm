@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class PolicyIssuanceObserver
@@ -37,6 +38,12 @@ class PolicyIssuanceObserver
             LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Executing policy issuance automation steps for quote: '.$policyIssuance->model->code);
             app(PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
             LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Policy issuance automation steps executed for quote: '.$policyIssuance->model->code);
+        } elseif (
+            $policyIssuance->isDirty('status') &&
+            $policyIssuance->status === PolicyIssuanceEnum::TIMEOUT_STATUS &&
+            $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::ADNIC
+        ) {
+            app(AdnicInsuranceService::class)->handleTimeoutStatusUpdate($policyIssuance);
         }
 
         LoggerService::info($this->className.' fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);

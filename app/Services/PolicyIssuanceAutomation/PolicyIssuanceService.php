@@ -19,12 +19,15 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response as HttpClientResponse;
@@ -35,6 +38,7 @@ class PolicyIssuanceService
     use GenericQueriesAllLobs;
 
     private string $className = 'policyIssuanceService';
+
     private const ALLOCATABLE_QUOTE_TYPES = [
         QuoteTypes::DEVICE,
     ];
@@ -55,6 +59,10 @@ class PolicyIssuanceService
             },
             QuoteTypes::DEVICE->value => match ($insurerCode) {
                 InsuranceProvidersEnum::NGI => app(NgiInsuranceService::class),
+                default => null,
+            },
+            QuoteTypes::HEALTH->value => match ($insurerCode) {
+                InsuranceProvidersEnum::ADNIC => app(AdnicInsuranceService::class),
                 default => null,
             },
             QuoteTypes::CYBER->value => match ($insurerCode) {
@@ -217,7 +225,7 @@ class PolicyIssuanceService
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id);
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });
@@ -304,6 +312,7 @@ class PolicyIssuanceService
 
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
         $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+
         if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
             $this->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         } else {
@@ -411,6 +420,8 @@ class PolicyIssuanceService
         return match ($quoteType) {
             QuoteTypes::DEVICE->value => $insuranceProvider->code === InsuranceProvidersEnum::NGI,
             QuoteTypes::CYBER->value => $insuranceProvider->code === InsuranceProvidersEnum::AWNI,
+            QuoteTypes::CAR->value => in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]),
+            QuoteTypes::HEALTH->value => $insuranceProvider->code === InsuranceProvidersEnum::ADNIC,
             default => false,
         };
     }
@@ -451,7 +462,7 @@ class PolicyIssuanceService
 
         $statusAPIFailed = null;
 
-        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
@@ -503,8 +514,7 @@ class PolicyIssuanceService
         // Assign advisor to lead for cyber policy issuance automation if not assigned and policy is booked only for cyber
         if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
             $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
-        }
-        elseif (! $advisorId && $isPolicyBooked) {
+        } elseif (! $advisorId && $isPolicyBooked) {
             $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
             $advisorId = $allocationResult['advisorId'] ?? null;
 
@@ -544,6 +554,8 @@ class PolicyIssuanceService
             )->onQueue('policy-issuance-automation');
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+        } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
+            app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
 
         if ($advisorId) {
@@ -751,5 +763,68 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);
+    }
+
+    /**
+     * IMCRM allowlist: statuses where manual re-trigger of policy automation may be offered.
+     */
+    public function isReTriggerPolicyAutomationStatusAllowed(?string $status): bool
+    {
+        $allowed = [
+            null,
+            '',
+            PolicyIssuanceEnum::TIMEOUT_STATUS,
+            PolicyIssuanceEnum::FAILED_STATUS,
+        ];
+
+        return in_array($status, $allowed, true);
+    }
+
+    /**
+     * Whether IMCRM should show "Re Trigger Policy Automation" for this issuance (LOB-specific rules apply).
+     */
+    public function shouldOfferReTriggerPolicyAutomation(PolicyIssuance $policyIssuance): bool
+    {
+        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
+            return false;
+        }
+
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            return false;
+        }
+
+        return match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance),
+            default => false,
+        };
+    }
+
+    /**
+     * Re-run LOB-specific recovery (e.g. immediate NGI document job). Caller must authorize and validate request context.
+     *
+     * @throws \InvalidArgumentException When automation is disabled, LOB unsupported, or eligibility fails
+     */
+    public function reTriggerPolicyAutomation(PolicyIssuance $policyIssuance): void
+    {
+        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
+            throw new \InvalidArgumentException('Policy issuance automation is not allowed for this status ('.$policyIssuance->status.').');
+        }
+
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            throw new \InvalidArgumentException('Policy issuance automation is not enabled for this quote.');
+        }
+
+        match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures($policyIssuance),
+            default => throw new \InvalidArgumentException('Re-trigger is not supported for this line of business.'),
+        };
     }
 }

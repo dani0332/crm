@@ -2,7 +2,9 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
+use App\Services\OCR\OCRService;
 use Database\Factories\ApplicationStorageFactory;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Services\PaymentTestQueryService;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
 use Tests\Helpers\Payments\PaymentTestCreationHelper;
@@ -14,6 +16,12 @@ beforeEach(function () {
     ApplicationStorageFactory::createVatValueForSqlite('5');
 
     $this->user = TestDataSeeder::createAdminUser();
+
+    // Mock OCRService to avoid dependency resolution issues in HandleInertiaRequests middleware
+    $ocrServiceMock = Mockery::mock(OCRService::class);
+    $ocrServiceMock->shouldReceive('getEligibleProviders')->andReturn([]);
+    $this->app->instance(OCRService::class, $ocrServiceMock);
+
     $this->actingAs($this->user);
     PaymentTestDataHelper::setupPaymentPermissions($this->user);
 
@@ -165,7 +173,7 @@ test('payment split validates presence and format of insurer receipt number', fu
 });
 
 test('payment should be approved via endpoint', function () {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $db->table('application_storage')->updateOrInsert(
         ['key_name' => ApplicationStorageEnums::SAGE_ENABLED],
         ['value' => '0', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]

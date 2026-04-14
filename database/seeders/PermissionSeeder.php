@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
@@ -48,6 +49,8 @@ class PermissionSeeder extends Seeder
         }
 
         $this->addBuyLeadsAdminPermission();
+        $this->addTransAppSearchPermission();
+        $this->addReTriggerPolicyAutomationDevicePermission();
     }
 
     private function addBuyLeadsAdminPermission(): void
@@ -70,6 +73,72 @@ class PermissionSeeder extends Seeder
                 } else {
                     info("Role {$role->name} already has permission {$permission->name}");
                 }
+            }
+        }
+    }
+
+    private function addTransAppSearchPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::TRANSAPP_SEARCH,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->where(function ($query) {
+                $query->whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])
+                    ->orWhereHas('permissions', function ($permissionQuery) {
+                        $permissionQuery->whereIn('name', [PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TransAppDelete]);
+                    });
+            })
+            ->get();
+
+        if ($roles->isNotEmpty()) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+                } else {
+                    LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+                }
+            }
+        }
+    }
+
+    /**
+     * IMCRM: device policy issuance document re-trigger. Runs before DeviceQuoteSeeder; device quote roles
+     * may not exist yet, so DeviceQuoteSeeder must assign this permission when it creates those roles.
+     */
+    private function addReTriggerPolicyAutomationDevicePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::DeviceManager,
+                RolesEnum::SmartPhoneAdvisor,
+                RolesEnum::SmartPhoneManager,
+                RolesEnum::DeviceAdvisor,
+            ])
+            ->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
             }
         }
     }

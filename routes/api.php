@@ -11,6 +11,7 @@ use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use App\Http\Controllers\FtcEmailController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\V2\AlfredChatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,7 +30,7 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
-    Route::post('/instant-alfred/generate-export-url', [\App\Http\Controllers\V2\AlfredChatController::class, 'generateExportUrl'])->name('api.instant-alfred.generate-url');
+    Route::post('/instant-alfred/generate-export-url', [AlfredChatController::class, 'generateExportUrl'])->name('api.instant-alfred.generate-url');
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
     Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);
@@ -58,6 +59,10 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
     Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
+    Route::post('/imcrm/device/send-ocb', [ApiController::class, 'deviceQuoteSendOCB'])->name('deviceQuoteSendOCBEmail');
+
+    Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [ApiController::class, 'getGenericDocuments']);
+
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
 
@@ -71,6 +76,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         // Signature routes
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
+    Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaim'])->name('assignClaim');
 
     Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes
@@ -144,7 +150,8 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
-    Route::post("quotes/send-zero-plans-email", [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
+    Route::post('quotes/send-zero-plans-email', [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
+    Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

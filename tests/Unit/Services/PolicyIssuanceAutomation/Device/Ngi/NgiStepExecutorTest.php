@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
+use App\Facades\Ngi;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
@@ -26,7 +28,7 @@ function makeDeviceQuoteStub(array $overrides = []): object
             'id' => 1,
             'insurer_quote_number' => 'NGI-Q-123',
             'policy_number' => null,
-            'quote_type_id' => \App\Enums\QuoteTypes::DEVICE->value,
+            'quote_type_id' => QuoteTypes::DEVICE->value,
             'email' => 'john.doe@example.com',
         ];
     }
@@ -91,10 +93,10 @@ afterEach(function () {
     unset($this->apiService, $this->bookPolicyService, $this->stepExecutor, $this->failureEmailService);
 
     // Clear service container bindings
-    app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
+    app()->forgetInstance(PolicyIssuanceService::class);
 
     // Reset Ngi facade to clear any mock instances
-    \App\Facades\Ngi::clearResolvedInstances();
+    Ngi::clearResolvedInstances();
 
     // Force garbage collection
     gc_collect_cycles();
@@ -163,7 +165,7 @@ describe('executeCreatePolicyFromQuoteStep', function () {
             ->once()
             ->with(
                 $quote,
-                \App\Enums\QuoteTypes::DEVICE->value,
+                QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
@@ -266,7 +268,7 @@ describe('executeBookPolicyStep', function () {
             ->once()
             ->with(
                 $quote,
-                \App\Enums\QuoteTypes::DEVICE->value,
+                QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY

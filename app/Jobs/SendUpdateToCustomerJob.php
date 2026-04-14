@@ -134,9 +134,10 @@ class SendUpdateToCustomerJob implements ShouldQueue
 
     private function isEmailResponseSuccessful($quoteTypeId, $response)
     {
-        if (QuoteTypeId::Device === $quoteTypeId) {
+        if ($quoteTypeId === QuoteTypeId::Device) {
             return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE || $response == BirdFlowStatusEnum::BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE;
         }
+
         return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE;
     }
 

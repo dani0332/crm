@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 
@@ -12,9 +14,7 @@ class NgiRequestBuilder
 {
     private const APPLICATION_JSON = 'application/json';
 
-    public function __construct(private readonly ApplicationStorageService $applicationStorageService)
-    {
-    }
+    public function __construct(private readonly ApplicationStorageService $applicationStorageService) {}
 
     /**
      * Build payload for CreatePolicyFromQuote API
@@ -27,12 +27,10 @@ class NgiRequestBuilder
     public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
 
-
-
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
         $paymentReferenceNumber = match (true) {
-            $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
-            $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
+            $payment instanceof Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
+            $payment instanceof PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
             default => null,
         } ?? '';
 
@@ -40,7 +38,7 @@ class NgiRequestBuilder
         $customerEmailId = $this->applicationStorageService->getValueByKey(ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_EMAIL_ID) ?: null;
 
         return [
-            'client_reference_number' => "DEV-********",
+            'client_reference_number' => 'DEV-********',
             'quote_reference_number' => $quote->insurer_quote_number,
             'payment_reference_number' => $paymentReferenceNumber,
             'transaction_country' => 'UAE',

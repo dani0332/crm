@@ -360,7 +360,6 @@ class RetryAllocationService
         $processedRecords = 0;
         $leads = $quoteType->model()::whereNull('advisor_id')
             ->select('uuid', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source')
-            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());
@@ -374,11 +373,13 @@ class RetryAllocationService
             ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
-            ->when($quoteType === QuoteTypes::CYBER, function ($q) {
-                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
+            ->when($quoteType === QuoteTypes::CYBER, function ($q) use ($allocationStartDate, $to) {
+                $q->forRetryAllocationCyber($allocationStartDate, $to);
+            }, function ($q) use ($allocationStartDate, $to) {
+                $q->whereBetween('created_at', [$allocationStartDate, $to]);
             })
             ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
-               $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
+                $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
             })
             ->take($chunkSize);
 

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
+use App\Models\DeviceInsurerRequestResponses;
+use App\Models\DeviceQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
+use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -20,16 +24,22 @@ use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use App\Models\DeviceInsurerRequestResponses;
-use App\Models\DeviceQuote;
 
 class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
+
+    public function __construct(
+        private BaseService $baseService,
+        private PolicyIssuanceService $policyIssuanceService,
+    ) {
+        $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
+    }
 
     public function loadAuditableComponent(Request $request)
     {
@@ -37,9 +47,7 @@ class AuditableController extends Controller
         $auditableId = $request->auditableId;
 
         if ($request->jsonData) {
-            $service = app()->make(BaseService::class);
-
-            return response()->json($service->audits($auditableId, $auditableType));
+            return response()->json($this->baseService->audits($auditableId, $auditableType));
         }
 
         return view('auditable', compact('auditableId', 'auditableType'));
@@ -92,7 +100,9 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && ( $quoteType !== QuoteTypes::CYBER->value ||  $quoteType !== QuoteTypes::DEVICE->value))) {
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value];
+
+        if (empty($quote) || empty($quoteType) || ! in_array($quoteType, $allowedQuoteTypes)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
@@ -105,11 +115,20 @@ class AuditableController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
+        $policyIssuance = $quote->policyIssuance;
+        $reTriggerPolicyAutomationEligible = false;
+        if ($policyIssuance) {
+            $policyIssuance->loadMissing('insuranceProvider');
+            $reTriggerPolicyAutomationEligible = $this->policyIssuanceService
+                ->shouldOfferReTriggerPolicyAutomation($policyIssuance);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
-            'policyIssuance' => $quote->policyIssuance ?? null,
+            'policyIssuance' => $policyIssuance ?? null,
+            'reTriggerPolicyAutomationEligible' => $reTriggerPolicyAutomationEligible,
         ]);
     }
 
@@ -197,8 +216,7 @@ class AuditableController extends Controller
                 return DeviceInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case HealthQuote::class:
-                return HealthInsurerRequestResponse::with('insuranceProvider')
-                    ->whereNotIn('call_type', ['oAuth', 'login']);
+                return HealthInsurerRequestResponse::with('insuranceProvider')->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }
@@ -244,6 +262,35 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load OCR logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadHealthRoutingLogs(Request $request)
+    {
+        try {
+            $logs = HealthRoutingLog::with('user')
+                ->where('type', $request->type)
+                ->when($request->team_category, function ($query) use ($request) {
+                    $query->where('team_category', $request->team_category);
+                })
+                ->when($request->quote_request_id, function ($query) use ($request) {
+                    $query->where('quote_request_id', $request->quote_request_id);
+                })
+                ->orderByDesc('id')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load Health Routing Logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

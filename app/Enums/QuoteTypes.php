@@ -5,6 +5,7 @@ namespace App\Enums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -40,6 +41,7 @@ use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\DeviceAllocation;
 use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
@@ -50,8 +52,6 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
-use App\Strategies\Allocations\DeviceAllocation;
-use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {
@@ -350,6 +350,7 @@ enum QuoteTypes: string
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
             self::CYBER => [RolesEnum::CyberAdvisor],
+            self::DEVICE => [RolesEnum::SmartPhoneAdvisor, RolesEnum::DeviceAdvisor],
             self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             self::JETSKI => [RolesEnum::JetskiAdvisor],
             self::DEVICE => [RolesEnum::SmartPhoneAdvisor],

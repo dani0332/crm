@@ -20,6 +20,7 @@ use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
+use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -28,11 +29,13 @@ use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SendZeroPlanEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
@@ -66,12 +69,13 @@ use App\Services\RewatermarkQuoteDocumentsService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Http\Requests\SendZeroPlanEmailRequest;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiController extends Controller
 {
@@ -495,11 +499,14 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-
+    public function assignClaim(ClaimAssignmentRequest $request)
+    {
+        return $this->apiService->processClaimAssignment($request);
+    }
     /**
      * Export email status logs as Excel file for a specific quote
      *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     * @return StreamedResponse
      */
     public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
     {
@@ -549,6 +556,11 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 
     public function missingDocsReminder($quoteUuid)
@@ -611,7 +623,7 @@ class ApiController extends Controller
     /**
      * Update customer replied status in email_status table
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
@@ -776,18 +788,18 @@ class ApiController extends Controller
 
     public function sendZeroPlansEmail(SendZeroPlanEmailRequest $request)
     {
-       $response = app(ApiService::class)->sendZeroPlansEmail($request);
-       if ($response['success']) {
-        return response()->json([
-            'success' => true,
-            'message' => $response['message'],
-        ], Response::HTTP_OK);
-       } else {
-        return response()->json([
-            'success' => false,
-            'message' => $response['message'],
-        ], Response::HTTP_BAD_REQUEST);
-       }
+        $response = app(ApiService::class)->sendZeroPlansEmail($request);
+        if ($response['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $response['message'],
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => $response['message'],
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
     public function getLeadOCRComparison(Request $request)
     {

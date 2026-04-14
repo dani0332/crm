@@ -5,16 +5,14 @@ namespace Database\Seeders;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusMap;
 use App\Models\QuoteType;
+use App\Models\Team;
 use App\Services\Logger\LoggerService;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
-use App\Models\Team;
-use App\Enums\TeamTypeEnum;
-use App\Models\QuoteStatusMap;
-use App\Models\QuoteStatus;
 
 class DeviceQuoteSeeder extends Seeder
 {
@@ -31,7 +29,7 @@ class DeviceQuoteSeeder extends Seeder
         $this->mapQuoteStatuses();
         LoggerService::info(self::class.' - Device Quote statuses mapped');
         LoggerService::info(self::class.' - Device Roles seeded');
-        $this->seedRoles([RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
+        $this->seedRoles([RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
         $this->seedDevicePermissions();
         LoggerService::info(self::class.' - Device Permissions seeded');
         $this->product();
@@ -83,16 +81,15 @@ class DeviceQuoteSeeder extends Seeder
         }
     }
 
-    private function seedDevicePermissions()
+    /**
+     * Permission name → role names assigned in {@see seedDevicePermissions()}.
+     * Single source of truth so every device permission (including re-trigger) is explicitly mapped.
+     *
+     * @return array<string, list<string>>
+     */
+    public function deviceQuotePermissionRoleAssignments(): array
     {
-        $permissions = [
-            PermissionsEnum::DEVICE_QUOTES_LIST,
-            PermissionsEnum::DEVICE_QUOTES_CREATE,
-            PermissionsEnum::DEVICE_QUOTES_EDIT,
-            PermissionsEnum::DEVICE_QUOTES_SHOW,
-            PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD,
-            PermissionsEnum::DEVICE_LEADPOOL,
-        ];
+
         // The DEVICE_LEADPOOL permission should NOT be assigned to the SmartPhoneAdvisor role.
         $permissionRoleMap = [
             PermissionsEnum::DEVICE_LEADPOOL => [RolesEnum::Admin, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
@@ -104,7 +101,7 @@ class DeviceQuoteSeeder extends Seeder
 
         foreach ($permissionRoleMap as $permission => $roles) {
             $this->seedPermissions([$permission], $roles);
-            LoggerService::info('DeviceQuoteSeeder: ' . $permission . ' permissions seeded for roles: ' . implode(', ', $roles));
+            LoggerService::info('DeviceQuoteSeeder: '.$permission.' permissions seeded for roles: '.implode(', ', $roles));
         }
 
         /* Reports permission */
@@ -138,9 +135,35 @@ class DeviceQuoteSeeder extends Seeder
 
         $this->seedPermissions($deviceAdvisorPermissions, [RolesEnum::SmartPhoneAdvisor]);
 
+        $rolesWithFullDeviceQuoteAccess = [
+            RolesEnum::Admin,
+            RolesEnum::DeviceAdvisor,
+            RolesEnum::DeviceManager,
+            RolesEnum::SmartPhoneAdvisor,
+            RolesEnum::SmartPhoneManager,
+            RolesEnum::Engineering,
+        ];
+
+        return [
+            PermissionsEnum::DEVICE_QUOTES_LIST => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_CREATE => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_EDIT => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_QUOTES_SHOW => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_LEADPOOL => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_CONVERSION_REPORT => $rolesWithFullDeviceQuoteAccess,
+            PermissionsEnum::DEVICE_DISTRIBUTION_REPORT => $rolesWithFullDeviceQuoteAccess,
+        ];
     }
 
-   
+    private function seedDevicePermissions(): void
+    {
+        foreach ($this->deviceQuotePermissionRoleAssignments() as $permission => $roles) {
+            $this->seedPermissions([$permission], $roles);
+        }
+    }
+
     private function product()
     {
         if (! Team::where('name', 'Device Insurance')->where('type', TeamTypeEnum::PRODUCT)->exists()) {

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Facades\Ngi;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Database\Factories\DeviceQuoteFactory;
 
 // Global variables for shared instances (Pest compatible)
@@ -44,10 +46,10 @@ afterEach(function () {
     // Note: $this->responseHandler is a shared instance, don't unset it
 
     // Clear service container bindings
-    app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
+    app()->forgetInstance(PolicyIssuanceService::class);
 
     // Reset Ngi facade to clear any mock instances
-    \App\Facades\Ngi::clearResolvedInstances();
+    Ngi::clearResolvedInstances();
 
     // Force garbage collection
     gc_collect_cycles();

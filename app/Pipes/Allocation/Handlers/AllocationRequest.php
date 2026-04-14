@@ -21,11 +21,17 @@ class AllocationRequest
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
         protected $evaluateTierOnly = false,
         protected $reAssigFromAdvisorId = null,
-        protected bool $assignToHappinessUser = false
+        protected $source = null,
+        protected bool $assignToHappinessUser = false,
     ) {
         $this->collection = new Collection;
 
         $this->reAssigFromAdvisorId = ! empty($this->reAssigFromAdvisorId) && $this->reAssigFromAdvisorId != 0 ? $this->reAssigFromAdvisorId : null;
+    }
+
+    public function getSource()
+    {
+        return $this->source;
     }
 
     public function getQuoteType()
@@ -110,5 +116,4 @@ class AllocationRequest
         }
     }
 
-   
 }

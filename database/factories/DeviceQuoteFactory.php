@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DeviceQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -94,7 +95,7 @@ class DeviceQuoteFactory extends Factory
      */
     public static function makeMock(array $overrides = []): object
     {
-        $factory = new self();
+        $factory = new self;
         $defaults = $factory->definition();
 
         // Add common test defaults
@@ -117,7 +118,8 @@ class DeviceQuoteFactory extends Factory
         $quote = self::makeMock($overrides);
 
         // Use plain object instead of Mockery mock for better memory efficiency
-        $mock = new class($quote) {
+        $mock = new class($quote)
+        {
             public function __construct($quote)
             {
                 // Copy all properties from quote object
@@ -152,7 +154,8 @@ class DeviceQuoteFactory extends Factory
                     'mobile_no' => $quote->mobile_no ?? '+971501234567',
                 ];
 
-                $this->latestPayment = new class {
+                $this->latestPayment = new class
+                {
                     public $id = 1;
                     public $code = 'PAY-123456'; // Static code for consistency
                     public $total_amount = 500.00;
@@ -162,10 +165,12 @@ class DeviceQuoteFactory extends Factory
                     public function paymentSplits()
                     {
                         // Return a mock query builder that can do where() and first()
-                        return new class {
+                        return new class
+                        {
                             public function where($column, $value)
                             {
-                                return new class($value) {
+                                return new class($value)
+                                {
                                     private $expectedValue;
 
                                     public function __construct($expectedValue)
@@ -187,15 +192,16 @@ class DeviceQuoteFactory extends Factory
 
                 // Set up payments relationship as plain object (not mock)
                 $this->paymentsRelation = (object) [
-                    'mainLeadPayment' => function() {
+                    'mainLeadPayment' => function () {
                         return (object) ['first' => $this->latestPayment];
-                    }
+                    },
                 ];
             }
 
             public function payments()
             {
-                return new class($this->latestPayment) {
+                return new class($this->latestPayment)
+                {
                     private $payment;
 
                     public function __construct($payment)
@@ -243,7 +249,7 @@ class DeviceQuoteFactory extends Factory
     {
         $defaults = [
             'id' => 1,
-            'status' => \App\Enums\PolicyIssuanceEnum::PROCESSING_STATUS,
+            'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
             'completed_step' => null,
         ];
 

@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Tests\Helpers;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Services\ApplicationStorageService;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Mockery\MockInterface;
 
 /**
  * Mock helper for NGI Device policy issuance tests.
@@ -74,7 +78,7 @@ class NgiPolicyIssuanceMockHelper
     public static function mockNgiApiTimeout(): void
     {
         Http::fake(function () {
-            throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Connection timed out');
+            throw new ConnectionException('cURL error 28: Connection timed out');
         });
     }
 
@@ -154,7 +158,7 @@ class NgiPolicyIssuanceMockHelper
      */
     public static function enableNgiAutomation(): void
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $db->table('application_storage')->updateOrInsert(
             ['key_name' => ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE],
             ['value' => '1', 'created_at' => now(), 'updated_at' => now()]
@@ -166,7 +170,7 @@ class NgiPolicyIssuanceMockHelper
      */
     public static function disableNgiAutomation(): void
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $db->table('application_storage')->updateOrInsert(
             ['key_name' => ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE],
             ['value' => '0', 'created_at' => now(), 'updated_at' => now()]
@@ -178,7 +182,7 @@ class NgiPolicyIssuanceMockHelper
      */
     public static function enableNgiRetryTimeout(): void
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $db->table('application_storage')->updateOrInsert(
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE],
             ['value' => '1', 'created_at' => now(), 'updated_at' => now()]
@@ -191,9 +195,9 @@ class NgiPolicyIssuanceMockHelper
      * @param  bool  $automationEnabled  Whether automation should be enabled
      * @param  bool  $retryEnabled  Whether retry on timeout should be enabled
      */
-    public static function mockApplicationStorageService(bool $automationEnabled = true, bool $retryEnabled = true): \Mockery\MockInterface
+    public static function mockApplicationStorageService(bool $automationEnabled = true, bool $retryEnabled = true): MockInterface
     {
-        $mock = \Mockery::mock(\App\Services\ApplicationStorageService::class);
+        $mock = \Mockery::mock(ApplicationStorageService::class);
         $mock->shouldReceive('getValueByKey')
             ->with(ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE)
             ->andReturn($automationEnabled);
@@ -211,7 +215,7 @@ class NgiPolicyIssuanceMockHelper
      */
     public static function seedNgiLookups(): array
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         // Create Nationality
         $nationalityId = $db->table('nationality')->where('text', 'UAE')->value('id');

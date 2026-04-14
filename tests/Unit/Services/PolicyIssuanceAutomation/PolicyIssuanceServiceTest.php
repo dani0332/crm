@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\PersonalQuote;
@@ -44,8 +44,8 @@ it('persists provided insurer and api issuance statuses', function () {
         ->withCyberDependencies()
         ->create(['quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
 
-    $process = PolicyIssuance::withoutEvents(fn() => createAwnicPolicyIssuanceProcess($quote));
-    PolicyIssuance::withoutEvents(fn() => $process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
+    PolicyIssuance::withoutEvents(fn () => $process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]));
 
     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
         $quote->fresh(),
@@ -106,7 +106,7 @@ dataset('policyIssuanceLogResponses', function () {
             ['foo' => 'bar'],
         ],
         'json serializable object' => [
-            new class implements \JsonSerializable
+            new class implements JsonSerializable
             {
                 public function jsonSerialize(): array
                 {

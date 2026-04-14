@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\Nationality;
@@ -20,6 +22,9 @@ class NationalityFactory extends Factory
             'text' => $this->faker->country(),
             'code' => strtoupper($this->faker->unique()->lexify('???')),
             'is_active' => true,
+            'sort_order' => fake()->numberBetween(1, 200),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 
