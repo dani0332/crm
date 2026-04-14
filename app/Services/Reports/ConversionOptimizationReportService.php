@@ -959,6 +959,9 @@ class ConversionOptimizationReportService extends BaseService
      */
     private function roundWithPointOneFractionBias(float $value): int
     {
+        // Stabilise binary float noise (e.g. (55/100)*100 becoming 55.00000000001 and ceil → 56).
+        $value = round($value, 8);
+
         $decimalPart = $value - floor($value);
 
         if (abs($decimalPart - 0.1) < 0.00001) {
