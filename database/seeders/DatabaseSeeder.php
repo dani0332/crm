@@ -57,11 +57,11 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
-            HealthTeamSeeder::class,
+            /*HealthTeamSeeder::class,
             NationalityPoolConfigSeeder::class,
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
-            HealthGroupNationalitySeeder::class,
+            HealthGroupNationalitySeeder::class,*/
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
         ]);
