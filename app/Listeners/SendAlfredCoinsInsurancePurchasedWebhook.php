@@ -10,8 +10,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendAlfredCoinsInsurancePurchasedWebhook implements ShouldQueue
 {
-    public int $tries = 3;
-
     /**
      * Create the event listener.
      */

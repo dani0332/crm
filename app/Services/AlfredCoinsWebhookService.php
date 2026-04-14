@@ -55,10 +55,11 @@ class AlfredCoinsWebhookService
 
         $payload = $this->buildPayload($quote);
 
-        LoggerService::info('AlfredCoinsWebhookService - Sending InsuranceMarket webhook', [], [
+        LoggerService::info('AlfredCoinsWebhookService - Sending InsuranceMarket webhook', [
+            'payload' => $payload,
+        ], [
             'quoteUID' => $quoteUID,
             'quoteTypeId' => $quoteTypeId,
-            'eventName' => $payload['eventName'],
         ]);
 
         try {
@@ -98,11 +99,7 @@ class AlfredCoinsWebhookService
 
     private function resolveQuote(string $uuid, int $quoteTypeId): ?PersonalQuote
     {
-        $query = app()->environment('testing')
-            ? PersonalQuote::on('sqlite')
-            : PersonalQuote::query();
-
-        return $query
+        return PersonalQuote::query()
             ->where('uuid', $uuid)
             ->where('quote_type_id', $quoteTypeId)
             ->first();
