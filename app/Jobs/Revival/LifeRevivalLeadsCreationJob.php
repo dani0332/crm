@@ -26,7 +26,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 90;
     public $backoff = 300;
-    private $lead = null;
+    protected $lead = null;
 
     public function __construct(
         private int $personalQuoteId,
@@ -111,11 +111,11 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->lead->uuid))->dontRelease()];
+        return [(new WithoutOverlapping($this->personalQuoteId))->dontRelease()];
     }
 
     public function failed(Throwable $exception)
     {
-        LoggerService::error('LifeRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
+        LoggerService::error('LifeRevivalLeadsCreationJob - Failed - '.$this->personalQuoteId.' Error: '.$exception->getMessage());
     }
 }
