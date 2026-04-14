@@ -240,6 +240,7 @@ class LifeRevivalService
     public function updateSource(string $quoteUuid): void
     {
         $quote = PersonalQuote::where('uuid', $quoteUuid)
+            ->where('quote_type_id', QuoteTypeId::Life)
             ->where('source', LeadSourceEnum::REVIVAL)
             ->with('lifeQuote')
             ->first();
