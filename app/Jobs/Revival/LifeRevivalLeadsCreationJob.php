@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs\Revival;
 
 use App\Enums\LeadSourceEnum;
@@ -18,13 +20,9 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
     use Batchable, Dispatchable, GenericQueriesAllLobs, Queueable;
 
-    private $lead = null;
-    /**
-     * Create a new job instance.
-     */
-    public function __construct($lead)
-    {
-        $this->lead = $lead;
+    public function __construct(
+        private int $personalQuoteId,
+    ) {
         $this->onQueue('renewals');
     }
 
@@ -33,30 +31,42 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $lead = PersonalQuote::query()
+            ->with('lifeQuote')
+            ->find($this->personalQuoteId);
+
+        if ($lead === null || $lead->lifeQuote === null) {
+            LoggerService::error('Life revival job: lead or life quote not found', extra: [
+                'personal_quote_id' => $this->personalQuoteId,
+            ]);
+
+            return;
+        }
+
         $payload = [
-            'firstName' => $this->lead->first_name,
-            'lastName' => $this->lead->last_name,
-            'email' => $this->lead->email,
-            'mobileNo' => $this->lead->mobile_no ?? null,
-            'gender' => $this->lead->gender ?? '',
-            'dob' => $this->lead->dob ?? null,
-            'nationalityId' => $this->lead->nationality_id ?? 0,
-            'paymentStatusId' => $this->lead->payment_status_id ?? 0,
-            'quoteStatusId' => $this->lead->quote_status_id ?? 0,
+            'firstName' => $lead->first_name,
+            'lastName' => $lead->last_name,
+            'email' => $lead->email,
+            'mobileNo' => $lead->mobile_no ?? null,
+            'gender' => $lead->gender ?? '',
+            'dob' => $lead->dob ?? null,
+            'nationalityId' => $lead->nationality_id ?? 0,
+            'paymentStatusId' => $lead->payment_status_id ?? 0,
+            'quoteStatusId' => $lead->quote_status_id ?? 0,
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'othersInfo' => '',
             'isSmoker' => false,
-            'sumInsuredValue' => (int) $this->lead->lifeQuote->sum_insured_value,
-            'sumInsuredCurrencyId' => $this->lead->lifeQuote->sum_insured_currency_id,
-            'maritalStatusId' => $this->lead->lifeQuote->marital_status_id,
-            'purposeOfInsuranceId' => $this->lead->lifeQuote->purpose_of_insurance_id ?? 0,
-            'tenureOfInsuranceId' => $this->lead->lifeQuote->tenure_of_insurance_id ?? 0,
-            'numberOfYearsId' => $this->lead->lifeQuote->number_of_years_id ?? 0,
+            'sumInsuredValue' => (int) $lead->lifeQuote->sum_insured_value,
+            'sumInsuredCurrencyId' => $lead->lifeQuote->sum_insured_currency_id,
+            'maritalStatusId' => $lead->lifeQuote->marital_status_id,
+            'purposeOfInsuranceId' => $lead->lifeQuote->purpose_of_insurance_id ?? 0,
+            'tenureOfInsuranceId' => $lead->lifeQuote->tenure_of_insurance_id ?? 0,
+            'numberOfYearsId' => $lead->lifeQuote->number_of_years_id ?? 0,
             'source' => LeadSourceEnum::REVIVAL,
             'referenceUrl' => 'IMCRM',
             'lang' => 'EN',
-            'height' => $this->lead->lifeQuote->height ?? 0,
-            'weight' => $this->lead->lifeQuote->weight ?? 0,
+            'height' => $lead->lifeQuote->height ?? 0,
+            'weight' => $lead->lifeQuote->weight ?? 0,
             'typeOfInsurance' => 'Life Insurance',
             'whatsappConsent' => 1,
         ];
@@ -64,7 +74,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         $capiResponse = Capi::request('/api/v2-save-life-quote', 'post', $payload);
 
         if (isset($capiResponse->errors)) {
-            LoggerService::error('Error Creating Life Revival Lead '.$this->lead->uuid, extra: [
+            LoggerService::error('Error Creating Life Revival Lead '.$lead->uuid, extra: [
                 'payload' => $payload,
                 'url' => '/api/v2-save-life-quote',
                 'response' => $capiResponse,
@@ -74,15 +84,17 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         }
 
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
-        LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
+        LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$lead->uuid}");
 
         // Save DTT revival record
         $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
 
         $dttRevivalService = app(DTTRevivalService::class);
-        $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $this->lead->id, QuoteTypes::LIFE->id());
+        $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $lead->id, QuoteTypes::LIFE->id());
+        LoggerService::info("DTT Revival record created successfully for quote UUID {$lifeRevivalQuoteUUID} from parent lead {$lead->uuid}");
 
         // Mark life quote as revived
-        $this->lead->update(['is_revived' => true]);
+        $lead->update(['is_revived' => true]);
+        LoggerService::info("Life quote marked as revived for lead {$lead->uuid}");
     }
 }

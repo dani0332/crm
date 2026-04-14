@@ -51,7 +51,7 @@ class LifeRevivalCommand extends Command
         $jobs = $revivalLeads->filter(fn ($lead) => $lead->lifeQuote->height != null && $lead->lifeQuote->weight != null)
             ->values()
             ->map(function ($lead, $index) {
-                return (new LifeRevivalLeadsCreationJob($lead))->delay(now()->addSeconds(30 + ($index * 30)));
+                return (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds(30 + ($index * 30)));
             })
             ->all();
 
