@@ -1538,6 +1538,7 @@ class SplitPaymentService
                 'modelType' => $modelType,
                 'paymentNotApproved' => $paymentNotApproved ? 'true' : 'false',
                 'insuranceProvider' => $insuranceProvider,
+                'collectionType' => $payment->collection_type,
             ]
         );
 
