@@ -66,10 +66,10 @@ class SageApiService
     public function __construct()
     {
         // Guzzle was not working for post request
-        $this->sageLogin = env('SAGE_300_LOGIN');
-        $this->sagePassword = env('SAGE_300_PASSWORD');
-        $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
-        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
+        $this->sageLogin = config('constants.SAGE_300_LOGIN');
+        $this->sagePassword = config('constants.SAGE_300_PASSWORD');
+        $this->sageRequestUrl = config('constants.SAGE_300_BASE_URL').config('constants.SAGE_300_VERSION');
+        $this->sageDBName = config('constants.SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -912,7 +912,7 @@ class SageApiService
 
         // Dispatch the policy document job first, before any policy booking operations
         $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Travel, QuoteTypeId::Cyber])) {
             $quote->load('policyIssuance');
             if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
@@ -2399,7 +2399,7 @@ class SageApiService
                                 $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
                             }
 
-                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
                             $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                             $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
                             $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;

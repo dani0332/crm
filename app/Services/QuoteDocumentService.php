@@ -32,6 +32,7 @@ use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
+use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -41,8 +42,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use League\Flysystem\UnableToCheckExistence;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
+use Throwable;
 
 class QuoteDocumentService extends BaseService
 {
@@ -51,6 +54,7 @@ class QuoteDocumentService extends BaseService
     private const LOG_WITH_KEY = ' with key: ';
 
     protected $client;
+    use ChecksAzureFileExistence;
     use GenericQueriesAllLobs;
 
     public function __construct()
@@ -1010,20 +1014,48 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
     {
-        // Early return if filePath is empty or null to avoid any errors
         if (empty($filePath)) {
             return null;
         }
 
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
-            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
-        }
+        try {
+            if (! $this->checkAzureFileExistsWithRetry($filePath, $storageDisk)) {
+                return null;
+            }
 
-        return null;
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        } catch (UnableToCheckExistence $e) {
+            LoggerService::warning(
+                'Unable to check document existence (Azure); returning no URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        } catch (Throwable $e) {
+            LoggerService::error(
+                'Error generating temporary document URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        }
     }
 
     /**

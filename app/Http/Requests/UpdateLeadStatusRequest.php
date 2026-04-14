@@ -154,6 +154,8 @@ class UpdateLeadStatusRequest extends FormRequest
 
             if (! $quoteObject) {
                 $validator->errors()->add('value', 'Lead not found please try again.');
+
+                return;
             }
 
             if (! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE) && $quoteObject->quote_status_id == QuoteStatusEnum::Lost) {

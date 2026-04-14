@@ -473,7 +473,7 @@ class SearchService extends BaseService
             }
 
             // Filter by update status
-            if ($request->has('update_status') && ! isset($request->su_code)) {
+            if ($isSendUpdateFilter && $request->has('update_status') && ! isset($request->su_code)) {
                 $formattedUpdateStatuses = array_map(function ($string) {
                     return strtoupper(str_replace(' ', '_', $string));
                 }, $request->update_status);
@@ -481,7 +481,7 @@ class SearchService extends BaseService
             }
 
             // Filter by send update type
-            if ($request->has('send_update_type') && ! isset($request->su_code)) {
+            if ($isSendUpdateFilter && $request->has('send_update_type') && ! isset($request->su_code)) {
                 $query->whereIn('send_update_logs.category_id', $request->send_update_type);
             }
         } catch (\Exception $e) {
