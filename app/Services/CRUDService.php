@@ -413,10 +413,17 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
+        // For unit test since concact does not work in sqllite
+        $driver = DB::connection()->getDriverName();
+
+        $nameExpression = $driver === 'sqlite'
+            ? "users.name || ' - ' || r.name"
+            : "CONCAT(users.name,' - ',r.name)";
+
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->select('users.id', DB::raw("$nameExpression AS name"))
             ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
