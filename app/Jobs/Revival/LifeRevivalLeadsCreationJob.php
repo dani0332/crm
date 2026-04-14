@@ -34,6 +34,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
     {
         $lead = PersonalQuote::query()
             ->with('lifeQuote')
+            ->where('is_revived', false)
             ->find($this->personalQuoteId);
 
         if ($lead === null || $lead->lifeQuote === null) {
