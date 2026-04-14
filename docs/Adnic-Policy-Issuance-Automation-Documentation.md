@@ -76,6 +76,8 @@ The ADNIC Policy Issuance Automation follows a modular architecture pattern with
 └─────────────────────────────────────────┘
 ```
 
+**Related**: On **`policy_issuance.status` → TIMEOUT** (ADNIC), `PolicyIssuanceObserver` schedules **`PolicyIssuanceTimeoutRetryJob`** (see [Timeout status and automated retry](#timeout-status-and-automated-retry)).
+
 ---
 
 ## Core Components
@@ -101,10 +103,24 @@ The ADNIC Policy Issuance Automation follows a modular architecture pattern with
 // Check if automation is enabled
 public function isPolicyIssuanceAutomationEnabled(): bool
 
+// Timeout retry: read cooldown (minutes) and max retries from Application Storage
+public function getPolicyIssuanceTimeoutRetryCooldownMinutes(): int
+public function getAllowRetryForTimeout(): int
+
+// When policy issuance moves to TIMEOUT, schedule PolicyIssuanceTimeoutRetryJob (observer-driven)
+public function handleTimeoutStatusUpdate(PolicyIssuance $policyIssuance): void
+
+// Map the *next* step after completed_step to an insurer API failure status (stuck/failed flows)
+public function getInsurerAPIStatusByStep($policyIssuance): ?int
+
+// Manual retry: failed/timeout at document upload with no completed step → reset to PENDING
+public function retryPolicyIssuance($policyIssuance)
+
 // Create automation schedule on payment capture (STP cases only)
 public function createPolicyIssuanceSchedule($quote, $insurer): void
 
-// Execute automation steps sequentially
+// Execute automation steps sequentially; may set `timeout` => true when ADNIC returns
+// "The Policy Conversion is already in Progress" (AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS)
 public function executeSteps($process): array
 
 // Get next step to execute
@@ -212,8 +228,8 @@ public function uploadPolicyDocumentsToIMCRM($quote, $process): array
 **Configuration**:
 
 ```php
-// From constants config
-'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL')
+// From config/constants.php (backed by .env)
+'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL')   // Host/base only — see URL construction below
 'ADNIC_PARTNER_ID' => env('ADNIC_PARTNER_ID')
 'ADNIC_PARTNER_REFERENCE_NO' => env('ADNIC_PARTNER_REFERENCE_NO')
 'ADNIC_AUTHORIZATION_TOKEN' => env('ADNIC_AUTHORIZATION_TOKEN')
@@ -222,6 +238,15 @@ public function uploadPolicyDocumentsToIMCRM($quote, $process): array
 // From ApplicationStorage
 ADNIC_HEALTH_AUTOMATION_API_TIMEOUT
 ```
+
+**Effective API base URL** (built in the client constructor):
+
+`{ADNIC_API_BASE_URL}` + `/MedicalProductAPI/MedicalAPI.svc/API/Medical`
+
+Example: if `ADNIC_API_BASE_URL=https://api.adnic.ae/dev`, requests go to  
+`https://api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical{endpoint}`.
+
+**HTTP resilience**: `post()` uses Laravel’s HTTP client with **up to 5 retries** on connection failures (including timeouts). Retry sleep is 10 seconds between attempts in normal runs (1 ms in unit tests). Failed HTTP status codes (4xx/5xx) are **not** retried; callers inspect the `Response` object.
 
 **Headers**:
 
@@ -332,11 +357,19 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 
 **Document Type Mappings**:
 
-**IMCRM → ADNIC (Upload)**:
+**IMCRM → ADNIC (Upload)** — `AdnicDocumentHandler::getInsurerDocCodeForHealth()` / `getQuoteDocumentTypeCodessToUpload()`:
 
-- `HEA_EID` (Emirates ID) → `3`
-- `HEA_VISA` (Visa) → `6`
-- `HEA_PAS` (Passport) → `1`
+| IMCRM / flow                            | ADNIC document type code | Notes                            |
+| --------------------------------------- | ------------------------ | -------------------------------- |
+| `HEA_EMIRATE_ID_COPY` (aggregated slot) | `3`                      | Emirates ID (single or combined) |
+| `HEA_INSURED_EMIRATES_ID_APPLICATION`   | `2`                      | Insured Emirates ID Application  |
+| `HEA_EID_FRONT`                         | `4`                      | Emirates ID front                |
+| `HEA_EID_BACK`                          | `5`                      | Emirates ID back                 |
+| `HEA_VISA`                              | `6`                      | Visa                             |
+| `HEA_PAS`                               | `1`                      | Passport                         |
+| `HEA_BIRTH_CERTIFICATE`                 | `11`                     | Birth Certificate                |
+| `HEA_MEDICAL_APPLICATION_FORM`          | `18`                     | Medical Application Form         |
+| `HEA_CUSTOMER_DUE_DILIGENCE`            | `17`                     | Customer Due Diligence           |
 
 **ADNIC → IMCRM (Download)**:
 
@@ -393,12 +426,15 @@ public function validateUploadDocuments($quote, $quoteDocuments, $insuredInfoDet
 public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
 ```
 
-**Required Data**:
+**Required Data** (`validateRequiredData`):
 
 - Health UMAF Response
 - Payments
-- Insurer Quote Number
+- Insurer Quote Number (from `insurerGenerateQuoteRequestResponse`)
 - Customer
+
+**Upload step** (`validateUploadDocuments`): all of the following document type codes must be present on the quote at least once:  
+`HEA_MEDICAL_APPLICATION_FORM`, `HEA_CUSTOMER_DUE_DILIGENCE`, `HEA_EMIRATE_ID_COPY`, `HEA_PAS`, `HEA_VISA`, `HEA_BIRTH_CERTIFICATE`.
 
 ---
 
@@ -450,15 +486,19 @@ public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePo
 public function getStepsLockingStatus($quote, $throughAutomation = false): array
 ```
 
-**Locking Logic**:
+**Locking Logic** (when `throughAutomation` is false, the UI uses this for **failed** automation or **incomplete step with empty status**; see `AdnicBookPolicyService` for exact conditions):
 
-| Completed Step     | Policy Details Editable | Booking Details Editable |
-| ------------------ | ----------------------- | ------------------------ |
-| None               | Yes                     | Yes                      |
-| UPLOAD_DOCUMENTS   | Yes                     | Yes                      |
-| ISSUE_POLICY       | Yes                     | Yes                      |
-| UPLOAD_POLICY_DOCS | Yes                     | Yes                      |
-| Through Automation | Yes                     | Yes                      |
+| Scenario                                          | `isEditPolicyDetailsDisabled` | Message (summary)                                          |
+| ------------------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| Through automation (`throughAutomation === true`) | No (editable)                 | All steps editable                                         |
+| No `policyIssuance` record                        | No                            | All steps editable                                         |
+| Failed, no `completed_step`                       | No                            | All steps editable                                         |
+| Failed after `UploadDocuments`                    | No                            | Issue Policy and Update Booking Details are editable       |
+| Failed after `IssuePolicy`                        | No                            | Policy document retrieval and Booking Details are editable |
+| Failed after `UploadPolicyDocumentsToIMCRM`       | No                            | Booking Details is editable                                |
+| Other statuses (e.g. success in progress)         | Yes (locked)                  | All steps are locked (default)                             |
+
+The response also includes `policyIssuance`, `insurer_api_status`, and a human-readable `message`.
 
 ---
 
@@ -555,8 +595,9 @@ sequenceDiagram
 **Process**:
 
 1. Retrieve insured members from `healthInsurerRequestResponse`
-2. Get required document types: Emirates ID, Visa, Passport
-3. For each member:
+2. Required document categories are validated in `AdnicValidationService::validateUploadDocuments()` (must exist on the quote): Medical Application Form, Customer Due Diligence, Emirates ID (`HEA_EMIRATE_ID_COPY` flow), Passport, Visa, Birth Certificate — see [Document type mappings](#document-type-mappings) for insurer codes.
+3. **Emirates ID handling**: UMAF answer `typeOfEID` drives whether documents are treated as physical Emirates ID (front/back split → ADNIC types `4`/`5`), a single Emirates ID upload (`3`), or Emirates ID Application (`2`). See `AdnicDocumentHandler::modifyEmirateDocument()` and `getDocumentByType()`.
+4. For each member:
    - For each required document:
      - Fetch document content from Azure storage (RAW format)
      - Validate MIME type (PDF, JPEG, PNG only)
@@ -564,7 +605,7 @@ sequenceDiagram
      - Build upload payload with member and document info
      - POST to `/UploadDocument` endpoint
      - Store API log
-4. Update `completed_step` to `STEP_UPLOAD_DOCUMENTS`
+5. Update `completed_step` to `STEP_UPLOAD_DOCUMENTS`
 
 **Validation**:
 
@@ -781,6 +822,24 @@ $nextStep = $service->getNextStep($lastCompletedStep);
 
 ---
 
+### Timeout status and automated retry
+
+When a policy issuance record for ADNIC is updated to **`TIMEOUT`**, `PolicyIssuanceObserver` calls `AdnicInsuranceService::handleTimeoutStatusUpdate()` (only when the provider is ADNIC and the dirty field is `status`).
+
+If `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE` is enabled:
+
+1. **`PolicyIssuanceTimeoutRetryJob`** is dispatched to the **`policy-issuance-automation`** queue after **`ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES`** (minimum 0).
+2. The job implements **`ShouldBeUnique`** (unique id per `policy_issuance_id`, lock ~600 seconds) to avoid stacking duplicate retries.
+3. On run, the job verifies the row is still `TIMEOUT`, compares **`retry_count`** to **`ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT`**, and if under the limit updates the row to **`PENDING`** and increments **`retry_count`** so the cron-driven automation can run again.
+
+If retry automation is disabled, max retries are reached, or the status is no longer `TIMEOUT`, the job exits without changing the record.
+
+### “Policy conversion already in progress” (soft timeout signal)
+
+If a step returns a message containing **`The Policy Conversion is already in Progress`** (`AdnicEnum::POLICY_CONVERSION_ALREADY_IN_PROGRESS`), `executeSteps()` adds **`'timeout' => true`** to the response so upstream logic can treat it similarly to a timeout scenario where appropriate.
+
+---
+
 ## API Integration
 
 ### Authentication
@@ -799,7 +858,8 @@ $nextStep = $service->getNextStep($lastCompletedStep);
 **Configuration**:
 
 ```env
-ADNIC_API_BASE_URL=https://api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical
+# Base URL only (Medical API path is appended in AdnicHttpClient — see Core Components → AdnicHttpClient)
+ADNIC_API_BASE_URL=https://api.adnic.ae/dev
 ADNIC_AUTHORIZATION_TOKEN=your_token_here
 ADNIC_SUBSCRIPTION_KEY=your_subscription_key_here
 ADNIC_PARTNER_ID=your_partner_id
@@ -1015,11 +1075,13 @@ finfo_close($finfo);
 
 These settings are managed via `ApplicationStorage` table and can be toggled without code deployment:
 
-| Key                                                 | Purpose                        | Type    |
-| --------------------------------------------------- | ------------------------------ | ------- |
-| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE`               | Master switch for automation   | boolean |
-| `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE` | Enable retry for timeout cases | boolean |
-| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT`               | API timeout in seconds         | integer |
+| Key                                                    | Purpose                                                     | Type    |
+| ------------------------------------------------------ | ----------------------------------------------------------- | ------- |
+| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE`                  | Master switch for automation                                | boolean |
+| `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE`    | Enable delayed retry when status becomes TIMEOUT            | boolean |
+| `ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES` | Minutes to wait before `PolicyIssuanceTimeoutRetryJob` runs | integer |
+| `ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT`            | Max times a timeout can be reset to PENDING via the job     | integer |
+| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT`                  | API timeout in seconds                                      | integer |
 
 **Access Method**:
 
@@ -1037,8 +1099,8 @@ $enabled = app(ApplicationStorageService::class)
 **Required in `.env`**:
 
 ```env
-# ADNIC API Configuration
-ADNIC_API_BASE_URL=https://api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical
+# ADNIC API Configuration (base host/path prefix only; Medical API path is appended in AdnicHttpClient)
+ADNIC_API_BASE_URL=https://api.adnic.ae/dev
 ADNIC_AUTHORIZATION_TOKEN=Bearer_or_Token_here
 ADNIC_SUBSCRIPTION_KEY=subscription_key_here
 ADNIC_PARTNER_ID=partner_id_here
@@ -1166,7 +1228,7 @@ PolicyIssuance::factory()->pending()->create([
 
 ```php
 return [
-    // ADNIC API
+    // ADNIC API — base URL only; AdnicHttpClient appends /MedicalProductAPI/MedicalAPI.svc/API/Medical
     'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL', ''),
     'ADNIC_PARTNER_ID' => env('ADNIC_PARTNER_ID', ''),
     'ADNIC_PARTNER_REFERENCE_NO' => env('ADNIC_PARTNER_REFERENCE_NO', ''),
@@ -1185,27 +1247,44 @@ return [
 
 **Location**: `app/Enums/AdnicEnum.php`
 
+Representative constants (not exhaustive — see source for the full list):
+
 ```php
 class AdnicEnum
 {
-    // Default Contact Information
-    public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae';
-    public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254';
+    // Responsible person `EmailId` / `MobileNo` in AdnicRequestBuilder use the health quote email and mobile (not enum defaults).
 
-    // Step Names
+    // Steps (automation sequence uses the first three; STEP_BOOK_POLICY reserved for UI/booking flows)
     public const STEP_ISSUE_POLICY = 'IssuePolicy';
     public const STEP_UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const STEP_UPLOAD_POLICY_DOCS = 'UploadPolicyDocumentsToIMCRM';
+    public const STEP_BOOK_POLICY = 'BookPolicy';
 
-    // Response Keys
+    // Response keys
     public const RESPONSE_POLICY = 'PolicyResponse';
     public const RESPONSE_UPLOAD_DOCUMENTS = 'UploadDocumentsResponse';
     public const RESPONSE_DOWNLOAD_DOCUMENT = 'DownloadDocumentResponse';
 
-    // Insurer Document Keys
+    // Insurer document keys (issue-policy response)
     public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';
     public const INSURER_DOCUMENT_KEY_COMMISION_NOTE = 'CommisionNoteDocumentId';
     public const INSURER_DOCUMENT_KEY_TAX_INVOICE = 'TaxInvoiceDocumentId';
+
+    // Emirates ID / UMAF (typeOfEID)
+    public const EMIRATES_ID_TEXT = 'Emirates ID';
+    public const EMIRATES_ID_CODE = 3;
+    public const INSURED_EMIRATES_ID_APPLICATION_TEXT = 'EID Application Form';
+    public const INSURED_EMIRATES_ID_APPLICATION_CODE = 2;
+
+    // Policy payload / member defaults (see AdnicRequestBuilder)
+    public const DEFAULT_EMIRATE_OF_YOUR_VISA = 2;
+    public const CUSTOMER_CLASSIFICATION_NATURAL_PERSONS = 1;
+    public const VISA_TYPE_EXISTING_VISA_HOLDER = 2;
+    public const NATIONALITY_ID_EMIRATES_ID = 146;
+    public const OCCUPATION_OTHER = 13;
+    public const SPONSER_CATEGORY_UAE = 2;
+    public const MEMBER_CATEGORY_DUBAI_RESIDENCY = 4;
+    public const DUBAI_RESIDENCY = 110;
 
     // Policy Payload Defaults
     public const LOADING_TYPE = 'PER';
@@ -1213,6 +1292,9 @@ class AdnicEnum
     public const LOADING_AMOUNT = 0;
     public const PAYMENT_TYPE = 5;
     public const NO = 'NO';
+
+    // Soft timeout / concurrency message from ADNIC
+    public const POLICY_CONVERSION_ALREADY_IN_PROGRESS = 'The Policy Conversion is already in Progress';
 }
 ```
 
@@ -1393,17 +1475,22 @@ The testing suite is organized into two main categories and uses **Pest PHP test
 
 **Unit Tests** (`tests/Unit/Services/Adnic/`):
 
+- `AdnicApiServiceTest.php` - Policy issue, upload, and download flows
+- `AdnicBookPolicyServiceTest.php` - UI locking messages and failure states
 - `AdnicDocumentHandlerTest.php` - Document handling and type mappings
-- `AdnicInsuranceServiceTest.php` - Main orchestration service
+- `AdnicHttpClientTest.php` - Base URL construction, headers, retries, POST behavior
+- `AdnicInsuranceServiceTest.php` - Orchestration, steps, `getInsurerAPIStatusByStep`, timeouts
+- `AdnicQuoteUpdaterServiceTest.php` - Quote updates from issue-policy response
+- `AdnicRequestBuilderTest.php` - Payload construction
 - `AdnicResponseHandlerTest.php` - API response parsing
 - `AdnicStepExecutorTest.php` - Step execution logic
-- `AdnicValidationServiceTest.php` - Data validation
+- `AdnicValidationServiceTest.php` - Required data and mandatory documents
 
-**Feature Tests** (`tests/Feature/`):
+**Jobs** (`tests/Unit/Jobs/`):
 
-- `AdnicPolicyIssuanceIntegrationTest.php` - Full integration flow testing
+- `PolicyIssuanceTimeoutRetryJobTest.php` - Timeout → PENDING retry, `retry_count`, max retries, cooldown dispatch
 
-**Note**: All tests have been converted to Pest syntax for better readability and modern PHP testing practices.
+**Note**: Tests use **Pest** syntax. There is no separate `AdnicPolicyIssuanceIntegrationTest` feature file; coverage is through the unit tests above and shared test schema (`tests/Support/Schema`).
 
 ---
 
@@ -1612,59 +1699,9 @@ doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicDocumentHandlerTe
 
 ```php
 test('get insurer doc code for health returns correct codes', function () {
-    expect($this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_EID))->toBe('3')
+    expect($this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_EMIRATE_ID_COPY))->toBe('3')
         ->and($this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_VISA))->toBe('6')
         ->and($this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_PAS))->toBe('1');
-});
-```
-
----
-
-### Feature Tests
-
-#### AdnicPolicyIssuanceIntegrationTest (Pest)
-
-**Tests Full Integration Flow**:
-
-- ✓ Creates policy issuance schedule on payment capture for STP case
-- ✓ Does not create schedule for non-STP case
-- ✓ Does not create duplicate schedules
-- ✓ Returns correct next step sequence
-- ✓ Validation fails when required data missing
-- ✓ Automation is disabled when flag is off
-- ✓ Creates policy issuance logs
-- ✓ Updates policy issuance status on step completion
-- ✓ Split payment service integration initializes ADNIC service
-- ✓ Document upload flow uses correct document types
-- ✓ Document handler returns correct insurer document codes
-- ✓ Document handler sets base64 flag when uploading to IMCRM
-- ✓ Cron job picks pending policy issuances
-- ✓ Can resume from last completed step
-- ✓ Validates complete health quote data
-- ✓ Supports multiple document types for health quotes
-- ✓ Policy issuance service correctly identifies health quote type
-
-**Run Command**:
-
-```bash
-doppler run -- php artisan test tests/Feature/AdnicPolicyIssuanceIntegrationTest.php
-```
-
-**Sample Pest Test**:
-
-```php
-test('policy issuance schedule is created on payment capture for STP case', function () {
-    $quote = Mockery::mock($this->quote)->makePartial();
-    $quote->shouldReceive('isSTPCase')->andReturn(true);
-
-    $service = app(AdnicInsuranceService::class);
-    $service->createPolicyIssuanceSchedule($quote, $this->insurer);
-
-    expect(PolicyIssuance::where([
-        'model_type' => HealthQuote::class,
-        'model_id' => $this->quote->id,
-        'status' => PolicyIssuanceEnum::PENDING_STATUS,
-    ])->exists())->toBeTrue();
 });
 ```
 
@@ -1706,7 +1743,7 @@ doppler run -- php artisan test --filter="creates health quote with all relation
 
 - Unit tests: ~0.5-1 second per test file
 - Feature tests: ~1-2 seconds per test file
-- Total suite: ~5-10 seconds (92 tests)
+- Total suite: ~5-10 seconds (97+ Adnic-related tests; one may be skipped depending on environment)
 - Parallel: ~2-3 seconds total
 
 ---
@@ -1781,6 +1818,8 @@ function mockApplicationStorage(bool $enabled): void
     app()->instance(ApplicationStorageService::class, $mockService);
 }
 ```
+
+When testing **`handleTimeoutStatusUpdate`**, **`PolicyIssuanceTimeoutRetryJob`**, or **`getPolicyIssuanceTimeoutRetryCooldownMinutes` / `getAllowRetryForTimeout`**, also map `ApplicationStorageEnums::ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES` and `ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT` (and keep `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT` for HTTP client tests).
 
 **Helper Functions (Pest)**:
 
@@ -1939,7 +1978,7 @@ public function executeMyNewStep($quote, $process): array
 **5. Write Tests**:
 
 - Unit test in `AdnicStepExecutorTest`
-- Integration test in `AdnicPolicyIssuanceIntegrationTest`
+- Add or extend tests in `tests/Unit/Services/Adnic/` (and job tests in `tests/Unit/Jobs/` when behavior crosses queues)
 
 ---
 
@@ -2030,8 +2069,8 @@ dd($result);
 
 **1. Document Upload Optimization**:
 
-- Documents are uploaded per member, per document type
-- For 3 members with 3 documents each = 9 API calls
+- Documents are uploaded per member, per document type (the set includes visa, passport, Emirates ID flow, birth certificate, medical application form, customer due diligence, etc., per `getQuoteDocumentTypeCodessToUpload()` / validation)
+- Total calls scale with **members × document types** for that quote (often more than the older “three documents only” scenario)
 - Consider implementing batch upload if API supports it
 
 **2. API Timeout Configuration**:
@@ -2178,6 +2217,7 @@ CREATE TABLE policy_issuance (
     quote_type VARCHAR(50),    -- 'health'
     status VARCHAR(50),        -- PENDING, PROCESSING, SUCCESS, FAILED, TIMEOUT
     completed_step VARCHAR(100), -- Last completed step
+    retry_count INT UNSIGNED NULL DEFAULT 0, -- Incremented when PolicyIssuanceTimeoutRetryJob resets TIMEOUT → PENDING
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
@@ -2228,7 +2268,12 @@ CREATE TABLE policy_issuance_logs (
 **Tests**:
 
 - `tests/Unit/Services/Adnic/`
-- `tests/Feature/AdnicPolicyIssuanceIntegrationTest.php`
+- `tests/Unit/Jobs/PolicyIssuanceTimeoutRetryJobTest.php`
+
+**Observers & jobs**:
+
+- `app/Observers/PolicyIssuanceObserver.php` — on ADNIC `TIMEOUT`, calls `AdnicInsuranceService::handleTimeoutStatusUpdate()`
+- `app/Jobs/PolicyIssuanceTimeoutRetryJob.php` — delayed reset to `PENDING` with `retry_count` cap
 
 ---
 
@@ -2261,6 +2306,17 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 
 ## Changelog
 
+### Version 1.3.0 - April 2026
+
+- ✅ **HTTP client**: Base URL built as `ADNIC_API_BASE_URL` + fixed Medical API path; connection retries (5×) on timeouts/connection errors
+- ✅ **Timeout retry**: `PolicyIssuanceObserver` + `PolicyIssuanceTimeoutRetryJob` (`policy-issuance-automation` queue), cooldown and max retries from Application Storage, `retry_count` on `policy_issuance`
+- ✅ **Execute steps**: Response may include `timeout` when ADNIC returns policy conversion already in progress
+- ✅ **Insurer status mapping**: `getInsurerAPIStatusByStep()` maps next step to PIA failure status IDs
+- ✅ **Documents**: Mandatory uploads expanded (medical form, CDD, birth certificate, etc.); Emirates ID front/back/application flows via UMAF `typeOfEID`; extended `getInsurerDocCodeForHealth()` mappings
+- ✅ **UI locking**: `AdnicBookPolicyService` step-based messages for failed / partial automation (replaces “all editable” table for those paths)
+- ✅ **Tests**: Added unit coverage for API, HTTP client, request builder, quote updater, book policy, timeout job; removed obsolete standalone Adnic feature test file reference from docs
+- ✅ **Manual retry**: `retryPolicyIssuance()` for failed/timeout at first step with no `completed_step`
+
 ### Version 1.2.0 - January 2026
 
 - ✅ **SQLite Testing**: Migrated all tests to use SQLite in-memory database
@@ -2288,10 +2344,10 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 
 ---
 
-**Last Updated**: January 5, 2026  
-**Version**: 1.2.0  
+**Last Updated**: April 3, 2026  
+**Version**: 1.3.0  
 **Status**: Production Ready  
 **Testing Framework**: Pest PHP + SQLite  
 **Database**: SQLite in-memory (`:memory:`)  
-**Test Data**: Laravel Factories (10 factories)  
+**Test Data**: Laravel factories + shared test schema  
 **Integration Status**: ✅ Complete

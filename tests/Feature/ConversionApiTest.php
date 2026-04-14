@@ -135,8 +135,8 @@ test('queues listener for different quote types', function () {
         event($event);
     }
 
-    // Verify that listener was queued for each quote type
-    Queue::assertPushed(\Illuminate\Events\CallQueuedListener::class, count($quoteTypes));
+    // One queued listener per event for conversion API; QuotePolicyBooked also queues other listeners (e.g. Alfred Coins).
+    expect(Queue::listenersPushed(TriggerConversionApis::class))->toHaveCount(count($quoteTypes));
 });
 
 test('queues listener with correct event structure for real example data', function () {
