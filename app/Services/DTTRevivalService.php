@@ -15,7 +15,7 @@ class DTTRevivalService
             'quote_type_id' => $quoteTypeId,
             'quote_id' => $revivalQuoteId,
             'uuid' => $revivalQuoteUUID,
-            'revival_quote_batch_id' => $quoteBatch->id,
+            'revival_quote_batch_id' => $quoteBatch?->id ?? null,
             'previous_quote_id' => $previousQuoteId,
             'email_sent' => true,
         ]);
