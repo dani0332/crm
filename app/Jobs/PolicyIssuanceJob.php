@@ -213,6 +213,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        LoggerService::info('Insurance provider found for process', [
+            'process_id' => $this->process?->id,
+            'quote_code' => $this->process?->model?->code,
+            'insurance_provider_code' => $insuranceProvider?->code,
+        ]);
+
         $automation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
         if (! $automation) {
@@ -221,6 +227,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'quote_code' => $quoteCode,
                 'provider' => $insuranceProvider->text,
                 'quote_type' => $quoteType,
+                'automation' => json_encode($automation),
             ]);
 
             $this->process->update([

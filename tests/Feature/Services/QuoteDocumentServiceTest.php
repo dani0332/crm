@@ -7,6 +7,8 @@ use App\Enums\CarVehicleUse;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -403,5 +405,39 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
         );
 
         expect($documents->count())->toBe(0);
+    });
+});
+
+describe('getDocumentUrl', function () {
+    test('returns null when Azure existence check fails after retries without throwing', function () {
+        $path = 'documents/car/transient.pdf';
+        $storageDisk = Mockery::mock();
+        $storageDisk->shouldReceive('exists')
+            ->times(3)
+            ->andThrow(UnableToCheckExistence::forLocation(
+                $path,
+                new RuntimeException('cURL error 6: Could not resolve host')
+            ));
+
+        Storage::shouldReceive('disk')
+            ->with('azureIMPrivate')
+            ->times(3)
+            ->andReturn($storageDisk);
+
+        expect($this->service->getDocumentUrl($path))->toBeNull();
+    });
+
+    test('returns temporary URL when file exists', function () {
+        $path = 'documents/car/ok.pdf';
+        $storageDisk = Mockery::mock();
+        $storageDisk->shouldReceive('exists')->once()->andReturn(true);
+        $storageDisk->shouldReceive('temporaryUrl')->once()->andReturn('https://example.com/signed');
+
+        Storage::shouldReceive('disk')
+            ->with('azureIMPrivate')
+            ->twice()
+            ->andReturn($storageDisk);
+
+        expect($this->service->getDocumentUrl($path))->toBe('https://example.com/signed');
     });
 });
