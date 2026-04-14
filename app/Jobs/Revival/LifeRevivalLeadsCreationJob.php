@@ -15,6 +15,7 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 
 class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
@@ -86,15 +87,17 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
         LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$lead->uuid}");
 
-        // Save DTT revival record
-        $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
+        DB::transaction(function () use ($lifeRevivalQuoteUUID, $lead) {
+            // Save DTT revival record
+            $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
 
-        $dttRevivalService = app(DTTRevivalService::class);
-        $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $lead->id, QuoteTypes::LIFE->id());
-        LoggerService::info("DTT Revival record created successfully for quote UUID {$lifeRevivalQuoteUUID} from parent lead {$lead->uuid}");
+            $dttRevivalService = app(DTTRevivalService::class);
+            $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $lead->id, QuoteTypes::LIFE->id());
+            LoggerService::info("DTT Revival record created successfully for quote UUID {$lifeRevivalQuoteUUID} from parent lead {$lead->uuid}");
 
-        // Mark life quote as revived
-        $lead->update(['is_revived' => true]);
-        LoggerService::info("Life quote marked as revived for lead {$lead->uuid}");
+            // Mark life quote as revived
+            $lead->update(['is_revived' => true]);
+            LoggerService::info("Life quote marked as revived for lead {$lead->uuid}");
+        });
     }
 }
