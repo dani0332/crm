@@ -65,7 +65,7 @@ return [
     | Alfred Coins (InsuranceMarket webhook)
     |--------------------------------------------------------------------------
     |
-    | Dispatched when a quote reaches PolicyBooked (see QuotePolicyBooked event).
+    | Dispatched when a quote reaches PolicyBooked ( see QuotePolicyBooked event).
     |
     */
     'alfred_coins' => [
