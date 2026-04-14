@@ -351,7 +351,7 @@ class MACRMService
                 return $voucherCode;
             }
 
-            $validFrom = now();
+            $validFrom = now()->subDay();
             $validTill = $validFrom->copy()->addDays(7);
 
             $payload = [
