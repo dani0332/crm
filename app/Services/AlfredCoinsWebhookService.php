@@ -58,6 +58,7 @@ class AlfredCoinsWebhookService
         LoggerService::info('AlfredCoinsWebhookService - Sending InsuranceMarket webhook', [
             'payload' => $payload,
         ], [
+            'webhookUrl' => $url,
             'quoteUID' => $quoteUID,
             'quoteTypeId' => $quoteTypeId,
         ]);

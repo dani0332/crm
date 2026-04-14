@@ -10,6 +10,7 @@ use App\Services\AlfredCoinsWebhookService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Tests\Helpers\TestDataSeeder;
@@ -98,13 +99,17 @@ test('logs full webhook payload before the HTTP request is sent', function () {
         QuoteTypeId::Car
     );
 
+    $rawExtra = Context::getHidden('__extra') ?? Context::get('__extra');
+    $decodedExtra = json_decode((string) $rawExtra, true);
+
     expect($captured)->not->toBeNull()
         ->and($captured->level)->toBe('info')
         ->and($captured->context['webhookUrl'] ?? null)->toBe($webhookUrl)
-        ->and($captured->context['payload']['eventName'] ?? null)->toBe('insurance_purchased')
-        ->and($captured->context['payload']['email'] ?? null)->toBe('logged@example.com')
-        ->and($captured->context['payload']['uniqueId'] ?? null)->toBe($quote->code)
-        ->and((float) ($captured->context['payload']['amount'] ?? 0))->toBe(2500.0);
+        ->and($captured->context)->not->toHaveKey('payload')
+        ->and($decodedExtra['payload']['eventName'] ?? null)->toBe('insurance_purchased')
+        ->and($decodedExtra['payload']['email'] ?? null)->toBe('logged@example.com')
+        ->and($decodedExtra['payload']['uniqueId'] ?? null)->toBe($quote->code)
+        ->and((float) ($decodedExtra['payload']['amount'] ?? 0))->toBe(2500.0);
 });
 
 test('sends insurance_renewed event when lead source is renewal upload and keeps payload source insurancemarket', function () {
