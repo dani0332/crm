@@ -167,6 +167,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
+        $this->seedDttLifeEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -1682,6 +1683,19 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttLifeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_LIFE_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
     }
