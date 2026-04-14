@@ -1537,8 +1537,7 @@ class SplitPaymentService
                 'isFromJob' => $isFromJob ? 'true' : 'false',
                 'modelType' => $modelType,
                 'paymentNotApproved' => $paymentNotApproved ? 'true' : 'false',
-                'insuranceProvider' => $insuranceProvider,
-                'collectionType' => $payment->collection_type,
+                'insuranceProvider' => $insuranceProvider
             ]
         );
 
