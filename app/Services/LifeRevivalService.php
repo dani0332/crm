@@ -20,6 +20,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LifeRevivalService
 {
@@ -245,13 +246,17 @@ class LifeRevivalService
             ->with('lifeQuote')
             ->first();
 
-        if ($quote && $quote->lifeQuote) {
-            $quote->update(['source' => $source]);
-            $quote->lifeQuote->update(['source' => $source]);
+        if (! $quote || ! $quote->lifeQuote) {
+            LoggerService::info("LifeRevivalService - source not updated since lead not found for Quote UUID: {$quoteUuid}");
 
-            LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
+            return;
         }
 
-        LoggerService::info("LifeRevivalService - source not updated since lead not found for Quote UUID: {$quoteUuid}");
+        DB::transaction(function () use ($quote, $source): void {
+            $quote->update(['source' => $source]);
+            $quote->lifeQuote->update(['source' => $source]);
+        });
+
+        LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
     }
 }
