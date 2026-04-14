@@ -1537,17 +1537,30 @@ class SplitPaymentService
                 'isFromJob' => $isFromJob ? 'true' : 'false',
                 'modelType' => $modelType,
                 'paymentNotApproved' => $paymentNotApproved ? 'true' : 'false',
-                'insuranceProvider' => $insuranceProvider
+                'insuranceProvider' => $insuranceProvider,
             ]
         );
 
-        // Check if the job is triggered for Travel or Car quotes
-        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]);
-        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuoteOrHealth: ".($isTravelOrCarQuote ? 'true' : 'false'));
+        // Travel / Car / Health (TCH) — split-payment job gate for these LOBs
+        $travelCarHealthModelTypes = [
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::CAR->value,
+            QuoteTypes::HEALTH->value,
+        ];
+        $isTchQuote = in_array($modelType, $travelCarHealthModelTypes);
+        LoggerService::info(
+            "Split payment Code: {$paymentCode} isTchQuote: ".($isTchQuote ? 'true' : 'false'),
+            ['travelCarHealthModelTypes' => $travelCarHealthModelTypes]
+        );
 
-        // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::ADNIC]);
-        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxaOrRsaOrAdnic: ".($isAlncOrAxa ? 'true' : 'false'));
+        // Split CC job: insurer codes that gate processing with TCH (ALNC, AXA, RSA, ADNIC)
+        $alncAxaRsaAdnicProviderCodes = [
+            InsuranceProvidersEnum::ALNC,
+            InsuranceProvidersEnum::AXA,
+            InsuranceProvidersEnum::RSA,
+            InsuranceProvidersEnum::ADNIC,
+        ];
+        $isAlncAxaRsaAdnicProvider = in_array($insuranceProvider, $alncAxaRsaAdnicProviderCodes);
 
         // check if cyber quote
         $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
@@ -1556,11 +1569,11 @@ class SplitPaymentService
 
         // Only process if payment is not approved and:
         // - not from job, or
-        // - from job AND is Travel/Car/Health AND provider is ALNC/AXA/ADNIC
+        // - from job AND is Travel/Car/Health AND provider is ALNC/AXA/RSA/ADNIC
         // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTravelOrCarQuote && $isAlncOrAxa) ||
+            ($isTchQuote && $isAlncAxaRsaAdnicProvider) ||
             ($isCyberQuote && $isAwni)
         );
 
