@@ -121,9 +121,6 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
 
         fputcsv($stream, [
             'Totals',
-            '',
-            '',
-            '',
             $this->resolveNumberFormat($this->exportSumTotalLeads),
             $this->resolveNumberFormat($this->exportSumSaleLeads),
             $teamAverageCell,
@@ -138,9 +135,6 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
     public function headings(): array
     {
         return [
-            'Batch Number',
-            'Start Date',
-            'End Date',
             'Advisor Name',
             'Total Leads',
             'Sale Leads',
@@ -156,9 +150,6 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
     public function map($record): array
     {
         return [
-            $record->batch_name ?? 'N/A',
-            $record->start_date ?? 'N/A',
-            $record->end_date ?? 'N/A',
             $record->advisor_name ?? 'N/A',
             $this->resolveNumberFormat($record->total_leads ?? 0),
             $this->resolveNumberFormat($record->sale_leads ?? 0),

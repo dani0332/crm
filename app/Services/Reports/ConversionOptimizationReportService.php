@@ -1,20 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\ConversionOptimizationCapPercentageEnum;
-use App\Enums\TeamNameEnum;
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Http\Traits\VehicleTypeTrait;
+use App\Models\CarQuote;
+use App\Models\LeadSource;
+use App\Models\PersonalQuote;
+use App\Models\QuoteBatches;
 use App\Models\Team;
+use App\Models\Tier;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\ApplicationStorageService;
+use App\Services\BaseService;
+use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
+use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ConversionOptimizationReportService extends AdvisorConversionReportService
+class ConversionOptimizationReportService extends BaseService
 {
+    use GetUserTreeTrait;
+    use Reportable;
+    use VehicleTypeTrait;
+
     public function getReportData($request)
     {
         $builder = $this->getReportQueryBuilder($request);
@@ -33,10 +64,6 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         return $this->applyPostQueryCalculations($baseReportData, (array) $request->all())->values()->all();
     }
 
-    /**
-     * Merge default filter values into the request so {@see getReportData()} matches the first client render
-     * when the browser sends no query parameters. Explicit request values override defaults.
-     */
     public function mergeDefaultsIntoRequest(Request $request, array $defaultFilters): Request
     {
         return $request->duplicate(
@@ -45,17 +72,318 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         );
     }
 
+    public function getReportQueryBuilder($request): ?Builder
+    {
+        $lob = $request->lob ?? '';
+
+        if (empty($lob)) {
+            return null;
+        }
+
+        $filters = (object) [
+            'advisorAssignedDates' => $request->advisorAssignedDates,
+            'ecommerceFilter' => $request->is_ecommerce,
+            'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
+            'batchNumberFilter' => $request->batches,
+            'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
+            'teamsFilter' => $request->teams,
+            'advisorsFilter' => $request->advisors,
+            'quoteBatchId' => $request->quote_batch_id,
+            'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
+            'page' => $request->page,
+            'lob' => $lob,
+            'subteams' => $request->sub_teams,
+            'vehicle_type' => $request->vehicle_type,
+            'insurance_type' => $request->insurance_type,
+            'insurance_for' => $request->insurance_for,
+            'travel_coverage' => $request->travel_coverage,
+            'segment_filter' => $request->segment_filter,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
+        ];
+
+        if ($lob === quoteTypeCode::Car) {
+            return $this->applyFiltersForCar($this->buildCarAdvisorAggregateQuery(), $filters);
+        }
+
+        return $this->applyFiltersForPersonal($this->buildPersonalAdvisorAggregateQuery($lob), $filters, $lob);
+    }
+
+    public function mapAdvisorConversionQueryResults(Collection $rows): Collection
+    {
+        return $rows->map(function ($row) {
+            $netDenominator = $row->total_leads - $row->bad_leads;
+            $grossDenominator = $row->total_leads;
+
+            $row->net_conversion = (float) $netDenominator > 0
+                ? round(($row->sale_leads / $netDenominator) * 100, 2)
+                : 0;
+            $row->gross_conversion = (float) $grossDenominator > 0
+                ? round(($row->sale_leads / $grossDenominator) * 100, 2)
+                : 0;
+
+            return $row;
+        });
+    }
+
+    public function getFiltersByLob()
+    {
+        $canView = [
+            quoteTypeCode::Car => ! Auth::user()->hasRole(RolesEnum::CarAdvisor),
+            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
+            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
+            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
+            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
+            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
+            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
+            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
+            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
+            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
+            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
+            quoteTypeCode::CYBER => ! Auth::user()->hasRole(RolesEnum::CyberAdvisor),
+        ];
+
+        return [
+            'advisors' => [
+                'can_view' => $canView,
+            ],
+            'teams' => [
+                'can_view' => $canView,
+                'lobs' => [
+                    quoteTypeCode::Car,
+                    quoteTypeCode::Health,
+                    quoteTypeCode::CORPLINE,
+                    quoteTypeCode::GroupMedical,
+                ],
+            ],
+            'sub_teams' => [
+                'can_view' => $canView,
+                'lobs' => [
+                    quoteTypeCode::Car,
+                    quoteTypeCode::GroupMedical,
+                ],
+            ],
+            'tiers' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                    quoteTypeCode::Bike,
+                ],
+            ],
+            'is_ecommerce' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                    quoteTypeCode::Bike,
+                    quoteTypeCode::Health,
+                    quoteTypeCode::Travel,
+                ],
+            ],
+            'vehicle_type' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                ],
+            ],
+            'isCommercial' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                ],
+            ],
+            'isEmbeddedProducts' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
+                ],
+            ],
+            'insurance_type' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
+                    quoteTypeCode::Life,
+                    quoteTypeCode::CORPLINE,
+                ],
+            ],
+            'insurance_for' => [
+                'lobs' => [
+                    quoteTypeCode::Health,
+                    quoteTypeCode::Home,
+                ],
+            ],
+            'travel_coverage' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
+                ],
+            ],
+            'segment_filter' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                    quoteTypeCode::Health,
+                    quoteTypeCode::Travel,
+                    quoteTypeCode::Life,
+                ],
+            ],
+        ];
+    }
+
+    public function getLobByPermissions()
+    {
+        $lobs = [
+            quoteTypeCode::Car => PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            quoteTypeCode::Bike => PermissionsEnum::BIKE_CONVERSION_REPORT,
+            quoteTypeCode::Health => PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            quoteTypeCode::Travel => PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            quoteTypeCode::Pet => PermissionsEnum::PET_CONVERSION_REPORT,
+            quoteTypeCode::Cycle => PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
+            quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
+            quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
+            quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            quoteTypeCode::CYBER => PermissionsEnum::CYBER_CONVERSION_REPORT,
+        ];
+
+        $lobs = array_filter($lobs, function ($permission, $lob) {
+            return Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob);
+        }, ARRAY_FILTER_USE_BOTH);
+
+        $lobs = QuoteTypeRepository::GetList()
+            ->filter(function ($lob) use ($lobs) {
+                return array_key_exists($lob->code, $lobs);
+            })
+            ->pluck('code', 'text')
+            ->toArray();
+
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::CORPLINE) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
+            $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
+        }
+
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::GroupMedical) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
+            $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
+        }
+
+        return $lobs;
+    }
+
     public function getFilterOptions()
     {
-        return array_merge(parent::getFilterOptions(), [
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $advisors = [];
+        $teams = [];
+
+        $batches = QuoteBatches::query()
+            ->select('name', 'start_date', 'end_date', 'id')
+            ->orderBy('id')
+            ->get()
+            ->keyBy('id')
+            ->map(function ($batch) {
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                $startDate = Carbon::parse($batch->start_date)->format($dateFormat);
+                $endDate = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                return $batch->name.'-('.$startDate.' to '.$endDate.')';
+            })
+            ->toArray();
+
+        $tiers = Tier::query()
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($tier) => $tier->name)
+            ->toArray();
+
+        $leadSources = LeadSource::query()
+            ->select('name')
+            ->where('is_active', 1)
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($leadSource) => $leadSource->name)
+            ->toArray();
+
+        $lobs = $this->getLobByPermissions();
+        $dropdownSourceService = new DropdownSourceService;
+
+        $insuranceFor = [
+            quoteTypeCode::Health => $dropdownSourceService->getDropdownSource('cover_for_id'),
+            quoteTypeCode::Home => $dropdownSourceService->getDropdownSource('iam_possesion_type_id'),
+        ];
+
+        $travelCoverage = [
+            quoteTypeCode::Travel => [
+                TravelQuoteEnum::TRAVEL_UAE_INBOUND => [
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
+                ],
+                TravelQuoteEnum::TRAVEL_UAE_OUTBOUND => [
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
+                ],
+            ],
+        ];
+
+        $lifeInsuranceType = $dropdownSourceService->getDropdownSource('tenure_of_insurance_id')
+            ->map(function ($type) {
+                return ['value' => $type['id'], 'label' => $type['text']];
+            })
+            ->toArray();
+
+        $businessInsuranceType = $dropdownSourceService->getDropdownSource('business_type_of_insurance_id')
+            ->filter(function ($type) {
+                return $type['text'] != quoteBusinessTypeCode::groupMedical;
+            })
+            ->map(function ($type) {
+                return ['value' => $type['id'], 'label' => $type['text']];
+            })
+            ->values()
+            ->toArray();
+
+        $insuranceType = [
+            quoteTypeCode::Travel => [
+                ['value' => TravelQuoteEnum::TRAVEL_UAE_INBOUND, 'label' => 'To the UAE (Inbound)'],
+                ['value' => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
+            ],
+            quoteTypeCode::Life => $lifeInsuranceType,
+            quoteTypeCode::CORPLINE => $businessInsuranceType,
+        ];
+
+        $vehicleCategories = $this->getVehicleTypes()
+            ->pluck('text')
+            ->map(function ($category) {
+                return ['value' => ucwords($category), 'label' => ucwords(strtolower($category))];
+            })
+            ->toArray();
+
+        return [
+            'lob' => $lobs,
+            'maxDays' => $maxDays,
+            'batches' => $batches,
+            'tiers' => $tiers,
+            'leadSources' => $leadSources,
+            'advisors' => $advisors,
+            'teams' => $teams,
+            'insurance_for' => $insuranceFor,
+            'travel_coverage' => $travelCoverage,
+            'insurance_type' => $insuranceType,
+            'vehicle_type' => [
+                quoteTypeCode::Car => $vehicleCategories,
+            ],
             'capPercentages' => ConversionOptimizationCapPercentageEnum::withLabels(),
-        ]);
+        ];
     }
 
     public function getDefaultFilters()
     {
-        $defaultFilters = parent::getDefaultFilters();
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $defaultFilters = [
+            'lob' => quoteTypeCode::Car,
+            'advisorAssignedDates' => [
+                now()->startOfDay()->format($dateFormat),
+                now()->endOfDay()->format($dateFormat),
+            ],
+            'isCommercial' => 'All',
+            'isEmbeddedProducts' => false,
+        ];
 
         $organicTeamId = Team::query()
             ->where('name', TeamNameEnum::ORGANIC)
@@ -72,7 +400,6 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
             ->all();
 
         return array_merge($defaultFilters, [
-            'lob' => quoteTypeCode::Car,
             'advisorAssignedDates' => [
                 now()->subWeeks(8)->startOfDay()->format($dateFormat),
                 now()->endOfDay()->format($dateFormat),
@@ -83,10 +410,155 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         ]);
     }
 
+    public function applyFiltersForCar(Builder $query, object $filters): Builder
+    {
+        [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters);
+
+        $query->filterByAdvisors($filters->advisorsFilter)
+            ->filterByBatches($filters->quoteBatchId)
+            ->filterByBatches($filters->batchNumberFilter)
+            ->filterByTeams($filters->teamsFilter)
+            ->filterBySubTeams($filters->subteams)
+            ->filterByTiers($filters->tiersFilter)
+            ->filterBySegment()
+            ->when($freshLoad || isset($filters->advisorAssignedDates), function ($builder) use ($startDate, $endDate) {
+                $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+            })
+            ->when(isset($filters->ecommerceFilter) && $filters->ecommerceFilter !== 'All', function ($builder) use ($filters) {
+                $builder->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter === 'Yes');
+            })
+            ->when(isset($filters->isCommercial) && $filters->isCommercial !== 'All', function ($builder) use ($filters) {
+                $isCommercial = $filters->isCommercial === 'true';
+                $builder->where('car_model.is_commercial', $isCommercial);
+            })
+            ->when(! empty($filters->vehicle_type) && $filters->vehicle_type !== 'All', function ($builder) use ($filters) {
+                $builder->join('vehicle_type', function ($join) use ($filters) {
+                    $join->on('vehicle_type.id', 'car_quote_request.vehicle_type_id')
+                        ->where('vehicle_type.category', $filters->vehicle_type);
+                });
+            })
+            ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter === 'yes', function ($builder) {
+                $builder->whereNotIn('car_quote_request.source', $this->getExcludedSources());
+            })
+            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($builder) use ($filters) {
+                $builder->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+            }, function ($builder) {
+                $builder->whereNotIn('car_quote_request.source', [
+                    LeadSourceEnum::RENEWAL_UPLOAD,
+                    LeadSourceEnum::SAPGO,
+                    LeadSourceEnum::SAPJO,
+                ]);
+            })
+            ->when(! empty($filters->registration_type) && $filters->registration_type !== 'All', function ($builder) use ($filters) {
+                $builder->where('car_quote_request.registration_type', $filters->registration_type);
+            })
+            ->when(
+                ! empty($filters->vehicle_use)
+                    && $filters->vehicle_use !== 'All'
+                    && $filters->registration_type === CarRegistrationType::COMPANY,
+                function ($builder) use ($filters) {
+                    $builder->where('car_quote_request.vehicle_use', $filters->vehicle_use);
+                }
+            );
+
+        return $query;
+    }
+
+    public function applyFiltersForPersonal(Builder $query, object $filters, string $lob): Builder
+    {
+        [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters);
+
+        $query->filterByAdvisors($filters->advisorsFilter)
+            ->filterByBatches($filters->quoteBatchId)
+            ->filterByBatches($filters->batchNumberFilter)
+            ->filterByTeams($filters->teamsFilter)
+            ->filterBySubTeams($filters->subteams)
+            ->when($lob === quoteTypeCode::Travel, function ($builder) {
+                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            })
+            ->when($lob === quoteTypeCode::Health, function ($builder) {
+                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
+            })
+            ->when($lob === quoteTypeCode::Car, function ($builder) {
+                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            })
+            ->when($lob === quoteTypeCode::Life, function ($builder) {
+                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Life);
+            })
+            ->when($freshLoad || isset($filters->advisorAssignedDates), function ($builder) use ($startDate, $endDate) {
+                $builder->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);
+            })
+            ->when(isset($filters->ecommerceFilter) && $filters->ecommerceFilter !== 'All', function ($builder) use ($filters) {
+                $builder->where('personal_quotes.is_ecommerce', $filters->ecommerceFilter === 'Yes');
+            })
+            ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter === 'yes', function ($builder) {
+                $builder->whereNotIn('personal_quotes.source', $this->getExcludedSources());
+            })
+            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($builder) use ($filters) {
+                $builder->whereIn('personal_quotes.source', $filters->leadSourceFilter);
+            }, function ($builder) {
+                $builder->whereNotIn('personal_quotes.source', [
+                    LeadSourceEnum::RENEWAL_UPLOAD,
+                    LeadSourceEnum::SAPGO,
+                    LeadSourceEnum::SAPJO,
+                ]);
+            })
+            ->when($lob === quoteTypeCode::Health, function ($builder) use ($filters) {
+                $builder->when(! empty($filters->insurance_for), function ($query) use ($filters) {
+                    $query->join('health_quote_request', function ($join) use ($filters) {
+                        $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('health_quote_request.cover_for_id', $filters->insurance_for);
+                    });
+                });
+            })
+            ->when($lob === quoteTypeCode::Home, function ($builder) use ($filters) {
+                $builder->when(! empty($filters->insurance_for), function ($query) use ($filters) {
+                    $query->join('home_quote_request', function ($join) use ($filters) {
+                        $join->on('home_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
+                    });
+                });
+            })
+            ->when($lob === quoteTypeCode::Life, function ($builder) use ($filters) {
+                $builder->when(! empty($filters->insurance_type), function ($query) use ($filters) {
+                    $query->join('life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid')
+                        ->where('life_quote_request.tenure_of_insurance_id', $filters->insurance_type);
+                });
+            })
+            ->when($lob === quoteTypeCode::CORPLINE, function ($builder) use ($filters) {
+                $builder->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid')
+                    ->when(! empty($filters->insurance_type), function ($query) use ($filters) {
+                        $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
+                    }, function ($query) {
+                        $query->where(
+                            'business_quote_request.business_type_of_insurance_id',
+                            '!=',
+                            quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+                        );
+                    });
+            })
+            ->when($lob === quoteTypeCode::GroupMedical, function ($builder) {
+                $builder->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid')
+                    ->where(
+                        'business_quote_request.business_type_of_insurance_id',
+                        quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+                    );
+            });
+
+        $this->applyTravelFilters($query, $filters, $lob);
+
+        return $query;
+    }
+
     public function applyPostQueryCalculations(Collection $reportRows, array $filters): Collection
     {
         $advisorMetadata = $this->getAdvisorMetadata(
-            $reportRows->pluck('advisorId')->filter()->map(fn ($advisorId) => (int) $advisorId)->unique()->values()->all(),
+            $reportRows->pluck('advisorId')
+                ->filter()
+                ->map(fn ($advisorId) => (int) $advisorId)
+                ->unique()
+                ->values()
+                ->all(),
             $filters['lob'] ?? null
         );
 
@@ -118,9 +590,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         // $cohorts = $normalizedRows->groupBy(fn ($row) => $this->resolveCohortKey($row, $filters));
         //
         // foreach ($cohorts as $cohortRows) {
-        $cohortRows = $normalizedRows;
-
-        $rankedRows = $cohortRows
+        $rankedRows = $normalizedRows
             ->sort(function ($leftRow, $rightRow) {
                 $conversionComparison = $rightRow->conversion <=> $leftRow->conversion;
 
@@ -134,7 +604,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
                     return $advisorNameComparison;
                 }
 
-                return ((int) ($leftRow->quote_batch_id ?? 0)) <=> ((int) ($rightRow->quote_batch_id ?? 0));
+                return ((int) ($leftRow->advisorId ?? 0)) <=> ((int) ($rightRow->advisorId ?? 0));
             })
             ->values();
 
@@ -145,9 +615,15 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
             $row->team_average = $teamAverage;
 
             if ((float) $row->conversion < $teamAverage && (float) $row->total_leads > 0) {
-                $row->expected_sales = round(((float) $row->total_leads * $teamAverage) / 100, 2);
-                $row->required_sales = round($row->expected_sales - (float) $row->sale_leads, 2);
-                $row->new_conversion = round(($row->expected_sales / (float) $row->total_leads) * 100, 2);
+                $row->expected_sales = $this->roundWithPointOneFractionBias(
+                    ((float) $row->total_leads * $teamAverage) / 100
+                );
+                $row->required_sales = $this->roundWithPointOneFractionBias(
+                    (float) $row->expected_sales - (float) $row->sale_leads
+                );
+                $row->new_conversion = $this->roundWithPointOneFractionBias(
+                    ($row->expected_sales / (float) $row->total_leads) * 100
+                );
             }
         }
 
@@ -203,6 +679,187 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
             ->whereIn('users.id', $advisorIds)
             ->get()
             ->keyBy('id');
+    }
+
+    private function buildCarAdvisorAggregateQuery(): Builder
+    {
+        $query = CarQuote::query()
+            ->select(
+                'users.id as advisorId',
+                'users.name as advisor_name',
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->where('users.is_active', true)
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('users.email');
+
+        $this->restrictAdvisorsToViewerTree($query, 'car_quote_request.advisor_id', quoteTypeCode::Car);
+        $this->addSelect($query, 'car_quote_request', quoteTypeCode::Car);
+
+        return $query;
+    }
+
+    private function buildPersonalAdvisorAggregateQuery(string $lob): Builder
+    {
+        $normalizedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE], true)
+            ? quoteTypeCode::Business
+            : $lob;
+        $lobId = QuoteTypeRepository::where('code', $normalizedLob)->value('id');
+
+        $query = PersonalQuote::query()
+            ->select(
+                'users.id as advisorId',
+                'users.name as advisor_name',
+            )
+            ->join('users', 'users.id', 'personal_quotes.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
+            ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
+            ->where('users.is_active', true)
+            ->when($lobId !== null, function ($builder) use ($lobId) {
+                $builder->where('personal_quotes.quote_type_id', $lobId);
+            }, function ($builder) {
+                $builder->whereRaw('1 = 0');
+            })
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('users.email');
+
+        $this->restrictAdvisorsToViewerTree($query, 'personal_quotes.advisor_id', $lob);
+        $this->addSelect($query, 'personal_quotes', $lob);
+
+        return $query;
+    }
+
+    private function restrictAdvisorsToViewerTree(Builder $query, string $advisorColumn, string $lob): void
+    {
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+            || auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
+        ) {
+            return;
+        }
+
+        $userIds = $this->walkTree(auth()->user()->id, $lob);
+
+        if (auth()->user()->isManagerORDeputy()) {
+            $userIds = UserManager::where('manager_id', auth()->user()->id)
+                ->get()
+                ->filter(function ($user) use ($userIds) {
+                    return in_array($user->user_id, $userIds, true);
+                })
+                ->pluck('user_id')
+                ->toArray();
+
+            if ($lob === quoteTypeCode::Health) {
+                $userIds = $this->getUsers($userIds);
+            }
+        }
+
+        $query->whereIn($advisorColumn, $userIds);
+    }
+
+    private function getUsers(array $userIds): array
+    {
+        return User::whereIn('id', $userIds)
+            ->where('department_id', auth()->user()->department_id)
+            ->pluck('id')
+            ->toArray();
+    }
+
+    private function getAdvisorConversionQuoteStatusDate(): Carbon
+    {
+        return cache()->remember('advisor_conversion_quote_status_date', now()->addHour(), function () {
+            return Carbon::parse(getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE));
+        });
+    }
+
+    private function getApprovedStatuses(): array
+    {
+        return [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+        ];
+    }
+
+    private function getSaleStatuses(): array
+    {
+        return [
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ];
+    }
+
+    private function getBindings(string $table): array
+    {
+        $excludedSources = implode(',', array_map(fn ($source) => "'$source'", $this->getExcludedSources()));
+
+        return [
+            ':table' => $table,
+            ':excludedSources' => $excludedSources,
+            ':quoteStatusDate' => $this->getAdvisorConversionQuoteStatusDate(),
+            ':saleStatuses' => implode(',', $this->getSaleStatuses()),
+            ':approvedStatuses' => implode(',', $this->getApprovedStatuses()),
+            ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
+            ':paidStatuses' => implode(',', $this->getPaidStatuses()),
+        ];
+    }
+
+    private function addSelect(Builder $query, string $table, string $lob): void
+    {
+        $bindings = $this->getBindings($table);
+
+        $buildCaseSum = function (string $condition, string $alias) use ($bindings) {
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
+        };
+
+        $getSaleLeadsQuery = function (string $sourceCondition, string $alias) use ($bindings) {
+            $condition = "(
+                ((:table.payment_status_id IN (:paidStatuses) OR :table.quote_status_id IN (:approvedStatuses)) AND :table.transaction_approved_at IS NULL) OR
+                (:table.quote_status_id IN (:approvedStatuses) AND :table.transaction_approved_at < \":quoteStatusDate\") OR
+                (:table.quote_status_id IN (:saleStatuses) AND :table.transaction_approved_at >= \":quoteStatusDate\")
+            ) AND :table.source {$sourceCondition} (:excludedSources)";
+
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
+        };
+
+        $query->addSelect(
+            $buildCaseSum(':table.source NOT IN (:excludedSources)', 'total_leads'),
+            $buildCaseSum(':table.quote_status_id IN (:badLeadsStatuses) AND :table.source NOT IN (:excludedSources)', 'bad_leads'),
+            $getSaleLeadsQuery('NOT IN', 'sale_leads'),
+        );
+    }
+
+    private function applyTravelFilters(Builder $query, object $filters, string $lob): void
+    {
+        $query->when($lob === quoteTypeCode::Travel, function ($builder) use ($filters) {
+            $isTravelQuote = (! empty($filters->insurance_type) && $filters->insurance_type !== '')
+                || (! empty($filters->travel_coverage) && $filters->travel_coverage !== '');
+
+            $builder->when($isTravelQuote, function ($query) {
+                $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
+            })
+                ->when(! empty($filters->insurance_type) && $filters->insurance_type !== '', function ($query) use ($filters) {
+                    $query->where('travel_quote_request.direction_code', $filters->insurance_type);
+                })
+                ->when(! empty($filters->travel_coverage) && $filters->travel_coverage !== '', function ($query) use ($filters) {
+                    $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
+                })
+                ->when(isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts === 'false', function ($query) use ($isTravelQuote) {
+                    $sourceColumn = $isTravelQuote ? 'travel_quote_request.source' : 'personal_quotes.source';
+                    $query->where($sourceColumn, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                });
+        });
     }
 
     private function resolveLeadAllocationQuoteTypeId(?string $lob): ?int
@@ -278,7 +935,7 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
         $worstRankedRow = $cappedRows->last();
 
         foreach ($cappedRows as $row) {
-            if ($worstRankedRow !== null && (int) $row->advisorId === (int) $worstRankedRow->advisorId && (int) $row->quote_batch_id === (int) $worstRankedRow->quote_batch_id) {
+            if ($worstRankedRow !== null && (int) $row->advisorId === (int) $worstRankedRow->advisorId) {
                 $row->cap_limit = 0;
 
                 continue;
@@ -290,18 +947,24 @@ class ConversionOptimizationReportService extends AdvisorConversionReportService
                 continue;
             }
 
-            $row->cap_limit = $this->roundReducedCapLimit(((int) $row->original_max_capacity * $capPercentage) / 100);
+            $row->cap_limit = $this->roundWithPointOneFractionBias(
+                ((int) $row->original_max_capacity * $capPercentage) / 100
+            );
         }
     }
 
-    private function roundReducedCapLimit(float $reducedCapLimit): int
+    /**
+     * Whole number: if the fractional part is ~0.1, floor; otherwise ceil.
+     * Used for cap limits, expected/required sales, and new conversion %.
+     */
+    private function roundWithPointOneFractionBias(float $value): int
     {
-        $decimalPart = $reducedCapLimit - floor($reducedCapLimit);
+        $decimalPart = $value - floor($value);
 
         if (abs($decimalPart - 0.1) < 0.00001) {
-            return (int) floor($reducedCapLimit);
+            return (int) floor($value);
         }
 
-        return (int) ceil($reducedCapLimit);
+        return (int) ceil($value);
     }
 }

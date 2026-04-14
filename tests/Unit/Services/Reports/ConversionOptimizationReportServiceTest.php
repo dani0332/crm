@@ -2,8 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Services\BaseService;
 use App\Services\Reports\ConversionOptimizationReportService;
 use Illuminate\Support\Collection;
+
+test('it is decoupled from advisor conversion inheritance', function (): void {
+    $parentClass = (new ReflectionClass(ConversionOptimizationReportService::class))
+        ->getParentClass()
+        ?->getName();
+
+    expect($parentClass)->toBe(BaseService::class);
+});
 
 test('it applies ranking averages projections and cap limits to a selected cohort', function () {
     $service = new class(collect(range(1, 10))->mapWithKeys(function (int $advisorId) {
@@ -37,10 +46,6 @@ test('it applies ranking averages projections and cap limits to a selected cohor
         return (object) [
             'advisorId' => $advisorId,
             'advisor_name' => "Advisor {$advisorId}",
-            'quote_batch_id' => 1,
-            'batch_name' => 'Batch 1',
-            'start_date' => '01-01-2026',
-            'end_date' => '07-01-2026',
             'total_leads' => 100,
             'sale_leads' => $conversion,
             'bad_leads' => 0,
@@ -58,9 +63,9 @@ test('it applies ranking averages projections and cap limits to a selected cohor
         ->and($result[1]->team_average)->toBe(55.0)
         ->and($result[1]->expected_sales)->toBeNull()
         ->and($result[6]->ranking)->toBe(6)
-        ->and($result[6]->expected_sales)->toBe(55.0)
-        ->and($result[6]->required_sales)->toBe(5.0)
-        ->and($result[6]->new_conversion)->toBe(55.0)
+        ->and($result[6]->expected_sales)->toBe(55)
+        ->and($result[6]->required_sales)->toBe(5)
+        ->and($result[6]->new_conversion)->toBe(55)
         ->and($result[9]->cap_limit)->toBe(7)
         ->and($result[10]->cap_limit)->toBe(0)
         ->and($result[1]->total_average)->toBe(55.0)
@@ -109,10 +114,6 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
         (object) [
             'advisorId' => 1,
             'advisor_name' => 'Advisor 1',
-            'quote_batch_id' => 1,
-            'batch_name' => 'Batch 1',
-            'start_date' => '01-01-2026',
-            'end_date' => '07-01-2026',
             'total_leads' => 100,
             'sale_leads' => 50,
             'bad_leads' => 0,
@@ -121,10 +122,6 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
         (object) [
             'advisorId' => 2,
             'advisor_name' => 'Advisor 2',
-            'quote_batch_id' => 1,
-            'batch_name' => 'Batch 1',
-            'start_date' => '01-01-2026',
-            'end_date' => '07-01-2026',
             'total_leads' => 100,
             'sale_leads' => 30,
             'bad_leads' => 0,
@@ -133,10 +130,6 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
         (object) [
             'advisorId' => 3,
             'advisor_name' => 'Advisor 3',
-            'quote_batch_id' => 1,
-            'batch_name' => 'Batch 1',
-            'start_date' => '01-01-2026',
-            'end_date' => '07-01-2026',
             'total_leads' => 100,
             'sale_leads' => 10,
             'bad_leads' => 0,
@@ -154,9 +147,9 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
         ->and($result[2]->expected_sales)->toBeNull()
         ->and($result[3]->ranking)->toBe(3)
         ->and($result[3]->team_average)->toBe(30.0)
-        ->and($result[3]->expected_sales)->toBe(30.0)
-        ->and($result[3]->required_sales)->toBe(20.0)
-        ->and($result[3]->new_conversion)->toBe(30.0)
+        ->and($result[3]->expected_sales)->toBe(30)
+        ->and($result[3]->required_sales)->toBe(20)
+        ->and($result[3]->new_conversion)->toBe(30)
         ->and($result[1]->total_average)->toBe(30.0)
         ->and($result[3]->total_average)->toBe(30.0);
 });

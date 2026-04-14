@@ -62,9 +62,6 @@ const updateRowsPerPageSelect = e => {
 };
 
 const tableHeader = [
-  { text: 'Batch Number', value: 'batch_name' },
-  { text: 'Start Date', value: 'start_date' },
-  { text: 'End Date', value: 'end_date' },
   { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Total Leads', value: 'total_leads', sortable: true },
   { text: 'Sale Leads', value: 'sale_leads', sortable: true },
@@ -1089,9 +1086,6 @@ onMounted(async () => {
           class="total-row"
         >
           <td class="direction-left">Total</td>
-          <td></td>
-          <td></td>
-          <td></td>
           <td class="direction-center">{{ calculateTotalSum('total_leads') }}</td>
           <td class="direction-center">{{ calculateTotalSum('sale_leads') }}</td>
           <td class="direction-center">
