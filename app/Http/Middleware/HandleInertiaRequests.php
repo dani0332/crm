@@ -465,8 +465,7 @@ class HandleInertiaRequests extends Middleware
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::LifeQuotesList)
-                        || auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST)
+                    (auth()->user()->hasAnyPermission(PermissionsEnum::LifeQuotesList, PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST, PermissionsEnum::VIEW_ALL_LEADS)
                         || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
