@@ -67,10 +67,17 @@ class AllocationCreationService
     {
         $filteredLeads = collect();
         // Group leads with wither email or monile_no same
-        $grouped = $leads->groupBy(function ($lead) {
-            return $lead->email ?: $lead->mobile_no;
-        });
+        $grouped = $leads
+            ->filter(function ($lead) {
+                return ! empty($lead->email) || ! empty($lead->mobile_no);
+            })
+            ->groupBy(function ($lead) {
+                return ! empty($lead->email)
+                    ? $lead->email
+                    : $lead->mobile_no;
+            });
 
+        // Apply filters as per business logic
         foreach ($grouped as $group) {
             // Case 1: If single lead in group, just add
             if ($group->count() == 1) {
