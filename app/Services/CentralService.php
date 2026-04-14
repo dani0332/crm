@@ -2168,12 +2168,12 @@ class CentralService extends BaseService
     {
         $quote->refresh();
 
-        $payments = $quote->payments()->get();
-        if ($payments->count() !== 1) {
+        $mainLeadPaymentsQuery = $quote->payments()->mainLeadPayment();
+        if ($mainLeadPaymentsQuery->count() !== 1) {
             return;
         }
 
-        $payment = $payments->first();
+        $payment = $mainLeadPaymentsQuery->first();
         $oldCode = (string) ($payment->code ?? '');
         $newCode = $quote->code;
         $expectedChildCode = $newCode.'-1';
