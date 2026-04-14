@@ -239,7 +239,10 @@ class LifeRevivalService
 
     public function updateSource(string $quoteUuid): void
     {
-        $quote = PersonalQuote::where('uuid', $quoteUuid)->with('lifeQuote')->first();
+        $quote = PersonalQuote::where('uuid', $quoteUuid)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->with('lifeQuote')
+            ->first();
 
         if ($quote && $quote->lifeQuote) {
             $quote->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
