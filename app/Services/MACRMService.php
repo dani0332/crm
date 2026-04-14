@@ -372,6 +372,11 @@ class MACRMService
                 'ctaLink' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
             ];
 
+            LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote createVoucher request', [
+                'quote_uuid' => $quoteUuid,
+                'request_payload' => $payload,
+            ]);
+
             $result = self::createVoucher($payload);
             if (! ($result['ok'] ?? false)) {
                 LoggerService::warning(self::class.'::generateMotorRevivalVoucherForQuote createVoucher did not succeed.', [
