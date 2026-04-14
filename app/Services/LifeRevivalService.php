@@ -237,7 +237,7 @@ class LifeRevivalService
         ];
     }
 
-    public function updateSource(string $quoteUuid): void
+    public function updateSource(string $quoteUuid, string $source): void
     {
         $quote = PersonalQuote::where('uuid', $quoteUuid)
             ->where('quote_type_id', QuoteTypeId::Life)
@@ -246,8 +246,8 @@ class LifeRevivalService
             ->first();
 
         if ($quote && $quote->lifeQuote) {
-            $quote->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            $quote->lifeQuote->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            $quote->update(['source' => $source]);
+            $quote->lifeQuote->update(['source' => $source]);
 
             LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
         }

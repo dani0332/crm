@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
@@ -639,7 +640,7 @@ class ApiController extends Controller
                 // Update lead resource to 'Revived_replied'
                 $quoteType = QuoteTypes::getName($request->quote_type_id);
                 match ($quoteType) {
-                    QuoteTypes::LIFE => app(LifeRevivalService::class)->updateSource($request->quote_uuid),
+                    QuoteTypes::LIFE => app(LifeRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     default => null,
                 };
 
