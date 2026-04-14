@@ -58,6 +58,7 @@ use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\OutboundEmailsHookService;
@@ -635,6 +636,13 @@ class ApiController extends Controller
             );
 
             if ($result->success) {
+                // Update lead resource to 'Revived_replied'
+                $quoteType = QuoteTypes::getName($request->quote_type_id);
+                match ($quoteType) {
+                    QuoteTypes::LIFE => app(LifeRevivalService::class)->updateSource($request->quote_uuid),
+                    default => null,
+                };
+
                 return response()->json([
                     'success' => true,
                     'message' => $result->message,

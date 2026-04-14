@@ -15,6 +15,7 @@ use App\Models\LifeInsuranceTenure;
 use App\Models\LifePurposeOfInsurance;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -234,5 +235,19 @@ class LifeRevivalService
             'insurerAmlStatuses' => $insurerAmlStatuses,
             'currencies' => CurrencyType::query()->withActive()->select(['id', 'text'])->get(),
         ];
+    }
+
+    public function updateSource(string $quoteUuid): void
+    {
+        $quote = PersonalQuote::where('uuid', $quoteUuid)->with('lifeQuote')->first();
+
+        if ($quote && $quote->lifeQuote) {
+            $quote->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            $quote->lifeQuote->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+
+            LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
+        }
+
+        LoggerService::info("LifeRevivalService - source not updated since lead not found for Quote UUID: {$quoteUuid}");
     }
 }
