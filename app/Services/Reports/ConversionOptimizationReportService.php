@@ -748,7 +748,7 @@ class ConversionOptimizationReportService extends BaseService
             $userIds = UserManager::where('manager_id', auth()->user()->id)
                 ->get()
                 ->filter(function ($user) use ($userIds) {
-                    return in_array($user->user_id, $userIds, true);
+                    return in_array($user->user_id, $userIds);
                 })
                 ->pluck('user_id')
                 ->toArray();
