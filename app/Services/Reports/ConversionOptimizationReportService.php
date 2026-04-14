@@ -377,10 +377,6 @@ class ConversionOptimizationReportService extends BaseService
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
         $defaultFilters = [
             'lob' => quoteTypeCode::Car,
-            'advisorAssignedDates' => [
-                now()->startOfDay()->format($dateFormat),
-                now()->endOfDay()->format($dateFormat),
-            ],
             'isCommercial' => 'All',
             'isEmbeddedProducts' => false,
         ];
@@ -473,17 +469,17 @@ class ConversionOptimizationReportService extends BaseService
             ->filterByBatches($filters->batchNumberFilter)
             ->filterByTeams($filters->teamsFilter)
             ->filterBySubTeams($filters->subteams)
-            ->when($lob === quoteTypeCode::Travel, function ($builder) {
-                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            ->when($lob === quoteTypeCode::Travel, function ($builder) use ($filters) {
+                $builder->filterBySegment($filters->segment_filter, QuoteTypeId::Travel);
             })
-            ->when($lob === quoteTypeCode::Health, function ($builder) {
-                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
+            ->when($lob === quoteTypeCode::Health, function ($builder) use ($filters) {
+                $builder->filterBySegment($filters->segment_filter, QuoteTypeId::Health);
             })
-            ->when($lob === quoteTypeCode::Car, function ($builder) {
-                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            ->when($lob === quoteTypeCode::Car, function ($builder) use ($filters) {
+                $builder->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             })
-            ->when($lob === quoteTypeCode::Life, function ($builder) {
-                $builder->filterBySegment(request()->segment_filter, QuoteTypeId::Life);
+            ->when($lob === quoteTypeCode::Life, function ($builder) use ($filters) {
+                $builder->filterBySegment($filters->segment_filter, QuoteTypeId::Life);
             })
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($builder) use ($startDate, $endDate) {
                 $builder->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);
