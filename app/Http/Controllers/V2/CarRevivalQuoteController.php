@@ -21,6 +21,7 @@ use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CarQuoteService;
+use App\Services\CommunicationEventLogService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -141,6 +142,8 @@ class CarRevivalQuoteController extends Controller
             $record->engagement_level_display = $engagementLabel === '' ? null : $engagementLabel;
         }
 
+        $communicationEventLogs = app(CommunicationEventLogService::class)->getLogsForQuoteUuid($record->uuid);
+
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,
             'quoteTypeId' => $quoteTypeId,
@@ -170,6 +173,7 @@ class CarRevivalQuoteController extends Controller
             'paymentStatusEnum' => $paymentStatusEnum,
             'paymentTooltipEnum' => $paymentTooltipEnum,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'communicationEventLogs' => $communicationEventLogs,
         ]);
     }
 
