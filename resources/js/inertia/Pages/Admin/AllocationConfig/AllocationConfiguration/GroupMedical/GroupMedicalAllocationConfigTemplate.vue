@@ -166,7 +166,6 @@ const initializeData = async () => {
 const validateBracket = (bracket, bracketIndex, type, regionLabel) => {
   const errors = [];
 
-
   if (!bracket.employees_min || bracket.employees_min <= 0) {
     errors.push(
       `[${regionLabel}] ${type} Bracket ${bracketIndex + 1}: Minimum number of employees is required and must be greater than 0`,
