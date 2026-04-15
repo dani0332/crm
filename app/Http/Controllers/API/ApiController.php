@@ -850,9 +850,6 @@ class ApiController extends Controller
     {
         $this->emailStatusService->logEpEmailStatuses($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Email statuses logged successfully',
-        ], Response::HTTP_OK);
+        return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
     }
 }

@@ -237,15 +237,12 @@ class EmailStatusService extends BaseService
 
     private function statusForDatabaseFromPostmarkRecordType(string $recordType): string
     {
-        /** @var ProcessStatusCode|string $status */
-        $status = match ($recordType) {
+        return (string) match ($recordType) {
             'Delivery' => ProcessStatusCode::SENT,
             'Bounce', 'SpamComplaint' => ProcessStatusCode::FAILED,
             'SubscriptionChange' => ProcessStatusCode::UNSUBSCRIBED,
             default => ProcessStatusCode::IN_PROGRESS,
         };
-
-        return $status instanceof ProcessStatusCode ? $status->value : (string) $status;
     }
 
     private function normalizedEmailStatusReason(mixed $reason): ?string

@@ -57,7 +57,11 @@ test('postmark delivery updates email_status by MessageID', function () {
         'RecordType' => 'Delivery',
         'MessageID' => $messageId,
         'Recipient' => 'cust@example.com',
-    ])->assertOk()->assertJson(['success' => true]);
+    ])->assertOk()->assertJson([
+        'data' => null,
+        'message' => 'Email statuses logged successfully',
+        'status' => 200,
+    ]);
 
     $row = DB::connection('sqlite')->table('email_status')->where('msg_id', $messageId)->first();
     expect($row->email_status)->toBe(ProcessStatusCode::SENT);
