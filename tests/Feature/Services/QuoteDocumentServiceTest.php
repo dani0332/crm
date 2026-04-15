@@ -416,7 +416,7 @@ describe('getDocumentUrl', function () {
             ->times(3)
             ->andThrow(UnableToCheckExistence::forLocation(
                 $path,
-                new \RuntimeException('cURL error 6: Could not resolve host')
+                new RuntimeException('cURL error 6: Could not resolve host')
             ));
 
         Storage::shouldReceive('disk')

@@ -330,7 +330,7 @@ class QuoteDocumentService extends BaseService
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
                 'document_category' => $data['document_category'] ?? null,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => auth()->id() ?? null,
             ]);
 
             // update the Bor log reference with uploaded document time and status

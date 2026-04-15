@@ -212,9 +212,10 @@ trait Carable
 
     private function getRulesForVehicleUse($lead)
     {
-        LoggerService::info(self::class."- Applying company use rules for lead with Ref-ID: {$lead->uuid} and source: {$lead->source}");
+        LoggerService::info(self::class." - Lead is {$lead->vehicle_use} use, applying company use rules for lead with Ref-ID: {$lead->uuid} ");
 
         return $this->getCompanyUsageRules($lead, RuleEnum::COMPANY_USE->value);
+
     }
 
     private function getCompanyUsageRules($lead, $ruleName = null)

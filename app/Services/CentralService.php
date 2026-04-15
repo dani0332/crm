@@ -2010,7 +2010,15 @@ class CentralService extends BaseService
         if ($quote?->businessTypeOfInsurance) {
             $lobName = $quote?->businessTypeOfInsurance?->text;
         }
-        $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+
+        $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
+
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        if ($isTravel) {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+        } else {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+        }
 
         $messageData = [
             'customerName' => "{$quote->first_name} {$quote->last_name}",
@@ -2021,10 +2029,15 @@ class CentralService extends BaseService
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
         ];
+
+        if ($isTravel) {
+            $messageData['maskedEmail'] = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
+        }
+        LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
-        $workFlowEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL)->first();
+        $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
         if ($workFlowEvent) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent, $messageData);
             LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
 
             return $response->status_code;
@@ -2220,9 +2233,10 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $isHealthAndSTPCase = $quoteTypeId == QuoteTypeId::Health && $quote->isSTPCase();
 
-        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase)) {
             $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
             $statusAPIFailed = 'Quote Referred To Insurer UW';
 
@@ -2244,7 +2258,7 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
-        if ($premiumCheckEnabled) {
+        if ($premiumCheckEnabled && ! $isHealthAndSTPCase) {
             $captureAmount = $payment->total_amount;
             if (
                 $quoteType->code == QuoteTypes::CAR->value &&
