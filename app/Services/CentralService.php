@@ -431,6 +431,7 @@ class CentralService extends BaseService
         }
 
         $data->vat = $vatAmount;
+        $data->premium = $data->price_with_vat;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
@@ -2009,7 +2010,14 @@ class CentralService extends BaseService
         if ($quote?->businessTypeOfInsurance) {
             $lobName = $quote?->businessTypeOfInsurance?->text;
         }
-        $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+
+        $isTravel = $quoteTypeId == QuoteTypeId::Travel;
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        if ($isTravel) {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+        } else {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+        }
 
         $messageData = [
             'customerName' => "{$quote->first_name} {$quote->last_name}",
@@ -2020,10 +2028,15 @@ class CentralService extends BaseService
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
         ];
+
+        if ($isTravel) {
+            $messageData['maskedEmail'] = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
+        }
+        LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
-        $workFlowEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL)->first();
+        $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
         if ($workFlowEvent) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent, $messageData);
             LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
 
             return $response->status_code;
