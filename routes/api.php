@@ -114,7 +114,6 @@ Route::post('/email-status/update-customer-replied', [ApiController::class, 'upd
 Route::prefix('v1')->group(function () {
     Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
 
-
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
     Route::post('quotes/car/update-quote-status', [CarQuoteController::class, 'updateQuoteStatus']);
