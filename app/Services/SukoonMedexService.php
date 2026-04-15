@@ -199,26 +199,23 @@ class SukoonMedexService
 
                 $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
 
-                // make sure email required watermarked documents is not missing
-                if (empty($missingReqWatermarkedDocTypes)) {
-                    $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
-                        $initialPolicyStatusBeforeDocumentsSync,
-                        EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
-                    );
-                    $isNowReadyForSage = $this->policyStatus === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+                $hasAllWatermarkedDocs = empty($missingReqWatermarkedDocTypes);
+                $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+                    $initialPolicyStatusBeforeDocumentsSync,
+                    EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                );
+                $isNowReadyForSage = $this->policyStatus === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
 
-                    if (! $hasAlreadySentDocument && $isNowReadyForSage) {
-                        $this->sendDocuments();
-
-                    } else {
-                        LoggerService::info("{$this->logPrefix} Skipping sendDocuments", extra: [
-                            'hasAlreadySentDocument' => $hasAlreadySentDocument,
-                            'isNowReadyForSage' => $isNowReadyForSage,
-                            'initialPolicyStatusBeforeDocumentsSync' => $initialPolicyStatusBeforeDocumentsSync,
-                        ]);
-                    }
-                } else {
+                if (! $hasAllWatermarkedDocs) {
                     LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
+                } elseif (! $hasAlreadySentDocument && $isNowReadyForSage) {
+                    $this->sendDocuments();
+                } else {
+                    LoggerService::info("{$this->logPrefix} Skipping sendDocuments", extra: [
+                        'hasAlreadySentDocument' => $hasAlreadySentDocument,
+                        'isNowReadyForSage' => $isNowReadyForSage,
+                        'initialPolicyStatusBeforeDocumentsSync' => $initialPolicyStatusBeforeDocumentsSync,
+                    ]);
                 }
             }
 
