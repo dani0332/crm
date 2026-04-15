@@ -71,6 +71,7 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'CheckRole' => \App\Http\Middleware\CheckRole::class,
         'basicAuth' => \App\Http\Middleware\BasicAuth::class,
+        'apiAuth' => \App\Http\Middleware\APIAuth::class,
         'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
         'check_lead_report_access' => \App\Http\Middleware\CheckReportPermission::class,
         'claims_module_enabled' => \App\Http\Middleware\ClaimsModuleEnabled::class,
