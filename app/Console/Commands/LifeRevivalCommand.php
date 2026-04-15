@@ -16,7 +16,7 @@ class LifeRevivalCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'LifeRevival';
+    protected $signature = 'DttLife';
 
     private $logPrefix = 'LifeRevivalCommand - ';
 
@@ -68,6 +68,7 @@ class LifeRevivalCommand extends Command
             LifeRevivalLeadsCreationJob::dispatch($lead->id);
             // Give some time before dispatching the next job (like car dtt revival job)
             sleep(10);
+            return;
         }
         LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
