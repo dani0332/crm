@@ -19,8 +19,8 @@ class APIAuth
         $has_supplied_credentials = ! (empty($request->getUser()) && empty($request->getPassword()));
         $is_not_authenticated = (
             ! $has_supplied_credentials ||
-            $request->getUser() != $AUTH_USER ||
-            $request->getPassword() != $AUTH_PASS
+            $request->getUser() !== $AUTH_USER ||
+            $request->getPassword() !== $AUTH_PASS
         );
         if ($is_not_authenticated) {
             return response()->json(['Authorization Required'], 401);
