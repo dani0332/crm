@@ -2011,7 +2011,8 @@ class CentralService extends BaseService
             $lobName = $quote?->businessTypeOfInsurance?->text;
         }
 
-        $isTravel = $quoteTypeId == QuoteTypeId::Travel;
+        $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
+
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
         if ($isTravel) {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
