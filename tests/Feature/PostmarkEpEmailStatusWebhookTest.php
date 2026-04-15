@@ -53,7 +53,7 @@ test('postmark delivery updates email_status by MessageID', function () {
         'updated_at' => now(),
     ]);
 
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Delivery',
         'MessageID' => $messageId,
         'Recipient' => 'cust@example.com',
@@ -81,7 +81,7 @@ test('postmark bounce sets failed and reason', function () {
         'updated_at' => now(),
     ]);
 
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Bounce',
         'MessageID' => $messageId,
         'Email' => 'bad@example.com',
@@ -96,7 +96,7 @@ test('postmark bounce sets failed and reason', function () {
 test('postmark creates row from Metadata when no msg_id match', function () {
     $messageId = 'c1111111-b222-c333-d444-e55555555555';
 
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Delivery',
         'MessageID' => $messageId,
         'Recipient' => 'new@example.com',
@@ -133,7 +133,7 @@ test('postmark open does not change stored status', function () {
         'updated_at' => now(),
     ]);
 
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Open',
         'MessageID' => $messageId,
         'Recipient' => 'o@example.com',
@@ -146,7 +146,7 @@ test('postmark open does not change stored status', function () {
 test('postmark delivery without row or metadata does not insert', function () {
     $messageId = 'e1111111-b222-c333-d444-e55555555555';
 
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Delivery',
         'MessageID' => $messageId,
         'Recipient' => 'orphan@example.com',
@@ -156,7 +156,7 @@ test('postmark delivery without row or metadata does not insert', function () {
 });
 
 test('validation fails without MessageID', function () {
-    $this->postJson('/api/log-ep-email-statuses', [
+    $this->postJson('/api/v1/log-ep-email-statuses', [
         'RecordType' => 'Delivery',
     ])->assertStatus(422);
 });

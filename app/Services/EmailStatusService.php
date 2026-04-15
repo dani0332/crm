@@ -199,19 +199,44 @@ class EmailStatusService extends BaseService
     {
         $messageId = (string) $validated['MessageID'];
         $recordType = (string) $validated['RecordType'];
-        $email = $validated['Recipient'] ?? $validated['Email'] ?? null;
-        $reason = $validated['Description'] ?? $validated['Details'] ?? null;
-        $metadata = $validated['Metadata'] ?? [];
 
-        if (in_array($recordType, ['Open', 'Click'], true)) {
-            LoggerService::info(self::class.' - logEpEmailStatuses: skipping record type', [
-                'record_type' => $recordType,
-                'message_id' => $messageId,
-            ]);
-
+        if ($this->shouldSkipPostmarkEngagementWebhook($recordType, $messageId)) {
             return;
         }
 
+        $statusForDb = $this->statusForDatabaseFromPostmarkRecordType($recordType);
+        $reason = $validated['Description'] ?? $validated['Details'] ?? null;
+
+        if ($this->tryUpdateEmailStatusForPostmarkMessage($messageId, $statusForDb, $reason, $recordType)) {
+            return;
+        }
+
+        if ($this->tryCreateEmailStatusFromPostmarkMetadata($validated, $messageId, $recordType, $statusForDb)) {
+            return;
+        }
+
+        LoggerService::warning(self::class.' - logEpEmailStatuses: no row and no usable Metadata', [
+            'message_id' => $messageId,
+            'record_type' => $recordType,
+        ]);
+    }
+
+    private function shouldSkipPostmarkEngagementWebhook(string $recordType, string $messageId): bool
+    {
+        if (! in_array($recordType, ['Open', 'Click'], true)) {
+            return false;
+        }
+
+        LoggerService::info(self::class.' - logEpEmailStatuses: skipping record type', [
+            'record_type' => $recordType,
+            'message_id' => $messageId,
+        ]);
+
+        return true;
+    }
+
+    private function statusForDatabaseFromPostmarkRecordType(string $recordType): string
+    {
         /** @var ProcessStatusCode|string $status */
         $status = match ($recordType) {
             'Delivery' => ProcessStatusCode::SENT,
@@ -220,57 +245,106 @@ class EmailStatusService extends BaseService
             default => ProcessStatusCode::IN_PROGRESS,
         };
 
-        $statusForDb = $status instanceof ProcessStatusCode ? $status->value : (string) $status;
+        return $status instanceof ProcessStatusCode ? $status->value : (string) $status;
+    }
 
-        $row = EmailStatus::query()->where('msg_id', $messageId)->orderByDesc('id')->first();
-
-        if ($row) {
-            $row->email_status = $statusForDb;
-            if (! empty($reason)) {
-                $row->reason = is_string($reason) ? $reason : (string) $reason;
-            }
-            $row->save();
-            Cache::forget("email_statuses_{$row->quote_type_id}_{$row->quote_id}");
-
-            LoggerService::info(self::class.' - logEpEmailStatuses: updated', [
-                'record_type' => $recordType,
-                'message_id' => $messageId,
-                'email_status' => $statusForDb,
-            ]);
-
-            return;
+    private function normalizedEmailStatusReason(mixed $reason): ?string
+    {
+        if (empty($reason)) {
+            return null;
         }
 
+        return is_string($reason) ? $reason : (string) $reason;
+    }
+
+    private function tryUpdateEmailStatusForPostmarkMessage(
+        string $messageId,
+        string $statusForDb,
+        mixed $reason,
+        string $recordType,
+    ): bool {
+        $row = EmailStatus::query()->where('msg_id', $messageId)->orderByDesc('id')->first();
+
+        if (! $row) {
+            return false;
+        }
+
+        $row->email_status = $statusForDb;
+        $reasonForDb = $this->normalizedEmailStatusReason($reason);
+        if ($reasonForDb !== null) {
+            $row->reason = $reasonForDb;
+        }
+        $row->save();
+        Cache::forget("email_statuses_{$row->quote_type_id}_{$row->quote_id}");
+
+        LoggerService::info(self::class.' - logEpEmailStatuses: updated', [
+            'record_type' => $recordType,
+            'message_id' => $messageId,
+            'email_status' => $statusForDb,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     * @return array{quote_id: int, quote_type_id: int}|null
+     */
+    private function quoteContextFromPostmarkMetadata(array $metadata): ?array
+    {
         $quoteId = isset($metadata['quote_id']) ? (int) $metadata['quote_id'] : null;
         $quoteTypeId = isset($metadata['quote_type_id']) ? (int) $metadata['quote_type_id'] : null;
 
-        if ($quoteId !== null && $quoteId !== 0 && $quoteTypeId !== null && $quoteTypeId !== 0) {
-            $newRow = new EmailStatus;
-            $newRow->quote_id = $quoteId;
-            $newRow->quote_type_id = $quoteTypeId;
-            $newRow->email_address = is_string($email) ? $email : null;
-            $newRow->msg_id = $messageId;
-            $newRow->email_status = $statusForDb;
-            $newRow->email_subject = (string) ($metadata['subject'] ?? $validated['Subject'] ?? '');
-            if (! empty($reason)) {
-                $newRow->reason = is_string($reason) ? $reason : (string) $reason;
-            }
-            $newRow->save();
-            Cache::forget("email_statuses_{$quoteTypeId}_{$quoteId}");
-
-            LoggerService::info(self::class.' - logEpEmailStatuses: created from Metadata', [
-                'record_type' => $recordType,
-                'message_id' => $messageId,
-                'quote_id' => $quoteId,
-                'quote_type_id' => $quoteTypeId,
-            ]);
-
-            return;
+        if ($quoteId === null || $quoteId === 0 || $quoteTypeId === null || $quoteTypeId === 0) {
+            return null;
         }
 
-        LoggerService::warning(self::class.' - logEpEmailStatuses: no row and no usable Metadata', [
-            'message_id' => $messageId,
+        return [
+            'quote_id' => $quoteId,
+            'quote_type_id' => $quoteTypeId,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function tryCreateEmailStatusFromPostmarkMetadata(
+        array $validated,
+        string $messageId,
+        string $recordType,
+        string $statusForDb,
+    ): bool {
+        $metadata = $validated['Metadata'] ?? [];
+        $context = $this->quoteContextFromPostmarkMetadata($metadata);
+
+        if ($context === null) {
+            return false;
+        }
+
+        $email = $validated['Recipient'] ?? $validated['Email'] ?? null;
+        $reason = $validated['Description'] ?? $validated['Details'] ?? null;
+
+        $newRow = new EmailStatus;
+        $newRow->quote_id = $context['quote_id'];
+        $newRow->quote_type_id = $context['quote_type_id'];
+        $newRow->email_address = is_string($email) ? $email : null;
+        $newRow->msg_id = $messageId;
+        $newRow->email_status = $statusForDb;
+        $newRow->email_subject = (string) ($metadata['subject'] ?? $validated['Subject'] ?? '');
+        $reasonForDb = $this->normalizedEmailStatusReason($reason);
+        if ($reasonForDb !== null) {
+            $newRow->reason = $reasonForDb;
+        }
+        $newRow->save();
+        Cache::forget("email_statuses_{$context['quote_type_id']}_{$context['quote_id']}");
+
+        LoggerService::info(self::class.' - logEpEmailStatuses: created from Metadata', [
             'record_type' => $recordType,
+            'message_id' => $messageId,
+            'quote_id' => $context['quote_id'],
+            'quote_type_id' => $context['quote_type_id'],
         ]);
+
+        return true;
     }
 }
