@@ -326,7 +326,6 @@ const toggleModule = () => {
               </div>
 
               <div class="border-b pb-4">
-                
                 <x-select
                   v-model="bracket.departmentIds"
                   :options="departmentOptions"
