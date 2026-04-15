@@ -8,7 +8,6 @@ use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
 
 class LifeRevivalCommand extends Command
 {
@@ -48,32 +47,28 @@ class LifeRevivalCommand extends Command
     private function processRevivalLeads($revivalLeads)
     {
         // Filter out the leads with null height or weight
-        $jobs = $revivalLeads->filter(fn ($lead) => $lead->lifeQuote->height != null && $lead->lifeQuote->weight != null)
+        $leads = $revivalLeads->filter(fn ($lead) => $lead->lifeQuote->height != null && $lead->lifeQuote->weight != null)
             ->values()
-            ->map(function ($lead, $index) {
-                return (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds(30 + ($index * 30)));
-            })
             ->all();
 
-        // Execute jobs in batch
-        if ($jobs != null && count($jobs)) {
-            LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($jobs));
-            $this->executeJobsInBatch($jobs);
+        if ($leads != null && count($leads)) {
+            LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($leads));
+            $this->executeJobs($leads);
         } else {
             LoggerService::info("{$this->logPrefix} No Life Revival Leads Jobs Found");
         }
     }
 
-    private function executeJobsInBatch($jobs)
+    private function executeJobs(array $leads)
     {
         $logPrefix = $this->logPrefix;
 
-        Bus::batch($jobs)
-            ->then(fn () => LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed"))
-            ->catch(fn () => LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed"))
-            ->finally(fn () => LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished"))
-            ->allowFailures()
-            ->name('Life Revival Leads Jobs')
-            ->dispatch();
+        foreach ($leads as $lead) {
+            LoggerService::info("{$logPrefix} Dispatching Life Revival Lead Job for lead {$lead->uuid}");
+            LifeRevivalLeadsCreationJob::dispatch($lead->id);
+            // Give some time before dispatching the next job (like car dtt revival job)
+            sleep(10);
+        }
+        LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
 }
