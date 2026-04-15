@@ -22,7 +22,7 @@ const props = defineProps({
 
 const HEALTH_PEC_YES = 1;
 const HEALTH_PEC_NO = 2;
-const { isRequired, isEmail, isMobileNo, maxCharacters, minAge } = useRules();
+const { isRequired, isEmail, isNumber, maxCharacters, minAge } = useRules();
 const isEmptyField = ref(false);
 const pecValidationError = ref('');
 const page = usePage();
@@ -282,6 +282,37 @@ const {
   getPolicyHolderCode: () => quoteForm.policy_holder_code,
   getIsCustomerTypeIndividual: () => isCustomerTypeIndividual.value,
   getIncludePolicyholder: () => quoteForm.include_policyholder == 1,
+});
+
+const converageInfo = computed(() => {
+  let info = '';
+  if(isSelf_Me.value) {
+    info = `Only the customer * The customer
+    <br />
+    The customer will get health insurance coverage just for themselves. As the policyholder, they will manage and pay for the policy.`;
+  } else if(isSelf_Other.value) {
+    info = `Only the customer * Another adult family member
+    <br />
+    The customer will get health insurance coverage just for themselves. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+  } else if(isFamily_Me.value) {
+    info = ` Only the customer's family member(s) * The customer
+    <br />
+    The customer’s family members will get health insurance coverage, but the customer will not be included. As the policyholder, the customer will manage and pay for the policy.`;
+  } else if(isFamily_Other.value) {
+    info = `Only the customer's family member(s) * Another adult family member
+    <br />
+    The customer’s family members will get health insurance coverage, but the customer will not be included. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+  } else if(isSelfAndFamily_Me.value) {
+    info = `The customer and their family member(s) * The customer
+    <br />
+    The customer and their family members will get health insurance coverage together. As the policyholder, the customer will manage and pay for the policy`;
+  } else if(isSelfAndFamily_Other.value) {
+    info = `The customer and their family member(s) * Another adult family member
+    <br />
+    The customer and their family members will get health insurance coverage together. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+  }
+
+  return info;
 });
 
 const emiratiNationalityIds = computed(() => {
@@ -626,9 +657,6 @@ function applyQuoteCategoryFieldChange(field, value) {
 }
 
 function requestQuoteCategoryFieldUpdate(field, newValue) {
-  if (!isCreate.value) {
-    return;
-  }
   if (categoryFieldValuesEqual(quoteForm[field], newValue)) {
     return;
   }
@@ -851,13 +879,11 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   class="w-full"
                   label="SELECT WHO THE HEALTH INSURANCE COVERAGE IS FOR?"
                   required
-                  :disabled="!isCreate"
                   @update:model-value="requestQuoteCategoryFieldUpdate('cover_for_id', $event)"
                 />
 
                 <x-select
                   v-if='isIndividualAndFamilies'
-                  :disabled="!isCreate"
                   :model-value="quoteForm.health_insure_code"
                   :rules="[isRequired]"
                   :options="
@@ -875,7 +901,6 @@ watch(categoryChangeConfirmOpen, isOpen => {
 
                 <x-select
                   v-if='isIndividualAndFamilies'
-                  :disabled="!isCreate"
                   :model-value="quoteForm.policy_holder_code"
                   :rules="[isRequired]"
                   :options="
@@ -890,6 +915,10 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   tooltip="The policyholder is the adult responsible for owning and managing the policy and paying the premium. The policyholder may or may not be an insured member."
                   @update:model-value="requestQuoteCategoryFieldUpdate('policy_holder_code', $event)"
                 /> 
+              </div>
+              <div v-if="isIndividualAndFamilies && converageInfo" class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2">
+                  <b>Please note:</b>
+                  <div v-html="converageInfo"></div>
               </div>
               
             </template>
@@ -1002,9 +1031,9 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     />
                     <x-input
                       v-model="mobileNationalNo"
-                      type="number"
+                      type="text"
                       maxLength="10"
-                      :rules="[isRequired, isMobileNationalPartLength]"
+                      :rules="[isRequired, isNumber, isMobileNationalPartLength]"
                       class="flex-1 min-w-0"
                       :disabled="isEdit"
                       :error="quoteForm.errors.mobile_no"
@@ -1151,7 +1180,6 @@ watch(categoryChangeConfirmOpen, isOpen => {
     </x-form>
 
     <x-modal
-      v-if="isCreate"
       v-model="categoryChangeConfirmOpen"
       size="md"
       title="Change category"
