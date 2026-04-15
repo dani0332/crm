@@ -31,8 +31,8 @@ class LogEpEmailStatusesRequest extends FormRequest
             'Details' => 'nullable|string',
             'Subject' => 'nullable|string',
             'Metadata' => 'nullable|array',
-            'Metadata.quote_id' => 'nullable|string',
-            'Metadata.quote_type_id' => 'nullable|string',
+            'Metadata.quote_id' => 'nullable|integer',
+            'Metadata.quote_type_id' => 'nullable|integer',
             'Metadata.subject' => 'nullable|string',
         ];
     }

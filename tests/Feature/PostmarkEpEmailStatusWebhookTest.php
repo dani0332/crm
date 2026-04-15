@@ -119,6 +119,27 @@ test('postmark creates row from Metadata when no msg_id match', function () {
         ->and($row->email_subject)->toBe('Welcome EP');
 });
 
+test('postmark creates row from Metadata when quote ids are JSON numbers', function () {
+    $messageId = 'f1111111-b222-c333-d444-e55555555555';
+
+    $this->postJson('/api/v1/log-ep-email-statuses', [
+        'RecordType' => 'Delivery',
+        'MessageID' => $messageId,
+        'Recipient' => 'numeric@example.com',
+        'Metadata' => [
+            'quote_id' => 12,
+            'quote_type_id' => QuoteTypeId::Car,
+            'subject' => 'Numeric ids',
+        ],
+    ])->assertOk();
+
+    $row = DB::connection('sqlite')->table('email_status')->where('msg_id', $messageId)->first();
+    expect($row)->not->toBeNull()
+        ->and((int) $row->quote_id)->toBe(12)
+        ->and((int) $row->quote_type_id)->toBe(QuoteTypeId::Car)
+        ->and($row->email_subject)->toBe('Numeric ids');
+});
+
 test('postmark open does not change stored status', function () {
     $messageId = 'd1111111-b222-c333-d444-e55555555555';
 
