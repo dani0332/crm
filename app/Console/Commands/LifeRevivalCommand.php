@@ -69,15 +69,9 @@ class LifeRevivalCommand extends Command
         $logPrefix = $this->logPrefix;
 
         Bus::batch($jobs)
-            ->then(function () use ($logPrefix) {
-                LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed");
-            })
-            ->catch(function () use ($logPrefix) {
-                LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed");
-            })
-            ->finally(function () use ($logPrefix) {
-                LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished");
-            })
+            ->then(fn () => LoggerService::info("{$logPrefix} All Life Revival Leads Jobs Completed"))
+            ->catch(fn () => LoggerService::error("{$logPrefix} Some of the Life Revival Leads Jobs Failed"))
+            ->finally(fn () => LoggerService::info("{$logPrefix} Life Revival Leads Jobs Finished"))
             ->allowFailures()
             ->name('Life Revival Leads Jobs')
             ->dispatch();

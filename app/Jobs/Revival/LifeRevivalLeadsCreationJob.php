@@ -45,7 +45,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             ->find($this->personalQuoteId);
 
         if ($this->lead === null || $this->lead->lifeQuote === null) {
-            LoggerService::error('Life revival job: lead or life quote not found', extra: [
+            LoggerService::info('Life revival job: lead or life quote not found', extra: [
                 'personal_quote_id' => $this->personalQuoteId,
             ]);
 
@@ -80,6 +80,9 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             'whatsappConsent' => 1,
         ];
 
+        LoggerService::info("Creating Life Revival Lead for lead {$this->lead->uuid}", extra: [
+            'payload' => $payload,
+        ]);
         $capiResponse = Capi::request('/api/v2-save-life-quote', 'post', $payload);
 
         if (isset($capiResponse->errors)) {
@@ -96,9 +99,11 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
 
         DB::transaction(function () use ($lifeRevivalQuoteUUID) {
-            // Save DTT revival record
+            // Get the life revival quote
             $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
+            LoggerService::info('Life Revival Quote: '.json_encode($lifeRevivalQuote));
 
+            // Save DTT revival record
             $dttRevivalService = app(DTTRevivalService::class);
             $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $this->lead->id, QuoteTypes::LIFE->id());
             LoggerService::info("DTT Revival record created successfully for quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
