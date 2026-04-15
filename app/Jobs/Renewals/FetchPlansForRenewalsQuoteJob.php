@@ -62,7 +62,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
         return [
             (new WithoutOverlapping($this->renewalQuoteProcess->id))
                 ->dontRelease()
-                ->expireAfter(60),
+                ->expireAfter($this->timeout),
         ];
     }
 
