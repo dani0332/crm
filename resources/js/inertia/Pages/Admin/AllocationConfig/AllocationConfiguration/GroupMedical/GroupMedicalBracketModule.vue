@@ -326,9 +326,7 @@ const toggleModule = () => {
               </div>
 
               <div class="border-b pb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-3">
-                  Departments
-                </h5>
+                
                 <x-select
                   v-model="bracket.departmentIds"
                   :options="departmentOptions"
@@ -338,7 +336,6 @@ const toggleModule = () => {
                   :disabled="viewMode"
                   class="w-full min-h-[40px]"
                   label="Departments"
-                  required
                   @update:model-value="
                     value => handleDepartmentChange(bracketIndex, value)
                   "

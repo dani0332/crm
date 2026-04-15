@@ -32,8 +32,8 @@ const props = defineProps({
 const emit = defineEmits(['data-update', 'request-save']);
 
 const regions = [
-  { key: 'auh', label: 'AUH' },
-  { key: 'non-auh', label: 'Non-AUH' },
+  { key: 'auh', label: 'AUH (Branch)' },
+  { key: 'non-auh', label: 'Non AUH (HQ)' },
 ];
 
 const activeRegion = ref(regions[0].key);
@@ -166,11 +166,6 @@ const initializeData = async () => {
 const validateBracket = (bracket, bracketIndex, type, regionLabel) => {
   const errors = [];
 
-  if (!bracket.departmentIds || bracket.departmentIds.length === 0) {
-    errors.push(
-      `[${regionLabel}] ${type} Bracket ${bracketIndex + 1}: At least one department must be selected`,
-    );
-  }
 
   if (!bracket.employees_min || bracket.employees_min <= 0) {
     errors.push(
@@ -533,21 +528,29 @@ defineExpose({
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white border border-gray-200 rounded-lg p-4 flex gap-2">
-      <button
-        v-for="region in regions"
-        :key="region.key"
-        type="button"
-        class="px-4 py-2 rounded-md text-sm font-medium transition"
-        :class="
-          activeRegion === region.key
-            ? 'bg-orange-500 text-white shadow'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        "
-        @click="activeRegion = region.key"
+    <div class="bg-white border border-gray-200 rounded-lg px-4 sm:px-6">
+      <div
+        class="flex border-b border-gray-200 gap-6 sm:gap-10"
+        role="tablist"
+        aria-label="Allocation region"
       >
-        {{ region.label }}
-      </button>
+        <button
+          v-for="region in regions"
+          :key="region.key"
+          type="button"
+          role="tab"
+          :aria-selected="activeRegion === region.key"
+          class="-mb-px py-3.5 text-sm font-medium border-b-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-t"
+          :class="
+            activeRegion === region.key
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+          "
+          @click="activeRegion = region.key"
+        >
+          {{ region.label }}
+        </button>
+      </div>
     </div>
 
     <div

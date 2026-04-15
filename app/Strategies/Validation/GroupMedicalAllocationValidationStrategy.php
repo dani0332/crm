@@ -179,7 +179,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
         return [
             "{$regionKey}" => ['sometimes', 'array'],
             "{$regionKey}.micro_brackets" => ['sometimes', 'array'],
-            "{$regionKey}.micro_brackets.*.departmentIds" => ['required', 'array', 'min:1'],
+            "{$regionKey}.micro_brackets.*.departmentIds" => ['sometimes','nullable', 'array'],
             "{$regionKey}.micro_brackets.*.departmentIds.*" => ['integer', Rule::exists(Department::class, 'id')],
             "{$regionKey}.micro_brackets.*.employees_min" => ['required_with:'.$regionKey.'.micro_brackets', 'numeric', 'min:1', 'max:99999'],
             "{$regionKey}.micro_brackets.*.employees_max" => ['required_with:'.$regionKey.'.micro_brackets', 'numeric', 'gte:'.$regionKey.'.micro_brackets.*.employees_min', 'max:99999'],
@@ -190,7 +190,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
             "{$regionKey}.micro_brackets.*.profiles.*.planTypeIds.*" => ['integer'],
 
             "{$regionKey}.non_micro_brackets" => ['sometimes', 'array'],
-            "{$regionKey}.non_micro_brackets.*.departmentIds" => ['required', 'array', 'min:1'],
+            "{$regionKey}.non_micro_brackets.*.departmentIds" => ['sometimes','nullable', 'array'],
             "{$regionKey}.non_micro_brackets.*.departmentIds.*" => ['integer', Rule::exists(Department::class, 'id')],
             "{$regionKey}.non_micro_brackets.*.employees_min" => ['required_with:'.$regionKey.'.non_micro_brackets', 'numeric', 'min:1', 'max:99999'],
             "{$regionKey}.non_micro_brackets.*.employees_max" => ['required_with:'.$regionKey.'.non_micro_brackets', 'numeric', 'gte:'.$regionKey.'.non_micro_brackets.*.employees_min', 'max:99999'],
