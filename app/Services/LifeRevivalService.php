@@ -20,7 +20,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class LifeRevivalService
 {
@@ -252,10 +251,8 @@ class LifeRevivalService
             return;
         }
 
-        DB::transaction(function () use ($quote, $source): void {
-            $quote->update(['source' => $source]);
-            $quote->lifeQuote->update(['source' => $source]);
-        });
+        $quote->update(['source' => $source]);
+        $quote->lifeQuote->update(['source' => $source]);
 
         LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
     }
