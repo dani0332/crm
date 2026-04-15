@@ -353,9 +353,9 @@ class ConversionOptimizationScheduledExportService
     {
         $validator = Validator::make($decoded, [
             'to_email' => ['required', 'string', 'email'],
-            'cc_emails' => ['sometimes', 'array'],
+            'cc_emails' => ['sometimes', 'nullable', 'array'],
             'cc_emails.*' => ['required', 'string', 'email'],
-            'filters' => ['sometimes', 'array'],
+            'filters' => ['sometimes', 'nullable', 'array'],
             'batch' => ['required', 'array'],
         ]);
 
