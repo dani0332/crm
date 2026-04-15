@@ -107,12 +107,13 @@ Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook'])
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutboundEmailsHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
-Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 
 Route::prefix('v1')->group(function () {
+    Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
+
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
