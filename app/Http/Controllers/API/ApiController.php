@@ -630,34 +630,43 @@ class ApiController extends Controller
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
         try {
-            DB::transaction(function () use ($request) {
+            $result = DB::transaction(function () use ($request) {
+
                 $emailStatusService = app(EmailStatusService::class);
+
                 $result = $emailStatusService->updateCustomerRepliedStatus(
                     $request->quote_uuid,
                     $request->quote_type_id,
                     $request->email_subject
                 );
 
-                if ($result->success) {
-                    // Update lead resource to 'Revived_replied'
-                    $quoteType = QuoteTypes::getName($request->quote_type_id);
-                    match ($quoteType) {
-                        QuoteTypes::LIFE => app(LifeRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
-                        default => null,
-                    };
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => $result->message,
-                        'data' => $result->data ?? null,
-                    ], Response::HTTP_OK);
+                if (! $result->success) {
+                    return $result;
                 }
 
-                return response()->json([
-                    'success' => false,
-                    'message' => $result->message,
-                ], Response::HTTP_BAD_REQUEST);
+                $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+                match ($quoteType) {
+                    QuoteTypes::LIFE => app(LifeRevivalService::class)
+                        ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    default => null,
+                };
+
+                return $result;
             });
+
+            if ($result->success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result->message,
+                    'data' => $result->data ?? null,
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $result->message,
+            ], 400);
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Error updating customer replied status', [
