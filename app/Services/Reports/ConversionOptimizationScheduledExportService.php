@@ -12,9 +12,15 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Validator as ValidatorInstance;
 
 class ConversionOptimizationScheduledExportService
 {
+    /**
+     * Upper bound for `batch.no_of_weeks` to catch misconfiguration.
+     */
+    private const ROLLING_BATCH_MAX_WEEKS = 104;
 
 
     /**
@@ -216,10 +222,49 @@ class ConversionOptimizationScheduledExportService
     {
         /** @var array<string, mixed> $batch */
         $batch = $decoded['batch'];
-        $start = Carbon::parse(trim((string) $batch['start']))->startOfDay()->toDateString();
-        $end = Carbon::parse(trim((string) $batch['end']))->endOfDay()->toDateString();
 
-        return ['start' => $start, 'end' => $end];
+        if ($this->batchHasExplicitStartAndEnd($batch)) {
+            $start = Carbon::parse(trim((string) $batch['start']))->startOfDay()->toDateString();
+            $end = Carbon::parse(trim((string) $batch['end']))->endOfDay()->toDateString();
+
+            return ['start' => $start, 'end' => $end];
+        }
+
+        $noOfWeeks = (int) $batch['no_of_weeks'];
+
+        return $this->resolveRollingWeeksBatchWindow($noOfWeeks);
+    }
+
+    /**
+     * Rolling window: from ($noOfWeeks × 7 (days is a week) ) calendar days before today through
+     * today (inclusive), in the application timezone.
+     *
+     * @return array{start: string, end: string}
+     */
+    private function resolveRollingWeeksBatchWindow(int $noOfWeeks): array
+    {
+        $timezone = (string) config('app.timezone');
+        $today = Carbon::now($timezone);
+        $daySpan = $noOfWeeks * 7;
+        $start = $today->copy()->subDays($daySpan)->startOfDay();
+
+        return [
+            'start' => $start->toDateString(),
+            'end' => $today->copy()->endOfDay()->toDateString(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $batch
+     */
+    private function batchHasExplicitStartAndEnd(array $batch): bool
+    {
+        foreach (['start', 'end'] as $key) {
+            if (! isset($batch[$key]) || ! is_string($batch[$key]) || trim($batch[$key]) === '') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -277,6 +322,8 @@ class ConversionOptimizationScheduledExportService
             "page": 1
           }
         }
+        Rolling batch alternative (start = today minus no_of_weeks×7 days, end = today; ignored if start+end are set):
+        { "batch": { "no_of_weeks": 8 }, ... }
       */
 
     private function extractMergeableFiltersFromStorage(array $decoded): array
@@ -304,86 +351,98 @@ class ConversionOptimizationScheduledExportService
      */
     private function validateConfig(array $decoded, string $applicationStorageKeyName): bool
     {
-        if (! isset($decoded['to_email']) || ! is_string($decoded['to_email']) || trim($decoded['to_email']) === '') {
-            LoggerService::error('Conversion optimization scheduled export: recipients JSON missing to_email', [
-                'application_storage_key' => $applicationStorageKeyName,
-            ]);
+        $validator = Validator::make($decoded, [
+            'to_email' => ['required', 'string', 'email'],
+            'cc_emails' => ['sometimes', 'array'],
+            'cc_emails.*' => ['required', 'string', 'email'],
+            'filters' => ['sometimes', 'array'],
+            'batch' => ['required', 'array'],
+        ]);
 
-            return false;
-        }
-
-        $toEmail = trim((string) $decoded['to_email']);
-        if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false) {
-            LoggerService::error('Conversion optimization scheduled export: invalid to_email', [
-                'application_storage_key' => $applicationStorageKeyName,
-            ]);
-
-            return false;
-        }
-
-        if (isset($decoded['cc_emails'])) {
-            if (! is_array($decoded['cc_emails'])) {
-                LoggerService::error('Conversion optimization scheduled export: cc_emails must be an array when present', [
-                    'application_storage_key' => $applicationStorageKeyName,
-                ]);
-
-                return false;
+        $validator->after(function (ValidatorInstance $v) use ($decoded): void {
+            if (! isset($decoded['batch']) || ! is_array($decoded['batch'])) {
+                return;
             }
 
-            foreach ($decoded['cc_emails'] as $cc) {
-                if (! is_string($cc) || trim($cc) === '' || filter_var(trim($cc), FILTER_VALIDATE_EMAIL) === false) {
-                    LoggerService::error('Conversion optimization scheduled export: invalid cc_emails entry', [
-                        'application_storage_key' => $applicationStorageKeyName,
-                    ]);
+            /** @var array<string, mixed> $batch */
+            $batch = $decoded['batch'];
 
-                    return false;
+            $hasStart = isset($batch['start']) && is_string($batch['start']) && trim($batch['start']) !== '';
+            $hasEnd = isset($batch['end']) && is_string($batch['end']) && trim($batch['end']) !== '';
+
+            if ($hasStart !== $hasEnd) {
+                $v->errors()->add(
+                    'batch',
+                    'When using an explicit date range, both batch.start and batch.end must be set.'
+                );
+
+                return;
+            }
+
+            if ($hasStart && $hasEnd) {
+                try {
+                    $startAt = Carbon::parse(trim((string) $batch['start']))->startOfDay();
+                    $endAt = Carbon::parse(trim((string) $batch['end']))->startOfDay();
+                } catch (\Throwable) {
+                    $v->errors()->add('batch', 'batch.start and batch.end must be valid dates.');
+
+                    return;
                 }
+
+                if ($endAt->lt($startAt)) {
+                    $v->errors()->add('batch', 'batch.end must be on or after batch.start.');
+                }
+
+                return;
             }
-        }
 
-        if (isset($decoded['filters']) && ! is_array($decoded['filters'])) {
-            LoggerService::error('Conversion optimization scheduled export: filters must be an object/array when present', [
-                'application_storage_key' => $applicationStorageKeyName,
-            ]);
+            if (! array_key_exists('no_of_weeks', $batch)) {
+                $v->errors()->add(
+                    'batch',
+                    'batch.no_of_weeks is required when batch.start and batch.end are omitted.'
+                );
 
-            return false;
-        }
-
-        if (! isset($decoded['batch']) || ! is_array($decoded['batch'])) {
-            LoggerService::error('Conversion optimization scheduled export: batch is required (object with start and end dates)', [
-                'application_storage_key' => $applicationStorageKeyName,
-            ]);
-
-            return false;
-        }
-
-        /** @var array<string, mixed> $batch */
-        $batch = $decoded['batch'];
-        foreach (['start', 'end'] as $batchKey) {
-            if (! isset($batch[$batchKey]) || ! is_string($batch[$batchKey]) || trim($batch[$batchKey]) === '') {
-                LoggerService::error('Conversion optimization scheduled export: batch missing date key', [
-                    'batch_key' => $batchKey,
-                    'application_storage_key' => $applicationStorageKeyName,
-                ]);
-
-                return false;
+                return;
             }
-        }
 
-        try {
-            $startAt = Carbon::parse(trim((string) $batch['start']))->startOfDay();
-            $endAt = Carbon::parse(trim((string) $batch['end']))->startOfDay();
-        } catch (\Throwable) {
-            LoggerService::error('Conversion optimization scheduled export: batch start/end are not valid dates', [
+            $weeks = $batch['no_of_weeks'];
+            if (is_string($weeks) && trim($weeks) === '') {
+                $v->errors()->add('batch.no_of_weeks', 'Must be a positive integer.');
+
+                return;
+            }
+
+            if (! is_int($weeks) && ! is_float($weeks) && ! is_string($weeks)) {
+                $v->errors()->add('batch.no_of_weeks', 'Must be a positive integer.');
+
+                return;
+            }
+
+            if (is_string($weeks) && ! is_numeric($weeks)) {
+                $v->errors()->add('batch.no_of_weeks', 'Must be a positive integer.');
+
+                return;
+            }
+
+            $weeksInt = (int) $weeks;
+            if ($weeksInt < 1 || (float) $weeksInt !== (float) $weeks) {
+                $v->errors()->add('batch.no_of_weeks', 'Must be a positive integer.');
+
+                return;
+            }
+
+            if ($weeksInt > self::ROLLING_BATCH_MAX_WEEKS) {
+                $v->errors()->add(
+                    'batch.no_of_weeks',
+                    sprintf('May not be greater than %d.', self::ROLLING_BATCH_MAX_WEEKS)
+                );
+            }
+        });
+
+        if ($validator->fails()) {
+            LoggerService::error('Conversion optimization scheduled export: recipients JSON validation failed', [
                 'application_storage_key' => $applicationStorageKeyName,
-            ]);
-
-            return false;
-        }
-
-        if ($endAt->lt($startAt)) {
-            LoggerService::error('Conversion optimization scheduled export: batch end must be on or after batch start', [
-                'application_storage_key' => $applicationStorageKeyName,
+                'errors' => $validator->errors()->toArray(),
             ]);
 
             return false;

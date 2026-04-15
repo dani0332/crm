@@ -1057,7 +1057,7 @@ onMounted(async () => {
       </template>
 
       <template #item-advisor_name="item">
-        <span>{{ item.advisor_name }} {{ item.advisorId }}</span>
+        <span>{{ item.advisor_name }}</span>
       </template>
 
       <template #item-team_average="item">
