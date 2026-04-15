@@ -45,7 +45,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'process_id' => $processId,
             ]);
         }
-        $this->onQueue('policy-issuance-automation');
+        $this->onQueue('renewals');
     }
 
     public function handle(): void
