@@ -1181,8 +1181,7 @@ watch(
               <!-- Fund Details Section -->
               <div
                 v-if="
-                  planDetails.fundDetails &&
-                  planDetails.fundDetails.length > 0
+                  planDetails.fundDetails && planDetails.fundDetails.length > 0
                 "
               >
                 <h4 class="text-sm font-semibold text-gray-700 mb-3">
@@ -1214,7 +1213,8 @@ watch(
                           >{{ doc.text }}</span
                         >
                         <template #tooltip
-                          >Fund details and underlying fund information</template
+                          >Fund details and underlying fund
+                          information</template
                         >
                       </x-tooltip>
                     </div>
