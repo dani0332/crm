@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\MotorRevivalEnum;
 use App\Models\CarQuote;
 use App\Services\Logger\LoggerService;
@@ -36,5 +37,28 @@ class CarRevivalService
 
             return;
         }
+    }
+
+    public function updateSource(string $quoteUuid, string $source): void
+    {
+        $quote = CarQuote::query()
+            ->where('uuid', $quoteUuid)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->first();
+
+        if (! $quote) {
+            LoggerService::info('CarRevivalService::updateSource - source not updated (no revival car quote)', [
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return;
+        }
+
+        $quote->update(['source' => $source]);
+
+        LoggerService::info('CarRevivalService::updateSource - source updated', [
+            'quote_uuid' => $quoteUuid,
+            'source' => $source,
+        ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
@@ -53,6 +54,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
@@ -72,6 +74,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -627,12 +630,29 @@ class ApiController extends Controller
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
         try {
-            $emailStatusService = app(EmailStatusService::class);
-            $result = $emailStatusService->updateCustomerRepliedStatus(
-                $request->quote_uuid,
-                $request->quote_type_id,
-                $request->email_subject
-            );
+            $result = DB::transaction(function () use ($request) {
+
+                $emailStatusService = app(EmailStatusService::class);
+
+                $result = $emailStatusService->updateCustomerRepliedStatus(
+                    $request->quote_uuid,
+                    $request->quote_type_id,
+                    $request->email_subject
+                );
+
+                if (! $result->success) {
+                    return $result;
+                }
+
+                $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+                match ($quoteType) {
+                    QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    default => null,
+                };
+
+                return $result;
+            });
 
             if ($result->success) {
                 return response()->json([
