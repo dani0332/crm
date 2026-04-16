@@ -61,7 +61,7 @@ class UpdateEpDocumentRequest extends FormRequest
     }
 
     /**
-     * IDs of embedded transactions for this EP, LOB, and quote (same scope as {@see \App\Repositories\EmbeddedProductRepository::fetchTransaction} with `$selected = false`).
+     * IDs of embedded transactions for this EP, LOB, and quote (same scope as {@see EmbeddedProductRepository::fetchTransaction} with `$selected = false`).
      *
      * @return list<int>
      */
