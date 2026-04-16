@@ -101,7 +101,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         DB::transaction(function () use ($lifeRevivalQuoteUUID) {
             // Get the life revival quote
             $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
-            LoggerService::info('Life Revival Quote: '.json_encode($lifeRevivalQuote));
+            LoggerService::info("Life Revival QuoteId: {$lifeRevivalQuote?->id}");
 
             // Save DTT revival record
             $dttRevivalService = app(DTTRevivalService::class);
