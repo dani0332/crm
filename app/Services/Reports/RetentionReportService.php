@@ -23,6 +23,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -138,7 +139,7 @@ class RetentionReportService extends BaseService
     /**
      * Builds the query for retrieving retention report data based on the provided model and request parameters.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     private function buildQuery($request)
     {

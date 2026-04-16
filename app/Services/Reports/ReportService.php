@@ -29,6 +29,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseService
@@ -811,7 +812,7 @@ class ReportService extends BaseService
 
         $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
-        return new \Illuminate\Pagination\LengthAwarePaginator(
+        return new LengthAwarePaginator(
             $paginatedData,
             $total,
             $perPage,

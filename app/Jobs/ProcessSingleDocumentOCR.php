@@ -6,12 +6,14 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\Nationality;
 use App\Models\OCRResponseData;
 use App\Models\QuoteDocument;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -590,7 +592,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         return [
             'vehicle_plate_number' => $plateInfo['plate_number'] ?? null,
             'first_registration_date' => $this->formatDate($ocrData->registrationDate ?? null),
-            'vehicle_color' => $this->getVehicleColorCode($ocrData->vehicalColor ?? null, \App\Enums\QuoteTypeId::Car, $providerId),
+            'vehicle_color' => $this->getVehicleColorCode($ocrData->vehicalColor ?? null, QuoteTypeId::Car, $providerId),
             'vehicle_engine_number' => $ocrData->engineNumber ?? null,
             'traffic_code_number' => $ocrData->trafficCodeNumber ?? null,
             'place_of_issue' => $ocrData->placeOfIssue ?? null,
@@ -609,7 +611,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         $priceVatApplicable = $ocrData->price?->baseAmount ?? null;
         $priceWithVat = $ocrData->price?->totalAmount ?? null;
 
-        $vatPercentage = app(\App\Services\ApplicationStorageService::class)->getValueByKey(\App\Enums\ApplicationStorageEnums::VAT_VALUE);
+        $vatPercentage = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         $vatAmount = $priceVatApplicable * $vatPercentage / 100;
 
         return [
