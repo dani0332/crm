@@ -4,9 +4,9 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity as ActivityModel;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 trait SpatieActivityLog
 {
@@ -45,7 +45,7 @@ trait SpatieActivityLog
     /**
      * Customize the activity before it's saved (Spatie activitylog v5: renamed from tapActivity).
      */
-    public function beforeActivityLogged(ActivityModel $activity, string $eventName): void
+    public function tapActivity(ActivityModel $activity, string $eventName): void
     {
         // Get feature and code from Context (set by LoggerService::startFeatureLogging)
         $feature = Context::get('feature');
