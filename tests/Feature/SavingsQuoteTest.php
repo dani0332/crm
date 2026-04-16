@@ -161,6 +161,31 @@ test('getting plan details extracts eligibility values correctly', function () {
         ->and($result['data']['policyTerm'])->toBe('15');
 });
 
+test('getting plan details includes fund details documents from API plan', function () {
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+    $planId = 1;
+    $mockPlan = SavingsQuoteMockHelper::createMockPlanData($planId, [
+        'fundDetails' => [
+            (object) ['id' => 1, 'text' => 'Fund factsheet', 'link' => 'https://example.com/fund.pdf'],
+        ],
+    ]);
+
+    $mockHttpService = Mockery::mock(HttpRequestService::class);
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
+    $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [$mockPlan]);
+    $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
+    $this->app->instance(SavingsQuoteService::class, $mockService);
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->getPlanDetails($quote->uuid, $planId);
+
+    expect($result['error'])->toBeFalse()
+        ->and($result['data']['fundDetails'])->toHaveCount(1)
+        ->and($result['data']['fundDetails'][0]->text)->toBe('Fund factsheet')
+        ->and($result['data']['fundDetails'][0]->link)->toBe('https://example.com/fund.pdf');
+});
+
 test('getting plan details returns 404 for non-existent plan', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $nonExistentPlanId = 999;

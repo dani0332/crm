@@ -699,6 +699,7 @@ class SavingsQuoteService extends BaseQuoteService
             'keyFeatureDocument' => $plan->keyFeatureDocument ?? [],
             'description' => $plan->description ?? '',
             'policyWordings' => $plan->policyWordings ?? [],
+            'fundDetails' => $plan->fundDetails ?? [],
             'actualPremium' => $plan->actualPremium ?? 0,
             'insurerQuoteNo' => $plan->insurerQuoteNo ?? '',
             'isDisabled' => $plan->isDisabled ?? false,
