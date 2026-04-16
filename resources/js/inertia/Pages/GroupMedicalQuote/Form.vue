@@ -327,15 +327,7 @@ function onSubmit(isValid) {
           :disabled="props.isEmirateDisabled"
           tooltip="Select the Emirate where the company is legally registered or primarily operates."
         >
-          <template #suffix>
-            <x-tooltip placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip
-                >Select the Emirate where the company is legally registered or
-                primarily operates.</template
-              >
-            </x-tooltip>
-          </template>
+          
         </x-select>
 
         <x-textarea
