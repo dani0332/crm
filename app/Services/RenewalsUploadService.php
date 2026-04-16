@@ -111,7 +111,9 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Bus\Batch;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -295,7 +297,7 @@ class RenewalsUploadService
     /**
      * @return void
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -1028,7 +1030,7 @@ class RenewalsUploadService
     /**
      * ignore fields having empty/null.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getNonEmptyValues($values)
     {
@@ -1376,7 +1378,7 @@ class RenewalsUploadService
             }
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1514,7 +1516,7 @@ class RenewalsUploadService
                 LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
                 $this->updateBasePricePlan($quote, $data, $renewalQuoteProcess);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1571,7 +1573,7 @@ class RenewalsUploadService
             }
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1650,7 +1652,7 @@ class RenewalsUploadService
             $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -1977,7 +1979,7 @@ class RenewalsUploadService
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
             RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             LoggerService::error('Renewals OCB Email failed for  CAR-'.$carQuote->uuid.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
         }
     }
@@ -3376,7 +3378,7 @@ class RenewalsUploadService
             ]);
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
@@ -3577,7 +3579,7 @@ class RenewalsUploadService
      *
      * @return void
      *
-     * @throws \Illuminate\Database\QueryException
+     * @throws QueryException
      * @throws FetchPlansUpdateException
      */
     public function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
@@ -3593,7 +3595,7 @@ class RenewalsUploadService
                     ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 return;
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false
                     || strpos($e->getMessage(), 'Lock wait timeout') !== false
                     || $e->getCode() === '40001'; // SQLSTATE 40001 is serialization failure

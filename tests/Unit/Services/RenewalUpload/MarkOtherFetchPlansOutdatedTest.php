@@ -37,7 +37,7 @@ if (! function_exists('createRenewalsUploadServiceWithMocks')) {
 
         // Cache ReflectionClass instance to avoid recreating it for each test call
         if ($reflection === null) {
-            $reflection = new \ReflectionClass(RenewalsUploadService::class);
+            $reflection = new ReflectionClass(RenewalsUploadService::class);
         }
 
         // Create instance without calling constructor (fast operation)

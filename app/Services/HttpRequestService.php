@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Services\Logger\LoggerService;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 
 class HttpRequestService extends BaseService
 {
@@ -12,7 +14,7 @@ class HttpRequestService extends BaseService
 
         $authBasic = base64_encode($creds['apiUserName'].':'.$creds['apiPassword']);
 
-        $kenClient = new \GuzzleHttp\Client;
+        $kenClient = new Client;
         try {
             $kenRequest = $kenClient->post(
                 $creds['apiEndPoint'],
@@ -29,7 +31,7 @@ class HttpRequestService extends BaseService
             $statusCode = $kenRequest->getStatusCode();
 
             return $statusCode;
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $responseObj = $e->getResponse();
             $statusCode = $responseObj ? $responseObj->getStatusCode() : null;
             $response = $responseObj ? json_decode((string) $responseObj->getBody()) : null;
@@ -102,7 +104,7 @@ class HttpRequestService extends BaseService
             $plansDataArr['allowUpdate'] = $allowUpdate;
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         try {
             // Make the API request
             $kenRequest = $client->post(
@@ -129,7 +131,7 @@ class HttpRequestService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             // add info for error and exception along with stack trace
             LoggerService::error('Exception occurred in quote plans call with error: '.$e->getMessage());
             LoggerService::error('Exception occurred in quote plans call with error stack as: '.$e->getTraceAsString());

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Customer;
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 
 class SendSmsCustomerService extends BaseService
 {
@@ -47,7 +49,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->request('POST', $smsEndpoint, ['query' => [
                 'username' => $smsUsername,
                 'password' => $smsPassword,
@@ -75,7 +77,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $response = (new \GuzzleHttp\Client)->post($smsEndpoint, [
+            $response = (new Client)->post($smsEndpoint, [
                 'json' => [
                     'username' => $smsUsername,
                     'password' => $smsPassword,
@@ -86,7 +88,7 @@ class SendSmsCustomerService extends BaseService
             ]);
 
             return json_decode($response->getBody()->getContents())->short_url;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $response = $ex->getCode().' '.$ex->getMessage();
             info($response);
 
@@ -110,7 +112,7 @@ class SendSmsCustomerService extends BaseService
     /**
      * @return int|mixed
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function sendSMS(mixed $customerMobile, string $smsMessage, Customer $customer, ?string $inviteCode = null): mixed
     {
@@ -120,7 +122,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $query = [
                 'username' => $smsUsername,
                 'password' => $smsPassword,

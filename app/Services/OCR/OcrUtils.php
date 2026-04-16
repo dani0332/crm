@@ -56,7 +56,7 @@ trait OcrUtils
 
         try {
             return Carbon::parse($date)->format('Y-m-d');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to format date', exception: $e);
 
             return null;
@@ -354,7 +354,7 @@ trait OcrUtils
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
                 'error' => $e->getMessage(),
                 'quote_type' => get_class($quote),

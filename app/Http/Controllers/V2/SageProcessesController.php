@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SageProcessesFilterRequest;
 use App\Services\Logger\LoggerService;
 use App\Services\SageProcessesService;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 /**
  * Controller for managing failed sage processes
@@ -34,7 +36,7 @@ class SageProcessesController extends Controller
     /**
      * Display a listing of failed sage processes
      */
-    public function index(SageProcessesFilterRequest $request): \Inertia\Response|\Inertia\ResponseFactory
+    public function index(SageProcessesFilterRequest $request): Response|ResponseFactory
     {
 
         $dropdownData = $this->sageProcessesService->dropdownData();

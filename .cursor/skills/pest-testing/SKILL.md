@@ -1,6 +1,6 @@
 ---
 name: pest-testing
-description: 'Use this skill for Pest PHP testing in Laravel projects only. Trigger whenever any test is being written, edited, fixed, or refactored — including fixing tests that broke after a code change, adding assertions, converting PHPUnit to Pest, adding datasets, and TDD workflows. Always activate when the user asks how to write something in Pest, mentions test files or directories (tests/Feature, tests/Unit) or architecture tests. Covers: it()/expect() syntax, datasets, mocking, browser testing, arch(), Livewire component tests, RefreshDatabase, and all Pest 4 features. Do not use for editing factories, seeders, migrations, controllers, models, or non-test PHP code.'
+description: "Use this skill for Pest PHP testing in Laravel projects only. Trigger whenever any test is being written, edited, fixed, or refactored — including fixing tests that broke after a code change, adding assertions, converting PHPUnit to Pest, adding datasets, and TDD workflows. Always activate when the user asks how to write something in Pest, mentions test files or directories (tests/Feature, tests/Unit) or architecture tests. Covers: it()/expect() syntax, datasets, mocking, browser testing, arch(), Livewire component tests, RefreshDatabase, and all Pest 4 features. Do not use for editing factories, seeders, migrations, controllers, models, or non-test PHP code."
 license: MIT
 metadata:
   author: laravel
@@ -27,7 +27,6 @@ All tests must be written using Pest. Use `php artisan make:test --pest {name}`.
 ### Basic Test Structure
 
 <!-- Basic Pest Test Example -->
-
 ```php
 it('is true', function () {
     expect(true)->toBeTrue();
@@ -45,18 +44,17 @@ it('is true', function () {
 Use specific assertions (`assertSuccessful()`, `assertNotFound()`) instead of `assertStatus()`:
 
 <!-- Pest Response Assertion -->
-
 ```php
 it('returns all', function () {
     $this->postJson('/api/docs', [])->assertSuccessful();
 });
 ```
 
-| Use                  | Instead of          |
-| -------------------- | ------------------- |
+| Use | Instead of |
+|-----|------------|
 | `assertSuccessful()` | `assertStatus(200)` |
-| `assertNotFound()`   | `assertStatus(404)` |
-| `assertForbidden()`  | `assertStatus(403)` |
+| `assertNotFound()` | `assertStatus(404)` |
+| `assertForbidden()` | `assertStatus(403)` |
 
 ## Mocking
 
@@ -67,7 +65,6 @@ Import mock function before use: `use function Pest\Laravel\mock;`
 Use datasets for repetitive tests (validation rules, etc.):
 
 <!-- Pest Dataset Example -->
-
 ```php
 it('has emails', function (string $email) {
     expect($email)->not->toBeEmpty();
@@ -84,7 +81,6 @@ it('has emails', function (string $email) {
 Pest 3 includes architecture testing to enforce code conventions:
 
 <!-- Architecture Test Example -->
-
 ```php
 arch('controllers')
     ->expect('App\Http\Controllers')
