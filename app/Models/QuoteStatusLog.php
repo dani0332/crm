@@ -7,6 +7,7 @@ use Config;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[ObservedBy(QuoteStatusLogObserver::class)]
 class QuoteStatusLog extends Model
@@ -39,7 +40,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function previousQuoteStatus()
     {
@@ -47,7 +48,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function currentQuoteStatus()
     {
@@ -55,7 +56,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function createdBy()
     {

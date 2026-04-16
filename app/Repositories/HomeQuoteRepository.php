@@ -35,6 +35,7 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
+use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -45,6 +46,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -255,7 +257,7 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Apply the renewal filter to the query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      */
     private function applyRenewalFilter($query, array $requestParams = []): void
     {
@@ -589,7 +591,7 @@ class HomeQuoteRepository extends BaseRepository
             LoggerService::info('Fields changed, Fetching quote plans', extra: [
                 'getLatestRating' => true,
             ]);
-            app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
+            app(HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
         }
 
         // Return the updated quote
@@ -653,12 +655,12 @@ class HomeQuoteRepository extends BaseRepository
     {
         // If no start date provided, use current date
         $from = $startDate
-            ? \Carbon\Carbon::parse($startDate)->startOfDay()->toDateTimeString()
+            ? Carbon::parse($startDate)->startOfDay()->toDateTimeString()
             : now()->startOfDay()->toDateTimeString();
 
         // If no end date provided, use current date
         $to = $endDate
-            ? \Carbon\Carbon::parse($endDate)->endOfDay()->toDateTimeString()
+            ? Carbon::parse($endDate)->endOfDay()->toDateTimeString()
             : now()->endOfDay()->toDateTimeString();
 
         return [$from, $to];
@@ -941,12 +943,12 @@ class HomeQuoteRepository extends BaseRepository
         // Add date filtering if present in request
         if (! empty($request['created_at_start']) || ! empty($request['created_at_end'])) {
             if (! empty($request['created_at_start'])) {
-                $startDate = \Carbon\Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
+                $startDate = Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
                 $query->where('createdAt', '>=', $startDate);
             }
 
             if (! empty($request['created_at_end'])) {
-                $endDate = \Carbon\Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
+                $endDate = Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
                 $query->where('createdAt', '<=', $endDate);
             }
         }
@@ -975,7 +977,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -1061,7 +1063,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -1151,7 +1153,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Create request object for filtering
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }

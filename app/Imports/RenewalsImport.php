@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Row;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class RenewalsImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithStartRow, WithValidation
 {
@@ -75,8 +76,8 @@ class RenewalsImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wit
             $previousAdvisor = preg_replace('/\s/', '', strtolower(trim($row[9])));
             $policy = $row[10];
             $batch = $row[11];
-            $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
-            $endDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[13]))->toDateTimeString();
+            $startDate = Carbon::instance(Date::excelToDateTimeObject($row[12]))->toDateTimeString();
+            $endDate = Carbon::instance(Date::excelToDateTimeObject($row[13]))->toDateTimeString();
             $object = $row[14];
             $premium = $row[15];
             $notes = $row[16];

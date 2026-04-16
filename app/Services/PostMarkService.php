@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
 class PostMarkService extends BaseService
@@ -16,7 +17,7 @@ class PostMarkService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 config('constants.POSTMARK_URL'),
                 [
