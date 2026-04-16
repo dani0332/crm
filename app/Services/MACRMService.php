@@ -369,7 +369,7 @@ class MACRMService
                 'source' => 'imcrm',
                 'is_active' => true,
                 'auto_claim' => true,
-                'ctaLink' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
+                'cta_link' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
             ];
 
             LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote createVoucher request', [
