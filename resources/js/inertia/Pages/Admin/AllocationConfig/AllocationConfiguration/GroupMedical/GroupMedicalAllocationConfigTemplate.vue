@@ -383,6 +383,115 @@ const getCacheKey = departmentIds => {
   return [...departmentIds].sort((a, b) => a - b).join('-');
 };
 
+const advisorOptionKey = value => String(value);
+
+const normalizeAdvisorId = raw => {
+  if (raw === null || raw === undefined || raw === '') {
+    return raw;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw;
+  }
+  if (
+    typeof raw === 'string' &&
+    raw.trim() !== '' &&
+    !Number.isNaN(Number(raw))
+  ) {
+    const n = Number(raw);
+    if (Number.isSafeInteger(n)) {
+      return n;
+    }
+  }
+
+  return raw;
+};
+
+const findAdvisorOptionInCaches = rawId => {
+  const key = advisorOptionKey(rawId);
+  for (const opts of advisorOptionsCache.value.values()) {
+    const hit = (opts || []).find(o => advisorOptionKey(o.value) === key);
+    if (hit) {
+      return {
+        value: hit.value,
+        label: hit.label ?? String(hit.value),
+      };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Department filter only narrows which advisors appear in the picker; it must not
+ * remove already-selected advisors. Merge current fetch results with options for
+ * any profile advisorIds not returned by the active department filter (labels from
+ * page props or prior department fetches in advisorOptionsCache).
+ */
+const mergeAdvisorOptionsWithSelectedProfiles = (fetchedOptions, bracket) => {
+  const map = new Map();
+
+  (fetchedOptions || []).forEach(opt => {
+    map.set(advisorOptionKey(opt.value), {
+      value: opt.value,
+      label: opt.label ?? String(opt.value),
+    });
+  });
+
+  const defaultById = new Map(
+    (props.advisorOptions ?? []).map(o => [
+      advisorOptionKey(o.value),
+      { value: o.value, label: o.label ?? String(o.value) },
+    ]),
+  );
+
+  bracket.profiles?.forEach(profile => {
+    (profile.advisorIds || []).forEach(rawId => {
+      const id = normalizeAdvisorId(rawId);
+      const key = advisorOptionKey(id);
+      if (map.has(key)) {
+        return;
+      }
+      const fromDefault = defaultById.get(key);
+      if (fromDefault) {
+        map.set(key, fromDefault);
+
+        return;
+      }
+      const fromCache = findAdvisorOptionInCaches(id);
+      if (fromCache) {
+        map.set(key, fromCache);
+
+        return;
+      }
+      map.set(key, {
+        value: id,
+        label: `Advisor (${id})`,
+      });
+    });
+  });
+
+  return Array.from(map.values());
+};
+
+const alignProfileAdvisorIdsToOptions = (mergedOptions, bracket) => {
+  if (!bracket?.profiles?.length || !mergedOptions?.length) {
+    return;
+  }
+
+  bracket.profiles.forEach(profile => {
+    if (!Array.isArray(profile.advisorIds) || profile.advisorIds.length === 0) {
+      return;
+    }
+    profile.advisorIds = profile.advisorIds.map(rawId => {
+      const key = advisorOptionKey(rawId);
+      const match = mergedOptions.find(
+        o => advisorOptionKey(o.value) === key,
+      );
+      return match ? match.value : normalizeAdvisorId(rawId);
+    });
+  });
+};
+
 const fetchAdvisorsForDepartments = async (departmentIds, regionKey) => {
   const cacheKey = `${regionKey || 'all'}-${getCacheKey(departmentIds)}`;
   if (advisorOptionsCache.value.has(cacheKey)) {
@@ -428,18 +537,27 @@ const hydrateAdvisorOptionsForBracket = async (
     return;
   }
 
+  const typeKey = bracketType === 'micro_brackets' ? 'micro' : 'nonMicro';
+  const previousOptions =
+    advisorOptionsMap.value?.[regionKey]?.[typeKey]?.[bracketIndex] ?? null;
+
+  const stableWhileLoading = mergeAdvisorOptionsWithSelectedProfiles(
+    previousOptions ?? props.advisorOptions ?? [],
+    bracket,
+  );
+  setAdvisorOptions(regionKey, bracketType, bracketIndex, stableWhileLoading);
+  alignProfileAdvisorIdsToOptions(stableWhileLoading, bracket);
+
   const options = await fetchAdvisorsForDepartments(
     bracket.departmentIds,
     regionKey,
   );
-  setAdvisorOptions(regionKey, bracketType, bracketIndex, options);
-
-  const allowedAdvisorIds = new Set(options.map(option => option.value));
-  bracket.profiles?.forEach(profile => {
-    profile.advisorIds = (profile.advisorIds || []).filter(id =>
-      allowedAdvisorIds.has(id),
-    );
-  });
+  const mergedOptions = mergeAdvisorOptionsWithSelectedProfiles(
+    options,
+    bracket,
+  );
+  setAdvisorOptions(regionKey, bracketType, bracketIndex, mergedOptions);
+  alignProfileAdvisorIdsToOptions(mergedOptions, bracket);
 };
 
 const handleDepartmentChange = async (
