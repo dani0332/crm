@@ -25,6 +25,7 @@ use App\Services\CommunicationEventLogService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -144,6 +145,8 @@ class CarRevivalQuoteController extends Controller
 
         $communicationEventLogs = app(CommunicationEventLogService::class)->getLogsForQuoteUuid($record->uuid);
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus($quoteTypeId, $record->id);
+
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,
             'quoteTypeId' => $quoteTypeId,
@@ -174,6 +177,7 @@ class CarRevivalQuoteController extends Controller
             'paymentTooltipEnum' => $paymentTooltipEnum,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'communicationEventLogs' => $communicationEventLogs,
+            'emailStatuses' => $emailStatuses,
         ]);
     }
 
