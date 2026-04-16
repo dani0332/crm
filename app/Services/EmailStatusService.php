@@ -320,20 +320,23 @@ class EmailStatusService extends BaseService
 
         $email = $validated['Recipient'] ?? $validated['Email'] ?? null;
         $reason = $validated['Description'] ?? $validated['Details'] ?? null;
-
-        $newRow = new EmailStatus;
-        $newRow->quote_id = $context['quote_id'];
-        $newRow->quote_type_id = $context['quote_type_id'];
-        $newRow->email_address = is_string($email) ? $email : null;
-        $newRow->msg_id = $messageId;
-        $newRow->email_status = $statusForDb;
-        $newRow->email_subject = (string) ($metadata['subject'] ?? $validated['Subject'] ?? '');
+        $emailSubject = (string) ($metadata['subject'] ?? $validated['Subject'] ?? '');
         $reasonForDb = $this->normalizedEmailStatusReason($reason);
-        if ($reasonForDb !== null) {
-            $newRow->reason = $reasonForDb;
-        }
-        $newRow->save();
-        Cache::forget("email_statuses_{$context['quote_type_id']}_{$context['quote_id']}");
+
+        $this->addEmailStatus(
+            (object) [
+                'quoteTypeId' => $context['quote_type_id'],
+                'quoteId' => $context['quote_id'],
+                'customerEmail' => is_string($email) ? $email : null,
+                'templateId' => null,
+                'emailTemplateId' => null,
+                'customerId' => null,
+            ],
+            $messageId,
+            $emailSubject,
+            $statusForDb,
+            $reasonForDb,
+        );
 
         LoggerService::info(self::class.' - logEpEmailStatuses: created from Metadata', [
             'record_type' => $recordType,

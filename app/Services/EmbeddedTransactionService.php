@@ -201,9 +201,15 @@ class EmbeddedTransactionService extends BaseService
 
     /**
      * Replaces an embedded-product quote document (manual override), including storage upload and optional watermark dispatch.
+     *
+     * Coerces `epId`, `quoteId`, and `documentId` to int: multipart and form-encoded bodies often keep validated numeric fields as strings, which would otherwise violate strict typing when passed to int-hinted helpers (including queued closures).
      */
     public function updateEpDocument(array $data): bool
     {
+        $data['epId'] = (int) $data['epId'];
+        $data['quoteId'] = (int) $data['quoteId'];
+        $data['documentId'] = (int) $data['documentId'];
+
         $ctx = $this->resolveUpdateEpDocumentContext($data);
         if ($ctx === null) {
             return false;
@@ -368,8 +374,8 @@ class EmbeddedTransactionService extends BaseService
         $watermarkJob = new WatermarkDocumentsJob($newDocument->id, $quoteObject->uuid, $documentType->id);
         $watermarkJob->afterCommit();
 
-        $quoteId = $quoteObject->id;
-        $epId = $data['epId'];
+        $quoteId = (int) $quoteObject->id;
+        $epId = (int) $data['epId'];
         $modelType = $data['modelType'];
         $epSentToCustomerDocTypes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
 
