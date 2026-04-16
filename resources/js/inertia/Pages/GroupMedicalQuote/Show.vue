@@ -267,7 +267,11 @@ const emirateOfRegistrationError = computed(() => {
   const value = customerProfileForm.emirate_of_registration_id;
   const isEmpty =
     value === null || value === undefined || value === '' || value === false;
-  if (enabledCustomerType === page.props.customerTypeEnum.Entity && isEmpty && !page.props.isEmirateOfRegistrationLocked) {
+  if (
+    enabledCustomerType === page.props.customerTypeEnum.Entity &&
+    isEmpty &&
+    !page.props.isEmirateOfRegistrationLocked
+  ) {
     return 'Emirate of registration is required.';
   }
   return null;
@@ -317,9 +321,10 @@ const customerProfileForm = useForm({
     page.props.quote?.quote_request_entity_mapping?.entity
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote?.emirate_of_registration_id ?? page.props.quote?.quote_request_entity_mapping?.entity
-    ?.emirate_of_registration_id ?? null,
-    
+    page.props.quote?.emirate_of_registration_id ??
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ??
+    null,
 });
 
 const resolvedEmirateOfRegistrationId = computed(
