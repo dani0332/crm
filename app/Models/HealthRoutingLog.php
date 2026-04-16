@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,6 +28,6 @@ class HealthRoutingLog extends Model
 
     public function getCreatedAtAttribute($value): string
     {
-        return \Carbon\Carbon::parse($value)->format('m/d/Y H:i:s');
+        return Carbon::parse($value)->format('m/d/Y H:i:s');
     }
 }
