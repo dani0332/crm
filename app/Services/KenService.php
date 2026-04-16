@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Logger\LoggerService;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class KenService
@@ -56,6 +57,20 @@ class KenService
             });
 
         return $response->json();
+    }
+
+    /**
+     * Send a request to KEN and return the raw HTTP client response.
+     * Does not abort on 4xx/5xx; use when the caller maps status and body (e.g. API proxies).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function sendRequest(string $path, string $method = 'post', array $data = []): Response
+    {
+        $url = $this->baseUrl.$path;
+
+        return $this->client->withBody(json_encode($data), 'application/json')
+            ->send($method, $url);
     }
 
     public function renewalRequest($path, $method = 'post', $data = [])

@@ -6,6 +6,7 @@ use App\Models\PersonalQuote;
 use App\Services\HttpRequestService;
 use App\Services\Quotes\SavingsQuoteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Tests\Helpers\Savings\SavingsQuoteMockHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -377,4 +378,67 @@ test('handles missing required fields in plan update request', function () {
 
     $response->assertStatus(302)
         ->assertSessionHasErrors(['quote_uuid', 'plan_id', 'provider_name']);
+});
+
+test('fetchSavingsProviderPlan returns KEN JSON on success via KenService', function () {
+    Http::fake([
+        'http://api/fetch-savings-provider-plan' => Http::response(['lumpSumPayout' => 50000], 200),
+    ]);
+
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+
+    $payload = [
+        'quoteUID' => $quote->uuid,
+        'planId' => 1,
+        'providerCode' => 'TEST',
+        'isIndividualLoading' => true,
+        'lang' => 'en',
+        'planData' => [
+            'investmentAmount' => 1000,
+            'currency' => 'AED',
+            'paymentTerm' => 1,
+            'investmentFrequency' => 'Regular',
+        ],
+    ];
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->fetchSavingsProviderPlan($payload);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['data'])->toMatchArray(['lumpSumPayout' => 50000]);
+
+    Http::assertSent(function ($request) {
+        return $request->url() === 'http://api/fetch-savings-provider-plan'
+            && $request->hasHeader('Authorization')
+            && $request->hasHeader('x-api-token');
+    });
+});
+
+test('fetchSavingsProviderPlan maps KEN error response without success', function () {
+    Http::fake([
+        'http://api/fetch-savings-provider-plan' => Http::response(['message' => 'Invalid tenure'], 422),
+    ]);
+
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+
+    $payload = [
+        'quoteUID' => $quote->uuid,
+        'planId' => 1,
+        'providerCode' => 'TEST',
+        'isIndividualLoading' => true,
+        'lang' => 'en',
+        'planData' => [
+            'investmentAmount' => 1000,
+            'currency' => 'AED',
+            'paymentTerm' => 1,
+            'investmentFrequency' => 'Regular',
+        ],
+    ];
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->fetchSavingsProviderPlan($payload);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['status'])->toBe(422)
+        ->and($result['message'])->toBe('Invalid tenure');
 });

@@ -34,7 +34,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -727,27 +726,13 @@ class SavingsQuoteService extends BaseQuoteService
      */
     public function fetchSavingsProviderPlan(array $payload): array
     {
-        $url = config('constants.KEN_API_ENDPOINT').'/fetch-savings-provider-plan';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = (int) config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
-
         LoggerService::info('SavingsQuoteService - fetchSavingsProviderPlan', [
             'quoteUID' => $payload['quoteUID'] ?? null,
             'planId' => $payload['planId'] ?? null,
         ]);
 
         try {
-            $response = Http::withBasicAuth($apiUserName, $apiPassword)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                    'x-api-token' => $apiToken,
-                ])
-                ->timeout($apiTimeout)
-                ->asJson()
-                ->post($url, $payload);
+            $response = app(KenService::class)->sendRequest('/fetch-savings-provider-plan', 'post', $payload);
         } catch (ConnectionException $e) {
             LoggerService::error('SavingsQuoteService - fetchSavingsProviderPlan connection failed', exception: $e);
 
