@@ -2,6 +2,7 @@
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Http\Middleware\BasicAuth;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,7 +10,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->withoutMiddleware(\App\Http\Middleware\BasicAuth::class);
+    $this->withoutMiddleware(BasicAuth::class);
 
     if (! Schema::hasTable('email_status')) {
         Schema::create('email_status', function (Blueprint $table) {
