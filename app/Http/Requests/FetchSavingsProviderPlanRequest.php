@@ -34,8 +34,7 @@ class FetchSavingsProviderPlanRequest extends FormRequest
             'planData.currency' => ['required', 'string', 'max:16'],
             'planData.currencyId' => ['nullable', 'integer'],
             'planData.paymentTerm' => ['required', 'integer', 'min:0'],
-            // UI often sends tenure as an integer (e.g. years); KEN may accept string or number.
-            'planData.tenure' => ['nullable', 'max:255'],
+            'planData.tenure' => ['nullable', 'string'],
             'planData.tenureId' => ['nullable', 'integer'],
             'planData.investmentFrequency' => ['required', 'string', 'max:255'],
             'planData.investmentFrequencyId' => ['nullable', 'integer'],
