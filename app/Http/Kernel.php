@@ -2,7 +2,6 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\APIAuth;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BasicAuth;
 use App\Http\Middleware\CheckLastLoginMiddleware;
@@ -109,6 +108,5 @@ class Kernel extends HttpKernel
         'check_lead_report_access' => CheckReportPermission::class,
         'claims_module_enabled' => ClaimsModuleEnabled::class,
         'readonly_db' => SetReadDbConnection::class,
-        'apiAuth' => APIAuth::class,
     ];
 }
