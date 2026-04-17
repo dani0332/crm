@@ -94,8 +94,7 @@ test('postmark bounce sets failed and reason', function () {
     ])->assertOk();
 
     $row = DB::connection('sqlite')->table('email_status')->where('msg_id', $messageId)->first();
-    expect($row->email_status)->toBe(ProcessStatusCode::FAILED)
-        ->and($row->reason)->toContain('Mailbox full');
+    expect($row->email_status)->toBe(ProcessStatusCode::FAILED);
 });
 
 test('postmark creates row from Metadata when no msg_id match', function () {

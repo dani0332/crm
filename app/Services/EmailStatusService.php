@@ -205,9 +205,8 @@ class EmailStatusService extends BaseService
         }
 
         $statusForDb = $this->statusForDatabaseFromPostmarkRecordType($recordType);
-        $reason = $validated['Description'] ?? $validated['Details'] ?? null;
 
-        if ($this->tryUpdateEmailStatusForPostmarkMessage($messageId, $statusForDb, $reason, $recordType)) {
+        if ($this->tryUpdateEmailStatusForPostmarkMessage($messageId, $statusForDb, $recordType)) {
             return;
         }
 
@@ -245,19 +244,9 @@ class EmailStatusService extends BaseService
         };
     }
 
-    private function normalizedEmailStatusReason(mixed $reason): ?string
-    {
-        if (empty($reason)) {
-            return null;
-        }
-
-        return is_string($reason) ? $reason : (string) $reason;
-    }
-
     private function tryUpdateEmailStatusForPostmarkMessage(
         string $messageId,
         string $statusForDb,
-        mixed $reason,
         string $recordType,
     ): bool {
         $row = EmailStatus::query()->where('msg_id', $messageId)->orderByDesc('id')->first();
@@ -267,10 +256,6 @@ class EmailStatusService extends BaseService
         }
 
         $row->email_status = $statusForDb;
-        $reasonForDb = $this->normalizedEmailStatusReason($reason);
-        if ($reasonForDb !== null) {
-            $row->reason = $reasonForDb;
-        }
         $row->save();
         Cache::forget("email_statuses_{$row->quote_type_id}_{$row->quote_id}");
 
@@ -319,9 +304,7 @@ class EmailStatusService extends BaseService
         }
 
         $email = $validated['Recipient'] ?? $validated['Email'] ?? null;
-        $reason = $validated['Description'] ?? $validated['Details'] ?? null;
         $emailSubject = (string) ($metadata['subject'] ?? $validated['Subject'] ?? '');
-        $reasonForDb = $this->normalizedEmailStatusReason($reason);
 
         $this->addEmailStatus(
             (object) [
@@ -335,7 +318,6 @@ class EmailStatusService extends BaseService
             $messageId,
             $emailSubject,
             $statusForDb,
-            $reasonForDb,
         );
 
         LoggerService::info(self::class.' - logEpEmailStatuses: created from Metadata', [
