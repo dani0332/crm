@@ -33,17 +33,17 @@ class AssignTeamPipe extends BaseAllocationPipe
             return $next($request);
         }
 
-        // Check if lead source ! ecom
-        if (! $this->lead->isEcommerce()) {
+        // Check if lead source is applicable
+        if (! $this->lead->isSourceApplicable()) {
             // Terminate
-            LoggerService::info('Lead source is not ecom, health team routing is not applicable', [
+            LoggerService::info('Lead source is not applicable, health team routing is not applicable', [
                 'source' => $this->source,
                 'lead_source' => $this->lead->source,
                 'uuid' => $this->lead->uuid]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'Lead source is not ecom, health team routing is not applicable',
+                    'message' => 'Lead source is not applicable, health team routing is not applicable',
                     'step' => 'ecom source check',
                     'lead_source' => $this->lead->source,
                 ],
@@ -81,11 +81,16 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         // AUH path
         if ($isAUHLead) {
-            LoggerService::info('Lead is AUH lead, triggering AUH tier routing', ['source' => $this->source, 'uuid' => $this->lead->uuid]);
+            LoggerService::info('Lead is AUH lead, triggering AUH tier routing', [
+                'emirates_of_visa' => $this->lead->emirate?->text,
+                'source' => $this->source,
+                'uuid' => $this->lead->uuid,
+            ]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'Lead is AUH lead, triggering AUH tier routing',
+                    'emirates_of_visa' => $this->lead->emirate?->text,
                     'step' => 'AUH check',
                     'is_auh' => true,
                     'source' => $this->source,
@@ -99,11 +104,13 @@ class AssignTeamPipe extends BaseAllocationPipe
             app(HealthTeamRoutingService::class, ['source' => $this->source])
                 ->triggerAUHTierRouting($this->lead);
         } else {
-            LoggerService::info('Lead is Non AUH lead, triggering Non AUH tier routing', ['source' => $this->source, 'uuid' => $this->lead->uuid]);
+            LoggerService::info('Lead is Non AUH lead, triggering Non AUH tier routing',
+                ['emirates_of_visa' => $this->lead->emirate?->text, 'source' => $this->source, 'uuid' => $this->lead->uuid]);
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
                     'message' => 'Lead is Non AUH lead, triggering Non AUH tier routing',
+                    'emirates_of_visa' => $this->lead->emirate?->text,
                     'step' => 'Non AUH check',
                     'is_auh' => false,
                     'source' => $this->source,

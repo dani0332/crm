@@ -72,6 +72,9 @@ class SageApiEmbeddedProductService
         $sageRequest->quoteCode = $quote->code;
         $sageRequest->epShortCode = $epTransaction->product?->embeddedProduct?->short_code;
 
+        $sageRequest->bookingDate = Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = Carbon::now()->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
+
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
         $sageRequest->customerId = $this->sageApiService->verifySageCustomer($quote->customer_id, $data, $quote, 15);
 
@@ -1589,8 +1592,8 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->policy_commision_without_tax;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->policy_commision_tax;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->policy_commision_with_tax;
-        $sageRequestEmbeddedProduct->startDate = Carbon::parse($insurerRequestResponseObject->policy_start_dt)->format(env('DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::parse($insurerRequestResponseObject->policy_end_dt)->format(env('DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->startDate = Carbon::parse($insurerRequestResponseObject->policy_start_dt)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::parse($insurerRequestResponseObject->policy_end_dt)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
     }
@@ -1630,8 +1633,8 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->additional_data->broker_commission_amount;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->additional_data->broker_commission_vat_amount;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->additional_data->broker_commission_total_amount;
-        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(env('DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(env('DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
 
@@ -1959,11 +1962,11 @@ class SageApiEmbeddedProductService
             ],
             [
                 'OptionalField' => 'EXPIRY',
-                'Value' => Carbon::parse($sageRequestEmbeddedProduct->endDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
+                'Value' => Carbon::parse($sageRequestEmbeddedProduct->endDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INCEPTION',
-                'Value' => Carbon::parse($sageRequestEmbeddedProduct->startDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
+                'Value' => Carbon::parse($sageRequestEmbeddedProduct->startDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INSURED',
