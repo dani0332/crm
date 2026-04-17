@@ -11,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -117,8 +118,8 @@ trait PrivateClient
     /**
      * Apply quote type specific conditions to the query
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     private function applyQuoteTypeSpecificConditions($query, int $quoteTypeId)
     {
@@ -244,7 +245,7 @@ trait PrivateClient
                     $customer->update(['pcp_tag' => false]);
 
                     LoggerService::info('PCP tag removed successfully.', extra: $customerLogObject);
-                } catch (\Exception $ex) {
+                } catch (Exception $ex) {
                     LoggerService::error('Error removing PCP tag. Continuing with next customer.', extra: $customerLogObject, exception: $ex);
                     // Do not throw — continue with next customer
                 }
@@ -414,7 +415,7 @@ trait PrivateClient
         if (! isset($this->columnsCache[$modelClass])) {
             try {
                 $this->columnsCache[$modelClass] = Schema::getColumnListing($table);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->columnsCache[$modelClass] = [];
             }
         }

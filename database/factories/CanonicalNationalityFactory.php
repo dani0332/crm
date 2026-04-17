@@ -6,7 +6,7 @@ use App\Models\CanonicalNationality;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CanonicalNationality>
+ * @extends Factory<CanonicalNationality>
  */
 class CanonicalNationalityFactory extends Factory
 {

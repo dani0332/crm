@@ -106,6 +106,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 'referenceUrl' => config('constants.APP_URL'),
                 'sicFlowEnabled' => false,
                 'whatsappConsent' => true,
+                'vehicleUse' => $this->lead?->vehicle_use,
             ];
 
             $carQuoteExists = CarQuote::select('uuid')->where([

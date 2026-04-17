@@ -11,8 +11,9 @@ use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\AlfredChat;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use MongoDB\Model\BSONArray;
+use MongoDB\Model\BSONDocument;
 
 class InstantAlfredExportService
 {
@@ -20,6 +21,7 @@ class InstantAlfredExportService
     private const URL_EXPIRY_HOURS = 1;
     private const BATCH_SIZE = 500;
     private const FLUSH_INTERVAL = 1000;
+    private const UUID_BATCH_SIZE = 2000;
 
     public function generateCsvAndGetUrl(array $params): array
     {
@@ -74,9 +76,6 @@ class InstantAlfredExportService
             if (is_resource($stream)) {
                 fclose($stream);
             }
-            Log::error('Detailed report CSV generation failed', [
-                'error' => $e->getMessage(),
-            ]);
             throw $e;
         }
     }
@@ -86,16 +85,27 @@ class InstantAlfredExportService
         DB::setDefaultConnection('mysql_read');
 
         try {
-            $query = app(InstantAlfredService::class)
-                ->getChatDetailedReportQuery($params);
+            $reportService = app(InstantAlfredReportService::class);
+            $hasSortType = ! empty($params['sortType']);
 
-            $rows = $query->get();
+            if ($hasSortType) {
+                $sortedIds = $reportService->getSortedIds($params);
+                $rows = collect();
 
-            return $rows
+                foreach (array_chunk($sortedIds, self::UUID_BATCH_SIZE) as $idBatch) {
+                    $rows = $rows->merge($reportService->getReportQueryByIds($idBatch, $params)->get());
+                }
+            } else {
+                $rows = $reportService->getReportQuery($params)->get();
+            }
+
+            $sqlData = $rows
                 ->groupBy('uuid')
                 ->map(fn ($group) => $group->sortBy('id')->first())
                 ->map(fn ($item) => (array) $item)
                 ->toArray();
+
+            return $reportService->enrichDetailedSqlData($sqlData, $params);
         } finally {
             DB::setDefaultConnection('mysql');
         }
@@ -103,24 +113,22 @@ class InstantAlfredExportService
 
     private function streamDetailedReportMongoData(array $uuids, array $sqlData, array $params): \Generator
     {
-        $pipeline = $this->buildDetailedReportPipeline($uuids, $params);
+        foreach (array_chunk($uuids, self::UUID_BATCH_SIZE) as $uuidBatch) {
+            $pipeline = $this->buildDetailedReportPipeline($uuidBatch, $params);
 
-        $cursor = AlfredChat::raw(fn ($collection) => $collection->aggregate($pipeline, [
-            'allowDiskUse' => true,
-            'cursor' => ['batchSize' => self::BATCH_SIZE],
-        ]));
+            $cursor = AlfredChat::raw(fn ($collection) => $collection->aggregate($pipeline, [
+                'allowDiskUse' => true,
+                'cursor' => ['batchSize' => self::BATCH_SIZE],
+            ]));
 
-        foreach ($cursor as $doc) {
-            yield $this->mapDetailedReportRow($doc, $sqlData);
+            foreach ($cursor as $doc) {
+                yield $this->mapDetailedReportRow($doc, $sqlData);
+            }
         }
     }
 
     private function buildDetailedReportPipeline(array $uuids, array $params): array
     {
-        // Match only by quote_id — date filtering is already applied by the SQL query
-        // on chat_initiated_at, so we must include ALL messages for each matched quote.
-        // Filtering MongoDB by date here would drop quotes whose messages fall outside
-        // the window, causing the Detailed report to have fewer unique Ref-IDs than Summary.
         $matchConditions = ['quote_id' => ['$in' => $uuids]];
 
         $sortDir = ($params['sortType'] ?? 'asc') === 'desc' ? -1 : 1;
@@ -231,39 +239,50 @@ class InstantAlfredExportService
             if (is_resource($stream)) {
                 fclose($stream);
             }
-            Log::error('Consolidated report CSV generation failed', [
-                'error' => $e->getMessage(),
-            ]);
             throw $e;
         }
     }
 
     private function streamConsolidatedReportData(array $params): \Generator
     {
-        $instantAlfredService = app(InstantAlfredService::class);
-        $query = $instantAlfredService->getChatConsolidateReportQuery($params);
-        $chunkSize = 500;
+        $reportService = app(InstantAlfredReportService::class);
+        $hasSortType = ! empty($params['sortType']);
 
-        $sqlRecordsChunk = [];
-        foreach ($query->lazyById($chunkSize, 'pqr.id', 'id') as $sqlRecord) {
-            $sqlRecordsChunk[] = $sqlRecord;
+        if ($hasSortType) {
+            $sortedIds = $reportService->getSortedIds($params);
 
-            if (count($sqlRecordsChunk) >= $chunkSize) {
-                $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
+            foreach (array_chunk($sortedIds, self::UUID_BATCH_SIZE) as $idBatch) {
+                $records = $reportService->getReportQueryByIds($idBatch, $params)->get()->all();
+                $processedRecords = $reportService->processConsolidatedChunk($records, $params);
 
                 foreach ($processedRecords as $record) {
                     yield $this->mapConsolidatedReportRow($record);
                 }
-
-                $sqlRecordsChunk = [];
             }
-        }
+        } else {
+            $query = $reportService->getReportQuery($params);
+            $sqlRecordsBatch = [];
 
-        if (! empty($sqlRecordsChunk)) {
-            $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
+            foreach ($query->lazyById(self::BATCH_SIZE, 'pqr.id', 'id') as $sqlRecord) {
+                $sqlRecordsBatch[] = $sqlRecord;
 
-            foreach ($processedRecords as $record) {
-                yield $this->mapConsolidatedReportRow($record);
+                if (count($sqlRecordsBatch) >= self::UUID_BATCH_SIZE) {
+                    $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
+
+                    foreach ($processedRecords as $record) {
+                        yield $this->mapConsolidatedReportRow($record);
+                    }
+
+                    $sqlRecordsBatch = [];
+                }
+            }
+
+            if (! empty($sqlRecordsBatch)) {
+                $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
+
+                foreach ($processedRecords as $record) {
+                    yield $this->mapConsolidatedReportRow($record);
+                }
             }
         }
     }
@@ -358,7 +377,7 @@ class InstantAlfredExportService
 
     private function formatCommunicationChannel($channel): string
     {
-        if ($channel instanceof \MongoDB\Model\BSONDocument || $channel instanceof \MongoDB\Model\BSONArray) {
+        if ($channel instanceof BSONDocument || $channel instanceof BSONArray) {
             $channel = $channel->getArrayCopy();
         }
 

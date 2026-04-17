@@ -15,6 +15,7 @@ use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -64,7 +65,7 @@ class CarQuoteController extends Controller
     /**
      * get ocb details
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getOcbDetails($uuid, CarQuoteService $carQuoteService)
     {

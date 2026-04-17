@@ -611,17 +611,22 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::CustomersList)) {
+        if (auth()->user()->canAny([
+            PermissionsEnum::CustomersList,
+            PermissionsEnum::CustomersUpload,
+            PermissionsEnum::LEADS_BY_EMAIL,
+        ])
+        ) {
             $nav = $nav->add('Customers', '', function (Section $section) {
                 $section
-                    ->add('Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::CustomersList), 'Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CustomersUpload),
                         'Uploads',
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->canAny([PermissionsEnum::LEADS_BY_EMAIL, PermissionsEnum::CustomersList]), 'Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 

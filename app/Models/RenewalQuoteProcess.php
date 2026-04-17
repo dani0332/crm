@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RenewalQuoteProcess extends Model
 {
@@ -17,7 +18,7 @@ class RenewalQuoteProcess extends Model
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function renewalUploadLead()
     {
@@ -25,7 +26,7 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function carQuote()
     {
@@ -48,7 +49,7 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function healthQuote()
     {

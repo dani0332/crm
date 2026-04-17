@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             BuyLeadsRevivalPermissionSeeder::class,
             RolePermissionSeeder::class,
+            UpdateRuleNameSeederCompany::class,
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
