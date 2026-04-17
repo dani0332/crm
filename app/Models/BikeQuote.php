@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -18,7 +19,7 @@ class BikeQuote extends Model implements AuditableContract
     public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id', 'bike_value_tier', 'make_id', 'model_id', 'currently_insured_with', 'cubic_capacity', 'emirate_of_registration_id', 'claim_history_id', 'bike_value', 'chassis_number'];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function manufactureYear()
     {
@@ -26,7 +27,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function currentlyInsuredWith()
     {
@@ -34,7 +35,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function uaeLicenseHeldFor()
     {
@@ -42,7 +43,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function quoteStatus()
     {
@@ -50,7 +51,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function bikeQuoteRequestDetail()
     {
@@ -92,7 +93,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function backHomeLicenseHeldFor()
     {
@@ -100,7 +101,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function bikeMake()
     {
@@ -108,7 +109,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function bikeModel()
     {
@@ -116,7 +117,7 @@ class BikeQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function carTypeInsurance()
     {

@@ -6,13 +6,14 @@ use App\Models\PaymentMode;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PaymentModeController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function __construct()
     {
@@ -25,14 +26,14 @@ class PaymentModeController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
         if ($request->ajax()) {
             $data = PaymentMode::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('paymentmode.actions', compact('row'))->render();
@@ -47,7 +48,7 @@ class PaymentModeController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -57,7 +58,7 @@ class PaymentModeController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -82,7 +83,7 @@ class PaymentModeController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(PaymentMode $paymentmode)
     {
@@ -92,7 +93,7 @@ class PaymentModeController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(PaymentMode $paymentmode)
     {
@@ -102,7 +103,7 @@ class PaymentModeController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, PaymentMode $paymentmode)
     {
@@ -123,7 +124,7 @@ class PaymentModeController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(PaymentMode $paymentmode)
     {

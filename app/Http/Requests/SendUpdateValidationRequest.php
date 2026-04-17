@@ -10,6 +10,7 @@ use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateValidationRequest extends FormRequest
@@ -25,7 +26,7 @@ class SendUpdateValidationRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

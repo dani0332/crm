@@ -8,7 +8,9 @@ use App\Facades\Capi;
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
 use App\Services\Logger\LoggerService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,7 +24,7 @@ class LegacyPolicyController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -42,7 +44,7 @@ class LegacyPolicyController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($legacyPolicyId)
     {
@@ -93,7 +95,7 @@ class LegacyPolicyController extends Controller
      * It sends a POST request to the '/api/migrate-policy' endpoint with the policy ID.
      *
      * @param  int  $policyId  The ID of the policy to be migrated.
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function migratePolicy(Request $request, $policyId)
     {
