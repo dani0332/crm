@@ -4,9 +4,9 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity as ActivityModel;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 trait SpatieActivityLog
 {
@@ -43,9 +43,9 @@ trait SpatieActivityLog
     }
 
     /**
-     * Customize the activity before it's saved (Spatie activitylog v5: renamed from tapActivity).
+     * Customize the activity before it's saved (Spatie activitylog v4: ActivityLogger calls tapActivity before persist).
      */
-    public function beforeActivityLogged(ActivityModel $activity, string $eventName): void
+    public function tapActivity(ActivityModel $activity, string $eventName): void
     {
         // Get feature and code from Context (set by LoggerService::startFeatureLogging)
         $feature = Context::get('feature');
@@ -60,7 +60,7 @@ trait SpatieActivityLog
         $activity->user_agent = $request ? $request->userAgent() : null;
         $activity->code = $code;
 
-        // v5 stores model diffs in attribute_changes (not properties)
+        // Structured diff copy for reporting (Spatie also stores old/attributes on properties)
         if ($eventName === 'updated') {
             $changedAttributes = $this->getChanges();
 
