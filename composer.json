@@ -87,16 +87,12 @@
     ],
     "serve": "composer install && doppler run -- php artisan serve",
     "pint:fix": "vendor/bin/pint",
+    "hooks:install": "git config core.hooksPath .githooks",
     "test": "vendor/bin/pest"
   },
   "extra": {
     "laravel": {
       "dont-discover": []
-    },
-    "hooks": {
-      "pre-commit": [
-        "vendor/bin/pint"
-      ]
     }
   },
   "config": {
