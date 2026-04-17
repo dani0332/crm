@@ -371,7 +371,7 @@ class MACRMService
                 'is_active' => true,
                 'auto_claim' => true,
                 'cta_link' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
-                'reference_id' => $carQuote->code,
+                'reference_id' => $quoteUuid,
                 'reference_type' => MotorRevivalEnum::REFERENCE_TYPE->value,
                 'cta_text' => MotorRevivalEnum::CTA_TEXT->value,
             ];
