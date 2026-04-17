@@ -37,9 +37,7 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -193,15 +191,6 @@ class LifeQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-        $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Life,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses
-        );
-
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
             'quoteType' => QuoteTypes::LIFE,
@@ -250,9 +239,6 @@ class LifeQuoteController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
-            'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Life),
         ]);
     }
 

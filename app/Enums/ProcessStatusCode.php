@@ -4,6 +4,11 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
+/**
+ * @method static static OptionOne()
+ * @method static static OptionTwo()
+ * @method static static OptionThree()
+ */
 final class ProcessStatusCode extends Enum
 {
     public const PENDING = 'Pending';
@@ -17,5 +22,4 @@ final class ProcessStatusCode extends Enum
     public const FAILED = 'Failed';
     public const SENT = 'Sent';
     public const UNSUBSCRIBED = 'unsubscribe-request';
-    public const CLICKED = 'Clicked';
 }

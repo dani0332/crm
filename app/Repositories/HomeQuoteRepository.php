@@ -31,12 +31,10 @@ use App\Models\PersonalQuote;
 use App\Models\SubArea;
 use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -407,13 +405,6 @@ class HomeQuoteRepository extends BaseRepository
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Home,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses
-        );
         $customerAddressData = $quote->customerAddressData ?: app(CustomerService::class)->getCustomerAddressData($quote);
         $lookUpData = $quote->lookUpData ?: app(LookupService::class)->getHomeLookUpData();
 
@@ -429,8 +420,6 @@ class HomeQuoteRepository extends BaseRepository
             'quoteTypeId' => QuoteTypeId::Home,
             'quoteStatuses' => $quoteStatuses,
             'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Home),
             'quote' => $quote,
             'activities' => $activities,
             'advisors' => UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value),

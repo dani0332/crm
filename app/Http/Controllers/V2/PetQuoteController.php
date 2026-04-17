@@ -41,11 +41,8 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\EmailStatusService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -209,15 +206,6 @@ class PetQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Pet, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Pet,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses,
-        );
-
         // dd($insuranceProviders);
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -264,9 +252,6 @@ class PetQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Pet),
         ]);
     }
 

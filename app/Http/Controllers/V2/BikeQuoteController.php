@@ -47,10 +47,8 @@ use App\Services\AMLService;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
 use App\Services\CentralService;
-use App\Services\CourtesyEmailService;
 use App\Services\CRUDService;
 use App\Services\EmailStatusService;
-use App\Services\GoogleReviewCommunicationLogService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -229,13 +227,6 @@ class BikeQuoteController extends Controller
 
         // We user personal quotes id in email status
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Bike, $quote->id);
-        $googleReviewCommunicationLogs = app(GoogleReviewCommunicationLogService::class)->getForQuote(
-            $quote->uuid,
-            QuoteTypeId::Bike,
-            $quote->id,
-            $quote->email ?? null,
-            $emailStatuses
-        );
 
         $bikeQuotePlanAddons = BikeQuoteRepository::bikeQuotePlanAddons($uuid);
         $carPlanTypeEnum = CarPlanType::asArray();
@@ -288,8 +279,6 @@ class BikeQuoteController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'yearsOfManufacture' => $yearsOfManufacture,
             'emailStatuses' => $emailStatuses,
-            'googleReviewCommunicationLogs' => $googleReviewCommunicationLogs,
-            'showGoogleReviewCommunicationLog' => CourtesyEmailService::isCourtesyEmailQuoteType(QuoteTypeId::Bike),
             'bikeQuotePlanAddons' => $bikeQuotePlanAddons,
             'carPlanExclusionsCodeEnum' => $carPlanExclusionsCodeEnum,
             'carPlanAddonsCodeEnum' => $carPlanAddonsCodeEnum,

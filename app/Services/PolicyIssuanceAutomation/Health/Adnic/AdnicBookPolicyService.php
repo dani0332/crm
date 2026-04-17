@@ -14,8 +14,6 @@ class AdnicBookPolicyService
 {
     use GenericQueriesAllLobs;
 
-    public function __construct() {}
-
     /**
      * Get steps locking status for UI
      *

@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\EmailStatusTypeEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypes;
 use App\Models\EmailStatus;
@@ -12,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class EmailStatusEventJob implements ShouldQueue
@@ -34,7 +34,7 @@ class EmailStatusEventJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(EmailStatusService $emailStatusService)
+    public function handle()
     {
         try {
             if (DB::getDefaultConnection() !== 'mysql') {
@@ -51,7 +51,8 @@ class EmailStatusEventJob implements ShouldQueue
                         return true;
                     }
                     info('EmailStatusEventJob - update status for home quote : msg_id: '.$this->emailData->message_id.' - status: '.$this->emailData->status.' | Time: '.now());
-                    $emailStatusService->updateEmailStatus($isEmailMessage, $this->emailData->status);
+                    app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
+                    Cache::forget("email_statuses_{$isEmailMessage->quote_type_id}_{$isEmailMessage->quote_id}");
 
                     return true;
                 }
@@ -73,13 +74,12 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->msg_id = $this->emailData->message_id;
                         $newEmailStatus->email_status = $this->emailData->status;
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
-                        $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
-                        $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
                         $newEmailStatus->save();
 
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
-                        $this->storeEmailStatusEvent($emailStatusData, $emailStatusService);
+                        $this->storeEmailStatusEvent($emailStatusData);
+                        Cache::forget("email_statuses_{$emailStatusData->quote_type_id}_{$emailStatusData->quote_id}");
                     } else {
                         info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                     }
@@ -100,7 +100,7 @@ class EmailStatusEventJob implements ShouldQueue
         }
     }
 
-    public function storeEmailStatusEvent($emailStatusData, EmailStatusService $emailStatusService)
+    public function storeEmailStatusEvent($emailStatusData)
     {
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
@@ -109,10 +109,7 @@ class EmailStatusEventJob implements ShouldQueue
         $newEmailStatus->msg_id = $this->emailData->message_id;
         $newEmailStatus->email_status = $this->emailData->status;
         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
-        $newEmailStatus->type = $emailStatusData->type ?? EmailStatusTypeEnum::Email;
-        $newEmailStatus->flow_type = $this->emailData->flow_type ?? $emailStatusData->flow_type;
         $newEmailStatus->save();
-        $emailStatusService->forgetEmailStatusListCache((int) $newEmailStatus->quote_type_id, (int) $newEmailStatus->quote_id);
         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
     }
 

@@ -24,6 +24,7 @@ use App\Listeners\Health\HandleHealthTransactionApproved;
 use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\SendAlfredCoinsInsurancePurchasedWebhook;
 use App\Listeners\TriggerConversionApis;
 use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
@@ -114,6 +115,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         QuotePolicyBooked::class => [
             TriggerConversionApis::class,
+            SendAlfredCoinsInsurancePurchasedWebhook::class,
         ],
         NationalityPoolCreated::class => [
             HandleNationalityPoolCreated::class,

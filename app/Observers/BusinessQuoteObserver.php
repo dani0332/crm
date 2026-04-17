@@ -11,7 +11,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
-use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
@@ -67,7 +66,6 @@ class BusinessQuoteObserver
                     $businessTypeInsurance = QuoteTypes::CORPLINE->value;
                     break;
             }
-
             if (! $businessQuote->isSuppressIntroEmail() && $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
                 LoggerService::info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} ");
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  ");
@@ -158,9 +156,6 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-
-            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Business, 'quoteUID' => $businessQuote->uuid]);
-
             ExtendCustomerSubscriptionViaSQS::dispatch(
                 $businessQuote->customer,
                 'LEAD_STATUS_UPDATE',
