@@ -4,6 +4,7 @@ namespace App\Services\Life;
 
 use App\Models\PersonalQuote;
 use App\Services\BaseService;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LifeQuoteNoteService extends BaseService
 {
@@ -11,7 +12,7 @@ class LifeQuoteNoteService extends BaseService
      * Get the notes for a life quote.
      *
      * @param  PersonalQuote  $quote  The life quote.
-     * @return \Illuminate\Pagination\LengthAwarePaginator
+     * @return LengthAwarePaginator
      */
     public function getNotes(PersonalQuote $quote)
     {

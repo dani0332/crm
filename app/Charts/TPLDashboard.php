@@ -4,6 +4,7 @@ namespace App\Charts;
 
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
+use ArielMejiaDev\LarapexCharts\BarChart;
 use ArielMejiaDev\LarapexCharts\LarapexChart;
 use DB;
 
@@ -18,7 +19,7 @@ class TPLDashboard
         $this->type = CarTypeInsurance::where('is_active', 1)->get();
     }
 
-    public function build(): \ArielMejiaDev\LarapexCharts\BarChart
+    public function build(): BarChart
     {
         $records = CarQuote::query()
             ->select(

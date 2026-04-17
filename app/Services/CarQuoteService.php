@@ -32,6 +32,7 @@ use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\RenewalQuoteProcess;
@@ -44,6 +45,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\OCRTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -1307,7 +1310,7 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             LoggerService::info('Calling KEN get-car-quote-plans to update plans', ['quote_uuid' => $quoteUuId, 'data' => $plansDataArr]);
@@ -1333,7 +1336,7 @@ class CarQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
 
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
@@ -1841,7 +1844,7 @@ class CarQuoteService extends BaseService
             // If sub_source_id is provided, validate sub_source_options_id based on available options
             if (! empty($request->sub_source_id) && is_numeric($request->sub_source_id)) {
                 // Check if the selected sub-source has child options
-                $subSource = \App\Models\Lookup::with('childs')->find($request->sub_source_id);
+                $subSource = Lookup::with('childs')->find($request->sub_source_id);
                 if ($subSource && $subSource->childs && $subSource->childs->count() > 0) {
                     $validationArray['sub_source_options_id'] = 'required|integer|exists:lookups,id';
                 }
@@ -2107,7 +2110,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2250,7 +2253,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2367,7 +2370,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
