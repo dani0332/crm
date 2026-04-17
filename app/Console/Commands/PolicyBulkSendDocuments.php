@@ -20,6 +20,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 class PolicyBulkSendDocuments extends Command
 {
@@ -80,7 +81,7 @@ class PolicyBulkSendDocuments extends Command
         return Command::SUCCESS;
     }
 
-    private function getCodesFromStorage(): \Illuminate\Support\Collection
+    private function getCodesFromStorage(): Collection
     {
         $storage = ApplicationStorage::where('key_name', ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES)->first();
 

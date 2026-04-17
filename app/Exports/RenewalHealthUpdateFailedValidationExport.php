@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
@@ -17,7 +18,7 @@ class RenewalHealthUpdateFailedValidationExport implements FromCollection, WithS
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function collection()
     {

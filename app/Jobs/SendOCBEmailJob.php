@@ -206,7 +206,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
                 LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
             }
 
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             LoggerService::error('Renewals PCP OCB Email failed for  CAR-'.$carQuote->uuid.' Customer EmailAddress:'.$carQuote->email);
         }
     }
