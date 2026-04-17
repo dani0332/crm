@@ -28,6 +28,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'source',
             'sub_source_id',
             'health_team_type',
+            'notional_team',
             'premium',
             'policy_number',
             'support_user_id',
@@ -75,6 +76,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'pec_marked_at',
             'branch_id',
             'is_branch_applicable',
+            'health_plan_type_id',
             'policy_holder_category_code',
             'visa_category_id',
         ], [
@@ -122,6 +124,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             request()->merge($requestParams);
         }
 
+        $hasQuoteStatusFilter = $this->hasFilterValue('quote_status', $requestParams) || $this->hasFilterValue('quote_status_id', $requestParams);
+
         $query
             ->filterBy('code', requestParams: $requestParams)
             ->matchBy('first_name', requestParams: $requestParams)
@@ -148,7 +152,11 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBySegment()
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByDateRange('booking_date', 'policy_booking_date', requestParams: $requestParams)
-            ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
+            ->filterByAdvisorAssignedDates(
+                'healthQuoteRequestDetail',
+                ['assigned_to_date_start', 'assigned_to_date_end'],
+                verifyQuoteStatus: ! $hasQuoteStatusFilter,
+            )
             ->filterByDateRange('last_modified_date', 'updated_at', requestParams: $requestParams)
             ->filterByPrivateClient(request('private_client'))
             ->when($this->hasFilterValue('authorize_date', $requestParams), function ($query) use ($requestParams) {
@@ -219,7 +227,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', $this->getFilterValue('insurer_commission_tax_invoice_number', $requestParams));
             })
             ->when(
-                ! $this->hasFilterValue('email', $requestParams) && ! $this->hasFilterValue('code', $requestParams) && ! $this->hasFilterValue('first_name', $requestParams) && ! $this->hasFilterValue('last_name', $requestParams) && ! $this->hasFilterValue('quote_status_id', $requestParams) && ! $this->hasFilterValue('mobile_no', $requestParams),
+                ! $this->hasFilterValue('email', $requestParams) && ! $this->hasFilterValue('code', $requestParams) && ! $this->hasFilterValue('first_name', $requestParams) && ! $this->hasFilterValue('last_name', $requestParams) && ! $hasQuoteStatusFilter && ! $this->hasFilterValue('mobile_no', $requestParams),
                 fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
             )

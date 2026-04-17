@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ApplicationStorage>
+ * @extends Factory<ApplicationStorage>
  */
 class ApplicationStorageFactory extends Factory
 {
@@ -46,6 +47,28 @@ class ApplicationStorageFactory extends Factory
             'key_name' => 'VAT_VALUE',
             'value' => $value,
             'is_active' => 1,
+        ]);
+    }
+
+    public function createLeadSourceEcommerceForSqlite(string $value): ApplicationStorage
+    {
+        return ApplicationStorage::forceCreate([
+            'key_name' => ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE,
+            'value' => $value,
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function createHealthTeamRoutingEnabledForSqlite(int $value): ApplicationStorage
+    {
+        return ApplicationStorage::forceCreate([
+            'key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED,
+            'value' => $value,
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

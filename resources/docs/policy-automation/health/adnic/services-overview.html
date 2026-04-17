@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC Health - Services Overview Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #27ae60;
+      }
+
+      .section h3 {
+        color: #27ae60;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .section p {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.8;
+      }
+
+      .section ul,
+      .section ol {
+        margin-left: 30px;
+        margin-bottom: 20px;
+        color: #555;
+      }
+
+      .section li {
+        margin-bottom: 10px;
+        line-height: 1.7;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .code-inline {
+        background: #e8f5e9;
+        color: #27ae60;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .service-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-left: 4px solid #27ae60;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .service-card:hover {
+        transform: translateX(5px);
+      }
+
+      .service-card h3 {
+        color: #27ae60;
+        margin-top: 0;
+        font-size: 1.5em;
+        margin-bottom: 20px;
+      }
+
+      .service-card .responsibility {
+        background: #e8f5e9;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .service-card .responsibility strong {
+        color: #2c3e50;
+      }
+
+      .pattern-badge {
+        display: inline-block;
+        background: #27ae60;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        margin: 5px 5px 5px 0;
+        font-weight: 600;
+      }
+
+      .method-signature {
+        background: #f8f9fa;
+        border-left: 3px solid #27ae60;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95em;
+      }
+
+      .method-signature .method-name {
+        color: #27ae60;
+        font-weight: bold;
+      }
+
+      .method-signature .return-type {
+        color: #e74c3c;
+      }
+
+      .method-signature .param-type {
+        color: #3498db;
+      }
+
+      .dependency-list {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .dependency-list strong {
+        color: #856404;
+      }
+
+      .integration-points {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .integration-points strong {
+        color: #0c5460;
+      }
+
+      .nav-links {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-links h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table th {
+        background: #27ae60;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .usage-example {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+      }
+
+      .usage-example h4 {
+        color: #27ae60;
+        margin-top: 0;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .section {
+          padding: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/adnic/index.html">ADNIC</a>
+        <span>></span>
+        <span>Services Overview</span>
+      </div>
+
+      <div class="header">
+        <h1>🔧 Services Overview</h1>
+        <p>
+          Comprehensive Documentation of All ADNIC Health Policy Issuance
+          Automation Services
+        </p>
+      </div>
+
+      <div class="nav-links">
+        <h3>📚 Navigation</h3>
+        <a href="/docs/policy-automation/health/adnic/index.html"
+          >← Back to Overview</a
+        >
+        <a href="/docs/policy-automation/health/adnic/architecture.html"
+          >Architecture →</a
+        >
+        <a href="/docs/policy-automation/health/adnic/automation-flow.html"
+          >Automation Flow →</a
+        >
+        <a href="/docs/policy-automation/health/adnic/api-integration.html"
+          >API Integration →</a
+        >
+      </div>
+
+      <!-- Service 1: AdnicInsuranceService -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            1. AdnicInsuranceService
+            <span class="pattern-badge">Main Orchestrator</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>
+                Implements
+                <code class="code-inline">PolicyIssuanceInterface</code> - Core
+                contract for all insurance providers
+              </li>
+              <li>
+                Manages the overall automation flow and coordinates between
+                different services
+              </li>
+              <li>Tracks step progression and maintains automation state</li>
+              <li>Handles automation enablement checks via feature toggles</li>
+              <li>Determines next step based on completed steps</li>
+              <li>Manages UI step locking status for manual intervention</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">createPolicyIssuanceSchedule</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$insurer</span>):
+            <span class="return-type">void</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Initiates automation schedule. Checks if automation is enabled and
+              creates PolicyIssuance record.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">executeSteps</span>(<span
+              class="param-type"
+              >$process</span
+            >): <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Main entry point for step execution. Validates required data and
+              initiates step sequence.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">executeStepSequence</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>,
+            <span class="param-type">string $nextStepToBeExecuted</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Sequential step execution with state management. Executes steps in
+              order until completion or failure.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getNextStep</span>(<span
+              class="param-type"
+              >?string $completedStep</span
+            >): <span class="return-type">?string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Determines next step based on completed steps. Returns null if all
+              steps completed.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">isPolicyIssuanceAutomationEnabled</span
+            >(): <span class="return-type">bool</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Feature toggle check. Retrieves runtime configuration from
+              ApplicationStorageService.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getStepsLockingStatus</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">bool $throughAutomation = false</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              UI locking status for manual intervention. Delegates to
+              AdnicBookPolicyService.
+            </p>
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">AdnicStepExecutor</code> - Step
+                execution logic
+              </li>
+              <li>
+                <code class="code-inline">AdnicValidationService</code> - Data
+                validation
+              </li>
+              <li>
+                <code class="code-inline">AdnicBookPolicyService</code> -
+                Booking process
+              </li>
+              <li>
+                <code class="code-inline">AdnicResponseHandler</code> - Response
+                formatting
+              </li>
+              <li>
+                <code class="code-inline">ApplicationStorageService</code> -
+                Feature toggles
+              </li>
+              <li>
+                <code class="code-inline">PolicyIssuanceService</code> - Core
+                orchestration
+              </li>
+              <li><code class="code-inline">LoggerService</code> - Logging</li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Create automation schedule $adnicService =
+                app(AdnicInsuranceService::class);
+                $adnicService->createPolicyIssuanceSchedule($quote, $insurer);
+                // Execute automation steps $process =
+                PolicyIssuance::where('quote_id', $quote->id)->first();
+                $response = $adnicService->executeSteps($process); // Check
+                automation status $isEnabled =
+                $adnicService->isPolicyIssuanceAutomationEnabled(); $nextStep =
+                $adnicService->getNextStep($process->completed_step);</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>PolicyIssuanceInterface:</strong> Implements core
+                interface contract
+              </li>
+              <li>
+                <strong>PolicyIssuanceService:</strong> Factory method creates
+                instance via <code class="code-inline">init()</code>
+              </li>
+              <li>
+                <strong>PolicyIssuanceJob:</strong> Queue job calls
+                <code class="code-inline">executeSteps()</code>
+              </li>
+              <li>
+                <strong>AdnicServiceProvider:</strong> Service container binding
+              </li>
+              <li>
+                <strong>ApplicationStorageService:</strong> Runtime feature
+                toggle configuration
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 2: AdnicStepExecutor -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            2. AdnicStepExecutor
+            <span class="pattern-badge">Step Execution Layer</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>
+                Executes individual automation steps using Command Pattern
+              </li>
+              <li>
+                Delegates to appropriate service methods based on step type
+              </li>
+              <li>Updates automation status after each step completion</li>
+              <li>Handles step-specific error scenarios and logging</li>
+              <li>Maps step constants to handler methods</li>
+            </ul>
+          </div>
+
+          <h4>Step Handlers:</h4>
+          <div class="code-block">
+            <code
+              >private array $stepHandlers = [ AdnicEnum::STEP_UPLOAD_DOCUMENTS
+              => 'executeUploadDocumentsStep', AdnicEnum::STEP_ISSUE_POLICY =>
+              'executeIssuePolicyStep', AdnicEnum::STEP_UPLOAD_POLICY_DOCS =>
+              'executeUploadPolicyDocumentsStep', ];</code
+            >
+          </div>
+          <p>
+            <strong>Note:</strong> <code>STEP_BOOK_POLICY</code> constant exists
+            but is not used in automation flow. Booking is handled separately
+            outside automation.
+          </p>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">executeIssuePolicyStep</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Executes policy issuance step. Calls
+              AdnicApiService::issuePolicy() and handles response.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">executeUploadDocumentsStep</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Executes document upload step. Calls
+              AdnicApiService::uploadDocuments() for all required documents.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">executeUploadPolicyDocumentsStep</span
+            >(<span class="param-type">$quote</span>,
+            <span class="param-type">$process</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Executes policy document download and upload to IMCRM. Calls
+              AdnicApiService::uploadPolicyDocumentsToIMCRM().
+            </p>
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">AdnicApiService</code> - API
+                communication layer
+              </li>
+              <li>
+                <code class="code-inline">PolicyIssuanceService</code> - Status
+                updates
+              </li>
+              <li><code class="code-inline">LoggerService</code> - Logging</li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Step executor is called internally by AdnicInsuranceService
+                $stepExecutor = app(AdnicStepExecutor::class); // Execute
+                specific step $response =
+                $stepExecutor->executeIssuePolicyStep($quote, $process); if
+                ($response['status']) { // Step completed successfully
+                $process->update(['completed_step' =>
+                $response['completed_step']]); }</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicInsuranceService:</strong> Calls step handlers via
+                dynamic method invocation
+              </li>
+              <li>
+                <strong>AdnicApiService:</strong> Delegates API calls to
+                appropriate methods
+              </li>
+              <li>
+                <strong>PolicyIssuanceService:</strong> Updates API issuance and
+                insurer status on failures
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 3: AdnicApiService -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            3. AdnicApiService
+            <span class="pattern-badge">API Communication Layer</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Direct interaction with insurance provider APIs</li>
+              <li>Orchestrates API calls with proper payloads and headers</li>
+              <li>
+                Stores API logs for audit trails via PolicyIssuanceService
+              </li>
+              <li>Updates quote and payment data after successful API calls</li>
+              <li>Handles API response parsing and error handling</li>
+              <li>Coordinates document operations and quote updates</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">issuePolicy</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>,
+            <span class="param-type">$healthInsurerRequestResponse</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Creates policy with insurer. Builds payload, calls /GeneratePolicy
+              endpoint, updates quote with policy details.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">uploadDocuments</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>,
+            <span class="param-type">$healthInsurerRequestResponse</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Uploads customer documents to insurer. Validates documents,
+              fetches from Azure, converts to base64, uploads via
+              /UploadDocument endpoint.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">uploadPolicyDocumentsToIMCRM</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Downloads policy documents from insurer and uploads to IMCRM.
+              Calls /GeneratePolicyDocument endpoint, downloads base64 content,
+              uploads to IMCRM.
+            </p>
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">AdnicRequestBuilder</code> - Payload
+                construction
+              </li>
+              <li>
+                <code class="code-inline">AdnicResponseHandler</code> - Response
+                parsing
+              </li>
+              <li>
+                <code class="code-inline">AdnicDocumentHandler</code> - Document
+                operations
+              </li>
+              <li>
+                <code class="code-inline">AdnicQuoteUpdaterService</code> -
+                Quote/payment updates
+              </li>
+              <li>
+                <code class="code-inline">AdnicValidationService</code> -
+                Pre-validation
+              </li>
+              <li>
+                <code class="code-inline">AdnicHttpFacade</code> - HTTP client
+                facade
+              </li>
+              <li>
+                <code class="code-inline">PolicyIssuanceService</code> - Log
+                storage
+              </li>
+              <li><code class="code-inline">LoggerService</code> - Logging</li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Issue policy $apiService = app(AdnicApiService::class);
+                $response = $apiService->issuePolicy($quote, $process,
+                $quote->insurerGenerateQuoteRequestResponse); if
+                ($response['status']) { $policyNumber =
+                $response['data']->PolicyInfo->PolicyNo; // Policy issued
+                successfully } // Upload documents $uploadResponse =
+                $apiService->uploadDocuments($quote, $process,
+                $quote->insurerGenerateQuoteRequestResponse); // Download and
+                upload policy documents $docResponse =
+                $apiService->uploadPolicyDocumentsToIMCRM($quote,
+                $process);</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicHttpFacade:</strong> Makes HTTP POST requests to
+                ADNIC API endpoints
+              </li>
+              <li>
+                <strong>AdnicRequestBuilder:</strong> Builds API-specific
+                payloads
+              </li>
+              <li>
+                <strong>AdnicResponseHandler:</strong> Parses and normalizes API
+                responses
+              </li>
+              <li>
+                <strong>AdnicDocumentHandler:</strong> Fetches documents from
+                Azure and uploads to IMCRM
+              </li>
+              <li>
+                <strong>AdnicQuoteUpdaterService:</strong> Updates quote and
+                payment data after successful API calls
+              </li>
+              <li>
+                <strong>PolicyIssuanceService:</strong> Stores API logs for
+                audit trails
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 4: AdnicHttpClient -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            4. AdnicHttpClient <span class="pattern-badge">HTTP Layer</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Manages HTTP communication with insurance provider</li>
+              <li>Configures authentication, headers, and timeouts</li>
+              <li>Provides consistent error handling for HTTP errors</li>
+              <li>Centralizes API configuration (base URL, credentials)</li>
+              <li>Implements retry mechanism for connection/timeout errors</li>
+              <li>Logs all HTTP requests and responses</li>
+            </ul>
+          </div>
+
+          <h4>Configuration Properties:</h4>
+          <div class="code-block">
+            <code
+              >private string $baseUrl; // From
+              config('constants.ADNIC_API_BASE_URL') private array $authParam;
+              // Authorization token and subscription key private array
+              $baseHeaders; // Standard headers (Content-Type, Accept, Auth)
+              private int $apiTimeout; // From ApplicationStorageService private
+              string $partnerId; // From config('constants.ADNIC_PARTNER_ID')
+              private string $partnerReferenceNo; // From
+              config('constants.ADNIC_PARTNER_REFERENCE_NO')</code
+            >
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">post</span>(<span class="param-type"
+              >string $endPoint</span
+            >, <span class="param-type">array $payload = []</span>,
+            <span class="param-type">array $headers = []</span>):
+            <span class="return-type">Response</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Makes HTTP POST request. Configures timeout, retry logic, headers,
+              and logs request/response.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">buildClient</span>(<span
+              class="param-type"
+              >array $headers = []</span
+            >): <span class="return-type">PendingRequest</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Builds HTTP client with timeout, retry configuration, and merged
+              headers.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getBaseUrl</span>():
+            <span class="return-type">string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Returns configured base URL for API endpoint construction.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getPartnerId</span>():
+            <span class="return-type">string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Returns partner ID for payload construction.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getPartnerReferenceNo</span>():
+            <span class="return-type">string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Returns partner reference number for payload construction.
+            </p>
+          </div>
+
+          <h4>Retry Configuration:</h4>
+          <div class="code-block">
+            <code
+              >// Retry configuration in buildClient() ->retry( times: 5,
+              sleepMilliseconds: 10000, when: function ($exception) { // Retry
+              on connection and timeout exceptions return $exception instanceof
+              ConnectionException; }, throw: false )</code
+            >
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">ApplicationStorageService</code> -
+                Runtime timeout configuration
+              </li>
+              <li>
+                <code class="code-inline">Illuminate\Support\Facades\Http</code>
+                - Laravel HTTP client
+              </li>
+              <li>
+                <code class="code-inline">LoggerService</code> -
+                Request/response logging
+              </li>
+              <li>
+                <code class="code-inline">config()</code> - Environment
+                configuration
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Accessed via AdnicHttpFacade use
+                App\Facades\AdnicHttpFacade; $payload = ['PartnerInfo' =>
+                ['PartnerId' => '123']]; $response =
+                AdnicHttpFacade::post('/GeneratePolicy', $payload); if
+                ($response->successful()) { $data = $response->json(); //
+                Process response } // Direct usage $httpClient =
+                app(AdnicHttpClient::class); $response =
+                $httpClient->post('/UploadDocument', $payload,
+                $customHeaders);</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicHttpFacade:</strong> Provides facade access to HTTP
+                client
+              </li>
+              <li>
+                <strong>AdnicApiService:</strong> Uses facade for all API calls
+              </li>
+              <li>
+                <strong>ApplicationStorageService:</strong> Retrieves timeout
+                configuration at runtime
+              </li>
+              <li>
+                <strong>config/constants.php:</strong> Base URL, credentials,
+                partner information
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 5: AdnicRequestBuilder -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            5. AdnicRequestBuilder
+            <span class="pattern-badge">Payload Builder</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Constructs API request payloads from domain models</li>
+              <li>
+                Formats dates, addresses, and other data as per API requirements
+              </li>
+              <li>Builds headers for specific API calls</li>
+              <li>Encapsulates payload structure knowledge</li>
+              <li>
+                Maps domain values to API-specific codes (nationality, gender,
+                marital status, etc.)
+              </li>
+              <li>Handles complex nested payload structures</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">buildIssuePolicyPayload</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$process</span>,
+            <span class="param-type">$healthInsurerRequestResponse</span>,
+            <span class="param-type">$splitPayment</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Policy creation payload. Builds PartnerInfo, SponsorInfo,
+              QuoteInfo, InsuredInfo, and PolicyInfo sections.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">buildUploadDocumentsPayload</span>(<span
+              class="param-type"
+              >string $base64Content</span
+            >, <span class="param-type">$healthInsurerResponse</span>,
+            <span class="param-type">$insuredMember</span>,
+            <span class="param-type">$insurerDocCode</span>,
+            <span class="param-type">$quoteDocument</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Document upload payload. Includes PartnerInfo and DocumentInfo
+              with base64 content, quotation number, member sequence.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">buildDownloadDocumentPayload</span>(<span
+              class="param-type"
+              >$generatePolicyResponse</span
+            >, <span class="param-type">$docId</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Document download payload. Includes PartnerInfo and
+              PolicyDocumentInfo with document ID, policy number, quotation
+              number.
+            </p>
+          </div>
+
+          <h4>Mapping Methods (Private):</h4>
+          <ul>
+            <li>
+              <code class="code-inline">mappingSalaryBand($salaryBand)</code> -
+              Maps salary band IDs to API codes
+            </li>
+            <li>
+              <code class="code-inline">mappingGender($gender)</code> - Maps
+              gender values to 'M'/'F'
+            </li>
+            <li>
+              <code class="code-inline"
+                >mappingMaritalStatus($maritalStatus)</code
+              >
+              - Maps marital status IDs to API codes
+            </li>
+            <li>
+              <code class="code-inline"
+                >uploadedDocumentsInfo($uploadDocumentsResponse)</code
+              >
+              - Builds document info array from upload responses
+            </li>
+          </ul>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">AdnicHttpClient</code> - Partner ID
+                and reference number
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Build issue policy payload $requestBuilder =
+                app(AdnicRequestBuilder::class); $payload =
+                $requestBuilder->buildIssuePolicyPayload( $quote, $process,
+                $quote->insurerGenerateQuoteRequestResponse, $splitPayment ); //
+                Build upload document payload $base64Content =
+                base64_encode($documentContent); $uploadPayload =
+                $requestBuilder->buildUploadDocumentsPayload( $base64Content,
+                $healthInsurerResponse, $insuredMember, '3', // Emirates ID code
+                $quoteDocument ); // Build download document payload
+                $downloadPayload =
+                $requestBuilder->buildDownloadDocumentPayload(
+                $generatePolicyResponse, $documentId );</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicApiService:</strong> Uses builder for all API
+                payload construction
+              </li>
+              <li>
+                <strong>AdnicHttpClient:</strong> Retrieves partner information
+                for payloads
+              </li>
+              <li>
+                <strong>Domain Models:</strong> Extracts data from Quote,
+                Payment, Customer models
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 6: AdnicResponseHandler -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            6. AdnicResponseHandler
+            <span class="pattern-badge">Response Parser</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Normalizes API responses into consistent structure</li>
+              <li>Parses success/error responses from ADNIC API</li>
+              <li>Builds standardized step response arrays</li>
+              <li>Handles HTTP status codes and API-specific error formats</li>
+              <li>Extracts error messages from various response structures</li>
+              <li>Provides consistent response format across all steps</li>
+            </ul>
+          </div>
+
+          <h4>Standard Response Structure:</h4>
+          <div class="code-block">
+            <code
+              >[ 'status' => bool, // true = success, false = failure
+              'completed_step' => string, // Step identifier (set by caller)
+              'message' => string, // User-friendly message 'error' => mixed, //
+              Error details (null on success) 'data' => mixed, // Response data
+              (null on failure) ]</code
+            >
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">buildStepResponse</span>(<span
+              class="param-type"
+              >string $step</span
+            >, <span class="param-type">bool $status = false</span>,
+            <span class="param-type">?string $message = null</span>,
+            <span class="param-type">$error = null</span>,
+            <span class="param-type">$data = null</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Builds consistent step response array with standardized structure.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">parseHttpResponse</span>(<span
+              class="param-type"
+              >Response $response</span
+            >, <span class="param-type">string $apiKey</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Normalizes HTTP response from ADNIC into consistent structure.
+              Checks for API errors, handles 404 responses.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">hasApiErrors</span>(<span
+              class="param-type"
+              >$responseObject</span
+            >): <span class="return-type">bool</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Checks if response contains API-level errors in ErrorInfo or
+              DocumentInfo.ErrorInfo.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">extractErrorMessage</span>(<span
+              class="param-type"
+              >$responseObject</span
+            >, <span class="param-type">string $apiKey</span>):
+            <span class="return-type">string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Extracts error message from response object. Checks
+              DocumentInfo.ErrorInfo first, then ErrorInfo, falls back to
+              default message.
+            </p>
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">Illuminate\Http\Client\Response</code>
+                - HTTP response object
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Parse HTTP response $responseHandler =
+                app(AdnicResponseHandler::class); $httpResponse =
+                AdnicHttpFacade::post('/GeneratePolicy', $payload);
+                $parsedResponse = $responseHandler->parseHttpResponse(
+                $httpResponse, AdnicEnum::RESPONSE_POLICY ); if
+                ($parsedResponse['status']) { $policyData =
+                $parsedResponse['data']; // Process successful response } else {
+                $error = $parsedResponse['error']; $message =
+                $parsedResponse['message']; // Handle error } // Build step
+                response $stepResponse = $responseHandler->buildStepResponse(
+                AdnicEnum::STEP_ISSUE_POLICY, true, 'Policy issued
+                successfully', null, $policyData );</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicApiService:</strong> Uses handler to parse all API
+                responses
+              </li>
+              <li>
+                <strong>AdnicInsuranceService:</strong> Uses handler to build
+                error responses
+              </li>
+              <li>
+                <strong>AdnicHttpClient:</strong> Provides Response objects for
+                parsing
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 7: AdnicValidationService -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            7. AdnicValidationService
+            <span class="pattern-badge">Validation Layer</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>
+                Pre-validates data before API calls to prevent unnecessary
+                requests
+              </li>
+              <li>
+                Validates quote data completeness (customer, payment, plan
+                details)
+              </li>
+              <li>Validates document availability and types</li>
+              <li>Validates booking prerequisites</li>
+              <li>Provides clear error messages for missing/invalid data</li>
+              <li>Prevents API costs and improves user experience</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">validateRequiredData</span>(<span
+              class="param-type"
+              >$quote</span
+            >): <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Validates required data for policy issuance. Checks health UMAF
+              response, payments, insurer quote number, customer existence.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">validateUploadDocuments</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$quoteDocuments</span>,
+            <span class="param-type">$insuredInfoDetails</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Validates document availability. Checks for mandatory documents
+              (EID, Passport, Visa, Birth Certificate, Medical Form, CDD). Also
+              checks if EID front/back are uploaded.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">validateDownloadDocuments</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">$docTypeCodeForIMCRM</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Validates document IDs availability before downloading. Checks
+              that all required document IDs exist in quote.
+            </p>
+          </div>
+
+          <h4>Mandatory Documents:</h4>
+          <div class="code-block">
+            <code
+              >// Required documents for ADNIC policy issuance
+              $mandatoryDocuments = [
+              DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM, // Medical
+              application form DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE, //
+              Customer Due Diligence DocumentTypeCode::HEA_EID, // Emirates ID
+              DocumentTypeCode::HEA_PAS, // Passport DocumentTypeCode::HEA_VISA,
+              // Visa DocumentTypeCode::HEA_BIRTH_CERTIFICATE, // Birth
+              Certificate ];</code
+            >
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">LoggerService</code> - Error logging
+              </li>
+              <li>
+                <code class="code-inline">DocumentTypeCode</code> - Document
+                type constants
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Validate required data before API call $validationService =
+                app(AdnicValidationService::class); $validationResult =
+                $validationService->validateRequiredData($quote); if
+                (!$validationResult['status']) { return $validationResult; //
+                Contains error message } // Validate documents before upload
+                $quoteDocuments = $documentHandler->getDocumentByType($quote,
+                $documentTypeCodes); $validationResult =
+                $validationService->validateUploadDocuments( $quote,
+                $quoteDocuments, $insuredInfoDetails ); if
+                (!$validationResult['status']) { // Missing documents, return
+                error return $validationResult; } $isEIDFrontBackUploaded =
+                $validationResult['isEIDFrontBackUploaded'];</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicInsuranceService:</strong> Validates required data
+                before step execution
+              </li>
+              <li>
+                <strong>AdnicApiService:</strong> Validates documents before
+                upload/download operations
+              </li>
+              <li>
+                <strong>AdnicStepExecutor:</strong> Uses validation results to
+                determine if steps can proceed
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 8: AdnicBookPolicyService -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            8. AdnicBookPolicyService
+            <span class="pattern-badge">Booking Process</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Manages final booking process and UI step locking status</li>
+              <li>Determines editable steps based on automation state</li>
+              <li>Handles step locking logic for manual intervention</li>
+              <li>
+                Provides UI with information about which steps can be edited
+              </li>
+              <li>
+                Integrates with booking and Sage processes (via other services)
+              </li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">getStepsLockingStatus</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">bool $throughAutomation = false</span>):
+            <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Determines UI editability based on automation state. Returns array
+              with policyIssuance, edit flags, message, and insurer_api_status.
+            </p>
+          </div>
+
+          <h4>Response Structure:</h4>
+          <div class="code-block">
+            <code
+              >[ 'policyIssuance' => $policyIssuance,
+              'isEditPolicyDetailsDisabled' => bool,
+              'isEditBookingDetailsDisabled' => bool, 'message' => string,
+              'insurer_api_status' => string, ]</code
+            >
+          </div>
+
+          <h4>Locking Rules:</h4>
+          <ul>
+            <li>
+              <strong>throughAutomation = true:</strong> All steps editable
+            </li>
+            <li><strong>No policy issuance:</strong> All steps editable</li>
+            <li>
+              <strong>Failed status:</strong> Editable based on completed step
+            </li>
+            <li>
+              <strong>Processing status:</strong> Limited editability based on
+              completed step
+            </li>
+            <li>
+              <strong>STEP_UPLOAD_DOCUMENTS completed:</strong> Policy details
+              and booking editable
+            </li>
+            <li>
+              <strong>STEP_ISSUE_POLICY completed:</strong> Upload documents and
+              booking editable
+            </li>
+            <li>
+              <strong>STEP_UPLOAD_POLICY_DOCS completed:</strong> Only booking
+              editable
+            </li>
+          </ul>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li><code class="code-inline">LoggerService</code> - Logging</li>
+              <li>
+                <code class="code-inline">GenericQueriesAllLobs</code> - Trait
+                for common queries
+              </li>
+              <li>
+                <code class="code-inline">AdnicEnum</code> - Step constants
+              </li>
+              <li>
+                <code class="code-inline">PolicyIssuanceEnum</code> - Status
+                constants
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Get steps locking status for UI $bookPolicyService =
+                app(AdnicBookPolicyService::class); $lockingStatus =
+                $bookPolicyService->getStepsLockingStatus($quote, false); if
+                ($lockingStatus['isEditPolicyDetailsDisabled']) { // Disable
+                policy details editing in UI } if
+                ($lockingStatus['isEditBookingDetailsDisabled']) { // Disable
+                booking details editing in UI } // Show message to user $message
+                = $lockingStatus['message']; // e.g., "All steps are editable"
+                or "Booking Details is editable"</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicInsuranceService:</strong> Delegates
+                getStepsLockingStatus() to this service
+              </li>
+              <li>
+                <strong>UI Controllers:</strong> Uses locking status to
+                enable/disable form fields
+              </li>
+              <li>
+                <strong>PolicyIssuance Model:</strong> Reads completed_step and
+                status for locking logic
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 9: AdnicQuoteUpdaterService -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            9. AdnicQuoteUpdaterService
+            <span class="pattern-badge">Data Updater</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Updates quote data from API responses</li>
+              <li>Updates payment and commission information</li>
+              <li>Maintains data consistency between systems</li>
+              <li>Updates policy numbers, dates, and amounts</li>
+              <li>Handles quote status transitions</li>
+              <li>Filters null values to avoid overwriting existing data</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">updateQuoteFromIssuePolicyResponse</span
+            >(<span class="param-type">$quote</span>,
+            <span class="param-type">$issuePolicyResult</span>):
+            <span class="return-type">void</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Updates quote with policy details from API response. Sets
+              policy_number, policy_start_date, policy_expiry_date,
+              quote_status_id, policy_issuance_status_id.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">updatePaymentFromIssuePolicyResponse</span
+            >(<span class="param-type">string $quoteCode</span>,
+            <span class="param-type">$issuePolicyResult</span>):
+            <span class="return-type">void</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Updates payment with commission details. Currently commented out,
+              reserved for future use.
+            </p>
+          </div>
+
+          <h4>Quote Updates:</h4>
+          <div class="code-block">
+            <code
+              >// Fields updated from issue policy response $data = [
+              'policy_number' => $issuePolicyResult->PolicyInfo->PolicyNo,
+              'policy_start_date' =>
+              $issuePolicyResult->PolicyInfo->PolicyStartDate,
+              'policy_expiry_date' =>
+              $issuePolicyResult->PolicyInfo->PolicyEndDate, 'quote_status_id'
+              => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' =>
+              PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' =>
+              now(), ];</code
+            >
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">QuoteStatusEnum</code> - Quote status
+                constants
+              </li>
+              <li>
+                <code class="code-inline">PolicyIssuanceStatusEnum</code> -
+                Policy issuance status constants
+              </li>
+              <li>
+                <code class="code-inline">Payment</code> - Payment model (for
+                future payment updates)
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Update quote after successful policy issuance $quoteUpdater
+                = app(AdnicQuoteUpdaterService::class); $issuePolicyResult =
+                $apiResponse['data']->data;
+                $quoteUpdater->updateQuoteFromIssuePolicyResponse($quote,
+                $issuePolicyResult); // Quote is now updated with: // -
+                policy_number // - policy_start_date // - policy_expiry_date //
+                - quote_status_id = PolicyIssued // - policy_issuance_status_id
+                = PolicyIssued // Refresh quote to get updated data
+                $quote->refresh();</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicApiService:</strong> Calls updater after successful
+                policy issuance API call
+              </li>
+              <li>
+                <strong>PersonalQuote Model:</strong> Updates quote record in
+                database
+              </li>
+              <li>
+                <strong>Payment Model:</strong> Reserved for future payment
+                updates
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service 10: AdnicDocumentHandler -->
+      <div class="section">
+        <div class="service-card">
+          <h3>
+            10. AdnicDocumentHandler
+            <span class="pattern-badge">Document Management</span>
+          </h3>
+
+          <div class="responsibility">
+            <strong>Purpose & Responsibilities:</strong>
+            <ul>
+              <li>Fetches documents from Azure storage</li>
+              <li>Validates document types and formats (MIME type checking)</li>
+              <li>Uploads documents to insurer and IMCRM</li>
+              <li>
+                Maps document types between systems (IMCRM codes ↔ Insurer
+                codes)
+              </li>
+              <li>Handles base64 encoding/decoding</li>
+              <li>Manages document type mappings for health insurance</li>
+            </ul>
+          </div>
+
+          <h4>Key Methods:</h4>
+          <div class="method-signature">
+            <span class="method-name">fetchDocumentContent</span>(<span
+              class="param-type"
+              >string $relativePath</span
+            >): <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Retrieves document from Azure storage. Validates MIME type (PDF,
+              JPEG, PNG), returns content or error.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">uploadAndAttachToQuoteDocuments</span
+            >(<span class="param-type">$quote</span>,
+            <span class="param-type">$documentContent</span>,
+            <span class="param-type">string $documentCode</span>,
+            <span class="param-type">?string $originalName = null</span>):
+            <span class="return-type">mixed</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Uploads base64 document to IMCRM and attaches to quote. Uses
+              QuoteDocumentService for upload.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getDocumentByType</span>(<span
+              class="param-type"
+              >$quote</span
+            >, <span class="param-type">array $documentTypeCodes</span>):
+            <span class="return-type">Collection|null</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Finds documents by type from quote documents collection. Returns
+              collection or null if not found.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getInsurerDocCodeForHealth</span>(<span
+              class="param-type"
+              >string $documentType</span
+            >): <span class="return-type">?string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Maps IMCRM document type codes to ADNIC insurer document codes.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getDocTypeCodeForIMCRM</span>(<span
+              class="param-type"
+              >$quote</span
+            >): <span class="return-type">array</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Maps insurer document keys to IMCRM document type codes for policy
+              documents.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name"
+              >getQuoteDocumentMappingForInsurerDocuments</span
+            >(<span class="param-type">$documentType</span>):
+            <span class="return-type">?string</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Maps insurer document keys (PolicyDocument, CommisionNote,
+              TaxInvoice) to IMCRM document codes.
+            </p>
+          </div>
+
+          <div class="method-signature">
+            <span class="method-name">getQuoteDocumentTypeCodessToUpload</span
+            >(): <span class="return-type">Collection</span>
+            <p style="margin-top: 10px; color: #555; font-style: italic">
+              Returns collection of document types that need to be uploaded with
+              their insurer codes and names.
+            </p>
+          </div>
+
+          <h4>Document Type Mappings:</h4>
+          <div class="code-block">
+            <code
+              >// IMCRM → ADNIC Insurer Codes HEA_EID → '3' (Emirates ID)
+              HEA_VISA → '6' (Visa) HEA_PAS → '1' (Passport) HEA_EID_FRONT → '4'
+              (Emirates ID Front) HEA_EID_BACK → '5' (Emirates ID Back)
+              HEA_BIRTH_CERTIFICATE → '11' (Birth Certificate)
+              HEA_MEDICAL_APPLICATION_FORM → '18' (Medical Application Form)
+              HEA_CUSTOMER_DUE_DILIGENCE → '17' (Customer Due Diligence) //
+              ADNIC Insurer → IMCRM Codes PolicyDocument → POLC (Policy
+              Schedule) CommisionNote → TIRBB (Debit Note) TaxInvoice → TI (Tax
+              Invoice)</code
+            >
+          </div>
+
+          <h4>Allowed MIME Types:</h4>
+          <div class="code-block">
+            <code
+              >private const ALLOWED_DOCUMENT_MIME_TYPES = [ 'application/pdf',
+              'image/jpeg', 'image/png' ];</code
+            >
+          </div>
+
+          <div class="dependency-list">
+            <strong>Dependencies:</strong>
+            <ul>
+              <li>
+                <code class="code-inline">QuoteDocumentService</code> - Document
+                upload to IMCRM
+              </li>
+              <li>
+                <code class="code-inline">DocumentTypeCode</code> - Document
+                type constants
+              </li>
+              <li>
+                <code class="code-inline">AdnicEnum</code> - Insurer document
+                key constants
+              </li>
+              <li>
+                <code class="code-inline">LoggerService</code> - Error logging
+              </li>
+            </ul>
+          </div>
+
+          <div class="usage-example">
+            <h4>Usage Example:</h4>
+            <div class="code-block">
+              <code
+                >// Fetch document from Azure $documentHandler =
+                app(AdnicDocumentHandler::class); $documentResponse =
+                $documentHandler->fetchDocumentContent($quoteDocument->doc_url);
+                if ($documentResponse['status']) { $fileContent =
+                $documentResponse['content']; $base64Content =
+                base64_encode($fileContent); // Get insurer document code
+                $insurerDocCode = $documentHandler->getInsurerDocCodeForHealth(
+                $quoteDocument->document_type_code ); // Upload to insurer (via
+                AdnicApiService) // ... } // Upload policy document to IMCRM
+                $documentContent = $downloadResponse['data']->documentContent;
+                $docCode =
+                $documentHandler->getQuoteDocumentMappingForInsurerDocuments(
+                'PolicyDocument' ); $quoteDocument =
+                $documentHandler->uploadAndAttachToQuoteDocuments( $quote,
+                $documentContent, $docCode, $documentName ); // Get documents by
+                type $documentTypeCodes = [DocumentTypeCode::HEA_EID,
+                DocumentTypeCode::HEA_PAS]; $documents =
+                $documentHandler->getDocumentByType($quote,
+                $documentTypeCodes);</code
+              >
+            </div>
+          </div>
+
+          <div class="integration-points">
+            <strong>Integration Points:</strong>
+            <ul>
+              <li>
+                <strong>AdnicApiService:</strong> Uses handler for all document
+                operations
+              </li>
+              <li>
+                <strong>QuoteDocumentService:</strong> Uploads documents to
+                IMCRM storage
+              </li>
+              <li>
+                <strong>Azure Storage:</strong> Fetches document content via
+                file_get_contents()
+              </li>
+              <li>
+                <strong>Quote Documents:</strong> Reads and writes document
+                attachments
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Dependencies Overview -->
+      <div class="section">
+        <h2>🔗 Service Dependencies Overview</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Direct Dependencies</th>
+              <th>Used By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AdnicInsuranceService</strong></td>
+              <td>
+                StepExecutor, ValidationService, BookPolicyService,
+                ResponseHandler
+              </td>
+              <td>PolicyIssuanceService, PolicyIssuanceJob</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicStepExecutor</strong></td>
+              <td>ApiService</td>
+              <td>AdnicInsuranceService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicApiService</strong></td>
+              <td>
+                RequestBuilder, ResponseHandler, DocumentHandler, QuoteUpdater,
+                ValidationService, HttpFacade
+              </td>
+              <td>AdnicStepExecutor</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicHttpClient</strong></td>
+              <td>ApplicationStorageService, Http Facade</td>
+              <td>AdnicApiService (via Facade)</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicRequestBuilder</strong></td>
+              <td>HttpClient</td>
+              <td>AdnicApiService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicResponseHandler</strong></td>
+              <td>None (pure adapter)</td>
+              <td>AdnicApiService, AdnicInsuranceService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicValidationService</strong></td>
+              <td>LoggerService</td>
+              <td>AdnicStepExecutor, AdnicInsuranceService, AdnicApiService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicBookPolicyService</strong></td>
+              <td>LoggerService, GenericQueriesAllLobs trait</td>
+              <td>AdnicInsuranceService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicQuoteUpdaterService</strong></td>
+              <td>QuoteStatusEnum, PolicyIssuanceStatusEnum</td>
+              <td>AdnicApiService</td>
+            </tr>
+            <tr>
+              <td><strong>AdnicDocumentHandler</strong></td>
+              <td>QuoteDocumentService</td>
+              <td>AdnicApiService</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Service Interaction Flow -->
+      <div class="section">
+        <h2>🔄 Service Interaction Flow</h2>
+
+        <div class="code-block">
+          <code
+            >// Complete automation flow showing service interactions 1.
+            PolicyIssuanceJob::handle() └─>
+            AdnicInsuranceService::executeSteps($process) ├─>
+            AdnicValidationService::validateRequiredData($quote) └─>
+            AdnicInsuranceService::executeStepSequence($quote, $process,
+            $nextStep) └─> AdnicStepExecutor::executeIssuePolicyStep($quote,
+            $process) └─> AdnicApiService::issuePolicy($quote, $process,
+            $requestResponse) ├─>
+            AdnicRequestBuilder::buildIssuePolicyPayload(...) ├─>
+            AdnicHttpFacade::post('/GeneratePolicy', $payload) │ └─>
+            AdnicHttpClient::post(...) ├─>
+            AdnicResponseHandler::parseHttpResponse($response, ...) ├─>
+            PolicyIssuanceService::storePolicyIssuanceLog(...) └─>
+            AdnicQuoteUpdaterService::updateQuoteFromIssuePolicyResponse(...) 2.
+            Document Upload Flow └─>
+            AdnicStepExecutor::executeUploadDocumentsStep($quote, $process) └─>
+            AdnicApiService::uploadDocuments($quote, $process, $requestResponse)
+            ├─> AdnicValidationService::validateUploadDocuments(...) ├─>
+            AdnicDocumentHandler::getDocumentByType($quote, $codes) ├─>
+            AdnicDocumentHandler::fetchDocumentContent($docUrl) ├─>
+            AdnicRequestBuilder::buildUploadDocumentsPayload(...) ├─>
+            AdnicHttpFacade::post('/UploadDocument', $payload) └─>
+            PolicyIssuanceService::storePolicyIssuanceLog(...) 3. Policy
+            Documents Download Flow └─>
+            AdnicStepExecutor::executeUploadPolicyDocumentsStep($quote,
+            $process) └─> AdnicApiService::uploadPolicyDocumentsToIMCRM($quote,
+            $process) ├─> AdnicValidationService::validateDownloadDocuments(...)
+            ├─> AdnicRequestBuilder::buildDownloadDocumentPayload(...) ├─>
+            AdnicHttpFacade::post('/GeneratePolicyDocument', $payload) ├─>
+            AdnicResponseHandler::parseHttpResponse(...) ├─>
+            AdnicDocumentHandler::uploadAndAttachToQuoteDocuments(...) └─>
+            PolicyIssuanceService::storePolicyIssuanceLog(...)</code
+          >
+        </div>
+      </div>
+
+      <!-- Best Practices -->
+      <div class="section">
+        <h2>✅ Service Usage Best Practices</h2>
+
+        <h3>1. Always Use Dependency Injection</h3>
+        <div class="code-block">
+          <code
+            >// ✅ Good: Constructor injection public function __construct(
+            private AdnicApiService $apiService, private AdnicValidationService
+            $validationService, ) {} // ❌ Bad: Direct instantiation $apiService
+            = new AdnicApiService();</code
+          >
+        </div>
+
+        <h3>2. Validate Before API Calls</h3>
+        <div class="code-block">
+          <code
+            >// ✅ Good: Pre-validation $validationResult =
+            $this->validationService->validateRequiredData($quote); if
+            (!$validationResult['status']) { return $validationResult; } //
+            Proceed with API call // ❌ Bad: No validation $response =
+            $this->apiService->issuePolicy($quote, $process);</code
+          >
+        </div>
+
+        <h3>3. Handle Response Structure Consistently</h3>
+        <div class="code-block">
+          <code
+            >// ✅ Good: Check status and handle errors $response =
+            $this->apiService->issuePolicy($quote, $process, $requestResponse);
+            if (!$response['status']) { LoggerService::error('API call failed',
+            extra: [ 'error' => $response['error'], ]); return $response; } //
+            Process successful response // ❌ Bad: Assume success $policyNumber
+            = $response['data']->PolicyInfo->PolicyNo;</code
+          >
+        </div>
+
+        <h3>4. Log Comprehensive Context</h3>
+        <div class="code-block">
+          <code
+            >// ✅ Good: Detailed logging LoggerService::info('Starting policy
+            issuance', extra: [ 'step' => AdnicEnum::STEP_ISSUE_POLICY,
+            'process_id' => $process->id, 'plan_id' => $quote->plan_id,
+            'quote_code' => $quote->code, ]); // ❌ Bad: Minimal logging
+            LoggerService::info('Policy issuance started');</code
+          >
+        </div>
+
+        <h3>5. Use Service Facades Appropriately</h3>
+        <div class="code-block">
+          <code
+            >// ✅ Good: Use facade for HTTP client use
+            App\Facades\AdnicHttpFacade; $response =
+            AdnicHttpFacade::post($endPoint, $payload); // ✅ Also Good: Direct
+            service injection for business logic public function __construct(
+            private AdnicApiService $apiService, ) {}</code
+          >
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong
+            >ADNIC Health Insurance Automation - Services Overview
+            Documentation</strong
+          >
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Documentation Version 1.0 | Last Updated: February 2026 | Production
+          Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

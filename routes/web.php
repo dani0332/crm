@@ -40,6 +40,8 @@ use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\NationalityAllocationConfigurationController;
+use App\Http\Controllers\NationalityGroupController;
+use App\Http\Controllers\NationalityPoolConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -249,6 +251,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
     Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
 
+    Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->name('leads-by-email')->middleware('permission:'.PermissionsEnum::CustomersList.'|'.PermissionsEnum::LEADS_BY_EMAIL);
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -303,7 +307,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
-        Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->can(PermissionsEnum::CustomersList);
+
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
@@ -337,7 +341,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Claims Management Routes
-    Route::group(['prefix' => 'claim', 'as' => 'claims.'], function () {
+    Route::group(['prefix' => 'claim', 'as' => 'claims.', 'middleware' => 'claims_module_enabled'], function () {
         // Main CRUD Routes
         Route::get('/', [ClaimsController::class, 'index'])->name('index');
         Route::get('/create', [ClaimsController::class, 'create'])->name('create');
@@ -351,7 +355,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/export', [ClaimsController::class, 'export'])->name('export');
 
         // Claim Actions
+        Route::post('/bulk-assign', [ClaimsController::class, 'bulkAssignClaims'])->name('bulk-assign');
         Route::post('/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('update.details');
+        Route::post('/{claim:uuid}/assign', [ClaimsController::class, 'assignClaim'])->name('assign');
         Route::post('/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('update.status');
         Route::post('/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('update.complaint-status');
         Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
@@ -508,10 +514,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     // claim allocation
-    Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
-    Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
-    Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
-    Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    Route::middleware('claims_module_enabled')->group(function () {
+        Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
+        Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
+        Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
+        Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+    });
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
@@ -696,7 +704,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-        Route::resource('business', BusinessQuoteController::class);
+        Route::resource('business', BusinessQuoteController::class)->middleware('check_route_access:corpline-quotes');
 
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
@@ -769,6 +777,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'generic'], function () {
         Route::resource('allocation-threshold', AllocationThresholdController::class);
+        Route::get('teams-by-category/{category}', [AllocationThresholdController::class, 'getTeams'])->name('getByCategory');
         Route::resource('team', TeamController::class);
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))
@@ -788,8 +797,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('status', StatusController::class);
         Route::resource('paymentmode', PaymentModeController::class);
         Route::resource('transaction', TransactionController::class)->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete');
-        Route::get('home', [TransactionController::class, 'transectionHome'])->name('home');
-        Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->name('showtransaction');
+        Route::get('home', [TransactionController::class, 'transectionHome'])->middleware('permission:transapp-search')->name('home');
+        Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->middleware('permission:transapp-search')->name('showtransaction');
         Route::get('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransectionView'])->name('reissue_view');
         Route::get('re-issue-transaction-form', [TransactionController::class, 'cancelAndReIssueTransectionForm'])->name('re_issue_transaction_form');
         Route::post('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransection'])->name('re_issue');
@@ -860,7 +869,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tmleadstatus', TmLeadStatusController::class);
         Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
         Route::resource('tmuploadlead', TmUploadLeadController::class)->names(generateRouteNames('tmuploadlead'));
-        Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
+        Route::put('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
         Route::post('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
     });
 
@@ -878,6 +887,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
+    Route::post('health-routing-logs', [AuditableController::class, 'loadHealthRoutingLogs']);
     Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
@@ -953,6 +963,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'admin.nationality-allocation-config.update',
         'destroy' => 'admin.nationality-allocation-config.destroy',
     ]);
+
+    // Nationality Pool Configuration Routes
+    Route::get('nationality-pool-config', [NationalityPoolConfigurationController::class, 'index'])->name('admin.nationality-pool-config.index');
+    Route::get('nationality-pool-config/data/{id?}', [NationalityPoolConfigurationController::class, 'getData'])->name('admin.nationality-pool-config.data');
+    Route::post('nationality-pool-config', [NationalityPoolConfigurationController::class, 'save'])->name('admin.nationality-pool-config.save');
+    Route::get('nationality-pool-audit-logs/{type}', [NationalityPoolConfigurationController::class, 'getAuditLogs'])->name('admin.nationality-pool-audit-logs');
+    Route::delete('nationality-pool-audit-logs/{id}', [NationalityPoolConfigurationController::class, 'deleteAuditLog'])->name('admin.nationality-pool-audit-logs.destroy');
+    Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
+    Route::post('group-nationalities', [NationalityGroupController::class, 'getGroupNationalities'])->name('admin.group-nationalities');
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])

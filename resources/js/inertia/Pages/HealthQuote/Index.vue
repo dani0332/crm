@@ -1423,6 +1423,9 @@ const paymentStatusOptions = computed(() => {
           {{ item.renewal_batch_text }}
         </p>
       </template>
+      <template #item-health_team_type="item">
+        {{ item.health_team_type ?? item.notional_team }}
+      </template>
       <template #item-member_category.text="item">
         <p>
           {{ item.member_category?.text ?? 'N/A' }}

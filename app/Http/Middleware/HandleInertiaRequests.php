@@ -346,7 +346,8 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->addIf(
                         // CLAIM_ALLOCATION_DASHBOARD
-                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD),
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)
+                            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true),
                         'Claims',
                         route('claim-allocation-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
@@ -388,7 +389,8 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)) {
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)
+            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true)) {
             $nav = $nav->add('Services', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -568,11 +570,11 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        auth()->user()->can(PermissionsEnum::TRANSAPP_SEARCH),
                         'Search Transaction',
                         route('home'),
                         fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
@@ -604,17 +606,22 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::CustomersList)) {
+        if (auth()->user()->canAny([
+            PermissionsEnum::CustomersList,
+            PermissionsEnum::CustomersUpload,
+            PermissionsEnum::LEADS_BY_EMAIL,
+        ])
+        ) {
             $nav = $nav->add('Customers', '', function (Section $section) {
                 $section
-                    ->add('Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::CustomersList), 'Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CustomersUpload),
                         'Uploads',
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->canAny([PermissionsEnum::LEADS_BY_EMAIL, PermissionsEnum::CustomersList]), 'Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -879,6 +886,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
+                                'GBP Eligible Nationalities',
+                                route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

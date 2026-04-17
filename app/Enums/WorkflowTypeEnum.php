@@ -43,6 +43,7 @@ final class WorkflowTypeEnum extends Enum
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
     public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER = 'send_policy_issued_whatsapp_message_to_customer';
+    public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL = 'send_policy_issued_whatsapp_message_to_customer_travel';
     public const MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups';
     public const MOTOR_PCP_OCB = 'motor_pcp_ocb';
     public const COMPANY_CAR_AUTOMATED_FOLLOWUPS = 'company_car_automated_followups';
@@ -91,4 +92,5 @@ final class WorkflowTypeEnum extends Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
     public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
+    public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS = 'car_intro_email_without_vehicle_details';
 }

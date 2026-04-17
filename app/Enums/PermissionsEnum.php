@@ -58,6 +58,7 @@ final class PermissionsEnum extends Enum
     public const TransAppCreate = 'transapp-create';
     public const TransAppEdit = 'transapp-edit';
     public const TransAppDelete = 'transapp-delete';
+    public const TRANSAPP_SEARCH = 'transapp-search';
     public const ClaimList = 'claim-list';
     public const ClaimCreate = 'claim-create';
     public const ClaimEdit = 'claim-edit';
@@ -182,6 +183,8 @@ final class PermissionsEnum extends Enum
     public const CAR_LEAD_ALLOCATION_DASHBOARD = 'car-lead-allocation-dashboard';
     public const HEALTH_LEAD_ALLOCATION_DASHBOARD = 'health-lead-allocation-dashboard';
     public const RULE_CONFIG_LIST = 'rule-config-list';
+    public const RULE_CONFIG_CREATE = 'rule-config-create';
+    public const RULE_CONFIG_UPDATE = 'rule-config-update';
     public const QUAD_CONFIG_LIST = 'quad-config-list';
     public const TIER_CONFIG_LIST = 'tier-config-list';
     public const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
@@ -427,6 +430,7 @@ final class PermissionsEnum extends Enum
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
+    public const NATIONALITY_POOL_CONFIG = 'nationality-pool-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
@@ -462,6 +466,7 @@ final class PermissionsEnum extends Enum
     public const CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
     public const CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
     public const CLAIM_DOWNLOAD_ALL_DOCUMENTS = 'claim-download-all-documents';
+    public const CLAIMS_MANUAL_ASSIGN = 'claim-manual-assign';
     // End of Claims Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
@@ -493,6 +498,7 @@ final class PermissionsEnum extends Enum
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+    public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -572,6 +578,7 @@ final class PermissionsEnum extends Enum
                 self::CLAIMS_SUB_STATUS_UPDATE,
                 self::CLAIM_DOCUMENT_UPLOAD,
                 self::CLAIM_DOCUMENT_S3_URL,
+                self::CLAIMS_MANUAL_ASSIGN,
             ],
             'claimLead' => [
                 self::CLAIM_LIST,
@@ -581,6 +588,7 @@ final class PermissionsEnum extends Enum
                 self::CLAIMS_EXPORT_DATA,
                 self::CLAIMS_STATUS_UPDATE,
                 self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIMS_MANUAL_ASSIGN,
                 self::CLAIM_DOCUMENT_UPLOAD,
                 self::CLAIM_DOCUMENT_DELETE,
                 self::CLAIM_DOCUMENT_S3_URL,

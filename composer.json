@@ -27,7 +27,7 @@
     "laravel/tinker": "^2.5",
     "league/flysystem-aws-s3-v3": "^3.0",
     "maatwebsite/excel": "^3.1",
-    "mongodb/laravel-mongodb": "^5.1",
+    "mongodb/laravel-mongodb": "^5.7",
     "owen-it/laravel-auditing": "^14.0",
     "parsecsv/php-parsecsv": "^1.3",
     "phpoffice/phpword": "^1.2",
@@ -36,7 +36,7 @@
     "sentry/sentry-laravel": "^4.4.1",
     "setasign/fpdf": "^1.8",
     "setasign/fpdi": "^2.6",
-    "spatie/laravel-activitylog": "dev-main",
+    "spatie/laravel-activitylog": "^4.0",
     "spatie/laravel-navigation": "^1.2",
     "spatie/laravel-permission": "^6.4.0",
     "staudenmeir/laravel-cte": "^1.12",
@@ -87,16 +87,12 @@
     ],
     "serve": "composer install && doppler run -- php artisan serve",
     "pint:fix": "vendor/bin/pint",
+    "hooks:install": "git config core.hooksPath .githooks",
     "test": "vendor/bin/pest"
   },
   "extra": {
     "laravel": {
       "dont-discover": []
-    },
-    "hooks": {
-      "pre-commit": [
-        "vendor/bin/pint"
-      ]
     }
   },
   "config": {

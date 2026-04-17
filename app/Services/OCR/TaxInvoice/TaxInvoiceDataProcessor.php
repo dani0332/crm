@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\TaxInvoice;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\SendUpdateLog;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\OcrValidator;
@@ -138,7 +140,7 @@ class TaxInvoiceDataProcessor
 
             // Only update 'vat' column for regular quotes, not Send Update logs
             if ($this->isFieldEnabled($this->providerCode, 'quote.vat')) {
-                $vatPercentage = app(\App\Services\ApplicationStorageService::class)->getValueByKey(\App\Enums\ApplicationStorageEnums::VAT_VALUE);
+                $vatPercentage = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
                 $vatAmount = $priceVatApplicable * $vatPercentage / 100;
                 $dataToUpdate['vat'] = $vatAmount;
 

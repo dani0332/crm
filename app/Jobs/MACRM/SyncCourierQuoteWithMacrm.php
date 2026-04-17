@@ -2,6 +2,7 @@
 
 namespace App\Jobs\MACRM;
 
+use App\Services\Logger\LoggerService;
 use App\Services\MACRMService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -10,7 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class SyncCourierQuoteWithMacrm implements ShouldQueue
 {
@@ -27,9 +27,10 @@ class SyncCourierQuoteWithMacrm implements ShouldQueue
     public function handle(): void
     {
         try {
+            LoggerService::info(self::class." - Syncing Courier Quote with MACRM for UUID: {$this->quote->uuid} and QuoteTypeId: {$this->quoteTypeId}");
             MACRMService::syncCourierQuote($this->quote, $this->quoteTypeId);
         } catch (Exception $e) {
-            Log::error(self::class." - Error: {$e->getMessage()}");
+            LoggerService::error(self::class.' - Error while syncing Courier Quote with MACRM', exception: $e);
         }
     }
 

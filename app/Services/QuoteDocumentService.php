@@ -32,6 +32,7 @@ use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
+use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -41,8 +42,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use League\Flysystem\UnableToCheckExistence;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
+use Throwable;
 
 class QuoteDocumentService extends BaseService
 {
@@ -51,6 +54,7 @@ class QuoteDocumentService extends BaseService
     private const LOG_WITH_KEY = ' with key: ';
 
     protected $client;
+    use ChecksAzureFileExistence;
     use GenericQueriesAllLobs;
 
     public function __construct()
@@ -87,7 +91,13 @@ class QuoteDocumentService extends BaseService
                 return $query;
             })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->when($documentTypeCategory === DocumentTypeCode::CLAIM, function ($collection) {
+                return $collection->each(function ($documentType) {
+                    $documentType->is_claim_form = str_starts_with($documentType->code, 'CLM_')
+                        && str_ends_with($documentType->code, '_CF');
+                });
+            });
     }
 
     public function isEnabled($quoteModelType)
@@ -320,7 +330,7 @@ class QuoteDocumentService extends BaseService
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
                 'document_category' => $data['document_category'] ?? null,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => auth()->id() ?? null,
             ]);
 
             // update the Bor log reference with uploaded document time and status
@@ -949,18 +959,49 @@ class QuoteDocumentService extends BaseService
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
+        $tempOutputFile = $tempFile.'_watermarked.docx';
 
-        $phpWord = IOFactory::load($tempFile);
-        $section = $phpWord->getSection(0);
-        // Define the watermark style
-        $header = $section->addHeader();
-        $header->addWatermark(public_path('images/watermark1.png'));
+        $result = null;
+        try {
+            $phpWord = IOFactory::load($tempFile);
+            $section = $phpWord->getSection(0);
+            // Define the watermark style
+            $header = $section->addHeader();
+            $header->addWatermark(public_path('images/watermark1.png'));
 
-        // Save the modified document
-        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($tempFile);
+            // Save to a separate temp path first — writing to the same path that IOFactory::load()
+            // opened (an internal ZipArchive read handle) causes a "Invalid or uninitialized Zip object"
+            // ValueError because PHP can't open the same file for writing while it's still referenced.
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($tempOutputFile);
 
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            // Release the source handle by unsetting, then atomically replace the original temp file
+            unset($phpWord, $objWriter);
+
+            // Check for successful atomic replacement, handle failure
+            if (! @rename($tempOutputFile, $tempFile)) {
+                // Clean up orphaned temp output file if present
+                if (file_exists($tempOutputFile)) {
+                    @unlink($tempOutputFile);
+                }
+                LoggerService::error("Failed to atomically replace temp file with watermarked docx during watermarking of $docName", extra: [
+                    'uuid' => $uuid,
+                    'tempFile' => $tempFile,
+                    'tempOutputFile' => $tempOutputFile,
+                ]);
+                throw new \RuntimeException("Failed to replace unwatermarked temp file with watermarked version for $docName");
+            }
+
+            $result = $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            foreach ([$tempOutputFile, $tempFile] as $cleanupPath) {
+                if (file_exists($cleanupPath)) {
+                    @unlink($cleanupPath);
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function isEnableUploadDocument($quoteStatusId)
@@ -972,20 +1013,48 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
     {
-        // Early return if filePath is empty or null to avoid any errors
         if (empty($filePath)) {
             return null;
         }
 
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
-            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
-        }
+        try {
+            if (! $this->checkAzureFileExistsWithRetry($filePath, $storageDisk)) {
+                return null;
+            }
 
-        return null;
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        } catch (UnableToCheckExistence $e) {
+            LoggerService::warning(
+                'Unable to check document existence (Azure); returning no URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        } catch (Throwable $e) {
+            LoggerService::error(
+                'Error generating temporary document URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        }
     }
 
     /**
