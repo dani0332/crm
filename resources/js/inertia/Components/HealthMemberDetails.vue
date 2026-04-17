@@ -627,6 +627,37 @@ const localMembersFiltered = computed(() => {
   return localMembers.value.filter(m => !((m.is_policy_holder == 1 && m.is_insured == 0) || (m.is_third_party_payer == 1)));
 });
 
+const ADD_MEMBER_VIEW_MODE_TOOLTIP =
+  'To add more members, go to Edit and update the details under \'Who would the customer like to insure?\' and \'Who will be the policyholder?\'';
+
+/**
+ * @param {boolean|undefined} isDisabledFromTemplate True when ReuseTemplate passes :isDisabled (e.g. locked member details).
+ */
+function isHealthAddMemberButtonDisabled(isDisabledFromTemplate) {
+  const filteredCount = localMembersFiltered.value.length;
+
+  return Boolean(
+    isDisabledFromTemplate
+    || props.isLocked
+    || isSelf_Me.value
+    || (isSelf_Other.value && filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
+    || (isDomesticHelper.value && filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
+    || filteredCount >= MAX_ALLOWED_INSURED_MEMBERS
+    || (
+      !isView.value
+      && (!props.coverForId || !props.healthInsureCode || !props.policyHolderCode)
+    )
+  );
+}
+
+function shouldShowHealthAddMemberViewModeTooltip(isDisabledFromTemplate) {
+  if (localMembersFiltered.value.length >= MAX_ALLOWED_INSURED_MEMBERS) {
+    return false;
+  }
+
+  return isHealthAddMemberButtonDisabled(isDisabledFromTemplate);
+}
+
 function buildPrincipalMemberDataFromQuoteForm() {
   return {
     id: `temp-${Date.now()}`,
@@ -797,25 +828,33 @@ defineExpose({
       <template #content>
         <x-divider class="mb-4 mt-1" />
         <AddMemberButtonTemplate v-slot="{ isDisabled }">
-          <x-button
-            @click.prevent="onAddMemberModal"
-            size="sm"
-            color="orange"
-            :disabled="isDisabled
-            || isLocked
-            || isSelf_Me
-            || (isSelf_Other && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
-            || (isDomesticHelper && localMembersFiltered.length === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
-            || localMembersFiltered.length >= MAX_ALLOWED_INSURED_MEMBERS
-            || (
-                !isView
-                && (!props.coverForId || !props.healthInsureCode || !props.policyHolderCode)
-              )
-            "
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Add Member
-          </x-button>
+          <template v-if="readOnlyMode.isDisable === true">
+            <x-tooltip
+              v-if="shouldShowHealthAddMemberViewModeTooltip(isDisabled)"
+              position="bottom"
+            >
+              <x-button
+                @click.prevent="onAddMemberModal"
+                size="sm"
+                color="orange"
+                :disabled="isHealthAddMemberButtonDisabled(isDisabled)"
+              >
+                Add Member
+              </x-button>
+              <template #tooltip>
+                {{ ADD_MEMBER_VIEW_MODE_TOOLTIP }}
+              </template>
+            </x-tooltip>
+            <x-button
+              v-else
+              @click.prevent="onAddMemberModal"
+              size="sm"
+              color="orange"
+              :disabled="isHealthAddMemberButtonDisabled(isDisabled)"
+            >
+              Add Member
+            </x-button>
+          </template>
         </AddMemberButtonTemplate>
         <div class="flex mb-3 justify-end">
           <x-tooltip
@@ -827,6 +866,15 @@ defineExpose({
               This lead is now locked as the policy has been booked. If
               changes are needed such midterm addition of member, go to 'Send
               Update', select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <x-tooltip
+            v-else-if="shouldShowHealthAddMemberViewModeTooltip(false)"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate />
+            <template #tooltip>
+              {{ ADD_MEMBER_VIEW_MODE_TOOLTIP }}
             </template>
           </x-tooltip>
           <AddMemButtonReuseTemplate v-else />

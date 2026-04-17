@@ -23,6 +23,12 @@ const props = defineProps({
 const HEALTH_PEC_YES = 1;
 const HEALTH_PEC_NO = 2;
 const { isRequired, isEmail, isNumber, maxCharacters, minAge } = useRules();
+
+const maxDobDate = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d;
+};
 const isEmptyField = ref(false);
 const pecValidationError = ref('');
 const page = usePage();
@@ -1068,7 +1074,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   <DatePicker
                     v-model="quoteForm.dob"
                     :rules="[isRequired, minAge(18)]"
-                    :max-date="new Date()"
+                    :max-date="maxDobDate()"
                     class="w-full"
                     label="DATE OF BIRTH"
                     required
