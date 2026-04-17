@@ -25,6 +25,10 @@ enum MotorRevivalEnum: string
     case WHATSAPP = 'WhatsApp';
     case MY_ALFRED = 'myAlfred';
 
+    // MACRM voucher values
+    case REFERENCE_TYPE = 'IM_POLICY_REF_ID';
+    case CTA_TEXT = 'View Car Quotes';
+
     public static function getEngagementLevelLabel(?string $storedValue): string
     {
         if (blank($storedValue)) {
