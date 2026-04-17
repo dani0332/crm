@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 
 class CyberEmailService extends BaseService
 {
@@ -76,7 +77,7 @@ class CyberEmailService extends BaseService
     {
 
         $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value);
-        $isMinor = ! empty($lead->dob) ? \Carbon\Carbon::parse($lead->dob)->age < 18 : false;
+        $isMinor = ! empty($lead->dob) ? Carbon::parse($lead->dob)->age < 18 : false;
 
         $emailData = [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),

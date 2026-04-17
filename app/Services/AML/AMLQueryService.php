@@ -17,12 +17,14 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class AMLQueryService
 {
-    public function getAMLQuotes(object $request): \Illuminate\Contracts\Pagination\Paginator|array
+    public function getAMLQuotes(object $request): Paginator|array
     {
         if (! $request->ajax() || ! isset($request->quoteType) || empty($request->quoteType)) {
             return [];
@@ -186,7 +188,7 @@ class AMLQueryService
         return $dataAml;
     }
 
-    public function getAMLLogs(int $quoteTypeId, int $quoteRequestId): \Illuminate\Database\Eloquent\Collection
+    public function getAMLLogs(int $quoteTypeId, int $quoteRequestId): Collection
     {
         return AML::with('quotetype')
             ->where([

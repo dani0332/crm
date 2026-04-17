@@ -8,6 +8,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
@@ -32,7 +33,7 @@ class CarLeadAllocationController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {

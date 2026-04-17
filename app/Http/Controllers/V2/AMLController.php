@@ -12,6 +12,7 @@ use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -642,17 +643,17 @@ class AMLController extends Controller
 
             $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
             $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
-            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
             $isPolicyAutomationEnabled = $policyAutomation?->isPolicyIssuanceAutomationEnabled() ?? false;
             LoggerService::info('Policy Automation AutoCapture Checks', extra: [
                 'QuoteType' => $quoteType,
                 'STP Case' => $isHealthQuote ? $quote?->isSTPCase() : false,
                 'AML Status' => $quote?->aml_status,
                 'KYC Status' => $quote?->kyc_decision,
-                'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+                'carQuotePolicyIssuanceToggle' => $isCarQuote ? $isPolicyIssuanceAutomationEnabled : null,
                 'insurerPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
             ]);
-            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyIssuanceAutomationEnabled && $isPolicyAutomationEnabled) {
+            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled) {
                 $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
                 $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
                 $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];

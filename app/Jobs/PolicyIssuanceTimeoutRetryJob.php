@@ -48,6 +48,16 @@ class PolicyIssuanceTimeoutRetryJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        $this->processTimeoutRetryForExistingPolicyIssuance($policyIssuance, $adnicInsuranceService);
+    }
+
+    /**
+     * Runs validation, optional quote logging, and the timeout→pending reset when all gates pass.
+     */
+    private function processTimeoutRetryForExistingPolicyIssuance(
+        PolicyIssuance $policyIssuance,
+        AdnicInsuranceService $adnicInsuranceService,
+    ): void {
         $quote = $policyIssuance->model;
         if ($quote) {
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
@@ -57,48 +67,40 @@ class PolicyIssuanceTimeoutRetryJob implements ShouldBeUnique, ShouldQueue
             LoggerService::info('ADNIC timeout retry job skipped: retry automation disabled', [
                 'policy_issuance_id' => $policyIssuance->id,
             ]);
-
-            return;
-        }
-
-        if ($policyIssuance->status !== PolicyIssuanceEnum::TIMEOUT_STATUS) {
+        } elseif ($policyIssuance->status !== PolicyIssuanceEnum::TIMEOUT_STATUS) {
             LoggerService::info('ADNIC timeout retry job skipped: policy issuance is not in timeout status', [
                 'policy_issuance_id' => $policyIssuance->id,
                 'status' => $policyIssuance->status,
             ]);
+        } else {
+            $maxRetries = $adnicInsuranceService->getAllowRetryForTimeout();
+            $currentRetryCount = (int) ($policyIssuance->retry_count ?? 0);
 
-            return;
-        }
+            if ($currentRetryCount >= $maxRetries) {
+                LoggerService::info('ADNIC timeout retry job skipped: maximum retries reached', [
+                    'policy_issuance_id' => $policyIssuance->id,
+                    'retry_count' => $currentRetryCount,
+                    'max_retries' => $maxRetries,
+                ]);
+            } else {
+                try {
+                    $policyIssuance->update([
+                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                        'retry_count' => $currentRetryCount + 1,
+                    ]);
 
-        $maxRetries = $adnicInsuranceService->getAllowRetryForTimeout();
-        $currentRetryCount = (int) ($policyIssuance->retry_count ?? 0);
+                    LoggerService::info('ADNIC timeout retry applied: status reset to pending', [
+                        'policy_issuance_id' => $policyIssuance->id,
+                        'retry_count' => $currentRetryCount + 1,
+                    ]);
+                } catch (Throwable $e) {
+                    LoggerService::error('ADNIC timeout retry job failed to update policy issuance', [
+                        'policy_issuance_id' => $policyIssuance->id,
+                    ], $e);
 
-        if ($currentRetryCount >= $maxRetries) {
-            LoggerService::info('ADNIC timeout retry job skipped: maximum retries reached', [
-                'policy_issuance_id' => $policyIssuance->id,
-                'retry_count' => $currentRetryCount,
-                'max_retries' => $maxRetries,
-            ]);
-
-            return;
-        }
-
-        try {
-            $policyIssuance->update([
-                'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                'retry_count' => $currentRetryCount + 1,
-            ]);
-
-            LoggerService::info('ADNIC timeout retry applied: status reset to pending', [
-                'policy_issuance_id' => $policyIssuance->id,
-                'retry_count' => $currentRetryCount + 1,
-            ]);
-        } catch (Throwable $e) {
-            LoggerService::error('ADNIC timeout retry job failed to update policy issuance', [
-                'policy_issuance_id' => $policyIssuance->id,
-            ], $e);
-
-            throw $e;
+                    throw $e;
+                }
+            }
         }
     }
 }

@@ -93,6 +93,7 @@ class Dtt extends Command
             'seat_capacity',
             'cylinder',
             'vehicle_type_id',
+            'vehicle_use',
             'premium',
             'car_make_id',
             'car_model_id',
