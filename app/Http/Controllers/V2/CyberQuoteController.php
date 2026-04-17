@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
@@ -15,6 +16,7 @@ use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\MACRMService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\Quotes\CyberQuoteService;
 
 class CyberQuoteController extends Controller
@@ -57,8 +59,8 @@ class CyberQuoteController extends Controller
             'paymentStatuses' => $paymentStatuses,
             'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code', 'text'])->get(),
             'cyberCoverages' => $cyberCoverages,
-            'apiIssuanceStatuses' => \App\Enums\PolicyIssuanceEnum::getAPIIssuanceStatuses(null, true),
-            'insurerApiStatuses' => app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(),
+            'apiIssuanceStatuses' => PolicyIssuanceEnum::getAPIIssuanceStatuses(null, true),
+            'insurerApiStatuses' => app(PolicyIssuanceService::class)->getInsurerAPIStatuses(),
         ]);
     }
 

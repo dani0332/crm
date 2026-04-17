@@ -22,10 +22,13 @@ use App\Services\LookupService;
 use App\Services\SearchService;
 use App\Services\UserService;
 use Illuminate\Support\Facades\DB;
+use Inertia\Response;
+use Inertia\ResponseFactory;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SearchController extends Controller
 {
-    public function index(): \Inertia\Response|\Inertia\ResponseFactory
+    public function index(): Response|ResponseFactory
     {
         $isUniversalSearchEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH);
         $isEndorsementList = (request()->get('list') == 'endorsements');
@@ -74,7 +77,7 @@ class SearchController extends Controller
         ]);
     }
 
-    public function searchExport(ExportSearchLeadsOrEndorsementsRequest $exportSearchLeadsOrEndorsementsRequest): \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function searchExport(ExportSearchLeadsOrEndorsementsRequest $exportSearchLeadsOrEndorsementsRequest): \Illuminate\Http\Response|BinaryFileResponse
     {
         $isEndorsementList = $exportSearchLeadsOrEndorsementsRequest->list == 'endorsements';
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList, true);

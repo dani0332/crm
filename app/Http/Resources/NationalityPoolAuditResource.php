@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\CanonicalNationalityService;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,7 +10,7 @@ class NationalityPoolAuditResource extends JsonResource
 {
     public function toArray($request)
     {
-        $canonicalNationalities = app()->make(\App\Services\CanonicalNationalityService::class)
+        $canonicalNationalities = app()->make(CanonicalNationalityService::class)
             ->getByCodes($this->canonical_nationality_codes);
 
         return [
