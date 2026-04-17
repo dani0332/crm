@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Services\DTTRevivalService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Batchable;
@@ -93,6 +94,18 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             ]);
 
             return;
+        }
+
+        try {
+            app(LifeRevivalService::class)->sendLifeRevialEmail($capiResponse->quoteUID);
+        } catch (\Exception $e) {
+            LoggerService::warning('LifeRevivalLeadsCreationJob - Error sending DTT revival email', extra: [
+                'error' => $e->getMessage(),
+                'quote_uuid' => $capiResponse->quoteUID,
+                'lead_uuid' => $this->lead->uuid,
+                'personal_quote_id' => $this->personalQuoteId,
+                'exception' => $e->getTraceAsString(),
+            ]);
         }
 
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
