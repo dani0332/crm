@@ -7,6 +7,7 @@ use App\Http\Requests\CommercialKeywordRequest;
 use App\Models\CommercialKeyword;
 use App\Services\CommercialKeywordsService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CommercialKeywordsController extends Controller
 {
@@ -15,7 +16,7 @@ class CommercialKeywordsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function __construct(CommercialKeywordsService $commercialKeywordsService)
     {
@@ -52,7 +53,7 @@ class CommercialKeywordsController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -62,7 +63,7 @@ class CommercialKeywordsController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(CommercialKeywordRequest $request)
     {
@@ -76,7 +77,7 @@ class CommercialKeywordsController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(CommercialKeyword $commercialKeyword)
     {
@@ -87,7 +88,7 @@ class CommercialKeywordsController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(CommercialKeyword $commercialKeyword)
     {

@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class SaleDetailReportExport implements CsvExportableInterface
@@ -44,7 +45,7 @@ class SaleDetailReportExport implements CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing
      */
-    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    public function getQuery(array $requestParams = []): ?Builder
     {
         $request = request()->merge($requestParams);
 

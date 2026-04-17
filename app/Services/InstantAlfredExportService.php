@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use MongoDB\Model\BSONArray;
+use MongoDB\Model\BSONDocument;
 
 class InstantAlfredExportService
 {
@@ -358,7 +360,7 @@ class InstantAlfredExportService
 
     private function formatCommunicationChannel($channel): string
     {
-        if ($channel instanceof \MongoDB\Model\BSONDocument || $channel instanceof \MongoDB\Model\BSONArray) {
+        if ($channel instanceof BSONDocument || $channel instanceof BSONArray) {
             $channel = $channel->getArrayCopy();
         }
 
