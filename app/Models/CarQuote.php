@@ -18,6 +18,9 @@ use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
@@ -465,7 +468,7 @@ class CarQuote extends BaseModel
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function carLostQuoteLogs()
     {
@@ -483,7 +486,7 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
@@ -550,7 +553,7 @@ class CarQuote extends BaseModel
     }
 
     // Reminder::Get the active insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -616,7 +619,7 @@ class CarQuote extends BaseModel
      * Get the previous quote for this car quote.
      * Returns null if no previous quote exists.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function previousQuote()
     {
