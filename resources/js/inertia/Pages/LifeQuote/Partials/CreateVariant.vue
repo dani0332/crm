@@ -100,7 +100,7 @@ watch(
         : null;
       createForm.paymentTerm = props.plan.paymentTerm;
       createForm.actualPremium = null;
-      if (!isApiOrRc) {
+      if (!isApiOrRc.value) {
         createForm.actualPremium = props.plan.actualPremium
           ? Math.max(0, Number(props.plan.actualPremium))
           : null;
@@ -636,7 +636,7 @@ const totalPrice = computed({
   },
   set(value) {
     if (
-      props.plan.isApi &&
+      isApiOrRc.value &&
       createForm.isInstantPolicy &&
       createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
     ) {
