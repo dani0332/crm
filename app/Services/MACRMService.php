@@ -44,10 +44,13 @@ class MACRMService
 
     public static function syncCourierQuote($quote, $quoteTypeId)
     {
+        LoggerService::info(self::class." - Inside syncCourierQuote method for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
         $leadData = getCourierQuote($quote, $quoteTypeId);
 
         try {
             if (! self::verifySyncPreChecks($quote, $quoteTypeId, $leadData)) {
+                LoggerService::warning(self::class." - Pre-checks failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
+
                 return false;
             }
 

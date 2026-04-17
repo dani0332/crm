@@ -1467,6 +1467,7 @@ if (! function_exists('getCourierQuote')) {
     function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
+            LoggerService::info("Helper::getCourierQuote - Getting courier quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
             $quoteModel = get_class($quote);
             $model = app($quoteModel);
             $table = $model->getTable();

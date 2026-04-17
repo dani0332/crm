@@ -77,20 +77,19 @@ class AdnicResponseHandler
             || (isset($responseObject->DocumentInfo->ErrorInfo) && count($responseObject->DocumentInfo->ErrorInfo) > 0);
     }
 
-    private function extractErrorMessage($responseObject, string $apiKey)
+    private function extractErrorMessage($responseObject, string $apiKey): string
     {
+        $message = $apiKey.' '.self::API_FAILED;
+
         if ($responseObject !== null && isset($responseObject->DocumentInfo->ErrorInfo) && count($responseObject->DocumentInfo->ErrorInfo) > 0) {
-            return json_encode($responseObject->DocumentInfo->ErrorInfo[0]->ErrorMsg);
-        }
-        if ($responseObject !== null && isset($responseObject->ErrorInfo) && count($responseObject->ErrorInfo) > 0) {
-            return json_encode($responseObject->ErrorInfo[0]->ErrorMsg);
-        }
-
-        if (is_string($responseObject)) {
-            return $responseObject;
+            $message = json_encode($responseObject->DocumentInfo->ErrorInfo[0]->ErrorMsg) ?: $message;
+        } elseif ($responseObject !== null && isset($responseObject->ErrorInfo) && count($responseObject->ErrorInfo) > 0) {
+            $message = json_encode($responseObject->ErrorInfo[0]->ErrorMsg) ?: $message;
+        } elseif (is_string($responseObject)) {
+            $message = $responseObject;
         }
 
-        return $apiKey.' '.self::API_FAILED;
+        return $message;
     }
 
 }

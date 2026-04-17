@@ -17,6 +17,7 @@ use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -68,7 +69,7 @@ class SageProcessesService extends BaseService
     /**
      * Build the base query for failed sage processes
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     protected function buildBaseQuery()
     {
@@ -81,7 +82,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply all filters to the query based on request parameters
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  mixed  $request
      */
     protected function applyFilters($query, $request): void
@@ -95,7 +96,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply insurance provider filter
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  mixed  $request
      */
     protected function applyInsuranceProviderFilter($query, $request): void
@@ -109,7 +110,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply quote type filter with support for direct models and personal quotes
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  mixed  $request
      */
     protected function applyQuoteTypeFilter($query, $request): void
@@ -140,7 +141,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply option filter (Main Lead vs Send Update)
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  mixed  $request
      */
     protected function applyOptionFilter($query, $request): void
@@ -157,7 +158,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply date range filters
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  mixed  $request
      */
     protected function applyDateFilters($query, $request): void
@@ -174,7 +175,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply eager loading for related models to prevent N+1 queries
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      */
     protected function applyEagerLoading($query): void
     {
@@ -202,7 +203,7 @@ class SageProcessesService extends BaseService
     /**
      * Apply model validation constraints
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      */
     protected function applyModelValidation($query): void
     {

@@ -1262,7 +1262,8 @@ class CRUDController extends Controller
 
                 $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
                 $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
-                $record->append(['api_issuance_status', 'insurer_api_status']);
+                $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

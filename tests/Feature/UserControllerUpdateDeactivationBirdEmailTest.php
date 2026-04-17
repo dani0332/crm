@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Services\UserService;
@@ -24,8 +25,8 @@ beforeEach(function () {
     $this->itSupportEmail = 'it-support-'.uniqid().'@example.test';
 
     TestDataSeeder::seedApplicationStorage([
-        \App\Enums\ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW => $this->workflowUrl,
-        \App\Enums\ApplicationStorageEnums::IT_SUPPORT_EMAIL => $this->itSupportEmail,
+        ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW => $this->workflowUrl,
+        ApplicationStorageEnums::IT_SUPPORT_EMAIL => $this->itSupportEmail,
     ]);
 
     ['productTeamId' => $this->productTeamId, 'teamId' => $this->teamId] = TestDataSeeder::seedTeamHierarchy();
