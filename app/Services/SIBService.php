@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\EnvEnum;
 use App\Models\EmailActivity;
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\Log;
 
 class SIBService extends BaseService
@@ -35,7 +37,7 @@ class SIBService extends BaseService
             'listIds' => [(int) $listId],
             'updateEnabled' => true,
         ]);
-        $clientExtendSubscription = new \GuzzleHttp\Client;
+        $clientExtendSubscription = new Client;
         $apiResponse = null;
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
@@ -52,7 +54,7 @@ class SIBService extends BaseService
             );
 
             $apiResponse = $requestExtendSubscription->getStatusCode();
-        } catch (\GuzzleHttp\Exception\BadResponseException $exception) {
+        } catch (BadResponseException $exception) {
             Log::error('Sync Contact SIB - Error: '.$exception->getMessage());
         }
 
@@ -130,7 +132,7 @@ class SIBService extends BaseService
 
             $body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 $url,
                 [
@@ -202,7 +204,7 @@ class SIBService extends BaseService
             ],
         ]);
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $apiResponse = null;
         try {
             $request = $client->post(
@@ -219,7 +221,7 @@ class SIBService extends BaseService
             );
 
             $apiResponse = $request->getStatusCode();
-        } catch (\GuzzleHttp\Exception\BadResponseException $exception) {
+        } catch (BadResponseException $exception) {
             Log::error('Create Event SIB - Error: '.$exception->getMessage());
         }
 

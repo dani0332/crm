@@ -6,6 +6,7 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class SystemHealthController extends Controller
         ]);
     }
 
-    public function databases(Request $request): \Illuminate\Http\JsonResponse
+    public function databases(Request $request): JsonResponse
     {
         return response()->json([
             'mysql' => $this->checkMysql('mysql'),
@@ -49,12 +50,12 @@ class SystemHealthController extends Controller
         ]);
     }
 
-    public function redis(Request $request): \Illuminate\Http\JsonResponse
+    public function redis(Request $request): JsonResponse
     {
         return response()->json($this->checkRedis());
     }
 
-    public function queues(Request $request): \Illuminate\Http\JsonResponse
+    public function queues(Request $request): JsonResponse
     {
         return response()->json($this->checkQueues());
     }
