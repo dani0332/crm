@@ -448,7 +448,11 @@ class CustomerVerificationService
             ]);
 
             DB::rollBack();
+
+            return;
         }
+
+        $this->updateCustomerVerificationStatus($quote);
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
@@ -506,7 +510,11 @@ class CustomerVerificationService
             ]);
 
             DB::rollBack();
+
+            return;
         }
+
+        $this->updateCustomerVerificationStatus($quote);
     }
 
     private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): bool
@@ -542,8 +550,6 @@ class CustomerVerificationService
             'updated_fields' => array_keys($verificationData),
         ]);
 
-        // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
         return true;
     }
 
