@@ -189,13 +189,17 @@ const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
 
-const showCommercialRule = computed(() => {
+const clearIsCommercialUnlessPersonal = () => {
   if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
     filters.isCommercial = '';
   }
+};
 
-  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
-});
+watch(() => filters.registration_type, clearIsCommercialUnlessPersonal);
+
+const showCommercialRule = computed(
+  () => filters.registration_type === carRegistrationTypeEnum.PERSONAL,
+);
 
 const cleanFilters = sourceFilters => {
   const payload = JSON.parse(JSON.stringify(sourceFilters));
@@ -677,6 +681,7 @@ const formatValue = value => {
 onMounted(async () => {
   setDefaultValues();
   setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams','sub_teams'] });
+  clearIsCommercialUnlessPersonal();
   await onLobChange(filters.lob, true);
 
   if (filters.teams?.length > 0 && filters.sub_teams?.length < 1) {
