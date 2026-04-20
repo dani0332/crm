@@ -308,3 +308,73 @@ test('returns false when insurer code was changed after validation', function ()
 
     expect($result)->toBeFalse();
 });
+
+test('isHistoricalRenewalForProcess respects precomputed isTransitionableLead false without treating as historical', function () {
+    $lead = createHistoricalRenewalLead();
+    $transition = createActiveCarTransition();
+
+    $current = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'insurance_provider_transition_id' => $transition->id,
+        'data' => [
+            'insurer' => $transition->sourceProvider->code,
+            'provider_name' => $transition->targetProvider->text,
+        ],
+    ]);
+
+    RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'data' => [],
+    ]);
+
+    $result = createHistoricalRenewalService()->isHistoricalRenewalForProcess($current, false);
+
+    expect($result)->toBeFalse();
+});
+
+test('isHistoricalRenewalForProcess with precomputed isTransitionableLead true still applies data consistency guard', function () {
+    $lead = createHistoricalRenewalLead();
+    $transition = createActiveCarTransition();
+
+    $current = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'insurance_provider_transition_id' => $transition->id,
+        'data' => [
+            'insurer' => $transition->sourceProvider->code,
+            'provider_name' => null,
+        ],
+    ]);
+
+    RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'data' => [],
+    ]);
+
+    $result = createHistoricalRenewalService()->isHistoricalRenewalForProcess($current, true);
+
+    expect($result)->toBeFalse();
+});

@@ -3662,8 +3662,14 @@ class RenewalsUploadService
      * Determine whether a car quote's renewal history qualifies as historical
      * (i.e. a prior email has already been sent via a transitionable process).
      * Centralises the duplicated block from CRUDController and CarQuoteService.
+     *
+     * @param  bool|null  $isTransitionableLead  When the caller already computed
+     *                                           {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     *                                           for {@code $carQuote->latestUpdateRenewalQuoteProcess},
+     *                                           pass it here to avoid evaluating it twice inside
+     *                                           {@see isTransitionConsistentWithCurrentData()}.
      */
-    public function resolveIsRenewalHistorical(CarQuote $carQuote): bool
+    public function resolveIsRenewalHistorical(CarQuote $carQuote, ?bool $isTransitionableLead = null): bool
     {
         $latestProcess = $carQuote->latestUpdateRenewalQuoteProcess;
 
@@ -3671,7 +3677,7 @@ class RenewalsUploadService
             return false;
         }
 
-        return $this->isHistoricalRenewalForProcess($latestProcess);
+        return $this->isHistoricalRenewalForProcess($latestProcess, $isTransitionableLead);
     }
 
     /**
@@ -3683,10 +3689,14 @@ class RenewalsUploadService
      * just an integer and can overlap across different LOB tables (CarQuote,
      * HealthQuote, TravelQuote, ...). Without the quote_type filter the
      * exists() can match unrelated renewal processes across LOBs.
+     *
+     * @param  bool|null  $isTransitionableLead  Optional precomputed
+     *                                           {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     *                                           for {@code $process} to skip duplicate evaluation.
      */
-    public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process): bool
+    public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
-        if (! $this->isTransitionConsistentWithCurrentData($process)) {
+        if (! $this->isTransitionConsistentWithCurrentData($process, $isTransitionableLead)) {
             return false;
         }
 
@@ -3714,13 +3724,21 @@ class RenewalsUploadService
      * evaluating the current `insurer` code and `provider_name` text against
      * the stored transition's source/target providers before trusting it.
      */
-    private function isTransitionConsistentWithCurrentData(RenewalQuoteProcess $process): bool
+    private function isTransitionConsistentWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
-        if (! $process->checkIsTransitionableLead()) {
+        if ($isTransitionableLead === false) {
+            return false;
+        }
+
+        if ($isTransitionableLead === null && ! $process->checkIsTransitionableLead()) {
             return false;
         }
 
         $transition = $process->insuranceProviderTransition;
+
+        if ($transition === null || ! $transition->is_active || ! $transition->targetProvider || ! $transition->sourceProvider) {
+            return false;
+        }
         $rawData = $process->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
 

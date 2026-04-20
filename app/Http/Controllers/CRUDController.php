@@ -2439,7 +2439,7 @@ class CRUDController extends Controller
             return response()->json(['success' => 'OCB email sent to customer']);
         }
         $isTransitionableLead = (bool) $carQuote->latestUpdateRenewalQuoteProcess?->checkIsTransitionableLead();
-        $isRenewalHistorical = app(RenewalsUploadService::class)->resolveIsRenewalHistorical($carQuote);
+        $isRenewalHistorical = app(RenewalsUploadService::class)->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
