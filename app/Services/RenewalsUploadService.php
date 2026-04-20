@@ -3686,7 +3686,7 @@ class RenewalsUploadService
      */
     public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process): bool
     {
-        if (! $process->checkIsTransitionableLead()) {
+        if (! $this->isTransitionConsistentWithCurrentData($process)) {
             return false;
         }
 
@@ -3698,6 +3698,39 @@ class RenewalsUploadService
             'email_sent' => true,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists();
+    }
+
+    /**
+     * Guard against a stale `insurance_provider_transition_id`: the column is
+     * persisted during validation from the lead's `insurer` + `provider_name`
+     * at that moment. If `data` is mutated afterwards (e.g. `provider_name`
+     * cleared or swapped), the stored id keeps pointing at a transition that
+     * no longer describes the current lead, and
+     * {@see RenewalQuoteProcess::checkIsTransitionableLead()} alone would
+     * still return true — producing incorrect historical plan sorting and
+     * OCB email routing.
+     *
+     * Restores the pre-refactor {@code isGenesisLead} contract of freshly
+     * evaluating the current `insurer` code and `provider_name` text against
+     * the stored transition's source/target providers before trusting it.
+     */
+    private function isTransitionConsistentWithCurrentData(RenewalQuoteProcess $process): bool
+    {
+        if (! $process->checkIsTransitionableLead()) {
+            return false;
+        }
+
+        $transition = $process->insuranceProviderTransition;
+        $rawData = $process->data;
+        $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
+
+        if (($leadData->insurer ?? null) !== $transition->sourceProvider->code) {
+            return false;
+        }
+
+        $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+
+        return $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
     }
 
     /**

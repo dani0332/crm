@@ -39,20 +39,15 @@ trait RenewalsImportTrait
     /**
      * Whether a spreadsheet cell should map to null in quote data.
      *
-     * PHP 7 treated 0 == '' as true; PHP 8+ does not. Readers often emit int/float 0
-     * for empty numeric cells, so 0 and 0.0 are treated as blank. String '0' is kept.
+     * Only genuine empty signals from the reader (null, '') are treated as blank.
+     * Numeric 0/0.0 are preserved because several imports accept 0 as a legitimate
+     * user-entered value (e.g. UploadAndUpdateImport::excess must be 0 for TPL
+     * plans, and amount fields such as ancillary_excess/driver_cover_amount can
+     * legitimately be 0). Treating those as blank collapses real data to null.
      */
     protected function isBlankImportCell(mixed $value): bool
     {
-        if ($value === null || $value === '') {
-            return true;
-        }
-
-        if ($value === 0 || $value === 0.0) {
-            return true;
-        }
-
-        return false;
+        return $value === null || $value === '';
     }
 
     /**

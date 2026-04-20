@@ -52,7 +52,11 @@ test('mapQuoteData does not throw when row has fewer columns than schema', funct
     expect($mapped['customer_name'])->toBe('Customer');
 });
 
-test('mapQuoteData maps numeric zero premium to null like legacy empty cells', function () {
+test('mapQuoteData preserves numeric zero premium so user-entered 0 is not silently dropped', function () {
+    // Regression: isBlankImportCell previously treated int/float 0 as blank and
+    // mapped it to null. That caused real data loss for numeric fields where 0
+    // is a legitimate user-entered value (e.g. UploadAndUpdateImport::excess
+    // for TPL plans, amount fields). Only null/'' should be treated as blank.
     $lead = new RenewalsUploadLeads;
     $import = new UploadAndCreateImport($lead);
 
@@ -66,13 +70,21 @@ test('mapQuoteData maps numeric zero premium to null like legacy empty cells', f
     $row[16] = 0;
 
     $mappedInt = $import->mapQuoteData($row);
-    expect($mappedInt['premium'])->toBeNull();
+    expect($mappedInt['premium'])->toBe(0);
 
     $row[16] = 0.0;
     $mappedFloat = $import->mapQuoteData($row);
-    expect($mappedFloat['premium'])->toBeNull();
+    expect($mappedFloat['premium'])->toBe(0.0);
 
     $row[16] = '0';
     $mappedStringZero = $import->mapQuoteData($row);
     expect($mappedStringZero['premium'])->toBe('0');
+
+    $row[16] = null;
+    $mappedNull = $import->mapQuoteData($row);
+    expect($mappedNull['premium'])->toBeNull();
+
+    $row[16] = '';
+    $mappedEmpty = $import->mapQuoteData($row);
+    expect($mappedEmpty['premium'])->toBeNull();
 });
