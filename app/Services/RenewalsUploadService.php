@@ -148,6 +148,34 @@ class RenewalsUploadService
      */
     private array $carPlanCache = [];
 
+    /**
+     * Per-instance memoization of transitionable lead resolution. Keyed by
+     * spl_object_id($lead) so that a lead already resolved by
+     * isTransitionableLead() within this instance can be reused by
+     * isTransitionableLeadForProcess() without re-querying the
+     * InsuranceProviderTransition row or re-loading its source/target
+     * providers via lazy relations in
+     * {@see RenewalQuoteProcess::checkIsTransitionableLead()}. Without this
+     * cache, the validation chunk loop performs 3 redundant queries per lead
+     * (transition + 2 providers).
+     *
+     * Each entry stores the transition_id observed at write time alongside
+     * the full result array so staleness (e.g. transition_id reset between
+     * calls) can be detected and the cache bypassed safely.
+     *
+     * @var array<int, array{
+     *     transitionId: int|null,
+     *     result: array{
+     *         status: bool,
+     *         carPlan: CarPlan|null,
+     *         insuranceProvider: InsuranceProvider|null,
+     *         transitionId: int|null,
+     *         tags: string,
+     *     },
+     * }>
+     */
+    private array $transitionableLeadCache = [];
+
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
         CapiRequestService $capiRequestService,
@@ -3537,6 +3565,7 @@ class RenewalsUploadService
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         $status = false;
+        $carPlan = null;
 
         $originalTransitionId = $lead->insurance_provider_transition_id;
         $newTransitionId = null;
@@ -3584,6 +3613,24 @@ class RenewalsUploadService
             $lead->insurance_provider_transition_id = $newTransitionId;
             $lead->save();
             LoggerService::info('isTransitionableLead - updated transition_id to: '.($newTransitionId ?? 'NULL'));
+        }
+
+        // Cache the fully resolved transitionable path so isTransitionableLeadForProcess() — typically
+        // called immediately after in the validation chunk loop — can skip re-querying the transition
+        // row and both providers via RenewalQuoteProcess::checkIsTransitionableLead()'s lazy relations.
+        // Only cache the transitionable branch: when no transition resolved, checkIsTransitionableLead()
+        // short-circuits on a null transition_id without any DB queries so there is nothing to save.
+        if ($newTransitionId !== null) {
+            $this->transitionableLeadCache[spl_object_id($lead)] = [
+                'transitionId' => $newTransitionId,
+                'result' => [
+                    'status' => $status,
+                    'carPlan' => $carPlan,
+                    'insuranceProvider' => $targetProvider,
+                    'transitionId' => $newTransitionId,
+                    'tags' => $status ? InsuranceProvidersTransitionEnum::tagForSourceCode($sourceProvider->code) : '',
+                ],
+            ];
         }
 
         LoggerService::info('isTransitionableLead - status: '.($status ? 'true' : 'false'));
@@ -3649,6 +3696,20 @@ class RenewalsUploadService
      */
     public function isTransitionableLeadForProcess(RenewalQuoteProcess $lead): array
     {
+        // Reuse the full resolution cached by a preceding isTransitionableLead() call for this lead
+        // instance. The staleness check against $lead->insurance_provider_transition_id makes the
+        // cache safe to bypass if something (e.g. a reload) changed the transition_id between calls.
+        $cacheKey = spl_object_id($lead);
+        if (isset($this->transitionableLeadCache[$cacheKey])
+            && $this->transitionableLeadCache[$cacheKey]['transitionId'] === $lead->insurance_provider_transition_id
+        ) {
+            LoggerService::info('isTransitionableLeadForProcess - cache hit', [
+                'transitionId' => $this->transitionableLeadCache[$cacheKey]['transitionId'],
+            ]);
+
+            return $this->transitionableLeadCache[$cacheKey]['result'];
+        }
+
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
 

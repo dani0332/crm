@@ -284,6 +284,115 @@ test('resolveCarPlan is memoized across isTransitionableLead and isTransitionabl
     }
 });
 
+test('isTransitionableLeadForProcess does not re-query transition or providers when preceded by isTransitionableLead', function () {
+    // Regression: without the per-lead resolution cache, the validation chunk
+    // loop runs both functions sequentially per lead and incurs 3 redundant
+    // queries (transition row + target provider + source provider) via
+    // RenewalQuoteProcess::checkIsTransitionableLead()'s lazy-loaded relations.
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Cached Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+    ]);
+
+    $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    $connection = DB::connection('sqlite');
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    try {
+        $result = $service->isTransitionableLeadForProcess($lead);
+
+        $queries = collect($connection->getQueryLog());
+        $transitionQueries = $queries->filter(fn (array $entry): bool => str_contains($entry['query'], '"renewal_insurance_provider_transitions"'));
+        $providerQueries = $queries->filter(fn (array $entry): bool => str_contains($entry['query'], '"insurance_provider"'));
+        $carPlanQueries = $queries->filter(fn (array $entry): bool => str_contains($entry['query'], '"car_plan"'));
+
+        expect($transitionQueries)->toHaveCount(0)
+            ->and($providerQueries)->toHaveCount(0)
+            ->and($carPlanQueries)->toHaveCount(0)
+            ->and($result['status'])->toBeTrue()
+            ->and($result['carPlan']->is($plan))->toBeTrue()
+            ->and($result['insuranceProvider']->is($targetProvider))->toBeTrue();
+    } finally {
+        $connection->disableQueryLog();
+        $connection->flushQueryLog();
+    }
+});
+
+test('isTransitionableLeadForProcess cache is bypassed safely when transition_id changes between calls', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Stale Cache Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+    ]);
+
+    $service->isTransitionableLead($lead, $leadValidationErrors);
+    expect($lead->insurance_provider_transition_id)->toBe($transition->id);
+
+    // Simulate the lead's transition_id being externally reset (e.g. reload)
+    // between the two calls. The cached entry should be treated as stale and
+    // the function should recompute via the standard path.
+    $lead->insurance_provider_transition_id = null;
+
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['transitionId'])->toBeNull()
+        ->and($result['insuranceProvider']?->is($targetProvider))->toBeTrue();
+});
+
 test('getNonTransitionableLeadConfig keeps text-matched provider with null carPlan when codes do not match', function () {
     // Preserves the pre-refactor isGenesisLead() contract: a lead whose
     // provider_name resolves to a real InsuranceProvider row but whose
