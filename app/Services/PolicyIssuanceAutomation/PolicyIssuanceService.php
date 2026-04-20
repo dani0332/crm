@@ -771,8 +771,6 @@ class PolicyIssuanceService
     public function isReTriggerPolicyAutomationStatusAllowed(?string $status): bool
     {
         $allowed = [
-            null,
-            '',
             PolicyIssuanceEnum::TIMEOUT_STATUS,
             PolicyIssuanceEnum::FAILED_STATUS,
         ];
@@ -785,10 +783,6 @@ class PolicyIssuanceService
      */
     public function shouldOfferReTriggerPolicyAutomation(PolicyIssuance $policyIssuance): bool
     {
-        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
-            return false;
-        }
-
         $policyIssuance->loadMissing('insuranceProvider');
         $insuranceProvider = $policyIssuance->insuranceProvider;
         $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
@@ -798,7 +792,7 @@ class PolicyIssuanceService
         }
 
         return match (ucfirst((string) $policyIssuance->quote_type)) {
-            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance),
+            QuoteTypes::DEVICE->value => $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status),
             default => false,
         };
     }
@@ -823,7 +817,7 @@ class PolicyIssuanceService
         }
 
         match (ucfirst((string) $policyIssuance->quote_type)) {
-            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures($policyIssuance),
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($policyIssuance),
             default => throw new \InvalidArgumentException('Re-trigger is not supported for this line of business.'),
         };
     }

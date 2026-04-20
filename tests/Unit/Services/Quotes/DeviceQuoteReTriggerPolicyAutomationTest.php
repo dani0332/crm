@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
@@ -25,14 +26,14 @@ beforeEach(function () {
 });
 
 describe('PolicyIssuanceService IMCRM re-trigger helpers', function () {
-    it('allows only null empty timeout and failed for re-trigger status allowlist', function () {
+    it('allows only timeout and failed for re-trigger status allowlist', function () {
         $service = app(PolicyIssuanceService::class);
 
-        expect($service->isReTriggerPolicyAutomationStatusAllowed(null))->toBeTrue();
-        expect($service->isReTriggerPolicyAutomationStatusAllowed(''))->toBeTrue();
         expect($service->isReTriggerPolicyAutomationStatusAllowed(PolicyIssuanceEnum::TIMEOUT_STATUS))->toBeTrue();
         expect($service->isReTriggerPolicyAutomationStatusAllowed(PolicyIssuanceEnum::FAILED_STATUS))->toBeTrue();
 
+        expect($service->isReTriggerPolicyAutomationStatusAllowed(null))->toBeFalse();
+        expect($service->isReTriggerPolicyAutomationStatusAllowed(''))->toBeFalse();
         expect($service->isReTriggerPolicyAutomationStatusAllowed(PolicyIssuanceEnum::PENDING_STATUS))->toBeFalse();
         expect($service->isReTriggerPolicyAutomationStatusAllowed(PolicyIssuanceEnum::PROCESSING_STATUS))->toBeFalse();
         expect($service->isReTriggerPolicyAutomationStatusAllowed(PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS))->toBeFalse();
@@ -78,6 +79,8 @@ describe('DeviceQuoteService re-trigger GetAndUpload policy documents', function
         ]);
 
         expect(app(DeviceQuoteService::class)->isEligibleForReTriggerGetAndUploadPolicyDocuments($process))->toBeFalse();
+
+        expect(app(PolicyIssuanceService::class)->shouldOfferReTriggerPolicyAutomation($process->fresh()))->toBeTrue();
     });
 
     it('is eligible with three failed GetAndUploadPolicyDocs logs', function () {
@@ -132,6 +135,85 @@ describe('DeviceQuoteService re-trigger GetAndUpload policy documents', function
         app(DeviceQuoteService::class)->reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures($process->fresh());
 
         Bus::assertDispatched(NgiGetPolicyDocumentsJob::class);
+
+        expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PENDING_STATUS);
+    });
+
+    it('identifyAutomationStepToReTrigger throws when create-policy step failed but doc re-trigger is not eligible', function () {
+        $process = PolicyIssuance::factory()->forQuote($this->quote)->create([
+            'quote_type' => QuoteTypes::DEVICE->value,
+            'insurance_provider_id' => 1,
+            'status' => PolicyIssuanceEnum::FAILED_STATUS,
+            'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+        ]);
+
+        expect(fn () => app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($process->fresh()))
+            ->toThrow(\InvalidArgumentException::class, 'Policy issuance is not eligible for document sync re-trigger.');
+    });
+
+    it('identifyAutomationStepToReTrigger dispatches PolicyIssuanceJob when status is timeout at create-policy step', function () {
+        Bus::fake();
+
+        $process = PolicyIssuance::factory()->forQuote($this->quote)->create([
+            'quote_type' => QuoteTypes::DEVICE->value,
+            'insurance_provider_id' => 1,
+            'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+            'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+        ]);
+
+        app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($process->fresh());
+
+        Bus::assertDispatched(PolicyIssuanceJob::class);
+        Bus::assertNotDispatched(NgiGetPolicyDocumentsJob::class);
+
+        expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PENDING_STATUS);
+    });
+
+    it('identifyAutomationStepToReTrigger dispatches PolicyIssuanceJob when failed on a step other than create-policy', function () {
+        Bus::fake();
+
+        $process = PolicyIssuance::factory()->forQuote($this->quote)->create([
+            'quote_type' => QuoteTypes::DEVICE->value,
+            'insurance_provider_id' => 1,
+            'status' => PolicyIssuanceEnum::FAILED_STATUS,
+            'completed_step' => NgiEnum::STEP_BOOK_POLICY,
+        ]);
+
+        app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($process->fresh());
+
+        Bus::assertDispatched(PolicyIssuanceJob::class);
+        Bus::assertNotDispatched(NgiGetPolicyDocumentsJob::class);
+
+        expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PENDING_STATUS);
+    });
+
+    it('identifyAutomationStepToReTrigger dispatches NGI doc job when doc re-trigger path applies and is eligible', function () {
+        Bus::fake();
+
+        $process = PolicyIssuance::factory()->forQuote($this->quote)->create([
+            'quote_type' => QuoteTypes::DEVICE->value,
+            'insurance_provider_id' => 1,
+            'status' => PolicyIssuanceEnum::FAILED_STATUS,
+            'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+        ]);
+
+        for ($i = 0; $i < 3; $i++) {
+            PolicyIssuanceLog::query()->create([
+                'policy_issuance_id' => $process->id,
+                'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                'status' => PolicyIssuanceEnum::FAILED_STATUS,
+                'payload' => '[]',
+                'response' => '[]',
+                'endPoint' => '/test',
+                'model_type' => null,
+                'model_id' => null,
+            ]);
+        }
+
+        app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($process->fresh());
+
+        Bus::assertDispatched(NgiGetPolicyDocumentsJob::class);
+        Bus::assertNotDispatched(PolicyIssuanceJob::class);
 
         expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PENDING_STATUS);
     });

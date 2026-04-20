@@ -13,6 +13,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\DeviceMake;
 use App\Models\PolicyIssuance;
 use App\Services\BranchAssignmentService;
@@ -510,7 +511,7 @@ class DeviceQuoteService extends BaseQuoteService
      */
     public function reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures(PolicyIssuance $policyIssuance): void
     {
-        if (! $this->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance)) {
+        if (! $this->isEligibleForReTriggerGetAndUploadPolicyDocuments($policyIssuance)) { // only retry doc step if all retries failed.
             throw new \InvalidArgumentException('Policy issuance is not eligible for document sync re-trigger.');
         }
 
@@ -523,6 +524,20 @@ class DeviceQuoteService extends BaseQuoteService
         LoggerService::info('Device NGI: manual re-trigger dispatched GetAndUploadPolicyDocs job without initial delay', extra: [
             'policy_issuance_id' => $policyIssuance->id,
         ]);
+    }
+
+    public function identifyAutomationStepToReTrigger(PolicyIssuance $policyIssuance): void
+    {
+        $isDownloadDocStepFailed = $policyIssuance->completed_step == NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE && $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS;
+        if ($isDownloadDocStepFailed) { // only doc step required special treatment.
+            $this->reTriggerGetAndUploadPolicyDocumentsAfterRepeatedFailures($policyIssuance);
+        } else {
+            // for other steps, just mark as pending and dispatch job.
+            $policyIssuance->update([
+                'status' => PolicyIssuanceEnum::PENDING_STATUS,
+            ]);
+            PolicyIssuanceJob::dispatch($policyIssuance->id);
+        }
     }
 
 }
