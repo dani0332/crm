@@ -15,6 +15,7 @@ class RenewalQuoteProcess extends Model
         'data' => 'array',
         'validation_errors' => 'array',
         'step_errors' => 'array',
+        'insurance_provider_transition_id' => 'integer',
     ];
 
     /**

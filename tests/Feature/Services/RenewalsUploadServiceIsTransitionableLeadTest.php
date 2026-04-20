@@ -357,6 +357,87 @@ test('isTransitionableLead persists transition_id when plan invalid so downstrea
         ->not->toContain('Invalid Insurance Provider & Provider Name Combination Provided');
 });
 
+test('isTransitionableLead does not re-save when stored transition_id matches and differs only in scalar type (string vs int)', function () {
+    // Regression: without an integer cast on insurance_provider_transition_id,
+    // PDO drivers that return integer columns as strings (e.g. with
+    // PDO::ATTR_EMULATE_PREPARES=true) cause $originalTransitionId to be "5"
+    // while $transition->id resolves to int 5 via Eloquent's primary-key
+    // auto-cast. The strict !== comparison would then trigger a save() on
+    // every validation pass for already-transitionable leads. The model cast
+    // normalises the value so the comparison is true.
+    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
+    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    CarPlan::create([
+        'text' => 'GIG Gulf (AXA) Motor Prestige',
+        'repair_type' => 'AGENCY',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $state = (object) [
+        'insurance_provider_transition_id' => (string) $transition->id,
+        'save_count' => 0,
+    ];
+
+    $lead = new class(['insurer' => 'RSA', 'provider_name' => 'GIG AXA', 'plan_name' => 'GIG Gulf (AXA) Motor Prestige', 'plan_type' => 'AGENCY'], $state) extends RenewalQuoteProcess
+    {
+        private array $dataStorage;
+        private object $state;
+
+        public function __construct(array $data = [], ?object $state = null)
+        {
+            parent::__construct();
+            $this->dataStorage = $data;
+            $this->state = $state ?? (object) ['insurance_provider_transition_id' => null, 'save_count' => 0];
+        }
+
+        public function getAttribute($key)
+        {
+            if ($key === 'data') {
+                return $this->dataStorage;
+            }
+
+            if ($key === 'insurance_provider_transition_id') {
+                return $this->castAttribute($key, $this->state->insurance_provider_transition_id);
+            }
+
+            return parent::getAttribute($key);
+        }
+
+        public function setAttribute($key, $value)
+        {
+            if ($key === 'insurance_provider_transition_id') {
+                $this->state->insurance_provider_transition_id = $value;
+
+                return $this;
+            }
+
+            return parent::setAttribute($key, $value);
+        }
+
+        public function save(array $options = [])
+        {
+            $this->state->save_count++;
+
+            return true;
+        }
+    };
+
+    $service = createTransitionableFeatureService();
+    $leadValidationErrors = new Collection;
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    expect($status)->toBeTrue()
+        ->and($state->save_count)->toBe(0);
+});
+
 test('isTransitionableLeadForProcess returns status false with carPlan null when plan name or type do not match but keeps transitionId set', function () {
     $sourceProvider = InsuranceProvider::create(['code' => 'TM', 'text' => 'Tokio Marine']);
     $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
