@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\AxiomBatchHandler;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 
@@ -102,7 +103,7 @@ return [
 
         'axiom' => [
             'driver' => 'monolog',
-            'handler' => App\Logging\AxiomBatchHandler::class,
+            'handler' => AxiomBatchHandler::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'with' => [
                 'apiToken' => env('AXIOM_API_TOKEN'),

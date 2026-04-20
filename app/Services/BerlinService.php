@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\Log;
 
 class BerlinService extends BaseService
@@ -22,7 +24,7 @@ class BerlinService extends BaseService
     public function getCustomerInviteCode()
     {
         $inviteCodeGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientBerlin = new \GuzzleHttp\Client;
+        $clientBerlin = new Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -41,7 +43,7 @@ class BerlinService extends BaseService
                 $getdecodeContents = json_decode($berlinRequest->getBody());
                 $getResponseInviteCode = $getdecodeContents->data->inviteCode;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $responseErrorCode = $e->getResponse()->getStatusCode();
             Log::error('Berlin Service - InviteCodeService Error: '.$responseErrorCode);
         }
@@ -64,7 +66,7 @@ class BerlinService extends BaseService
         $magicUrlGeneratePassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
         $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName.':'.$magicUrlGeneratePassword);
-        $clientBerlin = new \GuzzleHttp\Client;
+        $clientBerlin = new Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -82,7 +84,7 @@ class BerlinService extends BaseService
                 $getdecodeContents = json_decode($berlinRequest->getBody());
                 $getResponseUrl = $getdecodeContents->data->url;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $responseErrorCode = $e->getResponse()->getStatusCode();
         }
 

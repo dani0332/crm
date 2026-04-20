@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\ProcessStatusCode;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EmailEventsRequest extends FormRequest
@@ -18,7 +19,7 @@ class EmailEventsRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -26,7 +27,7 @@ class EmailEventsRequest extends FormRequest
             'message_id' => 'required',
             'customer_email' => 'required',
             'subject' => 'nullable',
-            'status' => 'nullable|in:' . ProcessStatusCode::SENT . ',' . ProcessStatusCode::FAILED . ',' . ProcessStatusCode::UNSUBSCRIBED.','.ProcessStatusCode::PENDING,
+            'status' => 'nullable|in:'.ProcessStatusCode::SENT.','.ProcessStatusCode::FAILED.','.ProcessStatusCode::UNSUBSCRIBED.','.ProcessStatusCode::PENDING,
         ];
     }
 }

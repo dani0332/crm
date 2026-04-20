@@ -12,6 +12,7 @@ use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Exports\Reports\ConversionAsAtReportExport;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -34,6 +35,7 @@ use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -517,7 +519,7 @@ class ReportsController extends Controller
 
         if ($includeUnassignedLeads) {
             $prototype = $reportData->first();
-            if ($prototype instanceof \Illuminate\Database\Eloquent\Model) {
+            if ($prototype instanceof Model) {
                 $row = $prototype->newInstance([], true);
                 $row->total_leads = $unassignedLeadsCount;
                 $row->sale_leads = 0;
@@ -590,7 +592,7 @@ class ReportsController extends Controller
     public function exportConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
         // Create the export class
-        $exportClass = new \App\Exports\Reports\ConversionAsAtReportExport($conversionAsAtReportService, $request->all());
+        $exportClass = new ConversionAsAtReportExport($conversionAsAtReportService, $request->all());
 
         // Check if export type is email
         if ($request->exportType == 'email') {

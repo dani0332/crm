@@ -10,6 +10,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use GuzzleHttp\Client;
 
 class CapiRequestService
 {
@@ -19,7 +20,7 @@ class CapiRequestService
         $apiToken = config('constants.CENTRAL_API_TOKEN');
         $apiTimeout = config('constants.CENTRAL_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $capiRequest = $client->post(
             $apiEndPoint,
             [

@@ -5,6 +5,7 @@ namespace App\Http\Requests\BuyLeads;
 use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +22,7 @@ class BuyLeadConfigUpsertRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

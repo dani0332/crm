@@ -21,7 +21,7 @@ afterEach(function (): void {
 it('does not throw when default is mysql_read', function (): void {
     DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL_READ->value);
 
-    expect(fn () => ensureWriteDefaultConnection())->not->toThrow(\Throwable::class);
+    expect(fn () => ensureWriteDefaultConnection())->not->toThrow(Throwable::class);
 });
 
 it('switches mysql_read to mysql', function (): void {
@@ -35,7 +35,7 @@ it('switches mysql_read to mysql', function (): void {
 it('does not throw and does not switch when default is mysql', function (): void {
     DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL->value);
 
-    expect(fn () => ensureWriteDefaultConnection())->not->toThrow(\Throwable::class);
+    expect(fn () => ensureWriteDefaultConnection())->not->toThrow(Throwable::class);
 
     expect(DB::getDefaultConnection())->toBe(DatabaseConnectionEnum::MYSQL->value);
 });

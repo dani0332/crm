@@ -11,9 +11,9 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\HealthQuote;
+use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
-use App\Models\Nationality;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -355,7 +355,7 @@ trait OcrUtils
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
                 'error' => $e->getMessage(),
                 'quote_type' => get_class($quote),
@@ -532,7 +532,7 @@ trait OcrUtils
         })?->code ?? null;
     }
 
-        protected function getNationalityId(?string $nationality): ?int
+    protected function getNationalityId(?string $nationality): ?int
     {
         if (empty($nationality)) {
             return null;
