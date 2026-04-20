@@ -161,9 +161,10 @@ test('adds validation error when transitionable lead plan is missing', function 
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($status)->toBeFalse()
-        ->and($result['status'])->toBeTrue()
+        ->and($result['status'])->toBeFalse()
         ->and($result['carPlan'])->toBeNull()
         ->and($result['insuranceProvider']->is($targetProvider))->toBeTrue()
+        ->and($result['tags'])->toBe('')
         ->and($leadValidationErrors)->toContain('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
 });
 

@@ -346,16 +346,18 @@ test('isTransitionableLead persists transition_id when plan invalid so downstrea
 
     expect($status)->toBeFalse()
         ->and($lead->getAttribute('insurance_provider_transition_id'))->toBe($transition->id)
-        ->and($result['status'])->toBeTrue()
+        ->and($result['status'])->toBeFalse()
         ->and($result['insuranceProvider']->id)->toBe($targetProvider->id)
         ->and($result['carPlan'])->toBeNull()
+        ->and($result['transitionId'])->toBe($transition->id)
+        ->and($result['tags'])->toBe('')
         ->and($leadValidationErrors->toArray())
         ->toContain('Invalid Insurer Plan Name or Repair Type for Transitionable Lead')
         ->and($leadValidationErrors->toArray())
         ->not->toContain('Invalid Insurance Provider & Provider Name Combination Provided');
 });
 
-test('isTransitionableLeadForProcess returns transitionable with carPlan null when plan name or type do not match', function () {
+test('isTransitionableLeadForProcess returns status false with carPlan null when plan name or type do not match but keeps transitionId set', function () {
     $sourceProvider = InsuranceProvider::create(['code' => 'TM', 'text' => 'Tokio Marine']);
     $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
 
@@ -375,8 +377,9 @@ test('isTransitionableLeadForProcess returns transitionable with carPlan null wh
     $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLeadForProcess($lead);
 
-    expect($result['status'])->toBeTrue()
+    expect($result['status'])->toBeFalse()
         ->and($result['insuranceProvider']->id)->toBe($targetProvider->id)
         ->and($result['carPlan'])->toBeNull()
-        ->and($result['transitionId'])->toBe($transition->id);
+        ->and($result['transitionId'])->toBe($transition->id)
+        ->and($result['tags'])->toBe('');
 });

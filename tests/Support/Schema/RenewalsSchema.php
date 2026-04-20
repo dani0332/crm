@@ -35,6 +35,7 @@ class RenewalsSchema
                 $table->string('quote_type');
                 $table->string('type');
                 $table->string('fetch_plans_status')->nullable();
+                $table->boolean('email_sent')->default(false);
                 $table->string('batch')->nullable();
                 $table->string('policy_number')->nullable();
                 $table->string('renewal_batch_id')->nullable();
@@ -92,6 +93,11 @@ class RenewalsSchema
     private function ensureColumns(): void
     {
         SchemaUtils::ensureColumns([
+            'renewal_quote_processes' => [
+                'email_sent' => function (Blueprint $table) {
+                    $table->boolean('email_sent')->default(false);
+                },
+            ],
             'health_quote_request' => [
                 'health_quote_id' => function (Blueprint $table) {
                     $table->unsignedBigInteger('health_quote_id')->nullable();

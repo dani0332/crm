@@ -513,12 +513,7 @@ class RenewalsUploadService
             return false;
         }
 
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $renewalQuoteProcess->checkIsTransitionableLead();
+        $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess);
 
         if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
             $message = 'can not proceed with quote as payment is already in process. ';
@@ -1891,14 +1886,7 @@ class RenewalsUploadService
                     'callSource' => 'imcrm',
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
-                $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
-                    'quote_id' => $carQuote->id,
-                    'quote_type' => QuoteTypeShortCode::CAR,
-                    'status' => RenewalProcessStatuses::PLANS_FETCHED,
-                    'type' => RenewalsUploadType::UPDATE_LEADS,
-                    'email_sent' => true,
-                    'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-                ])->exists() && $renewalQuoteProcess->checkIsTransitionableLead();
+                $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess);
 
                 $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -2344,10 +2332,10 @@ class RenewalsUploadService
                                 if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isTransitionableLeadForProcess['insuranceProvider'] != null) {
                                     // transitionable lead: plan type and plan name validated in isTransitionableLead
                                     $carPlan = $isTransitionableLeadForProcess['carPlan'];
-                                    // When status is true (transitionable path), isTransitionableLead has already
-                                    // pushed the "Invalid Insurer Plan Name or Repair Type for Transitionable Lead"
-                                    // error. Avoid pushing the generic duplicate here.
-                                    if (! $carPlan && ! $isTransitionableLeadForProcess['status']) {
+                                    // On the transitionable path (transitionId set), isTransitionableLead has
+                                    // already pushed the "Invalid Insurer Plan Name or Repair Type for Transitionable
+                                    // Lead" error. Avoid pushing the generic duplicate here.
+                                    if (! $carPlan && $isTransitionableLeadForProcess['transitionId'] === null) {
                                         $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
                                 } else {
@@ -3595,9 +3583,28 @@ class RenewalsUploadService
             return false;
         }
 
-        return $latestProcess->checkIsTransitionableLead() && RenewalQuoteProcess::where('id', '!=', $latestProcess->id)->where([
-            'quote_id' => $carQuote->id,
-            'quote_type' => QuoteTypeShortCode::CAR,
+        return $this->isHistoricalRenewalForProcess($latestProcess);
+    }
+
+    /**
+     * Determine whether a given renewal process qualifies as historical — i.e. a
+     * prior PLANS_FETCHED UPDATE_LEADS process already sent an email for the
+     * same quote_id AND quote_type, AND the given process is transitionable.
+     *
+     * Scoping to both quote_id and quote_type is critical because quote_id is
+     * just an integer and can overlap across different LOB tables (CarQuote,
+     * HealthQuote, TravelQuote, ...). Without the quote_type filter the
+     * exists() can match unrelated renewal processes across LOBs.
+     */
+    public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process): bool
+    {
+        if (! $process->checkIsTransitionableLead()) {
+            return false;
+        }
+
+        return RenewalQuoteProcess::where('id', '!=', $process->id)->where([
+            'quote_id' => $process->quote_id,
+            'quote_type' => $process->quote_type,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'email_sent' => true,
@@ -3610,9 +3617,13 @@ class RenewalsUploadService
      * Does not run isTransitionableLead; use that only during validation and persist transition_id there.
      * If process has no transition_id, returns non-transitionable config (status false, provider/plan from lead data).
      *
-     * @param  RenewalQuoteProcess|null  $process
-     * @param  object  $leadData
-     * @param  Collection  $leadValidationErrors
+     * `status` mirrors isTransitionableLead's contract: true only when the full
+     * transitionable path resolves (active transition, both providers present,
+     * AND a matching car plan). When the transition is valid but the plan
+     * lookup fails, `status` is false while `transitionId` and
+     * `insuranceProvider` are still populated so callers can distinguish
+     * "plan missing on transitionable path" from "not a transitionable lead".
+     *
      * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: int|null, tags: string}
      */
     public function isTransitionableLeadForProcess(RenewalQuoteProcess $lead): array
@@ -3630,11 +3641,11 @@ class RenewalsUploadService
             LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan_id' => $carPlan?->id]);
 
             return [
-                'status' => true,
+                'status' => $carPlan !== null,
                 'carPlan' => $carPlan,
                 'insuranceProvider' => $target,
                 'transitionId' => $transition->id,
-                'tags' => InsuranceProvidersTransitionEnum::tagForSourceCode($source->code),
+                'tags' => $carPlan !== null ? InsuranceProvidersTransitionEnum::tagForSourceCode($source->code) : '',
             ];
         }
 
