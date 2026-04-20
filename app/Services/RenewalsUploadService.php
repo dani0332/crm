@@ -1972,8 +1972,11 @@ class RenewalsUploadService
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-                // if the lead is a transitionable lead (e.g. Genesis), set the current insurer to empty in email
-                if ($renewalQuoteProcess->checkIsTransitionableLead()) {
+                // if the lead is a transitionable lead (e.g. Genesis), set the current insurer to empty in email.
+                // Uses the current-data consistency check — not the stored-transition-only
+                // checkIsTransitionableLead() — so a lead whose provider_name/insurer was mutated after
+                // validation no longer clears currentInsurer when the transition is stale.
+                if ($this->isTransitionableLeadWithCurrentData($renewalQuoteProcess)) {
                     $emailData->currentInsurer = '';
                 }
 
@@ -3667,7 +3670,7 @@ class RenewalsUploadService
      *                                           {@see RenewalQuoteProcess::checkIsTransitionableLead()}
      *                                           for {@code $carQuote->latestUpdateRenewalQuoteProcess},
      *                                           pass it here to avoid evaluating it twice inside
-     *                                           {@see isTransitionConsistentWithCurrentData()}.
+     *                                           {@see isTransitionableLeadWithCurrentData()}.
      */
     public function resolveIsRenewalHistorical(CarQuote $carQuote, ?bool $isTransitionableLead = null): bool
     {
@@ -3696,7 +3699,7 @@ class RenewalsUploadService
      */
     public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
-        if (! $this->isTransitionConsistentWithCurrentData($process, $isTransitionableLead)) {
+        if (! $this->isTransitionableLeadWithCurrentData($process, $isTransitionableLead)) {
             return false;
         }
 
@@ -3718,13 +3721,17 @@ class RenewalsUploadService
      * no longer describes the current lead, and
      * {@see RenewalQuoteProcess::checkIsTransitionableLead()} alone would
      * still return true — producing incorrect historical plan sorting and
-     * OCB email routing.
+     * OCB email routing (e.g. `currentInsurer` wrongly cleared in OCB email).
      *
      * Restores the pre-refactor {@code isGenesisLead} contract of freshly
      * evaluating the current `insurer` code and `provider_name` text against
      * the stored transition's source/target providers before trusting it.
+     *
+     * Prefer this over {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     * in any code path that acts on transitionable status AFTER validation
+     * (OCB email sending, historical plan resolution, etc.).
      */
-    private function isTransitionConsistentWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
+    public function isTransitionableLeadWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
         if ($isTransitionableLead === false) {
             return false;

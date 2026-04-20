@@ -483,3 +483,97 @@ test('getNonTransitionableLeadConfig returns null provider when provider_name do
         ->and($result['insuranceProvider'])->toBeNull()
         ->and($result['carPlan'])->toBeNull();
 });
+
+test('isTransitionableLeadWithCurrentData returns true for fresh transitionable lead', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+    ], transitionId: $transition->id);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    expect($service->isTransitionableLeadWithCurrentData($lead))->toBeTrue();
+});
+
+test('isTransitionableLeadWithCurrentData returns false when provider_name is cleared after validation', function () {
+    // Regression: previously OCB email flows called checkIsTransitionableLead()
+    // which trusts the stored transition_id without re-validating against
+    // current data — leading to currentInsurer being wrongly cleared when
+    // provider_name had been mutated after the original validation pass.
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => '', // cleared post-validation
+    ], transitionId: $transition->id);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    expect($lead->checkIsTransitionableLead())->toBeTrue()
+        ->and($service->isTransitionableLeadWithCurrentData($lead))->toBeFalse();
+});
+
+test('isTransitionableLeadWithCurrentData returns false when insurer code no longer matches transition source', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::AXA, // swapped away from source
+        'provider_name' => $targetProvider->text,
+    ], transitionId: $transition->id);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    expect($lead->checkIsTransitionableLead())->toBeTrue()
+        ->and($service->isTransitionableLeadWithCurrentData($lead))->toBeFalse();
+});
+
+test('isTransitionableLeadWithCurrentData short-circuits when caller passes false hint', function () {
+    $service = createRenewalsUploadServiceWithMocks();
+    $lead = createMockLead([]);
+
+    expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: false))->toBeFalse();
+});
