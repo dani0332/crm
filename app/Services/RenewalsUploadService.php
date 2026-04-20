@@ -2344,7 +2344,10 @@ class RenewalsUploadService
                                 if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isTransitionableLeadForProcess['insuranceProvider'] != null) {
                                     // transitionable lead: plan type and plan name validated in isTransitionableLead
                                     $carPlan = $isTransitionableLeadForProcess['carPlan'];
-                                    if (! $carPlan) {
+                                    // When status is true (transitionable path), isTransitionableLead has already
+                                    // pushed the "Invalid Insurer Plan Name or Repair Type for Transitionable Lead"
+                                    // error. Avoid pushing the generic duplicate here.
+                                    if (! $carPlan && ! $isTransitionableLeadForProcess['status']) {
                                         $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
                                 } else {
@@ -3555,11 +3558,14 @@ class RenewalsUploadService
                 LoggerService::info('isTransitionableLead inside function - transition found');
                 $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
+                // Persist transition_id whenever a valid active transition exists (even if plan is invalid)
+                // so downstream isTransitionableLeadForProcess() recognises the provider combination as valid
+                // and callers don't report a misleading "Invalid Insurance Provider & Provider Name Combination".
+                $newTransitionId = $transition->id;
+
                 if (! $carPlan) {
-                    $newTransitionId = $originalTransitionId;
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
                 } else {
-                    $newTransitionId = $transition->id;
                     $status = true;
                 }
             }

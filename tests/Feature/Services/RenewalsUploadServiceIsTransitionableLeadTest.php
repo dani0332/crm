@@ -50,58 +50,62 @@ afterEach(function () {
     Mockery::close();
 });
 
-function createServiceWithoutConstructor(): RenewalsUploadService
-{
-    $reflection = new ReflectionClass(RenewalsUploadService::class);
+if (! function_exists('createTransitionableFeatureService')) {
+    function createTransitionableFeatureService(): RenewalsUploadService
+    {
+        $reflection = new ReflectionClass(RenewalsUploadService::class);
 
-    return $reflection->newInstanceWithoutConstructor();
+        return $reflection->newInstanceWithoutConstructor();
+    }
 }
 
-/**
- * Mock lead: in-memory only, no DB. data and insurance_provider_transition_id
- * are read/written via overrides; save() is a no-op.
- */
-function createMockLead(array $data, ?int $transitionId = null): RenewalQuoteProcess
-{
-    $state = (object) ['insurance_provider_transition_id' => $transitionId];
-
-    return new class($data, $state) extends RenewalQuoteProcess
+if (! function_exists('createTransitionableFeatureMockLead')) {
+    /**
+     * Mock lead: in-memory only, no DB. data and insurance_provider_transition_id
+     * are read/written via overrides; save() is a no-op.
+     */
+    function createTransitionableFeatureMockLead(array $data, ?int $transitionId = null): RenewalQuoteProcess
     {
-        private array $dataStorage;
-        private object $state;
+        $state = (object) ['insurance_provider_transition_id' => $transitionId];
 
-        public function __construct(array $data = [], ?object $state = null)
+        return new class($data, $state) extends RenewalQuoteProcess
         {
-            parent::__construct();
-            $this->dataStorage = $data;
-            $this->state = $state ?? (object) ['insurance_provider_transition_id' => null];
-        }
+            private array $dataStorage;
+            private object $state;
 
-        public function getAttribute($key)
-        {
-            return match ($key) {
-                'data' => $this->dataStorage,
-                'insurance_provider_transition_id' => $this->state->insurance_provider_transition_id,
-                default => parent::getAttribute($key),
-            };
-        }
-
-        public function setAttribute($key, $value)
-        {
-            if ($key === 'insurance_provider_transition_id') {
-                $this->state->insurance_provider_transition_id = $value;
-
-                return $this;
+            public function __construct(array $data = [], ?object $state = null)
+            {
+                parent::__construct();
+                $this->dataStorage = $data;
+                $this->state = $state ?? (object) ['insurance_provider_transition_id' => null];
             }
 
-            return parent::setAttribute($key, $value);
-        }
+            public function getAttribute($key)
+            {
+                return match ($key) {
+                    'data' => $this->dataStorage,
+                    'insurance_provider_transition_id' => $this->state->insurance_provider_transition_id,
+                    default => parent::getAttribute($key),
+                };
+            }
 
-        public function save(array $options = [])
-        {
-            return true;
-        }
-    };
+            public function setAttribute($key, $value)
+            {
+                if ($key === 'insurance_provider_transition_id') {
+                    $this->state->insurance_provider_transition_id = $value;
+
+                    return $this;
+                }
+
+                return parent::setAttribute($key, $value);
+            }
+
+            public function save(array $options = [])
+            {
+                return true;
+            }
+        };
+    }
 }
 
 // ---- isTransitionableLead() ----
@@ -109,7 +113,7 @@ function createMockLead(array $data, ?int $transitionId = null): RenewalQuotePro
 test('isTransitionableLead returns false when source provider does not exist', function () {
     InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'Plan A',
@@ -117,7 +121,7 @@ test('isTransitionableLead returns false when source provider does not exist', f
     ]);
 
     $leadValidationErrors = new Collection;
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLead($lead, $leadValidationErrors);
 
     expect($result)->toBeFalse()
@@ -134,7 +138,7 @@ test('isTransitionableLead returns false when no transition or transition is ina
         'is_active' => false,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
@@ -142,7 +146,7 @@ test('isTransitionableLead returns false when no transition or transition is ina
     ]);
 
     $leadValidationErrors = new Collection;
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLead($lead, $leadValidationErrors);
 
     expect($result)->toBeFalse()
@@ -159,7 +163,7 @@ test('isTransitionableLead adds validation error and returns false when transiti
         'is_active' => true,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
         'provider_name' => 'Gulf Insurance Group (Gulf) B.S.C. (C)',
         'plan_name' => 'Unknown Plan',
@@ -167,7 +171,7 @@ test('isTransitionableLead adds validation error and returns false when transiti
     ]);
 
     $leadValidationErrors = new Collection;
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLead($lead, $leadValidationErrors);
 
     expect($result)->toBeFalse()
@@ -190,7 +194,7 @@ test('isTransitionableLead returns true and sets transition_id when transition a
         'provider_id' => $targetProvider->id,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
@@ -198,7 +202,7 @@ test('isTransitionableLead returns true and sets transition_id when transition a
     ]);
 
     $leadValidationErrors = new Collection;
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLead($lead, $leadValidationErrors);
 
     expect($result)->toBeTrue()
@@ -223,14 +227,14 @@ test('isTransitionableLeadForProcess returns transitionable config when active t
         'provider_id' => $targetProvider->id,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], $transition->id);
 
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($result['status'])->toBeTrue()
@@ -252,14 +256,14 @@ test('isTransitionableLeadForProcess handles scenario where source provider reco
     // Delete the source provider record but keep the transition referencing it
     $sourceProvider->delete();
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], $transition->id);
 
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
 
     // Should NOT throw fatal error, but instead fall back to non-transitionable config
     $result = $service->isTransitionableLeadForProcess($lead);
@@ -277,14 +281,14 @@ test('isTransitionableLeadForProcess returns non-transitionable when no transiti
         'provider_id' => $provider->id,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'AXA',
         'provider_name' => $providerText,
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], null);
 
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($result['status'])->toBeFalse()
@@ -303,18 +307,52 @@ test('isTransitionableLeadForProcess returns non-transitionable when stored tran
         'is_active' => false,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], $transition->id);
 
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($result['status'])->toBeFalse()
         ->and($result['transitionId'])->toBeNull();
+});
+
+test('isTransitionableLead persists transition_id when plan invalid so downstream provider combo is not misreported', function () {
+    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
+    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $lead = createTransitionableFeatureMockLead([
+        'insurer' => 'RSA',
+        'provider_name' => 'GIG AXA',
+        'plan_name' => 'Unknown Plan',
+        'plan_type' => 'TPL',
+    ]);
+
+    $leadValidationErrors = new Collection;
+    $service = createTransitionableFeatureService();
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($status)->toBeFalse()
+        ->and($lead->getAttribute('insurance_provider_transition_id'))->toBe($transition->id)
+        ->and($result['status'])->toBeTrue()
+        ->and($result['insuranceProvider']->id)->toBe($targetProvider->id)
+        ->and($result['carPlan'])->toBeNull()
+        ->and($leadValidationErrors->toArray())
+        ->toContain('Invalid Insurer Plan Name or Repair Type for Transitionable Lead')
+        ->and($leadValidationErrors->toArray())
+        ->not->toContain('Invalid Insurance Provider & Provider Name Combination Provided');
 });
 
 test('isTransitionableLeadForProcess returns transitionable with carPlan null when plan name or type do not match', function () {
@@ -327,14 +365,14 @@ test('isTransitionableLeadForProcess returns transitionable with carPlan null wh
         'is_active' => true,
     ]);
 
-    $lead = createMockLead([
+    $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
         'provider_name' => 'GIG AXA',
         'plan_name' => 'NonExistent Plan',
         'plan_type' => 'COMP',
     ], $transition->id);
 
-    $service = createServiceWithoutConstructor();
+    $service = createTransitionableFeatureService();
     $result = $service->isTransitionableLeadForProcess($lead);
 
     expect($result['status'])->toBeTrue()
