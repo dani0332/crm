@@ -54,6 +54,7 @@ use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
+use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CarRevivalService;
@@ -869,6 +870,15 @@ class ApiController extends Controller
 
     public function eligibleForRevivalFollowups(EligibleForRevivalFollowupsRequest $request): JsonResponse
     {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.': Dtt is not enabled from cms', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_OK, 'Dtt is not enabled from cms');
+        }
+
         LoggerService::info(self::class.': Eligible for revival followups request received', extra: [
             'quoteUID' => $request->quoteUID,
         ]);
@@ -884,7 +894,7 @@ class ApiController extends Controller
                 'quoteUID' => $request->quoteUID,
             ]);
 
-            return response()->json(false);
+            return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
         }
 
         $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
@@ -894,6 +904,6 @@ class ApiController extends Controller
             'isEligible' => $isEligible,
         ]);
 
-        return response()->json($isEligible);
+        return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
     }
 }
