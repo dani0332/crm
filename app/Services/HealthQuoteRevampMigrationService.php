@@ -245,7 +245,7 @@ class HealthQuoteRevampMigrationService
             ->count();
     }
 
-    private function monthsSinceDob(?string $dob): ?int
+    protected function monthsSinceDob(?string $dob): ?int
     {
         if ($dob === null || $dob === '') {
             return null;
@@ -257,7 +257,7 @@ class HealthQuoteRevampMigrationService
     /**
      * @param  mixed  $dob  Raw attribute (string, Carbon, etc.)
      */
-    private function dobToDateString(mixed $dob): ?string
+    protected function dobToDateString(mixed $dob): ?string
     {
         if ($dob === null || $dob === '') {
             return null;
@@ -294,7 +294,7 @@ class HealthQuoteRevampMigrationService
     /**
      * @return list<string>
      */
-    private function allowedCustomerTypesForQuote(HealthQuote $hqr): array
+    protected function allowedCustomerTypesForQuote(HealthQuote $hqr): array
     {
         $types = CustomerInsured::query()
             ->where('quote_request_id', $hqr->id)
