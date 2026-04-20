@@ -51,3 +51,28 @@ test('mapQuoteData does not throw when row has fewer columns than schema', funct
     expect($mapped['plan_name'])->toBeNull();
     expect($mapped['customer_name'])->toBe('Customer');
 });
+
+test('mapQuoteData maps numeric zero premium to null like legacy empty cells', function () {
+    $lead = new RenewalsUploadLeads;
+    $import = new UploadAndCreateImport($lead);
+
+    $row = array_fill(0, 20, '');
+    $row[0] = 'Customer';
+    $row[1] = 'test@example.com';
+    $row[2] = '1234567890';
+    $row[3] = 'CAR';
+    $row[8] = 'POL-001';
+    $row[10] = '01/01/2025';
+    $row[16] = 0;
+
+    $mappedInt = $import->mapQuoteData($row);
+    expect($mappedInt['premium'])->toBeNull();
+
+    $row[16] = 0.0;
+    $mappedFloat = $import->mapQuoteData($row);
+    expect($mappedFloat['premium'])->toBeNull();
+
+    $row[16] = '0';
+    $mappedStringZero = $import->mapQuoteData($row);
+    expect($mappedStringZero['premium'])->toBe('0');
+});

@@ -19,7 +19,7 @@ trait RenewalsImportTrait
         $quoteData = [];
         foreach ($columns as $key => $column) {
             $index = $column['index'];
-            if (! array_key_exists($index, $row) || $row[$index] === '' || $row[$index] === null) {
+            if (! array_key_exists($index, $row) || $this->isBlankImportCell($row[$index])) {
                 $quoteData[$key] = null;
 
                 continue;
@@ -34,6 +34,25 @@ trait RenewalsImportTrait
         }
 
         return $quoteData;
+    }
+
+    /**
+     * Whether a spreadsheet cell should map to null in quote data.
+     *
+     * PHP 7 treated 0 == '' as true; PHP 8+ does not. Readers often emit int/float 0
+     * for empty numeric cells, so 0 and 0.0 are treated as blank. String '0' is kept.
+     */
+    protected function isBlankImportCell(mixed $value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if ($value === 0 || $value === 0.0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
