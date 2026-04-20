@@ -2386,16 +2386,25 @@ class RenewalsUploadService
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
-                                $isTransitionableLeadForProcess = $this->isTransitionableLeadForProcess($lead);
+                                // Defer the transition lookup/provider resolution/plan resolution
+                                // performed by isTransitionableLeadForProcess() until we actually need
+                                // its result. When any of provider_name/plan_type/plan_name is empty,
+                                // control drops into the else branch unconditionally, so calling it
+                                // up-front would incur wasted DB work per lead.
+                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name) {
+                                    $isTransitionableLeadForProcess = $this->isTransitionableLeadForProcess($lead);
 
-                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isTransitionableLeadForProcess['insuranceProvider'] != null) {
-                                    // transitionable lead: plan type and plan name validated in isTransitionableLead
-                                    $carPlan = $isTransitionableLeadForProcess['carPlan'];
-                                    // On the transitionable path (transitionId set), isTransitionableLead has
-                                    // already pushed the "Invalid Insurer Plan Name or Repair Type for Transitionable
-                                    // Lead" error. Avoid pushing the generic duplicate here.
-                                    if (! $carPlan && $isTransitionableLeadForProcess['transitionId'] === null) {
-                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
+                                    if ($isTransitionableLeadForProcess['insuranceProvider'] != null) {
+                                        // transitionable lead: plan type and plan name validated in isTransitionableLead
+                                        $carPlan = $isTransitionableLeadForProcess['carPlan'];
+                                        // On the transitionable path (transitionId set), isTransitionableLead has
+                                        // already pushed the "Invalid Insurer Plan Name or Repair Type for Transitionable
+                                        // Lead" error. Avoid pushing the generic duplicate here.
+                                        if (! $carPlan && $isTransitionableLeadForProcess['transitionId'] === null) {
+                                            $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
+                                        }
+                                    } else {
+                                        $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                     }
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');

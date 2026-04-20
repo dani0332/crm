@@ -1221,7 +1221,12 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        $isRenewalHistorical = app(RenewalsUploadService::class)->resolveIsRenewalHistorical($carQuote);
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
@@ -1246,8 +1251,8 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $carQuote->isTransitionableLead = $carQuote->latestUpdateRenewalQuoteProcess->checkIsTransitionableLead();
+        if ($latestUpdateRenewalQuoteProcess && $latestUpdateRenewalQuoteProcess->data) {
+            $carQuote->isTransitionableLead = $isTransitionableLead;
         }
 
         $carQuote->plans = $plans;
