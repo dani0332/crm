@@ -103,12 +103,20 @@ describe('CustomerMembers::customizeAuditTransformation – created event', func
         expect($result['audit']->event)->toBe('member_added');
     });
 
-    test('event is member_added (Policyholder) when is_policy_holder equals "true"', function () {
+    test('event is member_added (Policyholder) when is_policy_holder and is_insured equal "true"', function () {
+        $result = CustomerMembers::customizeAuditTransformation(
+            auditData('created', [], ['is_policy_holder' => 'true', 'is_insured' => 'true'])
+        );
+
+        expect($result['audit']->event)->toBe('member_added (Policyholder)');
+    });
+
+    test('event is member_added (Non-insured Policyholder) when is_policy_holder is "true" but is_insured is absent from audit new values', function () {
         $result = CustomerMembers::customizeAuditTransformation(
             auditData('created', [], ['is_policy_holder' => 'true'])
         );
 
-        expect($result['audit']->event)->toBe('member_added (Policyholder)');
+        expect($result['audit']->event)->toBe('member_added (Non-insured Policyholder)');
     });
 
     test('event is member_added (Principal) when is_principal equals "true"', function () {
@@ -121,7 +129,7 @@ describe('CustomerMembers::customizeAuditTransformation – created event', func
 
     test('is_policy_holder takes precedence over is_principal on created event', function () {
         $result = CustomerMembers::customizeAuditTransformation(
-            auditData('created', [], ['is_policy_holder' => 'true', 'is_principal' => 'true'])
+            auditData('created', [], ['is_policy_holder' => 'true', 'is_principal' => 'true', 'is_insured' => 'true'])
         );
 
         expect($result['audit']->event)->toBe('member_added (Policyholder)');
@@ -358,8 +366,12 @@ describe('CustomerMembers::customizeAuditTransformation – event string dataset
             'member_added',
             auditData('created', [], []),
         ],
-        'created – policy holder' => [
+        'created – policy holder (insured)' => [
             'member_added (Policyholder)',
+            auditData('created', [], ['is_policy_holder' => 'true', 'is_insured' => 'true']),
+        ],
+        'created – policy holder (is_insured absent from audit)' => [
+            'member_added (Non-insured Policyholder)',
             auditData('created', [], ['is_policy_holder' => 'true']),
         ],
         'created – principal' => [

@@ -89,7 +89,7 @@ describe('CustomerMembers::customizeAuditTransformation - created event', functi
         expect($result['audit']->event)->toBe('member_added');
     });
 
-    test('sets event to member_added (Policy Holder) when is_policy_holder is true on creation', function () {
+    test('sets event to member_added (Non-insured Policyholder) when is_policy_holder is true but is_insured is absent from audit new values', function () {
         $audit = (object) ['event' => 'created', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $data = [
             'audit' => $audit,
@@ -100,7 +100,7 @@ describe('CustomerMembers::customizeAuditTransformation - created event', functi
 
         $result = CustomerMembers::customizeAuditTransformation($data);
 
-        expect($result['audit']->event)->toBe('member_added (Policy Holder)');
+        expect($result['audit']->event)->toBe('member_added (Non-insured Policyholder)');
     });
 
     test('sets event to member_added (Principal) when is_principal is true on creation', function () {
@@ -134,7 +134,7 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         expect($result['audit']->event)->toBe('member_deleted');
     });
 
-    test('sets event to member_updated (Policy Holder Removed) when policy holder flag changes to false', function () {
+    test('sets event to member_updated (Policyholder Removed) when policy holder flag changes to false', function () {
         $audit = (object) ['event' => 'updated', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 0, 'is_principal' => 0];
         $data = [
@@ -146,10 +146,10 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
 
         $result = CustomerMembers::customizeAuditTransformation($data);
 
-        expect($result['audit']->event)->toBe('member_updated (Policy Holder Removed)');
+        expect($result['audit']->event)->toBe('member_updated (Policyholder Removed)');
     });
 
-    test('sets event to member_updated (Policy Holder Added) when policy holder flag changes to true', function () {
+    test('sets event to member_updated (Policyholder Added) when policy holder flag changes to true', function () {
         $audit = (object) ['event' => 'updated', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 1, 'is_principal' => 0];
         $data = [
@@ -161,7 +161,7 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
 
         $result = CustomerMembers::customizeAuditTransformation($data);
 
-        expect($result['audit']->event)->toBe('member_updated (Policy Holder Added)');
+        expect($result['audit']->event)->toBe('member_updated (Policyholder Added)');
     });
 
     test('sets event to member_updated (Principal Removed) when principal flag changes to false', function () {
@@ -209,7 +209,7 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
         expect($result['audit']->event)->toBe('member_updated');
     });
 
-    test('appends (Policy Holder) suffix to member_updated when model is policy holder', function () {
+    test('appends (Policyholder) suffix to member_updated when model is policy holder', function () {
         $audit = (object) ['event' => 'updated', 'auditable_id' => 1, 'auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails'];
         $model = (object) ['first_name' => 'John', 'last_name' => 'Doe', 'is_policy_holder' => 1, 'is_principal' => 0];
         $data = [
@@ -221,7 +221,7 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
 
         $result = CustomerMembers::customizeAuditTransformation($data);
 
-        expect($result['audit']->event)->toBe('member_updated (Policy Holder)');
+        expect($result['audit']->event)->toBe('member_updated (Policyholder)');
     });
 
     test('appends (Principal) suffix to member_updated when model is principal', function () {

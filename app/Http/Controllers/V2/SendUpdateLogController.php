@@ -86,8 +86,16 @@ class SendUpdateLogController extends Controller
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
 
-                if ($requestData['quote_type_id'] == QuoteTypeId::Health) {
-                    HealthQuoteMigration::dispatch(HealthQuote::find($childLeadResponse['id']));
+                if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
+                    $healthQuoteForMigration = HealthQuote::find($childLeadResponse['id']);
+                    if ($healthQuoteForMigration === null) {
+                        LoggerService::warning('HealthQuoteMigration skipped: HealthQuote not found for child lead id', extra: [
+                            'health_quote_id' => $childLeadResponse['id'],
+                            'send_update_log_code' => $response->code,
+                        ]);
+                    } else {
+                        HealthQuoteMigration::dispatch($healthQuoteForMigration);
+                    }
                 }
             }
 

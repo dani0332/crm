@@ -107,7 +107,7 @@ class HealthQuoteRevampMigrationService
             QuoteStatusEnum::IMRenewal,
             QuoteStatusEnum::PendingQuote,
             QuoteStatusEnum::Uncontactable,
-            QuoteStatusEnum::AFIA_RENEWAL,
+            QuoteStatusEnum::IMRenewal,
             QuoteStatusEnum::Stale,
             QuoteStatusEnum::Allocated,
             QuoteStatusEnum::RenewalTermsReceived,
@@ -119,7 +119,7 @@ class HealthQuoteRevampMigrationService
             QuoteStatusEnum::RenewalTermsSent,
             QuoteStatusEnum::EarlyRenewal,
             QuoteStatusEnum::PaymentLinkRequestedByCustomer,
-            QuoteStatusEnum::PAYMENT_LINK_IN_PROGRESS,
+            QuoteStatusEnum::PaymentLinkInprogress,
             QuoteStatusEnum::PaymentLinkSentToCustomer,
             QuoteStatusEnum::PaymentInitiated,
             QuoteStatusEnum::PendingBorRequest,
@@ -786,7 +786,7 @@ class HealthQuoteRevampMigrationService
                     in_array($nid, $uaeNationalityIds, true) => MemberCategoryEnum::UAE_NATIONAL->value,
                     in_array($nid, $gccNationalityIds, true) => MemberCategoryEnum::GCC_NATIONAL->value,
                     $eid !== null && (int) $eid === EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_DUBAI_VISA->value,
-                    $eid === null || (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
+                    $eid !== null && (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
                     default => $cm->member_category_id,
                 };
 
