@@ -81,11 +81,6 @@ if (! function_exists('createMockLead')) {
             {
                 return true;
             }
-
-            public function checkIsTransitionableLead(): bool
-            {
-                return $this->insurance_provider_transition_id !== null;
-            }
         };
     }
 }
