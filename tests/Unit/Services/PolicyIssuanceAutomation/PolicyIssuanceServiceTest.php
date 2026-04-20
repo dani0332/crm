@@ -75,7 +75,8 @@ it('derives api issuance status when automation completes successfully', functio
         QuoteTypes::CYBER->value
     );
 
-    $quote->refresh();
+    // fresh() avoids reloading factory-stubbed cyberPlanDetail (refresh() would query Mongo).
+    $quote = $quote->fresh();
 
     expect($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
         ->and($quote->insurer_api_status_id)->toBeNull();
