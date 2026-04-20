@@ -23,6 +23,7 @@ use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
+use App\Http\Requests\EligibleForRevivalFollowupsRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -46,6 +47,7 @@ use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -863,5 +865,35 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function eligibleForRevivalFollowups(EligibleForRevivalFollowupsRequest $request): JsonResponse
+    {
+        LoggerService::info(self::class.': Eligible for revival followups request received', extra: [
+            'quoteUID' => $request->quoteUID,
+        ]);
+
+        $carQuote = CarQuote::query()
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
+            ->where('uuid', $request->quoteUID)
+            ->first();
+
+        if (! $carQuote || ! $carQuote->carQuoteRequestDetail) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return response()->json(false);
+        }
+
+        $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
+
+        LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
+            'quoteUID' => $request->quoteUID,
+            'isEligible' => $isEligible,
+        ]);
+
+        return response()->json($isEligible);
     }
 }

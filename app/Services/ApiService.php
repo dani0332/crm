@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\MotorRevivalEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -667,5 +670,59 @@ class ApiService
                 'message' => 'STP Advisor notification failed: '.$e->getMessage(),
             ];
         }
+    }
+
+    public function isEligibleForRevivalFollowups(CarQuote $carQuote): bool
+    {
+        $engagementLevel = $carQuote->carQuoteRequestDetail->engagement_level;
+        $excludedEngagementLevels = [
+            MotorRevivalEnum::MEDIUM_INTENT->value,
+            MotorRevivalEnum::INTENT_HIGH->value,
+        ];
+        $eligibleEngagementLevels = [
+            MotorRevivalEnum::COMMS_TRIGGERED->value,
+            MotorRevivalEnum::INTENT_LOW->value,
+        ];
+        $disallowedPaymentStatusIds = [
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ];
+
+        $isRevivalSource = $carQuote->source === LeadSourceEnum::REVIVAL;
+        $isAdvisorUnassigned = blank($carQuote->advisor_id);
+        $isLeadStatusNew = (int) $carQuote->quote_status_id === QuoteStatusEnum::NewLead;
+        $hasDisallowedPaymentStatus = $carQuote->payments()
+            ->whereIn('payment_status_id', $disallowedPaymentStatusIds)
+            ->exists();
+        $isPaymentStatusNotAuthorizedPaidOrPartial = ! $hasDisallowedPaymentStatus;
+        $isEngagementNotMediumOrHighIntent = ! in_array($engagementLevel, $excludedEngagementLevels, true);
+        $isEngagementCommsTriggeredOrIntentLow = in_array($engagementLevel, $eligibleEngagementLevels, true);
+
+        $isEligible = $isRevivalSource
+            && $isAdvisorUnassigned
+            && $isLeadStatusNew
+            && $isPaymentStatusNotAuthorizedPaidOrPartial
+            && $isEngagementNotMediumOrHighIntent
+            && $isEngagementCommsTriggeredOrIntentLow;
+
+        LoggerService::info(self::class.': Eligible for revival followups business logic evaluated', extra: [
+            'quoteUID' => $carQuote->uuid,
+            'isEligible' => $isEligible,
+            'isRevivalSource' => $isRevivalSource,
+            'isAdvisorUnassigned' => $isAdvisorUnassigned,
+            'isLeadStatusNew' => $isLeadStatusNew,
+            'isPaymentStatusNotAuthorizedPaidOrPartial' => $isPaymentStatusNotAuthorizedPaidOrPartial,
+            'hasDisallowedPaymentStatus' => $hasDisallowedPaymentStatus,
+            'isEngagementNotMediumOrHighIntent' => $isEngagementNotMediumOrHighIntent,
+            'isEngagementCommsTriggeredOrIntentLow' => $isEngagementCommsTriggeredOrIntentLow,
+            'source' => $carQuote->source,
+            'advisor_id' => $carQuote->advisor_id,
+            'quote_status_id' => $carQuote->quote_status_id,
+            'payment_status_id' => $carQuote->payment_status_id,
+            'engagement_level' => $engagementLevel,
+        ]);
+
+        return $isEligible;
     }
 }
