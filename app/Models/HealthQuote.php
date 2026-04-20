@@ -9,20 +9,24 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
@@ -32,7 +36,10 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
+    protected $appends = [
+        'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
+        'pc_qualified_formatted', 'has_pec_tag',
+    ];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -70,6 +77,16 @@ class HealthQuote extends Model implements AuditableContract
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
+    }
+
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function getAuditables()
@@ -179,7 +196,7 @@ class HealthQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function members()
     {
@@ -226,7 +243,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Health);
@@ -378,7 +395,7 @@ class HealthQuote extends Model implements AuditableContract
     }
 
     // Reminder::Get the active insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -465,7 +482,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all payments that have IPL splits
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getPaymentsWithInsurerPaymentLink()
     {
@@ -479,7 +496,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get the last payment with an IPL split
      *
-     * @return \App\Models\Payment|null
+     * @return Payment|null
      */
     public function getLastPaymentWithInsurerPaymentLink()
     {
@@ -494,7 +511,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all IPL payment splits across all payments
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAllInsurerPaymentLinkSplits()
     {
@@ -616,6 +633,45 @@ class HealthQuote extends Model implements AuditableContract
     public function branch()
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    public function insurerRequestResponses()
+    {
+        return $this->hasMany(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    public function insurerGenerateQuoteRequestResponse()
+    {
+        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => HealthInsurerRequestResponse::EXECUTION_METHOD_GENERATE_QUOTE, 'status' => 'passed'])->latest();
+    }
+
+    public function healthUmafResponse()
+    {
+        return $this->hasOne(HealthUMAFResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    /**
+     * Check if this quote is a Straight Through Processing (STP) case
+     */
+    public function isSTPCase(): bool
+    {
+        // Use data_get for safe nested access with default value
+        return (bool) data_get($this->healthUmafResponse, 'stp_rating.is_stp', false);
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
     /**

@@ -59,6 +59,8 @@ class InstantAlfredReportService
 
         $this->addQuoteTypeJoins($query, $quoteTypeId);
 
+        $query->groupBy('pqr.id');
+
         $idList = implode(',', array_map('intval', $ids));
         $query->orderByRaw("FIELD(pqr.id, {$idList})");
 

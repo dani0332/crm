@@ -59,7 +59,7 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
         }
     }
 
-    private function getRuleUsers()
+    private function getRuleUsers(): mixed
     {
         return app(RuleService::class)->getRuleUserIds($this->allocationRequest->getQuoteType());
     }

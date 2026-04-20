@@ -243,6 +243,10 @@ class CanonicalNationalitySeeder extends Seeder
         foreach ($rows as $row) {
             $nationality = Nationality::where('text', $row[0])->first();
 
+            if (! $nationality) {
+                continue;
+            }
+
             CanonicalNationality::updateOrCreate(
                 [
                     'nationality_id' => $nationality?->id,

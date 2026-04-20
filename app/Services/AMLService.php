@@ -64,6 +64,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
+use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLLookupsService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
@@ -74,6 +75,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
@@ -818,7 +820,7 @@ class AMLService
             }
 
             try {
-                $getQuoteResponse = app(\App\Services\AML\AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
+                $getQuoteResponse = app(AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('Successfully retrieved and updated quote details from insurer', extra: [
@@ -881,7 +883,7 @@ class AMLService
                         $screeningResponse['is_get_quote_api_failed'] = true;
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 LoggerService::info('Exception while calling getQuote API for renewal upload', extra: [
                     'quote_type_id' => $quoteTypeId,
                     'customer_type' => $customerType,
@@ -1472,7 +1474,7 @@ class AMLService
             LoggerService::info('Quote Kyc Decision updated Successfully');
 
             return true;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::error($ex->getMessage());
         }
 
@@ -1511,7 +1513,7 @@ class AMLService
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
 
             $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
@@ -1933,11 +1935,11 @@ class AMLService
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
         // Debug: Log the received parameters
-        \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
+        Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
         // Create request object from parameters or use global request as fallback
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -1947,7 +1949,7 @@ class AMLService
         $endDate = $request->get('amlCreatedEndDate');
 
         // Debug: Log the extracted dates and other filters
-        \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
+        Log::info('AMLService Extracted Filters:', [
             'startDate' => $startDate,
             'endDate' => $endDate,
             'searchType' => $request->get('searchType'),
@@ -2419,7 +2421,7 @@ class AMLService
                 $response['is_insured_driver_same'] = $vehicleDriverDetails['is_insured_and_driver_same'];
             }
             LoggerService::info(__FUNCTION__.' - '.$message);
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
@@ -2427,7 +2429,7 @@ class AMLService
         return $response;
     }
 
-    public function autoCaptureAMLValidationCheck($quote)
+    public function autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase = false)
     {
         if ($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
@@ -2435,7 +2437,7 @@ class AMLService
             return false;
         }
 
-        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared && ! $isHealthAndSTPCase) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
 
             return false;

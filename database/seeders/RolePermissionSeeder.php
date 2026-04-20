@@ -47,6 +47,7 @@ class RolePermissionSeeder extends Seeder
         $this->addBranchesPermission();
         $this->addCarLegacyKycSkipInsurerApiPermission();
         $this->addCarDriverEmiratesIdUpdatePermission();
+        $this->addReTriggerPolicyIssuancePermission();
         $this->addRuleConfigWritePermissions();
     }
 
@@ -638,6 +639,20 @@ class RolePermissionSeeder extends Seeder
                     $role->givePermissionTo($permission);
                 }
             }
+        }
+    }
+
+    private function addReTriggerPolicyIssuancePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RE_TRIGGER_POLICY_ISSUANCE,
+            'guard_name' => 'web',
+        ]);
+
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 
