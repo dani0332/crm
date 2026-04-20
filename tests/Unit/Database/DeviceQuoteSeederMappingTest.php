@@ -13,7 +13,7 @@ final class DeviceQuoteSeederMappingTest extends TestCase
 {
     public function test_maps_re_trigger_policy_automation_device_to_the_same_roles_as_device_quote_crud(): void
     {
-        $map = DeviceQuoteSeeder::deviceQuotePermissionRoleAssignments();
+        $map = DeviceQuoteSeeder::deviceQuotePermissionRoleAssignmentMap();
 
         $expectedRoles = [
             RolesEnum::Admin,

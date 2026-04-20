@@ -125,9 +125,10 @@ class AlfredCoinsWebhookService
             ? self::EVENT_RENEWED
             : self::EVENT_PURCHASED;
 
-        $amount = $quote->payments()->first()->price_vat_applicable;
+        $payment = $quote->payments()->first();
+        $amount = $payment?->price_vat_applicable ?? $quote->getAttribute('premium');
 
-        if ($amount === null && ! isset($amount)) {
+        if ($amount === null) {
             LoggerService::error('AlfredCoinsWebhookService - Amount not found for quote', [], null, [
                 'quoteUID' => $quote->getAttribute('uuid'),
                 'quoteTypeId' => $quote->getAttribute('quote_type_id'),

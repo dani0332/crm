@@ -135,6 +135,16 @@ class DeviceQuoteSeeder extends Seeder
 
         $this->seedPermissions($deviceAdvisorPermissions, [RolesEnum::SmartPhoneAdvisor]);
 
+        return self::deviceQuotePermissionRoleAssignmentMap();
+    }
+
+    /**
+     * Role map returned by {@see deviceQuotePermissionRoleAssignments()} (no DB side effects).
+     *
+     * @return array<string, list<string>>
+     */
+    public static function deviceQuotePermissionRoleAssignmentMap(): array
+    {
         $rolesWithFullDeviceQuoteAccess = [
             RolesEnum::Admin,
             RolesEnum::DeviceAdvisor,
