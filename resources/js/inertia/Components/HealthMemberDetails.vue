@@ -593,6 +593,7 @@ const memberPrincipalConfirmed = () => {
           title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
           position: 'top',
         });
+        memberForm.reset();
         emit('memberUpdated');
       }
     },

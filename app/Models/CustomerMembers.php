@@ -111,7 +111,9 @@ class CustomerMembers extends Model
     private static function resolveCreatedEvent(array $transformedNew): string
     {
         if (($transformedNew['is_policy_holder'] ?? null) == 'true') {
-            return 'member_added (Policyholder)';
+            $isInsured = $transformedNew['is_insured'] == 'true';
+
+            return $isInsured ? 'member_added (Policyholder)' : 'member_added (Non-insured Policyholder)';
         }
 
         if (($transformedNew['is_principal'] ?? null) == 'true') {

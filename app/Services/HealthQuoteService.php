@@ -43,7 +43,6 @@ use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
-use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
@@ -496,7 +495,7 @@ class HealthQuoteService extends BaseService
 
         $customer = $healthQuote?->customer;
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
-                $priceStartingFrom = $healthQuote?->price_starting_from ?? null;
+        $priceStartingFrom = $healthQuote?->price_starting_from ?? null;
         $members = collect($request->members);
         $principalMember = $members->firstWhere('is_principal', 1);
         $dataArr = [
@@ -524,6 +523,7 @@ class HealthQuoteService extends BaseService
                 'policyStartDate' => $request->policy_start_date,
                 'firstName' => $request->first_name,
                 'lastName' => $request->last_name,
+                'coverForId' => $request->cover_for_id,
 
                 // principal member details
                 'memberCategoryId' => $principalMember['member_category_id'] ?? null,
@@ -539,38 +539,8 @@ class HealthQuoteService extends BaseService
             ],
         ];
 
-        $uboMembers = CustomerMembersRepository::getBy($healthQuote->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity)->where('is_third_party_payer', 0);
-
         if ($request->customer_type == CustomerTypeEnum::Individual) {
-            $individualMembers = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member));
-            $dataArr['data']['memberDetails'] = array_merge($individualMembers->all(), $uboMembers->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all());
-        } else {
-            $customerMembers = CustomerMembersRepository::getBy($healthQuote->id, QuoteTypes::HEALTH->name)->where('is_third_party_payer', 0);
-            $uboPolicyHolderMember = $uboMembers->firstWhere('is_policy_holder', 1);
-            $allMembers = $customerMembers->merge($uboMembers);
-
-            $dataArr['data']['memberDetails'] = $allMembers->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all();
-
-            if (! $uboPolicyHolderMember) {
-                $dataArr['data']['memberDetails'][] = [
-                    'id' => null,
-                    'firstName' => $request->first_name,
-                    'lastName' => $request->last_name,
-                    'dob' => null,
-                    'gender' => null,
-                    'nationalityId' => null,
-                    'emirateOfYourVisaId' => $healthQuote->emirate_of_your_visa_id,
-                    'salaryBandId' => $request->salary_band_id,
-                    'memberCategoryId' => null,
-                    'visaCategoryId' => $request->visa_category_id,
-                    'relationCode' => null,
-                    'maritalStatusId' => null,
-                    'isInsured' => false,
-                    'isPolicyHolder' => true,
-                    'isPrincipal' => false,
-                    'isPecMarked' => false,
-                ];
-            }
+            $dataArr['data']['memberDetails'] = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member));
         }
 
         if ($request->has('sub_source_id')) {

@@ -25,6 +25,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Events\HealthQuoteMigration;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
@@ -1638,8 +1639,15 @@ class AMLService
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
 
-        if ($quoteTypeId == QuoteTypeId::Health && $isEntity) {
-            $this->updateHealthEntityData($quote, $request);
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            if ($isEntity) {
+                $this->updateHealthEntityData($quote, $request);
+            }
+
+            if (! $isEntity && in_array($quote->quote_status_id, app(HealthQuoteRevampMigrationService::class)->getMirationStatuses())
+            ) {
+                HealthQuoteMigration::dispatch($quote);
+            }
         }
 
         return [$shouldApplicableForScreening, $insured, $entityId];
@@ -1750,29 +1758,6 @@ class AMLService
 
         $quote->emirate_of_your_visa_id = $request->emirate_of_registration_id;
         $quote->save();
-
-        $policyHolder = $quote->activeMembers
-        ->where('customer_type', CustomerTypeEnum::Entity)
-        ->where('is_policy_holder', 1)
-        ->first();
-
-        if (! $policyHolder) {
-            $quote->members()->create([
-                'customer_type' => CustomerTypeEnum::Entity,
-                'customer_entity_id' => $quote->quoteRequestEntityMapping?->entity_id ?? null,
-                'code' => generateQuoteMemberCode(CustomerTypeEnum::Entity, $quote->quoteRequestEntityMapping?->entity_id ?? null),
-                'first_name' => $quote->first_name,
-                'last_name' => $quote->last_name,
-                'emirate_of_your_visa_id' => $request->emirate_of_registration_id,
-                'salary_band_id' => $quote->salary_band_id,
-                'visa_category_id' => $quote->visa_category_id,
-                'is_insured' => false,
-                'is_policy_holder' => true,
-                'is_principal' => false,
-                'nationality_id' => $quote->nationality_id,
-                'dob' => $quote->dob,
-            ]);
-        }
     }
 
     public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool

@@ -83,4 +83,6 @@ final class QuoteStatusEnum extends Enum
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
+    public const AFIA_RENEWAL = 48;
+    public const PAYMENT_LINK_IN_PROGRESS = 78;
 }

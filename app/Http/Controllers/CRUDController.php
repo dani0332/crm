@@ -47,6 +47,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Events\HealthQuoteMigration;
 use App\Events\LeadsCount;
 use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
@@ -107,6 +108,7 @@ use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
+use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
@@ -2047,6 +2049,16 @@ class CRUDController extends Controller
         if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
             (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
+        }
+
+        if (
+            strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+            && in_array($request->leadStatus, app(HealthQuoteRevampMigrationService::class)->getMirationStatuses())
+        ) {
+            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
+            if ($plainEntity->is_quote_locked) {
+                HealthQuoteMigration::dispatch($plainEntity);
+            }
         }
 
         // courtesy email

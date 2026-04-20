@@ -7,6 +7,7 @@ use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
+use App\Events\HealthQuoteMigration;
 use App\Events\NationalityPoolCreated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuoteEmailUpdated;
@@ -24,6 +25,7 @@ use App\Listeners\Health\HandleHealthTransactionApproved;
 use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\RunHealthQuoteRevampMigration;
 use App\Listeners\SendAlfredCoinsInsurancePurchasedWebhook;
 use App\Listeners\TriggerConversionApis;
 use App\Listeners\UpdateCustomerEmail;
@@ -63,6 +65,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         HealthQuoteAdvisorUpdated::class => [
             HandleHealthAdvisorUpdated::class,
+        ],
+        HealthQuoteMigration::class => [
+            RunHealthQuoteRevampMigration::class,
         ],
         Login::class => [
             LoginListener::class,

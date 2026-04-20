@@ -13,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Events\HealthQuoteMigration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -24,6 +25,7 @@ use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
+use App\Models\HealthQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteType;
@@ -83,6 +85,10 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
+
+                if ($requestData['quote_type_id'] == QuoteTypeId::Health) {
+                    HealthQuoteMigration::dispatch(HealthQuote::find($childLeadResponse['id']));
+                }
             }
 
             DB::commit();

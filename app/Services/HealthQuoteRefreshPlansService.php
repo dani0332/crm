@@ -49,8 +49,8 @@ class HealthQuoteRefreshPlansService extends BaseService
             ];
 
             $dataArray['memberDetails'] = $quote->activeMembers
-                ->filter(function ($member) {
-                    return $member->is_third_party_payer == 0;
+                ->filter(function ($member) use ($quote) {
+                    return $member->is_third_party_payer == 0 && $member->customer_type == $quote->customer_type;
                 })
                 ->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
 
@@ -58,7 +58,7 @@ class HealthQuoteRefreshPlansService extends BaseService
 
             $response = Ken::request('/get-revised-health-quote-plans', 'POST', $dataArray);
 
-            LoggerService::info('Health quote refresh plans - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
+            LoggerService::info('Health quote refresh plans - Ken API response', extra: ['uuid' => $quoteId]);
 
             return $response;
         } catch (\Exception $e) {

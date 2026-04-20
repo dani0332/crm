@@ -50,11 +50,9 @@ const computedMembers = computed(() => {
     return page.props.membersDetails.filter(x => !x.is_third_party_payer && x.is_insured == 1);
   } else {
     if (props.isPayerDetails) {
-      const thirdPartyPayerMembers = page.props.uboDetails.filter(x => x.is_third_party_payer);
-      const UboPolicyholderMembers = page.props.uboDetails.filter(x => x.is_policy_holder == 1);
-      return thirdPartyPayerMembers.length > 0 ? thirdPartyPayerMembers : UboPolicyholderMembers;
+      return page.props.uboDetails.filter(x => x.is_third_party_payer);
     }
-    return page.props.uboDetails.filter(x => !x.is_third_party_payer && x.is_policy_holder == 0);
+    return page.props.uboDetails.filter(x => !x.is_third_party_payer);
   }
 });
 const membersTableHeader = reactive({
@@ -82,14 +80,14 @@ const membersTableHeader = reactive({
       },
     ];
 
-    if((page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Health)) {
+    if(!(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual)) {
       baseColumns.push({
         text: 'Is this member is payer?',
         value: 'is_payer',
       });
     }
 
-    if (props.isPayerDetails || (page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Health)) {
+    if (!(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual && !props.isPayerDetails)) {
       baseColumns.push({
         text: 'Action',
         value: 'action',
@@ -446,8 +444,7 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
       <x-button
         v-else
         v-if="
-          (isPayerDetails && page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Health) ||
-          page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Health
+          !(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual)
         "
         size="sm"
         @click.prevent="memberFormEnableToggle"
