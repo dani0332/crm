@@ -138,6 +138,16 @@ class RenewalsUploadService
     protected $homeQuoteService;
     protected $renewalsHelperService;
 
+    /**
+     * Per-instance memoization for resolveCarPlan(). Keyed by
+     * plan_name|plan_type|provider_id so the same lookup within one
+     * validation/fetch/email pass avoids duplicate CarPlan queries.
+     * Stores CarPlan|null (null encodes "not found" so misses are cached too).
+     *
+     * @var array<string, CarPlan|null>
+     */
+    private array $carPlanCache = [];
+
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
         CapiRequestService $capiRequestService,
@@ -3500,7 +3510,13 @@ class RenewalsUploadService
             return null;
         }
 
-        return CarPlan::where('text', $planName)
+        $cacheKey = $planName.'|'.$planType.'|'.$providerId;
+
+        if (array_key_exists($cacheKey, $this->carPlanCache)) {
+            return $this->carPlanCache[$cacheKey];
+        }
+
+        return $this->carPlanCache[$cacheKey] = CarPlan::where('text', $planName)
             ->where('repair_type', $planType)
             ->where('provider_id', $providerId)
             ->first();

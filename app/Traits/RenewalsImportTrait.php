@@ -27,11 +27,7 @@ trait RenewalsImportTrait
 
             $value = $row[$index];
             if (! empty($column['type']) && $column['type'] == 'date') {
-                if (strpos($value, '/')) {
-                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $value)->format('d/m/Y');
-                } else {
-                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $value))->format('d/m/Y');
-                }
+                $quoteData[$key] = $this->formatDate($value);
             } else {
                 $quoteData[$key] = $value;
             }
@@ -88,12 +84,7 @@ trait RenewalsImportTrait
     public function validateDate($value)
     {
         try {
-            if (strpos($value, '/')) {
-                Carbon::createFromFormat('d/m/Y', $value)->format('d/m/Y');
-            } else {
-                $date = Date::excelToDateTimeObject((float) $value);
-                Carbon::instance($date)->format('d/m/Y');
-            }
+            $this->formatDate($value);
 
             return true;
         } catch (\Exception $exception) {
@@ -101,5 +92,21 @@ trait RenewalsImportTrait
 
             return false;
         }
+    }
+
+    /**
+     * Format a date value from the import row.
+     *
+     * @param  mixed  $value
+     */
+    protected function formatDate($value): string
+    {
+        $format = config('constants.DATE_DISPLAY_SLASH_FORMAT');
+
+        if (strpos((string) $value, '/')) {
+            return Carbon::createFromFormat($format, $value)->format($format);
+        }
+
+        return Carbon::instance(Date::excelToDateTimeObject((float) $value))->format($format);
     }
 }

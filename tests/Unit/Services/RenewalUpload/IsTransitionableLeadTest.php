@@ -8,6 +8,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderTransition;
 use App\Models\RenewalQuoteProcess;
 use App\Services\RenewalsUploadService;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -236,6 +237,56 @@ test('isTransitionableLead completes within 100 milliseconds', function () {
     $duration = microtime(true) - $start;
 
     expect($duration)->toBeLessThan(0.1);
+});
+
+test('resolveCarPlan is memoized across isTransitionableLead and isTransitionableLeadForProcess', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Memoized Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+    ]);
+
+    $connection = DB::connection('sqlite');
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    try {
+        $service->isTransitionableLead($lead, $leadValidationErrors);
+        $service->isTransitionableLeadForProcess($lead);
+
+        $carPlanQueries = collect($connection->getQueryLog())
+            ->filter(fn (array $entry): bool => str_contains($entry['query'], '"car_plan"'));
+
+        expect($carPlanQueries)->toHaveCount(1);
+    } finally {
+        $connection->disableQueryLog();
+        $connection->flushQueryLog();
+    }
 });
 
 test('getNonTransitionableLeadConfig returns null provider when codes do not match', function () {
