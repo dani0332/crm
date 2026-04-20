@@ -1753,7 +1753,13 @@ class RenewalsUploadService
 
     private function preparePlan($data, $carPlan, $isTransitionableLead, $provider, $quote)
     {
-        LoggerService::info('preparePlan inside function - isTransitionableLead:'.json_encode($isTransitionableLead));
+        LoggerService::info('preparePlan inside function', [
+            'status' => $isTransitionableLead['status'] ?? false,
+            'transitionId' => $isTransitionableLead['transitionId'] ?? null,
+            'carPlanId' => $isTransitionableLead['carPlan']?->id,
+            'insuranceProviderId' => $isTransitionableLead['insuranceProvider']?->id,
+            'tags' => $isTransitionableLead['tags'] ?? '',
+        ]);
         $plan = [
             'planId' => $carPlan->id,
             'isDisabled' => false,
