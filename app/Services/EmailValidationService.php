@@ -45,6 +45,13 @@ class EmailValidationService
         |&\#820[3-7];?
     )+/ix';
 
+    /**
+     * Matches a leading {@code mailto:} (case-insensitive) so pasted
+     * {@code mailto:user@example.com} values are normalised back to the bare
+     * address before further cleaning.
+     */
+    private const MAILTO_PREFIX_PATTERN = '/^mailto:/i';
+
     private const LITERAL_INVISIBLE_TRAILING_PATTERN = '/(?:
         \\\\u[0-9a-f]{4}
         |\\\\U[0-9a-f]{4}
@@ -148,8 +155,8 @@ class EmailValidationService
             $previous = $value;
             $value = trim($value);
 
-            if (preg_match('/^mailto:/i', $value) === 1) {
-                $value = (string) preg_replace('/^mailto:/i', '', $value, 1);
+            if (preg_match(self::MAILTO_PREFIX_PATTERN, $value) === 1) {
+                $value = (string) preg_replace(self::MAILTO_PREFIX_PATTERN, '', $value, 1);
             }
         }
 
@@ -164,8 +171,8 @@ class EmailValidationService
             $previous = $value;
             $value = trim($value, self::LEADING_TRAILING_JUNK);
 
-            if (preg_match('/^mailto:/i', $value) === 1) {
-                $value = (string) preg_replace('/^mailto:/i', '', $value, 1);
+            if (preg_match(self::MAILTO_PREFIX_PATTERN, $value) === 1) {
+                $value = (string) preg_replace(self::MAILTO_PREFIX_PATTERN, '', $value, 1);
             }
         }
 
