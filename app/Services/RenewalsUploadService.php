@@ -2318,7 +2318,6 @@ class RenewalsUploadService
 
                                 // Only place we run full transition resolution: during validation. Persist transition_id so fetch/email use stored value.
                                 $isTransitionableLead = $this->isTransitionableLead($lead, $leadValidationErrors);
-                                LoggerService::info('after function call isTransitionableLead', ['isTransitionableLead' => $isTransitionableLead, 'checkIsTransitionableLead' => $lead->checkIsTransitionableLead()]);
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
                                 } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0 && ! $isTransitionableLead) {
