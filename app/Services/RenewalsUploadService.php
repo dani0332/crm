@@ -3671,6 +3671,17 @@ class RenewalsUploadService
     /**
      * Resolve provider and plan from leadData only (no transition logic). Use when process has no transition_id.
      *
+     * Mirrors the pre-refactor isGenesisLead() contract: the returned
+     * `insuranceProvider` is always the provider resolved by text (or null when
+     * no provider matches by text at all), regardless of whether its `code`
+     * matches the lead's `insurer`. `carPlan` is only resolved when the codes
+     * match. This keeps validation (uploadedLeadsValidation) on the
+     * plan-validation branch so a mismatched-but-valid provider name produces
+     * the existing "Invalid Insurer Plan Name or Repair Type" error and
+     * continues to run downstream `$carPlan`-dependent checks, instead of
+     * short-circuiting to "Invalid Insurance Provider & Provider Name
+     * Combination Provided".
+     *
      * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: null, tags: string}
      */
     private function getNonTransitionableLeadConfig($leadData): array
@@ -3681,10 +3692,6 @@ class RenewalsUploadService
         $carPlan = null;
         if ($insuranceProvider && $insuranceProvider->code === ($leadData->insurer ?? null)) {
             $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $insuranceProvider->id);
-        } else {
-            // If code mismatch and not a transition lead (which is handled by the caller),
-            // we should return null for provider so validation gives the correct error.
-            $insuranceProvider = null;
         }
 
         LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan_id' => $carPlan?->id]);

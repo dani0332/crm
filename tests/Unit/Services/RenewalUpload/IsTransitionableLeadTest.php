@@ -284,7 +284,14 @@ test('resolveCarPlan is memoized across isTransitionableLead and isTransitionabl
     }
 });
 
-test('getNonTransitionableLeadConfig returns null provider when codes do not match', function () {
+test('getNonTransitionableLeadConfig keeps text-matched provider with null carPlan when codes do not match', function () {
+    // Preserves the pre-refactor isGenesisLead() contract: a lead whose
+    // provider_name resolves to a real InsuranceProvider row but whose
+    // insurer code does not match that provider's code must keep the
+    // text-matched provider in the result (with carPlan null). This lets
+    // uploadedLeadsValidation stay on the plan-validation branch and
+    // surface "Invalid Insurer Plan Name or Repair Type" instead of the
+    // blanket "Invalid Insurance Provider & Provider Name Combination".
     $provider = InsuranceProvider::create([
         'code' => InsuranceProvidersEnum::AXA,
         'text' => 'AXA',
@@ -294,6 +301,22 @@ test('getNonTransitionableLeadConfig returns null provider when codes do not mat
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA, // Code mismatch: RSA vs AXA
         'provider_name' => 'AXA',
+    ]);
+
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['insuranceProvider']?->is($provider))->toBeTrue()
+        ->and($result['carPlan'])->toBeNull()
+        ->and($result['transitionId'])->toBeNull()
+        ->and($result['tags'])->toBe('');
+});
+
+test('getNonTransitionableLeadConfig returns null provider when provider_name does not resolve at all', function () {
+    $service = createRenewalsUploadServiceWithMocks();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => 'Totally Unknown Provider Text',
     ]);
 
     $result = $service->isTransitionableLeadForProcess($lead);
