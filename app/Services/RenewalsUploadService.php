@@ -176,6 +176,19 @@ class RenewalsUploadService
      */
     private array $transitionableLeadCache = [];
 
+    /**
+     * Per-instance memoization for resolveInsuranceProviderByText(). Keyed by
+     * the raw provider_name string so the same text lookup issued by
+     * isTransitionableLead() during the transitionable resolution and the
+     * subsequent getNonTransitionableLeadConfig() fallback (for non-transitionable
+     * leads — where the transitionableLeadCache is intentionally empty) doesn't
+     * double the provider-by-text queries per lead in the validation chunk loop.
+     * Stores InsuranceProvider|null (null encodes "not found" so misses are cached too).
+     *
+     * @var array<string, InsuranceProvider|null>
+     */
+    private array $insuranceProviderByTextCache = [];
+
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
         CapiRequestService $capiRequestService,
@@ -3514,16 +3527,23 @@ class RenewalsUploadService
         if ($providerName === null || $providerName === '') {
             return null;
         }
+
+        if (array_key_exists($providerName, $this->insuranceProviderByTextCache)) {
+            return $this->insuranceProviderByTextCache[$providerName];
+        }
+
         $trimmed = trim($providerName);
         $provider = InsuranceProvider::where('text', $trimmed)->first();
         if ($provider !== null) {
-            return $provider;
+            return $this->insuranceProviderByTextCache[$providerName] = $provider;
         }
         // Normalize © (U+00A9) to (C) so upload "Gulf Insurance Group (Gulf) B.S.C. ©" matches DB "Gulf Insurance Group (Gulf) B.S.C. (C)"
         $normalized = str_replace('©', '(C)', $trimmed);
         $normalized = trim($normalized);
 
-        return $normalized !== $trimmed ? InsuranceProvider::where('text', $normalized)->first() : null;
+        return $this->insuranceProviderByTextCache[$providerName] = $normalized !== $trimmed
+            ? InsuranceProvider::where('text', $normalized)->first()
+            : null;
     }
 
     public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)

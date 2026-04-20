@@ -421,6 +421,55 @@ test('getNonTransitionableLeadConfig keeps text-matched provider with null carPl
         ->and($result['tags'])->toBe('');
 });
 
+test('resolveInsuranceProviderByText is memoized across isTransitionableLead and getNonTransitionableLeadConfig for non-transitionable leads', function () {
+    // Regression: for non-transitionable leads the transitionableLeadCache is
+    // intentionally empty, so isTransitionableLeadForProcess falls through to
+    // getNonTransitionableLeadConfig which re-runs resolveInsuranceProviderByText
+    // — duplicating the provider-by-text query already issued inside
+    // isTransitionableLead. A text-keyed memo on resolveInsuranceProviderByText
+    // collapses this to a single query per unique provider_name per instance.
+    $provider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Comprehensive',
+        'repair_type' => 'COMP',
+        'provider_id' => $provider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::AXA,
+        'provider_name' => $provider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+    ]);
+
+    $connection = DB::connection('sqlite');
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    try {
+        $service->isTransitionableLead($lead, $leadValidationErrors);
+        $result = $service->isTransitionableLeadForProcess($lead);
+
+        $providerByTextQueries = collect($connection->getQueryLog())
+            ->filter(fn (array $entry): bool => str_contains($entry['query'], '"insurance_provider"')
+                && str_contains($entry['query'], '"text"')
+            );
+
+        expect($providerByTextQueries)->toHaveCount(1)
+            ->and($result['insuranceProvider']->is($provider))->toBeTrue()
+            ->and($result['carPlan']->is($plan))->toBeTrue();
+    } finally {
+        $connection->disableQueryLog();
+        $connection->flushQueryLog();
+    }
+});
+
 test('getNonTransitionableLeadConfig returns null provider when provider_name does not resolve at all', function () {
     $service = createRenewalsUploadServiceWithMocks();
     $lead = createMockLead([
