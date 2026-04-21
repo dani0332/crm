@@ -1943,7 +1943,8 @@ class RenewalsUploadService
                     'callSource' => 'imcrm',
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
-                $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess);
+                $isTransitionableLead = $this->isTransitionableLeadWithCurrentData($renewalQuoteProcess);
+                $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess, $isTransitionableLead);
 
                 $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -1976,7 +1977,7 @@ class RenewalsUploadService
                 // Uses the current-data consistency check — not the stored-transition-only
                 // checkIsTransitionableLead() — so a lead whose provider_name/insurer was mutated after
                 // validation no longer clears currentInsurer when the transition is stale.
-                if ($this->isTransitionableLeadWithCurrentData($renewalQuoteProcess)) {
+                if ($isTransitionableLead) {
                     $emailData->currentInsurer = '';
                 }
 
