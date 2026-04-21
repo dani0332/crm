@@ -2028,7 +2028,6 @@ class CentralService extends BaseService
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
-            'maskedEmail' => '',
         ];
 
         if ($isTravel) {
