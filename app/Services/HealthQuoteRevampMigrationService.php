@@ -122,35 +122,4 @@ class HealthQuoteRevampMigrationService
             LoggerService::endLogging();
         }
     }
-
-    protected function monthsSinceDob(?string $dob): ?int
-    {
-        return $this->context->monthsSinceDob($dob);
-    }
-
-    /**
-     * @param  mixed  $dob  Raw attribute (string, Carbon, etc.)
-     */
-    protected function dobToDateString(mixed $dob): ?string
-    {
-        return $this->context->dobToDateString($dob);
-    }
-
-    protected function isEntityHealthLead(HealthQuote $hqr): bool
-    {
-        return $this->context->isEntityHealthLead($hqr);
-    }
-
-    protected function memberIsAtLeastYearsOld(mixed $dob, int $years = 18): bool
-    {
-        return $this->context->memberIsAtLeastYearsOld($dob, $years);
-    }
-
-    /**
-     * @return list<string>
-     */
-    protected function allowedCustomerTypesForQuote(HealthQuote $hqr): array
-    {
-        return $this->context->allowedCustomerTypesForQuote($hqr);
-    }
 }

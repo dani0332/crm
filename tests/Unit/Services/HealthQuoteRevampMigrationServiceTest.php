@@ -8,9 +8,9 @@ use App\Models\CustomerInsured;
 use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Services\HealthQuoteRevampMigrationService;
+use App\Services\HealthRevamp\HealthQuoteRevampMigrationContext;
 use Carbon\Carbon;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\Unit\Support\TestHealthQuoteRevampMigrationService;
 
 beforeEach(function () {
     TestSchemaCreator::ensureMinimalSchema();
@@ -87,9 +87,9 @@ describe('isEntityHealthLead', function () {
             ->forActiveHealthLink($quote, $insured)
             ->create();
 
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeIsEntityHealthLead($quote->fresh()))->toBeTrue();
+        expect($context->isEntityHealthLead($quote->fresh()))->toBeTrue();
     });
 
     it('is false when active insured is Individual', function () {
@@ -100,29 +100,29 @@ describe('isEntityHealthLead', function () {
             ->forActiveHealthLink($quote, $insured)
             ->create();
 
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeIsEntityHealthLead($quote->fresh()))->toBeFalse();
+        expect($context->isEntityHealthLead($quote->fresh()))->toBeFalse();
     });
 
     it('is false when customer_id is null', function () {
         $quote = HealthQuote::factory()->make(['customer_id' => null]);
 
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeIsEntityHealthLead($quote))->toBeFalse();
+        expect($context->isEntityHealthLead($quote))->toBeFalse();
     });
 });
 
 describe('memberIsAtLeastYearsOld', function () {
     it('matches calendar age against the threshold', function () {
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
         Carbon::setTestNow(Carbon::parse('2026-06-15'));
 
-        expect($service->exposeMemberIsAtLeastYearsOld('2008-06-16', 18))->toBeFalse()
-            ->and($service->exposeMemberIsAtLeastYearsOld('2008-06-15', 18))->toBeTrue()
-            ->and($service->exposeMemberIsAtLeastYearsOld(null, 18))->toBeFalse();
+        expect($context->memberIsAtLeastYearsOld('2008-06-16', 18))->toBeFalse()
+            ->and($context->memberIsAtLeastYearsOld('2008-06-15', 18))->toBeTrue()
+            ->and($context->memberIsAtLeastYearsOld(null, 18))->toBeFalse();
 
         Carbon::setTestNow();
     });
@@ -130,16 +130,16 @@ describe('memberIsAtLeastYearsOld', function () {
 
 describe('monthsSinceDob', function () {
     it('returns null for empty dob', function ($dob) {
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeMonthsSinceDob($dob))->toBeNull();
+        expect($context->monthsSinceDob($dob))->toBeNull();
     })->with([null, '']);
 
     it('returns month count for a valid dob', function () {
         Carbon::setTestNow(Carbon::parse('2026-06-15'));
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        $months = $service->exposeMonthsSinceDob('2020-06-15');
+        $months = $context->monthsSinceDob('2020-06-15');
 
         expect($months)->toBeInt()->and($months)->toBeGreaterThan(0);
 
@@ -149,15 +149,15 @@ describe('monthsSinceDob', function () {
 
 describe('dobToDateString', function () {
     it('returns null for empty values', function ($dob) {
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeDobToDateString($dob))->toBeNull();
+        expect($context->dobToDateString($dob))->toBeNull();
     })->with([null, '']);
 
     it('normalizes input to Y-m-d', function () {
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeDobToDateString('2000-01-15'))->toBe('2000-01-15');
+        expect($context->dobToDateString('2000-01-15'))->toBe('2000-01-15');
     });
 });
 
@@ -165,9 +165,9 @@ describe('allowedCustomerTypesForQuote', function () {
     it('defaults to Individual when there are no customer_insured rows', function () {
         $quote = HealthQuote::factory()->create();
 
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeAllowedCustomerTypesForQuote($quote))->toBe(['Individual']);
+        expect($context->allowedCustomerTypesForQuote($quote))->toBe(['Individual']);
     });
 
     it('returns distinct insured customer types for active health links', function () {
@@ -186,9 +186,9 @@ describe('allowedCustomerTypesForQuote', function () {
             ->forActiveHealthLink($quote, $insuredEntity)
             ->create(['is_active' => true]);
 
-        $service = new TestHealthQuoteRevampMigrationService;
+        $context = new HealthQuoteRevampMigrationContext;
 
-        expect($service->exposeAllowedCustomerTypesForQuote($quote->fresh()))
+        expect($context->allowedCustomerTypesForQuote($quote->fresh()))
             ->toEqualCanonicalizing([CustomerTypeEnum::Individual, CustomerTypeEnum::Entity]);
     });
 });
