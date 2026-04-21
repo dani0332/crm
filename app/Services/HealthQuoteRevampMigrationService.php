@@ -10,7 +10,6 @@ use App\Services\HealthRevamp\HealthQuoteRevampMigrationMutator;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationStateLogger;
 use App\Services\Logger\LoggerService;
 use Exception;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Applies health revamp data migration logic (health-revamp-3-migrationScript.sql) to a single lead.
@@ -106,14 +105,12 @@ class HealthQuoteRevampMigrationService
 
         try {
             $beforeSnapshots = $this->stateLogger->logLeadStateBefore($healthQuote);
-            DB::transaction(function () use ($healthQuote, $beforeSnapshots) {
-                $this->mutator->applyAll($healthQuote);
-                $this->stateLogger->logLeadStateAfter(
-                    $healthQuote,
-                    $beforeSnapshots['health_quote'],
-                    $beforeSnapshots['customer_members'],
-                );
-            });
+            $this->mutator->applyAll($healthQuote);
+            $this->stateLogger->logLeadStateAfter(
+                $healthQuote,
+                $beforeSnapshots['health_quote'],
+                $beforeSnapshots['customer_members'],
+            );
         } catch (Exception $e) {
             LoggerService::error('Error migrating health quote', ['error' => $e->getMessage()]);
 

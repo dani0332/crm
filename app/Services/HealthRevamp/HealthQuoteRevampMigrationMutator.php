@@ -17,6 +17,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Services\Life\NationalityService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 final class HealthQuoteRevampMigrationMutator
 {
@@ -32,15 +33,17 @@ final class HealthQuoteRevampMigrationMutator
         $this->insertIndividualPolicyHolderWhenNoNameMatch($hqr);
         $this->insertMembersWhenNoneAndNoActiveInsured($hqr);
         $this->insertMembersWhenNoneAndInsuredIndividual($hqr);
-        $this->applyCoverForIdUpdates($hqr);
-        $this->applyInsureAndPolicyHolderCodes($hqr);
-        $this->applyMaritalStatusUpdates($hqr);
-        $this->normalizeGenderValues($hqr);
-        $this->applyPolicyHolderCategoryCode($hqr);
-        $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr);
-        $this->applyMemberRelationSalaryAndVisa($hqr);
-        $this->applyHealthQuoteMemberCategoryRemap($hqr);
-        $this->applyCustomerMemberCategoryRemap($hqr);
+        DB::transaction(function () use ($hqr) {
+            $this->applyCoverForIdUpdates($hqr);
+            $this->applyInsureAndPolicyHolderCodes($hqr);
+            $this->applyMaritalStatusUpdates($hqr);
+            $this->normalizeGenderValues($hqr);
+            $this->applyPolicyHolderCategoryCode($hqr);
+            $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr);
+            $this->applyMemberRelationSalaryAndVisa($hqr);
+            $this->applyHealthQuoteMemberCategoryRemap($hqr);
+            $this->applyCustomerMemberCategoryRemap($hqr);
+        });
     }
 
     private function fillMissingPrincipals(HealthQuote $hqr): void
@@ -132,12 +135,6 @@ final class HealthQuoteRevampMigrationMutator
             ->where('is_third_party_payer', false)
             ->exists();
 
-        $hasAnyPolicyHolder = $this->queries->healthMembersBaseQuery($hqr)
-            ->where('customer_type', 'Individual')
-            ->where('is_third_party_payer', false)
-            ->where('is_policy_holder', true)
-            ->exists();
-
         $hasAdultNameMatchPolicyHolder = $this->queries->healthMembersBaseQuery($hqr)
             ->where('customer_type', 'Individual')
             ->where('is_third_party_payer', false)
@@ -148,9 +145,7 @@ final class HealthQuoteRevampMigrationMutator
             ->get()
             ->contains(fn (CustomerMembers $m) => $this->context->memberIsAtLeastYearsOld($m->dob, 18));
 
-        return $hasMembers
-            && ! $hasAnyPolicyHolder
-            && ! $hasAdultNameMatchPolicyHolder;
+        return $hasMembers && ! $hasAdultNameMatchPolicyHolder;
     }
 
     private function insertMembersWhenNoneAndNoActiveInsured(HealthQuote $hqr): void
