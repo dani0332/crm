@@ -2,8 +2,10 @@
 
 namespace App\Services\Life;
 
+use App\Enums\CacheKeyEnum;
 use App\Models\Nationality;
 use App\Services\BaseService;
+use App\Services\Cache\CacheManager;
 
 class NationalityService extends BaseService
 {
@@ -14,11 +16,15 @@ class NationalityService extends BaseService
 
     public function getGCCNationalityIds(): array
     {
-        return Nationality::whereIn('text', ['Saudi Arabian', 'Saudi', 'Kuwaiti', 'Omani', 'Qatari', 'Bahraini'])->pluck('id')->toArray();
+        return CacheManager::remember(CacheKeyEnum::NATIONALITIES_GCC_IDS, function () {
+            return Nationality::whereIn('text', ['Saudi Arabian', 'Saudi', 'Kuwaiti', 'Omani', 'Qatari', 'Bahraini'])->pluck('id')->toArray();
+        });
     }
 
     public function getUAENationalityIds(): array
     {
-        return Nationality::whereIn('text', ['Emirati', 'Emarat'])->pluck('id')->toArray();
+        return CacheManager::remember(CacheKeyEnum::NATIONALITIES_UAE_IDS, function () {
+            return Nationality::whereIn('text', ['Emirati', 'Emarat'])->pluck('id')->toArray();
+        });
     }
 }

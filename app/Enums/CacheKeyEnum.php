@@ -29,6 +29,8 @@ enum CacheKeyEnum: string
     case DOMESTIC_WORKER_RELATIONS_KEY = 'domestic_worker_relations_key';
     case GENDER_KEY = 'gender_key';
     case MARITAL_STATUS_KEY = 'marital_status_key';
+    case NATIONALITIES_GCC_IDS = 'nationalities_gcc_ids';
+    case NATIONALITIES_UAE_IDS = 'nationalities_uae_ids';
 
     public function expiry()
     {
