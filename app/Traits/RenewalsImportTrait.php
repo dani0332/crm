@@ -27,6 +27,11 @@ trait RenewalsImportTrait
 
             $value = $row[$index];
             if (! empty($column['type']) && $column['type'] == 'date') {
+                if ($this->isBlankImportDateCell($value)) {
+                    $quoteData[$key] = null;
+
+                    continue;
+                }
                 $quoteData[$key] = $this->formatDate($value);
             } else {
                 $quoteData[$key] = $value;
@@ -48,6 +53,31 @@ trait RenewalsImportTrait
     protected function isBlankImportCell(mixed $value): bool
     {
         return $value === null || $value === '';
+    }
+
+    /**
+     * Whether a date-like spreadsheet cell should map to null.
+     *
+     * Date columns treat Excel serial zero as blank to avoid converting 0/0.0
+     * into 30/12/1899 while preserving numeric zeros for non-date fields.
+     */
+    protected function isBlankImportDateCell(mixed $value): bool
+    {
+        if ($this->isBlankImportCell($value)) {
+            return true;
+        }
+
+        $isZeroDate = false;
+        if (is_int($value) || is_float($value)) {
+            $isZeroDate = (float) $value === 0.0;
+        } elseif (is_string($value)) {
+            $normalizedValue = trim($value);
+            if ($normalizedValue !== '' && is_numeric($normalizedValue)) {
+                $isZeroDate = (float) $normalizedValue === 0.0;
+            }
+        }
+
+        return $isZeroDate;
     }
 
     /**
@@ -97,6 +127,10 @@ trait RenewalsImportTrait
      */
     public function validateDate($value)
     {
+        if ($this->isBlankImportDateCell($value)) {
+            return false;
+        }
+
         try {
             $this->formatDate($value);
 

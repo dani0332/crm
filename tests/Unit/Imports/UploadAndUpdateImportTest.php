@@ -86,3 +86,17 @@ test('mapQuoteData still maps genuine empty cells to null for numeric fields', f
     expect($mapped['ancillary_excess'])->toBeNull();
     expect($mapped['premium'])->toBeNull();
 });
+
+test('mapQuoteData treats date zero values as blank while preserving numeric zero fields', function () {
+    $import = newUploadAndUpdateImport();
+    $row = buildUploadAndUpdateRow();
+    $row[12] = 0;
+    $row[17] = '0';
+    $row[28] = 0;
+
+    $mapped = $import->mapQuoteData($row);
+
+    expect($mapped['end_date'])->toBeNull();
+    expect($mapped['dob'])->toBeNull();
+    expect($mapped['excess'])->toBe(0);
+});
