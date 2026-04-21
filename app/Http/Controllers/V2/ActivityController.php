@@ -7,17 +7,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
 use App\Repositories\ActivityRepository;
 use App\Traits\GetUserTreeTrait;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class ActivityController extends Controller
 {
     use GetUserTreeTrait;
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index(Request $request)
     {
@@ -68,7 +71,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(ActivityRequest $request)
     {
@@ -78,7 +81,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update($id, ActivityRequest $request)
     {
@@ -88,7 +91,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updateStatus($id)
     {
@@ -99,7 +102,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function destroy($id)
     {

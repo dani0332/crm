@@ -12,6 +12,8 @@ use App\Models\QuoteSync;
 use App\Services\QuoteSyncService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class QuoteSyncController extends Controller
 {
@@ -23,19 +25,19 @@ class QuoteSyncController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index(Request $request, QuoteSyncService $quoteSyncService)
     {
         $filters = $request->all();
-        if (isset($filters['quote_type']) && in_array($filters['quote_type'], [QuotetypeId::Corpline, QuotetypeId::GroupMedical])) {
-            $filters['quote_type'] = QuotetypeId::Business;
+        if (isset($filters['quote_type']) && in_array($filters['quote_type'], [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+            $filters['quote_type'] = QuoteTypeId::Business;
         }
 
         $dataset = $quoteSyncService->getData($filters);
         $quotetypeOptions = QuoteTypeId::getOptions();
-        if (isset($quotetypeOptions[QuotetypeId::Business])) {
-            unset($quotetypeOptions[QuotetypeId::Business]);
+        if (isset($quotetypeOptions[QuoteTypeId::Business])) {
+            unset($quotetypeOptions[QuoteTypeId::Business]);
         }
         $quoteSyncStatusOptions = QuoteSyncStatus::getOptions();
 
@@ -48,7 +50,7 @@ class QuoteSyncController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show(QuoteSync $quoteSync)
     {

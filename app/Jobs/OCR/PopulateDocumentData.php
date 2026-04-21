@@ -118,7 +118,7 @@ class PopulateDocumentData implements ShouldQueue
                     $this->release(now()->addMinutes($retryDelay));
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' - OCR processing failed with unexpected exception', extra: [
                 'quote_type' => $this->quoteType?->value ?? null,
                 'quote_code' => $this->quote->code ?? null,
@@ -228,7 +228,7 @@ class PopulateDocumentData implements ShouldQueue
                     'document_type' => $docType?->value,
                     'user_id' => $this->userId,
                 ]);
-            } catch (\Exception $notificationException) {
+            } catch (Exception $notificationException) {
                 LoggerService::info(self::class.' - Failed to send OCR failure notification', extra: [
                     'quote_code' => $this->quote?->code ?? null,
                     'document_type' => $docType?->value ?? null,

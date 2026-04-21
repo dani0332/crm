@@ -39,6 +39,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -327,7 +329,7 @@ class TravelQuoteService extends BaseService
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
-                $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
+                $memberDob = Carbon::parse($member['dob'])->format('Y-m-d');
                 $memberData = new \stdClass;
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
@@ -830,7 +832,7 @@ class TravelQuoteService extends BaseService
             ...$extraData,
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -856,7 +858,7 @@ class TravelQuoteService extends BaseService
                 return $getdecodeContents;
 
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
