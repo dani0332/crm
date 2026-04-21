@@ -422,26 +422,28 @@ const fixedValue = numberString => {
             />
           </template>
         </x-select>
-        <x-select
-          v-if="!hasRole(rolesEnum.LifeAdvisor)"
-          v-model="filters.sum_insured_currency_id"
-          placeholder="Currency"
-          label="Sum Assured — Currency"
-          :options="currencyOptions"
-          class="w-full"
-        />
-        <x-select
-          v-if="!hasRole(rolesEnum.LifeAdvisor)"
-          v-model="filters.sum_insured_range"
-          placeholder="Value range"
-          label="Sum Assured — Range"
-          :options="[
-            { value: 'lt500k', label: 'Less than 500k' },
-            { value: '500k-1m', label: '500k to less than 1M' },
-            { value: 'gte1m', label: 'Greater than or equal to 1M' },
-          ]"
-          class="w-full"
-        />
+        <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-1">
+          <x-select
+            v-if="!hasRole(rolesEnum.LifeAdvisor)"
+            v-model="filters.sum_insured_currency_id"
+            placeholder="Currency"
+            label="Sum Assured"
+            :options="currencyOptions"
+            class="w-full"
+          />
+          <x-select
+            v-if="!hasRole(rolesEnum.LifeAdvisor)"
+            v-model="filters.sum_insured_range"
+            placeholder="Value Range"
+            label="&nbsp;"
+            :options="[
+              { value: 'lt500k', label: 'Less than 500k' },
+              { value: '500k-1m', label: '500k to less than 1M' },
+              { value: 'gte1m', label: 'Greater than or equal to 1M' },
+            ]"
+              class="border-l-0 rounded-tl-none rounded-bl-none"
+          />
+        </div>
         <x-select
           v-model="filters.private_client"
           label="Private Client"
