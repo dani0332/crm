@@ -46,8 +46,7 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  assigned_to_date_start: '',
-  assigned_to_date_end: '',
+  assigned_to_date: '',
   quote_status: [],
   advisors: [],
   insurer_aml_status: [],
@@ -65,8 +64,7 @@ const filters = reactive({
   captured_date: '',
   sum_insured_currency_id: null,
   sum_insured_range: '',
-  updated_at_start: '',
-  updated_at_end: '',
+  updated_at: '',
   page: 1,
 });
 
@@ -233,14 +231,9 @@ const fixedValue = numberString => {
           label="Created Date End"
         />
         <DatePicker
-          v-model="filters.assigned_to_date_start"
-          name="assigned_to_date_start"
-          label="Advisor Assigned Date Start"
-        />
-        <DatePicker
-          v-model="filters.assigned_to_date_end"
-          name="assigned_to_date_end"
-          label="Advisor Assigned Date End"
+          v-model="filters.assigned_to_date"
+          name="assigned_to_date"
+          label="Advisor Assigned Date"
         />
         <x-select
           v-model="filters.quote_status"
@@ -371,14 +364,9 @@ const fixedValue = numberString => {
           multi-calendars-solo
         />
         <DatePicker
-          v-model="filters.updated_at_start"
-          name="updated_at_start"
-          label="Last Modified Start Date"
-        />
-        <DatePicker
-          v-model="filters.updated_at_end"
-          name="updated_at_end"
-          label="Last Modified End Date"
+          v-model="filters.updated_at"
+          name="updated_at"
+          label="Last Modified Date"
         />
         <x-select
           v-model="filters.purpose_of_insurance_id"
