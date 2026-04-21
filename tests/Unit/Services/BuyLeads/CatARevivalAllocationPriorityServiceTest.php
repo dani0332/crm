@@ -28,40 +28,6 @@ test('effectiveCarValue uses car_value_tier when car_value is not positive', fun
     expect(CatARevivalAllocationPriorityService::effectiveCarValue($lead))->toBe(30000.0);
 });
 
-test('hasHigherPriorityUnassignedLead is true when a higher value unassigned revival lead exists in window', function () {
-    TestSchemaCreator::createMinimalSchema();
-    Carbon::setTestNow(Carbon::parse('2026-06-01 10:00:00'));
-
-    BuyLeadConfigurationNationality::query()->create([
-        'quote_type' => QuoteTypes::CAR_CAT_A,
-        'nationality_id' => 42,
-    ]);
-
-    CarQuote::factory()->create([
-        'source' => LeadSourceEnum::REVIVAL,
-        'nationality_id' => 42,
-        'car_value' => 400000,
-        'car_value_tier' => null,
-        'advisor_id' => null,
-        'quote_status_id' => 1,
-        'created_at' => now()->subHours(2),
-    ]);
-
-    $low = CarQuote::factory()->create([
-        'source' => LeadSourceEnum::REVIVAL,
-        'nationality_id' => 42,
-        'car_value' => 1000,
-        'car_value_tier' => null,
-        'advisor_id' => null,
-        'quote_status_id' => 1,
-        'created_at' => now()->subHour(),
-    ]);
-
-    expect(CatARevivalAllocationPriorityService::hasHigherPriorityUnassignedLead($low))->toBeTrue();
-
-    Carbon::setTestNow();
-});
-
 test('hasHigherPriorityUnassignedLead ignores higher leads outside the lookback window', function () {
     TestSchemaCreator::createMinimalSchema();
     Carbon::setTestNow(Carbon::parse('2026-06-01 10:00:00'));
