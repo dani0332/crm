@@ -83,10 +83,9 @@ class LifeRevivalService
         }
 
         $query->when(
-            $request->filled('assigned_to_date_start') && $request->filled('assigned_to_date_end'),
-            function ($q) use ($request): void {
-                $startDate = Carbon::parse((string) $request->assigned_to_date_start)->startOfDay()->toDateTimeString();
-                $endDate = Carbon::parse((string) $request->assigned_to_date_end)->endOfDay()->toDateTimeString();
+            $request->filled('assigned_to_date'), function ($q) use ($request): void {
+                $startDate = Carbon::parse((string) $request->assigned_to_date)->startOfDay()->toDateTimeString();
+                $endDate = Carbon::parse((string) $request->assigned_to_date)->endOfDay()->toDateTimeString();
                 $q->whereHas('quoteDetail', function ($detailQuery) use ($startDate, $endDate): void {
                     $detailQuery->whereBetween('advisor_assigned_date', [$startDate, $endDate]);
                 });
@@ -190,10 +189,9 @@ class LifeRevivalService
         });
 
         $query->when(
-            $request->filled('updated_at_start') && $request->filled('updated_at_end'),
-            function ($q) use ($request): void {
-                $start = Carbon::parse((string) $request->updated_at_start)->startOfDay()->toDateTimeString();
-                $end = Carbon::parse((string) $request->updated_at_end)->endOfDay()->toDateTimeString();
+            $request->filled('updated_at'), function ($q) use ($request): void {
+                $start = Carbon::parse((string) $request->updated_at)->startOfDay()->toDateTimeString();
+                $end = Carbon::parse((string) $request->updated_at)->endOfDay()->toDateTimeString();
                 $q->whereBetween('personal_quotes.updated_at', [$start, $end]);
             }
         );
