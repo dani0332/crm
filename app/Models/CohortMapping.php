@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CohortMapping extends Model
 {
+    protected $table = 'cohort_mapping';
     protected $fillable = [
         'visa_type',
         'member_classification',
