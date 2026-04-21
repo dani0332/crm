@@ -186,7 +186,9 @@ const shouldShowPassportFields = computed(() => {
     return false;
   }
 
-  return passportOcrEligiblePlanCodes.value.includes(selectedInsuranceProviderPlanCode.value);
+  return passportOcrEligiblePlanCodes.value.includes(
+    selectedInsuranceProviderPlanCode.value,
+  );
 });
 
 const customerProfileForm = useForm({
@@ -204,10 +206,12 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date:
     page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
 
-  passport_number: page.props.quote.passport_visa_details?.passport_number ?? null,
-  passport_country: page.props.quote.passport_visa_details?.passport_country ?? null,
-  passport_expiry_date: page.props.quote.passport_visa_details?.passport_expiry_date ?? null,
-
+  passport_number:
+    page.props.quote.passport_visa_details?.passport_number ?? null,
+  passport_country:
+    page.props.quote.passport_visa_details?.passport_country ?? null,
+  passport_expiry_date:
+    page.props.quote.passport_visa_details?.passport_expiry_date ?? null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -1313,7 +1317,10 @@ const handlePlanSelected = plan => {
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
-    <ApiLogs :type="modelClassSavings" :id="$page.props.quote.savings_quote?.id" />
+    <ApiLogs
+      :type="modelClassSavings"
+      :id="$page.props.quote.savings_quote?.id"
+    />
 
     <AuditLogs
       :quote-type="quoteType"
