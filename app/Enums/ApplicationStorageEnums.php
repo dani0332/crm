@@ -421,4 +421,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
+    // Car CAT A Revival Allocation Lookback Days
+    public const CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS = 'CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS';
 }

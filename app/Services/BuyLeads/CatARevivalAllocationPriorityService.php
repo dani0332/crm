@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\BuyLeads;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -39,11 +40,17 @@ class CatARevivalAllocationPriorityService
         return "CASE WHEN {$table}.car_value IS NOT NULL AND {$table}.car_value > 0 THEN {$table}.car_value WHEN {$table}.car_value_tier IS NOT NULL AND {$table}.car_value_tier > 0 THEN {$table}.car_value_tier ELSE 0 END";
     }
 
-    public const LOOKBACK_DAYS = 15;
+    /**
+     * Days of history for CAT A Revival priority / retry windows (see `constants.CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS`).
+     */
+    public static function lookbackDays(): int
+    {
+        return (int) getAppStorageValueByKey(ApplicationStorageEnums::CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS, useCache: true);
+    }
 
     /**
      * Unassigned Revival leads eligible for CAT A buy allocation (nationality from configuration).
-     * Only considers leads created within the last {@see self::LOOKBACK_DAYS} days.
+     * Only considers leads created within the last {@see self::lookbackDays()} days.
      */
     public static function unassignedRevivalCatABaseQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -52,14 +59,13 @@ class CatARevivalAllocationPriorityService
         $query = CarQuote::query()
             ->where('car_quote_request.source', LeadSourceEnum::REVIVAL)
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->where('car_quote_request.created_at', '>=', now()->subDays(self::LOOKBACK_DAYS)->startOfDay());
+            ->where('car_quote_request.created_at', '>=', now()->subDays(self::lookbackDays())->startOfDay());
 
         if ($nationalityIds === []) {
             return $query->whereRaw('0 = 1');
         }
 
-        return $query
-            ->whereIn('car_quote_request.nationality_id', $nationalityIds)
+        return $query->whereIn('car_quote_request.nationality_id', $nationalityIds)
             ->whereNull('car_quote_request.advisor_id');
     }
 

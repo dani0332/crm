@@ -51,7 +51,7 @@ class RetryCarRevivalAllocation extends Command
         [$startTime, $endTime] = $retryAllocation;
 
         if (BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A) !== []) {
-            $startTime = now()->subDays(CatARevivalAllocationPriorityService::LOOKBACK_DAYS)->startOfDay()->toDateTimeString();
+            $startTime = now()->subDays(CatARevivalAllocationPriorityService::lookbackDays())->startOfDay()->toDateTimeString();
         }
 
         $retryAllocationService->executeCarRevivalAllocation(QuoteTypeId::Car, $endTime, 200, $startTime);
