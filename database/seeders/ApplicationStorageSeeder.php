@@ -55,6 +55,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => $isProd ? 0 : 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         $this->seedBirdWorkflowUrls();
         $this->claimGoogleReviewEmail();
