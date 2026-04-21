@@ -540,7 +540,7 @@ class HealthQuoteService extends BaseService
         ];
 
         if ($request->customer_type == CustomerTypeEnum::Individual) {
-            $dataArr['data']['memberDetails'] = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member));
+            $dataArr['data']['memberDetails'] = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
         }
 
         if ($request->has('sub_source_id')) {
