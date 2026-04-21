@@ -1395,7 +1395,6 @@ class CoreSchema
         SchemaUtils::ensureColumns([
             'car_quote_request' => [
                 'car_value_tier' => fn (Blueprint $table) => $table->decimal('car_value_tier', 15, 2)->nullable(),
-                'stale_at' => fn (Blueprint $table) => $table->timestamp('stale_at')->nullable(),
             ],
         ]);
         SchemaUtils::ensureTables([
