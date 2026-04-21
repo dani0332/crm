@@ -67,7 +67,9 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
                 return false;
             }
 
+            LoggerService::info('Going to send Policy Issued Whatsapp Message');
             $responseCode = (new CentralService)->sendPolicyIssuedWhatsappMessage($this->quote, $this->quoteTypeId);
+            LoggerService::info('Policy Issued Whatsapp Message Sent: '.$responseCode);
 
             if (in_array($responseCode, [200, 201])) {
                 LoggerService::info(self::class." - Policy Issued Whatsapp Message Sent: {$responseCode} Customer Phone: {$this->quote?->mobile_no} Quote Code: {$this->quote?->code} , QuoteTypeId {$this->quoteTypeId}", extra: [
