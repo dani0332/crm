@@ -3835,6 +3835,11 @@ class RenewalsUploadService
 
         $rawData = $process->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
+        $hasStoredTransition = $process->insurance_provider_transition_id !== null;
+
+        if ($isTransitionableLead === true && ! $hasStoredTransition) {
+            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+        }
 
         if ($isTransitionableLead === null && ! $process->checkIsTransitionableLead()) {
             return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];

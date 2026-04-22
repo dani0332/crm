@@ -563,9 +563,17 @@ test('isTransitionableLeadWithCurrentData returns true for fresh transitionable 
         'is_active' => true,
     ]);
 
+    $plan = CarPlan::create([
+        'text' => 'Current Data Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
         'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ], transitionId: $transition->id);
 
     $service = createRenewalsUploadServiceWithMocks();
@@ -638,4 +646,38 @@ test('isTransitionableLeadWithCurrentData short-circuits when caller passes fals
     $lead = createMockLead([]);
 
     expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: false))->toBeFalse();
+});
+
+test('isTransitionableLeadWithCurrentData uses current-data fallback when caller passes true hint without stored transition id', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Fallback Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+    ], transitionId: null);
+
+    expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: true))->toBeTrue();
 });
