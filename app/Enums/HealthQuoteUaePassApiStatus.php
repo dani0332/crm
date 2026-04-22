@@ -5,19 +5,40 @@ namespace App\Enums;
 use BenSampo\Enum\Enum;
 
 /**
- * UAE PASS API interaction status for reporting (IMCRM Health).
+ * UAE PASS reporting status for IMCRM Health (labels align with product wording).
  *
- * Persisted on health_quote_request.uae_pass_api_status.
+ * Persisted on health_quote_request.uae_pass_api_status (snake_case values below).
  */
 final class HealthQuoteUaePassApiStatus extends Enum
 {
-    public const AUTHENTICATION_PENDING = 'authentication_pending';
-    public const AUTHENTICATION_SUCCESS = 'authentication_success';
-    public const AUTHENTICATION_FAILED = 'authentication_failed';
-    public const SIGNATURE_PENDING = 'signature_pending';
-    public const SIGNATURE_SUCCESS = 'signature_success';
-    public const SIGNATURE_FAILED = 'signature_failed';
-    public const API_ERROR = 'api_error';
+    /** IMCRM list filter: not persisted on health_quote_request. */
+    public const FILTER_ALL = 'All';
+
+    public const AUTHENTICATED = 'authenticated';
+    public const AUTH_CANCELLED = 'auth_cancelled';
+    public const NOT_ELIGIBLE = 'not_eligible';
+    public const DOC_SIGNED = 'doc_signed';
+    public const DOC_FAILED = 'doc_failed';
+    public const DOC_CANCELLED = 'doc_cancelled';
+    public const DOCS_NOT_RECEIVED = 'docs_not_received';
+
+    /**
+     * Stored value => IMCRM / export label (not a BenSampo enum constant — avoids array in getValues()).
+     *
+     * @return array<string, string>
+     */
+    private static function labels(): array
+    {
+        return [
+            self::AUTHENTICATED => 'UAE PASS – Authenticated',
+            self::AUTH_CANCELLED => 'UAE PASS – Auth Cancelled',
+            self::NOT_ELIGIBLE => 'UAE PASS – Not Eligible',
+            self::DOC_SIGNED => 'UAE PASS – Doc Signed',
+            self::DOC_FAILED => 'UAE PASS – Doc Failed',
+            self::DOC_CANCELLED => 'UAE PASS – Doc Cancelled',
+            self::DOCS_NOT_RECEIVED => 'UAE PASS – Docs not Received',
+        ];
+    }
 
     /**
      * IMCRM filter / dropdown (includes "All" — not persisted).
@@ -26,16 +47,15 @@ final class HealthQuoteUaePassApiStatus extends Enum
      */
     public static function filterDropdown(): array
     {
-        return [
-            ['value' => 'All', 'label' => 'All'],
-            ['value' => self::AUTHENTICATION_PENDING, 'label' => 'Authentication Pending'],
-            ['value' => self::AUTHENTICATION_SUCCESS, 'label' => 'Authentication Success'],
-            ['value' => self::AUTHENTICATION_FAILED, 'label' => 'Authentication Failed'],
-            ['value' => self::SIGNATURE_PENDING, 'label' => 'Signature Pending'],
-            ['value' => self::SIGNATURE_SUCCESS, 'label' => 'Signature Success'],
-            ['value' => self::SIGNATURE_FAILED, 'label' => 'Signature Failed'],
-            ['value' => self::API_ERROR, 'label' => 'API Error'],
+        $rows = [
+            ['value' => self::FILTER_ALL, 'label' => 'All'],
         ];
+
+        foreach (self::labels() as $value => $label) {
+            $rows[] = ['value' => $value, 'label' => $label];
+        }
+
+        return $rows;
     }
 
     public static function displayLabel(?string $value): string
@@ -44,24 +64,20 @@ final class HealthQuoteUaePassApiStatus extends Enum
             return '—';
         }
 
-        return match ($value) {
-            self::AUTHENTICATION_PENDING => 'Authentication Pending',
-            self::AUTHENTICATION_SUCCESS => 'Authentication Success',
-            self::AUTHENTICATION_FAILED => 'Authentication Failed',
-            self::SIGNATURE_PENDING => 'Signature Pending',
-            self::SIGNATURE_SUCCESS => 'Signature Success',
-            self::SIGNATURE_FAILED => 'Signature Failed',
-            self::API_ERROR => 'API Error',
-            default => (string) $value,
-        };
+        return self::labels()[$value] ?? (string) $value;
     }
 
     public static function isStoredValue(?string $value): bool
     {
-        if ($value === null || $value === '') {
+        if ($value === null || $value === '' || $value === self::FILTER_ALL) {
             return false;
         }
 
-        return in_array($value, self::getValues(), true);
+        $persisted = array_values(array_filter(
+            self::getValues(),
+            static fn (string $v): bool => $v !== self::FILTER_ALL
+        ));
+
+        return in_array($value, $persisted, true);
     }
 }
