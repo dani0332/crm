@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Models\CarPlan;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderTransition;
 use App\Models\RenewalQuoteProcess;
@@ -58,6 +59,17 @@ if (! function_exists('createActiveCarTransition')) {
     }
 }
 
+if (! function_exists('createTransitionCarPlan')) {
+    function createTransitionCarPlan(InsuranceProviderTransition $transition): CarPlan
+    {
+        return CarPlan::create([
+            'provider_id' => $transition->targetProvider->id,
+            'text' => 'Transition Plan',
+            'repair_type' => 'TPL',
+        ]);
+    }
+}
+
 test('returns false when the given process is not a transitionable lead', function () {
     $lead = createHistoricalRenewalLead();
 
@@ -91,6 +103,7 @@ test('returns false when the given process is not a transitionable lead', functi
 test('returns true when a prior matching CAR process exists and lead is transitionable', function () {
     $lead = createHistoricalRenewalLead();
     $transition = createActiveCarTransition();
+    $plan = createTransitionCarPlan($transition);
 
     $current = RenewalQuoteProcess::create([
         'renewals_upload_lead_id' => $lead->id,
@@ -104,6 +117,46 @@ test('returns true when a prior matching CAR process exists and lead is transiti
         'data' => [
             'insurer' => $transition->sourceProvider->code,
             'provider_name' => $transition->targetProvider->text,
+            'plan_name' => $plan->text,
+            'plan_type' => $plan->repair_type,
+        ],
+    ]);
+
+    RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'data' => [],
+    ]);
+
+    $result = createHistoricalRenewalService()->isHistoricalRenewalForProcess($current);
+
+    expect($result)->toBeTrue();
+});
+
+test('returns true for legacy records without transition_id when current data still matches an active transition and plan', function () {
+    $lead = createHistoricalRenewalLead();
+    $transition = createActiveCarTransition();
+    $plan = createTransitionCarPlan($transition);
+
+    $current = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $lead->id,
+        'quote_id' => 42,
+        'quote_type' => 'CAR',
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        'email_sent' => true,
+        'insurance_provider_transition_id' => null,
+        'data' => [
+            'insurer' => $transition->sourceProvider->code,
+            'provider_name' => $transition->targetProvider->text,
+            'plan_name' => $plan->text,
+            'plan_type' => $plan->repair_type,
         ],
     ]);
 

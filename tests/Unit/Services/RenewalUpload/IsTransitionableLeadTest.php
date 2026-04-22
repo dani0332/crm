@@ -470,6 +470,68 @@ test('resolveInsuranceProviderByText is memoized across isTransitionableLead and
     }
 });
 
+test('source provider and transition lookups are memoized across repeated lead validations', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    CarPlan::create([
+        'text' => 'Memoized Transition Plan',
+        'repair_type' => 'TPL',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    $firstLead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => 'Memoized Transition Plan',
+        'plan_type' => 'TPL',
+    ]);
+    $secondLead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => 'Memoized Transition Plan',
+        'plan_type' => 'TPL',
+    ]);
+
+    $connection = DB::connection('sqlite');
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    try {
+        $firstLeadValidationErrors = collect();
+        $secondLeadValidationErrors = collect();
+        $service->isTransitionableLead($firstLead, $firstLeadValidationErrors);
+        $service->isTransitionableLead($secondLead, $secondLeadValidationErrors);
+
+        $queries = collect($connection->getQueryLog());
+        $sourceProviderQueries = $queries->filter(fn (array $entry): bool => str_contains($entry['query'], '"insurance_provider"')
+            && str_contains($entry['query'], '"code"')
+        );
+        $activeTransitionQueries = $queries->filter(fn (array $entry): bool => str_contains($entry['query'], '"renewal_insurance_provider_transitions"'));
+
+        expect($sourceProviderQueries)->toHaveCount(1)
+            ->and($activeTransitionQueries)->toHaveCount(1);
+    } finally {
+        $connection->disableQueryLog();
+        $connection->flushQueryLog();
+    }
+});
+
 test('getNonTransitionableLeadConfig returns null provider when provider_name does not resolve at all', function () {
     $service = createRenewalsUploadServiceWithMocks();
     $lead = createMockLead([
