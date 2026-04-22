@@ -527,6 +527,7 @@ class EmbeddedProduct
             $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
 
             return [
+                'id' => $document->id,
                 'watermarked_doc_url' => ! empty($document->watermarked_doc_url) ? $websiteURL.$document->watermarked_doc_url : '',
                 'watermarked_doc_path' => $document->watermarked_doc_url,
                 'is_watermarked' => $document->is_watermarked ?? false,
@@ -535,6 +536,7 @@ class EmbeddedProduct
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
                 'path' => $document->doc_url,
                 'is_policy_wordings' => false,
+                'is_manual_override' => (bool) $document->is_manual_override,
             ];
         })->toArray();
 
