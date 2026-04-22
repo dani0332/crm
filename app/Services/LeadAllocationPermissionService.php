@@ -51,6 +51,9 @@ class LeadAllocationPermissionService
      * Shared POST routes (toggle-reset-cap, etc.) are used by multiple LOB UIs. Resolve
      * the lead allocation row the same way as the controller, then require dashboard|edit
      * for that LOB.
+     *
+     * Matches controller resolution order: leadId, laId, or latest row for userId (see
+     * LeadAllocationController updateResetCapSwitch and related methods).
      */
     public static function authorizeMutateForSharedToggleRequest(Request $request): void
     {
@@ -60,6 +63,8 @@ class LeadAllocationPermissionService
             $query->where('id', $request->leadId);
         } elseif ($request->filled('laId')) {
             $query->where('id', $request->laId);
+        } elseif ($request->filled('userId')) {
+            $query->where('user_id', $request->userId);
         } else {
             abort(403, 'Unauthorized action.');
         }

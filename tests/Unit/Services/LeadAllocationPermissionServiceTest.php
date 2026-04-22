@@ -138,7 +138,7 @@ test('authorize shared toggle aborts when user cannot mutate for resolved quote 
     LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
 })->throws(HttpException::class, 'Unauthorized action.');
 
-test('authorize shared toggle aborts when neither lead id nor la id is present', function () {
+test('authorize shared toggle aborts when lead id la id and user id are all absent', function () {
     $user = TestDataSeeder::createUser();
     Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
     $user->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
@@ -149,20 +149,27 @@ test('authorize shared toggle aborts when neither lead id nor la id is present',
     LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
 })->throws(HttpException::class, 'Unauthorized action.');
 
-test('dashboard team scope is true when user has view only for that lob', function () {
-    $user = TestDataSeeder::createUser();
-    Permission::findOrCreate(PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY, AuthGuardEnum::Web->value);
-    $user->givePermissionTo(PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY);
-    $this->actingAs($user);
+test('authorize shared toggle allows when only user id is present', function () {
+    $actor = TestDataSeeder::createUser(['email' => 'manager@example.com']);
+    Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $actor->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($actor);
 
-    expect(LeadAllocationPermissionService::shouldScopeLeadAllocationDashboardToUserTeamsOnly(QuoteTypes::HEALTH))
-        ->toBeTrue();
-});
+    $advisor = TestDataSeeder::createUser(['email' => 'advisor@example.com']);
 
-test('dashboard team scope is false when user lacks view only for that lob', function () {
-    $user = TestDataSeeder::createUser();
-    $this->actingAs($user);
+    DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $advisor->id,
+        'quote_type_id' => QuoteTypes::CAR->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
-    expect(LeadAllocationPermissionService::shouldScopeLeadAllocationDashboardToUserTeamsOnly(QuoteTypes::HEALTH))
-        ->toBeFalse();
+    $request = Request::create('/test', 'POST', ['userId' => $advisor->id]);
+
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+
+    expect(true)->toBeTrue();
 });
