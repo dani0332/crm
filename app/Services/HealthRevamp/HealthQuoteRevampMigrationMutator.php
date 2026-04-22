@@ -69,6 +69,7 @@ final class HealthQuoteRevampMigrationMutator
     private function fillMissingPrincipals(HealthQuote $hqr): void
     {
         $members = $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_principal', 'first_name', 'last_name'])
             ->orderBy('id')
             ->get();
 
@@ -94,7 +95,9 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function updatePolicyHoldersFromNameMatch(HealthQuote $hqr): void
     {
-        $members = $this->queries->healthMembersQuery($hqr)->get();
+        $members = $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_principal', 'is_policy_holder', 'first_name', 'last_name', 'dob'])
+            ->get();
 
         if ($members->isEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
             return;
@@ -272,7 +275,9 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyInsureAndPolicyHolderCodes(HealthQuote $hqr): void
     {
-        $members = $this->queries->healthMembersQuery($hqr)->get();
+        $members = $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_policy_holder', 'is_insured'])
+            ->get();
 
         if ($members->isEmpty()) {
             return;
@@ -308,6 +313,7 @@ final class HealthQuoteRevampMigrationMutator
         $hqr->save();
 
         $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_principal', 'gender', 'marital_status_id'])
             ->get()
             ->each(function (CustomerMembers $cm) use ($hqr) {
                 $g = $cm->gender;
@@ -425,6 +431,7 @@ final class HealthQuoteRevampMigrationMutator
     private function applyMemberRelationSalaryAndVisa(HealthQuote $hqr): void
     {
         $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_policy_holder', 'member_category_id', 'dob', 'relation_code', 'salary_band_id', 'visa_category_id'])
             ->get()
             ->each(function (CustomerMembers $cm) use ($hqr) {
                 $mc = (int) $cm->member_category_id;
@@ -512,6 +519,7 @@ final class HealthQuoteRevampMigrationMutator
     private function applyCustomerMemberCategoryRemap(HealthQuote $hqr): void
     {
         $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_principal', 'member_category_id', 'dob', 'nationality_id', 'emirate_of_your_visa_id'])
             ->get()
             ->each(function (CustomerMembers $cm) use ($hqr) {
                 if ($cm->is_principal) {

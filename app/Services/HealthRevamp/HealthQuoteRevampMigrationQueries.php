@@ -27,24 +27,7 @@ final class HealthQuoteRevampMigrationQueries
             ->where('quote_id', $hqr->id)
             ->whereNull('deleted_at')
             ->notThirdPartyPayer()
-            ->individual()
-            ->select([
-                'id',
-                'is_principal',
-                'is_policy_holder',
-                'is_insured',
-                'first_name',
-                'last_name',
-                'dob',
-                'gender',
-                'marital_status_id',
-                'member_category_id',
-                'relation_code',
-                'salary_band_id',
-                'visa_category_id',
-                'nationality_id',
-                'emirate_of_your_visa_id',
-            ]);
+            ->individual();
     }
 
     /**
