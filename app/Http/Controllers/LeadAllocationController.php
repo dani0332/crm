@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -47,7 +48,11 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
 
-        if (Gate::allows('view-lead-allocation', auth()->user())) {
+        if (Gate::allows('view-lead-allocation', auth()->user()) || request()->user()->hasAnyPermission([
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+        ])) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;

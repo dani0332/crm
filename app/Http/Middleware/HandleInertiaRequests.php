@@ -292,6 +292,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
             PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_VIEW_ONLY,
             PermissionsEnum::DEVICE_LEAD_ALLOCATION_EDIT,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
