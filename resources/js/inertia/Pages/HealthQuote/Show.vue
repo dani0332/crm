@@ -2459,6 +2459,14 @@ const validateEmirateOfVisa = () => {
                 <dt class="font-medium">IS STP Case</dt>
                 <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SIGNATORY</dt>
+                <dd>{{ quote.signatory_text ?? '—' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE PASS API STATUS</dt>
+                <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2651,14 +2659,6 @@ const validateEmirateOfVisa = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">PRIVATE CLIENT</dt>
                   <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">SIGNATORY</dt>
-                  <dd>{{ quote.signatory_text ?? '—' }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">UAE PASS API STATUS</dt>
-                  <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
