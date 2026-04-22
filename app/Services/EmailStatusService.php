@@ -139,6 +139,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->quote_type_id = $quoteTypeId;
         $newEmailStatus->quote_id = $quote->id;
         $newEmailStatus->flow_type = $request->flow_type;
+        $newEmailStatus->email_subject = $request->subject ?? '';
         $newEmailStatus->save();
         $this->forgetEmailStatusListCache($quoteTypeId, (int) $quote->id);
 
