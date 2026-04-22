@@ -171,13 +171,10 @@ class DocumentTypeRepository extends BaseRepository
 
         if ($disabled) {
             LoggerService::info('fetchAreSendPolicyDocsUploaded: send policy blocked — required document types not uploaded', [
-                'quote_type' => $quoteType,
                 'quote_code' => $record->code ?? null,
-                'quote_id' => $record->id ?? null,
-                'required_document_codes' => $docCodes,
-                'required_documents' => $requiredDocuments,
-                'not_uploaded_document_codes' => $missingDocumentCodes,
-                'not_uploaded_documents' => $missingDocuments,
+                'requiredDocuments' => $requiredDocuments,
+                'missingDocumentCodes' => $missingDocumentCodes,
+                'missingDocuments' => $missingDocuments,
             ]);
         }
 
