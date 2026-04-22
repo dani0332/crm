@@ -496,6 +496,34 @@ final class PermissionsEnum extends Enum
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
 
+    // Lead allocation dashboards (view-only access for managers)
+    public const CAR_LEAD_ALLOCATION_VIEW_ONLY = 'car-lead-allocation-view-only';
+    public const HEALTH_LEAD_ALLOCATION_VIEW_ONLY = 'health-lead-allocation-view-only';
+    public const CORPLINE_LEAD_ALLOCATION_VIEW_ONLY = 'corpline-lead-allocation-view-only';
+    public const CYBER_LEAD_ALLOCATION_VIEW_ONLY = 'cyber-lead-allocation-view-only';
+    public const CYCLE_LEAD_ALLOCATION_VIEW_ONLY = 'cycle-lead-allocation-view-only';
+    public const DEVICE_LEAD_ALLOCATION_VIEW_ONLY = 'device-lead-allocation-view-only';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY = 'group-medical-lead-allocation-view-only';
+    public const TRAVEL_LEAD_ALLOCATION_VIEW_ONLY = 'travel-lead-allocation-view-only';
+    public const LIFE_LEAD_ALLOCATION_VIEW_ONLY = 'life-lead-allocation-view-only';
+    public const PET_LEAD_ALLOCATION_VIEW_ONLY = 'pet-lead-allocation-view-only';
+    public const YACHT_LEAD_ALLOCATION_VIEW_ONLY = 'yacht-lead-allocation-view-only';
+    public const SAVINGS_LEAD_ALLOCATION_VIEW_ONLY = 'savings-lead-allocation-view-only';
+    public const HOME_LEAD_ALLOCATION_VIEW_ONLY = 'home-lead-allocation-view-only';
+    public const CAR_LEAD_ALLOCATION_EDIT = 'car-lead-allocation-edit';
+    public const HEALTH_LEAD_ALLOCATION_EDIT = 'health-lead-allocation-edit';
+    public const CORPLINE_LEAD_ALLOCATION_EDIT = 'corpline-lead-allocation-edit';
+    public const CYBER_LEAD_ALLOCATION_EDIT = 'cyber-lead-allocation-edit';
+    public const CYCLE_LEAD_ALLOCATION_EDIT = 'cycle-lead-allocation-edit';
+    public const DEVICE_LEAD_ALLOCATION_EDIT = 'device-lead-allocation-edit';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_EDIT = 'group-medical-lead-allocation-edit';
+    public const TRAVEL_LEAD_ALLOCATION_EDIT = 'travel-lead-allocation-edit';
+    public const LIFE_LEAD_ALLOCATION_EDIT = 'life-lead-allocation-edit';
+    public const PET_LEAD_ALLOCATION_EDIT = 'pet-lead-allocation-edit';
+    public const YACHT_LEAD_ALLOCATION_EDIT = 'yacht-lead-allocation-edit';
+    public const SAVINGS_LEAD_ALLOCATION_EDIT = 'savings-lead-allocation-edit';
+    public const HOME_LEAD_ALLOCATION_EDIT = 'home-lead-allocation-edit';
+
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
     public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
