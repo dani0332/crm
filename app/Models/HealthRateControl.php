@@ -14,6 +14,7 @@ class HealthRateControl extends Model
         'status',
         'effective_from',
         'effective_to',
+        'total_records',
         'created_by',
     ];
 

@@ -14,11 +14,15 @@ const badRates = ref([]);
 const contactLoader = ref(false);
 const tableLoader = ref(false);
 const page = usePage();
+const dates = reactive({
+  effective_from: '',
+  effective_to: '',
+});
 
 const tableHeader = [
   { text: 'File Name', value: 'file_name' },
   { text: 'Status', value: 'status' },
-  { text: 'Total Records', value: 'totalRecords' },
+  { text: 'Total Records', value: 'total_records' },
   { text: 'Effective From', value: 'effective_from' },
   { text: 'Effective To', value: 'effective_to' },
   { text: 'Plan Code', value: 'health_plan.code' },
@@ -211,14 +215,30 @@ const showFailedRates = (id, badCount) => {
           <li>Please use the unformatted (values only) data in the sheet.</li>
         </ul>
       </x-alert>
-      <div class="flex justify-end gap-3 my-4">
-        <x-button
-          size="sm"
-          color="#ff5e00"
-          type="submit"
-          :loading="contactLoader"
-          >Upload</x-button
-        >
+      <div class="flex justify-between gap-2 my-4">
+        <div class="flex gap-3">
+          <DatePicker
+            v-model="dates.effective_from"
+            name="effective_from"
+            label="Effective From"
+            format="dd/MM/yyyy"
+          />
+          <DatePicker
+            v-model="dates.effective_to"
+            name="effective_to"
+            label="Effective To"
+            format="dd/MM/yyyy"
+          />
+        </div>
+        <div class="mt-3">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="contactLoader"
+            >Upload</x-button
+          >
+        </div>
       </div>
       <div class="flex items-center">
         <x-button
