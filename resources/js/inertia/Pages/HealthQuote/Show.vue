@@ -7,6 +7,7 @@ import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import UaePassLogs from '@/inertia/Components/UaePassLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -77,6 +78,8 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  archivedDocuments: Array,
+  isLeadUaePass: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -4599,6 +4602,13 @@ const validateEmirateOfVisa = () => {
       :expanded="sectionExpanded"
       :quoteId="page.props.quote.id"
       :quoteTypeId="page.props.quoteTypeId"
+    />
+
+    <UaePassLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :quoteUuid="quote.uuid"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :expanded="sectionExpanded"
     />
 
     <ClientInquiryLogs
