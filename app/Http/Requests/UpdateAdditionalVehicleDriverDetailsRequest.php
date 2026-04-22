@@ -8,6 +8,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Models\CarQuote;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
@@ -299,15 +300,15 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         }
 
         if ($this->filled('certificate_start_date')) {
-            $certificateStartDate = \Carbon\Carbon::parse($this->certificate_start_date);
-            $currentDate = \Carbon\Carbon::now()->startOfDay();
+            $certificateStartDate = Carbon::parse($this->certificate_start_date);
+            $currentDate = Carbon::now()->startOfDay();
 
             if ($certificateStartDate->lt($currentDate)) {
                 $validator->errors()->add('certificate_start_date', 'Certificate start date cannot be backdated.');
             }
 
             if ($this->filled('policy_effective_date')) {
-                $policyEffectiveDate = \Carbon\Carbon::parse($this->policy_effective_date);
+                $policyEffectiveDate = Carbon::parse($this->policy_effective_date);
                 if ($certificateStartDate->gt($policyEffectiveDate)) {
                     $validator->errors()->add('certificate_start_date', 'Certificate start date cannot be after the policy effective date.');
                 }
@@ -329,8 +330,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private function validatePolicyEffectiveDateWithinLimit($validator): void
     {
         if ($this->filled('policy_effective_date')) {
-            $policyEffectiveDate = \Carbon\Carbon::parse($this->policy_effective_date);
-            $currentDate = \Carbon\Carbon::now();
+            $policyEffectiveDate = Carbon::parse($this->policy_effective_date);
+            $currentDate = Carbon::now();
             $maxAllowedDate = $currentDate->copy()->addDays(self::POLICY_EFFECTIVE_DATE_MAX_DAYS);
 
             if ($policyEffectiveDate->gt($maxAllowedDate)) {
@@ -366,8 +367,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         }
 
         if ($this->filled('license_issue_date') && $this->filled('license_expiry_date')) {
-            $issueDate = \Carbon\Carbon::parse($this->license_issue_date);
-            $expiryDate = \Carbon\Carbon::parse($this->license_expiry_date);
+            $issueDate = Carbon::parse($this->license_issue_date);
+            $expiryDate = Carbon::parse($this->license_expiry_date);
 
             if ($expiryDate->lte($issueDate)) {
                 $validator->errors()->add('license_expiry_date', 'License expiry date must be after the issue date.');
@@ -375,7 +376,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         }
 
         if ($this->filled('driver_dob')) {
-            $dob = \Carbon\Carbon::parse($this->driver_dob);
+            $dob = Carbon::parse($this->driver_dob);
             $age = $dob->age;
 
             if ($age < 18) {
@@ -397,7 +398,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             case self::RTA_NEW_VEHICLE_REGISTRATION:
             case self::RTA_CHANGE_VEHICLE_OWNERSHIP:
                 if ($this->filled('policy_effective_date')) {
-                    $policyEffectiveDate = \Carbon\Carbon::parse($this->policy_effective_date);
+                    $policyEffectiveDate = Carbon::parse($this->policy_effective_date);
                     $calculatedDates['policy_expiry_date'] = $policyEffectiveDate->copy()->addMonths(self::POLICY_DURATION_MONTHS)->format('Y-m-d');
                     $calculatedDates['certificate_start_date'] = $policyEffectiveDate->format('Y-m-d');
                     $calculatedDates['certificate_end_date'] = $calculatedDates['policy_expiry_date'];
@@ -408,12 +409,12 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                 $gigRenewalData = $this->isGigRenewal();
                 if ($gigRenewalData['status']) {
                     if ($this->filled('certificate_start_date')) {
-                        $certificateStartDate = \Carbon\Carbon::parse($this->certificate_start_date);
+                        $certificateStartDate = Carbon::parse($this->certificate_start_date);
                         $calculatedDates['certificate_end_date'] = $certificateStartDate->copy()->addMonths(self::POLICY_DURATION_MONTHS)->format('Y-m-d');
                     }
                 } else {
                     if ($this->filled('policy_effective_date')) {
-                        $policyEffectiveDate = \Carbon\Carbon::parse($this->policy_effective_date);
+                        $policyEffectiveDate = Carbon::parse($this->policy_effective_date);
                         $calculatedDates['certificate_start_date'] = $policyEffectiveDate->format('Y-m-d');
                         $calculatedDates['certificate_end_date'] = $policyEffectiveDate->copy()->addMonths(self::POLICY_DURATION_MONTHS)->format('Y-m-d');
                         $calculatedDates['policy_expiry_date'] = $calculatedDates['certificate_end_date'];

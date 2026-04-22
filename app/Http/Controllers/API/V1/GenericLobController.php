@@ -21,13 +21,14 @@ use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GenericLobController extends Controller
 {
     /**
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     * @return StreamedResponse
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {

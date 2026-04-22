@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class MarshallService
@@ -29,7 +31,7 @@ class MarshallService
     /**
      * send request to ken.
      *
-     * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
+     * @return PromiseInterface|Response
      *
      * @throws \Exception
      */

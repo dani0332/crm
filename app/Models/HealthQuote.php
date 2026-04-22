@@ -585,16 +585,16 @@ class HealthQuote extends Model implements AuditableContract
         return false;
     }
 
-    public function isEcommerce(): bool
+    public function isSourceApplicable(): bool
     {
-        LoggerService::info("isEcommerce check for lead source {$this->source}", ['source' => $this->source]);
+        LoggerService::info("isSourceApplicable check for lead source {$this->source}", ['source' => $this->source]);
         $appStorageValue = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE);
         LoggerService::info("App storage Value for lead source {$appStorageValue}", ['appStorageValue' => $appStorageValue]);
 
         $host = parse_url($this->source, PHP_URL_HOST);
         $domains = explode(',', $appStorageValue);
 
-        if (! in_array($host, $domains)) {
+        if (! in_array($host, $domains) && $this->source != LeadSourceEnum::INSURANCE_WALLET) {
             return false;
         }
 
