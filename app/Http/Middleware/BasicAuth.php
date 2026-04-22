@@ -14,15 +14,36 @@ class BasicAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        $authUserName = config('constants.IMCRM_BASIC_AUTH_USER_NAME');
-        $authPassword = config('constants.IMCRM_BASIC_AUTH_PASSWORD');
-        $hasSuppliedCredentials = ! (empty($request->getUser()) && empty($request->getPassword()));
-        $isNotAuthenticated = (
-            ! $hasSuppliedCredentials ||
-            $request->getUser() !== $authUserName ||
-            $request->getPassword() !== $authPassword
+        $credentialPairs = array_filter(
+            [
+                [
+                    config('constants.IMCRM_BASIC_AUTH_USER_NAME'),
+                    config('constants.IMCRM_BASIC_AUTH_PASSWORD'),
+                ],
+                [
+                    config('constants.IMCRM_API_AUTH_USER_NAME'),
+                    config('constants.IMCRM_API_AUTH_PASSWORD'),
+                ],
+            ],
+            function (array $pair) {
+                [$user, $password] = $pair;
+
+                return $user !== null && $user !== '' && $password !== null && $password !== '';
+            }
         );
-        if ($isNotAuthenticated) {
+
+        $hasSuppliedCredentials = ! (empty($request->getUser()) && empty($request->getPassword()));
+        $matches = false;
+        if ($hasSuppliedCredentials) {
+            foreach ($credentialPairs as [$user, $password]) {
+                if ($request->getUser() === $user && $request->getPassword() === $password) {
+                    $matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (! $matches) {
             return response()->json(['Authorization Required'], 401);
         }
 
