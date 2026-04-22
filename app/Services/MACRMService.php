@@ -374,6 +374,7 @@ class MACRMService
                 'reference_id' => $quoteUuid,
                 'reference_type' => strtoupper(QuoteTypes::CAR->value),
                 'cta_text' => MotorRevivalEnum::CTA_TEXT->value,
+                'max_claims_per_customer' => 1,
             ];
 
             LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote createVoucher request', [
