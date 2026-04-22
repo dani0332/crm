@@ -196,12 +196,23 @@ const paymentTerms = [
   { value: props.paymentTermEnum.QUARTERLY, label: 'Quarterly' },
   { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
   { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
+  { value: props.paymentTermEnum.SINGLE_PAYMENT, label: 'Single Payment' },
 ];
 
 const filteredPaymentTerms = computed(() => {
-  return createForm.providerId === 180
-    ? paymentTerms.filter(term => ![4, 2].includes(term.value))
-    : paymentTerms;
+  let terms = paymentTerms;
+
+  // When isRateCalculator is NOT true, remove Single Payment
+  if (!props?.plan?.isRateCalculator) {
+    terms = terms.filter(term => term.value !== props.paymentTermEnum.SINGLE_PAYMENT);
+  }
+
+  // If providerId is 180, filter out values 4 and 2
+  if (createForm.providerId === 180) {
+    terms = terms.filter(term => ![4, 2].includes(term.value));
+  }
+
+  return terms;
 });
 
 const availableInsuranceProviders = computed(() => {
@@ -847,7 +858,7 @@ const isMetLife = computed(() => {
           />
 
 
-          
+
 
           <x-toggle
             color="emerald"
