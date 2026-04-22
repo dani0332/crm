@@ -613,19 +613,6 @@ class HealthQuote extends Model implements AuditableContract
         );
     }
 
-    /**
-     * Persist UAE PASS digital signature linkage (call after Emirates ID match).
-     */
-    public function recordDigitalSignatory(string $signatory): bool
-    {
-        if (! HealthQuoteDigitalSignatory::isStoredValue($signatory)) {
-            return false;
-        }
-        $this->digital_signatory = $signatory;
-
-        return $this->save();
-    }
-
     public function uaePassApiStatusText(): Attribute
     {
         return Attribute::make(
