@@ -55,6 +55,15 @@ class AlfredCoinsWebhookService
 
         $payload = $this->buildPayload($quote);
 
+        if (empty($payload)) {
+            LoggerService::error('AlfredCoinsWebhookService - Payload not built for quote due to missing amount', [], null, [
+                'quoteUID' => $quoteUID,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return;
+        }
+
         LoggerService::info('AlfredCoinsWebhookService - Sending InsuranceMarket webhook', [
             'payload' => $payload,
         ], [
@@ -116,9 +125,15 @@ class AlfredCoinsWebhookService
             ? self::EVENT_RENEWED
             : self::EVENT_PURCHASED;
 
-        $amount = $quote->premium ?? null;
-        if ($amount === null && isset($quote->price_with_vat)) {
-            $amount = $quote->price_with_vat;
+        $amount = $quote->payments()->first()->price_vat_applicable;
+
+        if ($amount === null && ! isset($amount)) {
+            LoggerService::error('AlfredCoinsWebhookService - Amount not found for quote', [], null, [
+                'quoteUID' => $quote->getAttribute('uuid'),
+                'quoteTypeId' => $quote->getAttribute('quote_type_id'),
+            ]);
+
+            return [];
         }
 
         return [
