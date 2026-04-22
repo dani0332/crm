@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\UaePassLogStatusEnum;
 use App\Http\Requests\LogsRequest;
+use App\Http\Requests\UaePassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
 use App\Models\DeviceInsurerRequestResponses;
@@ -23,6 +25,7 @@ use App\Models\SavingsInsurerRequestResponse;
 use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
+use App\Models\UaePassLog;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -335,6 +338,57 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load EP logs',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadUaePassLogs(UaePassLogsRequest $request)
+    {
+        try {
+            $quoteUuid = $request->input('quote_uuid');
+            $quoteTypeId = (int) $request->input('quote_type_id');
+
+            LoggerService::info('Loading UAE Pass logs');
+
+            $logs = UaePassLog::query()
+                ->where('quote_uuid', $quoteUuid)
+                ->where('quote_type_id', $quoteTypeId)
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($log) {
+                    $status = $log->status;
+
+                    $tagColor = null;
+                    if ($status === UaePassLogStatusEnum::PASSED->value) {
+                        $tagColor = 'success';
+                    } elseif ($status === UaePassLogStatusEnum::FAILED->value) {
+                        $tagColor = 'error';
+                    }
+
+                    return [
+                        'id' => $log->id,
+                        'request_id' => $log->request_id,
+                        'proof_of_presentation_id' => $log->proof_of_presentation_id,
+                        'status' => $status,
+                        'status_display' => $status ? strtoupper($status) : 'N/A',
+                        'status_tag_color' => $tagColor ?: 'secondary',
+                        'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
+                        'request_payload' => $log->request_payload,
+                        'presentation_response_payload' => $log->presentation_response_payload,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load UAE Pass logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load UAE Pass logs',
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
