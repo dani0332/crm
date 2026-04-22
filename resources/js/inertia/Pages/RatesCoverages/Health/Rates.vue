@@ -16,14 +16,15 @@ const tableLoader = ref(false);
 const page = usePage();
 
 const tableHeader = [
-  { text: 'ID', value: 'upload_id' },
-  { text: 'File Name', value: 'fileName' },
+  { text: 'File Name', value: 'file_name' },
   { text: 'Status', value: 'status' },
-  { text: 'Total Record', value: 'totalRecords' },
-  { text: 'Uploaded Record', value: 'good' },
-  { text: 'Bad Record', value: 'cannotUpload' },
+  { text: 'Total Records', value: 'totalRecords' },
+  { text: 'Effective From', value: 'effective_from' },
+  { text: 'Effective To', value: 'effective_to' },
+  { text: 'Plan Code', value: 'health_plan.code' },
+  { text: 'Plan Name', value: 'health_plan.text' },
+  { text: 'Created By', value: 'user.name' },
   { text: 'Created At', value: 'created_at' },
-  { text: 'Updated At', value: 'updated_at' },
 ];
 
 const badRecordsTableHeader = [

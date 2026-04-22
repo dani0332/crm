@@ -8,6 +8,7 @@ use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
 use App\Jobs\UploadRatesJob;
+use App\Models\HealthRateControl;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
 use App\Services\Logger\LoggerService;
@@ -317,23 +318,7 @@ class RateCoverageUploadService
 
     public function getUploadRates()
     {
-        $rates = RateCoverageUpload::select(
-            'rate_coverage_uploads.file_name as fileName',
-            'rate_coverage_uploads.status as status',
-            'rate_coverage_uploads.total_records as totalRecords',
-            DB::raw('IF(COUNT(rate_coverage_processes.id) = 0, 0, SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END)) as good'),
-            DB::raw('IF(COUNT(rate_coverage_processes.id) = 0, 0, SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END)) as cannotUpload'),
-            'rate_coverage_uploads.id as upload_id',
-            'rate_coverage_uploads.created_at as created_at',
-            'rate_coverage_uploads.updated_at as updated_at',
-            'rate_coverage_processes.type as type',
-        )
-            ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::RATES)
-            ->leftJoin('rate_coverage_processes', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
-            ->groupBy('rate_coverage_uploads.id')
-            ->orderBy('rate_coverage_uploads.created_at', 'desc')
-            ->simplePaginate(10)
-            ->withQueryString();
+        $rates = HealthRateControl::with('user', 'healthPlan')->orderByDesc('id')->simplePaginate(10)->withQueryString();
 
         return $rates;
     }
