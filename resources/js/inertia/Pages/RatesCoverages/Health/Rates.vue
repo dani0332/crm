@@ -14,9 +14,9 @@ const badRates = ref([]);
 const contactLoader = ref(false);
 const tableLoader = ref(false);
 const page = usePage();
-const dates = reactive({
+const dates = ref({
   effective_from: '',
-  effective_to: '',
+  effective_to: new Date('2099-12-31'),
 });
 
 const tableHeader = [
@@ -56,11 +56,62 @@ function handleFileUpload(event) {
   uploadForm.csvFile = event[0];
 }
 
-function onSubmit(isValid) {
+function validateForm() {
+  if (!dates.value.effective_from) {
+    notification.error({
+      title: 'Effective from is required',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (!dates.value.effective_to) {
+    notification.error({
+      title: 'Effective to is required',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (dates.value.effective_to < dates.value.effective_from) {
+    notification.error({
+      title: 'Effective to must be greater than effective from',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (!file) {
+    notification.error({
+      title: 'File is required',
+      position: 'top',
+    });
+    return false;
+  }
+
+  return true;
+}
+
+function onSubmit() {
+  const isValid = validateForm(); 
+
   if (isValid) {
+    // Format dates for laravel validation
+    const formattedFromDate = new Date(dates.value.effective_from)
+    .toISOString()
+    .split('T')[0];
+
+    const formattedToDate = new Date(dates.value.effective_to)
+    .toISOString()
+    .split('T')[0];
+
+    // Prepare form data
     let formData = new FormData();
     formData.append('file_name', file);
+    formData.append('effective_from', formattedFromDate);
+    formData.append('effective_to', formattedToDate);
     contactLoader.value = true;
+
     axios
       .post('/rates-coverages/upload-rates', formData, {
         headers: {
@@ -215,8 +266,11 @@ const showFailedRates = (id, badCount) => {
           <li>Please use the unformatted (values only) data in the sheet.</li>
         </ul>
       </x-alert>
-      <div class="flex justify-between gap-2 my-4">
-        <div class="flex gap-3">
+      <div class="grid grid-cols-2 mt-4">
+        <!-- Empty left side -->
+        <div></div>
+        <!-- Right side (split into 2) -->
+        <div class="grid grid-cols-2 gap-3">
           <DatePicker
             v-model="dates.effective_from"
             name="effective_from"
@@ -230,7 +284,8 @@ const showFailedRates = (id, badCount) => {
             format="dd/MM/yyyy"
           />
         </div>
-        <div class="mt-3">
+      </div>
+      <div class="flex justify-end gap-2">
           <x-button
             size="sm"
             color="#ff5e00"
@@ -238,7 +293,6 @@ const showFailedRates = (id, badCount) => {
             :loading="contactLoader"
             >Upload</x-button
           >
-        </div>
       </div>
       <div class="flex items-center">
         <x-button
