@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -33,19 +34,21 @@ class BasicAuth
         );
 
         $hasSuppliedCredentials = ! (empty($request->getUser()) && empty($request->getPassword()));
-        $matches = false;
+        $matchedUserName = null;
         if ($hasSuppliedCredentials) {
             foreach ($credentialPairs as [$user, $password]) {
                 if ($request->getUser() === $user && $request->getPassword() === $password) {
-                    $matches = true;
+                    $matchedUserName = $user;
                     break;
                 }
             }
         }
 
-        if (! $matches) {
+        if ($matchedUserName === null) {
             return response()->json(['Authorization Required'], 401);
         }
+
+        LoggerService::info('IMCRM API Basic Auth', ['username' => $matchedUserName]);
 
         return $next($request);
     }
