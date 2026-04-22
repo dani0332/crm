@@ -3554,26 +3554,28 @@ class RenewalsUploadService
      */
     private function resolveInsuranceProviderByText(?string $providerName): ?InsuranceProvider
     {
-        if ($providerName === null || $providerName === '') {
-            return null;
+        $provider = null;
+
+        if ($providerName !== null && $providerName !== '') {
+            if (array_key_exists($providerName, $this->insuranceProviderByTextCache)) {
+                $provider = $this->insuranceProviderByTextCache[$providerName];
+            } else {
+                $trimmed = trim($providerName);
+                $provider = InsuranceProvider::where('text', $trimmed)->first();
+
+                if ($provider === null) {
+                    // Normalize © (U+00A9) to (C) so upload text matches DB text.
+                    $normalized = trim(str_replace('©', '(C)', $trimmed));
+                    if ($normalized !== $trimmed) {
+                        $provider = InsuranceProvider::where('text', $normalized)->first();
+                    }
+                }
+
+                $this->insuranceProviderByTextCache[$providerName] = $provider;
+            }
         }
 
-        if (array_key_exists($providerName, $this->insuranceProviderByTextCache)) {
-            return $this->insuranceProviderByTextCache[$providerName];
-        }
-
-        $trimmed = trim($providerName);
-        $provider = InsuranceProvider::where('text', $trimmed)->first();
-        if ($provider !== null) {
-            return $this->insuranceProviderByTextCache[$providerName] = $provider;
-        }
-        // Normalize © (U+00A9) to (C) so upload "Gulf Insurance Group (Gulf) B.S.C. ©" matches DB "Gulf Insurance Group (Gulf) B.S.C. (C)"
-        $normalized = str_replace('©', '(C)', $trimmed);
-        $normalized = trim($normalized);
-
-        return $this->insuranceProviderByTextCache[$providerName] = $normalized !== $trimmed
-            ? InsuranceProvider::where('text', $normalized)->first()
-            : null;
+        return $provider;
     }
 
     private function resolveSourceProviderByCode(?string $providerCode): ?InsuranceProvider
@@ -3829,37 +3831,43 @@ class RenewalsUploadService
      */
     public function isTransitionableLeadWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
-        if ($isTransitionableLead === false) {
-            return false;
-        }
+        $isTransitionable = false;
 
         $rawData = $process->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         $hasStoredTransition = $process->insurance_provider_transition_id !== null;
-
-        if ($isTransitionableLead === true && ! $hasStoredTransition) {
-            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
-        }
+        $shouldResolveFromCurrentData = $isTransitionableLead === true && ! $hasStoredTransition;
 
         if ($isTransitionableLead === null && ! $process->checkIsTransitionableLead()) {
-            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+            $shouldResolveFromCurrentData = true;
         }
 
-        $transition = $process->insuranceProviderTransition;
+        if ($isTransitionableLead !== false) {
+            if ($shouldResolveFromCurrentData) {
+                $isTransitionable = $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+            } else {
+                $transition = $process->insuranceProviderTransition;
+                $hasValidTransition = $transition !== null
+                    && $transition->is_active
+                    && $transition->targetProvider
+                    && $transition->sourceProvider;
 
-        if ($transition === null || ! $transition->is_active || ! $transition->targetProvider || ! $transition->sourceProvider) {
-            return false;
-        }
-        if (($leadData->insurer ?? null) !== $transition->sourceProvider->code) {
-            return false;
+                if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
+                    $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+                    $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
+
+                    if ($matchesCurrentTarget) {
+                        $planName = $leadData->plan_name ?? null;
+                        $planType = $leadData->plan_type ?? null;
+                        $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+                        $isTransitionable = ! $isPlanValidationRequired
+                            || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
+                    }
+                }
+            }
         }
 
-        $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-        if ($currentTarget === null || $currentTarget->id !== $transition->targetProvider->id) {
-            return false;
-        }
-
-        return $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $currentTarget->id) !== null;
+        return $isTransitionable;
     }
 
     /**
