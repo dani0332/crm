@@ -66,7 +66,7 @@ class LeadAllocationPermissionService
 
         $leadAllocation = $query->latest()->first();
         if ($leadAllocation === null) {
-            return;
+            abort(403, 'Unauthorized action.');
         }
 
         self::authorizeMutateForQuoteTypeId((int) $leadAllocation->quote_type_id);
@@ -134,52 +134,5 @@ class LeadAllocationPermissionService
             default => [],
         };
     }
-    public static function shouldScopeLeadAllocationDashboardToUserTeamsOnly(QuoteTypes $quoteType): bool
-    {
-        if ($quoteType === null) {
-            return false;
-        }
 
-        $permissions = match ($quoteType) {
-            QuoteTypes::CAR => [
-                PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::HEALTH => [
-                PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::HOME => [
-                PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::LIFE => [
-                PermissionsEnum::LIFE_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::PET => [
-                PermissionsEnum::PET_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::CYCLE => [
-                PermissionsEnum::CYCLE_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::YACHT => [
-                PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::TRAVEL => [
-                PermissionsEnum::TRAVEL_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::CORPLINE => [
-                PermissionsEnum::CORPLINE_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::GROUP_MEDICAL => [
-                PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::SAVINGS => [
-                PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            QuoteTypes::CYBER => [
-                PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
-            ],
-            default => [],
-        };
-
-        return auth()->user()->hasAnyPermission($permissions);
-    }
 }

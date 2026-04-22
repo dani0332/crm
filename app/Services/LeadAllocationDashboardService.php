@@ -100,10 +100,6 @@ class LeadAllocationDashboardService extends BaseService
             return [];
         }
     }
-    private function checkDepartmentAccess(QuoteTypes $quoteType)
-    {
-        return LeadAllocationPermissionService::shouldScopeLeadAllocationDashboardToUserTeamsOnly($quoteType);
-    }
     private function getQuotesBaseQuery($quoteType)
     {
         $from = now()->startOfDay();
