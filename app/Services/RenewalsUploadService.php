@@ -3843,13 +3843,8 @@ class RenewalsUploadService
         $rawData = $process->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         $checkIsTransitionableLead = $process->checkIsTransitionableLead();
-        $shouldResolveFromCurrentData = false;
 
         if ($isTransitionableLead === null && ! $checkIsTransitionableLead) {
-            $shouldResolveFromCurrentData = true;
-        }
-
-        if ($shouldResolveFromCurrentData) {
             return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
         }
 
@@ -3876,7 +3871,7 @@ class RenewalsUploadService
         // If caller passed a precomputed "true" hint but stored transition data no longer
         // matches current lead data, use current-data resolution as a deterministic fallback.
         if (! $isTransitionable && $isTransitionableLead === true && ! $checkIsTransitionableLead) {
-            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+            $isTransitionable = $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
         }
 
         return $isTransitionable;
