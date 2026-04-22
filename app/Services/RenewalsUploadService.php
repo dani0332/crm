@@ -3831,40 +3831,47 @@ class RenewalsUploadService
      */
     public function isTransitionableLeadWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
     {
-        $isTransitionable = false;
+        if ($isTransitionableLead === false) {
+            return false;
+        }
 
         $rawData = $process->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
-        $hasStoredTransition = $process->insurance_provider_transition_id !== null;
-        $shouldResolveFromCurrentData = $isTransitionableLead === true && ! $hasStoredTransition;
+        $checkIsTransitionableLead = $process->checkIsTransitionableLead();
+        $shouldResolveFromCurrentData = false;
 
-        if ($isTransitionableLead === null && ! $process->checkIsTransitionableLead()) {
+        if ($isTransitionableLead === null && ! $checkIsTransitionableLead) {
             $shouldResolveFromCurrentData = true;
         }
 
-        if ($isTransitionableLead !== false) {
-            if ($shouldResolveFromCurrentData) {
-                $isTransitionable = $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
-            } else {
-                $transition = $process->insuranceProviderTransition;
-                $hasValidTransition = $transition !== null
-                    && $transition->is_active
-                    && $transition->targetProvider
-                    && $transition->sourceProvider;
+        if ($shouldResolveFromCurrentData) {
+            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+        }
 
-                if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
-                    $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-                    $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
+        $isTransitionable = false;
+        $transition = $process->insuranceProviderTransition;
+        $hasValidTransition = $transition !== null
+            && $transition->is_active
+            && $transition->targetProvider
+            && $transition->sourceProvider;
 
-                    if ($matchesCurrentTarget) {
-                        $planName = $leadData->plan_name ?? null;
-                        $planType = $leadData->plan_type ?? null;
-                        $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
-                        $isTransitionable = ! $isPlanValidationRequired
-                            || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
-                    }
-                }
+        if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
+            $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+            $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
+
+            if ($matchesCurrentTarget) {
+                $planName = $leadData->plan_name ?? null;
+                $planType = $leadData->plan_type ?? null;
+                $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+                $isTransitionable = ! $isPlanValidationRequired
+                    || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
             }
+        }
+
+        // If caller passed a precomputed "true" hint but stored transition data no longer
+        // matches current lead data, use current-data resolution as a deterministic fallback.
+        if (! $isTransitionable && $isTransitionableLead === true && ! $checkIsTransitionableLead) {
+            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
         }
 
         return $isTransitionable;
