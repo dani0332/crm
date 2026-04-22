@@ -34,7 +34,7 @@ const sendPolicyMissingWithCodes = computed(() => {
   }
   return labels.map((label, i) => ({
     label,
-    code: Array.isArray(codes) ? codes[i] ?? '' : '',
+    code: Array.isArray(codes) ? (codes[i] ?? '') : '',
   }));
 });
 </script>
@@ -45,9 +45,7 @@ const sendPolicyMissingWithCodes = computed(() => {
     class="w-full mt-4 border-t border-gray-200 dark:border-gray-600"
     aria-label="Send policy document checklist"
   >
-    <h4
-      class="text-sm font-medium uppercase pb-1 mb-4 inline-block"
-    >
+    <h4 class="text-sm font-medium uppercase pb-1 mb-4 inline-block">
       Send policy — documents
     </h4>
     <div class="text-sm">
