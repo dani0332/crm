@@ -19,6 +19,8 @@ use App\Enums\EmirateEnum;
 use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -363,6 +365,8 @@ class CRUDController extends Controller
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
                 'dropdownSource' => $dropdownSource,
+                'healthSignatoryFilterOptions' => HealthQuoteDigitalSignatory::filterDropdown(),
+                'healthUaePassApiStatusFilterOptions' => HealthQuoteUaePassApiStatus::filterDropdown(),
             ]);
         }
 
@@ -1268,6 +1272,12 @@ class CRUDController extends Controller
                 $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
                 $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
                 $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
+
+                $archivedDocuments = $this->quoteDocumentService->getArchivedDocuments($quoteType, $record->id);
+
+                // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
+                $record->signatory_text = HealthQuoteDigitalSignatory::displayLabel($record->digital_signatory ?? null);
+                $record->uae_pass_api_status_text = HealthQuoteUaePassApiStatus::displayLabel($record->uae_pass_api_status ?? null);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
