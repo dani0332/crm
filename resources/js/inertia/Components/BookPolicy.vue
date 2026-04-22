@@ -82,6 +82,8 @@ const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
@@ -2059,6 +2061,7 @@ const isDocTypeLoading = docType => {
               </p>
             </template>
             <BookPolicySendPolicyDocumentsPanel
+              v-if="hasRole(rolesEnum.Engineering)"
               :book-policy-details="props.bookPolicyDetails"
             />
           </div>
