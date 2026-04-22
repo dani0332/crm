@@ -30,8 +30,10 @@ class UploadRateCoverageRequest extends FormRequest
                 'file',
                 'mimes:xls,xlsx',
                 'max:5120',
-                new FileNameExists('rate_coverage_uploads', 'file_name'),
+                // new FileNameExists('rate_coverage_uploads', 'file_name'),
             ],
+            'effective_from' => 'required|date',
+            'effective_to' => 'required|date|after:effective_from',
         ];
     }
 
