@@ -681,3 +681,31 @@ test('isTransitionableLeadWithCurrentData uses current-data fallback when caller
 
     expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: true))->toBeTrue();
 });
+
+test('isTransitionableLeadWithCurrentData fallback does not require plan when plan fields are empty', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::RSA,
+        'text' => 'RSA',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::RSA,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => '',
+        'plan_type' => '',
+    ], transitionId: null);
+
+    expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: true))->toBeTrue();
+});

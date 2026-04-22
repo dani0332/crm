@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Imports\UploadAndUpdateImport;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Regression tests for RenewalsImportTrait::isBlankImportCell via
@@ -99,4 +100,14 @@ test('mapQuoteData treats date zero values as blank while preserving numeric zer
     expect($mapped['end_date'])->toBeNull();
     expect($mapped['dob'])->toBeNull();
     expect($mapped['excess'])->toBe(0);
+});
+
+test('validation allows zero in optional dob date field so row is not rejected before mapping', function () {
+    $import = newUploadAndUpdateImport();
+    $row = buildUploadAndUpdateRow();
+    $row[17] = 0;
+
+    $validator = Validator::make([$row], $import->getRules(), [], $import->customValidationAttributes());
+
+    expect($validator->errors()->toArray())->not->toHaveKey('0.17');
 });

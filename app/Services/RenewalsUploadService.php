@@ -3639,10 +3639,15 @@ class RenewalsUploadService
             ];
         }
 
-        $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
+        $planName = $leadData->plan_name ?? null;
+        $planType = $leadData->plan_type ?? null;
+        $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+        $carPlan = $isPlanValidationRequired
+            ? $this->resolveCarPlan($planName, $planType, $targetProvider->id)
+            : null;
 
         return [
-            'status' => $carPlan !== null,
+            'status' => ! $isPlanValidationRequired || $carPlan !== null,
             'transition' => $transition,
             'sourceProvider' => $sourceProvider,
             'targetProvider' => $targetProvider,

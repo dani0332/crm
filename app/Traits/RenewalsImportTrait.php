@@ -128,7 +128,7 @@ trait RenewalsImportTrait
     public function validateDate($value)
     {
         if ($this->isBlankImportDateCell($value)) {
-            return false;
+            return true;
         }
 
         try {
