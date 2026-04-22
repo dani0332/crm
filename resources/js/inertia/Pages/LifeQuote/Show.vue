@@ -1371,6 +1371,9 @@ const getDisplayPriceInAED = item => {
     return numberFormat(actualPremium + ridersPrice);
   }
 
+  if(item.isRateCalculator){
+    return item.totalPrice != null ? numberFormat(item.totalPrice) : 'N/A';
+  }
   // zurich & manual plan
   return item.actualPremium != null ? numberFormat(item.actualPremium) : 'N/A';
 };
