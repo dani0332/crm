@@ -261,12 +261,12 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         }
 
         $signatory = $this->getFilterValue('signatory', $requestParams);
-        if ($signatory && $signatory !== 'All' && HealthQuoteDigitalSignatory::isStoredValue($signatory)) {
+        if ($signatory && $signatory !== HealthQuoteDigitalSignatory::FILTER_ALL && HealthQuoteDigitalSignatory::isStoredValue($signatory)) {
             $query->where('digital_signatory', $signatory);
         }
 
         $uaePassApiStatus = $this->getFilterValue('uae_pass_api_status', $requestParams);
-        if ($uaePassApiStatus && $uaePassApiStatus !== 'All' && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
+        if ($uaePassApiStatus && $uaePassApiStatus !== HealthQuoteUaePassApiStatus::FILTER_ALL && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
             $query->where('uae_pass_api_status', $uaePassApiStatus);
         }
     }
