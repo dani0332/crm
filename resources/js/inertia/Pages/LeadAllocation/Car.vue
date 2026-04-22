@@ -86,9 +86,7 @@ const canEditCarAllocationCaps = computed(() => {
     return true;
   }
 
-  return useCanAny([
-    permissionsEnum.CAR_LEAD_ALLOCATION_EDIT,
-  ]);
+  return useCanAny([permissionsEnum.CAR_LEAD_ALLOCATION_EDIT]);
 });
 
 const confirmModal = reactive({
