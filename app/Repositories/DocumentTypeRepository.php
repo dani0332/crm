@@ -10,7 +10,9 @@ use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
 use App\Models\KycLog;
 use App\Services\ActivitiesService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Collection;
 
 class DocumentTypeRepository extends BaseRepository
 {
@@ -134,17 +136,57 @@ class DocumentTypeRepository extends BaseRepository
         return false;
     }
 
-    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
+    /**
+     * @param  array<int, mixed>|Collection<int, mixed>  $quoteDocuments
+     * @return array{
+     *     disabled: bool,
+     *     documentTypeCodes: mixed,
+     *     requiredDocuments: array<int, string>,
+     *     missingDocumentCodes: array<int, string>,
+     *     missingDocuments: array<int, string>,
+     * }
+     */
+    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record): array
     {
         $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
-        $docCodes = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('code')->toArray();
-        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $docCodes)->groupBy('document_type_code')->count();
-        $requiredDocuments = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('text')->toArray();
+        $requiredRows = collect($documentTypeCodes)->where('is_required_for_send_policy', 1);
+        $docCodes = $requiredRows->pluck('code')->unique()->values()->all();
+        $requiredDocuments = $requiredRows->pluck('text')->unique()->values()->all();
+
+        $uploadedCodes = collect($quoteDocuments)
+            ->pluck('document_type_code')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $missingDocumentCodes = array_values(array_diff($docCodes, $uploadedCodes));
+        $codeToText = $requiredRows->mapWithKeys(fn ($row) => [$row->code => $row->text])->all();
+        $missingDocuments = array_values(array_map(
+            static fn (string $code): string => $codeToText[$code] ?? $code,
+            $missingDocumentCodes
+        ));
+
+        $disabled = $docCodes !== [] && $missingDocumentCodes !== [];
+
+        if ($disabled) {
+            LoggerService::info('fetchAreSendPolicyDocsUploaded: send policy blocked — required document types not uploaded', [
+                'quote_type' => $quoteType,
+                'quote_code' => $record->code ?? null,
+                'quote_id' => $record->id ?? null,
+                'required_document_codes' => $docCodes,
+                'required_documents' => $requiredDocuments,
+                'not_uploaded_document_codes' => $missingDocumentCodes,
+                'not_uploaded_documents' => $missingDocuments,
+            ]);
+        }
 
         return [
-            'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
+            'disabled' => $disabled,
             'documentTypeCodes' => $documentTypeCodes,
             'requiredDocuments' => $requiredDocuments,
+            'missingDocumentCodes' => $missingDocumentCodes,
+            'missingDocuments' => $missingDocuments,
         ];
     }
 
