@@ -482,6 +482,12 @@ const openDocumentInNewTab = async item => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
+              <p
+                v-if="hasRole(rolesEnum.Engineering) && documentType.code"
+                class="text-xs"
+              >
+                Document type code: {{ documentType.code }}
+              </p>
 
               <x-alert
                 v-if="successStatus[documentType.id]"
