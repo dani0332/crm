@@ -118,6 +118,13 @@ const hideFooter = computed(() => {
               item.customer_replied ? 'Yes' : 'No'
             }}</span>
           </template>
+          <template #item-email_address="item">
+            <span class="text-sm">{{
+              isWhatsAppType(item.type)
+                ? '+' + item.mobile_no
+                : item.email_address || '—'
+            }}</span>
+          </template>
         </DataTable>
       </template>
     </Collapsible>
