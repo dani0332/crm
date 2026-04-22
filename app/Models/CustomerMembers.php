@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerTypeEnum;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TransformsAuditables;
 use Carbon\Carbon;
@@ -63,6 +64,21 @@ class CustomerMembers extends Model
     public function getDobAttribute($value)
     {
         return ! empty($value) ? Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')) : $value;
+    }
+
+    public function scopeIndividual($query)
+    {
+        return $query->where('customer_type', CustomerTypeEnum::Individual);
+    }
+
+    public function scopeNotThirdPartyPayer($query)
+    {
+        return $query->where('is_third_party_payer', false);
+    }
+
+    public function scopePolicyHolder($query)
+    {
+        return $query->where('is_policy_holder', true);
     }
 
     /**

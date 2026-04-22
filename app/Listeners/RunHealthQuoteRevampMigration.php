@@ -13,6 +13,6 @@ class RunHealthQuoteRevampMigration
 
     public function handle(HealthQuoteMigration $event): void
     {
-        $this->healthQuoteRevampMigrationService->migrateLead($event->healthQuote);
+        $this->healthQuoteRevampMigrationService->migrateLead($event->healthQuoteId);
     }
 }

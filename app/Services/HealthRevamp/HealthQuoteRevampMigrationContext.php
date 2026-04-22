@@ -2,14 +2,14 @@
 
 namespace App\Services\HealthRevamp;
 
-use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\CustomerInsured;
-use App\Models\HealthQuote;
 use Carbon\Carbon;
 
 final class HealthQuoteRevampMigrationContext
 {
+    /**
+     * Returns the number of complete months between the given date-of-birth string and today.
+     * Returns null when dob is absent, used as a newborn threshold guard (≤ 12 months).
+     */
     public function monthsSinceDob(?string $dob): ?int
     {
         if ($dob === null || $dob === '') {
@@ -20,6 +20,9 @@ final class HealthQuoteRevampMigrationContext
     }
 
     /**
+     * Normalises a raw dob attribute (string, Carbon, or null) to a Y-m-d string.
+     * Returns null when dob is absent, preventing downstream Carbon::parse() errors.
+     *
      * @param  mixed  $dob  Raw attribute (string, Carbon, etc.)
      */
     public function dobToDateString(mixed $dob): ?string
@@ -28,25 +31,13 @@ final class HealthQuoteRevampMigrationContext
             return null;
         }
 
-        return Carbon::parse($dob)->format('Y-m-d');
+        return Carbon::parse($dob)->format(config('constants.DATE_FORMAT_ONLY'));
     }
 
     /**
-     * Same notion as health_revamp_bak_entity_health_leads in health-revamp-2-migrationScript-backup.sql.
+     * Guards age-eligibility checks (e.g. policy-holder must be ≥ 18).
+     * Returns false for missing dob to treat unknown-age members as ineligible.
      */
-    public function isEntityHealthLead(HealthQuote $hqr): bool
-    {
-        if ($hqr->customer_id === null) {
-            return false;
-        }
-
-        $insured = $hqr->latestInsured()
-            ->where('customer_insured.customer_id', $hqr->customer_id)
-            ->first();
-
-        return $insured !== null && $insured->customer_type === CustomerTypeEnum::Entity;
-    }
-
     public function memberIsAtLeastYearsOld(mixed $dob, int $years = 18): bool
     {
         if ($dob === null || $dob === '') {
@@ -54,28 +45,5 @@ final class HealthQuoteRevampMigrationContext
         }
 
         return Carbon::parse($dob)->age >= $years;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function allowedCustomerTypesForQuote(HealthQuote $hqr): array
-    {
-        $types = CustomerInsured::query()
-            ->where('quote_request_id', $hqr->id)
-            ->where('quote_type_id', QuoteTypeId::Health)
-            ->where('is_active', true)
-            ->join('insured', 'insured.id', '=', 'customer_insured.insured_id')
-            ->distinct()
-            ->pluck('insured.customer_type')
-            ->filter()
-            ->values()
-            ->all();
-
-        if ($types === []) {
-            return ['Individual'];
-        }
-
-        return $types;
     }
 }

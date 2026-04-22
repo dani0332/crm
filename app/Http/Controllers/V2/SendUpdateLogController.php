@@ -13,7 +13,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Events\HealthQuoteMigration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -25,7 +24,6 @@ use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
-use App\Models\HealthQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteType;
@@ -37,6 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -87,15 +86,10 @@ class SendUpdateLogController extends Controller
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
 
                 if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
-                    $healthQuoteForMigration = HealthQuote::find($childLeadResponse['id']);
-                    if ($healthQuoteForMigration === null) {
-                        LoggerService::warning('HealthQuoteMigration skipped: HealthQuote not found for child lead id', extra: [
-                            'health_quote_id' => $childLeadResponse['id'],
-                            'send_update_log_code' => $response->code,
-                        ]);
-                    } else {
-                        HealthQuoteMigration::dispatch($healthQuoteForMigration);
-                    }
+                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead(
+                        $childLeadResponse['id'],
+                        $response->code,
+                    );
                 }
             }
 

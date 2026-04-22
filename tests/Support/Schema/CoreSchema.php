@@ -1169,6 +1169,9 @@ class CoreSchema
                 $table->unsignedBigInteger('salary_band_id')->nullable();
                 $table->boolean('is_policy_holder')->default(0);
                 $table->boolean('is_insured')->default(1);
+                $table->boolean('is_principal')->default(0);
+                $table->boolean('is_third_party_payer')->default(0);
+                $table->unsignedBigInteger('customer_entity_id')->nullable();
                 $table->unsignedBigInteger('marital_status_id')->nullable();
                 $table->unsignedBigInteger('visa_category_id')->nullable();
                 $table->timestamps();

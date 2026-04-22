@@ -25,7 +25,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Events\HealthQuoteMigration;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
@@ -1644,10 +1643,11 @@ class AMLService
                 $this->updateHealthEntityData($quote, $request);
             }
 
-            if (! $isEntity && in_array($quote->quote_status_id, app(HealthQuoteRevampMigrationService::class)->getMirationStatuses())
-            ) {
-                HealthQuoteMigration::dispatch($quote);
-            }
+            app(HealthQuoteRevampMigrationService::class)->dispatchForNonEntityLead(
+                $quote->id,
+                $quote->quote_status_id,
+                $isEntity,
+            );
         }
 
         return [$shouldApplicableForScreening, $insured, $entityId];

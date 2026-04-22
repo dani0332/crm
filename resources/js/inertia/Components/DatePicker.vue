@@ -66,16 +66,12 @@ const props = defineProps({
     type: Object,
     default: null,
   },
-  minDate: {
-    type: [Date, String, Number],
-    default: null,
-  },
   maxDate: {
-    type: [Date, String, Number],
+    type: Date,
     default: null,
   },
   startDate: {
-    type: [Date, String, Number],
+    type: Date,
     default: null,
   },
 });

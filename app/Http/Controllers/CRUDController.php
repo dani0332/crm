@@ -47,7 +47,6 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
-use App\Events\HealthQuoteMigration;
 use App\Events\LeadsCount;
 use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
@@ -2051,14 +2050,11 @@ class CRUDController extends Controller
             (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
         }
 
-        if (
-            strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-            && in_array($request->leadStatus, app(HealthQuoteRevampMigrationService::class)->getMirationStatuses())
-        ) {
-            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
-            if ($plainEntity->is_quote_locked) {
-                HealthQuoteMigration::dispatch($plainEntity);
-            }
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+            app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
+                $request->leadId,
+                $request->leadStatus,
+            );
         }
 
         // courtesy email

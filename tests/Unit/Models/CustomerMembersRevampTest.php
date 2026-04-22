@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
 use App\Models\MartialStatus;
 use App\Models\VisaCategory;
@@ -253,6 +254,81 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
 
         expect($result['transformedOld']['name'])->toBe('John Doe')
             ->and($result['transformedNew']['name'])->toBe('John Doe');
+    });
+});
+
+describe('CustomerMembers scopes', function () {
+    function insertMember(array $attributes = []): int
+    {
+        return DB::table('customer_members')->insertGetId(array_merge([
+            'quote_type' => 'App\Models\HealthQuote',
+            'quote_id' => 1,
+            'customer_type' => CustomerTypeEnum::Individual,
+            'is_policy_holder' => false,
+            'is_third_party_payer' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $attributes));
+    }
+
+    test('individual scope returns only Individual customer_type rows', function () {
+        insertMember(['customer_type' => CustomerTypeEnum::Individual]);
+        insertMember(['customer_type' => CustomerTypeEnum::Entity]);
+
+        $results = CustomerMembers::individual()->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->customer_type)->toBe(CustomerTypeEnum::Individual);
+    });
+
+    test('notThirdPartyPayer scope excludes third-party-payer rows', function () {
+        insertMember(['is_third_party_payer' => false]);
+        insertMember(['is_third_party_payer' => true]);
+
+        $results = CustomerMembers::notThirdPartyPayer()->get();
+
+        expect($results)->toHaveCount(1)
+            ->and((bool) $results->first()->is_third_party_payer)->toBeFalse();
+    });
+
+    test('policyHolder scope returns only policy-holder rows', function () {
+        insertMember(['is_policy_holder' => true]);
+        insertMember(['is_policy_holder' => false]);
+
+        $results = CustomerMembers::policyHolder()->get();
+
+        expect($results)->toHaveCount(1)
+            ->and((bool) $results->first()->is_policy_holder)->toBeTrue();
+    });
+
+    test('scopes can be chained together', function () {
+        insertMember([
+            'customer_type' => CustomerTypeEnum::Individual,
+            'is_policy_holder' => true,
+            'is_third_party_payer' => false,
+        ]);
+        insertMember([
+            'customer_type' => CustomerTypeEnum::Entity,
+            'is_policy_holder' => true,
+            'is_third_party_payer' => false,
+        ]);
+        insertMember([
+            'customer_type' => CustomerTypeEnum::Individual,
+            'is_policy_holder' => false,
+            'is_third_party_payer' => false,
+        ]);
+        insertMember([
+            'customer_type' => CustomerTypeEnum::Individual,
+            'is_policy_holder' => true,
+            'is_third_party_payer' => true,
+        ]);
+
+        $results = CustomerMembers::individual()->policyHolder()->notThirdPartyPayer()->get();
+
+        expect($results)->toHaveCount(1)
+            ->and($results->first()->customer_type)->toBe(CustomerTypeEnum::Individual)
+            ->and((bool) $results->first()->is_policy_holder)->toBeTrue()
+            ->and((bool) $results->first()->is_third_party_payer)->toBeFalse();
     });
 });
 

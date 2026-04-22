@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Events\HealthQuoteMigration;
 use App\Models\CustomerInsured;
 use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationContext;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -53,12 +54,125 @@ describe('isMigrated', function () {
     ]);
 });
 
+describe('dispatchForLockedLead', function () {
+    it('dispatches when status is in migration set and lead is locked', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create(['is_quote_locked' => true]);
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForLockedLead($quote->id, QuoteStatusEnum::Draft);
+
+        Event::assertDispatched(HealthQuoteMigration::class, fn ($e) => $e->healthQuoteId === $quote->id);
+    });
+
+    it('does not dispatch when status is not in migration set', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create(['is_quote_locked' => true]);
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForLockedLead($quote->id, QuoteStatusEnum::PolicyIssued);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+
+    it('does not dispatch when lead is not locked', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create(['is_quote_locked' => false]);
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForLockedLead($quote->id, QuoteStatusEnum::Draft);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+
+    it('does not dispatch when quote is not found', function () {
+        Event::fake();
+
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForLockedLead(999999, QuoteStatusEnum::Draft);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+});
+
+describe('dispatchForNonEntityLead', function () {
+    it('dispatches when not entity and status is in migration set', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create();
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNonEntityLead($quote->id, QuoteStatusEnum::Draft, false);
+
+        Event::assertDispatched(HealthQuoteMigration::class, fn ($e) => $e->healthQuoteId === $quote->id);
+    });
+
+    it('does not dispatch when isEntity is true', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create();
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNonEntityLead($quote->id, QuoteStatusEnum::Draft, true);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+
+    it('does not dispatch when status is not in migration set', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create();
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNonEntityLead($quote->id, QuoteStatusEnum::PolicyIssued, false);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+});
+
+describe('dispatchForNewChildLead', function () {
+    it('dispatches when health quote exists', function () {
+        Event::fake();
+
+        $quote = HealthQuote::factory()->create();
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNewChildLead($quote->id);
+
+        Event::assertDispatched(HealthQuoteMigration::class, fn ($e) => $e->healthQuoteId === $quote->id);
+    });
+
+    it('does not dispatch and logs warning when health quote is not found', function () {
+        Event::fake();
+
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNewChildLead(999999, 'SUL-001');
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+
+    it('does not dispatch when id is null', function () {
+        Event::fake();
+
+        $service = new HealthQuoteRevampMigrationService;
+
+        $service->dispatchForNewChildLead(null);
+
+        Event::assertNotDispatched(HealthQuoteMigration::class);
+    });
+});
+
 describe('migrateLead', function () {
     it('returns without error when quote is already migrated', function () {
         $quote = HealthQuote::factory()->withRevampFields()->create();
 
         $service = new HealthQuoteRevampMigrationService;
-        $service->migrateLead($quote);
+        $service->migrateLead($quote->id);
 
         expect($quote->fresh()->insure_code)->not->toBeNull();
     });
@@ -72,13 +186,13 @@ describe('migrateLead', function () {
             ->create();
 
         $service = new HealthQuoteRevampMigrationService;
-        $service->migrateLead($quote->fresh());
+        $service->migrateLead($quote->id);
 
         expect($quote->fresh()->insure_code)->toBeNull();
     });
 });
 
-describe('isEntityHealthLead', function () {
+describe('isEntity', function () {
     it('is true when active health customer_insured points at an Entity insured', function () {
         $quote = HealthQuote::factory()->create();
         $insured = Insured::factory()->entity()->create();
@@ -87,9 +201,7 @@ describe('isEntityHealthLead', function () {
             ->forActiveHealthLink($quote, $insured)
             ->create();
 
-        $context = new HealthQuoteRevampMigrationContext;
-
-        expect($context->isEntityHealthLead($quote->fresh()))->toBeTrue();
+        expect($quote->fresh()->isEntity())->toBeTrue();
     });
 
     it('is false when active insured is Individual', function () {
@@ -100,17 +212,13 @@ describe('isEntityHealthLead', function () {
             ->forActiveHealthLink($quote, $insured)
             ->create();
 
-        $context = new HealthQuoteRevampMigrationContext;
-
-        expect($context->isEntityHealthLead($quote->fresh()))->toBeFalse();
+        expect($quote->fresh()->isEntity())->toBeFalse();
     });
 
     it('is false when customer_id is null', function () {
         $quote = HealthQuote::factory()->make(['customer_id' => null]);
 
-        $context = new HealthQuoteRevampMigrationContext;
-
-        expect($context->isEntityHealthLead($quote))->toBeFalse();
+        expect($quote->isEntity())->toBeFalse();
     });
 });
 
@@ -158,37 +266,5 @@ describe('dobToDateString', function () {
         $context = new HealthQuoteRevampMigrationContext;
 
         expect($context->dobToDateString('2000-01-15'))->toBe('2000-01-15');
-    });
-});
-
-describe('allowedCustomerTypesForQuote', function () {
-    it('defaults to Individual when there are no customer_insured rows', function () {
-        $quote = HealthQuote::factory()->create();
-
-        $context = new HealthQuoteRevampMigrationContext;
-
-        expect($context->allowedCustomerTypesForQuote($quote))->toBe(['Individual']);
-    });
-
-    it('returns distinct insured customer types for active health links', function () {
-        $quote = HealthQuote::factory()->create();
-
-        $insuredIndividual = Insured::factory()->create([
-            'customer_type' => CustomerTypeEnum::Individual,
-        ]);
-        $insuredEntity = Insured::factory()->entity()->create();
-
-        CustomerInsured::factory()
-            ->forActiveHealthLink($quote, $insuredIndividual)
-            ->create(['is_active' => true]);
-
-        CustomerInsured::factory()
-            ->forActiveHealthLink($quote, $insuredEntity)
-            ->create(['is_active' => true]);
-
-        $context = new HealthQuoteRevampMigrationContext;
-
-        expect($context->allowedCustomerTypesForQuote($quote->fresh()))
-            ->toEqualCanonicalizing([CustomerTypeEnum::Individual, CustomerTypeEnum::Entity]);
     });
 });

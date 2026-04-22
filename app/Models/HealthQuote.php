@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
@@ -779,5 +780,18 @@ class HealthQuote extends Model implements AuditableContract
     public function quoteBatch()
     {
         return $this->belongsTo(QuoteBatches::class, 'quote_batch_id');
+    }
+
+    public function isEntity(): bool
+    {
+        if ($this->customer_id === null) {
+            return false;
+        }
+
+        $insured = $this->latestInsured()
+            ->where('customer_insured.customer_id', $this->customer_id)
+            ->first();
+
+        return $insured !== null && $insured->customer_type === CustomerTypeEnum::Entity;
     }
 }

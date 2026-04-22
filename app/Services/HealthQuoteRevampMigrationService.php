@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Events\HealthQuoteMigration;
 use App\Models\HealthQuote;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationContext;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationMutator;
@@ -86,18 +87,74 @@ class HealthQuoteRevampMigrationService
         ];
     }
 
+    /**
+     * Dispatches migration for a locked health lead whose status is in the migration set.
+     * Used when saving a lead via CRUDController (status-change flow).
+     */
+    public function dispatchForLockedLead(int $healthQuoteId, mixed $leadStatus): void
+    {
+        if (! in_array($leadStatus, $this->getMirationStatuses())) {
+            return;
+        }
+
+        $quote = HealthQuote::find($healthQuoteId);
+
+        if ($quote && $quote->is_quote_locked) {
+            HealthQuoteMigration::dispatch($healthQuoteId);
+        }
+    }
+
+    /**
+     * Dispatches migration for a non-entity health lead whose status is in the migration set.
+     * Used by AMLService after insured/customer data updates.
+     */
+    public function dispatchForNonEntityLead(int $healthQuoteId, mixed $quoteStatusId, bool $isEntity): void
+    {
+        if ($isEntity) {
+            return;
+        }
+
+        if (in_array($quoteStatusId, $this->getMirationStatuses())) {
+            HealthQuoteMigration::dispatch($healthQuoteId);
+        }
+    }
+
+    /**
+     * Dispatches migration for a newly created child health lead (CIR flow).
+     * Used by SendUpdateLogController after child lead creation.
+     */
+    public function dispatchForNewChildLead(?int $healthQuoteId, ?string $sendUpdateLogCode = null): void
+    {
+        if ($healthQuoteId === null) {
+            return;
+        }
+
+        if (! HealthQuote::find($healthQuoteId)) {
+            LoggerService::warning('HealthQuoteMigration skipped: HealthQuote not found for child lead id', extra: [
+                'health_quote_id' => $healthQuoteId,
+                'send_update_log_code' => $sendUpdateLogCode,
+            ]);
+
+            return;
+        }
+
+        HealthQuoteMigration::dispatch($healthQuoteId);
+    }
+
     public function isMigrated(HealthQuote $healthQuote): bool
     {
         return $healthQuote->insure_code !== null && $healthQuote->policy_holder_code !== null;
     }
 
-    public function migrateLead(HealthQuote $healthQuote): void
+    public function migrateLead(int $healthQuoteId): void
     {
+        $healthQuote = HealthQuote::find($healthQuoteId);
+
         if (! $healthQuote || $this->isMigrated($healthQuote)) {
             return;
         }
 
-        if ($this->context->isEntityHealthLead($healthQuote)) {
+        if ($healthQuote->isEntity()) {
             return;
         }
 

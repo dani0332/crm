@@ -50,6 +50,12 @@ final class HealthQuoteRevampMigrationStateLogger
     /**
      * @return array{health_quote: array<string, mixed>, customer_members: array<int|string, array<string, mixed>>}
      */
+    /**
+     * Captures and logs the full pre-migration state of the health quote and its members.
+     * Returns snapshots that are passed to logLeadStateAfter to compute the diff.
+     *
+     * @return array{health_quote: array<string, mixed>, customer_members: array<int|string, array<string, mixed>>}
+     */
     public function logLeadStateBefore(HealthQuote $healthQuote): array
     {
         $beforeQuote = $this->snapshotHealthQuoteAttributes($healthQuote);
@@ -68,6 +74,13 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * @param  array<string, mixed>  $beforeQuote
+     * @param  array<int|string, array<string, mixed>>  $beforeMembers
+     */
+    /**
+     * Re-fetches the quote after mutation, diffs it against the before snapshots, and logs the result.
+     * Only includes a 'changed' key in the log payload when actual differences exist.
+     *
      * @param  array<string, mixed>  $beforeQuote
      * @param  array<int|string, array<string, mixed>>  $beforeMembers
      */
@@ -98,6 +111,8 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * Extracts the subset of health quote attributes tracked for migration logging.
+     *
      * @return array<string, mixed>
      */
     public function snapshotHealthQuoteAttributes(HealthQuote $healthQuote): array
@@ -106,6 +121,8 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * Snapshots all non-deleted members of the quote, keyed by member id for diffing.
+     *
      * @return array<int|string, array<string, mixed>>
      */
     public function snapshotCustomerMembers(HealthQuote $healthQuote): array
@@ -115,6 +132,7 @@ final class HealthQuoteRevampMigrationStateLogger
             $healthQuote->members()
                 ->whereNull('deleted_at')
                 ->orderBy('id')
+                ->select(self::CUSTOMER_MEMBER_LOG_ATTRIBUTES)
                 ->get() as $member
         ) {
             /** @var CustomerMembers $member */
@@ -125,6 +143,8 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * Assembles the structured log payload shared by the before and after log entries.
+     *
      * @param  array<int|string, array<string, mixed>>  $membersById
      * @return array<string, mixed>
      */
@@ -138,6 +158,14 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * @param  array<string, mixed>  $before
+     * @param  array<string, mixed>  $after
+     * @return array<string, array{before: mixed, after: mixed}>
+     */
+    /**
+     * Compares two flat attribute maps and returns only the keys that changed,
+     * each with a {before, after} pair. Uses JSON encoding for type-safe comparison.
+     *
      * @param  array<string, mixed>  $before
      * @param  array<string, mixed>  $after
      * @return array<string, array{before: mixed, after: mixed}>
@@ -158,6 +186,15 @@ final class HealthQuoteRevampMigrationStateLogger
     }
 
     /**
+     * @param  array<int|string, array<string, mixed>>  $beforeById
+     * @param  array<int|string, array<string, mixed>>  $afterById
+     * @return array<string, mixed>
+     */
+    /**
+     * Diffs two member snapshot maps (keyed by member id).
+     * Rows present only in after are marked 'created'; only in before are marked 'removed';
+     * rows in both are diffed at the attribute level via diffLogAttributeMaps.
+     *
      * @param  array<int|string, array<string, mixed>>  $beforeById
      * @param  array<int|string, array<string, mixed>>  $afterById
      * @return array<string, mixed>
