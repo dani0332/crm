@@ -390,13 +390,12 @@ const openDocumentInNewTab = async item => {
               @click.prevent="openDocumentInNewTab(item)"
             >
               <span>{{ item.original_name }}</span>
-             
             </a>
             <span
-                v-if="hasRole(rolesEnum.Engineering) && item.document_type_code"
-                class="text-gray-600 text-xs font-mono block mt-0.5"
-              >
-                {{ item.document_type_code }}
+              v-if="hasRole(rolesEnum.Engineering) && item.document_type_code"
+              class="text-gray-600 text-xs font-mono block mt-0.5"
+            >
+              {{ item.document_type_code }}
             </span>
           </template>
           <template
