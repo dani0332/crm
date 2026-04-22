@@ -79,7 +79,6 @@ const props = defineProps({
     default: false,
   },
   archivedDocuments: Array,
-  isLeadUaePass: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
