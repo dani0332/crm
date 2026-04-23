@@ -133,11 +133,29 @@ class PostMarkService extends BaseService
         $quoteId = $metadata['quote_id'] ?? $metadata['quoteId'] ?? null;
         $quoteTypeId = $metadata['quote_type_id'] ?? $metadata['quoteTypeId'] ?? null;
 
-        if ($quoteId === null || $quoteTypeId === null || $quoteId === '' || $quoteTypeId === '' || (is_numeric($quoteId) && (int) $quoteId === 0) || (is_numeric($quoteTypeId) && (int) $quoteTypeId === 0)) {
-            return false;
+        return $this->positiveIntString($quoteId) !== null
+            && $this->positiveIntString($quoteTypeId) !== null;
+    }
+
+    private function positiveIntString(mixed $value): ?string
+    {
+        if (is_int($value)) {
+            return $value > 0 ? (string) $value : null;
         }
 
-        return true;
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $intVal = filter_var($value, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]);
+
+        return $intVal === false ? null : (string) $intVal;
     }
 
     /**
@@ -147,8 +165,8 @@ class PostMarkService extends BaseService
      */
     private function validatedPayloadForEpEmailStatusLog(array $requestPayload, array $metadata, string $messageId): array
     {
-        $quoteId = $metadata['quote_id'] ?? $metadata['quoteId'] ?? null;
-        $quoteTypeId = $metadata['quote_type_id'] ?? $metadata['quoteTypeId'] ?? null;
+        $quoteId = $this->positiveIntString($metadata['quote_id'] ?? $metadata['quoteId'] ?? null);
+        $quoteTypeId = $this->positiveIntString($metadata['quote_type_id'] ?? $metadata['quoteTypeId'] ?? null);
 
         $subject = $metadata['subject']
             ?? ((isset($requestPayload['Subject']) && is_string($requestPayload['Subject']))
@@ -156,8 +174,8 @@ class PostMarkService extends BaseService
                 : null);
 
         $normalizedMeta = array_merge($metadata, [
-            'quote_id' => (string) (int) $quoteId,
-            'quote_type_id' => (string) (int) $quoteTypeId,
+            'quote_id' => $quoteId,
+            'quote_type_id' => $quoteTypeId,
             'subject' => $subject,
         ]);
 
