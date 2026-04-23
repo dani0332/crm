@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alliance Travel Automation Flow - Complete 5-Step Workflow</title>
+    <title>Qatar Travel Automation Flow - Complete 5-Step Workflow</title>
     <link rel="stylesheet" href="/docs/styles/styles.css" />
     <style>
       * {
@@ -319,15 +319,15 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
-          >Alliance</a
+        <a href="/docs/policy-automation/travel/qatar/index.html"
+          >Qatar</a
         >
         <span>></span>
         <span>Automation Flow</span>
       </div>
 
       <div class="header">
-        <h1>🔄 Alliance Travel Automation Flow</h1>
+        <h1>🔄 Qatar Travel Automation Flow</h1>
         <p>
           Complete 5-Step Policy Issuance Workflow with Detailed Process
           Documentation
@@ -397,7 +397,7 @@
             </li>
             <li>
               <strong>Provider Support:</strong> Currently implemented for
-              Alliance Travel and other e-commerce providers
+              Qatar Travel and other e-commerce providers
             </li>
             <li>
               <strong>Failure Handling:</strong> If capture fails, automation is
@@ -423,7 +423,7 @@
       <div class="section">
         <h2>📋 Complete Automation Workflow Overview</h2>
         <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 30px">
-          The Alliance Travel Policy Issuance Automation follows a sequential
+          The Qatar Travel Policy Issuance Automation follows a sequential
           5-step process, where each step must complete successfully before
           proceeding to the next. The system maintains state throughout the
           process, allowing for retry mechanisms and manual intervention when
@@ -435,7 +435,7 @@
             <span class="step-number">Step 1</span>
             <h3>Issue Policy</h3>
             <p>
-              Finalize policy with Alliance API using customer and traveller
+              Finalize policy with Qatar API using customer and traveller
               details. Updates quote with policy ID, premium, VAT, and dates.
             </p>
           </div>
@@ -451,7 +451,7 @@
             <span class="step-number">Step 3</span>
             <h3>Upload Policy Documents</h3>
             <p>
-              Retrieve policy documents from Alliance (with retry mechanism) and
+              Retrieve policy documents from Qatar (with retry mechanism) and
               upload to IMCRM with automatic mapping.
             </p>
           </div>
@@ -509,7 +509,7 @@
       <div class="section">
         <h2>1️⃣ Step 1: Issue Policy</h2>
         <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
-          The first step finalizes the policy with Alliance Insurance Company
+          The first step finalizes the policy with Qatar Insurance Company
           using customer information, traveller details, and plan information.
           This step establishes the policy foundation and generates the policy
           ID.
@@ -550,9 +550,9 @@
               </ul>
             </li>
             <li>
-              <strong>API Call:</strong> Call Alliance API endpoint
+              <strong>API Call:</strong> Call Qatar API endpoint
               <code>/v1/quote/{travelType}/finalise</code> via
-              <code>allianceHttpCall()</code>
+              <code>qatarHttpCall()</code>
             </li>
             <li>
               <strong>Response Parsing:</strong> Extract policy ID, premium
@@ -586,7 +586,7 @@
             </li>
             <li>
               <strong>Step Completion:</strong> Mark step as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_ISSUE_POLICY</code
+                >completed_step = QATAR_TRAVEL_ISSUE_POLICY</code
               >)
             </li>
           </ol>
@@ -601,7 +601,7 @@
             <span class="flow-arrow">→</span>
             <div class="flow-box">Build Payload</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box">Alliance API</div>
+            <div class="flow-box">Qatar API</div>
             <span class="flow-arrow">→</span>
             <div class="flow-box">Parse Response</div>
             <span class="flow-arrow">→</span>
@@ -623,7 +623,7 @@
             <li>Policy expiry date is calculated correctly (last cover day)</li>
             <li>
               Step is marked as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_ISSUE_POLICY</code
+                >completed_step = QATAR_TRAVEL_ISSUE_POLICY</code
               >)
             </li>
             <li>API log is stored with <code>SUCCESS_STATUS</code></li>
@@ -668,7 +668,7 @@
             </li>
             <li>
               <strong>PolicyIssuance:</strong>
-              <code>completed_step = ALLIANCE_TRAVEL_ISSUE_POLICY</code>
+              <code>completed_step = QATAR_TRAVEL_ISSUE_POLICY</code>
             </li>
             <li>
               <strong>PolicyIssuanceLog:</strong> Complete request/response
@@ -682,7 +682,7 @@
       <div class="section">
         <h2>2️⃣ Step 2: Purchase Policy</h2>
         <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
-          The second step purchases the finalized policy with Alliance Insurance
+          The second step purchases the finalized policy with Qatar Insurance
           Company. This step generates the policy number and tax invoice number.
         </p>
 
@@ -723,9 +723,9 @@
               </ul>
             </li>
             <li>
-              <strong>API Call:</strong> Call Alliance API endpoint
+              <strong>API Call:</strong> Call Qatar API endpoint
               <code>/v1/quote/{travelType}/purchase</code> via
-              <code>allianceHttpCall()</code>
+              <code>qatarHttpCall()</code>
             </li>
             <li>
               <strong>Response Parsing:</strong> Extract policy number and tax
@@ -744,7 +744,7 @@
             </li>
             <li>
               <strong>Step Completion:</strong> Mark step as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_PURCHASE_POLICY</code
+                >completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code
               >)
             </li>
           </ol>
@@ -759,7 +759,7 @@
             <span class="flow-arrow">→</span>
             <div class="flow-box">Build Payload</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box">Alliance API</div>
+            <div class="flow-box">Qatar API</div>
             <span class="flow-arrow">→</span>
             <div class="flow-box">Parse Response</div>
             <span class="flow-arrow">→</span>
@@ -779,7 +779,7 @@
             <li>Payment record is updated with insurer tax invoice number</li>
             <li>
               Step is marked as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_PURCHASE_POLICY</code
+                >completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code
               >)
             </li>
             <li>API log is stored with <code>SUCCESS_STATUS</code></li>
@@ -819,7 +819,7 @@
             <li><strong>Payment:</strong> <code>insurer_tax_number</code></li>
             <li>
               <strong>PolicyIssuance:</strong>
-              <code>completed_step = ALLIANCE_TRAVEL_PURCHASE_POLICY</code>
+              <code>completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code>
             </li>
           </ul>
         </div>
@@ -829,7 +829,7 @@
       <div class="section">
         <h2>3️⃣ Step 3: Upload Policy Documents</h2>
         <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
-          The third step retrieves policy documents from Alliance Insurance
+          The third step retrieves policy documents from Qatar Insurance
           Company. This step includes a retry mechanism to handle document
           generation delays, then uploads documents to IMCRM with automatic type
           mapping.
@@ -853,7 +853,7 @@
                 <li>Max retries: 5 attempts</li>
                 <li>Retry delay: 10 seconds between attempts</li>
                 <li>
-                  Call Alliance API endpoint
+                  Call Qatar API endpoint
                   <code>/v1/policy/{travelType}/documents</code>
                 </li>
                 <li>
@@ -875,7 +875,7 @@
               document:
               <ul style="margin-top: 10px; padding-left: 25px">
                 <li>
-                  Map Alliance document name to IMCRM document code using
+                  Map Qatar document name to IMCRM document code using
                   <code>getTravelDocumentMapping()</code>
                 </li>
                 <li>If mapping found, download document from URL</li>
@@ -894,7 +894,7 @@
             </li>
             <li>
               <strong>Step Completion:</strong> Mark step as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+                >completed_step = QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
               >)
             </li>
           </ol>
@@ -909,7 +909,7 @@
             <span class="flow-arrow">→</span>
             <div class="flow-box">Retry Loop (5x)</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box">Alliance API</div>
+            <div class="flow-box">Qatar API</div>
             <span class="flow-arrow">→</span>
             <div class="flow-box">Map Document Types</div>
             <span class="flow-arrow">→</span>
@@ -932,7 +932,7 @@
             <li>Quote status is updated to <code>PolicyIssued</code></li>
             <li>
               Step is marked as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+                >completed_step = QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
               >)
             </li>
           </ul>
@@ -988,7 +988,7 @@
       <div class="section">
         <h2>4️⃣ Step 4: Fill Booking Details</h2>
         <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
-          The fourth step retrieves the buyer tax invoice from Alliance and
+          The fourth step retrieves the buyer tax invoice from Qatar and
           updates payment records with commission details, VAT information, and
           invoice data. This step also updates the commission schedule.
         </p>
@@ -1010,9 +1010,9 @@
               payload with policy ID and policy number
             </li>
             <li>
-              <strong>API Call:</strong> Call Alliance API endpoint
+              <strong>API Call:</strong> Call Qatar API endpoint
               <code>/v1/agency/buyer-tax-invoices</code> via
-              <code>allianceHttpCall()</code>
+              <code>qatarHttpCall()</code>
             </li>
             <li>
               <strong>Response Parsing:</strong> Extract buyer tax invoice
@@ -1069,7 +1069,7 @@
             <li>
               <strong>Step Completion:</strong> Mark step as completed (<code
                 >completed_step =
-                ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+                QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
               >)
             </li>
           </ol>
@@ -1084,7 +1084,7 @@
             <span class="flow-arrow">→</span>
             <div class="flow-box">Build Payload</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box">Alliance API</div>
+            <div class="flow-box">Qatar API</div>
             <span class="flow-arrow">→</span>
             <div class="flow-box">Download Invoice</div>
             <span class="flow-arrow">→</span>
@@ -1109,7 +1109,7 @@
             <li>
               Step is marked as completed (<code
                 >completed_step =
-                ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+                QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
               >)
             </li>
           </ul>
@@ -1205,7 +1205,7 @@
             </li>
             <li>
               <strong>Step Completion:</strong> Mark step as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_BOOK_POLICY</code
+                >completed_step = QATAR_TRAVEL_BOOK_POLICY</code
               >)
             </li>
             <li>
@@ -1237,7 +1237,7 @@
             <li>Booking process is initiated in Sage ERP</li>
             <li>
               Step is marked as completed (<code
-                >completed_step = ALLIANCE_TRAVEL_BOOK_POLICY</code
+                >completed_step = QATAR_TRAVEL_BOOK_POLICY</code
               >)
             </li>
             <li>Automation process status is updated to completed</li>
@@ -1304,23 +1304,23 @@
           <ul style="margin-top: 15px; padding-left: 25px">
             <li><code>null</code> - No steps completed yet</li>
             <li>
-              <code>ALLIANCE_TRAVEL_ISSUE_POLICY</code> - Step 1 completed
+              <code>QATAR_TRAVEL_ISSUE_POLICY</code> - Step 1 completed
               successfully
             </li>
             <li>
-              <code>ALLIANCE_TRAVEL_PURCHASE_POLICY</code> - Steps 1 and 2
+              <code>QATAR_TRAVEL_PURCHASE_POLICY</code> - Steps 1 and 2
               completed successfully
             </li>
             <li>
-              <code>ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code> - Steps 1, 2,
+              <code>QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code> - Steps 1, 2,
               and 3 completed successfully
             </li>
             <li>
-              <code>ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code> - Steps
+              <code>QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code> - Steps
               1, 2, 3, and 4 completed successfully
             </li>
             <li>
-              <code>ALLIANCE_TRAVEL_BOOK_POLICY</code> - All 5 steps completed
+              <code>QATAR_TRAVEL_BOOK_POLICY</code> - All 5 steps completed
               successfully
             </li>
           </ul>
@@ -1335,7 +1335,7 @@
               {<br />
               &nbsp;&nbsp;&nbsp;&nbsp;$allSteps =
               PolicyIssuanceEnum::getPolicyIssuanceSteps(<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsuranceProviderEnum::ALNC->value,
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsuranceProviderEnum::QIC->value,
               <br />
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self::TYPE<br />
               &nbsp;&nbsp;&nbsp;&nbsp;);<br />
@@ -1413,7 +1413,7 @@
           "
         >
           <a
-            href="/docs/policy-automation/travel/alliance/index.html"
+            href="/docs/policy-automation/travel/qatar/index.html"
             style="
               background: rgba(255, 255, 255, 0.2);
               color: white;
@@ -1426,7 +1426,7 @@
             >← Back to Overview</a
           >
           <a
-            href="/docs/policy-automation/travel/alliance/architecture.html"
+            href="/docs/policy-automation/travel/qatar/architecture.html"
             style="
               background: rgba(255, 255, 255, 0.2);
               color: white;
@@ -1444,7 +1444,7 @@
       <div class="footer">
         <p>
           <strong
-            >Alliance Travel Insurance Automation Flow Documentation</strong
+            >Qatar Travel Insurance Automation Flow Documentation</strong
           >
         </p>
         <p>Complete 5-Step Workflow with State Management and Error Handling</p>

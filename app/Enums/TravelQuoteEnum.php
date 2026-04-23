@@ -21,8 +21,8 @@ final class TravelQuoteEnum extends Enum
     const IN_BOUND = 'inbound';
     const OUT_BOUND = 'outbound';
 
-    // Alliance Travel Direction code
-    const ALLIANCE_IN_BOUND = 'inbound';
-    const ALLIANCE_OUT_BOUND = 'outbound';
+    // Qatar Travel Direction code
+    const QATAR_IN_BOUND = 'inbound';
+    const QATAR_OUT_BOUND = 'outbound';
     const LOCK_MEMBER_DETAILS = 'Member details cannot be edited because the payment is already';
 }

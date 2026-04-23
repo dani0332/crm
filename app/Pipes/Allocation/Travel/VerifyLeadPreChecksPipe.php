@@ -61,32 +61,32 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             return false;
         }
 
-        $isAllianceTravelPolicyIssuanceEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE, useCache: true) == '1';
+        $isQatarTravelPolicyIssuanceEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE, useCache: true) == '1';
 
-        // Run Alliance Check only when the travel quote is a parent lead and the members are adult
-        if ($isAllianceTravelPolicyIssuanceEnabled && $lead->isParent() && $lead->isAdult()) {
-            LoggerService::info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
-            // Check if the lead is associated with the ALNC provider
+        // Run Qatar Check only when the travel quote is a parent lead and the members are adult
+        if ($isQatarTravelPolicyIssuanceEnabled && $lead->isParent() && $lead->isAdult()) {
+            LoggerService::info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Qatar Travel Automation');
+            // Check if the lead is associated with the QIC provider
             $payment = PaymentRepository::mainQuotePayment($lead);
             $insurer = getInsuranceProvider($payment, $this->allocationRequest->getQuoteType()->value);
             $insurerCode = $insurer?->code;
 
-            $isALNC = $insurerCode == InsuranceProviderEnum::ALNC->value;
+            $isQIC = $insurerCode == InsuranceProviderEnum::QIC->value;
 
-            $isALNC && LoggerService::info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
+            $isQIC && LoggerService::info(self::class.":verifyFetchLeadPreChecks - it is Qatar so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 
             $isAutomationEnabled = (new PolicyIssuanceService)->init(quoteTypeCode::Travel, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
-            LoggerService::info(self::class." - verifyFetchLeadPreChecks: isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
+            LoggerService::info(self::class." - verifyFetchLeadPreChecks: isQIC: {$isQIC} - isAutomationEnabled: {$isAutomationEnabled}");
 
-            if ($isALNC && $isAutomationEnabled && $lead->isSingleTrip() && $lead->isPaid()) {
+            if ($isQIC && $isAutomationEnabled && $lead->isSingleTrip() && $lead->isPaid()) {
                 if ($lead->isAutomationCompleted() || $lead->isBookingFailed()) {
                     $this->allocationRequest->set('isCHSAdvisor', true);
                     $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
                 } else {
                     if (! $lead->isAutomationCompleted()) {
-                        LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed so check fail cases');
+                        LoggerService::info(self::class.':fetchLead - it is Qatar and automation is not yet completed so check fail cases');
                         if ($lead->isPolicyIssuanceFailed()) {
-                            LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation');
+                            LoggerService::info(self::class.':fetchLead - it is Qatar and automation is not yet completed but policy issuance failed so proceed with allocation');
                             $this->allocationRequest->set('isSICAdvisor', true);
                             $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
 

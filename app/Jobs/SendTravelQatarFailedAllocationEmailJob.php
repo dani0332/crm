@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendTravelAllianceFailedAllocationEmailJob implements ShouldQueue
+class SendTravelQatarFailedAllocationEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -43,7 +43,7 @@ class SendTravelAllianceFailedAllocationEmailJob implements ShouldQueue
 
                 return false;
             }
-            $responseCode = $travelEmailService->sendTravelAllianceFailedAllocationEmail($lead);
+            $responseCode = $travelEmailService->sendTravelQatarFailedAllocationEmail($lead);
             if (in_array($responseCode, [200, 201])) {
                 info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
             } else {

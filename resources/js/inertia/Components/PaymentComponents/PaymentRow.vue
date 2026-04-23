@@ -55,7 +55,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isAllianceProvider: {
+  isQatarProvider: {
     type: Boolean,
     default: false,
   },
