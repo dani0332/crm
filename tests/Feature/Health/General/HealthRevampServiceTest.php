@@ -7,7 +7,6 @@ use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\VisaCategory;
 use App\Services\CapiRequestService;
-use App\Services\HealthQuoteRefreshPlansService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -358,94 +357,7 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
 });
 
 // ============================================================================
-// SECTION 3: refreshPlans service method
-// ============================================================================
-
-describe('HealthQuoteRefreshPlansService refreshPlans', function () {
-    test('returns status false when quote is not found', function () {
-        Ken::swap(Mockery::mock()->shouldReceive('request')->never()->getMock());
-
-        $request = new Request;
-        $request->merge(['quoteId' => 'non-existent-uuid']);
-
-        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
-
-        expect($result['status'])->toBeFalse()
-            ->and($result['message'])->toBe('Quote not found');
-    });
-
-    test('calls Ken with correct endpoint and returns response when quote exists', function () {
-        $quote = HealthQuote::factory()->create();
-
-        Ken::swap(
-            Mockery::mock()->shouldReceive('request')
-                ->once()
-                ->with('/get-revised-health-quote-plans', 'POST', Mockery::type('array'))
-                ->andReturn((object) ['status' => true, 'plans' => []])
-                ->getMock()
-        );
-
-        $request = new Request;
-        $request->merge(['quoteId' => $quote->uuid]);
-
-        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
-
-        expect($result)->not->toBeFalsy()
-            ->and($result->status)->toBeTrue();
-    });
-
-    test('Ken request payload contains required revamp fields', function () {
-        $quote = HealthQuote::factory()->create([
-            'dob' => '1990-01-15',
-            'gender' => 'M',
-        ]);
-
-        $capturedPayload = null;
-
-        Ken::swap(
-            Mockery::mock()->shouldReceive('request')
-                ->once()
-                ->andReturnUsing(function ($endpoint, $method, $data) use (&$capturedPayload) {
-                    $capturedPayload = $data;
-
-                    return (object) ['status' => true];
-                })
-                ->getMock()
-        );
-
-        $request = new Request;
-        $request->merge(['quoteId' => $quote->uuid]);
-
-        app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
-
-        expect($capturedPayload)->not->toBeNull()
-            ->and($capturedPayload['quoteUID'])->toBe($quote->uuid)
-            ->and($capturedPayload['callSource'])->toBe('imcrm')
-            ->and($capturedPayload['userId'])->toBe($this->user->id)
-            ->and($capturedPayload)->toHaveKey('memberDetails');
-    });
-
-    test('returns falsy status when Ken API throws exception', function () {
-        $quote = HealthQuote::factory()->create();
-
-        Ken::swap(
-            Mockery::mock()->shouldReceive('request')
-                ->andThrow(new \Exception('Ken service unavailable'))
-                ->getMock()
-        );
-
-        $request = new Request;
-        $request->merge(['quoteId' => $quote->uuid]);
-
-        $result = app(HealthQuoteRefreshPlansService::class)->refreshPlans($request);
-
-        expect($result['status'])->toBeFalse()
-            ->and($result['message'])->toBe('Failed to refresh plans');
-    });
-});
-
-// ============================================================================
-// SECTION 4: New health_quote_request schema columns via factory
+// SECTION 3: New health_quote_request schema columns via factory
 // ============================================================================
 
 describe('health_quote_request new schema columns', function () {
@@ -458,24 +370,7 @@ describe('health_quote_request new schema columns', function () {
 
         expect($row->insure_code)->toBe('ONLY_MYSELF')
             ->and($row->policy_holder_code)->toBe('ME')
-            ->and((bool) $row->is_quote_revisable)->toBeFalse()
             ->and($row->policy_holder_category_code)->toBe('CAT_A');
-    });
-
-    test('health quote is_quote_revisable defaults to false via factory', function () {
-        $quote = HealthQuote::factory()->create();
-
-        $row = DB::table('health_quote_request')->find($quote->id);
-
-        expect((bool) $row->is_quote_revisable)->toBeFalse();
-    });
-
-    test('health quote revisable state is set correctly via factory', function () {
-        $quote = HealthQuote::factory()->revisable()->create();
-
-        $row = DB::table('health_quote_request')->find($quote->id);
-
-        expect((bool) $row->is_quote_revisable)->toBeTrue();
     });
 
     test('health quote locked state is set correctly via factory', function () {

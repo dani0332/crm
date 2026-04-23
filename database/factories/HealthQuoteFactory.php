@@ -37,7 +37,6 @@ class HealthQuoteFactory extends Factory
             'dob' => fake()->date('Y-m-d', '-25 years'),
             'gender' => fake()->randomElement(['M', 'F']),
             'is_quote_locked' => false,
-            'is_quote_revisable' => false,
         ];
     }
 
@@ -70,14 +69,6 @@ class HealthQuoteFactory extends Factory
     }
 
     /**
-     * Quote is revisable.
-     */
-    public function revisable(): self
-    {
-        return $this->state(['is_quote_revisable' => true]);
-    }
-
-    /**
      * Quote with new revamp fields populated.
      */
     public function withRevampFields(string $insureCode = 'ONLY_MYSELF', string $policyHolderCode = 'ME'): self
@@ -85,7 +76,6 @@ class HealthQuoteFactory extends Factory
         return $this->state([
             'insure_code' => $insureCode,
             'policy_holder_code' => $policyHolderCode,
-            'is_quote_revisable' => false,
         ]);
     }
 

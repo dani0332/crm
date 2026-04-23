@@ -1594,7 +1594,6 @@ onMounted(() => {
   isMounted.value = true;
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-  membersDetailsUpdated.value = page.props.quote?.is_quote_revisable == 1;
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);

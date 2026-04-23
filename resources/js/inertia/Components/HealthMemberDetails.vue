@@ -318,10 +318,6 @@ const memberPecErrorMessage = computed(() => {
   return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
 });
 
-const refreshPlansForm = useForm({
-  quoteId: props.quote?.uuid,
-});
-
 const submitForm = (form, method, url, { successTitle, onSuccess, onFinish } = {}) => {
   form[method](url, {
     preserveScroll: true,
@@ -341,16 +337,6 @@ const submitForm = (form, method, url, { successTitle, onSuccess, onFinish } = {
       });
     },
     onFinish,
-  });
-};
-
-const onRefreshPlans = () => {
-  refreshPlansForm.post(route('health.refresh-plans'), {
-    preserveScroll: true,
-    onSuccess: () => emit('loadAvailablePlans'),
-    onError: () => {
-      notification.error({ title: 'Failed to refresh plans', position: 'top' });
-    },
   });
 };
 
@@ -489,6 +475,7 @@ const onMemberSubmit = isValid => {
     onSuccess: () => {
       memberForm.reset();
       emit('memberUpdated');
+      emit('loadAvailablePlans');
     },
     onFinish: () => {
       modals.member = false;
@@ -518,7 +505,10 @@ const memberDeleteConfirmed = () => {
 
   submitForm(memberForm, 'post', '/health-quote-delete-member', {
     successTitle: 'Member Deleted',
-    onSuccess: () => emit('memberUpdated'),
+    onSuccess: () => {
+      emit('memberUpdated');
+      emit('loadAvailablePlans');
+    },
     onFinish: () => {
       modals.memberConfirm = false;
     },
@@ -595,6 +585,7 @@ const memberPrincipalConfirmed = () => {
         });
         memberForm.reset();
         emit('memberUpdated');
+        emit('loadAvailablePlans');
       }
     },
     onError: errors => {
@@ -1039,20 +1030,6 @@ defineExpose({
             </div>
           </template>
         </DataTable>
-
-        <div class="mt-2 flex justify-end">
-          <x-button
-              @click.prevent="onRefreshPlans"
-              size="sm"
-              color="emerald"
-              :disabled="refreshPlansForm.processing || isLocked || props.quote?.is_quote_revisable == 0"
-              :loading="refreshPlansForm.processing"
-              v-if="isView"
-            >
-              View Quote
-          </x-button>
-        </div>
-        <div v-if="isView && props.quote?.is_quote_revisable == 1" class="mx-2 text-right mt-2">*Add all members to view the final quote under Available Plans Section.</div>
 
         <x-modal
           v-model="modals.member"

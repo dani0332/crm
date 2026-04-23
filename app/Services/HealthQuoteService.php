@@ -238,7 +238,6 @@ class HealthQuoteService extends BaseService
             'hqr.visa_category_id',
             'hqr.insure_code',
             'hqr.policy_holder_code',
-            'hqr.is_quote_revisable',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')

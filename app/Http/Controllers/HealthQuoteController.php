@@ -14,14 +14,12 @@ use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDeleteRequest;
 use App\Http\Requests\MemberDetailRequest;
-use App\Http\Requests\RefreshPlansRequest;
 use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\HealthQuoteRefreshPlansService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -36,7 +34,6 @@ class HealthQuoteController extends Controller
     public function __construct(
         HealthQuoteService $healthQuoteService,
         SLAService $slaService,
-        protected HealthQuoteRefreshPlansService $healthQuoteRefreshPlansService,
     ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->slaService = $slaService;
@@ -252,22 +249,6 @@ class HealthQuoteController extends Controller
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
 
         return redirect()->back();
-    }
-
-    public function refreshPlans(RefreshPlansRequest $request)
-    {
-
-        $response = $this->healthQuoteRefreshPlansService->refreshPlans($request);
-
-        if (($response['status'] ?? true) !== false) {
-            $key = 'success';
-            $message = 'Plans refreshed successfully';
-        } else {
-            $key = 'error';
-            $message = $response['message'] ?? 'Failed to refresh plans';
-        }
-
-        return redirect()->back()->with($key, $message);
     }
 
     public function plansByInsuranceProvider(Request $request)

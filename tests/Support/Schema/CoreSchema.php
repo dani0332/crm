@@ -652,7 +652,6 @@ class CoreSchema
                 $table->unsignedBigInteger('primary_member_id')->nullable();
                 $table->string('insure_code', 50)->nullable();
                 $table->string('policy_holder_code', 50)->nullable();
-                $table->boolean('is_quote_revisable')->default(0);
                 $table->unsignedBigInteger('visa_category_id')->nullable();
                 $table->string('policy_holder_category_code', 50)->nullable();
                 $table->timestamps();

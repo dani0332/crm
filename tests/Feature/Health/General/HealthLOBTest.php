@@ -108,23 +108,7 @@ test('health quote data builder has default values', function () {
 });
 
 // ============================================================================
-// SECTION 3: REFRESH PLANS REQUEST VALIDATION TESTS (2 tests)
-// ============================================================================
-
-test('refresh plans endpoint rejects request when quoteId is missing', function () {
-    $response = $this->post(route('health.refresh-plans'), []);
-
-    $response->assertSessionHasErrors('quoteId');
-});
-
-test('refresh plans endpoint accepts request when quoteId is provided', function () {
-    $response = $this->post(route('health.refresh-plans'), ['quoteId' => 'HEALTH-QUOTE-UUID']);
-
-    expect($response->status())->not->toBe(422);
-});
-
-// ============================================================================
-// SECTION 4: HEALTH HELPER & INFRASTRUCTURE TESTS (2 tests)
+// SECTION 3: HEALTH HELPER & INFRASTRUCTURE TESTS (2 tests)
 // ============================================================================
 
 test('health quote mock helper can be instantiated', function () {
