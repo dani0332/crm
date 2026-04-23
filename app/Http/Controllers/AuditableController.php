@@ -343,7 +343,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadUaePassLogs(UaePassLogsRequest $request)
+    public function loadUaeSigningPassLogs(UaePassLogsRequest $request)
     {
         try {
             $quoteUuid = $request->input('quote_uuid');
