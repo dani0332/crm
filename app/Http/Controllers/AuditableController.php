@@ -377,7 +377,7 @@ class AuditableController extends Controller
                         'status_display' => $status ? strtoupper($status) : 'N/A',
                         'status_tag_color' => $tagColor ?: 'secondary',
                         'request_payload' => $log->request_payload,
-                        'presentation_response_payload' => $log->presentation_response_payload,
+                        'response_payload' => $log->response_payload,
                     ];
                 });
 

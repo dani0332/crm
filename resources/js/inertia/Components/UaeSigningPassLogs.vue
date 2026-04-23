@@ -264,14 +264,15 @@ const formatJson = value => {
           </dl>
         </div>
 
-        <div v-if="selectedLog.presentation_response_payload" class="mt-5">
+
+        <div v-if="selectedLog.response_payload" class="mt-5">
           <dl class="">
             <dt class="font-medium mb-2">Presentation Response Payload:</dt>
             <div
               class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
             >
               <pre class="whitespace-pre-wrap">{{
-                formatJson(selectedLog.presentation_response_payload)
+                formatJson(selectedLog.response_payload)
               }}</pre>
             </div>
           </dl>
