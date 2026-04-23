@@ -7,7 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\UaePassAPILogLabel;
 use App\Enums\UaePassLogStatusEnum;
 use App\Http\Requests\LogsRequest;
-use App\Http\Requests\UaePassLogsRequest;
+use App\Http\Requests\UaeSigningPassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
 use App\Models\DeviceInsurerRequestResponses;
@@ -343,7 +343,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadUaeSigningPassLogs(UaePassLogsRequest $request)
+    public function loadUaeSigningPassLogs(UaeSigningPassLogsRequest $request)
     {
         try {
             $quoteUuid = $request->input('quote_uuid');
@@ -370,7 +370,6 @@ class AuditableController extends Controller
                     return [
                         'id' => $log->id,
                         'api_name' => $log->api_name,
-                        'request_id' => $log->request_id,
                         'status' => $status,
                         'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
                         'response_status' => $log->response_status,

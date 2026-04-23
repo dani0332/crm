@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UaePassLogsRequest extends FormRequest
+class UaeSigningPassLogsRequest extends FormRequest
 {
     public function authorize(): bool
     {

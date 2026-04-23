@@ -25,7 +25,7 @@ const uaePassLogs = reactive({
   loading: false,
   data: null,
   table: [
-    { text: 'Request ID', value: 'request_id' },
+    { text: 'ID', value: 'id' },
     { text: 'API Name', value: 'api_name' },
     { text: 'Status', value: 'status' },
     { text: 'Created At', value: 'created_at' },
