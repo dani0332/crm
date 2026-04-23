@@ -108,7 +108,7 @@ final class UaeSigningPassLogsPresenter
     private function buildNormalizedRow(array $row): array
     {
         $status = $row['status'];
-        $tagColor = $this->statusTagColor($status);
+        $tagColor = UaePassLogStatusEnum::resolveTagColor($status);
         $created = Carbon::parse($row['created_at']);
         $updated = Carbon::parse($row['updated_at']);
 
@@ -126,17 +126,5 @@ final class UaeSigningPassLogsPresenter
             'updated_at' => $updated?->format('Y-m-d H:i:s'),
             '_sort_ts' => $created?->getTimestamp() ?? 0,
         ]);
-    }
-
-    private function statusTagColor(mixed $status): string
-    {
-        if ($status === UaePassLogStatusEnum::PASSED->value) {
-            return 'success';
-        }
-        if ($status === UaePassLogStatusEnum::FAILED->value) {
-            return 'error';
-        }
-
-        return 'secondary';
     }
 }
