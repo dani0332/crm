@@ -14,13 +14,13 @@ final class HealthQuoteUaePassApiStatus extends Enum
     /** IMCRM list filter: not persisted on health_quote_request. */
     public const FILTER_ALL = 'All';
 
-    public const AUTHENTICATED = 'authenticated';
-    public const AUTH_CANCELLED = 'auth_cancelled';
-    public const NOT_ELIGIBLE = 'not_eligible';
-    public const DOC_SIGNED = 'doc_signed';
-    public const DOC_FAILED = 'doc_failed';
-    public const DOC_CANCELLED = 'doc_cancelled';
-    public const DOCS_NOT_RECEIVED = 'docs_not_received';
+    public const AUTHENTICATION_SUCCESS = 'AUTHENTICATION_SUCCESS';
+    public const AUTHENTICATION_CANCELLED = 'AUTHENTICATION_CANCELLED';
+    public const NOT_ELIGIBLE = 'NOT_ELIGIBLE';
+    public const DOC_SIGNED = 'DOC_SIGNED';
+    public const DOC_FAILED = 'DOC_FAILED';
+    public const DOC_CANCELLED = 'DOC_CANCELLED';
+    public const DOCS_NOT_RECEIVED = 'DOCS_NOT_RECEIVED';
 
     /**
      * Stored value => IMCRM / export label (not a BenSampo enum constant — avoids array in getValues()).
@@ -30,8 +30,8 @@ final class HealthQuoteUaePassApiStatus extends Enum
     private static function labels(): array
     {
         return [
-            self::AUTHENTICATED => 'UAE PASS – Authenticated',
-            self::AUTH_CANCELLED => 'UAE PASS – Auth Cancelled',
+            self::AUTHENTICATION_SUCCESS => 'UAE PASS – Authentication Success',
+            self::AUTHENTICATION_CANCELLED => 'UAE PASS – Authentication Cancelled',
             self::NOT_ELIGIBLE => 'UAE PASS – Not Eligible',
             self::DOC_SIGNED => 'UAE PASS – Doc Signed',
             self::DOC_FAILED => 'UAE PASS – Doc Failed',
