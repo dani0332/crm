@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\LeadAllocation;
 use Illuminate\Http\Request;
 
@@ -140,4 +141,24 @@ class LeadAllocationPermissionService
         };
     }
 
+    /**
+     * Whether the current user may change allocation state (toggles, caps, master switches):
+     * dashboard or edit (or travel SIC), but not view-only.
+     */
+    public static function userCanMutate(?QuoteTypes $quoteType): bool
+    {
+        if ($quoteType === null) {
+            return false;
+        }
+        if (auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin])) {
+            return true;
+        }
+
+        $permissions = self::mutatePermissionsForQuoteType($quoteType);
+        if ($permissions === []) {
+            return false;
+        }
+
+        return auth()->user()->hasAnyPermission($permissions);
+    }
 }

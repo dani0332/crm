@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Services\LeadAllocationDashboardService;
+use App\Services\LeadAllocationPermissionService;
 use App\Traits\TeamHierarchyTrait;
 
 class LeadAllocationController extends Controller
@@ -103,6 +104,7 @@ class LeadAllocationController extends Controller
             'quoteTypes' => QuoteTypes::withLabels(),
             'data' => $data,
             'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation(),
+            'canMutateLeadAllocation' => LeadAllocationPermissionService::userCanMutate($quoteType),
             'isSavings' => $quoteType == QuoteTypes::SAVINGS,
         ];
 
