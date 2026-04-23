@@ -22,6 +22,7 @@ const dates = ref({
 const tableHeader = [
   { text: 'File Name', value: 'file_name' },
   { text: 'Status', value: 'status' },
+  { text: 'Source', value: 'source' },
   { text: 'Total Records', value: 'total_records' },
   { text: 'Effective From', value: 'effective_from' },
   { text: 'Effective To', value: 'effective_to' },
@@ -349,6 +350,9 @@ const showFailedRates = (id, badCount) => {
         >
           <span>{{ item.cannotUpload }} </span>
         </Button>
+      </template>
+      <template #item-source="item">
+        {{ item.file_name ? 'IMCRM' : 'CMS'}}
       </template>
     </DataTable>
 

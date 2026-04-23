@@ -8,12 +8,12 @@ use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
-use App\Jobs\UploadRatesJob;
 use App\Models\HealthRateControl;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RateCoverageUploadService
 {
@@ -193,9 +193,27 @@ class RateCoverageUploadService
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
-        // $uploadRate = $this->createRate($uploadedFile);
-        // $uplodedFile['file_name'];
-        // UploadRatesJob::dispatch($uploadRate);
+        $excelRecords = [];
+        if ($data && isset($data['file_name']) && file_exists($data['file_name'])) {
+            $excelRecords = Excel::toArray([], $data['file_name']);
+
+            // Assuming first sheet, and first row is header
+            $rows = $excelRecords[0] ?? [];
+            if (count($rows) > 1) {
+                $headers = array_map('strtolower', $rows[0]); // normalize header case
+                for ($i = 1; $i < count($rows); $i++) {
+                    $row = $rows[$i];
+                    $rowAssoc = array_combine($headers, $row);
+
+                    // Access column data by header name, e.g.:
+                    $planCode = $rowAssoc['plan_code'] ?? null;
+                    $gender = $rowAssoc['gender'] ?? null;
+                    $maritalStatus = $rowAssoc['marital_statu'] ?? null;
+                }
+            }
+        }
+
+        exit;
 
         // Upload file (health rate control)
         $this->uploadHealthRateControl($uploadedFile, $data['effective_from'], $data['effective_to']);
@@ -203,10 +221,16 @@ class RateCoverageUploadService
 
     private function uploadHealthRateControl($uploadedFile, $effective_from, $effective_to)
     {
+        echo '<pre>';
+        print_r($uploadedFile);
+        exit;
+        // Derive plan versiob
+        $rateVersion = $this->deriveRateVersion(1);
+
         $uploadLeadData = [
             'file_name' => $uploadedFile['file_name'],
             'health_plan_id' => 1,
-            'version' => '1.5',
+            'version' => $rateVersion,
             'effective_from' => $effective_from,
             'effective_to' => $effective_to,
             'total_records' => 0,
@@ -215,6 +239,22 @@ class RateCoverageUploadService
         ];
 
         HealthRateControl::create($uploadLeadData);
+    }
+
+    private function deriveRateVersion(int $planId): float
+    {
+        // Get Active plan version (if exists)
+        $plan = HealthRateControl::where('health_plan_id', $planId)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE)
+            ->first();
+
+        // If active version exists, return next minor version for draft
+        if ($plan) {
+            return $plan->version + 0.1;
+        }
+
+        // If no active version exists, return 1.0
+        return 1.0;
     }
 
     public function createRate($uploadedFile)
