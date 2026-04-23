@@ -9,12 +9,12 @@ enum GenderEnum: string
     case MALE = 'male';
     case FEMALE = 'female';
 
-    const MALE_SHORT = 'M';
-    const FEMALE_SHORT = 'F';
+    case MALE_SHORT = 'M';
+    case FEMALE_SHORT = 'F';
 
-    // Lagacy gender constants
-    const LEGACY_MALE = 'Male';
-    const LEGACY_FEMALE = 'Female';
-    const LEGACY_FEMALE_SHORT = 'FS';
-    const LEGACY_FEMALE_MARRIED = 'FM';
+    // Legacy gender codes
+    case LEGACY_MALE = 'Male';
+    case LEGACY_FEMALE = 'Female';
+    case LEGACY_FEMALE_SHORT = 'FS';
+    case LEGACY_FEMALE_MARRIED = 'FM';
 }

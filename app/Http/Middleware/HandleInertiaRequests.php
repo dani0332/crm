@@ -15,6 +15,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\GenderEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
@@ -178,6 +179,7 @@ class HandleInertiaRequests extends Middleware
             'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
+            'genderEnum' => array_column(GenderEnum::cases(), 'value', 'name'),
         ];
     }
 

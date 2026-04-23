@@ -302,9 +302,9 @@ final class HealthQuoteRevampMigrationMutator
         $g = $hqr->gender;
         $msId = $hqr->marital_status_id;
 
-        if ($msId === null && in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_MALE], true)) {
+        if ($msId === null && in_array($g, [GenderEnum::MALE_SHORT->value, GenderEnum::FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE->value, GenderEnum::LEGACY_MALE->value], true)) {
             $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
-        } elseif ($msId === null && $g === GenderEnum::LEGACY_FEMALE_MARRIED) {
+        } elseif ($msId === null && $g === GenderEnum::LEGACY_FEMALE_MARRIED->value) {
             $hqr->marital_status_id = MaritalStatusEnum::MARRIED->value;
         } elseif ($msId !== null && (int) $msId === MaritalStatusEnum::UNMARRIED_PARTNER->value) {
             $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
@@ -319,9 +319,9 @@ final class HealthQuoteRevampMigrationMutator
                 $g = $cm->gender;
                 if ($cm->is_principal) {
                     $cm->marital_status_id = $hqr->marital_status_id;
-                } elseif (! $cm->is_principal && in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_MALE], true)) {
+                } elseif (! $cm->is_principal && in_array($g, [GenderEnum::MALE_SHORT->value, GenderEnum::FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE->value, GenderEnum::LEGACY_MALE->value], true)) {
                     $cm->marital_status_id = MaritalStatusEnum::SINGLE->value;
-                } elseif (! $cm->is_principal && $g === GenderEnum::LEGACY_FEMALE_MARRIED) {
+                } elseif (! $cm->is_principal && $g === GenderEnum::LEGACY_FEMALE_MARRIED->value) {
                     $cm->marital_status_id = MaritalStatusEnum::MARRIED->value;
                 }
                 $cm->save();
@@ -335,32 +335,32 @@ final class HealthQuoteRevampMigrationMutator
     private function normalizeGenderValues(HealthQuote $hqr): void
     {
         $g = $hqr->gender;
-        if (in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE], true)) {
-            $hqr->gender = GenderEnum::MALE_SHORT;
-        } elseif (in_array($g, [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED], true)) {
-            $hqr->gender = GenderEnum::FEMALE_SHORT;
+        if (in_array($g, [GenderEnum::MALE_SHORT->value, GenderEnum::LEGACY_MALE->value], true)) {
+            $hqr->gender = GenderEnum::MALE_SHORT->value;
+        } elseif (in_array($g, [GenderEnum::FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE->value, GenderEnum::LEGACY_FEMALE_MARRIED->value], true)) {
+            $hqr->gender = GenderEnum::FEMALE_SHORT->value;
         }
         $hqr->save();
 
         PersonalQuote::query()
             ->where('quote_id', $hqr->id)
             ->where('quote_type_id', QuoteTypeId::Health)
-            ->whereIn('gender', [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE])
-            ->update(['gender' => GenderEnum::MALE_SHORT]);
+            ->whereIn('gender', [GenderEnum::MALE_SHORT->value, GenderEnum::LEGACY_MALE->value])
+            ->update(['gender' => GenderEnum::MALE_SHORT->value]);
 
         PersonalQuote::query()
             ->where('quote_id', $hqr->id)
             ->where('quote_type_id', QuoteTypeId::Health)
-            ->whereIn('gender', [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED])
-            ->update(['gender' => GenderEnum::FEMALE_SHORT]);
+            ->whereIn('gender', [GenderEnum::FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE->value, GenderEnum::LEGACY_FEMALE_MARRIED->value])
+            ->update(['gender' => GenderEnum::FEMALE_SHORT->value]);
 
         $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE])
-            ->update(['gender' => GenderEnum::MALE_SHORT]);
+            ->whereIn('gender', [GenderEnum::MALE_SHORT->value, GenderEnum::LEGACY_MALE->value])
+            ->update(['gender' => GenderEnum::MALE_SHORT->value]);
 
         $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED])
-            ->update(['gender' => GenderEnum::FEMALE_SHORT]);
+            ->whereIn('gender', [GenderEnum::FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE_SHORT->value, GenderEnum::LEGACY_FEMALE->value, GenderEnum::LEGACY_FEMALE_MARRIED->value])
+            ->update(['gender' => GenderEnum::FEMALE_SHORT->value]);
     }
 
     /**

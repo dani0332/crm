@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import moment from 'moment';
 import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
 import KYCDetails from './KYCDetails.vue';
@@ -32,6 +33,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const insurerName = page.props.insurerName;
 const genericRequestEnum = page.props.genericRequestEnum;
+const genderEnum = page.props.genderEnum;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -178,6 +180,45 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
+/** YYYY-MM-DD from API values that may include a time (e.g. ISO strings). */
+const dateOnly = value => {
+  if (value == null || value === '') {
+    return value;
+  }
+  const m = moment(value);
+  return m.isValid() ? m.format('YYYY-MM-DD') : String(value).trim();
+};
+
+const getScreeningInsuredFirstName = () =>
+  page.props.insuredDetails?.insured?.first_name ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? quoteRequest?.first_name
+    : null);
+
+const getScreeningInsuredLastName = () =>
+  page.props.insuredDetails?.insured?.last_name ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? quoteRequest?.last_name
+    : null);
+
+const getScreeningNationalityId = () =>
+  page.props.insuredDetails?.insured?.nationality_id ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? quoteRequest?.nationality_id
+    : null);
+
+const getScreeningDob = () =>
+  page.props.insuredDetails?.insured?.dob ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? dateOnly(quoteRequest?.dob)
+    : null);
+
+const getScreeningGender = () =>
+  page.props.insuredDetails?.insured?.gender ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? (quoteRequest?.gender === genderEnum.MALE_SHORT ? genderEnum.LEGACY_MALE : genderEnum.LEGACY_FEMALE)
+    : null);
+
 const screeningFormDetails = useForm({
   customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
@@ -190,19 +231,11 @@ const screeningFormDetails = useForm({
       genericRequestEnum.EMIRATES_ID
       ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
       : (page.props.insuredDetails?.insured?.id_number ?? null),
-  insured_first_name:
-    page.props.insuredDetails?.insured?.first_name ??
-    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
-      ? page.props.membersDetails[0]?.first_name
-      : null),
-  insured_last_name:
-    page.props.insuredDetails?.insured?.last_name ??
-    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
-      ? page.props.membersDetails[0]?.last_name
-      : null),
-  nationality_id: page.props.insuredDetails?.insured.nationality_id ?? null,
-  dob: page.props.insuredDetails?.insured.dob ?? null,
-  screening_gender: page.props.insuredDetails?.insured?.gender ?? null,
+  insured_first_name: getScreeningInsuredFirstName(),
+  insured_last_name: getScreeningInsuredLastName(),
+  nationality_id: getScreeningNationalityId(),
+  dob: getScreeningDob(),
+  screening_gender: getScreeningGender(),
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
