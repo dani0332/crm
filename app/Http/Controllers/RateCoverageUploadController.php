@@ -78,7 +78,7 @@ class RateCoverageUploadController extends Controller
     {
         $this->rateCoverageUploadService->rateUploadCreate($request->validated());
 
-        return response()->json(['message' => 'Rates upload is being processed.']);
+        return response()->json(['message' => 'Rates uploaded successfully.']);
     }
 
     /**
