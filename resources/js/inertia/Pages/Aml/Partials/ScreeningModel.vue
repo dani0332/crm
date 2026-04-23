@@ -1100,7 +1100,6 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
           : customerTypeEnum.Entity
       "
       :isPayerDetails="false"
-      :from-aml-ubo-screening="true"
     />
     <x-divider class="mb-4 mt-4" />
     <!-- This Component is used for Payer Details -->
@@ -1111,7 +1110,6 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
           : customerTypeEnum.Entity
       "
       :isPayerDetails="true"
-      :from-aml-ubo-screening="true"
     />
     <SubmitForScreeningBtnTemplate>
       <x-button

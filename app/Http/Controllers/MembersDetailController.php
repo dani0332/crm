@@ -31,29 +31,13 @@ class MembersDetailController extends Controller
      */
     public const FLASH_ERROR_MEMBER_DETAILS_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to \'Send Update\', select \'Add Update\', and choose \'Endorsement Financial\'';
 
-    /**
-     * Request flag: AML UBO / member add-edit-delete from the screening model.
-     * When true, business-quote member lock is not applied.
-     */
-    public const REQUEST_PARAM_FROM_AML_UBO = 'from_aml_ubo';
-
-    /**
-     * When member details are locked for a business quote, block add/update/delete of members/UBOs.
-     *
-     * @param  mixed  $quoteObject
-     */
-    private function shouldSkipBusinessMemberLockForAmlUbo(Request $request): bool
-    {
-        return $request->boolean(self::REQUEST_PARAM_FROM_AML_UBO);
-    }
-
     private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
     {
         if (! $quoteObject instanceof BusinessQuote) {
             return null;
         }
 
-        if ($this->shouldSkipBusinessMemberLockForAmlUbo($request)) {
+        if ($request->boolean('from_aml_model')) {
             return null;
         }
 
