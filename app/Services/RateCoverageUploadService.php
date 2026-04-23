@@ -17,6 +17,12 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class RateCoverageUploadService
 {
+    public function __construct(
+        private HealthPlanService $healthPlanService,
+        private CohortMappingService $cohortMappingService,
+        private HealthPlanCoPaymentService $healthPlanCoPaymentService
+    ) {}
+
     public function uploadFile()
     {
         $path = 'ratings/health';
@@ -200,15 +206,84 @@ class RateCoverageUploadService
             // Assuming first sheet, and first row is header
             $rows = $excelRecords[0] ?? [];
             if (count($rows) > 1) {
-                $headers = array_map('strtolower', $rows[0]); // normalize header case
-                for ($i = 1; $i < count($rows); $i++) {
-                    $row = $rows[$i];
-                    $rowAssoc = array_combine($headers, $row);
+                // normalize header case
+                $headers = array_map('strtolower', $rows[0]);
+                $allCohorts = $this->cohortMappingService->getAllCohorts();
+                $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
-                    // Access column data by header name, e.g.:
+                // Iterate through rows to get values
+                for ($i = 1; $i < count($rows); $i++) {
+                    $rowAssoc = array_combine($headers, $rows[$i]);
                     $planCode = $rowAssoc['plan_code'] ?? null;
+                    $minAge = $rowAssoc['min_age'] ?? null;
+                    $maxAge = $rowAssoc['max_age'] ?? null;
+                    $premium = $rowAssoc['premium'] ?? null;
+                    $maritalStatus = $rowAssoc['marital_status'] ?? null;
+                    $eligibilityCode = $rowAssoc['eligibility_code'] ?? null;
+                    $copaymentCode = $rowAssoc['copayment_code'] ?? null;
                     $gender = $rowAssoc['gender'] ?? null;
-                    $maritalStatus = $rowAssoc['marital_statu'] ?? null;
+                    $cohort = $rowAssoc['cohort'] ?? null;
+
+                    // Throw error if any required value is empty
+                    if (
+                        empty($planCode) ||
+                        empty($minAge) ||
+                        empty($maxAge) ||
+                        empty($premium) ||
+                        empty($eligibilityCode) ||
+                        empty($copaymentCode)
+                    ) {
+                        throw new \Exception("All fields (plan_code, min_age, max_age, premium, marital_status, eligibility_code, copayment_code) are required. Please check row {$i}");
+                    }
+
+                    // Validate plan code is the same as the first plan code
+                    // To get previous row's record as an associative array:
+                    if ($i > 1) {
+                        $prevRowAssoc = array_combine($headers, $rows[$i - 1]);
+                        if ($planCode !== $prevRowAssoc['plan_code']) {
+                            throw new \Exception('All plan codes must be the same.');
+                        }
+                    }
+
+                    if (! $this->healthPlanService->getPlanByCode($planCode)) {
+                        throw new \Exception('Plan not found.');
+                    }
+
+                    // Validate min age as integers
+                    if (! ctype_digit(strval($minAge))) {
+                        throw new \Exception('All min ages values must be integers.');
+                    }
+
+                    // Validate max age as integers
+                    if (! ctype_digit(strval($maxAge))) {
+                        throw new \Exception('All max ages values must be integers.');
+                    }
+
+                    // Validate premium as integers
+                    if (! ctype_digit(strval($premium))) {
+                        throw new \Exception('All premiums values must be integers.');
+                    }
+
+                    // Validate if gender is 'male' or 'female'
+                    $allowedGenders = ['male', 'female'];
+                    if ($gender && ! in_array(strtolower($gender), $allowedGenders, true)) {
+                        throw new \Exception('Gender value must be either "male" or "female".');
+                    }
+                    // Validate if marital status is 'single' or 'married'
+                    $allowedMaritalStatuses = ['single', 'married'];
+                    if ($maritalStatus && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
+                        throw new \Exception('Marital status value must be either "single" or "married".');
+                    }
+
+                    // Validate if cohort is in the list of all cohorts
+                    if ($cohort && ! in_array($cohort, $allCohorts, true)) {
+                        throw new \Exception('Invalid cohort value.');
+                    }
+
+                    // Validate if copayment code is in the list of all co payments
+                    if ($copaymentCode && ! in_array($copaymentCode, $allCoPayments, true)) {
+                        throw new \Exception('Invalid copayment code value.');
+                    }
                 }
             }
         }
