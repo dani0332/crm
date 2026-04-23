@@ -271,29 +271,17 @@ const {
 const converageInfo = computed(() => {
   let info = '';
   if(isSelf_Me.value) {
-    info = `Only the customer * The customer
-    <br />
-    The customer will get health insurance coverage just for themselves. As the policyholder, they will manage and pay for the policy.`;
+    info = 'The customer will get health insurance coverage just for themselves. As the policyholder, they will manage and pay for the policy.';
   } else if(isSelf_Other.value) {
-    info = `Only the customer * Another adult family member
-    <br />
-    The customer will get health insurance coverage just for themselves. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+    info = 'The customer will get health insurance coverage just for themselves. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
   } else if(isFamily_Me.value) {
-    info = ` Only the customer's family member(s) * The customer
-    <br />
-    The customer’s family members will get health insurance coverage, but the customer will not be included. As the policyholder, the customer will manage and pay for the policy.`;
+    info = 'The customer’s family members will get health insurance coverage, but the customer will not be included. As the policyholder, the customer will manage and pay for the policy.';
   } else if(isFamily_Other.value) {
-    info = `Only the customer's family member(s) * Another adult family member
-    <br />
-    The customer’s family members will get health insurance coverage, but the customer will not be included. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+    info = 'The customer’s family members will get health insurance coverage, but the customer will not be included. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
   } else if(isSelfAndFamily_Me.value) {
-    info = `The customer and their family member(s) * The customer
-    <br />
-    The customer and their family members will get health insurance coverage together. As the policyholder, the customer will manage and pay for the policy`;
+    info = 'The customer and their family members will get health insurance coverage together. As the policyholder, the customer will manage and pay for the policy';
   } else if(isSelfAndFamily_Other.value) {
-    info = `The customer and their family member(s) * Another adult family member
-    <br />
-    The customer and their family members will get health insurance coverage together. The family member chosen by the customer as the policyholder will manage and pay for the policy.`;
+    info = 'The customer and their family members will get health insurance coverage together. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
   }
 
   return info;
@@ -901,8 +889,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 /> 
               </div>
               <div v-if="isIndividualAndFamilies && converageInfo" class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2">
-                  <b>Please note:</b>
-                  <div v-html="converageInfo"></div>
+                  <div> <b>Please note:</b> {{ converageInfo }} </div>
               </div>
               
             </template>
