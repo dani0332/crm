@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
+use App\Services\Logger\LoggerService;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
@@ -51,7 +52,18 @@ class PostMarkService extends BaseService
             try {
                 $this->afterSuccessfulPostmarkSend($body, $responseBodyString);
             } catch (Exception $ex) {
-                Log::error('PostMark afterSuccessfulPostmarkSend failed: '.$ex->getMessage());
+                $requestPayload = $this->requestPayloadAsArray($body);
+                LoggerService::error(
+                    'PostMark afterSuccessfulPostmarkSend failed',
+                    [],
+                    $ex,
+                    [
+                        'processing_stage' => 'afterSuccessfulPostmarkSend',
+                        'postmark_response_body' => $responseBodyString,
+                        'postmark_message_id' => $this->postmarkMessageIdFromResponseJson($responseBodyString),
+                        'metadata' => $this->postmarkMetadataFromPayload($requestPayload),
+                    ],
+                );
             }
         }
 
