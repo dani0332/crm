@@ -392,7 +392,6 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load UAE Pass logs',
-                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
