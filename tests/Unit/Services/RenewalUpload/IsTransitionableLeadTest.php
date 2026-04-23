@@ -28,7 +28,7 @@ if (! function_exists('createRenewalsUploadServiceWithMocks')) {
         static $reflection = null;
 
         if ($reflection === null) {
-            $reflection = new \ReflectionClass(RenewalsUploadService::class);
+            $reflection = new ReflectionClass(RenewalsUploadService::class);
         }
 
         return $reflection->newInstanceWithoutConstructor();

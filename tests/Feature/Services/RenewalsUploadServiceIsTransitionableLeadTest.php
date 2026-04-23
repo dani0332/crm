@@ -8,6 +8,7 @@ use App\Models\InsuranceProviderTransition;
 use App\Models\RenewalQuoteProcess;
 use App\Services\RenewalsUploadService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 /**
@@ -27,7 +28,7 @@ beforeEach(function () {
     }
 
     config(['database.default' => 'sqlite']);
-    Illuminate\Support\Facades\DB::setDefaultConnection('sqlite');
+    DB::setDefaultConnection('sqlite');
 
     $sqliteConfig = config('database.connections.sqlite');
     config([
@@ -35,12 +36,12 @@ beforeEach(function () {
         'database.connections.mysql.database' => $sqliteConfig['database'] ?? ':memory:',
         'database.connections.mysql.prefix' => $sqliteConfig['prefix'] ?? '',
     ]);
-    Illuminate\Support\Facades\DB::purge('mysql');
-    Illuminate\Support\Facades\DB::reconnect('mysql');
+    DB::purge('mysql');
+    DB::reconnect('mysql');
 
     TestSchemaCreator::createRenewalsSchema();
 
-    $db = Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $db->table('insurance_provider')->truncate();
     $db->table('renewal_insurance_provider_transitions')->truncate();
     $db->table('car_plan')->truncate();
