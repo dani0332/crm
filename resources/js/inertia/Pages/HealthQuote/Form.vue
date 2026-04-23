@@ -150,27 +150,10 @@ function parseMobileNoForInitial(raw) {
   return { dial: '+971', national: digitsOnly };
 }
 
-function stripDialToDigits(dial) {
-  return String(dial || '')
-    .replaceAll(/^\+/g, '')
-    .replaceAll(/\D/g, '');
-}
-
 const initialMobile = parseMobileNoForInitial(
   isEdit.value ? props.quote?.mobile_no : null,
 );
 
-const mobileDialCode = ref(initialMobile.dial);
-const mobileNationalNo = ref(initialMobile.national);
-
-function buildQuoteFormMobileNo() {
-  const dialDigits = stripDialToDigits(mobileDialCode.value);
-  const nationalDigits = String(mobileNationalNo.value || '').replaceAll(/\D/g, '');
-  if (!nationalDigits) {
-    return '';
-  }
-  return `+${dialDigits}${nationalDigits}`;
-}
 
 const isMobileNationalPartLength = v => {
   if (v == null || v === '') {
@@ -214,7 +197,8 @@ const quoteForm = useForm({
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
-  mobile_no: '',
+  mobile_dial_code: initialMobile.dial ?? '',
+  mobile_national_no: initialMobile.national ?? '',
   dob: props.quote?.dob
     ? props.quote?.dob.split('-').reverse().join('-')
     : null,
@@ -263,13 +247,6 @@ const quoteForm = useForm({
   customer_type: customerType.value,
 });
 
-watch(
-  [mobileDialCode, mobileNationalNo],
-  () => {
-    quoteForm.mobile_no = buildQuoteFormMobileNo();
-  },
-  { immediate: true },
-);
 
 const {
   isIndividualAndFamilies,
@@ -1028,7 +1005,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     class="flex flex-row flex-nowrap items-stretch gap-3 w-full min-w-0"
                   >
                     <x-select
-                      v-model="mobileDialCode"
+                      v-model="quoteForm.mobile_dial_code"
                       :options="mobileDialCodeOptions"
                       class="w-36 sm:w-44 shrink-0 min-w-0"
                       label="COUNTRY CODE"
@@ -1037,13 +1014,13 @@ watch(categoryChangeConfirmOpen, isOpen => {
                       filterPlaceholder="Search code"
                     />
                     <x-input
-                      v-model="mobileNationalNo"
+                      v-model="quoteForm.mobile_national_no"
                       type="text"
                       maxLength="10"
                       :rules="[isRequired, isNumber, isMobileNationalPartLength]"
                       class="flex-1 min-w-0"
                       :disabled="isEdit"
-                      :error="quoteForm.errors.mobile_no"
+                      :error="quoteForm.errors.mobile_national_no"
                       label="PHONE NUMBER"
                       required
                     />

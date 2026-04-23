@@ -349,12 +349,13 @@ class HealthQuoteService extends BaseService
         if ($subSource && $subSource?->code == 'strategic-partners-referrals') {
             $sendOcbEmail = false;
         }
+        $mobileNo = ($request->mobile_dial_code ?? '').($request->mobile_national_no ?? '');
 
         $dataArr = [
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'email' => $request->email,
             'details' => $request->details,
-            'mobileNo' => $request->mobile_no,
+            'mobileNo' => $mobileNo,
             'preference' => $request->preference,
             'source' => $sourceName,
             'maritalStatusId' => $request->marital_status_id,
@@ -498,6 +499,7 @@ class HealthQuoteService extends BaseService
         $priceStartingFrom = $healthQuote?->price_starting_from ?? null;
         $members = collect($request->members);
         $principalMember = $members->firstWhere('is_principal', 1);
+        $mobileNo = ($request->mobile_dial_code ?? '').($request->mobile_national_no ?? '');
         $dataArr = [
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'quoteUID' => $id,
@@ -506,7 +508,7 @@ class HealthQuoteService extends BaseService
                 'receiveMarketingUpdates' => $customer?->receive_marketing_updates,
                 'email' => $request->email,
                 'details' => $request->details,
-                'mobileNo' => $request->mobile_no,
+                'mobileNo' => $mobileNo,
                 'preference' => $request->preference,
                 'source' => $sourceName,
                 'leadTypeId' => $request->lead_type_id,
