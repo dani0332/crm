@@ -33,13 +33,18 @@ class LeadAllocationPermissionService
     public static function authorizeMutateForQuoteType(?QuoteTypes $quoteType): void
     {
         $permissions = self::mutatePermissionsForQuoteType($quoteType);
-        if ($permissions === []) {
-            abort(403, 'Unauthorized action.');
+
+        if (! auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin])) {
+
+            if ($permissions === []) {
+                abort(403, 'Unauthorized action.');
+            }
+
+            if (! auth()->user()->hasAnyPermission($permissions)) {
+                abort(403, 'Unauthorized action.');
+            }
         }
 
-        if (! auth()->user()->hasAnyPermission($permissions)) {
-            abort(403, 'Unauthorized action.');
-        }
     }
 
     public static function authorizeMutateForQuoteTypeId(int $quoteTypeId): void
