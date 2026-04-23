@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\ProcessStatusCode;
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use Illuminate\Support\Facades\Log;
 
 class PostMarkService extends BaseService
 {
     public function __construct(
         private readonly EmailStatusService $emailStatusService,
+        private ClientInterface $client = new Client,
     ) {
         parent::__construct();
     }
@@ -27,8 +29,8 @@ class PostMarkService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $client = new Client;
-            $clientRequest = $client->post(
+            $clientRequest = $this->client->request(
+                'POST',
                 config('constants.POSTMARK_URL'),
                 [
                     'headers' => $headers,

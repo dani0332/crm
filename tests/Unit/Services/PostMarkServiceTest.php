@@ -3,8 +3,9 @@
 use App\Enums\ProcessStatusCode;
 use App\Services\EmailStatusService;
 use App\Services\PostMarkService;
-use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use Mockery\MockInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 use function Pest\Laravel\mock;
@@ -39,19 +40,19 @@ test('sendEmail logs ep email status when request has quote metadata and respons
             return true;
         }));
 
-    $service = new PostMarkService($emailStatusService);
+    $client = Mockery::mock(ClientInterface::class);
+    $service = new PostMarkService($emailStatusService, $client);
 
     $stream = Mockery::mock(StreamInterface::class);
     $stream->shouldReceive('getContents')->andReturn(json_encode(['MessageID' => 'msg-123']));
 
-    $httpResponse = Mockery::mock();
+    $httpResponse = Mockery::mock(ResponseInterface::class);
     $httpResponse->shouldReceive('getStatusCode')->andReturn(200);
     $httpResponse->shouldReceive('getBody')->andReturn($stream);
 
-    $client = Mockery::mock('overload:'.Client::class);
-    $client->shouldReceive('post')
+    $client->shouldReceive('request')
         ->once()
-        ->with('https://postmark.test/email', Mockery::on(function (array $opts) {
+        ->with('POST', 'https://postmark.test/email', Mockery::on(function (array $opts) {
             expect($opts)->toHaveKeys(['headers', 'body', 'timeout']);
             expect($opts['timeout'])->toBe(100);
             expect($opts['headers'])->toMatchArray([
@@ -81,17 +82,17 @@ test('sendEmail does not log when postmark response has no MessageID', function 
     $emailStatusService = mock(EmailStatusService::class);
     $emailStatusService->shouldNotReceive('logEpEmailStatuses');
 
-    $service = new PostMarkService($emailStatusService);
+    $client = Mockery::mock(ClientInterface::class);
+    $service = new PostMarkService($emailStatusService, $client);
 
     $stream = Mockery::mock(StreamInterface::class);
     $stream->shouldReceive('getContents')->andReturn(json_encode(['ErrorCode' => 0]));
 
-    $httpResponse = Mockery::mock();
+    $httpResponse = Mockery::mock(ResponseInterface::class);
     $httpResponse->shouldReceive('getStatusCode')->andReturn(200);
     $httpResponse->shouldReceive('getBody')->andReturn($stream);
 
-    $client = Mockery::mock('overload:'.Client::class);
-    $client->shouldReceive('post')->andReturn($httpResponse);
+    $client->shouldReceive('request')->andReturn($httpResponse);
 
     $body = json_encode([
         'To' => 'to@example.com',
@@ -110,17 +111,17 @@ test('sendEmail does not log when request payload metadata is missing quote ids'
     $emailStatusService = mock(EmailStatusService::class);
     $emailStatusService->shouldNotReceive('logEpEmailStatuses');
 
-    $service = new PostMarkService($emailStatusService);
+    $client = Mockery::mock(ClientInterface::class);
+    $service = new PostMarkService($emailStatusService, $client);
 
     $stream = Mockery::mock(StreamInterface::class);
     $stream->shouldReceive('getContents')->andReturn(json_encode(['MessageID' => 'msg-123']));
 
-    $httpResponse = Mockery::mock();
+    $httpResponse = Mockery::mock(ResponseInterface::class);
     $httpResponse->shouldReceive('getStatusCode')->andReturn(200);
     $httpResponse->shouldReceive('getBody')->andReturn($stream);
 
-    $client = Mockery::mock('overload:'.Client::class);
-    $client->shouldReceive('post')->andReturn($httpResponse);
+    $client->shouldReceive('request')->andReturn($httpResponse);
 
     $body = json_encode([
         'To' => 'to@example.com',
@@ -139,17 +140,17 @@ test('sendEmail does not log when request payload quote ids are non-numeric stri
     $emailStatusService = mock(EmailStatusService::class);
     $emailStatusService->shouldNotReceive('logEpEmailStatuses');
 
-    $service = new PostMarkService($emailStatusService);
+    $client = Mockery::mock(ClientInterface::class);
+    $service = new PostMarkService($emailStatusService, $client);
 
     $stream = Mockery::mock(StreamInterface::class);
     $stream->shouldReceive('getContents')->andReturn(json_encode(['MessageID' => 'msg-123']));
 
-    $httpResponse = Mockery::mock();
+    $httpResponse = Mockery::mock(ResponseInterface::class);
     $httpResponse->shouldReceive('getStatusCode')->andReturn(200);
     $httpResponse->shouldReceive('getBody')->andReturn($stream);
 
-    $client = Mockery::mock('overload:'.Client::class);
-    $client->shouldReceive('post')->andReturn($httpResponse);
+    $client->shouldReceive('request')->andReturn($httpResponse);
 
     $body = json_encode([
         'To' => 'to@example.com',
@@ -168,10 +169,10 @@ test('sendEmail returns exception code when guzzle throws', function () {
     $emailStatusService = mock(EmailStatusService::class);
     $emailStatusService->shouldNotReceive('logEpEmailStatuses');
 
-    $service = new PostMarkService($emailStatusService);
+    $client = Mockery::mock(ClientInterface::class);
+    $service = new PostMarkService($emailStatusService, $client);
 
-    $client = Mockery::mock('overload:'.Client::class);
-    $client->shouldReceive('post')->andThrow(new Exception('boom', 503));
+    $client->shouldReceive('request')->andThrow(new Exception('boom', 503));
 
     expect($service->sendEmail(json_encode(['To' => 'to@example.com'])))->toBe(503);
 });
