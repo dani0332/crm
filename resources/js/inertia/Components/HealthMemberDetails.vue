@@ -637,6 +637,7 @@ function isHealthAddMemberButtonDisabled(isDisabledFromTemplate) {
     || filteredCount >= MAX_ALLOWED_INSURED_MEMBERS
     || (
       !isView.value
+      && !isDomesticHelper.value
       && (!props.coverForId || !props.healthInsureCode || !props.policyHolderCode)
     )
   );
