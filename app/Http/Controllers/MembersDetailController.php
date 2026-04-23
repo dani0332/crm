@@ -58,7 +58,7 @@ class MembersDetailController extends Controller
     }
 
     /**
-     * AML and other axios callers expect JSON, not an HTML redirect. Inertia visits use {@see Middleware} X-Inertia header and must receive a redirect + flash.
+     * Non-Inertia clients that expect JSON get a 403 JSON body. Inertia visits send X-Inertia and must receive a redirect with flash.
      */
     private function memberLockResponseShouldBeJson(Request $request): bool
     {
@@ -66,8 +66,7 @@ class MembersDetailController extends Controller
             return false;
         }
 
-        return $request->boolean('from_aml_model')
-            || $request->expectsJson();
+        return $request->expectsJson();
     }
 
     /**
