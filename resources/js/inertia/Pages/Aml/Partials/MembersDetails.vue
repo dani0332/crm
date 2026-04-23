@@ -2,6 +2,11 @@
 const props = defineProps({
   customerType: String,
   isPayerDetails: Boolean,
+  /** When true, requests include `from_aml_ubo` so business-quote member lock is skipped (set by ScreeningModel). */
+  fromAmlUboScreening: {
+    type: Boolean,
+    default: false,
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
@@ -110,6 +115,7 @@ const memberForm = useForm({
   nationality_id: null,
   is_payer: props.is_payer ?? false,
   from_aml_model: true,
+  from_aml_ubo: props.fromAmlUboScreening,
   entity_id: page.props.entityDetails?.entity?.id ?? null,
   pec: false,
   ...(props.isPayerDetails && {

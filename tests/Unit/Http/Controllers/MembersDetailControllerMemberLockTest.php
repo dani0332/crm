@@ -72,7 +72,7 @@ test('it redirects back with policy booked flash when business quote member deta
         ->and(session('error'))->toBe(MembersDetailController::FLASH_ERROR_MEMBER_DETAILS_LOCKED);
 });
 
-test('it returns json 403 when locked and request is from aml model', function () {
+test('it returns json 403 when locked and request is from aml model (without from_aml_ubo)', function () {
     $this->mock(CentralService::class, function ($mock) {
         $mock->shouldReceive('lockLeadSectionsDetails')
             ->once()
@@ -97,6 +97,19 @@ test('it returns json 403 when locked and request is from aml model', function (
             'status' => false,
             'message' => MembersDetailController::FLASH_ERROR_MEMBER_DETAILS_LOCKED,
         ]);
+});
+
+test('it does not block when locked and from_aml_ubo is true', function () {
+    $this->mock(CentralService::class, function ($mock) {
+        $mock->shouldNotReceive('lockLeadSectionsDetails');
+    });
+
+    $request = Request::create('/', 'POST', ['from_aml_model' => true, 'from_aml_ubo' => true]);
+    $quote = Mockery::mock(BusinessQuote::class);
+
+    $result = $this->lockMethod->invoke($this->controller, $request, $quote);
+
+    expect($result)->toBeNull();
 });
 
 test('it redirects when locked and request has x-inertia even if from_aml_model is present', function () {
