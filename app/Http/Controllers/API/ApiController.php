@@ -26,6 +26,7 @@ use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
+use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -843,5 +844,12 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function logEpEmailStatuses(LogEpEmailStatusesRequest $request)
+    {
+        $this->emailStatusService->logEpEmailStatuses($request->validated());
+
+        return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
     }
 }
