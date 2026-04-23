@@ -26,9 +26,10 @@ const uaePassLogs = reactive({
   data: null,
   table: [
     { text: 'Request ID', value: 'request_id' },
-    { text: 'Proof Of Presentation ID', value: 'proof_of_presentation_id' },
+    { text: 'API Name', value: 'api_name' },
     { text: 'Status', value: 'status' },
     { text: 'Created At', value: 'created_at' },
+    { text: 'Response Status', value: 'response_status' },
     { text: 'Action', value: 'action' },
   ],
 });
@@ -54,10 +55,10 @@ const onLoadUaePassLogData = async () => {
     if (response.data.success) {
       uaePassLogs.data = response.data.data;
     } else {
-      console.error('Failed to load UAE Pass logs:', response.data.message);
+      console.error('Failed to load UAE Signing Pass logs:', response.data.message);
     }
   } catch (error) {
-    console.error('Error loading UAE Pass logs:', error);
+    console.error('Error loading UAE Signing Pass logs:', error);
   } finally {
     uaePassLogs.loading = false;
   }
@@ -94,7 +95,7 @@ const formatJson = value => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">UAE Pass Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">UAE Signing Pass Logs</h3>
 
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
@@ -134,7 +135,7 @@ const formatJson = value => {
             @click.prevent="onLoadUaePassLogData"
             :loading="uaePassLogs.loading"
           >
-            Load UAE Pass Logs
+            Load UAE Signing Pass Logs
           </x-button>
         </div>
 
@@ -211,7 +212,7 @@ const formatJson = value => {
     <x-modal
       v-model="modals.uaePassLog"
       size="lg"
-      :title="`UAE Pass Log Details: ${quoteTypeShortCode}-${quoteUuid || 'N/A'}`"
+      :title="`UAE Signing Pass Log Details: ${quoteTypeShortCode}-${quoteUuid || 'N/A'}`"
       show-close
       backdrop
     >
