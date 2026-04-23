@@ -2198,8 +2198,10 @@ class CentralService extends BaseService
         $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
 
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        $maskedEmail = null;
         if ($isTravel) {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+            $maskedEmail = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
         } else {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
         }
@@ -2212,11 +2214,8 @@ class CentralService extends BaseService
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
+            ...($isTravel ? ['maskedEmail' => $maskedEmail] : []),
         ];
-
-        if ($isTravel) {
-            $messageData['maskedEmail'] = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
-        }
         LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
         $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
