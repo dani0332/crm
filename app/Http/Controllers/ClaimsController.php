@@ -356,7 +356,7 @@ class ClaimsController extends Controller
                     ]);
                     $assigned++;
                 }
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 $errors[] = $uuid.': '.implode(' ', $e->validator->errors()->all());
             } catch (Exception $e) {
                 LoggerService::error(' Error bulk assigning claim - UUID: '.$uuid, extra: [

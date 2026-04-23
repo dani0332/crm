@@ -1,3 +1,4 @@
+@inject('userService', \App\Services\UserService::class)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,8 +176,8 @@
                 </td>
 
                 <td style="width: 8%; vertical-align:top">            
-                    @if (!empty($data['profile_photo_path']))
-                        <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
+                    @if (! empty($data['profile_photo_path']) && ($profilePhotoDataUri = $userService->profilePhotoDataUriForPdf($data['profile_photo_path'])))
+                        <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{ $profilePhotoDataUri }}" alt="Insurance Market Logo">
                     @endif
                 </td>
             @endif
