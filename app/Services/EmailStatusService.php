@@ -214,7 +214,11 @@ class EmailStatusService extends BaseService
             return;
         }
 
-        LoggerService::warning(self::class.' - logEpEmailStatuses: no row and no usable Metadata', $validated);
+        LoggerService::warning(self::class.' - logEpEmailStatuses: no row and no usable Metadata', [
+            'message_id' => $messageId,
+            'record_type' => $recordType,
+            'metadata' => $validated['Metadata'] ?? 'Metadata not found',
+        ]);
     }
 
     private function shouldSkipPostmarkEngagementWebhook(string $recordType, string $messageId): bool
