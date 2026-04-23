@@ -29,7 +29,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
     public int $timeout = 120;
 
     /**
-     * @param  array{quote_status: array<int>, payment_status: array<int>}  $paymentAndStatusFilter
+     * @var array{quote_status: array<int>, payment_status: array<int>}
      */
     private const PAYMENT_AND_STATUS_FILTER = [
         'quote_status' => [
@@ -42,6 +42,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             PaymentStatusEnum::PARTIALLY_PAID,
             PaymentStatusEnum::CAPTURED,
             PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::CREDIT_APPROVED,
         ],
     ];
 
