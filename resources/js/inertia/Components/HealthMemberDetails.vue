@@ -351,7 +351,7 @@ function updateMemberForm(data) {
   memberForm.dob = data.dob;
   memberForm.nationality_id = data.nationality_id;
   memberForm.salary_band_id = data.salary_band_id;
-  memberForm.emirate_of_your_visa_id = getPrincipalEmirateOfYourVisaId();
+  memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
   memberForm.member_category_id = data.member_category_id;
   memberForm.first_name = data.first_name;
   memberForm.last_name = data.last_name;
@@ -445,7 +445,6 @@ const onMemberSubmit = isValid => {
         
         syncPolicyHolderToQuoteForm(member);
         syncPrincipalToQuoteForm(member);
-        syncEmiratesToMembers();
       }
       notification.success({
         title: 'Member Updated',
@@ -527,18 +526,6 @@ const memberPrincipal = data => {
 
   modals.memberPrincipal = true;
   confirmPrincipalData.member = data.id;
-};
-
-const syncEmiratesToMembers = () => {
-  const principalMember = localMembers.value.find(m => m.is_principal === 1);
-  if (principalMember) {
-    localMembers.value = localMembers.value.map(m => {
-      if (m.is_insured === 1) {
-        return { ...m, emirate_of_your_visa_id: principalMember.emirate_of_your_visa_id };
-      }
-      return m;
-    });
-  }
 };
 
 const memberPrincipalConfirmed = () => {
@@ -798,8 +785,6 @@ watch(
         principalMember.is_pec_marked = props.quoteForm.pec === HEALTH_PEC_YES;
         principalMember.pec = props.quoteForm.pec || null;
       }
-
-      syncEmiratesToMembers();
     }
   },
   { deep: true }
@@ -945,8 +930,8 @@ defineExpose({
             {{ nationalityText(nationality_id).value }}
           </template>
 
-          <template #item-emirate="{ is_principal, emirate_of_your_visa_id }">
-            {{ is_principal !== 1 ? 'N/A' : emirateText(emirate_of_your_visa_id).value }}
+          <template #item-emirate="{ emirate_of_your_visa_id }">
+            {{ emirateText(emirate_of_your_visa_id).value }}
           </template>
 
           <template #item-member_category_id="{ member_category_id }">
@@ -1129,7 +1114,6 @@ defineExpose({
             />
 
             <x-select
-              v-if="memberForm.is_principal == 1"
               required
               v-model="memberForm.emirate_of_your_visa_id"
               label="Emirate of Visa"
