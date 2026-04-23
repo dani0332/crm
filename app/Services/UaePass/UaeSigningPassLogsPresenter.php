@@ -2,12 +2,14 @@
 
 namespace App\Services\UaePass;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\UaePassAPILogLabel;
 use App\Enums\UaePassLogStatusEnum;
 use App\Models\UaePassLog;
 use App\Models\UaeSigningPassLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 
 final class UaeSigningPassLogsPresenter
@@ -98,7 +100,7 @@ final class UaeSigningPassLogsPresenter
             'status' => ucfirst($log->status),
             'created_at' => Carbon::parse($log->createdAt),
             'updated_at' => Carbon::parse($log->updatedAt),
-            'response_status' => $log->status == 'passed' ? 200 : 400,
+            'response_status' => $log->status == GenericRequestEnum::PASSED ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST,
             'proof_of_presentation_id' => $log->proofOfPresentationId,
             'request_payload' => $log->req,
             'response_payload' => $log->resp,
