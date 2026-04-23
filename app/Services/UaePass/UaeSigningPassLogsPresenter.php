@@ -10,12 +10,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-/**
- * Loads UAE Pass-style logs from MySQL (`uae_pass_logs`) and Mongo (`uae_signing_pass_logs`),
- * normalizes them to one payload shape for the UI, and merges by recency.
- *
- * Per-source API filters and attribute aliases live here so the controller stays thin.
- */
 final class UaeSigningPassLogsPresenter
 {
     /**
@@ -46,9 +40,6 @@ final class UaeSigningPassLogsPresenter
             ->map(fn (array $row) => collect($row)->except('_sort_ts')->all());
     }
 
-    /**
-     * @return Collection<int, UaePassLog>
-     */
     private function loadMysqlLogs(string $quoteUuid, int $quoteTypeId): Collection
     {
         $q = UaePassLog::query()
@@ -64,9 +55,6 @@ final class UaeSigningPassLogsPresenter
         return $q->get();
     }
 
-    /**
-     * @return Collection<int, UaeSigningPassLog>
-     */
     private function loadMongoLogs(string $quoteUuid, int $quoteTypeId): Collection
     {
         $q = UaeSigningPassLog::query();
@@ -117,21 +105,7 @@ final class UaeSigningPassLogsPresenter
         ]);
     }
 
-    /**
-     * @param  array{
-     *     id: mixed,
-     *     api_name: mixed,
-     *     status: mixed,
-     *     created_at: mixed,
-     *     updated_at: mixed,
-     *     response_status: mixed,
-     *     proof_of_presentation_id: mixed,
-     *     request_payload: mixed,
-     *     response_payload: mixed
-     * }  $row
-     * @param  array<string, mixed>  $extra  Optional keys merged into the row (e.g. future `source`).
-     */
-    private function buildNormalizedRow(array $row, array $extra = []): array
+    private function buildNormalizedRow(array $row): array
     {
         $status = $row['status'];
         $tagColor = $this->statusTagColor($status);
@@ -151,7 +125,7 @@ final class UaeSigningPassLogsPresenter
             'response_payload' => $row['response_payload'],
             'updated_at' => $updated?->format('Y-m-d H:i:s'),
             '_sort_ts' => $created?->getTimestamp() ?? 0,
-        ], $extra);
+        ]);
     }
 
     private function statusTagColor(mixed $status): string
