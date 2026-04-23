@@ -20,7 +20,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Inertia\Middleware;
 
 class MembersDetailController extends Controller
 {
@@ -277,7 +276,7 @@ class MembersDetailController extends Controller
 
         $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
 
-        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject,true))) {
+        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject, true))) {
             return $response;
         }
 
