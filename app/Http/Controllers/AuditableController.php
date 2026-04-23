@@ -369,12 +369,14 @@ class AuditableController extends Controller
 
                     return [
                         'id' => $log->id,
+                        'api_name' => $log->api_name,
                         'request_id' => $log->request_id,
-                        'proof_of_presentation_id' => $log->proof_of_presentation_id,
                         'status' => $status,
+                        'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
+                        'response_status' => $log->response_status,
+                        'proof_of_presentation_id' => $log->proof_of_presentation_id,
                         'status_display' => $status ? strtoupper($status) : 'N/A',
                         'status_tag_color' => $tagColor ?: 'secondary',
-                        'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
                         'request_payload' => $log->request_payload,
                         'presentation_response_payload' => $log->presentation_response_payload,
                     ];
