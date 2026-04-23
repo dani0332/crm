@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\UaePassAPILogLabel;
-use App\Enums\UaePassLogStatusEnum;
 use App\Http\Requests\LogsRequest;
 use App\Http\Requests\UaeSigningPassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
@@ -26,11 +24,11 @@ use App\Models\SavingsInsurerRequestResponse;
 use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
-use App\Models\UaePassLog;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\UaePass\UaeSigningPassLogsPresenter;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -349,38 +347,11 @@ class AuditableController extends Controller
             $quoteUuid = $request->input('quote_uuid');
             $quoteTypeId = (int) $request->input('quote_type_id');
 
-            LoggerService::info('Loading UAE Pass logs');
+            LoggerService::info('Loading UAE Pass logs for quote UUID: '.$quoteUuid.' and quote type ID: '.$quoteTypeId);
 
-            $logs = UaePassLog::query()
-                ->where('quote_uuid', $quoteUuid)
-                ->where('quote_type_id', $quoteTypeId)
-                ->whereIn('api_name', [UaePassAPILogLabel::USER_INFO_API->value])
-                ->orderByDesc('created_at')
-                ->get()
-                ->map(function ($log) {
-                    $status = $log->status;
+            $logs = app(UaeSigningPassLogsPresenter::class)->mergedRows($quoteUuid, $quoteTypeId);
 
-                    $tagColor = null;
-                    if ($status === UaePassLogStatusEnum::PASSED->value) {
-                        $tagColor = 'success';
-                    } elseif ($status === UaePassLogStatusEnum::FAILED->value) {
-                        $tagColor = 'error';
-                    }
-
-                    return [
-                        'id' => $log->id,
-                        'api_name' => $log->api_name,
-                        'status' => $status,
-                        'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
-                        'response_status' => $log->response_status,
-                        'proof_of_presentation_id' => $log->proof_of_presentation_id,
-                        'status_display' => $status ? strtoupper($status) : 'N/A',
-                        'status_tag_color' => $tagColor ?: 'secondary',
-                        'request_payload' => $log->request_payload,
-                        'response_payload' => $log->response_payload,
-                        'updated_at' => $log->updated_at?->format('Y-m-d H:i:s'),
-                    ];
-                });
+            LoggerService::info('UAE Pass logs loaded successfully for quote UUID: '.$quoteUuid.' and quote type ID: '.$quoteTypeId);
 
             return response()->json([
                 'success' => true,
