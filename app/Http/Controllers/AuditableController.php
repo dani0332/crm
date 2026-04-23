@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\UaePassAPILogLabel;
 use App\Enums\UaePassLogStatusEnum;
 use App\Http\Requests\LogsRequest;
 use App\Http\Requests\UaePassLogsRequest;
@@ -353,6 +354,7 @@ class AuditableController extends Controller
             $logs = UaePassLog::query()
                 ->where('quote_uuid', $quoteUuid)
                 ->where('quote_type_id', $quoteTypeId)
+                ->whereIn('api_name', [UaePassAPILogLabel::USER_INFO_API->value])
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(function ($log) {

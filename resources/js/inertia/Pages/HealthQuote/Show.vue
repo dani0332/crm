@@ -7,7 +7,7 @@ import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import UaePassLogs from '@/inertia/Components/UaePassLogs.vue';
+import UaeSigningPassLogs from '@/inertia/Components/UaeSigningPassLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -4603,7 +4603,7 @@ const validateEmirateOfVisa = () => {
       :quoteTypeId="page.props.quoteTypeId"
     />
 
-    <UaePassLogs
+    <UaeSigningPassLogs
       v-if="can(permissionEnum.API_LOG_VIEW)"
       :quoteUuid="quote.uuid"
       :quoteTypeId="$page.props.quoteTypeId"
