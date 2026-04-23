@@ -8,6 +8,7 @@ enum HealthInsureEnum: string
     case ONLY_MY_FAMILY_MEMBERS = 'ONLY_MY_FAMILY_MEMBERS';
     case MYSELF_AND_MY_FAMILY_MEMBERS = 'MYSELF_AND_MY_FAMILY_MEMBERS';
 
+    /** Short label for UI when the lead source is IMCRM; otherwise the lookup row's DB text is shown. */
     public function getLabel(): string
     {
         return match ($this) {

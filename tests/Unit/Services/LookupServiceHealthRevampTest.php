@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Services\LookupService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
+    Cache::flush();
     $this->lookupService = app(LookupService::class);
 });
 
@@ -34,11 +37,11 @@ describe('LookupService::getGender', function () {
 });
 
 describe('LookupService::getHealthInsureOptions', function () {
-    test('returns health insure options with translated labels', function () {
+    test('returns health insure options with database text', function () {
         DB::table('lookups')->insert([
-            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MYSELF', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MY_FAMILY_MEMBERS', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MYSELF', 'text' => 'raw_self', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MY_FAMILY_MEMBERS', 'text' => 'raw_family', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS', 'text' => 'raw_both', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $results = $this->lookupService->getHealthInsureOptions();
@@ -46,9 +49,9 @@ describe('LookupService::getHealthInsureOptions', function () {
         expect($results)->toHaveCount(3);
 
         $byCode = $results->keyBy('code');
-        expect($byCode['ONLY_MYSELF']->text)->toBe('Only the customer')
-            ->and($byCode['ONLY_MY_FAMILY_MEMBERS']->text)->toBe("Only the customer's family member(s)")
-            ->and($byCode['MYSELF_AND_MY_FAMILY_MEMBERS']->text)->toBe('The customer and their family member(s)');
+        expect($byCode['ONLY_MYSELF']->text)->toBe('raw_self')
+            ->and($byCode['ONLY_MY_FAMILY_MEMBERS']->text)->toBe('raw_family')
+            ->and($byCode['MYSELF_AND_MY_FAMILY_MEMBERS']->text)->toBe('raw_both');
     });
 
     test('returns empty collection when no health insure options exist', function () {
@@ -59,10 +62,10 @@ describe('LookupService::getHealthInsureOptions', function () {
 });
 
 describe('LookupService::getPolicyHolder', function () {
-    test('returns policy holder options with translated labels', function () {
+    test('returns policy holder options with database text', function () {
         DB::table('lookups')->insert([
-            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'OTHER_ADULT_FAMILY_MEMBER', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw_me', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'OTHER_ADULT_FAMILY_MEMBER', 'text' => 'raw_other', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $results = $this->lookupService->getPolicyHolder();
@@ -70,8 +73,27 @@ describe('LookupService::getPolicyHolder', function () {
         expect($results)->toHaveCount(2);
 
         $byCode = $results->keyBy('code');
-        expect($byCode['ME']->text)->toBe('The customer')
-            ->and($byCode['OTHER_ADULT_FAMILY_MEMBER']->text)->toBe('Another adult family member');
+        expect($byCode['ME']->text)->toBe('raw_me')
+            ->and($byCode['OTHER_ADULT_FAMILY_MEMBER']->text)->toBe('raw_other');
+    });
+});
+
+describe('LookupService::getHealthInsureOptions and getPolicyHolder enum labels by source', function () {
+    test('applies customer-centric text only when lead source is IMCRM', function () {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MYSELF', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $svc = $this->lookupService;
+        expect($svc->getHealthInsureOptions(LeadSourceEnum::IMCRM)->first()->text)->toBe('Only the customer')
+            ->and($svc->getHealthInsureOptions('ECOM')->first()->text)->toBe('raw');
+        DB::table('lookups')->where('key', LookupsEnum::HEALTH_INSURE_OPTIONS->value)->delete();
+        Cache::flush();
+
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw_ph', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        expect($svc->getPolicyHolder(LeadSourceEnum::IMCRM)->first()->text)->toBe('The customer')
+            ->and($svc->getPolicyHolder('ECOM')->first()->text)->toBe('raw_ph');
     });
 });
 

@@ -86,8 +86,8 @@ describe('HealthCoverForEnum', function () {
         expect(HealthCoverForEnum::tryFrom(999))->toBeNull();
     });
 
-    test('has exactly three cases', function () {
-        expect(HealthCoverForEnum::cases())->toHaveCount(3);
+    test('has all cover-for cases (inactive and active)', function () {
+        expect(HealthCoverForEnum::cases())->toHaveCount(5);
     });
 });
 

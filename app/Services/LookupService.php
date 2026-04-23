@@ -6,7 +6,7 @@ use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
-use App\Enums\InsuranceProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -29,6 +29,7 @@ use App\Models\VehicleType;
 use App\Models\VisaCategory;
 use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class LookupService extends BaseService
@@ -371,36 +372,66 @@ class LookupService extends BaseService
         );
     }
 
-    public function getHealthInsureOptions()
+    /**
+     * @return \Illuminate\Support\Collection<int, \App\Models\Lookup>
+     */
+    public function getHealthInsureOptions(?string $leadSource = null): Collection
     {
-        return Cache::remember(
+        $rows = Cache::remember(
             CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->value,
             CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->expiry(),
-            function () {
-                return Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
-                    ->map(function ($item) {
-                        $item->text = HealthInsureEnum::from($item->code)->getLabel();
-
-                        return $item;
-                    });
-            }
+            fn () => Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
         );
+
+        if ($leadSource !== LeadSourceEnum::IMCRM) {
+            return $rows;
+        }
+
+        return $rows->map(function ($item) {
+            $code = $item->code ?? null;
+            if (! is_string($code)) {
+                return $item;
+            }
+            $case = HealthInsureEnum::tryFrom($code);
+            if ($case === null) {
+                return $item;
+            }
+            $row = clone $item;
+            $row->text = $case->getLabel();
+
+            return $row;
+        })->values();
     }
 
-    public function getPolicyHolder()
+    /**
+     * @return \Illuminate\Support\Collection<int, \App\Models\Lookup>
+     */
+    public function getPolicyHolder(?string $leadSource = null): Collection
     {
-        return Cache::remember(
+        $rows = Cache::remember(
             CacheKeyEnum::POLICY_HOLDER_KEY->value,
             CacheKeyEnum::POLICY_HOLDER_KEY->expiry(),
-            function () {
-                return Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
-                    ->map(function ($item) {
-                        $item->text = HealthPolicyHolderEnum::from($item->code)->getLabel();
-
-                        return $item;
-                    });
-            }
+            fn () => Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
         );
+
+        if ($leadSource !== LeadSourceEnum::IMCRM) {
+            return $rows;
+        }
+
+        return $rows->map(function ($item) {
+            $code = $item->code ?? null;
+            if (! is_string($code)) {
+                return $item;
+            }
+            $case = HealthPolicyHolderEnum::tryFrom($code);
+            if ($case === null) {
+                return $item;
+            }
+            $row = clone $item;
+            $row->text = $case->getLabel();
+
+            return $row;
+        })->values();
     }
 
     public function getPolicyHolderCategory()
