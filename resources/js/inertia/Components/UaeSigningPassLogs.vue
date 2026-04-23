@@ -212,7 +212,7 @@ const formatJson = value => {
     <x-modal
       v-model="modals.uaePassLog"
       size="lg"
-      :title="`UAE Signing Pass Log Details: ${quoteTypeShortCode}-${quoteUuid || 'N/A'}`"
+      :title="`UAE Pass API Log Details: ${quoteTypeShortCode}-${quoteUuid || 'N/A'}`"
       show-close
       backdrop
     >
@@ -227,9 +227,19 @@ const formatJson = value => {
             <dt class="font-medium">Proof Of Presentation ID:</dt>
             <dd class="truncate max-w-xs" :title="selectedLog.proof_of_presentation_id">
               {{ selectedLog.proof_of_presentation_id }}
+            <dt class="font-medium">Ref ID:</dt>
+            <dd>
+              {{ `${quoteTypeShortCode}-${quoteUuid || 'N/A'}` }}
             </dd>
           </div>
 
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Call Type:</dt>
+            <dd>{{ selectedLog.api_name }}</dd>
+          </div>
+        </dl>
+        
+        <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5 mt-2">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Status:</dt>
             <dd>
@@ -246,6 +256,13 @@ const formatJson = value => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At:</dt>
             <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
+          </div>
+        </dl>
+
+        <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5 mt-2">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Updated At:</dt>
+            <dd>{{ new Date(selectedLog.updated_at).toLocaleString() }}</dd>
           </div>
         </dl>
 

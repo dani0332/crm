@@ -378,6 +378,7 @@ class AuditableController extends Controller
                         'status_tag_color' => $tagColor ?: 'secondary',
                         'request_payload' => $log->request_payload,
                         'response_payload' => $log->response_payload,
+                        'updated_at' => $log->updated_at?->format('Y-m-d H:i:s'),
                     ];
                 });
 
