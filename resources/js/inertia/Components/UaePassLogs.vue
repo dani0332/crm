@@ -46,7 +46,7 @@ const selectLog = item => {
 const onLoadUaePassLogData = async () => {
   uaePassLogs.loading = true;
   try {
-    const response = await axios.post('/uae-pass-logs', {
+    const response = await axios.post('/uae-signing-pass-logs', {
       quote_uuid: props.quoteUuid,
       quote_type_id: props.quoteTypeId,
     });
