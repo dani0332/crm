@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class UaeSigningPassLog extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'uae_signing_pass_logs';
-    protected $casts = ['createdAt' => 'datetime:Y-m-d', 'updatedAt' => 'datetime:Y-m-d'];
+    protected $table = 'uae-pass-sign-in-logs';
+    protected $guarded = [];
+    protected $casts = [
+        'createdAt' => 'datetime:Y-m-d',
+        'updatedAt' => 'datetime:Y-m-d',
+    ];
 }
