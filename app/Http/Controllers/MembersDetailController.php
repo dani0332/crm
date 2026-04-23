@@ -31,13 +31,13 @@ class MembersDetailController extends Controller
      */
     public const FLASH_ERROR_MEMBER_DETAILS_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to \'Send Update\', select \'Add Update\', and choose \'Endorsement Financial\'';
 
-    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
+    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject, bool $notDeleteRequest = false): RedirectResponse|JsonResponse|null
     {
         if (! $quoteObject instanceof BusinessQuote) {
             return null;
         }
 
-        if ($request->boolean('from_aml_model')) {
+        if ($request->boolean('from_aml_model') && $notDeleteRequest == false) {
             return null;
         }
 
@@ -277,7 +277,7 @@ class MembersDetailController extends Controller
 
         $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
 
-        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject))) {
+        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject,true))) {
             return $response;
         }
 
