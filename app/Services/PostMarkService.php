@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 class PostMarkService extends BaseService
 {
+    public function __construct(
+        private readonly EmailStatusService $emailStatusService,
+    ) {
+        parent::__construct();
+    }
+
     public function sendEmail($body)
     {
         $responseCode = 0;
@@ -64,7 +70,7 @@ class PostMarkService extends BaseService
             return;
         }
 
-        app(EmailStatusService::class)->logEpEmailStatuses(
+        $this->emailStatusService->logEpEmailStatuses(
             $this->validatedPayloadForEpEmailStatusLog($requestPayload, $metadata, $messageId)
         );
     }
@@ -144,7 +150,10 @@ class PostMarkService extends BaseService
         $quoteId = $metadata['quote_id'] ?? $metadata['quoteId'] ?? null;
         $quoteTypeId = $metadata['quote_type_id'] ?? $metadata['quoteTypeId'] ?? null;
 
-        $subject = $metadata['subject'] ?? isset($requestPayload['Subject']) && is_string($requestPayload['Subject']) ? $requestPayload['Subject'] : null;
+        $subject = $metadata['subject']
+            ?? ((isset($requestPayload['Subject']) && is_string($requestPayload['Subject']))
+                ? $requestPayload['Subject']
+                : null);
 
         $normalizedMeta = array_merge($metadata, [
             'quote_id' => (string) (int) $quoteId,
