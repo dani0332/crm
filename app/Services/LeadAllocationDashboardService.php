@@ -77,7 +77,7 @@ class LeadAllocationDashboardService extends BaseService
                     });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
-            if (auth()->user()->hasRole(RolesEnum::ManagerLeadAllocation)) {
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])) {
                 $departmentIds = auth()->user()->department()->pluck('id')->toArray();
                 $users = $users->whereIn('users.department_id', $departmentIds);
             } else {
