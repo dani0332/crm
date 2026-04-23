@@ -310,7 +310,7 @@ const showFailedRates = (id, badCount) => {
     </x-form>
 
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Uploaded Rates</h2>
+      <h2 class="text-xl font-semibold">Health Plan Rates</h2>
       <div class="space-x-3"></div>
     </div>
     <x-divider class="my-4" />

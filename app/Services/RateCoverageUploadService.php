@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
@@ -192,9 +193,28 @@ class RateCoverageUploadService
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
+        // $uploadRate = $this->createRate($uploadedFile);
+        // $uplodedFile['file_name'];
+        // UploadRatesJob::dispatch($uploadRate);
 
-        $uploadRate = $this->createRate($uploadedFile);
-        UploadRatesJob::dispatch($uploadRate);
+        // Upload file (health rate control)
+        $this->uploadHealthRateControl($uploadedFile, $data['effective_from'], $data['effective_to']);
+    }
+
+    private function uploadHealthRateControl($uploadedFile, $effective_from, $effective_to)
+    {
+        $uploadLeadData = [
+            'file_name' => $uploadedFile['file_name'],
+            'health_plan_id' => 1,
+            'version' => '1.5',
+            'effective_from' => $effective_from,
+            'effective_to' => $effective_to,
+            'total_records' => 0,
+            'created_by' => auth()->user()->id,
+            'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+        ];
+
+        HealthRateControl::create($uploadLeadData);
     }
 
     public function createRate($uploadedFile)
