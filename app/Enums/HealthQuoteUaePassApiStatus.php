@@ -9,6 +9,7 @@ namespace App\Enums;
  */
 enum HealthQuoteUaePassApiStatus: string
 {
+    case FILTER_ALL = 'All';
     case AuthenticationSuccess = 'AUTHENTICATION_SUCCESS';
     case AuthenticationCancelled = 'AUTHENTICATION_CANCELLED';
     case NotEligible = 'NOT_ELIGIBLE';
@@ -16,7 +17,6 @@ enum HealthQuoteUaePassApiStatus: string
     case DocFailed = 'DOC_FAILED';
     case DocCancelled = 'DOC_CANCELLED';
     case DocsNotReceived = 'DOCS_NOT_RECEIVED';
-    case FILTER_ALL = 'All';
 
     /**
      * IMCRM filter / dropdown (includes "All" — not persisted).
