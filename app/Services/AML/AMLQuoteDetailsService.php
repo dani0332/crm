@@ -66,7 +66,7 @@ class AMLQuoteDetailsService
 
         // Get reference data
         $nationalities = NationalityRepository::withActive()->get();
-        $emirates = Emirate::withActive()->orderBy('sort_order')->get();
+        $emirates = Emirate::withActive()->orderBy('text', 'asc')->get();
 
         // Get member details
         $membersDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
