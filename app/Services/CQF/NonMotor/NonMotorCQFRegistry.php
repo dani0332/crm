@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor;
 
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
@@ -122,5 +124,30 @@ class NonMotorCQFRegistry
     public function hasLOB(QuoteTypes $quoteType): bool
     {
         return isset(self::$lobMap[$quoteType->value]);
+    }
+
+    /**
+     * The single authoritative eligibility filter for Non-motor CQF renewals.
+     * Excludes cancelled/pending-cancellation quotes; requires a paid/captured/credit payment status.
+     * Used by both the orchestrator count query and the per-LOB quote dispatch query.
+     *
+     * @return array{quote_status: array<int>, payment_status: array<int>}
+     */
+    public static function eligibilityFilter(): array
+    {
+        return [
+            'quote_status' => [
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+                QuoteStatusEnum::CancellationPending,
+            ],
+            'payment_status' => [
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ],
+        ];
     }
 }

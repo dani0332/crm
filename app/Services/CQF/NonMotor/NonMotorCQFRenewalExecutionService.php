@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -25,7 +23,6 @@ use App\Services\CQF\NonMotor\Pipes\StoragePipe;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Pipeline\Pipeline;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class NonMotorCQFRenewalExecutionService
@@ -37,28 +34,15 @@ class NonMotorCQFRenewalExecutionService
     /**
      * Whether there is eligible work for this LOB (used by orchestrator job).
      */
-    public function hasEligibleQuotesForLOB(QuoteTypes $quoteType, Carbon $startDate): bool
-    {
-        if (! $this->registry->hasLOB($quoteType)) {
-            return false;
-        }
-        $filter = $this->paymentAndStatusFilter();
-        $quoteTypeId = (int) $quoteType->id();
-        $hasPersonal = $this->hasEligiblePersonalQuotes($startDate, $quoteTypeId, $filter);
-        $hasCarBike = $quoteType === QuoteTypes::BIKE ? $this->hasEligibleBikeQuotesFromCar($startDate, $filter) : false;
-
-        return $hasPersonal || $hasCarBike;
-    }
-
     /**
      * Count of eligible quotes for this LOB (personal + car for Bike). Used to set total_records on lead creation.
      */
-    public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, Carbon $startDate): int
+    public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, string $startDate): int
     {
         if (! $this->registry->hasLOB($quoteType)) {
             return 0;
         }
-        $filter = $this->paymentAndStatusFilter();
+        $filter = NonMotorCQFRegistry::eligibilityFilter();
         $quoteTypeId = (int) $quoteType->id();
 
         $count = PersonalQuote::whereDate('policy_expiry_date', $startDate)
@@ -76,51 +60,6 @@ class NonMotorCQFRenewalExecutionService
         }
 
         return $count;
-    }
-
-    /**
-     * @return array{quote_status: array<int>, payment_status: array<int>}
-     */
-    protected function paymentAndStatusFilter(): array
-    {
-        return [
-            'quote_status' => [
-                QuoteStatusEnum::PolicyCancelled,
-                QuoteStatusEnum::PolicyCancelledReissued,
-                QuoteStatusEnum::CancellationPending,
-            ],
-            'payment_status' => [
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIALLY_PAID,
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::CREDIT_APPROVED,
-            ],
-        ];
-    }
-
-    /**
-     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
-     */
-    protected function hasEligiblePersonalQuotes(Carbon $startDate, int $quoteTypeId, array $filter): bool
-    {
-        return PersonalQuote::whereDate('policy_expiry_date', $startDate)
-            ->where('quote_type_id', $quoteTypeId)
-            ->whereNotIn('quote_status_id', $filter['quote_status'])
-            ->whereIn('payment_status_id', $filter['payment_status'])
-            ->exists();
-    }
-
-    /**
-     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
-     */
-    protected function hasEligibleBikeQuotesFromCar(Carbon $startDate, array $filter): bool
-    {
-        return CarQuote::whereDate('policy_expiry_date', $startDate)
-            ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
-            ->whereNotIn('quote_status_id', $filter['quote_status'])
-            ->whereIn('payment_status_id', $filter['payment_status'])
-            ->exists();
     }
 
     /**
@@ -208,7 +147,7 @@ class NonMotorCQFRenewalExecutionService
         }
     }
 
-    public function createLeadForLOB(QuoteTypes $quoteType, ?int $totalRecords = null): RenewalsUploadLeads
+    public function createRenewalUploadLeadsForLOB(QuoteTypes $quoteType, ?int $totalRecords = null): RenewalsUploadLeads
     {
         $shortCode = str_replace('-', '', $quoteType->shortCode());
 

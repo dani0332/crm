@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Jobs\CQF;
 
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\VehicleTypeEnum;
 use App\Models\CarQuote;
@@ -18,7 +16,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 
 class ProcessNonMotorCQFLOBJob implements ShouldQueue
@@ -28,23 +25,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
     public int $tries = 1;
     public int $timeout = 120;
 
-    /**
-     * @var array{quote_status: array<int>, payment_status: array<int>}
-     */
-    private const PAYMENT_AND_STATUS_FILTER = [
-        'quote_status' => [
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-            QuoteStatusEnum::CancellationPending,
-        ],
-        'payment_status' => [
-            PaymentStatusEnum::PAID,
-            PaymentStatusEnum::PARTIALLY_PAID,
-            PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-            PaymentStatusEnum::CREDIT_APPROVED,
-        ],
-    ];
+    public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal';
 
     public function __construct(
         public int $renewalsUploadLeadsId,
@@ -55,7 +36,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
     protected function lobBatchName(): string
     {
-        return 'Non Motor CQF Renewal - '.$this->quoteType->value;
+        return self::BATCH_NAME_PREFIX.' - '.$this->quoteType->value.' - '.now()->format(config('constants.DATE_FORMAT_ONLY'));
     }
 
     public function handle(): void
@@ -66,12 +47,11 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             return;
         }
 
-        $startDate = Carbon::parse($this->startDate);
         $quoteTypeId = (int) $this->quoteType->id();
-        $filter = self::PAYMENT_AND_STATUS_FILTER;
+        $filter = NonMotorCQFRegistry::eligibilityFilter();
         $quoteJobs = [];
 
-        $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $startDate)
+        $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $this->startDate)
             ->where('quote_type_id', $quoteTypeId)
             ->whereNotIn('quote_status_id', $filter['quote_status'])
             ->whereIn('payment_status_id', $filter['payment_status']);
@@ -87,7 +67,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         });
 
         if ($this->quoteType === QuoteTypes::BIKE) {
-            CarQuote::whereDate('policy_expiry_date', $startDate)
+            CarQuote::whereDate('policy_expiry_date', $this->startDate)
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
                 ->whereNotIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])

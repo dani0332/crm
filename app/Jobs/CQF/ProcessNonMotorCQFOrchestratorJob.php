@@ -20,7 +20,12 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public const BATCH_NAME = 'Non Motor CQF Renewal Batch';
+    /**
+     * Shared prefix for all batch names in the Non-motor CQF renewal pipeline.
+     * The orchestrator batch is suffixed with "- Orchestrator"; each per-LOB batch with "- {LOB}".
+     * See: ProcessNonMotorCQFLOBJob::lobBatchName()
+     */
+    public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal Orchestrator';
 
     public int $tries = 1;
     public int $timeout = 300;
@@ -28,45 +33,47 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {
         $renewalDaysThreshold = (int) getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD);
-        $startDate = Carbon::now()->addDays($renewalDaysThreshold);
+        $startDate = Carbon::now()->addDays($renewalDaysThreshold)->format(config('constants.DATE_FORMAT_ONLY'));
 
         LoggerService::info(self::class.' - Non-motor CQF renewal orchestrator started', [
-            'startDate' => $startDate->format('Y-m-d'),
+            'startDate' => $startDate,
             'renewalDaysThreshold' => $renewalDaysThreshold,
         ]);
 
         $lobJobs = [];
         foreach (NonMotorCQFRegistry::supportedLOBs() as $quoteType) {
-            if (! $executionService->hasEligibleQuotesForLOB($quoteType, $startDate)) {
+            $totalRecords = $executionService->getEligibleQuoteCountForLOB($quoteType, $startDate);
+
+            if ($totalRecords === 0) {
                 LoggerService::info(self::class.' - No eligible quotes for LOB', ['quoteType' => $quoteType->value]);
 
                 continue;
             }
 
-            $totalRecords = $executionService->getEligibleQuoteCountForLOB($quoteType, $startDate);
-            $lead = $executionService->createLeadForLOB($quoteType, $totalRecords);
+            $renewalUploadLeads = $executionService->createRenewalUploadLeadsForLOB($quoteType, $totalRecords);
             $lobJobs[] = new ProcessNonMotorCQFLOBJob(
-                $lead->id,
+                $renewalUploadLeads->id,
                 $quoteType,
-                $startDate->format('Y-m-d'),
+                $startDate,
                 $renewalDaysThreshold
             );
 
             LoggerService::info(self::class.' - Queued LOB job for batch', [
                 'quoteType' => $quoteType->value,
-                'renewalsUploadLeadsId' => $lead->id,
+                'renewalsUploadLeadsId' => $renewalUploadLeads->id,
             ]);
         }
 
         if (! empty($lobJobs) && count($lobJobs) > 0) {
+            $batchName = self::BATCH_NAME_PREFIX.' - '.now()->format('Y-m-d');
             Bus::batch($lobJobs)
-                ->name(self::BATCH_NAME)
+                ->name($batchName)
                 ->allowFailures()
                 ->onQueue('default')
                 ->dispatch();
 
             LoggerService::info(self::class.' - Dispatched batch', [
-                'batchName' => self::BATCH_NAME,
+                'batchName' => $batchName,
                 'jobCount' => count($lobJobs),
             ]);
         }
