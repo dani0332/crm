@@ -2,21 +2,19 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
 /**
  * UAE PASS digital signature: Emirates ID match vs policyholder / members.
  *
  * Persisted on health_quote_request.digital_signatory.
  */
-final class HealthQuoteDigitalSignatory extends Enum
+enum HealthQuoteDigitalSignatory: string
 {
+    case PolicyHolder = 'policy_holder';
+    case InsuredMember = 'insured_member';
+    case SomeoneElse = 'someone_else';
+
     /** IMCRM list filter: not persisted on health_quote_request. */
     public const FILTER_ALL = 'All';
-
-    public const POLICY_HOLDER = 'policy_holder';
-    public const INSURED_MEMBER = 'insured_member';
-    public const SOMEONE_ELSE = 'someone_else';
 
     /**
      * IMCRM filter / dropdown options (includes "All" — not persisted).
@@ -27,9 +25,9 @@ final class HealthQuoteDigitalSignatory extends Enum
     {
         return [
             ['value' => self::FILTER_ALL, 'label' => 'All'],
-            ['value' => self::POLICY_HOLDER, 'label' => 'Policy Holder'],
-            ['value' => self::INSURED_MEMBER, 'label' => 'Insured Member'],
-            ['value' => self::SOMEONE_ELSE, 'label' => 'Someone Else'],
+            ['value' => self::PolicyHolder->value, 'label' => 'Policy Holder'],
+            ['value' => self::InsuredMember->value, 'label' => 'Insured Member'],
+            ['value' => self::SomeoneElse->value, 'label' => 'Someone Else'],
         ];
     }
 
@@ -39,11 +37,16 @@ final class HealthQuoteDigitalSignatory extends Enum
             return '—';
         }
 
-        return match ($value) {
-            self::POLICY_HOLDER => 'Policy Holder',
-            self::INSURED_MEMBER => 'Insured Member',
-            self::SOMEONE_ELSE => 'Someone Else',
-            default => (string) $value,
+        $case = self::tryFrom($value);
+
+        if ($case === null) {
+            return $value;
+        }
+
+        return match ($case) {
+            self::PolicyHolder => 'Policy Holder',
+            self::InsuredMember => 'Insured Member',
+            self::SomeoneElse => 'Someone Else',
         };
     }
 
@@ -53,11 +56,6 @@ final class HealthQuoteDigitalSignatory extends Enum
             return false;
         }
 
-        $persisted = array_values(array_filter(
-            self::getValues(),
-            static fn (string $v): bool => $v !== self::FILTER_ALL
-        ));
-
-        return in_array($value, $persisted, true);
+        return self::tryFrom($value) !== null;
     }
 }
