@@ -220,11 +220,8 @@ class RateCoverageUploadService
                     $minAge = $rowAssoc['min_age'] ?? null;
                     $maxAge = $rowAssoc['max_age'] ?? null;
                     $premium = $rowAssoc['premium'] ?? null;
-                    $maritalStatus = $rowAssoc['marital_status'] ?? null;
                     $eligibilityCode = $rowAssoc['eligibility_code'] ?? null;
                     $copaymentCode = $rowAssoc['copayment_code'] ?? null;
-                    $gender = $rowAssoc['gender'] ?? null;
-                    $cohort = $rowAssoc['cohort'] ?? null;
 
                     // Throw error if any required value is empty
                     if (
@@ -267,20 +264,46 @@ class RateCoverageUploadService
                         throw new \Exception('All premiums values must be integers.');
                     }
 
-                    // Validate if gender is 'male' or 'female'
-                    $allowedGenders = ['male', 'female'];
-                    if ($gender && ! in_array(strtolower($gender), $allowedGenders, true)) {
-                        throw new \Exception('Gender value must be either "male" or "female".');
-                    }
-                    // Validate if marital status is 'single' or 'married'
-                    $allowedMaritalStatuses = ['single', 'married'];
-                    if ($maritalStatus && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
-                        throw new \Exception('Marital status value must be either "single" or "married".');
+                    // Validate gender based on plan gender enabled
+                    if ($plan->gender_enabled) {
+                        $gender = $rowAssoc['gender'] ?? null;
+                        if (empty($gender)) {
+                            throw new \Exception('Gender is required when plan gender is enabled.');
+                        }
+
+                        $allowedGenders = ['male', 'female'];
+                        if (! in_array(strtolower($gender), $allowedGenders, true)) {
+                            throw new \Exception('Gender value must be either "male" or "female".');
+                        }
                     }
 
-                    // Validate if cohort is in the list of all cohorts
-                    if ($cohort && ! in_array($cohort, $allCohorts, true)) {
-                        throw new \Exception('Invalid cohort value.');
+                    // Validate cohort based on plan cohort enabled
+                    if ($plan->cohort_enabled) {
+                        $gender = $rowAssoc['gender'] ?? null;
+                        if (empty($gender)) {
+                            throw new \Exception('Gender is required when plan gender is enabled.');
+                        }
+
+                        if (! in_array($cohort, $allCohorts, true)) {
+                            throw new \Exception('Invalid cohort value.');
+                        }
+                    }
+
+                    // Validate marital status based on plan marital status enabled
+                    if ($plan->marital_status_enabled && ! $plan->gender_enabled) {
+                        throw new \Exception('Gender must be enabled when marital status is enabled.');
+                    }
+
+                    if ($plan->marital_status_enabled) {
+                        $maritalStatus = $rowAssoc['marital_status'] ?? null;
+                        if (empty($maritalStatus)) {
+                            throw new \Exception('Marital status is required when marital status is enabled.');
+                        }
+
+                        $allowedMaritalStatuses = ['single', 'married'];
+                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
+                            throw new \Exception('Marital status value must be either "single" or "married".');
+                        }
                     }
 
                     // Validate if copayment code is in the list of all co payments
