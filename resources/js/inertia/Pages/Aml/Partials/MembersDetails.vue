@@ -240,19 +240,21 @@ const createOrUpdateMember = async (form, isUpdate) => {
 function onEditMember(member) {
   memberForm.clearErrors();
   isMemberFormEnabled.value = true;
-
   isMemberEditEnabled.value = true;
-  if (
-    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health &&
-    memberForm.is_third_party_payer == 1 &&
-    member?.is_third_party_payer == 0) {
-      isMemberEditEnabled.value = false;
+
+  if(page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual) {
+
+      // if edit member is policyholder then this will trigger add thirdparty payer api
+      if (memberForm.is_third_party_payer == 1 && member?.is_third_party_payer == 0) {
+        isMemberEditEnabled.value = false;
+      }
+
+      // thirdparty payer will not be insured
+      if(memberForm.is_third_party_payer == 1) {
+        memberForm.is_insured = 0;
+      }
   }
 
-  if(memberForm.is_third_party_payer == 1) {
-    memberForm.is_insured = 0;
-  }
-  
   memberForm.quote_type = page.props.quoteType.code;
   memberForm.quote_request_id = page.props.quoteRequest.id;
   memberForm.id = member.id;
