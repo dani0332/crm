@@ -9,7 +9,6 @@ namespace App\Enums;
  */
 enum HealthQuoteUaePassApiStatus: string
 {
-    case FILTER_ALL = 'All';
     case AuthenticationSuccess = 'AUTHENTICATION_SUCCESS';
     case AuthenticationCancelled = 'AUTHENTICATION_CANCELLED';
     case NotEligible = 'NOT_ELIGIBLE';
@@ -25,6 +24,10 @@ enum HealthQuoteUaePassApiStatus: string
      */
     public static function filterDropdown(): array
     {
+        $rows = [
+            ['value' => GenericRequestEnum::ALL, 'label' => 'All'],
+        ];
+
         foreach (self::cases() as $case) {
             $rows[] = ['value' => $case->value, 'label' => $case->uiLabel()];
         }
@@ -42,7 +45,6 @@ enum HealthQuoteUaePassApiStatus: string
             self::DocFailed => 'UAE PASS – Doc Failed',
             self::DocCancelled => 'UAE PASS – Doc Cancelled',
             self::DocsNotReceived => 'UAE PASS – Docs not Received',
-            self::FILTER_ALL => 'All',
         };
     }
 
@@ -63,7 +65,7 @@ enum HealthQuoteUaePassApiStatus: string
 
     public static function isStoredValue(?string $value): bool
     {
-        if ($value === null || $value === '' || $value === self::FILTER_ALL->value) {
+        if ($value === null || $value === '' || $value === GenericRequestEnum::ALL) {
             return false;
         }
 

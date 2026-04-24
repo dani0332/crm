@@ -13,9 +13,6 @@ enum HealthQuoteDigitalSignatory: string
     case InsuredMember = 'insured_member';
     case SomeoneElse = 'someone_else';
 
-    /** IMCRM list filter: not persisted on health_quote_request. */
-    public const FILTER_ALL = 'All';
-
     /**
      * IMCRM filter / dropdown options (includes "All" — not persisted).
      *
@@ -24,7 +21,7 @@ enum HealthQuoteDigitalSignatory: string
     public static function filterDropdown(): array
     {
         return [
-            ['value' => self::FILTER_ALL, 'label' => 'All'],
+            ['value' => GenericRequestEnum::ALL, 'label' => 'All'],
             ['value' => self::PolicyHolder->value, 'label' => 'Policy Holder'],
             ['value' => self::InsuredMember->value, 'label' => 'Insured Member'],
             ['value' => self::SomeoneElse->value, 'label' => 'Someone Else'],
@@ -52,7 +49,7 @@ enum HealthQuoteDigitalSignatory: string
 
     public static function isStoredValue(?string $value): bool
     {
-        if ($value === null || $value === '' || $value === self::FILTER_ALL) {
+        if ($value === null || $value === '' || $value === GenericRequestEnum::ALL) {
             return false;
         }
 
