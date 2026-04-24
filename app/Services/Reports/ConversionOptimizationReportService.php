@@ -567,12 +567,13 @@ class ConversionOptimizationReportService extends BaseService
             $row->sub_team_id = $metadata?->sub_team_id;
             $row->sub_team_name = $metadata?->sub_team_name;
             $row->original_max_capacity = isset($metadata?->max_capacity) ? (int) $metadata->max_capacity : null;
+            $row->current_cap = $row->original_max_capacity;
             $row->ranking = null;
             $row->team_average = null;
             $row->expected_sales = null;
             $row->required_sales = null;
             $row->new_conversion = null;
-            $row->cap_limit = null;
+            $row->suggested_cap = null;
             $row->total_average = null;
 
             return $row;
@@ -932,18 +933,18 @@ class ConversionOptimizationReportService extends BaseService
 
         foreach ($cappedRows as $row) {
             if ($worstRankedRow !== null && (int) $row->advisorId === (int) $worstRankedRow->advisorId) {
-                $row->cap_limit = 0;
+                $row->suggested_cap = 0;
 
                 continue;
             }
 
             if ($row->original_max_capacity === null || (int) $row->original_max_capacity <= 0) {
-                $row->cap_limit = null;
+                $row->suggested_cap = null;
 
                 continue;
             }
 
-            $row->cap_limit = $this->roundWithPointOneFractionBias(
+            $row->suggested_cap = $this->roundWithPointOneFractionBias(
                 ((int) $row->original_max_capacity * $capPercentage) / 100
             );
         }

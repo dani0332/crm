@@ -16,7 +16,8 @@ test('conversion optimization export headings omit batch columns', function (): 
         'Expected Sales',
         'Required Sales',
         'New Conversion %',
-        'Cap Limit',
+        'Current Cap',
+        'Suggested Cap',
     ]);
 });
 
@@ -32,7 +33,8 @@ test('conversion optimization export maps advisor-only rows', function (): void 
         'expected_sales' => 5.5,
         'required_sales' => 2.5,
         'new_conversion' => 45.83,
-        'cap_limit' => 7,
+        'current_cap' => 20,
+        'suggested_cap' => 7,
     ];
 
     expect($export->map($record))->toBe([
@@ -44,6 +46,7 @@ test('conversion optimization export maps advisor-only rows', function (): void 
         5.5,
         2.5,
         45.83,
+        20.0,
         7.0,
     ]);
 });

@@ -14,11 +14,8 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
     use ModernCsvExportable;
 
     private bool $footerRowsAlreadyWritten = false;
-
     private float $exportSumTotalLeads = 0.0;
-
     private float $exportSumSaleLeads = 0.0;
-
     private ?float $exportTeamAverage = null;
 
     public function __construct(
@@ -129,6 +126,7 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
             '',
             '',
             '',
+            '',
         ]);
     }
 
@@ -143,7 +141,8 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
             'Expected Sales',
             'Required Sales',
             'New Conversion %',
-            'Cap Limit',
+            'Current Cap',
+            'Suggested Cap',
         ];
     }
 
@@ -158,7 +157,8 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
             $this->resolveNumberFormat($record->expected_sales ?? ''),
             $this->resolveNumberFormat($record->required_sales ?? ''),
             $this->resolveNumberFormat($record->new_conversion ?? ''),
-            $this->resolveNumberFormat($record->cap_limit ?? ''),
+            $this->resolveNumberFormat($record->current_cap ?? ''),
+            $this->resolveNumberFormat($record->suggested_cap ?? ''),
         ];
     }
 }

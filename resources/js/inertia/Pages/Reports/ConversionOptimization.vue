@@ -70,7 +70,8 @@ const tableHeader = [
   { text: 'Expected Sales', value: 'expected_sales', sortable: true },
   { text: 'Required Sales', value: 'required_sales', sortable: true },
   { text: 'New Conversion %', value: 'new_conversion', sortable: true },
-  { text: 'Cap Limit', value: 'cap_limit', sortable: true },
+  { text: 'Current Cap', value: 'current_cap', sortable: true },
+  { text: 'Suggested Cap', value: 'suggested_cap', sortable: true },
 ];
 
 const getFiltersObject = () => ({
@@ -1081,8 +1082,12 @@ onMounted(async () => {
         <span>{{ formatValue(item.required_sales) }}</span>
       </template>
 
-      <template #item-cap_limit="item">
-        <span>{{ formatValue(item.cap_limit) }}</span>
+      <template #item-current_cap="item">
+        <span>{{ formatValue(item.current_cap) }}</span>
+      </template>
+
+      <template #item-suggested_cap="item">
+        <span>{{ formatValue(item.suggested_cap) }}</span>
       </template>
 
       <template #body-append>
@@ -1099,6 +1104,7 @@ onMounted(async () => {
           <td></td>
           <td class="direction-center"></td>
           <td class="direction-center"></td>
+          <td></td>
           <td></td>
           <td></td>
         </tr>

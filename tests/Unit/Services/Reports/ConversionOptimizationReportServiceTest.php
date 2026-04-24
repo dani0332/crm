@@ -66,39 +66,17 @@ test('it applies ranking averages projections and cap limits to a selected cohor
         ->and($result[6]->expected_sales)->toBe(55)
         ->and($result[6]->required_sales)->toBe(5)
         ->and($result[6]->new_conversion)->toBe(55)
-        ->and($result[9]->cap_limit)->toBe(7)
-        ->and($result[10]->cap_limit)->toBe(0)
+        ->and($result[9]->current_cap)->toBe(31)
+        ->and($result[9]->suggested_cap)->toBe(7)
+        ->and($result[10]->current_cap)->toBe(20)
+        ->and($result[10]->suggested_cap)->toBe(0)
         ->and($result[1]->total_average)->toBe(55.0)
         ->and($result[10]->total_average)->toBe(55.0);
 });
 
 test('it ranks the full filtered dataset as a single cohort when no team filters are selected', function () {
-    $service = new class(collect([
-        1 => (object) [
-            'id' => 1,
-            'team_id' => 11,
-            'team_name' => 'Organic',
-            'sub_team_id' => 101,
-            'sub_team_name' => 'Value',
-            'max_capacity' => 20,
-        ],
-        2 => (object) [
-            'id' => 2,
-            'team_id' => 11,
-            'team_name' => 'Organic',
-            'sub_team_id' => 101,
-            'sub_team_name' => 'Value',
-            'max_capacity' => 20,
-        ],
-        3 => (object) [
-            'id' => 3,
-            'team_id' => null,
-            'team_name' => null,
-            'sub_team_id' => null,
-            'sub_team_name' => null,
-            'max_capacity' => 20,
-        ],
-    ])) extends ConversionOptimizationReportService {
+    $service = new class(collect([1 => (object) ['id' => 1, 'team_id' => 11, 'team_name' => 'Organic', 'sub_team_id' => 101, 'sub_team_name' => 'Value', 'max_capacity' => 20], 2 => (object) ['id' => 2, 'team_id' => 11, 'team_name' => 'Organic', 'sub_team_id' => 101, 'sub_team_name' => 'Value', 'max_capacity' => 20], 3 => (object) ['id' => 3, 'team_id' => null, 'team_name' => null, 'sub_team_id' => null, 'sub_team_name' => null, 'max_capacity' => 20]])) extends ConversionOptimizationReportService
+    {
         public function __construct(private Collection $advisorMetadata)
         {
             parent::__construct();
@@ -155,32 +133,8 @@ test('it ranks the full filtered dataset as a single cohort when no team filters
 });
 
 test('it returns rows sorted by conversion descending so ranking matches row order', function () {
-    $service = new class(collect([
-        1 => (object) [
-            'id' => 1,
-            'team_id' => 11,
-            'team_name' => 'Organic',
-            'sub_team_id' => null,
-            'sub_team_name' => null,
-            'max_capacity' => 20,
-        ],
-        2 => (object) [
-            'id' => 2,
-            'team_id' => 11,
-            'team_name' => 'Organic',
-            'sub_team_id' => null,
-            'sub_team_name' => null,
-            'max_capacity' => 20,
-        ],
-        3 => (object) [
-            'id' => 3,
-            'team_id' => 11,
-            'team_name' => 'Organic',
-            'sub_team_id' => null,
-            'sub_team_name' => null,
-            'max_capacity' => 20,
-        ],
-    ])) extends ConversionOptimizationReportService {
+    $service = new class(collect([1 => (object) ['id' => 1, 'team_id' => 11, 'team_name' => 'Organic', 'sub_team_id' => null, 'sub_team_name' => null, 'max_capacity' => 20], 2 => (object) ['id' => 2, 'team_id' => 11, 'team_name' => 'Organic', 'sub_team_id' => null, 'sub_team_name' => null, 'max_capacity' => 20], 3 => (object) ['id' => 3, 'team_id' => 11, 'team_name' => 'Organic', 'sub_team_id' => null, 'sub_team_name' => null, 'max_capacity' => 20]])) extends ConversionOptimizationReportService
+    {
         public function __construct(private Collection $advisorMetadata)
         {
             parent::__construct();
