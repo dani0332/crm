@@ -14,11 +14,13 @@ use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Throwable;
 
 class CarRevivalFollowUpEmailJob implements ShouldQueue
 {
@@ -100,7 +102,17 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             return;
         }
 
-        $this->sendFollowUpEmail($this->emailData, $lead);
+        try {
+            $this->sendFollowUpEmail($this->emailData, $lead);
+        } catch (Exception $exception) {
+            LoggerService::warning(self::class.': exception in handle', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevivalId,
+                'child_quote_uuid' => $this->dttRevival?->uuid,
+                'exception_class' => $exception::class,
+                'exception_message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
@@ -130,5 +142,18 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 'response_code' => $response->status_code,
             ]);
         }
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        $childQuoteUuid = DttRevival::query()->whereKey($this->dttRevivalId)->value('uuid');
+
+        LoggerService::warning(self::class.': job failed after max tries', [
+            'flow' => self::LOG_FLOW,
+            'dtt_revival_id' => $this->dttRevivalId,
+            'child_quote_uuid' => $childQuoteUuid,
+            'exception_class' => $exception::class,
+            'exception_message' => $exception->getMessage(),
+        ]);
     }
 }
