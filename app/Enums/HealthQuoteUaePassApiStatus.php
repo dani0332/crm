@@ -48,6 +48,7 @@ enum HealthQuoteUaePassApiStatus: string
             self::DocFailed => 'UAE PASS – Doc Failed',
             self::DocCancelled => 'UAE PASS – Doc Cancelled',
             self::DocsNotReceived => 'UAE PASS – Docs not Received',
+            self::FILTER_ALL => 'All',
         };
     }
 
