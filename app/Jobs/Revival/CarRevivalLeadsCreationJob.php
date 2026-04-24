@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -168,7 +169,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 }
 
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
-                $emailData->workflowType = QuoteFlowType::MOTOR_REVIVAL_OCB->value;
+                $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_OCB;
                 // Shifted to Bird Workflow, previous it was using Brevo
                 $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
@@ -208,7 +209,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                             'child_quote_uuid' => $revivalCarQuoteUUID,
                         ]);
                     } else {
-                        $emailData->workflowType = QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value;
+                        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
 
                         CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
 
