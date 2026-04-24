@@ -144,7 +144,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
             HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
-            HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status ?? null),
+            HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
         ];
     }
 

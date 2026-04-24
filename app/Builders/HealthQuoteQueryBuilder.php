@@ -266,7 +266,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         }
 
         $uaePassApiStatus = $this->getFilterValue('uae_pass_api_status', $requestParams);
-        if ($uaePassApiStatus && $uaePassApiStatus !== HealthQuoteUaePassApiStatus::FILTER_ALL && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
+        if ($uaePassApiStatus && $uaePassApiStatus !== HealthQuoteUaePassApiStatus::FILTER_ALL->value && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
             $query->where('uae_pass_api_status', $uaePassApiStatus);
         }
     }

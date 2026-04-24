@@ -2,43 +2,23 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
 /**
  * UAE PASS reporting status for IMCRM Health (labels align with product wording).
  *
  * Persisted on health_quote_request.uae_pass_api_status (snake_case values below).
  */
-final class HealthQuoteUaePassApiStatus extends Enum
+enum HealthQuoteUaePassApiStatus: string
 {
+    case AuthenticationSuccess = 'AUTHENTICATION_SUCCESS';
+    case AuthenticationCancelled = 'AUTHENTICATION_CANCELLED';
+    case NotEligible = 'NOT_ELIGIBLE';
+    case DocSigned = 'DOC_SIGNED';
+    case DocFailed = 'DOC_FAILED';
+    case DocCancelled = 'DOC_CANCELLED';
+    case DocsNotReceived = 'DOCS_NOT_RECEIVED';
+
     /** IMCRM list filter: not persisted on health_quote_request. */
-    public const FILTER_ALL = 'All';
-
-    public const AUTHENTICATION_SUCCESS = 'AUTHENTICATION_SUCCESS';
-    public const AUTHENTICATION_CANCELLED = 'AUTHENTICATION_CANCELLED';
-    public const NOT_ELIGIBLE = 'NOT_ELIGIBLE';
-    public const DOC_SIGNED = 'DOC_SIGNED';
-    public const DOC_FAILED = 'DOC_FAILED';
-    public const DOC_CANCELLED = 'DOC_CANCELLED';
-    public const DOCS_NOT_RECEIVED = 'DOCS_NOT_RECEIVED';
-
-    /**
-     * Stored value => IMCRM / export label (not a BenSampo enum constant — avoids array in getValues()).
-     *
-     * @return array<string, string>
-     */
-    private static function labels(): array
-    {
-        return [
-            self::AUTHENTICATION_SUCCESS => 'UAE PASS – Authentication Success',
-            self::AUTHENTICATION_CANCELLED => 'UAE PASS – Authentication Cancelled',
-            self::NOT_ELIGIBLE => 'UAE PASS – Not Eligible',
-            self::DOC_SIGNED => 'UAE PASS – Doc Signed',
-            self::DOC_FAILED => 'UAE PASS – Doc Failed',
-            self::DOC_CANCELLED => 'UAE PASS – Doc Cancelled',
-            self::DOCS_NOT_RECEIVED => 'UAE PASS – Docs not Received',
-        ];
-    }
+    case FILTER_ALL = 'All';
 
     /**
      * IMCRM filter / dropdown (includes "All" — not persisted).
@@ -51,11 +31,24 @@ final class HealthQuoteUaePassApiStatus extends Enum
             ['value' => self::FILTER_ALL, 'label' => 'All'],
         ];
 
-        foreach (self::labels() as $value => $label) {
-            $rows[] = ['value' => $value, 'label' => $label];
+        foreach (self::cases() as $case) {
+            $rows[] = ['value' => $case->value, 'label' => $case->uiLabel()];
         }
 
         return $rows;
+    }
+
+    public function uiLabel(): string
+    {
+        return match ($this) {
+            self::AuthenticationSuccess => 'UAE PASS – Authentication Success',
+            self::AuthenticationCancelled => 'UAE PASS – Authentication Cancelled',
+            self::NotEligible => 'UAE PASS – Not Eligible',
+            self::DocSigned => 'UAE PASS – Doc Signed',
+            self::DocFailed => 'UAE PASS – Doc Failed',
+            self::DocCancelled => 'UAE PASS – Doc Cancelled',
+            self::DocsNotReceived => 'UAE PASS – Docs not Received',
+        };
     }
 
     public static function displayLabel(?string $value): string
@@ -64,7 +57,13 @@ final class HealthQuoteUaePassApiStatus extends Enum
             return '—';
         }
 
-        return self::labels()[$value] ?? (string) $value;
+        $case = self::tryFrom($value);
+
+        if ($case === null) {
+            return $value;
+        }
+
+        return $case->uiLabel();
     }
 
     public static function isStoredValue(?string $value): bool
@@ -73,11 +72,6 @@ final class HealthQuoteUaePassApiStatus extends Enum
             return false;
         }
 
-        $persisted = array_values(array_filter(
-            self::getValues(),
-            static fn (string $v): bool => $v !== self::FILTER_ALL
-        ));
-
-        return in_array($value, $persisted, true);
+        return self::tryFrom($value) !== null;
     }
 }
