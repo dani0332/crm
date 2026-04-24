@@ -44,6 +44,17 @@ final class UaeSigningPassLogsPresenter
     private function loadMysqlLogs(string $quoteUuid, int $quoteTypeId): Collection
     {
         $q = UaePassLog::query()
+            ->select([
+                'id',
+                'api_name',
+                'status',
+                'created_at',
+                'updated_at',
+                'response_status',
+                'proof_of_presentation_id',
+                'request_payload',
+                'response_payload',
+            ])
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
             ->orderByDesc('created_at');
@@ -58,7 +69,17 @@ final class UaeSigningPassLogsPresenter
 
     private function loadMongoLogs(string $quoteUuid, int $quoteTypeId): Collection
     {
-        $q = UaeSigningPassLog::query();
+        $q = UaeSigningPassLog::query()
+            ->select([
+                '_id',
+                'functionName',
+                'status',
+                'createdAt',
+                'updatedAt',
+                'proofOfPresentationId',
+                'req',
+                'resp',
+            ]);
 
         self::applyMongoQuoteScope($q, $quoteUuid, $quoteTypeId);
 
