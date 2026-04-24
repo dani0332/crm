@@ -32,9 +32,6 @@ class NonMotorCQFRenewalExecutionService
     ) {}
 
     /**
-     * Whether there is eligible work for this LOB (used by orchestrator job).
-     */
-    /**
      * Count of eligible quotes for this LOB (personal + car for Bike). Used to set total_records on lead creation.
      */
     public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, string $startDate): int
