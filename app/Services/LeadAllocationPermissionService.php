@@ -65,12 +65,12 @@ class LeadAllocationPermissionService
     {
         $query = LeadAllocation::query()->with(['leadAllocationUser']);
 
-        if ($request->filled('leadId')) {
+        if ($request->filled('laId')) {
+            $query->where('id', $request->laId);
+        } elseif ($request->filled('leadId')) {
             $query->where('id', $request->leadId);
         } elseif ($request->filled('userId')) {
             $query->where('user_id', $request->userId);
-        } elseif ($request->filled('laId')) {
-            $query->where('id', $request->laId);
         } else {
             abort(403, 'Unauthorized action.');
         }
