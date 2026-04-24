@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EmirateTypeEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
@@ -220,19 +221,18 @@ class RateCoverageUploadService
                     $minAge = $rowAssoc['min_age'] ?? null;
                     $maxAge = $rowAssoc['max_age'] ?? null;
                     $premium = $rowAssoc['premium'] ?? null;
-                    $eligibilityCode = $rowAssoc['eligibility_code'] ?? null;
                     $copaymentCode = $rowAssoc['copayment_code'] ?? null;
-
+                    $emirateType = $rowAssoc['emirate_type'] ?? null;
                     // Throw error if any required value is empty
                     if (
                         empty($planCode) ||
                         empty($minAge) ||
                         empty($maxAge) ||
                         empty($premium) ||
-                        empty($eligibilityCode) ||
-                        empty($copaymentCode)
+                        empty($copaymentCode) ||
+                        empty($emirateType)
                     ) {
-                        throw new \Exception("All fields (plan_code, min_age, max_age, premium, marital_status, eligibility_code, copayment_code) are required. Please check row {$i}");
+                        throw new \Exception("All fields (plan_code, min_age, max_age, premium, copayment_code, emirate_type) are required. Please check row {$i}");
                     }
 
                     // Validate plan code is the same as the first plan code
@@ -279,9 +279,9 @@ class RateCoverageUploadService
 
                     // Validate cohort based on plan cohort enabled
                     if ($plan->cohort_enabled) {
-                        $gender = $rowAssoc['gender'] ?? null;
+                        $cohort = $rowAssoc['cohort'] ?? null;
                         if (empty($gender)) {
-                            throw new \Exception('Gender is required when plan gender is enabled.');
+                            throw new \Exception('Cohort is required when plan cohort is enabled.');
                         }
 
                         if (! in_array($cohort, $allCohorts, true)) {
@@ -290,11 +290,13 @@ class RateCoverageUploadService
                     }
 
                     // Validate marital status based on plan marital status enabled
-                    if ($plan->marital_status_enabled && ! $plan->gender_enabled) {
-                        throw new \Exception('Gender must be enabled when marital status is enabled.');
-                    }
-
                     if ($plan->marital_status_enabled) {
+
+                        // Plan gender must be enabled if marital status is enabled, other throw error
+                        if (! $plan->gender_enabled) {
+                            throw new \Exception('Gender must be enabled when marital status is enabled.');
+                        }
+
                         $maritalStatus = $rowAssoc['marital_status'] ?? null;
                         if (empty($maritalStatus)) {
                             throw new \Exception('Marital status is required when marital status is enabled.');
@@ -310,11 +312,17 @@ class RateCoverageUploadService
                     if ($copaymentCode && ! in_array($copaymentCode, $allCoPayments, true)) {
                         throw new \Exception('Invalid copayment code value.');
                     }
+
+                    // Validate emirate type
+                    if (! in_array($emirateType, EmirateTypeEnum::labels(), true)) {
+                        throw new \Exception('Invalid emirate type value.');
+                    }
                 }
             } else {
                 throw new \Exception('No data found in the file.');
             }
         }
+        exit;
         // Upload file (health rate control)
         $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
     }
