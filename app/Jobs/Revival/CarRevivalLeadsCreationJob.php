@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\QuoteBatches;
 use App\Services\BirdService;
+use App\Services\CarRevivalService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
@@ -186,6 +187,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 }
 
                 if (in_array($response->status_code, [201, 200])) {
+                    app(CarRevivalService::class)->markRevivalCommsTriggered($revivalCarQuoteUUID);
+
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
 
@@ -225,7 +228,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                         'flow' => self::LOG_FLOW,
                         'parent_lead_uuid' => $this->lead->uuid,
                         'child_quote_uuid' => $revivalCarQuoteUUID,
-                        'response_code' => $response,
+                        'response_code' => $response->status_code,
                     ]);
                 }
             }
