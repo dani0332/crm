@@ -10,19 +10,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendAlfredCoinsInsurancePurchasedWebhook implements ShouldQueue
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct(
-        private readonly AlfredCoinsWebhookService $alfredCoinsWebhookService
-    ) {}
-
-    /**
-     * Handle the event.
-     */
     public function handle(QuotePolicyBooked $event): void
     {
-        $this->alfredCoinsWebhookService->sendInsuranceMarketWebhook(
+        app(AlfredCoinsWebhookService::class)->sendInsuranceMarketWebhook(
             $event->quoteUID,
             $event->quoteTypeId
         );

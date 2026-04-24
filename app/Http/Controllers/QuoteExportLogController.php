@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\QuoteExportLogRequest;
 use App\Services\QuoteExportLogService;
+use Illuminate\Http\JsonResponse;
 
 class QuoteExportLogController extends Controller
 {
@@ -17,7 +18,7 @@ class QuoteExportLogController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(QuoteExportLogRequest $request)
     {
