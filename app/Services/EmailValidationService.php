@@ -11,7 +11,7 @@ class EmailValidationService
      * noise, quotes, brackets). Stripped from both ends only — never from the
      * middle — so local parts like user&name@ or user*name@ stay intact.
      */
-    private const LEADING_TRAILING_JUNK = " \t\n\r\0\x0B%*^&'\"<>[](){}|~,;`\\/#?$!=";
+    private const LEADING_TRAILING_JUNK = " \t\n\r\0\x0B\"<>[](){},;\\";
 
     /**
      * Characters removed from anywhere in the string (invisible controls, bidi,

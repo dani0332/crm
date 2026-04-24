@@ -33,16 +33,29 @@ it('trims leading and trailing whitespace from a valid address', function (): vo
 it('trims common wrapper characters from both ends without touching the local part', function (string $dirty, string $expected): void {
     expect(EmailValidationService::sanitize($dirty))->toBe($expected);
 })->with([
-    'percent wildcards' => ['%zeeshan232@gmail.com%', 'zeeshan232@gmail.com'],
-    'asterisk' => ['*user@example.com*', 'user@example.com'],
-    'caret' => ['^user@example.com^', 'user@example.com'],
-    'ampersand' => ['&user@example.com&', 'user@example.com'],
     'double quotes' => ['"user@example.com"', 'user@example.com'],
     'angle brackets' => ['<user@example.com>', 'user@example.com'],
     'parentheses' => ['(user@example.com)', 'user@example.com'],
     'square brackets' => ['[user@example.com]', 'user@example.com'],
-    'pipe' => ['|user@example.com|', 'user@example.com'],
     'comma list fragment' => [',user@example.com,', 'user@example.com'],
+]);
+
+it('does not silently alter valid emails by stripping valid RFC 5322 characters from the ends', function (string $email): void {
+    expect(EmailValidationService::sanitize($email))->toBe($email);
+})->with([
+    'leading dollar sign' => ['$admin@example.com'],
+    'trailing exclamation' => ['user!@example.com'],
+    'leading hash' => ['#channel@example.com'],
+]);
+
+it('returns null for invalid addresses with junk characters that are no longer auto-stripped', function (string $invalid): void {
+    expect(EmailValidationService::sanitize($invalid))->toBeNull();
+})->with([
+    'percent wildcards' => ['%zeeshan232@gmail.com%'],
+    'asterisk' => ['*user@example.com*'],
+    'caret' => ['^user@example.com^'],
+    'ampersand' => ['&user@example.com&'],
+    'pipe' => ['|user@example.com|'],
 ]);
 
 // ── RFC 5322 special characters in the local part ────────────────────────────
