@@ -756,10 +756,10 @@ _Note: These updates should not affect existing functionalities and should integ
        4. No OCB email should be sent at this point
 5.  Link the renewal_upload lead to the previous lead booked 1. Once a renewal lead is created, the section displaying last year's policy details should be activated.
     ![](https://t2197982.p.clickup-attachments.com/t2197982/8a4a71b2-9ad8-47c9-ac38-d963bf820653/image.png)
-6.             1. Add the previous Ref ID as a hyperlink and ensure that clicking the Ref ID opens the old lead in a new tab to ensure that the user will be able to access the previous lead to see details and documents from the previous year
+6.              1. Add the previous Ref ID as a hyperlink and ensure that clicking the Ref ID opens the old lead in a new tab to ensure that the user will be able to access the previous lead to see details and documents from the previous year
 7.  Under "Uploaded Leads" in the renewals module, the Renewal Manager should continue to see how many leads are created and it's status 1. In case of bad data, the Renewal Manager should be able to export and reupload the file using the existing upload and create functionality as per the existing behavior
     ![](https://t2197982.p.clickup-attachments.com/t2197982/8f086037-c423-4b29-b375-e9dc8eab49e3/image.png)
-8.             1. Under the "Search" in the renewal module, the Renewal Manager should be able to search for all renewal\_upload leads created within a selected policy expiry date range and export the search results if needed to ensure that the leads created are complete.
+8.              1. Under the "Search" in the renewal module, the Renewal Manager should be able to search for all renewal\_upload leads created within a selected policy expiry date range and export the search results if needed to ensure that the leads created are complete.
 
 # F.1.0 Automation - Upload & Update data
 
@@ -1154,7 +1154,7 @@ As a renewals manager, I want to be able to view the uploaded batches so that I 
 1.  Against each uploaded Renewal Batch, Renewals Manager will have the option to Fetch Plans and Send Emails
 2.  When Fetch Plans against an entry is selected, plans for each lead are fetched with the help of APIs and rating tables.
 3.  Plans fetched and sent to customers should have the Renewal Plan for the existing policy displayed.
-    1.             1. 2 scenarios come into play here: Renewal policies with Premium available and Renewal policies with No Premium available
+    1.              1. 2 scenarios come into play here: Renewal policies with Premium available and Renewal policies with No Premium available
         2. The sole difference in the OCB templates for the scenarios mentioned is the distinction between the "Buy Now" and "Under Review" actions.
 4.  After plans are fetched, Manager can send them to the customer. This will be sent to them as a reminder mail (OCB).
     1. When OCB mail is sent to the customer, the assigned advisor will also be CC'd on it.
@@ -1629,7 +1629,7 @@ As IM, **automatically pick the renewal leads from existing leads 320 days befor
 
 **Requirements:**
 
-1.             1.     1. Marked 'Yes': Copy the data for the new renewal leads.
+1.              1.     1. Marked 'Yes': Copy the data for the new renewal leads.
         2. Marked 'No': Don't copy
             1. Marked 'If available, yes': Copy the data only if the data is available.
 
@@ -1670,7 +1670,7 @@ _Transfer member details only if the member details are provided in the lead._
 
 **Requirements:**
 
-1.             1.     1. Marked 'Yes': Copy the data for the new renewal leads.
+1.              1.     1. Marked 'Yes': Copy the data for the new renewal leads.
         2. Marked 'No': Don't copy
         3. Marked 'If available, yes': Copy the data only if the data is available.
         4. Auto generate: The system should **_autogenerate the Ref ID._**
@@ -1725,7 +1725,7 @@ As IM, the system should automatically generate and send an OCB (one-click buy) 
 | **Listing quotes**                                                                                                                                                                                                                                                                | Based on the client's enquiry show a maximum of 5 quotes.                                                                                                                                                                                     |
 | **Client Replies**                                                                                                                                                                                                                                                                | Advisors should receive reply emails when the client responds to the OCB email.                                                                                                                                                               |
 
-1.             1. **If there is one plan available**
+1.              1. **If there is one plan available**
 
 | **OCB Email- With Advisor**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -1737,7 +1737,7 @@ As IM, the system should automatically generate and send an OCB (one-click buy) 
 | Email Content:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Dear \[Client's Name\],<br><br>We hope this message finds you well.<br>As your dedicated advisor, I wanted to remind you that your travel insurance policy is up for renewal soon for:<br><br>Plan type: Annual multi-trip<br>Plan expiry: {dd/mmm/yyyy}<br><br>We have prepared personalised renewal quote for you.<br><br>**\[Quote 1\]**<br><br>We look forward having you covered throughout your amazing journeys!<br>We appreciate having you as our valued client and look forward to always remaining of service to you.<br><br>Feel free to reach out via Call, WhatsApp, or Email.<br><br>Best regards,<br>\[Advisor’s Name\]<br>\[Mobile number\] | \[Email Address\]<br>\[Happiness center\]                                                                |
 
-1.             1. **If there are multiple plans available**
+1.              1. **If there are multiple plans available**
 
 | **OCB Email- With Advisor**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -1749,7 +1749,7 @@ As IM, the system should automatically generate and send an OCB (one-click buy) 
 | Email Content:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Dear \[Client's Name\],<br><br>We hope this message finds you well.<br>As your dedicated advisor, I wanted to remind you that your travel insurance policy is up for renewal soon for:<br><br>Plan type: Annual multi-trip<br>Plan expiry: {dd/mmm/yyyy}<br><br>We have prepared personalised renewal quotes for you.<br><br>**\[Quote 1\] ; \[Quote 2\] ; \[Quote 3\] ;**<br>**\[Quote 4\] ; \[Quote 5\]; \[Quote 6\]**<br><br>**\[See all your quotes\]**<br><br>We look forward having you covered throughout your amazing journeys!<br>We appreciate having you as our valued client and look forward to always remaining of service to you.<br><br>Feel free to reach out via Call, WhatsApp, or Email.<br><br>Best regards,<br>\[Advisor’s Name\]<br>\[Mobile number\] | \[Email Address\]<br>\[Happiness center\]                                                                |
 
-1.             1. **For two travellers with 0-64 and 65 and above**
+1.              1. **For two travellers with 0-64 and 65 and above**
 
 | **OCB Email- With Advisor**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -1863,7 +1863,7 @@ As IM, I want quotes to be generated for renewal leads considering regions cover
 
 1.  Use Travel regions field to map to country/ destination and generate quote.
     Refer to the sheets below for mapping
-1.             1. [https://docs.google.com/spreadsheets/d/1SjDxlKb-E2b5JXw7IVFoAFvrD44svzEFeyeGZDdBjRo/edit?gid=1307441973#gid=1307441973](https://docs.google.com/spreadsheets/d/1SjDxlKb-E2b5JXw7IVFoAFvrD44svzEFeyeGZDdBjRo/edit?gid=1307441973#gid=1307441973)
+1.              1. [https://docs.google.com/spreadsheets/d/1SjDxlKb-E2b5JXw7IVFoAFvrD44svzEFeyeGZDdBjRo/edit?gid=1307441973#gid=1307441973](https://docs.google.com/spreadsheets/d/1SjDxlKb-E2b5JXw7IVFoAFvrD44svzEFeyeGZDdBjRo/edit?gid=1307441973#gid=1307441973)
     2. [https://docs.google.com/spreadsheets/d/18vxg_W-QtzGwoHUNHiDacPXE-WzcY58VWwZVNF8I_HA/edit?gid=998153355#gid=998153355](https://docs.google.com/spreadsheets/d/18vxg_W-QtzGwoHUNHiDacPXE-WzcY58VWwZVNF8I_HA/edit?gid=998153355#gid=998153355)
 
 Example - The below lead shows the Travel region as Schengen Countries. This should be used to map to Travel countries provided in the table and generate quotes accordingly depending on the insurer.
@@ -1954,23 +1954,23 @@ As a Renewals Manager, I want to ensure that I will be able to upload commercial
     2. This should be both applicable whether the SIC toggle is on or off.
 2.  **Email Content Adjustments:** 1. **Content:** Keep the existing renewal OCB email and follow-up email content unchanged. 2. **Dynamic Fields:** Ensure the following fields are dynamically populated in the email: 1. Client's name
     ![](https://t2197982.p.clickup-attachments.com/t2197982/61218d55-881e-40d9-9f11-3c31efb680c5/image.png)
-3.             1.     1. Advisor's name
+3.              1.     1. Advisor's name
     ![](https://t2197982.p.clickup-attachments.com/t2197982/367b5077-8951-4654-811a-3e89e1510468/image.png)
-4.             1.     1. Vehicle
+4.              1.     1. Vehicle
             2. Current insurer
             3. Policy number
             4. Renewal due date
     ![](https://t2197982.p.clickup-attachments.com/t2197982/1c9a7731-0765-4b93-b8e3-a541076291fc/image.png)
-5.             1.     1. Advisor card details
+5.              1.     1. Advisor card details
     ![](https://t2197982.p.clickup-attachments.com/t2197982/4bb88c1c-2a13-46ce-a2a3-fcdd6e09bfcb/image.png)
-6.             1.     1. Signature
+6.              1.     1. Signature
     ![](https://t2197982.p.clickup-attachments.com/t2197982/e47efa5b-e27d-4bc2-8654-cd133e0ce277/image.png)
-7.             1. Update the email header (Your Company Car Insurance Renewal) and image (shown below)[](https://app.clickup.com/2197982/docs/232ey-34384/232ey-182058?block=block-1fc60f3e-9f15-4492-9a3d-98c65a29a269)
+7.              1. Update the email header (Your Company Car Insurance Renewal) and image (shown below)[](https://app.clickup.com/2197982/docs/232ey-34384/232ey-182058?block=block-1fc60f3e-9f15-4492-9a3d-98c65a29a269)
 
 ![](https://t2197982.p.clickup-attachments.com/t2197982/095824cf-fc96-4011-9ea4-3b6179272551/image%20-%202024-12-21T130632.200.png)
 
 3.  **Standard Flow:**
-1.             1. If **Registration Type = Personal**, continue with the existing flow without changes and the existing retail APIs should run to generate car quotes.
+1.              1. If **Registration Type = Personal**, continue with the existing flow without changes and the existing retail APIs should run to generate car quotes.
 
 [https://docs.google.com/spreadsheets/d/1OSYVIEoxj7vr-FumZZBVzY2Xj18I4VDAAKKQGl8LEVo/edit?gid=0#gid=0](https://docs.google.com/spreadsheets/d/1OSYVIEoxj7vr-FumZZBVzY2Xj18I4VDAAKKQGl8LEVo/edit?gid=0#gid=0)
 
@@ -2290,7 +2290,7 @@ This FRD extends existing renewal capabilities to the Bike line of business unde
     ![](https://t2197982.p.clickup-attachments.com/t2197982/9dd13cf7-cf69-4f86-b6dc-375f605961a5/image.png)
 4.  For Non-Motor Batches, if the Line of Business (LOB) is Bike, display a **Send Emails** button.
     ![](https://t2197982.p.clickup-attachments.com/t2197982/06de8008-330f-44c6-a82e-f023285c6ee5/image.png)
-5.             1. Upon clicking **Send Emails**:
+5.              1. Upon clicking **Send Emails**:
             1. Open a new page showing **Email Batch Details**.
             2. Any email failures from this batch can be **retriggered** from this page.
     ![](https://t2197982.p.clickup-attachments.com/t2197982/9e186220-0688-4e19-aeb9-ca48bec13df2/image.png)
