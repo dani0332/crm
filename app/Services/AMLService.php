@@ -1640,7 +1640,7 @@ class AMLService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             if ($isEntity) {
-                $this->updateHealthEntityData($quote, $request);
+                app(HealthQuoteService::class)->updateHealthEntityData($quote, $request);
             }
 
             app(HealthQuoteRevampMigrationService::class)->dispatchForNonEntityLead(
@@ -1744,20 +1744,6 @@ class AMLService
         }
 
         return $getPersonalQuote;
-    }
-
-    private function updateHealthEntityData($quote, $request)
-    {
-        if (! $quote) {
-            LoggerService::info('Quote not found', extra: [
-                'function' => __FUNCTION__,
-            ]);
-
-            return;
-        }
-
-        $quote->emirate_of_your_visa_id = $request->emirate_of_registration_id;
-        $quote->save();
     }
 
     public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool

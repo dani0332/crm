@@ -512,6 +512,17 @@ function preprocessFormData() {
 
     quoteForm.member_category_id = null;
   }
+
+  if (!isCustomerTypeIndividual.value) {
+    quoteForm.policy_holder_category_code = null;
+    quoteForm.member_category_id = null;
+    quoteForm.visa_category_id = null;
+    quoteForm.salary_band_id = null;
+    quoteForm.gender = null;
+    quoteForm.marital_status_id = null;
+    quoteForm.insure_code = null;
+    quoteForm.policy_holder_code = null;
+  }
 }
 
 function onSubmit(isValid) {
@@ -855,7 +866,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
-                  v-if='isIndividualAndFamilies'
+                  v-if='isIndividualAndFamilies && isCustomerTypeIndividual'
                   :model-value="quoteForm.health_insure_code"
                   :rules="[isRequired]"
                   :options="
@@ -872,7 +883,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
-                  v-if='isIndividualAndFamilies'
+                  v-if='isIndividualAndFamilies && isCustomerTypeIndividual'
                   :model-value="quoteForm.policy_holder_code"
                   :rules="[isRequired]"
                   :options="
@@ -899,7 +910,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
       <x-accordion show-icon>
           <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Policyholder Details
+              Policyholder Details ({{ isCustomerTypeIndividual ? customerTypeEnum.Individual : customerTypeEnum.Entity }})
             </h3>
             <template #content>
               <x-divider class="mb-4 mt-1" />
@@ -927,7 +938,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
-                  v-if='!showMemberCategoryField'
+                  v-if='isCustomerTypeIndividual && !showMemberCategoryField'
                   v-model="quoteForm.policy_holder_category_code"
                   :rules="[isRequired]"
                   :options="
@@ -942,7 +953,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
-                  v-if='showMemberCategoryField'
+                  v-if='isCustomerTypeIndividual && showMemberCategoryField'
                   v-model="quoteForm.member_category_id"
                   :rules="[isRequired]"
                   :options="memberCategoriesOptions"
@@ -952,6 +963,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
+                  v-if='isCustomerTypeIndividual'
                   v-model="quoteForm.visa_category_id"
                   :rules="[isRequired]"
                   :options="
@@ -968,6 +980,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
+                  v-if='isCustomerTypeIndividual'
                   v-model="quoteForm.salary_band_id"
                   :options="salaryBandsOptions"
                   class="w-full"

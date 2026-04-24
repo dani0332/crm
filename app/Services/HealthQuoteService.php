@@ -499,6 +499,7 @@ class HealthQuoteService extends BaseService
         $members = collect($request->members);
         $principalMember = $members->firstWhere('is_principal', 1);
         $mobileNo = ($request->mobile_dial_code ?? '').($request->mobile_national_no ?? '');
+        $emirateOfVisaId = $request->customer_type == CustomerTypeEnum::Entity ? $healthQuote->emirate_of_your_visa_id : ($principalMember['emirate_of_your_visa_id'] ?? null);
         $dataArr = [
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'quoteUID' => $id,
@@ -528,7 +529,7 @@ class HealthQuoteService extends BaseService
 
                 // principal member details
                 'memberCategoryId' => $principalMember['member_category_id'] ?? null,
-                'emirateOfYourVisaId' => $principalMember['emirate_of_your_visa_id'] ?? null,
+                'emirateOfYourVisaId' => $emirateOfVisaId,
                 'nationalityId' => $principalMember['nationality_id'] ?? null,
                 'gender' => $principalMember['gender'] ?? null,
                 'dob' => $principalMember['dob'] ?? null,
@@ -1940,5 +1941,27 @@ class HealthQuoteService extends BaseService
         $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
 
         return [$startOfMonth, $endOfPreviousDay];
+    }
+
+    public function updateHealthEntityData($quote, $request): void
+    {
+        if (! $quote) {
+            LoggerService::info('Quote not found', extra: [
+                'function' => __FUNCTION__,
+            ]);
+
+            return;
+        }
+
+        $quote->emirate_of_your_visa_id = $request->emirate_of_registration_id;
+        $quote->member_category_id = null;
+        $quote->policy_holder_category_code = null;
+        $quote->visa_category_id = null;
+        $quote->gender = null;
+        $quote->marital_status_id = null;
+        $quote->salary_band_id = null;
+        $quote->insure_code = null;
+        $quote->policy_holder_code = null;
+        $quote->save();
     }
 }
