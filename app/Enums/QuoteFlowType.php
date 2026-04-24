@@ -44,8 +44,8 @@ enum QuoteFlowType: int
     case CYBER_AUTOMATION_FAILED = 44;
     case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
-    case MOTOR_REVIVAL_OCB = 50;
-    case MOTOR_REVIVAL_FOLLOWUP = 51;
+    case MOTOR_REVIVAL_OCB = 70;
+    case MOTOR_REVIVAL_FOLLOWUP = 71;
 
     public function label(): string
     {
@@ -137,8 +137,8 @@ enum QuoteFlowType: int
             42 => QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS,
             43 => QuoteFlowType::CYBER_NEW_POLICY,
             44 => QuoteFlowType::CYBER_AUTOMATION_FAILED,
-            50 => QuoteFlowType::MOTOR_REVIVAL_OCB,
-            51 => QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP,
+            70 => QuoteFlowType::MOTOR_REVIVAL_OCB,
+            71 => QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP,
             default => null,  // Return null if the value doesn't match any case
         };
     }
