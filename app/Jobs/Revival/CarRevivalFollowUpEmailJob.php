@@ -6,20 +6,13 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\TiersEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
-use App\Models\Tier;
 use App\Services\ApplicationStorageService;
-use App\Services\CarQuoteService;
-use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
-use App\Services\MACRMService;
 use App\Services\SendEmailCustomerService;
-use App\Services\UserService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,46 +23,44 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable;
 
+    private const LOG_FLOW = 'car_dtt_revival_followup';
+
     public $tries = 3;
     public $timeout = 60;
     public $backoff = 300;
     private $dttRevival = null;
-    private $dttRevivalId = null;
 
     /**
-     * Create a new job instance.
-     *
-     * @return void
+     * @param  object  $emailData  Same Bird payload as {@see CarRevivalLeadsCreationJob} (from {@see CarEmailService::buildDttRevivalBirdEmailPayload} when not dispatched from that job).
      */
-    public function __construct($dttRevivalId)
-    {
-        $this->dttRevivalId = $dttRevivalId;
+    public function __construct(
+        public int $dttRevivalId,
+        public object $emailData,
+    ) {
         $this->onQueue('renewals');
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): void
     {
-
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            LoggerService::info('Dtt is not enabled from cms');
+            LoggerService::warning(self::class.': DTT disabled in CMS (job was queued anyway)', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevivalId,
+            ]);
 
-            return false;
+            return;
         }
 
-        // Fetch the DttRevival model to avoid serialization issues
         $this->dttRevival = DttRevival::find($this->dttRevivalId);
 
-        // If the record was deleted between job creation and execution, exit gracefully
         if ($this->dttRevival === null) {
-            LoggerService::info('DttRevival record not found (ID: '.$this->dttRevivalId.'). Record may have been deleted.');
+            LoggerService::warning(self::class.': dtt_revivals row missing', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevivalId,
+            ]);
 
-            return false;
+            return;
         }
 
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
@@ -79,60 +70,47 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         $created_at = $this->dttRevival->created_at;
         $lead = CarQuote::where('uuid', $this->dttRevival->uuid)->first();
 
-        // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
-        // or if the source is Revival Paid or if the lead is assigned to an advisor
-        if ($lead && ! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
-            try {
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
-            } catch (\Exception $exception) {
-                LoggerService::info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
-
-                return false;
-            }
-
-            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-
-            $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
-
-            $previousAdvisor = null;
-            if (! empty($lead->previous_advisor_id)) {
-                $previousAdvisor = app(UserService::class)->getUserById($lead->previous_advisor_id);
-            }
-            $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
-
-            $emailData->customer = (object) ['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
-            $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
-
-            $advisor = explode(',', $dttAdvisor);
-
-            $emailData->uuid = $this->dttRevival->uuid;
-            $emailData->advisorName = $advisor[0];
-            $emailData->advisorEmail = $advisor[1];
-            $emailData->id = $this->dttRevival->id;
-            $emailData->lob = QuoteTypes::CAR->id();
-
-            $emailData->carMake = (string) $lead?->car_make_id;
-            $emailData->carModel = (string) $lead?->car_model_id;
-
-            $voucherCode = MACRMService::generateMotorRevivalVoucherForQuote($lead);
-            $emailData->voucherCode = $voucherCode ?? '';
-            $emailData->myAlfredurl = filled($voucherCode)
-                ? 'https://myalfred.com/voucher/'.rawurlencode($voucherCode)
-                : '';
-
-            $this->sendFollowUpEmail($emailData);
+        $skipReason = null;
+        if (! $lead) {
+            $skipReason = 'no_child_car_quote';
+        } elseif (empty($created_at)) {
+            $skipReason = 'dtt_revival_created_at_empty';
+        } elseif (in_array($lead->quote_status_id, $leadStatusArray)) {
+            $skipReason = 'quote_status_duplicate_or_fake';
+        } elseif (in_array($lead->payment_status_id, $paymentStatusArray)) {
+            $skipReason = 'payment_authorised_or_captured';
+        } elseif (in_array($lead->source, $leadSourceArray)) {
+            $skipReason = 'source_revival_paid';
+        } elseif (! empty($lead->advisor_id)) {
+            $skipReason = 'advisor_already_assigned';
         }
 
+        if ($skipReason !== null) {
+            LoggerService::warning(self::class.': follow-up not eligible', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
+                'skip_reason' => $skipReason,
+                'advisor_id' => $lead?->advisor_id,
+                'quote_status_id' => $lead?->quote_status_id,
+                'payment_status_id' => $lead?->payment_status_id,
+            ]);
+
+            return;
+        }
+
+        $this->sendFollowUpEmail($this->emailData);
     }
 
-    private function sendFollowUpEmail($emailData)
+    private function sendFollowUpEmail(object $emailData): void
     {
-        // Migrate to Bird workflow - frequency is managed by Bird, but we update count here
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
-            LoggerService::warning('CarRevivalFollowUpEmailJob - Bird workflow URL not configured; legacy Brevo send disabled', [
-                'uuid' => $this->dttRevival->uuid,
+            LoggerService::warning(self::class.': MOTOR_REVIVAL_WORKFLOW URL missing in CMS', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
             ]);
 
             return;
@@ -146,9 +124,13 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
         if ($response == 201) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
-            LoggerService::info('CarRevivalFollowUpEmailJob email is sent via Bird '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         } else {
-            LoggerService::info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
+            LoggerService::warning(self::class.': Bird follow-up call did not return success', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
+                'response_code' => $response,
+            ]);
         }
     }
 }
