@@ -26,14 +26,15 @@ class CarRevivalService
         $carQuoteRequestDetail = $carQuote->carQuoteRequestDetail;
 
         if ($carQuoteRequestDetail) {
+            $now = now();
             $carQuoteRequestDetail->update([
                 'engagement_level' => MotorRevivalEnum::COMMS_TRIGGERED->value,
-                'engagement_level_updated_at' => now(),
+                'engagement_level_updated_at' => $now,
             ]);
             LoggerService::info('CarRevivalService::markRevivalCommsTriggered - car quote request detail updated', [
                 'quote_uuid' => $quoteUuid,
                 'engagement_level' => MotorRevivalEnum::COMMS_TRIGGERED->value,
-                'engagement_level_updated_at' => now(),
+                'engagement_level_updated_at' => $now,
             ]);
         } else {
             LoggerService::warning('CarRevivalService::markRevivalCommsTriggered - car quote request detail not found', [
