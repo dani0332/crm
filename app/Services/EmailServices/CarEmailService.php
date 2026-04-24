@@ -942,6 +942,8 @@ class CarEmailService extends BaseService
         $emailData->myAlfredurl = filled($voucherCode)
             ? 'https://myalfred.com/voucher/'.rawurlencode($voucherCode)
             : '';
+        $emailData->refID = $carQuote->code;
+        $emailData->quoteUID = $carQuote->uuid;
 
         return $emailData;
     }

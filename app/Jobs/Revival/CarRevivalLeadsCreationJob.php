@@ -168,7 +168,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 }
 
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
-
+                $emailData->workflowType = QuoteFlowType::MOTOR_REVIVAL_OCB->value;
                 // Shifted to Bird Workflow, previous it was using Brevo
                 $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
@@ -180,6 +180,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                     ]);
                     $response = (object) ['status_code' => 0];
                 } else {
+
                     $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
                 }
 
@@ -207,6 +208,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                             'child_quote_uuid' => $revivalCarQuoteUUID,
                         ]);
                     } else {
+                        $emailData->workflowType = QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value;
+
                         CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
 
                         LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
