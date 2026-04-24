@@ -54,7 +54,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
             $lobJobs[] = new ProcessNonMotorCQFLOBJob(
                 $renewalUploadLeads->id,
                 $quoteType,
-                $startDate,
+                $startDate->format(config('constants.DATE_FORMAT_ONLY')),
                 $renewalDaysThreshold
             );
 
