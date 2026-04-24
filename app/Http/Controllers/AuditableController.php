@@ -347,18 +347,27 @@ class AuditableController extends Controller
             $quoteUuid = $request->input('quote_uuid');
             $quoteTypeId = (int) $request->input('quote_type_id');
 
-            LoggerService::info('Loading UAE Pass logs for quote UUID: '.$quoteUuid.' and quote type ID: '.$quoteTypeId);
+            LoggerService::info('Loading UAE Pass logs', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
 
             $logs = app(UaeSigningPassLogsPresenter::class)->mergedRows($quoteUuid, $quoteTypeId);
 
-            LoggerService::info('UAE Pass logs loaded successfully for quote UUID: '.$quoteUuid.' and quote type ID: '.$quoteTypeId);
+            LoggerService::info('UAE Pass logs loaded successfully', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => $logs,
             ]);
         } catch (\Exception $e) {
-            LoggerService::error('Failed to load UAE Pass logs - ', exception: $e);
+            LoggerService::error('Failed to load UAE Pass logs', [], $e, [
+                'quote_uuid' => $request->input('quote_uuid'),
+                'quote_type_id' => $request->input('quote_type_id'),
+            ]);
 
             return response()->json([
                 'success' => false,
