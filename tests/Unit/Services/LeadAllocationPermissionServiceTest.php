@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Services\LeadAllocationPermissionService;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -101,6 +102,38 @@ test('authorize mutate for route uses request quote type', function () {
     $this->actingAs($user);
 
     $request = Request::create('/test', 'POST', ['quoteType' => 'Health']);
+
+    LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
+
+    expect(true)->toBeTrue();
+});
+
+test('authorize mutate for route uses url segment when input quote type absent', function () {
+    $user = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($user);
+
+    $request = Request::create('http://localhost/test', 'POST', []);
+    $route = new Route('POST', 'lead-allocation/{quoteType}/update-availability', []);
+    $route->parameters = ['quoteType' => 'Health'];
+    $request->setRouteResolver(fn () => $route);
+
+    LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
+
+    expect(true)->toBeTrue();
+});
+
+test('authorize mutate for route prefers input quote type over url when both present', function () {
+    $user = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($user);
+
+    $request = Request::create('http://localhost/test', 'POST', ['quoteType' => 'Car']);
+    $route = new Route('POST', 'lead-allocation/{quoteType}/update-availability', []);
+    $route->parameters = ['quoteType' => 'Health'];
+    $request->setRouteResolver(fn () => $route);
 
     LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
 

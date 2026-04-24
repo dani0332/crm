@@ -13,11 +13,20 @@ class LeadAllocationPermissionService
     /**
      * Mutate operations require full allocation access: dashboard or edit (not view-only).
      * Travel also allows {@see PermissionsEnum::TRAVEL_SIC_ALLOCATION} (SIC / sales allocation).
+     *
+     * Authorizes using the same effective LOB as `request('quoteType')`: non-empty `quoteType`
+     * in the merged body/query takes precedence, otherwise the `{quoteType}` route parameter.
      */
     public static function authorizeMutateForRouteQuoteType(Request $request): void
     {
-        $raw = $request->route('quoteType') ?? $request->input('quoteType');
-        if (! is_string($raw) || $raw === '') {
+        $fromRoute = $request->route('quoteType');
+        $fromInput = $request->input('quoteType');
+
+        $routeStr = is_string($fromRoute) && $fromRoute !== '' ? $fromRoute : null;
+        $inputStr = is_string($fromInput) && $fromInput !== '' ? $fromInput : null;
+
+        $raw = $inputStr ?? $routeStr;
+        if ($raw === null || $raw === '') {
             abort(403, 'Unauthorized action.');
         }
 
