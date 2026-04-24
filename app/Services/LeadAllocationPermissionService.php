@@ -67,10 +67,10 @@ class LeadAllocationPermissionService
 
         if ($request->filled('leadId')) {
             $query->where('id', $request->leadId);
-        } elseif ($request->filled('laId')) {
-            $query->where('id', $request->laId);
         } elseif ($request->filled('userId')) {
             $query->where('user_id', $request->userId);
+        } elseif ($request->filled('laId')) {
+            $query->where('id', $request->laId);
         } else {
             abort(403, 'Unauthorized action.');
         }
@@ -93,6 +93,16 @@ class LeadAllocationPermissionService
         }
 
         return match ($quoteType) {
+            /**
+             * `lead_allocation.quote_type_id` 5 is BUSINESS; Corpline/Group Medical rows use this id.
+             * Accept either LOB's dashboard|edit so shared toggles authorize correctly.
+             */
+            QuoteTypes::BUSINESS => [
+                PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+                PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT,
+                PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+                PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT,
+            ],
             QuoteTypes::CAR => [
                 PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
                 PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,

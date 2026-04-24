@@ -40,6 +40,15 @@ test('mutate permissions for travel includes sic allocation', function () {
         ->and($perms)->toContain(PermissionsEnum::TRAVEL_LEAD_ALLOCATION_EDIT);
 });
 
+test('mutate permissions for business merges corpline and group medical', function () {
+    $perms = LeadAllocationPermissionService::mutatePermissionsForQuoteType(QuoteTypes::BUSINESS);
+
+    expect($perms)->toContain(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD)
+        ->and($perms)->toContain(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT)
+        ->and($perms)->toContain(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD)
+        ->and($perms)->toContain(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT);
+});
+
 test('mutate permissions for unknown product returns empty', function () {
     expect(LeadAllocationPermissionService::mutatePermissionsForQuoteType(QuoteTypes::JETSKI))
         ->toBe([]);
@@ -51,6 +60,17 @@ test('authorize mutate aborts when user has no lead allocation permissions', fun
 
     LeadAllocationPermissionService::authorizeMutateForQuoteType(QuoteTypes::HEALTH);
 })->throws(HttpException::class, 'Unauthorized action.');
+
+test('authorize mutate for business id allows user with corpline permission only', function () {
+    $user = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($user);
+
+    LeadAllocationPermissionService::authorizeMutateForQuoteTypeId(5);
+
+    expect(true)->toBeTrue();
+});
 
 test('authorize mutate allows user with health dashboard permission', function () {
     $user = TestDataSeeder::createUser();
