@@ -707,7 +707,6 @@ class ApiService
             'isAdvisorUnassigned' => $isAdvisorUnassigned,
             'isLeadStatusNew' => $isLeadStatusNew,
             'isPaymentStatusNotAuthorizedPaidOrPartial' => $isPaymentStatusNotAuthorizedPaidOrPartial,
-            'hasDisallowedPaymentStatus' => $hasDisallowedPaymentStatus,
             'isEngagementCommsTriggeredOrIntentLow' => $isEngagementCommsTriggeredOrIntentLow,
             'source' => $carQuote->source,
             'advisor_id' => $carQuote->advisor_id,
