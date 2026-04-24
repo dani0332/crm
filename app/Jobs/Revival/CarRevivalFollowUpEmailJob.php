@@ -5,14 +5,15 @@ namespace App\Jobs\Revival;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\WorkflowTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
+use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -99,10 +100,10 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             return;
         }
 
-        $this->sendFollowUpEmail($this->emailData);
+        $this->sendFollowUpEmail($this->emailData, $lead);
     }
 
-    private function sendFollowUpEmail(object $emailData): void
+    private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
     {
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
@@ -116,20 +117,17 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             return;
         }
 
-        $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
-            $emailData,
-            WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP,
-            $workflowUrl->value
-        );
+        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
 
-        if ($response == 201) {
+        if (in_array($response->status_code, [201, 200])) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value, (int) QuoteTypes::CAR->id());
         } else {
             LoggerService::warning(self::class.': Bird follow-up call did not return success', [
                 'flow' => self::LOG_FLOW,
                 'dtt_revival_id' => $this->dttRevival->id,
                 'child_quote_uuid' => $this->dttRevival->uuid,
-                'response_code' => $response,
+                'response_code' => $response->status_code,
             ]);
         }
     }

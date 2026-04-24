@@ -5,10 +5,9 @@ namespace App\Jobs\Revival;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
-use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
-use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
@@ -179,16 +178,12 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                         'parent_lead_uuid' => $this->lead->uuid,
                         'child_quote_uuid' => $revivalCarQuoteUUID,
                     ]);
-                    $response = 0;
+                    $response = (object) ['status_code' => 0];
                 } else {
-                    $response = app(SendEmailCustomerService::class)->sendDttEmailViaBird(
-                        $emailData,
-                        WorkflowTypeEnum::MOTOR_REVIVAL_OCB,
-                        $workflowUrl->value
-                    );
+                    $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
                 }
 
-                if ($response == 201) {
+                if (in_array($response->status_code, [201, 200])) {
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
 
@@ -200,23 +195,27 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                         'email_sent' => true,
                     ]);
 
-                    $kenResponse = Ken::request('/send-ocb-whatsapp-revival', 'post', [
-                        'quoteUID' => $revivalCarQuoteUUID,
-                        'callSource' => 'imcrm',
-                    ]);
-
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                    app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $kenResponse, WorkflowTypeEnum::MOTOR_REVIVAL_OCB, (int) QuoteTypes::CAR->id());
+                    app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $response, QuoteFlowType::MOTOR_REVIVAL_OCB->value, (int) QuoteTypes::CAR->id());
 
-                    CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
+                    if (app(BirdService::class)->isFollowupExecuted($revivalCarQuoteUUID, (int) QuoteTypes::CAR->id(), QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value)) {
+                        LoggerService::info(self::class.': follow-up email already executed', [
+                            'flow' => self::LOG_FLOW,
+                            'dtt_revival_id' => $dttRevival->id,
+                            'parent_lead_uuid' => $this->lead->uuid,
+                            'child_quote_uuid' => $revivalCarQuoteUUID,
+                        ]);
+                    } else {
+                        CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
 
-                    LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
-                        'flow' => self::LOG_FLOW,
-                        'dtt_revival_id' => $dttRevival->id,
-                        'parent_lead_uuid' => $this->lead->uuid,
-                        'child_quote_uuid' => $revivalCarQuoteUUID,
-                    ]);
+                        LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
+                            'flow' => self::LOG_FLOW,
+                            'dtt_revival_id' => $dttRevival->id,
+                            'parent_lead_uuid' => $this->lead->uuid,
+                            'child_quote_uuid' => $revivalCarQuoteUUID,
+                        ]);
+                    }
                 } else {
                     LoggerService::warning(self::class.': Bird OCB call did not return success (no dtt / no follow-up)', [
                         'flow' => self::LOG_FLOW,
