@@ -31,10 +31,7 @@ enum UaePassLogStatusEnum: string
         if ($value instanceof self) {
             return $value;
         }
-        if ($value === null || $value === '') {
-            return null;
-        }
-        if (! is_string($value)) {
+        if ($value === null || $value === '' || ! is_string($value)) {
             return null;
         }
 
