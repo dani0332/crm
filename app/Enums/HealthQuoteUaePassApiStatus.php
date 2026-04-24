@@ -16,8 +16,6 @@ enum HealthQuoteUaePassApiStatus: string
     case DocFailed = 'DOC_FAILED';
     case DocCancelled = 'DOC_CANCELLED';
     case DocsNotReceived = 'DOCS_NOT_RECEIVED';
-
-    /** IMCRM list filter: not persisted on health_quote_request. */
     case FILTER_ALL = 'All';
 
     /**
