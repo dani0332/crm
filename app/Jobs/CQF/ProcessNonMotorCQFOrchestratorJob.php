@@ -33,10 +33,10 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {
         $renewalDaysThreshold = (int) getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD);
-        $startDate = Carbon::now()->addDays($renewalDaysThreshold)->format(config('constants.DATE_FORMAT_ONLY'));
+        $startDate = Carbon::now()->addDays($renewalDaysThreshold);
 
         LoggerService::info(self::class.' - Non-motor CQF renewal orchestrator started', [
-            'startDate' => $startDate,
+            'startDate' => $startDate->format(config('constants.DATE_FORMAT_ONLY')),
             'renewalDaysThreshold' => $renewalDaysThreshold,
         ]);
 

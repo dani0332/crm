@@ -16,6 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 
 class ProcessNonMotorCQFLOBJob implements ShouldQueue
@@ -49,9 +50,10 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
         $quoteTypeId = (int) $this->quoteType->id();
         $filter = NonMotorCQFRegistry::eligibilityFilter();
+        $startDate = Carbon::parse($this->startDate);
         $quoteJobs = [];
 
-        $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $this->startDate)
+        $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $startDate)
             ->where('quote_type_id', $quoteTypeId)
             ->whereNotIn('quote_status_id', $filter['quote_status'])
             ->whereIn('payment_status_id', $filter['payment_status']);
@@ -67,7 +69,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         });
 
         if ($this->quoteType === QuoteTypes::BIKE) {
-            CarQuote::whereDate('policy_expiry_date', $this->startDate)
+            CarQuote::whereDate('policy_expiry_date', $startDate)
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
                 ->whereNotIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])

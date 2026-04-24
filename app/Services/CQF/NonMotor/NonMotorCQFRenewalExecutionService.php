@@ -23,6 +23,7 @@ use App\Services\CQF\NonMotor\Pipes\StoragePipe;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class NonMotorCQFRenewalExecutionService
@@ -34,7 +35,7 @@ class NonMotorCQFRenewalExecutionService
     /**
      * Count of eligible quotes for this LOB (personal + car for Bike). Used to set total_records on lead creation.
      */
-    public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, string $startDate): int
+    public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, Carbon $startDate): int
     {
         if (! $this->registry->hasLOB($quoteType)) {
             return 0;
