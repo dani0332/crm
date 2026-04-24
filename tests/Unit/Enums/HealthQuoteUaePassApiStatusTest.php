@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthQuoteUaePassApiStatus;
 
 describe('HealthQuoteUaePassApiStatus', function () {
@@ -26,12 +27,12 @@ describe('HealthQuoteUaePassApiStatus', function () {
     test('filterDropdown includes All', function () {
         $options = HealthQuoteUaePassApiStatus::filterDropdown();
         expect($options[0])->toBe([
-            'value' => HealthQuoteUaePassApiStatus::FILTER_ALL->value,
+            'value' => GenericRequestEnum::ALL,
             'label' => 'All',
         ]);
     });
 
-    test('FILTER_ALL is not a stored database value', function () {
-        expect(HealthQuoteUaePassApiStatus::isStoredValue(HealthQuoteUaePassApiStatus::FILTER_ALL->value))->toBeFalse();
+    test('ALL sentinel is not a stored database value', function () {
+        expect(HealthQuoteUaePassApiStatus::isStoredValue(GenericRequestEnum::ALL))->toBeFalse();
     });
 });
