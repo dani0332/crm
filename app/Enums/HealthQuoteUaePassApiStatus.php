@@ -27,10 +27,6 @@ enum HealthQuoteUaePassApiStatus: string
      */
     public static function filterDropdown(): array
     {
-        $rows = [
-            ['value' => self::FILTER_ALL, 'label' => 'All'],
-        ];
-
         foreach (self::cases() as $case) {
             $rows[] = ['value' => $case->value, 'label' => $case->uiLabel()];
         }
