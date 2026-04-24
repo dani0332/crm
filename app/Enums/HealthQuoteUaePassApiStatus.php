@@ -65,7 +65,7 @@ enum HealthQuoteUaePassApiStatus: string
 
     public static function isStoredValue(?string $value): bool
     {
-        if ($value === null || $value === '' || $value === self::FILTER_ALL) {
+        if ($value === null || $value === '' || $value === self::FILTER_ALL->value) {
             return false;
         }
 
