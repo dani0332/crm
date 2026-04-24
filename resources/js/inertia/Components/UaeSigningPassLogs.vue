@@ -195,7 +195,7 @@ const formatJson = value => {
             </template>
 
             <template #item-created_at="{ created_at }">
-              {{ new Date(created_at).toLocaleString() }}
+              {{ created_at}}
             </template>
 
             <template #item-action="item">
@@ -259,14 +259,14 @@ const formatJson = value => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At:</dt>
-            <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
+            <dd>{{ selectedLog.created_at }}</dd>
           </div>
         </dl>
 
         <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5 mt-2">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Updated At:</dt>
-            <dd>{{ new Date(selectedLog.updated_at).toLocaleString() }}</dd>
+            <dd>{{ selectedLog.updated_at }}</dd>
           </div>
         </dl>
 

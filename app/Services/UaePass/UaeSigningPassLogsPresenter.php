@@ -7,7 +7,6 @@ use App\Enums\UaePassAPILogLabel;
 use App\Enums\UaePassLogStatusEnum;
 use App\Models\UaePassLog;
 use App\Models\UaeSigningPassLog;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -98,8 +97,8 @@ final class UaeSigningPassLogsPresenter
             'id' => $log->_id,
             'api_name' => $log->functionName,
             'status' => ucfirst($log->status),
-            'created_at' => Carbon::parse($log->createdAt),
-            'updated_at' => Carbon::parse($log->updatedAt),
+            'created_at' => $log->createdAt,
+            'updated_at' => $log->updatedAt,
             'response_status' => $log->status == GenericRequestEnum::PASSED ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST,
             'proof_of_presentation_id' => $log->proofOfPresentationId,
             'request_payload' => $log->req,
@@ -111,22 +110,22 @@ final class UaeSigningPassLogsPresenter
     {
         $status = $row['status'];
         $tagColor = UaePassLogStatusEnum::resolveTagColor($status);
-        $created = Carbon::parse($row['created_at']);
-        $updated = Carbon::parse($row['updated_at']);
+        $createdAt = $row['created_at'];
+        $updatedAt = $row['updated_at'];
 
         return array_merge([
             'id' => $row['id'],
             'api_name' => $row['api_name'],
             'status' => $status,
-            'created_at' => $created?->format('Y-m-d H:i:s'),
+            'created_at' => $createdAt,
             'response_status' => $row['response_status'],
             'proof_of_presentation_id' => $row['proof_of_presentation_id'],
             'status_display' => $status ? strtoupper((string) $status) : 'N/A',
             'status_tag_color' => $tagColor,
             'request_payload' => $row['request_payload'],
             'response_payload' => $row['response_payload'],
-            'updated_at' => $updated?->format('Y-m-d H:i:s'),
-            '_sort_ts' => $created?->getTimestamp() ?? 0,
+            'updated_at' => $updatedAt,
+            '_sort_ts' => $createdAt,
         ]);
     }
 }
