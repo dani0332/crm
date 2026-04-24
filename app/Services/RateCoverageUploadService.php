@@ -211,6 +211,7 @@ class RateCoverageUploadService
             if ($rowCount > 1) {
                 // normalize header case
                 $headers = array_map('strtolower', $rows[0]);
+                $seenCombinations = [];
                 $allCohorts = $this->cohortMappingService->getAllCohorts();
                 $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
@@ -223,6 +224,10 @@ class RateCoverageUploadService
                     $premium = $rowAssoc['premium'] ?? null;
                     $copaymentCode = $rowAssoc['copayment_code'] ?? null;
                     $emirateType = $rowAssoc['emirate_type'] ?? null;
+                    $gender = $rowAssoc['gender'] ?? null;
+                    $maritalStatus = $rowAssoc['marital_status'] ?? null;
+                    $cohort = $rowAssoc['cohort'] ?? null;
+
                     // Throw error if any required value is empty
                     if (
                         empty($planCode) ||
@@ -266,7 +271,6 @@ class RateCoverageUploadService
 
                     // Validate gender based on plan gender enabled
                     if ($plan->gender_enabled) {
-                        $gender = $rowAssoc['gender'] ?? null;
                         if (empty($gender)) {
                             throw new \Exception('Gender is required when plan gender is enabled.');
                         }
@@ -279,8 +283,7 @@ class RateCoverageUploadService
 
                     // Validate cohort based on plan cohort enabled
                     if ($plan->cohort_enabled) {
-                        $cohort = $rowAssoc['cohort'] ?? null;
-                        if (empty($gender)) {
+                        if (empty($cohort)) {
                             throw new \Exception('Cohort is required when plan cohort is enabled.');
                         }
 
@@ -291,13 +294,11 @@ class RateCoverageUploadService
 
                     // Validate marital status based on plan marital status enabled
                     if ($plan->marital_status_enabled) {
-
                         // Plan gender must be enabled if marital status is enabled, other throw error
                         if (! $plan->gender_enabled) {
                             throw new \Exception('Gender must be enabled when marital status is enabled.');
                         }
 
-                        $maritalStatus = $rowAssoc['marital_status'] ?? null;
                         if (empty($maritalStatus)) {
                             throw new \Exception('Marital status is required when marital status is enabled.');
                         }
@@ -317,6 +318,17 @@ class RateCoverageUploadService
                     if (! in_array($emirateType, EmirateTypeEnum::labels(), true)) {
                         throw new \Exception('Invalid emirate type value.');
                     }
+
+                    // Apply unique combination
+                    // Track seen combinations of columns as row
+                    $combinationKey = "{$copaymentCode}|{$emirateType}|{$gender}|{$maritalStatus}|{$cohort}";
+
+                    if (in_array($combinationKey, $seenCombinations, true)) {
+                        throw new \Exception('Duplicate row detected');
+                    }
+
+                    $seenCombinations[] = $combinationKey;
+
                 }
             } else {
                 throw new \Exception('No data found in the file.');
