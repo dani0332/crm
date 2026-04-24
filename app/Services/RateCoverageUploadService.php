@@ -20,7 +20,8 @@ class RateCoverageUploadService
     public function __construct(
         private HealthPlanService $healthPlanService,
         private CohortMappingService $cohortMappingService,
-        private HealthPlanCoPaymentService $healthPlanCoPaymentService
+        private HealthPlanCoPaymentService $healthPlanCoPaymentService,
+        private HealthRateControlService $healthRateControlService
     ) {}
 
     public function uploadFile()
@@ -205,14 +206,15 @@ class RateCoverageUploadService
 
             // Assuming first sheet, and first row is header
             $rows = $excelRecords[0] ?? [];
-            if (count($rows) > 1) {
+            $rowCount = count($rows);
+            if ($rowCount > 1) {
                 // normalize header case
                 $headers = array_map('strtolower', $rows[0]);
                 $allCohorts = $this->cohortMappingService->getAllCohorts();
                 $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
                 // Iterate through rows to get values
-                for ($i = 1; $i < count($rows); $i++) {
+                for ($i = 1; $i < $rowCount; $i++) {
                     $rowAssoc = array_combine($headers, $rows[$i]);
                     $planCode = $rowAssoc['plan_code'] ?? null;
                     $minAge = $rowAssoc['min_age'] ?? null;
@@ -245,7 +247,8 @@ class RateCoverageUploadService
                         }
                     }
 
-                    if (! $this->healthPlanService->getPlanByCode($planCode)) {
+                    $plan = $this->healthPlanService->getPlanByCode($planCode);
+                    if (! $plan) {
                         throw new \Exception('Plan not found.');
                     }
 
@@ -285,30 +288,33 @@ class RateCoverageUploadService
                         throw new \Exception('Invalid copayment code value.');
                     }
                 }
+            } else {
+                throw new \Exception('No data found in the file.');
             }
         }
-
-        exit;
-
         // Upload file (health rate control)
-        $this->uploadHealthRateControl($uploadedFile, $data['effective_from'], $data['effective_to']);
+        $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
     }
 
-    private function uploadHealthRateControl($uploadedFile, $effective_from, $effective_to)
+    private function uploadHealthRateControl(string $fileName, $effectiveFrom, $effectiveTo, int $planId, int $totalRecords)
     {
-        echo '<pre>';
-        print_r($uploadedFile);
-        exit;
+        // Check if any draft version exists against plan
+        $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, HealthPlanRateSheetStatusEnum::DRAFT);
+
+        if ($draftVersion) {
+            throw new \Exception('Draft version already exists for this plan.');
+        }
+
         // Derive plan versiob
-        $rateVersion = $this->deriveRateVersion(1);
+        $rateVersion = $this->deriveRateVersion($planId);
 
         $uploadLeadData = [
-            'file_name' => $uploadedFile['file_name'],
-            'health_plan_id' => 1,
+            'file_name' => $fileName,
+            'health_plan_id' => $planId,
             'version' => $rateVersion,
-            'effective_from' => $effective_from,
-            'effective_to' => $effective_to,
-            'total_records' => 0,
+            'effective_from' => $effectiveFrom,
+            'effective_to' => $effectiveTo,
+            'total_records' => $totalRecords,
             'created_by' => auth()->user()->id,
             'status' => HealthPlanRateSheetStatusEnum::DRAFT,
         ];
