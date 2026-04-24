@@ -9,6 +9,7 @@ use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
+use App\Models\HealthRate;
 use App\Models\HealthRateControl;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
@@ -323,23 +324,47 @@ class RateCoverageUploadService
                     // Track seen combinations of columns as row
                     $combinationKey = "{$copaymentCode}|{$emirateType}|{$gender}|{$maritalStatus}|{$cohort}";
 
+                    // Check for duplicate combination key
                     if (in_array($combinationKey, $seenCombinations, true)) {
                         throw new \Exception('Duplicate row detected');
                     }
 
-                    $seenCombinations[] = $combinationKey;
+                    // Initialize combination age ranges if not already set
+                    if (! isset($combinationAgeRanges)) {
+                        $combinationAgeRanges = [];
+                    }
 
+                    // Check age overlap
+                    foreach ($combinationAgeRanges as $range) {
+                        if (
+                            ($minAge >= $range['min'] && $minAge <= $range['max'])
+                            || ($maxAge >= $range['min'] && $maxAge <= $range['max'])
+                        ) {
+                            throw new \Exception("Age range ({$minAge} - {$maxAge}) overlaps with an existing row for this combination.");
+                        }
+                    }
+
+                    $combinationAgeRanges[] = ['min' => $minAge, 'max' => $maxAge];
+                    $seenCombinations[] = $combinationKey;
                 }
             } else {
                 throw new \Exception('No data found in the file.');
             }
         }
-        exit;
+
         // Upload file (health rate control)
-        $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
+        $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
+
+        // Upload rates
+        $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
     }
 
-    private function uploadHealthRateControl(string $fileName, $effectiveFrom, $effectiveTo, int $planId, int $totalRecords)
+    private function uploadHealthRateControl(
+        string $fileName,
+        $effectiveFrom,
+        $effectiveTo,
+        int $planId,
+        int $totalRecords): array
     {
         // Check if any draft version exists against plan
         $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, HealthPlanRateSheetStatusEnum::DRAFT);
@@ -362,7 +387,39 @@ class RateCoverageUploadService
             'status' => HealthPlanRateSheetStatusEnum::DRAFT,
         ];
 
-        HealthRateControl::create($uploadLeadData);
+        $healthRateControl = HealthRateControl::create($uploadLeadData);
+
+        return [
+            'health_rate_control_id' => $healthRateControl->id,
+            'version' => $rateVersion,
+        ];
+    }
+
+    private function uploadRates(int $planId, int $healthRateControlId, float $version, array $data)
+    {
+        $headers = array_map('strtolower', $data[0]);
+
+        for ($i = 1; $i < count($data); $i++) {
+            $rowAssoc = array_combine($headers, $data[$i]);
+            $coPayment = $this->healthPlanCoPaymentService->getByAttribute('code', $rowAssoc['copayment_code']);
+            $emirateType = EmirateTypeEnum::fromText($rowAssoc['emirate_type']);
+
+            HealthRate::create([
+                'health_plan_id' => $planId,
+                'health_rate_control_id' => $healthRateControlId,
+                'version' => $version,
+                'health_plan_co_payment_id' => $coPayment->id,
+                'emirate_type' => $emirateType->value,
+                'min_age' => $rowAssoc['min_age'],
+                'max_age' => $rowAssoc['max_age'],
+                'gender' => $rowAssoc['gender'],
+                'marital_status' => $rowAssoc['marital_status'],
+                'cohort' => $rowAssoc['cohort'],
+                'premium' => $rowAssoc['premium'],
+                'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+                'is_active' => 0,
+            ]);
+        }
     }
 
     private function deriveRateVersion(int $planId): float

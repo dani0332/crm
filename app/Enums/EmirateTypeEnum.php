@@ -23,4 +23,12 @@ enum EmirateTypeEnum: int
     {
         return array_map(fn ($case) => $case->label(), self::cases());
     }
+
+    public static function fromText(string $value): ?self
+    {
+        $normalized = strtoupper(str_replace(' ', '_', $value));
+
+        return collect(self::cases())
+            ->first(fn ($case) => $case->name === $normalized);
+    }
 }

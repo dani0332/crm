@@ -10,4 +10,9 @@ class HealthPlanCoPaymentService extends BaseService
     {
         return HealthPlanCoPayment::distinct()->pluck('code')->toArray();
     }
+
+    public function getByAttribute(string $attribute, $value): ?HealthPlanCoPayment
+    {
+        return HealthPlanCoPayment::where($attribute, $value)->first();
+    }
 }
