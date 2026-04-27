@@ -705,7 +705,7 @@ onMounted(async () => {
   <div>
     <Head title="Conversion Optimization Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
-      Conversion Optimization Report
+      Conversion Optimization Engine
     </h1>
 
     <x-divider class="my-4" />
