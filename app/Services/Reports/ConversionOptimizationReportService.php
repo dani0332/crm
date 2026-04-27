@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CacheKeyEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\ConversionOptimizationCapPercentageEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -30,6 +31,7 @@ use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\Cache\CacheManager;
 use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
@@ -381,29 +383,47 @@ class ConversionOptimizationReportService extends BaseService
             'isEmbeddedProducts' => false,
         ];
 
-        $organicTeamId = Team::query()
-            ->where('name', TeamNameEnum::ORGANIC)
-            ->where('is_active', 1)
-            ->value('id');
-
-        $defaultSubTeamIds = Team::query()
-            ->whereIn('name', [TeamNameEnum::VALUE, TeamNameEnum::VOLUME])
-            ->whereIn('parent_team_id', [$organicTeamId])
-            ->where('is_active', 1)
-            ->pluck('id')
-            ->map(fn ($id) => (string) $id)
-            ->values()
-            ->all();
+        $teamFilters = $this->getCachedDefaultConversionOptimizationTeamFilters();
 
         return array_merge($defaultFilters, [
             'advisorAssignedDates' => [
                 now()->subWeeks(8)->startOfDay()->format($dateFormat),
                 now()->endOfDay()->format($dateFormat),
             ],
-            'teams' => $organicTeamId ? [(string) $organicTeamId] : [],
-            'sub_teams' => $defaultSubTeamIds,
+            'teams' => $teamFilters['organic_team_id'] ? [(string) $teamFilters['organic_team_id']] : [],
+            'sub_teams' => $teamFilters['sub_team_ids'],
             'cap_percentage' => '',
         ]);
+    }
+
+    /**
+     * Cached organic team id and default sub-team ids for this report (two Team queries).
+     * Date-based defaults stay outside the cache so advisor ranges stay current.
+     *
+     * @return array{organic_team_id: int|null, sub_team_ids: list<string>}
+     */
+    private function getCachedDefaultConversionOptimizationTeamFilters(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CONVERSION_OPTIMIZATION_DEFAULT_TEAM_FILTERS, function (): array {
+            $organicTeamId = Team::query()
+                ->where('name', TeamNameEnum::ORGANIC)
+                ->where('is_active', 1)
+                ->value('id');
+
+            $defaultSubTeamIds = Team::query()
+                ->whereIn('name', [TeamNameEnum::VALUE, TeamNameEnum::VOLUME])
+                ->whereIn('parent_team_id', [$organicTeamId])
+                ->where('is_active', 1)
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->values()
+                ->all();
+
+            return [
+                'organic_team_id' => $organicTeamId !== null ? (int) $organicTeamId : null,
+                'sub_team_ids' => $defaultSubTeamIds,
+            ];
+        });
     }
 
     public function applyFiltersForCar(Builder $query, object $filters): Builder

@@ -7,6 +7,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\ConversionOptimizationReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class ConversionOptimizationReportExport implements CsvExportableInterface
@@ -22,11 +23,18 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
         private ConversionOptimizationReportService $conversionOptimizationReportService,
         private array $requestParams
     ) {
-        request()->merge($this->requestParams);
         $this->footerRowsAlreadyWritten = false;
         $this->exportSumTotalLeads = 0.0;
         $this->exportSumSaleLeads = 0.0;
         $this->exportTeamAverage = null;
+    }
+
+    /**
+     * Prevent merged export filters from leaking to later artisan tasks in the same PHP process.
+     */
+    private function resetBoundRequestSingleton(): void
+    {
+        app()->instance('request', Request::create('/'));
     }
 
     public function collection(array $requestParams = []): Collection
@@ -106,28 +114,32 @@ class ConversionOptimizationReportExport implements CsvExportableInterface
             return;
         }
 
-        $this->footerRowsAlreadyWritten = true;
+        try {
+            $this->footerRowsAlreadyWritten = true;
 
-        if ($this->exportSumTotalLeads <= 0 && $this->exportSumSaleLeads <= 0) {
-            return;
+            if ($this->exportSumTotalLeads <= 0 && $this->exportSumSaleLeads <= 0) {
+                return;
+            }
+
+            $teamAverageCell = $this->exportTeamAverage !== null
+                ? $this->resolveNumberFormat($this->exportTeamAverage)
+                : '';
+
+            fputcsv($stream, [
+                'Totals',
+                $this->resolveNumberFormat($this->exportSumTotalLeads),
+                $this->resolveNumberFormat($this->exportSumSaleLeads),
+                $teamAverageCell,
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+            ]);
+        } finally {
+            $this->resetBoundRequestSingleton();
         }
-
-        $teamAverageCell = $this->exportTeamAverage !== null
-            ? $this->resolveNumberFormat($this->exportTeamAverage)
-            : '';
-
-        fputcsv($stream, [
-            'Totals',
-            $this->resolveNumberFormat($this->exportSumTotalLeads),
-            $this->resolveNumberFormat($this->exportSumSaleLeads),
-            $teamAverageCell,
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-        ]);
     }
 
     public function headings(): array
