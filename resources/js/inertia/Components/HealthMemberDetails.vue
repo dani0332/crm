@@ -91,6 +91,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isMigrated: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const HEALTH_PEC_YES = 1;
@@ -243,58 +247,27 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
 const [PrincipalMemberButtonTemplate, PrincipalMemberButtonReuseTemplate] =
   createReusableTemplate();
 
+const MIGRATED_ONLY_COLUMNS = new Set(['visa_category_id', 'marital_status_id', 'salary_band_id']);
+
 const memberDetailsTable = reactive({
   isLoading: false,
-  columns: [
-    {
-      text: 'Member Name',
-      value: 'first_name',
-    },
-    {
-      text: 'Policy PEC Flag',
-      value: 'is_pec_marked',
-    },
-    {
-      text: 'Gender',
-      value: 'gender',
-    },
-    {
-      text: 'DOB',
-      value: 'dob',
-    },
-    {
-      text: 'Relation',
-      value: 'relation',
-    },
-    {
-      text: 'Nationality',
-      value: 'nationality',
-    },
-    {
-      text: 'Emirate of Visa',
-      value: 'emirate',
-    },
-    {
-      text: 'Member Category',
-      value: 'member_category_id',
-    },
-    {
-      text: 'Visa Category',
-      value: 'visa_category_id',
-    },
-    {
-      text: 'Marital Status',
-      value: 'marital_status_id',
-    },
-    {
-      text: 'Salary',
-      value: 'salary_band_id',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
+  get columns() {
+    const all = [
+      { text: 'Member Name', value: 'first_name' },
+      { text: 'Policy PEC Flag', value: 'is_pec_marked' },
+      { text: 'Gender', value: 'gender' },
+      { text: 'DOB', value: 'dob' },
+      { text: 'Relation', value: 'relation' },
+      { text: 'Nationality', value: 'nationality' },
+      { text: 'Emirate of Visa', value: 'emirate' },
+      { text: 'Member Category', value: 'member_category_id' },
+      { text: 'Visa Category', value: 'visa_category_id' },
+      { text: 'Marital Status', value: 'marital_status_id' },
+      { text: 'Salary', value: 'salary_band_id' },
+      { text: 'Action', value: 'action' },
+    ];
+    return props.isMigrated ? all : all.filter(col => !MIGRATED_ONLY_COLUMNS.has(col.value));
+  },
 });
 
 const memberForm = useForm({

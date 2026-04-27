@@ -124,6 +124,11 @@ const insuredMembersCount = computed(() => {
   return page.props.membersDetail.filter(m => m.is_insured == 1).length;
 });
 
+const isMigrated = computed(() => {
+  const { INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER } = page.props.healthCoverForEnum;
+  return [INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER].includes(page.props.quote.cover_for_id);
+});
+
 const {
   isIndividualAndFamilies,
   isDomesticHelper,
@@ -2327,11 +2332,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">POLICYHOLDER FIRST NAME</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER' : '' }} FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">POLICYHOLDER LAST NAME</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER' : '' }} LAST NAME</dt>
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -2423,7 +2428,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">SALARY BAND</dt>
                   <dd>{{ quote.salary_band_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="showMemberCategoryField">
+                <div class="grid sm:grid-cols-2" v-if="showMemberCategoryField || !isMigrated">
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
                 </div>
@@ -2432,15 +2437,15 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2" v-if="isMigrated">
                   <dt class="font-medium">Visa Category</dt>
                   <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField">
+                <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField && isMigrated">
                   <dt class="font-medium">Policyholder Category</dt>
                   <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="showIncludePolicyholderField">
+                <div class="grid sm:grid-cols-2" v-if="showIncludePolicyholderField && isMigrated">
                   <dt class="font-medium">Is the Policyholder Included in the Policy?</dt>
                   <dd>{{ isIncludePolicyholder ? 'Yes' : 'No' }}</dd>
                 </div>
@@ -2452,11 +2457,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">POLICYHOLDER FIRST NAME</dt>
+                  <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">POLICYHOLDER LAST NAME</dt>
+                  <dt class="font-medium">LAST NAME</dt>
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -2679,6 +2684,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :genderDisplayMap="page.props.genderDisplayMap"
       :memberRelationDisplayMap="page.props.memberRelationDisplayMap"
       :memberCategoryDisplayMap="page.props.memberCategoryDisplayMap"
+      :isMigrated="isMigrated"
     />
     
     <UBODetails
