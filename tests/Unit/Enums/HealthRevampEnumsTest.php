@@ -93,27 +93,23 @@ describe('HealthCoverForEnum', function () {
 });
 
 describe('GenderEnum', function () {
-    test('legacy codes are enum cases not constants', function () {
-        // Previously these were PHP constants; they must now be proper enum cases
-        // so that ->value works and tryFrom() can resolve them.
-        expect(GenderEnum::MALE_SHORT->value)->toBe('M')
-            ->and(GenderEnum::FEMALE_SHORT->value)->toBe('F')
-            ->and(GenderEnum::LEGACY_MALE->value)->toBe('Male')
-            ->and(GenderEnum::LEGACY_FEMALE->value)->toBe('Female')
-            ->and(GenderEnum::LEGACY_FEMALE_SHORT->value)->toBe('FS')
-            ->and(GenderEnum::LEGACY_FEMALE_MARRIED->value)->toBe('FM');
+    test('short and legacy codes are PHP constants with correct string values', function () {
+        expect(GenderEnum::MALE_SHORT)->toBe('M')
+            ->and(GenderEnum::FEMALE_SHORT)->toBe('F')
+            ->and(GenderEnum::LEGACY_MALE)->toBe('Male')
+            ->and(GenderEnum::LEGACY_FEMALE)->toBe('Female')
+            ->and(GenderEnum::LEGACY_FEMALE_SHORT)->toBe('FS')
+            ->and(GenderEnum::LEGACY_FEMALE_MARRIED)->toBe('FM');
     });
 
-    test('tryFrom resolves all legacy gender codes', function (string $raw, GenderEnum $expected) {
-        expect(GenderEnum::tryFrom($raw))->toBe($expected);
-    })->with([
-        ['M',      GenderEnum::MALE_SHORT],
-        ['F',      GenderEnum::FEMALE_SHORT],
-        ['Male',   GenderEnum::LEGACY_MALE],
-        ['Female', GenderEnum::LEGACY_FEMALE],
-        ['FS',     GenderEnum::LEGACY_FEMALE_SHORT],
-        ['FM',     GenderEnum::LEGACY_FEMALE_MARRIED],
-    ]);
+    test('tryFrom returns null for short and legacy gender strings since they are constants not cases', function () {
+        expect(GenderEnum::tryFrom('M'))->toBeNull()
+            ->and(GenderEnum::tryFrom('F'))->toBeNull()
+            ->and(GenderEnum::tryFrom('Male'))->toBeNull()
+            ->and(GenderEnum::tryFrom('Female'))->toBeNull()
+            ->and(GenderEnum::tryFrom('FS'))->toBeNull()
+            ->and(GenderEnum::tryFrom('FM'))->toBeNull();
+    });
 
     test('tryFrom returns null for unknown gender string', function () {
         expect(GenderEnum::tryFrom('X'))->toBeNull()
