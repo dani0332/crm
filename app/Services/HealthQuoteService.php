@@ -1444,12 +1444,20 @@ class HealthQuoteService extends BaseService
     {
         $quoteId = $request->quoteId ?? null;
 
+        $membersMissingId = ! empty($request->members)
+            ? collect($request->members)->filter(fn ($m) => empty($m['id'] ?? null))->isNotEmpty()
+            : empty($request->id);
+
         if (! $quoteId) {
             return ['status' => false, 'message' => 'Quote Id not found'];
         }
 
-        // Bulk path (policyholder change): Vue sends all affected members.
-        // Single path (regular edit): wrap the single member in an array.
+        // Bulk path (policyholder change): each member must carry its id.
+        // Single path (regular edit): top-level id is required.
+        if ($membersMissingId) {
+            return ['status' => false, 'message' => 'Member Id not found'];
+        }
+
         $memberDetails = ! empty($request->members)
             ? collect($request->members)->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all()
             : [$this->prepareMemberDetailPayload($request->all())];
