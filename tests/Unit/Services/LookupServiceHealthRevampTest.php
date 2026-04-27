@@ -79,12 +79,13 @@ describe('LookupService::getPolicyHolder', function () {
 });
 
 describe('LookupService::getHealthInsureOptions and getPolicyHolder enum labels by source', function () {
-    test('applies customer-centric text only when lead source is IMCRM', function () {
+    test('applies customer-centric text when lead source is IMCRM or RENEWAL_UPLOAD', function () {
         DB::table('lookups')->insert([
             ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MYSELF', 'text' => 'raw', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
         $svc = $this->lookupService;
         expect($svc->getHealthInsureOptions(LeadSourceEnum::IMCRM)->first()->text)->toBe('Only the customer')
+            ->and($svc->getHealthInsureOptions(LeadSourceEnum::RENEWAL_UPLOAD)->first()->text)->toBe('Only the customer')
             ->and($svc->getHealthInsureOptions('ECOM')->first()->text)->toBe('raw');
         DB::table('lookups')->where('key', LookupsEnum::HEALTH_INSURE_OPTIONS->value)->delete();
         Cache::flush();
@@ -93,6 +94,7 @@ describe('LookupService::getHealthInsureOptions and getPolicyHolder enum labels 
             ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw_ph', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
         expect($svc->getPolicyHolder(LeadSourceEnum::IMCRM)->first()->text)->toBe('The customer')
+            ->and($svc->getPolicyHolder(LeadSourceEnum::RENEWAL_UPLOAD)->first()->text)->toBe('The customer')
             ->and($svc->getPolicyHolder('ECOM')->first()->text)->toBe('raw_ph');
     });
 });
@@ -145,7 +147,7 @@ describe('LookupService::getPolicyHolder IMCRM label edge cases', function () {
         expect($result->first()->text)->toBe('raw_unknown');
     });
 
-    test('non-IMCRM source always returns raw database text', function (?string $source) {
+    test('non-IMCRM non-RENEWAL_UPLOAD source always returns raw database text', function (?string $source) {
         DB::table('lookups')->insert([
             ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw_me', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);

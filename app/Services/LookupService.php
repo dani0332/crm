@@ -392,7 +392,7 @@ class LookupService extends BaseService
             fn () => Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
         );
 
-        if ($leadSource !== LeadSourceEnum::IMCRM) {
+        if (! in_array($leadSource, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD], true)) {
             return $rows;
         }
 
@@ -423,7 +423,7 @@ class LookupService extends BaseService
             fn () => Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
         );
 
-        if ($leadSource !== LeadSourceEnum::IMCRM) {
+        if (! in_array($leadSource, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD], true)) {
             return $rows;
         }
 
