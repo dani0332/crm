@@ -9,6 +9,9 @@ use Illuminate\Http\Client\Response;
 
 class DicResponseHandler
 {
+    /** When Redis/cache has no dic-token before calling EnsuredIT. */
+    public const MESSAGE_AUTH_TOKEN_UNAVAILABLE = 'Could not obtain EnsuredIT access token. Generate a token and store it under the configured Redis key (dic-token), then retry.';
+
     /**
      * @param  mixed  $error
      * @param  mixed  $data
@@ -43,12 +46,32 @@ class DicResponseHandler
      */
     public function issuePolicyAuthFailureResponse(): array
     {
+        return $this->authTokenUnavailableStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function authTokenUnavailableStepResponse(string $step): array
+    {
         return $this->buildStepResponse(
-            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+            $step,
             false,
-            'DIC authentication failed — could not obtain access token',
-            'DIC authentication failed — could not obtain access token',
+            self::MESSAGE_AUTH_TOKEN_UNAVAILABLE,
+            self::MESSAGE_AUTH_TOKEN_UNAVAILABLE,
         );
+    }
+
+    /**
+     * Failed EnsuredIT HTTP response mapped per API error guide (AUTH_ERROR / VALIDATION_ERROR / INTERNAL_ERROR).
+     *
+     * @return array<string, mixed>
+     */
+    public function buildStepResponseFromEnsuredItFailure(string $step, Response $httpResponse): array
+    {
+        $mapped = DicEnsuredItErrorHandler::map($httpResponse);
+
+        return $this->buildStepResponse($step, false, $mapped['message'], $mapped['error']);
     }
 
     /**
@@ -60,11 +83,9 @@ class DicResponseHandler
     public function issuePolicyResultFromHttp(Response $httpResponse, mixed $responseBody): array
     {
         if ($httpResponse->failed()) {
-            return $this->buildStepResponse(
+            return $this->buildStepResponseFromEnsuredItFailure(
                 PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-                false,
-                'DIC IssuePolicy request failed',
-                $httpResponse->body() ?: 'HTTP '.$httpResponse->status(),
+                $httpResponse,
             );
         }
 

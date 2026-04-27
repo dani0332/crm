@@ -90,11 +90,8 @@ class DicApiService
 
         $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
         if ($httpResponse === null) {
-            return $this->responseHandler->buildStepResponse(
+            return $this->responseHandler->authTokenUnavailableStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-                false,
-                'DIC authentication failed — could not obtain access token',
-                'DIC authentication failed — could not obtain access token',
             );
         }
 
@@ -110,11 +107,9 @@ class DicApiService
         );
 
         if ($httpResponse->failed()) {
-            return $this->responseHandler->buildStepResponse(
+            return $this->responseHandler->buildStepResponseFromEnsuredItFailure(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-                false,
-                'DIC GetPolicyDoc request failed',
-                $httpResponse->body() ?: 'HTTP '.$httpResponse->status(),
+                $httpResponse,
             );
         }
 
@@ -139,11 +134,8 @@ class DicApiService
 
         $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
         if ($httpResponse === null) {
-            return $this->responseHandler->buildStepResponse(
+            return $this->responseHandler->authTokenUnavailableStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-                false,
-                'DIC authentication failed — could not obtain access token',
-                'DIC authentication failed — could not obtain access token',
             );
         }
 
@@ -160,11 +152,9 @@ class DicApiService
         );
 
         if ($httpResponse->failed()) {
-            return $this->responseHandler->buildStepResponse(
+            return $this->responseHandler->buildStepResponseFromEnsuredItFailure(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-                false,
-                'DIC GetBrokerInvoice request failed',
-                $httpResponse->body() ?: 'HTTP '.$httpResponse->status(),
+                $httpResponse,
             );
         }
 

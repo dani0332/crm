@@ -42,3 +42,4 @@ expect()->extend('toBeOne', function () {
 */
 
 require_once __DIR__.'/Helpers/AwnicTestHelper.php';
+require_once __DIR__.'/Helpers/DicTestHelper.php';

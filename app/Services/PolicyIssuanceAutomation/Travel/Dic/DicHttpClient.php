@@ -71,9 +71,12 @@ class DicHttpClient
             }
 
             if ($response->failed()) {
+                $mapped = DicEnsuredItErrorHandler::map($response);
                 LoggerService::error('DIC API HTTP error response', [
                     'method' => strtoupper($method),
                     'status_code' => $response->status(),
+                    'ensuredit_operator_message' => $mapped['message'],
+                    'ensuredit_error_detail' => $mapped['error'],
                     'response_body' => $response->body(),
                 ]);
             } else {
