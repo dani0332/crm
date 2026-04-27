@@ -822,13 +822,6 @@ class LookupSeeder extends Seeder
                 'updated_at' => $now,
             ],
             [
-                'code' => 'ESTABLISHMENT_COMPANY_CORPORATE',
-                'text' => 'Establishment/Company/Corporate',
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
                 'code' => 'INVESTOR_VISA',
                 'text' => 'Investor Visa',
                 'is_active' => 1,
