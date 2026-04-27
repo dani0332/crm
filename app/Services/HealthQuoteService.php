@@ -1444,9 +1444,11 @@ class HealthQuoteService extends BaseService
     {
         $quoteId = $request->quoteId ?? null;
 
+        $isInvalidMemberId = fn ($id) => empty($id) || str_starts_with((string) $id, 'temp-');
+
         $membersMissingId = ! empty($request->members)
-            ? collect($request->members)->filter(fn ($m) => empty($m['id'] ?? null))->isNotEmpty()
-            : empty($request->id);
+            ? collect($request->members)->filter(fn ($m) => $isInvalidMemberId($m['id'] ?? null))->isNotEmpty()
+            : $isInvalidMemberId($request->id);
 
         if (! $quoteId) {
             return ['status' => false, 'message' => 'Quote Id not found'];
