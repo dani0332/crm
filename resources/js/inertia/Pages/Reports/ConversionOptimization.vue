@@ -497,7 +497,9 @@ const onTeamChange = async selectedTeams => {
   advisorOptions.value = [];
 
   if (
-    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob)
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(
+      filters.lob,
+    )
   ) {
     await loadSubTeams(selectedTeams);
   }
@@ -588,7 +590,6 @@ function onSubmit(isValid, isOnMounted = false) {
     },
   });
 }
-
 
 function onReset() {
   isDirty.value = false;
@@ -681,7 +682,9 @@ const formatValue = value => {
 
 onMounted(async () => {
   setDefaultValues();
-  setQueryStringFiltersUtil(params, filters, { integerFields: ['page','teams','sub_teams'] });
+  setQueryStringFiltersUtil(params, filters, {
+    integerFields: ['page', 'teams', 'sub_teams'],
+  });
   clearIsCommercialUnlessPersonal();
   await onLobChange(filters.lob, true);
 
@@ -848,9 +851,9 @@ onMounted(async () => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.leadSources = Object.keys(props.filterOptions.leadSources).map(
-                  leadSource => leadSource,
-                )
+                filters.leadSources = Object.keys(
+                  props.filterOptions.leadSources,
+                ).map(leadSource => leadSource)
               "
               @clear="filters.leadSources = []"
             />
@@ -1006,7 +1009,9 @@ onMounted(async () => {
         />
 
         <x-select
-          v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
@@ -1091,13 +1096,14 @@ onMounted(async () => {
       </template>
 
       <template #body-append>
-        <tr
-          v-if="props.reportData?.length > 0"
-          class="total-row"
-        >
+        <tr v-if="props.reportData?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
-          <td class="direction-center">{{ calculateTotalSum('total_leads') }}</td>
-          <td class="direction-center">{{ calculateTotalSum('sale_leads') }}</td>
+          <td class="direction-center">
+            {{ calculateTotalSum('total_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum('sale_leads') }}
+          </td>
           <td class="direction-center">
             {{ formatPercentage(props.reportData[0]?.total_average) }}
           </td>
