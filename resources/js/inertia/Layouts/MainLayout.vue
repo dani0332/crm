@@ -452,7 +452,7 @@ onUnmounted(() => {
                   class="hidden lg:flex items-center gap-1.5 whitespace-nowrap"
                   @click.prevent="copyUploadDocumentLink"
                 >
-                  <x-icon icon="upload" size="sm" />
+                  <x-icon icon="link" size="sm" />
                   <span class="text-xs font-medium">Upload Document Link</span>
                   <x-icon :icon="linkCopied ? 'copyCheck' : 'copy'" size="sm" />
                 </x-button>
