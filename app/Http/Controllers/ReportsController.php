@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\ExportTypeEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\ExportTypeEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -14,6 +14,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\Reports\ConversionAsAtReportExport;
+use App\Exports\Reports\ConversionOptimizationReportExport;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -26,9 +27,9 @@ use App\Services\ConversionAsAtReportService;
 use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\AdvisorConversionReportService;
-use App\Services\Reports\ConversionOptimizationReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
+use App\Services\Reports\ConversionOptimizationReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
@@ -623,7 +624,7 @@ class ReportsController extends Controller
 
     public function exportConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
     {
-        $exportClass = new \App\Exports\Reports\ConversionOptimizationReportExport($conversionOptimizationReportService, $request->all());
+        $exportClass = new ConversionOptimizationReportExport($conversionOptimizationReportService, $request->all());
 
         if ($request->exportType === ExportTypeEnum::Email->value) {
             LoggerService::info('Email CSV');
