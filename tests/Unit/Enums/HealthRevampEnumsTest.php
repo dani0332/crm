@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\GenderEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
@@ -88,6 +89,35 @@ describe('HealthCoverForEnum', function () {
 
     test('has all cover-for cases (inactive and active)', function () {
         expect(HealthCoverForEnum::cases())->toHaveCount(5);
+    });
+});
+
+describe('GenderEnum', function () {
+    test('legacy codes are enum cases not constants', function () {
+        // Previously these were PHP constants; they must now be proper enum cases
+        // so that ->value works and tryFrom() can resolve them.
+        expect(GenderEnum::MALE_SHORT->value)->toBe('M')
+            ->and(GenderEnum::FEMALE_SHORT->value)->toBe('F')
+            ->and(GenderEnum::LEGACY_MALE->value)->toBe('Male')
+            ->and(GenderEnum::LEGACY_FEMALE->value)->toBe('Female')
+            ->and(GenderEnum::LEGACY_FEMALE_SHORT->value)->toBe('FS')
+            ->and(GenderEnum::LEGACY_FEMALE_MARRIED->value)->toBe('FM');
+    });
+
+    test('tryFrom resolves all legacy gender codes', function (string $raw, GenderEnum $expected) {
+        expect(GenderEnum::tryFrom($raw))->toBe($expected);
+    })->with([
+        ['M',      GenderEnum::MALE_SHORT],
+        ['F',      GenderEnum::FEMALE_SHORT],
+        ['Male',   GenderEnum::LEGACY_MALE],
+        ['Female', GenderEnum::LEGACY_FEMALE],
+        ['FS',     GenderEnum::LEGACY_FEMALE_SHORT],
+        ['FM',     GenderEnum::LEGACY_FEMALE_MARRIED],
+    ]);
+
+    test('tryFrom returns null for unknown gender string', function () {
+        expect(GenderEnum::tryFrom('X'))->toBeNull()
+            ->and(GenderEnum::tryFrom('male'))->toBe(GenderEnum::MALE);
     });
 });
 

@@ -97,6 +97,63 @@ describe('LookupService::getHealthInsureOptions and getPolicyHolder enum labels 
     });
 });
 
+describe('LookupService::getHealthInsureOptions IMCRM label edge cases', function () {
+    test('rows with null code are returned unchanged when source is IMCRM', function () {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => null, 'text' => 'no_code', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $result = $this->lookupService->getHealthInsureOptions(LeadSourceEnum::IMCRM);
+
+        expect($result->first()->text)->toBe('no_code');
+    });
+
+    test('rows with unrecognised code are returned unchanged when source is IMCRM', function () {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'UNKNOWN_CODE', 'text' => 'raw_unknown', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $result = $this->lookupService->getHealthInsureOptions(LeadSourceEnum::IMCRM);
+
+        expect($result->first()->text)->toBe('raw_unknown');
+    });
+
+    test('original cached rows are not mutated by IMCRM label replacement', function () {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::HEALTH_INSURE_OPTIONS->value, 'code' => 'ONLY_MYSELF', 'text' => 'raw_self', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $this->lookupService->getHealthInsureOptions(LeadSourceEnum::IMCRM);
+        Cache::flush();
+
+        // Re-fetch without IMCRM – should still get raw DB text, not the mutated label
+        DB::table('lookups')->where('key', LookupsEnum::HEALTH_INSURE_OPTIONS->value)->update(['text' => 'raw_self']);
+        $result = $this->lookupService->getHealthInsureOptions(null);
+
+        expect($result->first()->text)->toBe('raw_self');
+    });
+});
+
+describe('LookupService::getPolicyHolder IMCRM label edge cases', function () {
+    test('rows with unrecognised code are returned unchanged when source is IMCRM', function () {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'UNKNOWN', 'text' => 'raw_unknown', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $result = $this->lookupService->getPolicyHolder(LeadSourceEnum::IMCRM);
+
+        expect($result->first()->text)->toBe('raw_unknown');
+    });
+
+    test('non-IMCRM source always returns raw database text', function (?string $source) {
+        DB::table('lookups')->insert([
+            ['key' => LookupsEnum::POLICY_HOLDER_OPTIONS->value, 'code' => 'ME', 'text' => 'raw_me', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        expect($this->lookupService->getPolicyHolder($source)->first()->text)->toBe('raw_me');
+    })->with(['ECOM', 'DIRECT', null]);
+});
+
 describe('LookupService::getPolicyHolderCategory', function () {
     test('returns all policy holder category lookups', function () {
         DB::table('lookups')->insert([
