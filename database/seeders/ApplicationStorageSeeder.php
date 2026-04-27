@@ -167,6 +167,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
+        $this->seedDicTravelPolicyIssuance();
     }
 
     private function livaCarAutomationSeed()
@@ -1679,6 +1680,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
             [
                 'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDicTravelPolicyIssuance()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_DIC_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

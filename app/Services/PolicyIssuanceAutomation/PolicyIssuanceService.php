@@ -18,6 +18,7 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Models\TravelQuote;
 use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
@@ -25,6 +26,7 @@ use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -41,6 +43,7 @@ class PolicyIssuanceService
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
                 InsuranceProviderEnum::ALNC->value => new AllianceInsuranceService,
+                InsuranceProviderEnum::DIC->value => app(DicInsuranceService::class),
                 default => null,
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
@@ -442,34 +445,19 @@ class PolicyIssuanceService
             $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
         }
 
-        if (
-            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) &&
-            (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
-            ! $isPolicyBooked
-        ) {
-            $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
-            [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
+        $hasFailureContext = ! empty($statusAPIFailed) && ! empty($processInvolved);
+        $isCarOrCyber = in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value], true);
+        $isTravel = $quoteType === QuoteTypes::TRAVEL->value;
+        // Other LOBs (e.g. Home policy issuance): add `$quoteType === QuoteTypes::HOME->value` and extend `resolveAutomationFailureRouting`.
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
-                'actionRequired' => $actionRequired,
-                'statusAPIFailed' => $statusAPIFailed,
-                'processInvolved' => $processInvolved,
-                'jobQuoteTypeId' => $jobQuoteTypeId,
-                'workflowType' => $workflowType,
-                'recipientUser' => $recipientUser,
-            ]);
-
-            AutomationFailedJob::dispatch(
+        if ($hasFailureContext && (($isCarOrCyber && ! $isPolicyBooked) || $isTravel)) {
+            $this->dispatchAutomationFailedJob(
                 $quote->id,
-                $jobQuoteTypeId,
-                $actionRequired,
+                $quoteType,
                 $statusAPIFailed,
                 $processInvolved,
-                $workflowType,
-                $recipientUser
-            )->onQueue('policy-issuance-automation');
-
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+                __FUNCTION__,
+            );
         } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
             app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
@@ -492,8 +480,51 @@ class PolicyIssuanceService
         }
     }
 
+    /**
+     * Shared AutomationFailedJob dispatch (only from {@see allocateLead}).
+     */
+    private function dispatchAutomationFailedJob(
+        int $quoteId,
+        string $quoteType,
+        string $statusAPIFailed,
+        string $processInvolved,
+        string $logContextFunction,
+    ): void {
+        $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
+        [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.$logContextFunction.' - Going to dispatch AutomationFailedJob', extra: [
+            'actionRequired' => $actionRequired,
+            'statusAPIFailed' => $statusAPIFailed,
+            'processInvolved' => $processInvolved,
+            'jobQuoteTypeId' => $jobQuoteTypeId,
+            'workflowType' => $workflowType,
+            'recipientUser' => $recipientUser,
+        ]);
+
+        AutomationFailedJob::dispatch(
+            $quoteId,
+            $jobQuoteTypeId,
+            $actionRequired,
+            $statusAPIFailed,
+            $processInvolved,
+            $workflowType,
+            $recipientUser
+        )->onQueue('policy-issuance-automation');
+
+        LoggerService::info('automation:'.$this->className.' fn:'.$logContextFunction.' - AutomationFailedJob Dispatched');
+    }
+
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
     {
+        if ($quoteType === QuoteTypes::TRAVEL->value) {
+            return [
+                QuoteTypeId::Travel,
+                WorkflowTypeEnum::TRAVEL_POLICY_ISSUANCE_AUTOMATION_FAILED,
+                UserNameEnum::PA_USER,
+            ];
+        }
+
         $isCyber = $quoteType === QuoteTypes::CYBER->value;
 
         $quoteTypeId = $isCyber ? QuoteTypeId::Cyber : QuoteTypeId::Car;
@@ -630,5 +661,27 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);
+    }
+
+    /**
+     * Travel DIC: persist failure on the quote, then {@see allocateLead} (same AutomationFailedJob path as Car/Cyber).
+     */
+    public function applyTravelDicAutomationFailure(TravelQuote $quote, int $insurerApiStatusId, string $processInvolved, ?int $apiIssuanceStatusId = null): void
+    {
+        $apiIssuanceStatusId ??= PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+
+        $quote->update([
+            'insurer_api_status_id' => $insurerApiStatusId,
+            'api_issuance_status_id' => $apiIssuanceStatusId,
+        ]);
+        $quote->refresh();
+
+        $this->allocateLead(
+            QuoteTypes::TRAVEL->value,
+            $quote,
+            false,
+            PolicyIssuanceEnum::getInsurerAPIStatuses($insurerApiStatusId),
+            $processInvolved,
+        );
     }
 }
