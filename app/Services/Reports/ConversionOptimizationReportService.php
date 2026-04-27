@@ -631,6 +631,9 @@ class ConversionOptimizationReportService extends BaseService
             $row->ranking = $index + 1;
             $row->team_average = $teamAverage;
 
+            /** Since above "multi-cohort grouping" is disabled both team and total average will be same. */
+            $row->total_average = $teamAverage;
+
             if ((float) $row->conversion < $teamAverage && (float) $row->total_leads > 0) {
                 $row->expected_sales = $this->roundWithPointOneFractionBias(
                     ((float) $row->total_leads * $teamAverage) / 100
@@ -647,7 +650,11 @@ class ConversionOptimizationReportService extends BaseService
         $this->applyCapLimitCalculations($rankedRows, $capPercentage);
         // } // end of foreach $cohorts
 
-        if ($normalizedRows->isNotEmpty()) {
+        // Below gets enable when above "multi-cohort grouping" is enabled
+
+        /* Calculates total average across groups when multiple groups logic is enabled */
+
+        /*if ($normalizedRows->isNotEmpty()) {
             $datasetAverageConversion = round(
                 (float) $normalizedRows->avg(fn ($row) => (float) $row->conversion),
                 2
@@ -656,7 +663,7 @@ class ConversionOptimizationReportService extends BaseService
             foreach ($normalizedRows as $row) {
                 $row->total_average = $datasetAverageConversion;
             }
-        }
+        }*/
 
         return $rankedRows;
     }
