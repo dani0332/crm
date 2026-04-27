@@ -280,9 +280,9 @@
                                 @if($isCarQuote)
                                     <br style="margin-top:0px !important;">
                                 @endif
-                            <p style="margin:0; font-weight:400; font-size:12px; @if($isCarQuote) line-height:1.2 @endif !important;">{{ $quote->advisor->name }}</p>
-                            <p style="margin:0; font-size:10px; color:#555; @if($isCarQuote) line-height:1.2 @endif !important;">Insurance Advisor</p>
-                            <p style=" font-size:10px; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 5px; @else margin-top: 0px; @endif @if($isCarQuote) line-height:1.3 @endif !important;">
+                            <p style="margin:0; font-weight:400; font-size:12px; @if($isCarQuote) line-height:1.2 !important; @endif">{{ $quote->advisor->name }}</p>
+                            <p style="margin:0; font-size:10px; color:#555; @if($isCarQuote) line-height:1.2 !important; @endif">Insurance Advisor</p>
+                            <p style=" font-size:10px; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 5px; @else margin-top: 0px; @endif @if($isCarQuote) line-height:1.3  !important; @endif">
                               <a href="mailto:{{ $quote->advisor->email }}" style="color:#000; "><img src="{{ public_path('images/quote_plans_pages/icons/mail.svg') }}"
                               style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 8px; @else margin-top: 0px; @endif">
                              {{ $quote->advisor->email }}</a><br>
