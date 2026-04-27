@@ -1050,13 +1050,14 @@ watch(categoryChangeConfirmOpen, isOpen => {
 
                 <div v-if="showAdditionalFields" class="grid sm:grid-cols-2 gap-4 w-full col-span-2">
                   <DatePicker
-                    v-model="quoteForm.dob"
+                    :model-value="quoteForm.dob"
                     :rules="[isRequired, minAge(18)]"
                     :max-date="maxPolicyholderDobDate"
                     :start-date="maxPolicyholderDobDate"
                     class="w-full"
                     label="DATE OF BIRTH"
                     required
+                    @update:modelValue="v => quoteForm.dob = v ? new Date(v).toISOString().slice(0, 10) : null"
                   />
 
                   <x-select

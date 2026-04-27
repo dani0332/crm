@@ -132,6 +132,8 @@ const confirmPrincipalData = reactive({
   member: null,
 });
 
+const isPrincipalConfirmProcessing = ref(false);
+
 const memberActionEdit = ref(false);
 const memberPecValidationError = ref('');
 
@@ -630,6 +632,8 @@ const memberPrincipalConfirmed = () => {
     });
   }
 
+  isPrincipalConfirmProcessing.value = true;
+
   submitForm(form, 'put', '/health-quote-update-member', {
     successTitle: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
     onSuccess: () => {
@@ -638,6 +642,7 @@ const memberPrincipalConfirmed = () => {
       emit('loadAvailablePlans');
     },
     onFinish: () => {
+      isPrincipalConfirmProcessing.value = false;
       modals.memberPrincipal = false;
     },
   });
@@ -1131,10 +1136,11 @@ defineExpose({
 
             <DatePicker
               required
-              v-model="memberForm.dob"
+              :model-value="memberForm.dob"
               label="Date of Birth"
               :max-date="new Date()"
               :rules="[isRequired]"
+              @update:modelValue="v => memberForm.dob = v ? new Date(v).toISOString().slice(0, 10) : null"
             />
 
             <x-select
@@ -1372,7 +1378,7 @@ defineExpose({
                 size="sm"
                 color="error"
                 @click.prevent="memberPrincipalConfirmed"
-                :loading="memberForm.processing"
+                :loading="isPrincipalConfirmProcessing"
               >
                 Confirm
               </x-button>
