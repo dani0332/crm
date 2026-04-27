@@ -150,8 +150,9 @@ class DocumentTypeRepository extends BaseRepository
     {
         $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
         $requiredRows = collect($documentTypeCodes)->where('is_required_for_send_policy', 1);
-        $docCodes = $requiredRows->pluck('code')->unique()->values()->all();
-        $requiredDocuments = $requiredRows->pluck('text')->unique()->values()->all();
+        $codeToText = $requiredRows->pluck('text', 'code');
+        $docCodes = $codeToText->keys()->values()->all();
+        $requiredDocuments = $codeToText->values()->unique()->values()->all();
 
         $uploadedCodes = collect($quoteDocuments)
             ->pluck('document_type_code')
@@ -161,7 +162,6 @@ class DocumentTypeRepository extends BaseRepository
             ->all();
 
         $missingDocumentCodes = array_values(array_diff($docCodes, $uploadedCodes));
-        $codeToText = $requiredRows->mapWithKeys(fn ($row) => [$row->code => $row->text])->all();
         $missingDocuments = array_values(array_map(
             static fn (string $code): string => $codeToText[$code] ?? $code,
             $missingDocumentCodes
