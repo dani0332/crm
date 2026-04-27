@@ -44,6 +44,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RelationCodeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -180,6 +181,7 @@ class HandleInertiaRequests extends Middleware
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
             'genderEnum' => array_column(GenderEnum::cases(), 'value', 'name'),
+            'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
         ];
     }
 

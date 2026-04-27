@@ -40,6 +40,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
+use App\Enums\RelationCodeEnum;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
@@ -500,6 +501,7 @@ class CRUDController extends Controller
                     'subSource' => $request->input('subSourceId'),
                     'subSourceOption' => $request->input('subSourceOptionsId'),
                 ],
+                'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
             ]);
         }
 
@@ -1365,6 +1367,7 @@ class CRUDController extends Controller
                     'insureCodeOptions' => $insureCodeOptions,
                     'policyHolderOptions' => $policyHolderOptions,
                     'emirateEnum' => EmirateEnum::asArray(),
+                    'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
                 ]);
             } else {
                 return view('shared.show', compact([
@@ -1455,6 +1458,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
+                'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
             ]);
         }
 

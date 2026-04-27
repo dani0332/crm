@@ -102,6 +102,7 @@ const emit = defineEmits(['memberUpdated', 'loadAvailablePlans']);
 
 const page = usePage();
 const notification = useToast();
+const relationCodeEnum = page.props.relationCodeEnum;
 
 const {
   isDomesticHelper,
@@ -381,6 +382,7 @@ const onAddMemberModal = () => {
   memberForm.is_policy_holder = 0;
   memberForm.is_insured = 1;
   memberForm.emirate_of_your_visa_id = getPrincipalEmirateOfYourVisaId();
+  memberForm.relation_code = relationCodeEnum.SELF;
 };
 
 function onEditMember(data) {
@@ -528,11 +530,40 @@ const memberPrincipal = data => {
   confirmPrincipalData.member = data.id;
 };
 
+/**
+ * Sourced from RelationCodeEnum::policyHolderRelationMap() passed as a page prop
+ * from HealthQuote/Show, HealthQuote/Form (create & edit), and HealthRevivalQuote/Show.
+ * Edit the mapping in app/Enums/RelationCodeEnum.php — changes propagate here automatically.
+ */
+const POLICYHOLDER_RELATION_MAP = page.props.policyHolderRelationMap;
+
+/**
+ * When a new policyholder is confirmed, remap all insured members' relation_codes
+ * according to the defined mapping rules. Returns the updated members list.
+ */
+const applyPolicyHolderRelationCodes = (members, newPolicyHolderId) => {
+  const newPH = members.find(m => m.id === newPolicyHolderId);
+  if (!newPH) return members;
+
+  const newPHRelation = newPH.relation_code;
+  const mapping = POLICYHOLDER_RELATION_MAP[newPHRelation];
+
+  if (!mapping) return members;
+
+  return members.map(m => {
+    if (m.is_insured != 1) return m;
+    const updatedRelation = m.id === newPolicyHolderId
+      ? relationCodeEnum?.SELF
+      : (mapping[m.relation_code] ?? m.relation_code);
+    return { ...m, relation_code: updatedRelation };
+  });
+};
+
 const memberPrincipalConfirmed = () => {
   if (isCreate.value || isEdit.value) {
 
     const targetId = confirmPrincipalData.member;
-    localMembers.value = localMembers.value.map(m => {
+    let updated = localMembers.value.map(m => {
       const principalWhenInsured = m.id === targetId ? 1 : 0;
       const isPrincipal = m.is_insured == 1 ? principalWhenInsured : m.is_principal;
 
@@ -541,6 +572,12 @@ const memberPrincipalConfirmed = () => {
 
       return { ...m, is_principal: isPrincipal, is_policy_holder: isPolicyHolder };
     });
+
+    if (makeActionName.value === 'policyholder') {
+      updated = applyPolicyHolderRelationCodes(updated, targetId);
+    }
+
+    localMembers.value = updated;
     
     const newPrincipalMember = localMembers.value.find(m => m.id === targetId);
     if (newPrincipalMember) {
@@ -561,25 +598,44 @@ const memberPrincipalConfirmed = () => {
     return;
   }
 
-  memberForm.put(`/health-quote-update-member`, {
-    preserveScroll: true,
-    onSuccess: response => {
-      const flash_messages = response.props.flash;
-      if (!flash_messages.error) {
-        notification.success({
-          title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
-          position: 'top',
-        });
-        memberForm.reset();
-        emit('memberUpdated');
-        emit('loadAvailablePlans');
-      }
-    },
-    onError: errors => {
-      notification.error({
-        title: errors.error || 'Some error occurred while processing request',
-        position: 'top',
-      });
+  let form = memberForm;
+
+  if (makeActionName.value === 'policyholder') {
+    const targetId = confirmPrincipalData.member;
+    const updatedMembers = applyPolicyHolderRelationCodes(localMembers.value, targetId);
+
+    form = useForm({
+      quoteId: props.quote?.uuid,
+      customer_id: props.quote?.customer_id,
+      members: updatedMembers
+        .filter(m => m.is_insured == 1)
+        .map(m => ({
+          id: m.id,
+          relation_code: m.relation_code,
+          is_principal: m.id === targetId ? 1 : 0,
+          is_policy_holder: m.id === targetId ? 1 : 0,
+          first_name: m.first_name,
+          last_name: m.last_name,
+          gender: m.gender,
+          dob: m.dob,
+          nationality_id: m.nationality_id,
+          emirate_of_your_visa_id: m.emirate_of_your_visa_id,
+          salary_band_id: m.salary_band_id,
+          member_category_id: m.member_category_id,
+          visa_category_id: m.visa_category_id,
+          marital_status_id: m.marital_status_id,
+          pec: m.pec ?? m.is_pec_marked,
+          is_insured: m.is_insured,
+        })),
+    });
+  }
+
+  submitForm(form, 'put', '/health-quote-update-member', {
+    successTitle: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
+    onSuccess: () => {
+      memberForm.reset();
+      emit('memberUpdated');
+      emit('loadAvailablePlans');
     },
     onFinish: () => {
       modals.memberPrincipal = false;
@@ -656,7 +712,7 @@ function buildPrincipalMemberDataFromQuoteForm() {
     is_principal: 1,
     is_policy_holder: 1,
     is_insured: 1,
-    relation_code: null,
+    relation_code: relationCodeEnum.SELF,
     quote_request_id: props.quote.id,
   };
 }

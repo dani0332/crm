@@ -1443,30 +1443,29 @@ class HealthQuoteService extends BaseService
     public function healthQuoteUpdateMember($request)
     {
         $quoteId = $request->quoteId ?? null;
-        $memberId = $request->id ?? null;
 
-        if ($quoteId && $memberId) {
-            $memberDetails = $this->prepareMemberDetailPayload($request->all());
-
-            $dataArray = [
-                'quoteUID' => $quoteId,
-                'memberDetails' => [$memberDetails],
-                'userId' => auth()->user()->id,
-                'callSource' => strtolower(LeadSourceEnum::IMCRM),
-            ];
-
-            LoggerService::info('Health quote update member - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
-
-            $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
-
-            LoggerService::info('Health quote update member - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
-
-        } else {
-            $response = [
-                'status' => false,
-                'message' => 'Quote Id not found',
-            ];
+        if (! $quoteId) {
+            return ['status' => false, 'message' => 'Quote Id not found'];
         }
+
+        // Bulk path (policyholder change): Vue sends all affected members.
+        // Single path (regular edit): wrap the single member in an array.
+        $memberDetails = ! empty($request->members)
+            ? collect($request->members)->map(fn ($m) => $this->prepareMemberDetailPayload($m))->all()
+            : [$this->prepareMemberDetailPayload($request->all())];
+
+        $dataArray = [
+            'quoteUID' => $quoteId,
+            'memberDetails' => $memberDetails,
+            'userId' => auth()->user()->id,
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
+        ];
+
+        LoggerService::info('Health quote update member - Ken API request', extra: ['request' => $dataArray, 'uuid' => $quoteId]);
+
+        $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
+        LoggerService::info('Health quote update member - Ken API response', extra: ['response' => $response, 'uuid' => $quoteId]);
 
         return $response;
     }

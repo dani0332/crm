@@ -438,7 +438,7 @@ final class HealthQuoteRevampMigrationMutator
                 $months = $this->context->monthsSinceDob($this->context->dobToDateString($cm->dob));
 
                 if ($cm->is_policy_holder) {
-                    $cm->relation_code = null;
+                    $cm->relation_code = RelationCodeEnum::SELF->value;
                     $cm->salary_band_id = $hqr->salary_band_id;
                     $cm->visa_category_id = $hqr->visa_category_id;
                     $cm->save();
@@ -449,7 +449,7 @@ final class HealthQuoteRevampMigrationMutator
                 $relation = match (true) {
                     $mc === MemberCategoryEnum::DOMESTIC_WORKER->value => RelationCodeEnum::DOMESTIC_WORKER->value,
                     in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value, MemberCategoryEnum::INVESTOR_PARTNER->value, MemberCategoryEnum::GOLDEN_VISA->value], true) => null,
-                    $mc === MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value => RelationCodeEnum::SIBLING_OR_RELATIVES->value,
+                    $mc === MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value => RelationCodeEnum::RELATIVES->value,
                     $mc === MemberCategoryEnum::DEPENDENT_PARENT->value => RelationCodeEnum::PARENT->value,
                     $mc === MemberCategoryEnum::DEPENDENT_SPOUSE->value => RelationCodeEnum::SPOUSE->value,
                     $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => RelationCodeEnum::CHILD->value,
