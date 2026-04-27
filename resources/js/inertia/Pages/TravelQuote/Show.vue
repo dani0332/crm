@@ -67,6 +67,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAllianceProvider: Boolean,
+  isDicProvider: Boolean,
   customerAddressData: Object,
 });
 
@@ -3840,7 +3841,7 @@ const fullAddress = computed(() => {
     />
 
     <PolicyIssuanceApiLogs
-      v-if="isAllianceProvider"
+      v-if="isAllianceProvider || isDicProvider"
       :type="modelClass"
       :quoteTypeId="$page.props.quoteTypeId"
       :id="$page.props.quote.id"
