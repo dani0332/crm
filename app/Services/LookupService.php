@@ -59,6 +59,15 @@ class LookupService extends BaseService
         return MemberCategory::active()->get();
     }
 
+    public function getAllMemberCategories()
+    {
+        return Cache::remember(
+            CacheKeyEnum::ALL_MEMBER_CATEGORIES_KEY->value,
+            CacheKeyEnum::ALL_MEMBER_CATEGORIES_KEY->expiry(),
+            fn () => MemberCategory::select('id', 'text')->get()
+        );
+    }
+
     public function getSalaryBands()
     {
         return SalaryBand::active()->get();
@@ -449,6 +458,17 @@ class LookupService extends BaseService
             CacheKeyEnum::VISA_CATEGORY_KEY->value,
             CacheKeyEnum::VISA_CATEGORY_KEY->expiry(),
             fn () => VisaCategory::active()->orderBy('sort_order')->get()
+        );
+    }
+
+    public function getMemberRelations()
+    {
+        return Cache::remember(
+            CacheKeyEnum::MEMBER_RELATIONS_KEY->value,
+            CacheKeyEnum::MEMBER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::MEMBER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
         );
     }
 

@@ -18,12 +18,13 @@ class HealthQuotesExport implements CsvExportableInterface
     use ModernCsvExportable;
 
     private $genderOptions;
-
+    private $genderDisplayMap;
     public function __construct(
         private HealthQuoteService $healthQuoteService,
         private CRUDService $crudService
     ) {
         $this->genderOptions = $this->crudService->getGenderOptions(QuoteTypeId::Health);
+        $this->genderDisplayMap = $this->crudService->getHealthGenderDisplayMap();
     }
 
     public function collection(array $requestParams = []): Collection
@@ -123,7 +124,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->memberCategory?->text ?? 'N/A',
             $quote->policyHolderCategory?->text ?? 'N/A',
             $quote->visaCategory?->text ?? 'N/A',
-            $this->genderOptions[$quote->gender] ?? 'N/A',
+            $this->genderDisplayMap[$quote->gender] ?? 'N/A',
             $quote->maritalStatus?->text ?? 'N/A',
             $quote->salaryBand?->text ?? 'N/A',
             $quote->currentProvider?->text,

@@ -27,6 +27,7 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  genderDisplayMap: Object,
 });
 
 const page = usePage();
@@ -1443,7 +1444,7 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-gender_lookup.text="item">
         <p>
-          {{ item.gender_lookup?.text ?? 'N/A' }}
+          {{ item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A' }}
         </p>
       </template>
       <template #item-marital_status.text="item">

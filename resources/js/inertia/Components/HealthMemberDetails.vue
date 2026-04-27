@@ -79,6 +79,18 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  genderDisplayMap: {
+    type: Object,
+    default: () => ({}),
+  },
+  memberRelationDisplayMap: {
+    type: Object,
+    default: () => ({}),
+  },
+  memberCategoryDisplayMap: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const HEALTH_PEC_YES = 1;
@@ -166,12 +178,13 @@ watch(
 
 const genderText = gender =>
   computed(() => {
-    return props.genderOptions.find(option => option.value === gender)?.label;
+    return props.genderDisplayMap[gender] ?? props.genderOptions.find(option => option.value === gender)?.label;
   });
 
 const relationText = relationCode =>
   computed(() => {
-    return props.memberRelations.find(relation => relation.value === relationCode)?.label;
+    return props.memberRelationDisplayMap[relationCode]
+      ?? props.memberRelations.find(relation => relation.value === relationCode)?.label;
   });
 
 const nationalityText = nationalityId =>
@@ -186,7 +199,8 @@ const emirateText = emirateId =>
 
 const memberCategoryText = memberCategoryId =>
   computed(() => {
-    return props.memberCategories.find(category => category.value === memberCategoryId)?.label;
+    return props.memberCategoryDisplayMap[memberCategoryId]
+      ?? props.memberCategories.find(category => category.value === memberCategoryId)?.label;
   });
 
 const visaCategoryText = visaCategoryId =>

@@ -35,6 +35,9 @@ const props = defineProps({
   allowedDuplicateLOB: Array,
   permissions: Object,
   genderOptions: Object,
+  genderDisplayMap: Object,
+  memberRelationDisplayMap: Object,
+  memberCategoryDisplayMap: Object,
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
   payments: Array,
@@ -334,7 +337,7 @@ const onCopyText = text => {
 
 const genderText = gender =>
   computed(() => {
-    return page.props.genderOptions[gender];
+    return page.props.genderDisplayMap[gender];
   });
 
 const memberCategoryText = memberCategoryId =>
@@ -2673,6 +2676,9 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :policyHolderCode="quote.policy_holder_code"
       @memberUpdated="onMemberUpdated"
       @loadAvailablePlans="onLoadAvailablePlansData"
+      :genderDisplayMap="page.props.genderDisplayMap"
+      :memberRelationDisplayMap="page.props.memberRelationDisplayMap"
+      :memberCategoryDisplayMap="page.props.memberCategoryDisplayMap"
     />
     
     <UBODetails
