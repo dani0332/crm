@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -26,6 +27,7 @@ use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
+use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -559,7 +561,7 @@ class ApiController extends Controller
     }
 
     /**
-     * Manually run the same flow as {@see \App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand}
+     * Manually run the same flow as {@see ReportsConversionOptimizationScheduledExportCommand}
      * (reads recipient JSON from {@see ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS}
      * or an optional `application_storage_key`).
      */
@@ -892,5 +894,12 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function logEpEmailStatuses(LogEpEmailStatusesRequest $request)
+    {
+        $this->emailStatusService->logEpEmailStatuses($request->validated());
+
+        return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
     }
 }

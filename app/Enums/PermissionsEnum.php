@@ -255,6 +255,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
+    public const EP_DOCUMENT_MANUAL_OVERRIDE = 'update-ep-document-manual-override';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -336,7 +337,6 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
     public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
-
     public const CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW = 'conversion-optimization-engine-report-view';
     public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
     public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
