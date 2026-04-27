@@ -296,13 +296,8 @@ export const setQueryStringFilters = (params, filters, options = {}) => {
       val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val);
     const mayCoerceInt =
       looksLikeInt &&
-      (
-        integerFields === undefined ||
-        (
-          Array.isArray(integerFields) &&
-          integerFields.includes(baseKey)
-        )
-      );
+      (integerFields === undefined ||
+        (Array.isArray(integerFields) && integerFields.includes(baseKey)));
     params[key] = mayCoerceInt ? parseInt(val, 10) : val;
 
     if (key.includes('[]')) {
