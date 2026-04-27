@@ -22,7 +22,6 @@ class ConversionOptimizationScheduledExportService
      */
     private const ROLLING_BATCH_MAX_WEEKS = 104;
 
-
     /**
      * Request keys allowed inside application_storage JSON `filters` (merged over code defaults).
      *
@@ -76,7 +75,7 @@ class ConversionOptimizationScheduledExportService
             'application_storage_key' => $applicationStorageKeyName,
         ]);
 
-        //region Fetch params from application_storage
+        // region Fetch params from application_storage
         $row = ApplicationStorage::query()
             ->where('key_name', $applicationStorageKeyName)
             ->first();
@@ -91,7 +90,6 @@ class ConversionOptimizationScheduledExportService
 
         $decoded = json_decode((string) $row->value, true);
 
-
         if (! is_array($decoded)) {
             LoggerService::error('Conversion optimization scheduled export: recipients value is not valid JSON', [
                 'application_storage_key' => $applicationStorageKeyName,
@@ -99,7 +97,7 @@ class ConversionOptimizationScheduledExportService
 
             return false;
         }
-        //endregion
+        // endregion
 
         if (! $this->validateConfig($decoded, $applicationStorageKeyName)) {
             return false;
@@ -216,7 +214,7 @@ class ConversionOptimizationScheduledExportService
 
     /**
      * @param  array<string, mixed>  $decoded
-     * @return array{start: string, end: string}  Normalized Y-m-d (validated in {@see validateConfig}).
+     * @return array{start: string, end: string} Normalized Y-m-d (validated in {@see validateConfig}).
      */
     private function normalizeBatchWindowFromDecoded(array $decoded): array
     {
@@ -264,6 +262,7 @@ class ConversionOptimizationScheduledExportService
                 return false;
             }
         }
+
         return true;
     }
 
@@ -324,8 +323,7 @@ class ConversionOptimizationScheduledExportService
         }
         Rolling batch alternative (start = today minus no_of_weeks×7 days, end = today; ignored if start+end are set):
         { "batch": { "no_of_weeks": 8 }, ... }
-      */
-
+     */
     private function extractMergeableFiltersFromStorage(array $decoded): array
     {
         if (! isset($decoded['filters'])) {
@@ -447,7 +445,6 @@ class ConversionOptimizationScheduledExportService
 
             return false;
         }
-
 
         LoggerService::info('Conversion optimization scheduled export: recipients JSON validated', [
             'application_storage_key' => $applicationStorageKeyName,

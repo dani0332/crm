@@ -95,10 +95,12 @@ class AdvisorConversionReportService extends BaseService
 
         if ($lob === quoteTypeCode::Car) {
             $query = $this->getCarQuoteQuery($lob);
+
             return $this->applyFiltersForCar($query, $filters);
         }
 
         $query = $this->getPersonsalQuoteQuery($lob);
+
         return $this->applyFilters($query, $filters);
     }
 
