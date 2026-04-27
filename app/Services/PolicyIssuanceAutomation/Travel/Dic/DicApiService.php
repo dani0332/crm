@@ -5,20 +5,14 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Facades\DicHttpFacade;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use InvalidArgumentException;
 
 class DicApiService
 {
-    /** Laravel Redis cache key — value must be set via e.g. `Cache::store('redis')->put('dic-token', $bearer, $ttl)`. */
-    private const REDIS_TOKEN_KEY = 'dic-token';
-
     public function __construct(
         private DicResponseHandler $responseHandler,
         private DicRequestBuilder $requestBuilder,
@@ -33,7 +27,7 @@ class DicApiService
     public function issuePolicy(TravelQuote $quote, PolicyIssuance $policyIssuance): array
     {
         $path = 'products/buy/client';
-        $url = $this->buildUrl($path);
+        $url = DicHttpFacade::buildUrl($path);
         $payload = $this->requestBuilder->buildIssuePolicyPayload($quote);
 
         LoggerService::info('DIC Travel IssuePolicy request', [
@@ -42,22 +36,12 @@ class DicApiService
         ]);
 
         if ($payload === [] || ! isset($payload['policy_id'])) {
-            return $this->responseHandler->buildStepResponse(
-                PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-                false,
-                'DIC IssuePolicy requires policy_id (set insurer_quote_number for EnsuredIT embed).',
-                'DIC IssuePolicy: missing policy_id for this quote',
-            );
+            return $this->responseHandler->issuePolicyInvalidPayloadResponse();
         }
 
-        $httpResponse = $this->authenticatedRequest('POST', $url, $payload);
+        $httpResponse = DicHttpFacade::authenticatedRequest('POST', $url, $payload);
         if ($httpResponse === null) {
-            return $this->responseHandler->buildStepResponse(
-                PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-                false,
-                'DIC authentication failed — could not obtain access token',
-                'DIC authentication failed — could not obtain access token',
-            );
+            return $this->responseHandler->issuePolicyAuthFailureResponse();
         }
 
         $responseBody = $httpResponse->json() ?? [];
@@ -72,33 +56,13 @@ class DicApiService
             $policyIssuance,
         );
 
-        if ($httpResponse->failed()) {
-            return $this->responseHandler->buildStepResponse(
-                PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-                false,
-                'DIC IssuePolicy request failed',
-                $httpResponse->body() ?: 'HTTP '.$httpResponse->status(),
-            );
+        $result = $this->responseHandler->issuePolicyResultFromHttp($httpResponse, $responseBody);
+
+        if ($result['status'] === true && is_array($result['data'] ?? null)) {
+            $this->applyIssuePolicyResponseToQuote($quote, $result['data']);
         }
 
-        if (! is_array($responseBody)) {
-            return $this->responseHandler->buildStepResponse(
-                PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-                false,
-                'DIC IssuePolicy: success response missing',
-                'DIC IssuePolicy: success response missing',
-            );
-        }
-
-        // $this->applyIssuePolicyResponseToQuote($quote, $responseBody);
-
-        return $this->responseHandler->buildStepResponse(
-            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-            true,
-            'DIC IssuePolicy completed',
-            null,
-            $responseBody,
-        );
+        return $result;
     }
 
     /**
@@ -122,9 +86,9 @@ class DicApiService
         $policyId = $quote->insurer_quote_number;
 
         $path = 'policy-stores/'.$policyId.'/certificate:download';
-        $url = $this->buildUrl($path);
+        $url = DicHttpFacade::buildUrl($path);
 
-        $httpResponse = $this->authenticatedRequest('GET', $url);
+        $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
         if ($httpResponse === null) {
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
@@ -171,9 +135,9 @@ class DicApiService
         $policyId = $quote->insurer_quote_number;
 
         $path = 'policy-stores/invoice/'.$policyId.':download';
-        $url = $this->buildUrl($path);
+        $url = DicHttpFacade::buildUrl($path);
 
-        $httpResponse = $this->authenticatedRequest('GET', $url);
+        $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
         if ($httpResponse === null) {
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
@@ -218,82 +182,18 @@ class DicApiService
      */
     public function extractDocumentUrlFromResponse(mixed $responseData): ?string
     {
-        if (! is_array($responseData)) {
-            return null;
-        }
+        $url = null;
 
-        $raw = $responseData['url'] ?? $responseData['Url'] ?? null;
-        if (! is_string($raw)) {
-            return null;
-        }
-
-        $raw = trim($raw);
-        if ($raw === '') {
-            return null;
-        }
-
-        return str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://') ? $raw : null;
-    }
-
-    private function buildUrl(string $path): string
-    {
-        $base = rtrim((string) config('constants.DIC_API_BASE_URL', ''), '/');
-        $path = ltrim($path, '/');
-
-        return $base !== '' && $path !== '' ? $base.'/'.$path : '';
-    }
-
-    private function httpTimeoutSeconds(): int
-    {
-        return (int) config('constants.DIC_API_TIMEOUT', 90);
-    }
-
-    /**
-     * Bearer access token (single entry point; swap with Redis when not using a static token in dev).
-     */
-    private function getBearerToken(): ?string
-    {
-        $value = Cache::store('redis')->get(self::REDIS_TOKEN_KEY);
-
-        return is_string($value) && $value !== '' ? $value : null;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Query string (GET) or JSON body (POST/PUT/PATCH)
-     */
-    private function sendWithBearer(string $method, string $fullUrl, string $token, array $data = []): Response
-    {
-        $client = Http::withToken($token)
-            ->timeout($this->httpTimeoutSeconds())
-            ->acceptJson();
-
-        return match (strtoupper($method)) {
-            'GET' => $client->get($fullUrl, $data),
-            'POST' => $client->asJson()->post($fullUrl, $data),
-            default => throw new InvalidArgumentException("Unsupported DIC HTTP method: {$method}"),
-        };
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function authenticatedRequest(string $method, string $fullUrl, array $data = []): ?Response
-    {
-        $token = $this->getBearerToken();
-        if ($token === null) {
-            return null;
-        }
-
-        $response = $this->sendWithBearer($method, $fullUrl, $token, $data);
-
-        if ($response->status() === 401) {
-            $token = $this->getBearerToken();
-            if ($token === null) {
-                return null;
+        if (is_array($responseData)) {
+            $raw = $responseData['url'] ?? $responseData['Url'] ?? null;
+            if (is_string($raw)) {
+                $trimmed = trim($raw);
+                if ($trimmed !== '' && (str_starts_with($trimmed, 'http://') || str_starts_with($trimmed, 'https://'))) {
+                    $url = $trimmed;
+                }
             }
-            $response = $this->sendWithBearer($method, $fullUrl, $token, $data);
         }
 
-        return $response;
+        return $url;
     }
 }
