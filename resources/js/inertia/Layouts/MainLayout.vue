@@ -37,6 +37,23 @@ const isActive = link => {
 };
 
 const user = computed(() => page.props.auth.user);
+const ecomBaseUrl = computed(() => page.props.ecomBaseUrl);
+const uploadDocumentLink = computed(
+  () => `${ecomBaseUrl.value}/documents/upload?userId=${user.value?.id}`,
+);
+const linkCopied = ref(false);
+
+const copyUploadDocumentLink = async () => {
+  try {
+    await navigator.clipboard.writeText(uploadDocumentLink.value);
+    linkCopied.value = true;
+    setTimeout(() => {
+      linkCopied.value = false;
+    }, 2000);
+  } catch {
+    linkCopied.value = false;
+  }
+};
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
 const authorisePaymentCountProp = computed(
   () => page.props.authorisePaymentCount,
@@ -423,6 +440,25 @@ onUnmounted(() => {
                   <div class="font-bold">
                     {{ authorisePaymentCount }} customers are waiting for their
                     policies - you're one step away from a sale.
+                  </div>
+                </template>
+              </x-tooltip>
+
+              <x-tooltip position="top">
+                <x-button
+                  size="sm"
+                  :color="linkCopied ? 'success' : 'primary'"
+                  outlined
+                  class="hidden lg:flex items-center gap-1.5 whitespace-nowrap"
+                  @click.prevent="copyUploadDocumentLink"
+                >
+                  <x-icon icon="upload" size="sm" />
+                  <span class="text-xs font-medium">Upload Document Link</span>
+                  <x-icon :icon="linkCopied ? 'copyCheck' : 'copy'" size="sm" />
+                </x-button>
+                <template #tooltip>
+                  <div class="font-bold">
+                    {{ linkCopied ? 'Link copied!' : 'Copy upload document link for this advisor' }}
                   </div>
                 </template>
               </x-tooltip>
