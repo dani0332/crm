@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\HealthPlanController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -155,6 +156,13 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+// Cms Api Routes
+Route::prefix('cms')->group(function () {
+    Route::group(['prefix' => 'plans'], function () {
+        Route::get('/{planId}', [HealthPlanController::class, 'getPlan']);
+    });
+});
 
 Route::get('/heath-check', function () {
     return response()->json(['success' => true]);
