@@ -444,25 +444,6 @@ onUnmounted(() => {
                 </template>
               </x-tooltip>
 
-              <x-tooltip position="top">
-                <x-button
-                  size="sm"
-                  :color="linkCopied ? 'success' : 'primary'"
-                  outlined
-                  class="hidden lg:flex items-center gap-1.5 whitespace-nowrap"
-                  @click.prevent="copyUploadDocumentLink"
-                >
-                  <x-icon icon="link" size="sm" />
-                  <span class="text-xs font-medium">Upload Document Link</span>
-                  <x-icon :icon="linkCopied ? 'copyCheck' : 'copy'" size="sm" />
-                </x-button>
-                <template #tooltip>
-                  <div class="font-bold">
-                    {{ linkCopied ? 'Link copied!' : 'Copy upload document link for this advisor' }}
-                  </div>
-                </template>
-              </x-tooltip>
-
               <x-popover placement="bottom-end" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
@@ -521,6 +502,23 @@ onUnmounted(() => {
                       <div class="md:hidden block">{{ user.name }}</div>
                       <div class="text-gray-500">{{ user.email }}</div>
                     </div>
+                    <button
+                      type="button"
+                      class="flex w-full gap-2 items-center px-2 py-1.5 rounded hover:bg-gray-100 group transition"
+                      @click.prevent="copyUploadDocumentLink"
+                    >
+                      <x-icon
+                        :icon="linkCopied ? 'copyCheck' : 'link'"
+                        size="sm"
+                        :class="linkCopied ? 'text-success-600' : 'text-primary-500'"
+                      />
+                      <span
+                        class="text-sm font-medium"
+                        :class="linkCopied ? 'text-success-600' : ''"
+                      >
+                        {{ linkCopied ? 'Link Copied!' : 'Upload Document Link' }}
+                      </span>
+                    </button>
                     <x-menu :items="userMenu" />
                   </x-popover-container>
                 </template>
