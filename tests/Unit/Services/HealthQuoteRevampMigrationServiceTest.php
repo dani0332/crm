@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\HealthCoverForEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Events\HealthQuoteMigration;
 use App\Models\CustomerInsured;
@@ -29,28 +30,32 @@ describe('getMirationStatuses', function () {
 });
 
 describe('isMigrated', function () {
-    it('is true when both insure_code and policy_holder_code are set', function () {
+    it('is true when cover_for_id is INDIVIDUAL_AND_FAMILIES (4)', function () {
         $service = new HealthQuoteRevampMigrationService;
         $quote = HealthQuote::factory()->make([
-            'insure_code' => 'ONLY_MYSELF',
-            'policy_holder_code' => 'ME',
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value,
         ]);
 
         expect($service->isMigrated($quote))->toBeTrue();
     });
 
-    it('is false when either code is missing', function ($insure, $policyHolder) {
+    it('is true when cover_for_id is DOMESTIC_HELPER (5)', function () {
         $service = new HealthQuoteRevampMigrationService;
         $quote = HealthQuote::factory()->make([
-            'insure_code' => $insure,
-            'policy_holder_code' => $policyHolder,
+            'cover_for_id' => HealthCoverForEnum::DOMESTIC_HELPER->value,
         ]);
+
+        expect($service->isMigrated($quote))->toBeTrue();
+    });
+
+    it('is false when cover_for_id is not 4 or 5', function (int $coverForId) {
+        $service = new HealthQuoteRevampMigrationService;
+        $quote = HealthQuote::factory()->make(['cover_for_id' => $coverForId]);
 
         expect($service->isMigrated($quote))->toBeFalse();
     })->with([
-        'missing insure' => [null, 'ME'],
-        'missing policy holder' => ['ONLY_MYSELF', null],
-        'both missing' => [null, null],
+        'INDIVIDUAL (1)' => [HealthCoverForEnum::INDIVIDUAL->value],
+        'FAMILY (2)' => [HealthCoverForEnum::FAMILY->value],
     ]);
 });
 

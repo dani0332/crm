@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\HealthCoverForEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Events\HealthQuoteMigration;
@@ -143,7 +144,10 @@ class HealthQuoteRevampMigrationService
 
     public function isMigrated(HealthQuote $healthQuote): bool
     {
-        return $healthQuote->insure_code !== null && $healthQuote->policy_holder_code !== null;
+        return in_array($healthQuote->cover_for_id, [
+            HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value,
+            HealthCoverForEnum::DOMESTIC_HELPER->value,
+        ]);
     }
 
     public function migrateLead(int $healthQuoteId): void
