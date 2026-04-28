@@ -14,7 +14,6 @@ use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -104,7 +103,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
         try {
             $this->sendFollowUpEmail($this->emailData, $lead);
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             LoggerService::warning(self::class.': exception in handle', [
                 'flow' => self::LOG_FLOW,
                 'dtt_revival_id' => $this->dttRevivalId,
@@ -112,6 +111,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 'exception_class' => $exception::class,
                 'exception_message' => $exception->getMessage(),
             ]);
+
+            throw $exception;
         }
     }
 
