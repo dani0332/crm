@@ -1698,5 +1698,35 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_NUMBER_OF_ALLOWED_RETRY],
+            [
+                'value' => 3,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP],
+            [
+                'value' => 3,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

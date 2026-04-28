@@ -62,6 +62,40 @@ class DicInsuranceService implements PolicyIssuanceInterface
         }
     }
 
+    /**
+     * Next DIC API step to run from {@see PolicyIssuance::$completed_step} (same ordering as sync {@see executeSteps}).
+     */
+    public function resolveAsyncStepToRun(PolicyIssuance $process): ?string
+    {
+        return $this->getNextStep($process->completed_step);
+    }
+
+    public function updateProcessCompletedStepFromResponse(PolicyIssuance $process, array $stepResponse): void
+    {
+        $this->updateProcessWithStep($process, $stepResponse);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function runSingleDicAsyncStep(TravelQuote $quote, PolicyIssuance $process, string $step, bool $applyQuoteFailure): array
+    {
+        $handler = $this->getStepHandler($step);
+        if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
+            return $this->responseHandler->buildStepResponse($step, false, 'Missing handler for step: '.$step, 'Missing handler for step: '.$step);
+        }
+
+        return $this->stepExecutor->{$handler}($quote, $process, $applyQuoteFailure);
+    }
+
+    /**
+     * @return array{status: bool, error?: string, message?: string}
+     */
+    public function validateBeforeDicAsyncRun(TravelQuote $quote): array
+    {
+        return $this->validationService->validateRequiredData($quote);
+    }
+
     private function getStepHandler(string $step): ?string
     {
         return $this->stepHandlers[$step] ?? null;
@@ -279,5 +313,38 @@ class DicInsuranceService implements PolicyIssuanceInterface
             $processInvolved,
             $newApiIssuanceStatus !== null ? (int) $newApiIssuanceStatus : null,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $stepResult
+     * @return array{insurer_api_status_id: int, process_involved: string}
+     */
+    public function resolveTravelDicAsyncFailureContext(string $step, array $stepResult): array
+    {
+        if (isset($stepResult['travel_dic_insurer_api_status_id'], $stepResult['travel_dic_process_involved'])) {
+            return [
+                'insurer_api_status_id' => (int) $stepResult['travel_dic_insurer_api_status_id'],
+                'process_involved' => (string) $stepResult['travel_dic_process_involved'],
+            ];
+        }
+
+        return match ($step) {
+            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY => [
+                'insurer_api_status_id' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+                'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
+            ],
+            PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC => [
+                'insurer_api_status_id' => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
+            ],
+            PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE => [
+                'insurer_api_status_id' => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+            ],
+            default => [
+                'insurer_api_status_id' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+                'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
+            ],
+        };
     }
 }

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteStatusEnum;
+use App\Jobs\DicPolicyIssuanceStepJob;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
@@ -22,9 +21,10 @@ class DicStepExecutor
     ) {}
 
     /**
-     * @param  PolicyIssuance  $process
+     * @param  bool  $applyQuoteFailure  When false (async Bus steps), quote/AutomationFailedJob are handled by {@see DicPolicyIssuanceStepJob}.
+     * @return array<string, mixed>
      */
-    public function executeIssuePolicyStep(TravelQuote $quote, $process): array
+    public function executeIssuePolicyStep(TravelQuote $quote, PolicyIssuance $process, bool $applyQuoteFailure = true): array
     {
         LoggerService::info('DIC Travel: IssuePolicy step', [
             'process_id' => $process->id,
@@ -34,22 +34,28 @@ class DicStepExecutor
         $result = $this->apiService->issuePolicy($quote, $process);
 
         if (! $result['status']) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
+                );
+            }
+
+            return $this->withTravelDicFailureMeta(
+                $result,
                 PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
             );
-
-            return $result;
         }
 
         return $result;
     }
 
     /**
-     * @param  PolicyIssuance  $process
+     * @return array<string, mixed>
      */
-    public function executeGetPolicyDocStep(TravelQuote $quote, $process): array
+    public function executeGetPolicyDocStep(TravelQuote $quote, PolicyIssuance $process, bool $applyQuoteFailure = true): array
     {
         LoggerService::info('DIC Travel: GetPolicyDoc step', [
             'process_id' => $process->id,
@@ -59,25 +65,39 @@ class DicStepExecutor
         $result = $this->apiService->getPolicyDoc($quote, $process);
 
         if (! $result['status']) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
+                );
+            }
+
+            return $this->withTravelDicFailureMeta(
+                $result,
                 PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
             );
-
-            return $result;
         }
 
         $documentUrl = $this->apiService->extractDocumentUrlFromResponse($result['data'] ?? null);
         if (! $documentUrl) {
             $message = 'Document URL missing in GetPolicyDoc response (configure extractDocumentUrlFromResponse)';
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                );
+            }
+
+            $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
+
+            return $this->withTravelDicFailureMeta(
+                $built,
                 PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             );
-
-            return $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
         }
 
         try {
@@ -87,17 +107,25 @@ class DicStepExecutor
                 'quote_code' => $quote->code,
                 'exception' => $e->getMessage(),
             ]);
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
-                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-            );
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                );
+            }
 
-            return $this->responseHandler->buildStepResponse(
+            $built = $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
                 false,
                 $e->getMessage(),
                 $e->getMessage(),
+            );
+
+            return $this->withTravelDicFailureMeta(
+                $built,
+                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             );
         }
 
@@ -110,9 +138,9 @@ class DicStepExecutor
     }
 
     /**
-     * @param  PolicyIssuance  $process
+     * @return array<string, mixed>
      */
-    public function executeGetBrokerInvoiceStep(TravelQuote $quote, $process): array
+    public function executeGetBrokerInvoiceStep(TravelQuote $quote, PolicyIssuance $process, bool $applyQuoteFailure = true): array
     {
         LoggerService::info('DIC Travel: GetBrokerInvoice step', [
             'process_id' => $process->id,
@@ -122,25 +150,39 @@ class DicStepExecutor
         $result = $this->apiService->getBrokerInvoice($quote, $process);
 
         if (! $result['status']) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+                );
+            }
+
+            return $this->withTravelDicFailureMeta(
+                $result,
                 PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             );
-
-            return $result;
         }
 
         $documentUrl = $this->apiService->extractDocumentUrlFromResponse($result['data'] ?? null);
         if (! $documentUrl) {
             $message = 'Document URL missing in GetBrokerInvoice response (configure extractDocumentUrlFromResponse)';
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+                );
+            }
+
+            $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE, false, $message, $message);
+
+            return $this->withTravelDicFailureMeta(
+                $built,
                 PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             );
-
-            return $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE, false, $message, $message);
         }
 
         try {
@@ -150,25 +192,27 @@ class DicStepExecutor
                 'quote_code' => $quote->code,
                 'exception' => $e->getMessage(),
             ]);
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                $quote,
-                PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
-            );
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+                );
+            }
 
-            return $this->responseHandler->buildStepResponse(
+            $built = $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
                 false,
                 $e->getMessage(),
                 $e->getMessage(),
             );
-        }
 
-        /* $quote->update([
-            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-            'quote_status_date' => now(),
-        ]); */
+            return $this->withTravelDicFailureMeta(
+                $built,
+                PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+            );
+        }
 
         return $this->responseHandler->buildStepResponse(
             PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
@@ -176,5 +220,17 @@ class DicStepExecutor
             'Broker invoice stored and quote marked policy issued',
             null,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $response
+     * @return array<string, mixed>
+     */
+    private function withTravelDicFailureMeta(array $response, int $insurerApiStatusId, string $processInvolved): array
+    {
+        return array_merge($response, [
+            'travel_dic_insurer_api_status_id' => $insurerApiStatusId,
+            'travel_dic_process_involved' => $processInvolved,
+        ]);
     }
 }
