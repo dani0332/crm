@@ -260,9 +260,6 @@
 
                 <!-- Right Column -->
                     <td class="footer-td" style="width:27%;  @if(isset($quoteType) && $quoteType != 'Life') padding:10px; @endif text-align:left; margin-left:15px;">
-                        @php
-                            $isCarQuote = $quote instanceof \App\Models\CarQuote;
-                        @endphp
                         <div style="display:inline-block; background:#ffffff; color:#000; @if(isset($quoteType) && $quoteType != 'Life') padding:12px; @else padding:8px; @endif border-radius:12px; text-align:left; font-size:10px;  width:65%; @if(isset($quoteType) && $quoteType != 'Life') height:110px; @else height:124px; @endif margin-top:5px;">
 
                         <!-- Photo + Details wrapper -->
