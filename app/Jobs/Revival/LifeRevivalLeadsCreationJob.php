@@ -14,7 +14,6 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,7 @@ use Throwable;
 
 class LifeRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, GenericQueriesAllLobs, Queueable;
+    use Batchable, GenericQueriesAllLobs, Queueable;
 
     public $tries = 3;
     public $timeout = 90;
@@ -127,12 +126,12 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         });
     }
 
-    public function middleware()
+    public function middleware(): array
     {
         return [(new WithoutOverlapping($this->personalQuoteId))->dontRelease()];
     }
 
-    public function failed(Throwable $exception)
+    public function failed(Throwable $exception): void
     {
         LoggerService::error('LifeRevivalLeadsCreationJob - Failed - '.$this->personalQuoteId.' Error: '.$exception->getMessage());
     }
