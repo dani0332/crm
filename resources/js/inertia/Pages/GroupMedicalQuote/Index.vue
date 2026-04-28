@@ -767,15 +767,7 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        <x-select
-          v-model="filters.assignment_type"
-          name="assignment_type"
-          placeholder="Search by Assignment Type"
-          :options="assignmentTypes || []"
-          class="w-full"
-          filterable
-          label="Assignment Type"
-        />
+        
 
         <x-input
           v-model="filters.previous_quote_policy_number"
