@@ -289,7 +289,7 @@ class LifeRevivalService
             'quoteUID' => $quoteUuid,
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
-            'refID' => $quoteUuid,
+            'refID' => $quote->code,
             'subject' => $quote->first_name.' '.$quote->last_name."'s Life Policy with Alfred",
             'tag' => 'life-revival-email',
             'lob' => QuoteTypes::LIFE->id(),
