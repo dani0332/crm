@@ -6,7 +6,6 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
-use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Services\LookupService;
 use App\Traits\ModernCsvExportable;
@@ -18,14 +17,11 @@ class HealthQuotesExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
 
-    private $genderOptions;
     private $genderDisplayMap;
     public function __construct(
         private HealthQuoteService $healthQuoteService,
-        private CRUDService $crudService,
         private LookupService $lookupService,
     ) {
-        $this->genderOptions = $this->crudService->getGenderOptions(QuoteTypeId::Health);
         $this->genderDisplayMap = $this->lookupService->getHealthGenderDisplayMap();
     }
 
