@@ -327,7 +327,6 @@ function onSubmit(isValid) {
           :disabled="props.isEmirateDisabled"
           tooltip="Select the Emirate where the company is legally registered or primarily operates."
         >
-          
         </x-select>
 
         <x-textarea
