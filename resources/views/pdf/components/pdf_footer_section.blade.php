@@ -275,26 +275,18 @@
                                 style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
                             </div>
 
-                            <!-- Advisor Details -->
+                           <!-- Advisor Details -->
                             <div>
-                                @if($isCarQuote)
-                                    <br style="margin-top:0px !important;">
-                                @endif
-                            <p style="margin:0; font-weight:400; font-size:12px; @if($isCarQuote) line-height:1.2 !important; @endif">{{ $quote->advisor->name }}</p>
-                            <p style="margin:0; font-size:10px; color:#555; @if($isCarQuote) line-height:1.2 !important; @endif">Insurance Advisor</p>
-                            <p style=" font-size:10px; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 5px; @else margin-top: 0px; @endif @if($isCarQuote) line-height:1.3  !important; @endif">
+
+                            <p style="margin:0; font-weight:400; font-size:12px;">{{ $quote->advisor->name }}</p>
+                            <p style="margin:0; font-size:10px; color:#555;">Insurance Advisor</p>
+                            <p style=" font-size:10px; line-height:1.1 !important; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 5px; @else margin-top: 0px; @endif">
                               <a href="mailto:{{ $quote->advisor->email }}" style="color:#000; "><img src="{{ public_path('images/quote_plans_pages/icons/mail.svg') }}"
                               style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 8px; @else margin-top: 0px; @endif">
                              {{ $quote->advisor->email }}</a><br>
-                                @if(!$isCarQuote)
-                                    <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
-                                         style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
-                                    <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}"  target="_blank">
-                                      <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png"
-                                      width="10"
-                                      style="vertical-align:middle; margin-left:4px;  margin-top: 5px !important;">
-                                    </a><br>
-                                @endif
+                                 <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
+                                 style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
+                               <br>
                                 <img src="{{ public_path('images/quote_plans_pages/icons/call.svg') }}"
                                 style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;">  <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none; ">{{ $quote->advisor->landline_no }}</a>
                             </p>
