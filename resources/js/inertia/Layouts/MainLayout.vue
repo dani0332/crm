@@ -430,9 +430,8 @@ onUnmounted(() => {
                     </x-button>
                     <template #tooltip>
                       <div class="max-w-xs">
-                        This is your personal document upload link that you can
-                        share with the customer. Once the customer uploads
-                        documents, will they be sent to you by email.
+                        Copy and share this secure link so your customer can
+                        upload documents, which will be emailed to your inbox
                       </div>
                     </template>
                   </x-tooltip>
@@ -550,7 +549,8 @@ onUnmounted(() => {
                       </button>
                       <template #tooltip>
                         <div class="max-w-xs">
-                          This is your personal document upload link that you can share with the customer. Once the customer uploads documents, will they be sent to you by email.
+                          Copy and share this secure link so your customer can
+                          upload documents, which will be emailed to your inbox
                         </div>
                       </template>
                     </x-tooltip>
