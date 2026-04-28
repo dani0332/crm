@@ -192,7 +192,6 @@ final class ApplicationStorageEnums extends Enum
     /* Policy Issuance Automation */
     public const ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_DIC_TRAVEL_POLICY_ISSUANCE';
-    public const DIC_NUMBER_OF_ALLOWED_RETRY = 'DIC_NUMBER_OF_ALLOWED_RETRY';
 
     /**
      * Max total API attempts per async DIC Travel step (including the first). One row is written to
