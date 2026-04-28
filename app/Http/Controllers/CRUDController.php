@@ -369,7 +369,7 @@ class CRUDController extends Controller
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
                 'dropdownSource' => $dropdownSource,
-                'genderDisplayMap' => $this->crudService->getHealthGenderDisplayMap(),
+                'genderDisplayMap' => $this->lookupService->getHealthGenderDisplayMap(),
             ]);
         }
 
@@ -1289,9 +1289,9 @@ class CRUDController extends Controller
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
                     'genderOptions' => $this->crudService->getGenderOptions($quoteTypeId),
-                    'genderDisplayMap' => $this->crudService->getHealthGenderDisplayMap(),
-                    'memberRelationDisplayMap' => $this->crudService->getMemberRelationDisplayMap(),
-                    'memberCategoryDisplayMap' => $this->crudService->getMemberCategoryDisplayMap(),
+                    'genderDisplayMap' => $this->lookupService->getHealthGenderDisplayMap(),
+                    'memberRelationDisplayMap' => $this->lookupService->getMemberRelationDisplayMap(),
+                    'memberCategoryDisplayMap' => $this->lookupService->getAllMemberCategories(),
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'ecomDetails' => $ecomDetails,

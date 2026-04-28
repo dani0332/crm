@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
+use App\Services\LookupService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,10 +22,11 @@ class HealthQuotesExport implements CsvExportableInterface
     private $genderDisplayMap;
     public function __construct(
         private HealthQuoteService $healthQuoteService,
-        private CRUDService $crudService
+        private CRUDService $crudService,
+        private LookupService $lookupService,
     ) {
         $this->genderOptions = $this->crudService->getGenderOptions(QuoteTypeId::Health);
-        $this->genderDisplayMap = $this->crudService->getHealthGenderDisplayMap();
+        $this->genderDisplayMap = $this->lookupService->getHealthGenderDisplayMap();
     }
 
     public function collection(array $requestParams = []): Collection

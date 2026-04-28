@@ -25,7 +25,7 @@ enum CacheKeyEnum: string
     case POLICY_HOLDER_KEY = 'policy_holder_key';
     case POLICY_HOLDER_CATEGORY_KEY = 'policy_holder_category_key';
     case VISA_CATEGORY_KEY = 'visa_category_key';
-    case ALL_MEMBER_CATEGORIES_KEY = 'all_member_categories_key';
+    case MEMBER_CATEGORY_DISPLAY_MAP_KEY = 'member_category_display_map_key';
     case MEMBER_RELATIONS_KEY = 'member_relations_key';
     case HEALTH_MEMBER_RELATIONS_KEY = 'health_member_relations_key';
     case DOMESTIC_WORKER_RELATIONS_KEY = 'domestic_worker_relations_key';

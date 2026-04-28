@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\LeadSourceEnum;
@@ -59,12 +60,13 @@ class LookupService extends BaseService
         return MemberCategory::active()->get();
     }
 
-    public function getAllMemberCategories()
+    /** Returns an id → text map of all member categories for display purposes. */
+    public function getAllMemberCategories(): array
     {
         return Cache::remember(
-            CacheKeyEnum::ALL_MEMBER_CATEGORIES_KEY->value,
-            CacheKeyEnum::ALL_MEMBER_CATEGORIES_KEY->expiry(),
-            fn () => MemberCategory::select('id', 'text')->get()
+            CacheKeyEnum::MEMBER_CATEGORY_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::MEMBER_CATEGORY_DISPLAY_MAP_KEY->expiry(),
+            fn () => MemberCategory::select('id', 'text')->get()->pluck('text', 'id')->all()
         );
     }
 
@@ -491,6 +493,60 @@ class LookupService extends BaseService
             fn () => Lookup::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION->value)
                 ->where('is_active', true)->orderBy('sort_order')
                 ->get()
+        );
+    }
+
+    /**
+     * Returns a code → label map built from all three member relation lookup keys:
+     * 'member-relation', 'health-member-relation', and 'domestic-worker-relation'.
+     *
+     * Use this for display only so any relation_code stored in a record resolves
+     * to its label regardless of which set it originated from.
+     */
+    public function getMemberRelationDisplayMap(): array
+    {
+        return Cache::remember(
+            CacheKeyEnum::MEMBER_RELATION_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::MEMBER_RELATION_DISPLAY_MAP_KEY->expiry(),
+            function () {
+                $toMap = fn ($collection) => $collection->pluck('text', 'code')->all();
+
+                return array_merge(
+                    $toMap($this->getMemberRelations()),
+                    $toMap($this->getHealthMemberRelations()),
+                    $toMap($this->getDomesticWorkerRelations()),
+                );
+            }
+        );
+    }
+
+    /**
+     * Returns a code → label map for resolving the display text of gender values
+     * stored in health quote records, including legacy codes written before the
+     * gender lookup was introduced (M/FS/FM/Male/Female).
+     *
+     * Use this for display only; use getGenderOptions(QuoteTypeId::Health) for dropdowns.
+     */
+    public function getHealthGenderDisplayMap(): array
+    {
+        return Cache::remember(
+            CacheKeyEnum::HEALTH_GENDER_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::HEALTH_GENDER_DISPLAY_MAP_KEY->expiry(),
+            function () {
+                $newOptions = $this->getGender()->pluck('text', 'code')->all();
+
+                $legacyOptions = [
+                    GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                    GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                    GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+                    GenericRequestEnum::FEMALE_SHORT_VALUE => GenericRequestEnum::FEMALE,
+                    GenericRequestEnum::MALE_SINGLE => GenericRequestEnum::MALE_SINGLE,
+                    GenericRequestEnum::FEMALE => GenericRequestEnum::FEMALE,
+                ];
+
+                // New lookup entries take precedence; legacy entries fill in any gaps.
+                return array_merge($legacyOptions, $newOptions);
+            }
         );
     }
 }
