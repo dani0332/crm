@@ -869,13 +869,7 @@ class LookupSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'code' => 'relChild',
-                'text' => 'Child',
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
+                'sort_order' => 1,
             ],
             [
                 'code' => 'relParent',
@@ -883,6 +877,15 @@ class LookupSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
+                'sort_order' => 2,
+            ],
+            [
+                'code' => 'relChild',
+                'text' => 'Child',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 3,
             ],
             [
                 'code' => 'relSibling',
@@ -890,6 +893,7 @@ class LookupSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
+                'sort_order' => 4,
             ],
             [
                 'code' => 'relOtherRelatives',
@@ -897,6 +901,7 @@ class LookupSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
+                'sort_order' => 5,
             ],
         ]);
     }
