@@ -1368,7 +1368,7 @@ watch(
         <AmlApprovalModal
           v-model="isAmlApprovalRequired"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :quote-request-id="props.quoteRequest.id"
           :is-processing="paymentMethodsFormReplicated.processing"
@@ -1414,7 +1414,7 @@ watch(
           :quote-id="props.quoteRequest.id"
           :quote-uuid="props.quoteRequest.uuid"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"

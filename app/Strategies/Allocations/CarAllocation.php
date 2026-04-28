@@ -70,7 +70,7 @@ class CarAllocation implements Allocation
             EvaluateTierPipe::class,
         ];
 
-        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
+        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A) && ! $lead->isRevivalCommsIntentHighOrMedium()) {
             return [
                 ...$basePipes,
                 EvaluateCatAEligibleAdvisorPipe::class,
