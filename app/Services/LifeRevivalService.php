@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -309,12 +310,20 @@ class LifeRevivalService
 
         LoggerService::info("LifeRevivalService - Life revival email sent for Quote UUID: {$quoteUuid} - Response: ".json_encode($response));
 
-        if ($response->status_code !== 200) {
+        if (! in_array($response->status_code, [200, 201])) {
             LoggerService::error("LifeRevivalService - Life revival email not sent for Quote UUID: {$quoteUuid} - Response: ".json_encode($response));
 
             return;
         }
 
+        $this->updateQuoteStatus($quote);
+
         LoggerService::info("LifeRevivalService - Life revival email sent for Quote UUID: {$quoteUuid}");
+    }
+
+    private function updateQuoteStatus(PersonalQuote $quote): void
+    {
+        $quote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+        $quote->lifeQuote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
     }
 }
