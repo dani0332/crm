@@ -4,7 +4,7 @@ namespace App\Services\HealthRevamp;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmirateEnum;
-use App\Enums\GenderEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
@@ -302,9 +302,9 @@ final class HealthQuoteRevampMigrationMutator
         $g = $hqr->gender;
         $msId = $hqr->marital_status_id;
 
-        if ($msId === null && in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_MALE], true)) {
+        if ($msId === null && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
             $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
-        } elseif ($msId === null && $g === GenderEnum::LEGACY_FEMALE_MARRIED) {
+        } elseif ($msId === null && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
             $hqr->marital_status_id = MaritalStatusEnum::MARRIED->value;
         } elseif ($msId !== null && (int) $msId === MaritalStatusEnum::UNMARRIED_PARTNER->value) {
             $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
@@ -319,9 +319,9 @@ final class HealthQuoteRevampMigrationMutator
                 $g = $cm->gender;
                 if ($cm->is_principal) {
                     $cm->marital_status_id = $hqr->marital_status_id;
-                } elseif (! $cm->is_principal && in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_MALE], true)) {
+                } elseif (! $cm->is_principal && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
                     $cm->marital_status_id = MaritalStatusEnum::SINGLE->value;
-                } elseif (! $cm->is_principal && $g === GenderEnum::LEGACY_FEMALE_MARRIED) {
+                } elseif (! $cm->is_principal && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
                     $cm->marital_status_id = MaritalStatusEnum::MARRIED->value;
                 }
                 $cm->save();
@@ -335,32 +335,32 @@ final class HealthQuoteRevampMigrationMutator
     private function normalizeGenderValues(HealthQuote $hqr): void
     {
         $g = $hqr->gender;
-        if (in_array($g, [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE], true)) {
-            $hqr->gender = GenderEnum::MALE_SHORT;
-        } elseif (in_array($g, [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED], true)) {
-            $hqr->gender = GenderEnum::FEMALE_SHORT;
+        if (in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE], true)) {
+            $hqr->gender = GenericRequestEnum::MALE_SINGLE_VALUE;
+        } elseif (in_array($g, [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE], true)) {
+            $hqr->gender = GenericRequestEnum::FEMALE_SHORT_VALUE;
         }
         $hqr->save();
 
         PersonalQuote::query()
             ->where('quote_id', $hqr->id)
             ->where('quote_type_id', QuoteTypeId::Health)
-            ->whereIn('gender', [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE])
-            ->update(['gender' => GenderEnum::MALE_SHORT]);
+            ->whereIn('gender', [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE])
+            ->update(['gender' => GenericRequestEnum::MALE_SINGLE_VALUE]);
 
         PersonalQuote::query()
             ->where('quote_id', $hqr->id)
             ->where('quote_type_id', QuoteTypeId::Health)
-            ->whereIn('gender', [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED])
-            ->update(['gender' => GenderEnum::FEMALE_SHORT]);
+            ->whereIn('gender', [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE])
+            ->update(['gender' => GenericRequestEnum::FEMALE_SHORT_VALUE]);
 
         $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenderEnum::MALE_SHORT, GenderEnum::LEGACY_MALE])
-            ->update(['gender' => GenderEnum::MALE_SHORT]);
+            ->whereIn('gender', [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE])
+            ->update(['gender' => GenericRequestEnum::MALE_SINGLE_VALUE]);
 
         $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenderEnum::FEMALE_SHORT, GenderEnum::LEGACY_FEMALE_SHORT, GenderEnum::LEGACY_FEMALE, GenderEnum::LEGACY_FEMALE_MARRIED])
-            ->update(['gender' => GenderEnum::FEMALE_SHORT]);
+            ->whereIn('gender', [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE])
+            ->update(['gender' => GenericRequestEnum::FEMALE_SHORT_VALUE]);
     }
 
     /**

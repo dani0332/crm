@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\GenderEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
@@ -92,28 +92,14 @@ describe('HealthCoverForEnum', function () {
     });
 });
 
-describe('GenderEnum', function () {
-    test('short and legacy codes are PHP constants with correct string values', function () {
-        expect(GenderEnum::MALE_SHORT)->toBe('M')
-            ->and(GenderEnum::FEMALE_SHORT)->toBe('F')
-            ->and(GenderEnum::LEGACY_MALE)->toBe('Male')
-            ->and(GenderEnum::LEGACY_FEMALE)->toBe('Female')
-            ->and(GenderEnum::LEGACY_FEMALE_SHORT)->toBe('FS')
-            ->and(GenderEnum::LEGACY_FEMALE_MARRIED)->toBe('FM');
-    });
-
-    test('tryFrom returns null for short and legacy gender strings since they are constants not cases', function () {
-        expect(GenderEnum::tryFrom('M'))->toBeNull()
-            ->and(GenderEnum::tryFrom('F'))->toBeNull()
-            ->and(GenderEnum::tryFrom('Male'))->toBeNull()
-            ->and(GenderEnum::tryFrom('Female'))->toBeNull()
-            ->and(GenderEnum::tryFrom('FS'))->toBeNull()
-            ->and(GenderEnum::tryFrom('FM'))->toBeNull();
-    });
-
-    test('tryFrom returns null for unknown gender string', function () {
-        expect(GenderEnum::tryFrom('X'))->toBeNull()
-            ->and(GenderEnum::tryFrom('male'))->toBe(GenderEnum::MALE);
+describe('GenericRequestEnum gender constants', function () {
+    test('short and legacy gender codes have correct string values', function () {
+        expect(GenericRequestEnum::MALE_SINGLE_VALUE)->toBe('M')
+            ->and(GenericRequestEnum::FEMALE_SHORT_VALUE)->toBe('F')
+            ->and(GenericRequestEnum::MALE_SINGLE)->toBe('Male')
+            ->and(GenericRequestEnum::FEMALE)->toBe('Female')
+            ->and(GenericRequestEnum::FEMALE_SINGLE_VALUE)->toBe('FS')
+            ->and(GenericRequestEnum::FEMALE_MARRIED_VALUE)->toBe('FM');
     });
 });
 

@@ -33,7 +33,6 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const insurerName = page.props.insurerName;
 const genericRequestEnum = page.props.genericRequestEnum;
-const genderEnum = page.props.genderEnum;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -213,11 +212,19 @@ const getScreeningDob = () =>
     ? dateOnly(quoteRequest?.dob)
     : null);
 
-const getScreeningGender = () =>
-  page.props.insuredDetails?.insured?.gender ??
-  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
-    ? (quoteRequest?.gender === genderEnum.MALE_SHORT ? genderEnum.LEGACY_MALE : genderEnum.LEGACY_FEMALE)
-    : null);
+const getScreeningGender = () => {
+  const genderMap = {
+    [genericRequestEnum.MALE_SINGLE_VALUE]: genericRequestEnum.MALE_SINGLE,
+    [genericRequestEnum.FEMALE_SINGLE_VALUE]: genericRequestEnum.FEMALE_SINGLE,
+  };
+
+  const isHealthQuote = page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health;
+
+  return (
+    page.props.insuredDetails?.insured?.gender ??
+    (isHealthQuote ? (genderMap[quoteRequest?.gender] ?? null) : null)
+  );
+};
 
 const screeningFormDetails = useForm({
   customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
