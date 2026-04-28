@@ -19,6 +19,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use RuntimeException;
 use Throwable;
 
 class CarRevivalFollowUpEmailJob implements ShouldQueue
@@ -127,7 +128,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 'child_quote_uuid' => $this->dttRevival->uuid,
             ]);
 
-            return;
+            throw new RuntimeException('MOTOR_REVIVAL_WORKFLOW URL missing in CMS');
         }
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
