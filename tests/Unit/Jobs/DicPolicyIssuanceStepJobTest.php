@@ -9,10 +9,12 @@ use App\Enums\QuoteTypes;
 use App\Jobs\DicPolicyIssuanceStepJob;
 use App\Models\InsuranceProvider;
 use App\Models\PolicyIssuance;
+use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Illuminate\Http\Client\ConnectionException as IlluminateConnectionException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +22,8 @@ use Tests\Helpers\TestSchemaCreator;
 
 afterEach(function (): void {
     Mockery::close();
+    app()->forgetInstance(PolicyIssuanceService::class);
+    app()->forgetInstance(DicInsuranceService::class);
 });
 
 beforeEach(function (): void {
@@ -87,7 +91,7 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
     $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
     $dic->shouldReceive('isPolicyIssuanceAutomationEnabled')->once()->andReturn(true);
     $dic->shouldReceive('validateBeforeDicAsyncRun')->once()->andReturn(['status' => true]);
-    $dic->shouldReceive('runSingleDicAsyncStep')->once()->andThrow(new RuntimeException('simulated API connection failure'));
+    $dic->shouldReceive('runSingleDicAsyncStep')->once()->andThrow(new IlluminateConnectionException('cURL error 28: Timeout'));
 
     app()->instance(DicInsuranceService::class, $dic);
 
@@ -96,10 +100,75 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
 
     expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PROCESSING_STATUS);
 
+    expect(
+        PolicyIssuanceLog::query()
+            ->where('policy_issuance_id', $process->id)
+            ->where('step', PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY)
+            ->count()
+    )->toBe(1);
+
     Bus::assertDispatched(function (DicPolicyIssuanceStepJob $job) use ($process): bool {
         return $job->policyIssuanceId === $process->id
             && $job->step === PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY;
     });
+});
+
+it('fails issuance immediately without retry when runSingleDicAsyncStep throws non-transport exception', function (): void {
+    Bus::fake();
+
+    $provider = InsuranceProvider::query()->create([
+        'code' => InsuranceProviderEnum::DIC->value,
+        'text' => 'DIC Test',
+        'sort_order' => 1,
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $travelId = DB::table('travel_quote_request')->insertGetId([
+        'uuid' => (string) Str::uuid(),
+        'code' => 'TRV-NO-RETRY',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $process = PolicyIssuance::query()->create([
+        'insurance_provider_id' => $provider->id,
+        'model_type' => TravelQuote::class,
+        'model_id' => $travelId,
+        'quote_type' => QuoteTypes::TRAVEL->value,
+        'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
+        'completed_step' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $dic = Mockery::mock(DicInsuranceService::class);
+    $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
+    $dic->shouldReceive('isPolicyIssuanceAutomationEnabled')->once()->andReturn(true);
+    $dic->shouldReceive('validateBeforeDicAsyncRun')->once()->andReturn(['status' => true]);
+    $dic->shouldReceive('runSingleDicAsyncStep')->once()->andThrow(new RuntimeException('bug in automation code'));
+
+    $dic->shouldReceive('resolveTravelDicAsyncFailureContext')
+        ->once()
+        ->with(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY, Mockery::type('array'))
+        ->andReturn([
+            'insurer_api_status_id' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+            'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
+        ]);
+
+    app()->instance(DicInsuranceService::class, $dic);
+
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService->shouldReceive('applyTravelDicAutomationFailure')->once();
+    app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
+    (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
+        ->handle(app(DicInsuranceService::class));
+
+    expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::FAILED_STATUS);
+
+    Bus::assertNothingDispatched();
 });
 
 it('marks issuance failed after max attempts when runSingleDicAsyncStep throws', function (): void {
@@ -151,7 +220,7 @@ it('marks issuance failed after max attempts when runSingleDicAsyncStep throws',
     $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
     $dic->shouldReceive('isPolicyIssuanceAutomationEnabled')->once()->andReturn(true);
     $dic->shouldReceive('validateBeforeDicAsyncRun')->once()->andReturn(['status' => true]);
-    $dic->shouldReceive('runSingleDicAsyncStep')->once()->andThrow(new RuntimeException('simulated API connection failure'));
+    $dic->shouldReceive('runSingleDicAsyncStep')->once()->andThrow(new IlluminateConnectionException('cURL error 7: Failed to connect'));
     $dic->shouldReceive('resolveTravelDicAsyncFailureContext')
         ->once()
         ->with(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY, Mockery::type('array'))
@@ -163,6 +232,7 @@ it('marks issuance failed after max attempts when runSingleDicAsyncStep throws',
     app()->instance(DicInsuranceService::class, $dic);
 
     $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService->shouldReceive('storePolicyIssuanceLog')->once();
     $policyIssuanceService->shouldReceive('applyTravelDicAutomationFailure')->once();
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 

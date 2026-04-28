@@ -15,10 +15,13 @@ use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
+use GuzzleHttp\Exception\ConnectException as GuzzleConnectException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException as IlluminateConnectionException;
+use Illuminate\Http\Client\RequestException as IlluminateRequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
@@ -132,11 +135,36 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         try {
             $stepResponse = $dicInsuranceService->runSingleDicAsyncStep($quote, $process, $this->step, false);
         } catch (Throwable $e) {
-            LoggerService::error('DIC Travel: async step threw exception (applying retry policy)', [
+            LoggerService::error('DIC Travel: async step threw exception', [
                 'policy_issuance_id' => $process->id,
                 'step' => $this->step,
                 'quote_code' => $quote->code,
             ], exception: $e);
+
+            if (! $this->isRetryableDicAsyncTransportFailure($e)) {
+                $stepResponse = [
+                    'status' => false,
+                    'error' => $e->getMessage(),
+                    'message' => $e->getMessage(),
+                ];
+                $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $stepResponse);
+
+                return;
+            }
+
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+                $quote,
+                [],
+                [
+                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'handler' => 'dic_async_exception',
+                ],
+                'dic-async-step/unhandled-exception',
+                $this->step,
+                PolicyIssuanceEnum::FAILED_STATUS,
+                $process,
+            );
 
             $stepResponse = [
                 'status' => false,
@@ -190,7 +218,42 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
+        $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $stepResponse);
+
+        LoggerService::info('DIC Travel: async step failed after max attempts', [
+            'policy_issuance_id' => $process->id,
+            'step' => $this->step,
+            'attempt_count_for_step' => $attemptCountForStep,
+        ]);
+    }
+
+    /**
+     * Laravel HTTP layer and raw Guzzle connect failures (timeouts, resets, refusal after client retries exhausted).
+     *
+     * Anything else—including {@see \Error} (type/parse failures) and non-transport {@see \Exception}s—does not retry.
+     */
+    private function isRetryableDicAsyncTransportFailure(Throwable $e): bool
+    {
+        if ($e instanceof \Error) {
+            return false;
+        }
+
+        return $e instanceof IlluminateConnectionException
+            || $e instanceof IlluminateRequestException
+            || $e instanceof GuzzleConnectException;
+    }
+
+    /**
+     * @param  array<string, mixed>  $stepResponse
+     */
+    private function finalizeDicAsyncStepAsPermanentlyFailed(
+        PolicyIssuance $process,
+        TravelQuote $quote,
+        DicInsuranceService $dicInsuranceService,
+        array $stepResponse,
+    ): void {
         $ctx = $dicInsuranceService->resolveTravelDicAsyncFailureContext($this->step, $stepResponse);
+
         app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
             $quote->fresh(),
             $ctx['insurer_api_status_id'],
@@ -200,14 +263,8 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         $process->update([
             'status' => PolicyIssuanceEnum::FAILED_STATUS,
             'message' => json_encode([
-                'error' => $stepResponse['error'] ?? $stepResponse['message'] ?? 'DIC step failed after max retries',
+                'error' => $stepResponse['error'] ?? $stepResponse['message'] ?? 'DIC async step permanently failed',
             ]),
-        ]);
-
-        LoggerService::info('DIC Travel: async step failed after max attempts', [
-            'policy_issuance_id' => $process->id,
-            'step' => $this->step,
-            'attempt_count_for_step' => $attemptCountForStep,
         ]);
     }
 
