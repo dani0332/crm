@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class HealthPlanService extends BaseService
 {
@@ -21,17 +23,38 @@ class HealthPlanService extends BaseService
             'status', 'version', 'cohort_enabled', 'gender_enabled', 'marital_status_enabled', 'created_at', 'updated_at', 'deleted_at')
             ->where('status', strtolower($status))
             ->where('id', $id)
-            ->orderByDesc('id')
             ->get(); // It can be multiple records in case of archive status so its collection
     }
 
-    public function getList(?string $status = null): Collection
+    public function getList(Request $request): LengthAwarePaginator|Collection
     {
-        return HealthPlan::select('id', 'code', 'text', 'text_ar', 'provider_id', 'health_business_type',
+        // Apply pagination if 'per_page' is set in the request, otherwise return all results
+        $query = HealthPlan::select(
+            'id', 'code', 'text', 'text_ar', 'provider_id', 'health_business_type',
             'plan_type_id', 'health_rating_eligibility_id', 'health_network_id', 'is_hidden', 'is_active',
-            'status', 'version', 'created_at', 'updated_at', 'deleted_at')
-            ->where('status', strtolower($status ?? HealthPlanRateSheetStatusEnum::ACTIVE))
-            ->orderByDesc('id')
-            ->get(); // It can b
+            'status', 'version', 'created_at', 'updated_at', 'deleted_at'
+        )
+            ->where('status', strtolower($request->status ?? HealthPlanRateSheetStatusEnum::ACTIVE))
+            ->when($request->provider_id, function ($query) use ($request) {
+                $query->where('provider_id', $request->provider_id);
+            })
+            ->when($request->code, function ($query) use ($request) {
+                $query->where('code', 'like', '%'.$request->code.'%');
+            })
+            ->orderByDesc('id');
+
+        if ($request->has('per_page')) {
+            $perPage = (int) $request->get('per_page', 15);
+
+            return $query->paginate($perPage);
+        } else {
+            return $query->get();
+        }
+
+    }
+
+    public function create(array $data): HealthPlan
+    {
+        return HealthPlan::create($data);
     }
 }

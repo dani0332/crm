@@ -3,14 +3,31 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\CreateHealthPlanRequest;
 use App\Services\HealthPlanService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class HealthPlanController extends Controller
 {
     public function __construct(private HealthPlanService $healthPlanService) {}
-    public function getPlan($planId)
+
+    public function getList(Request $request): JsonResponse
     {
-        $plan = HealthPlan::find($planId);
+        $plans = $this->healthPlanService->getList($request);
+
+        return response()->json($plans);
+    }
+    public function getPlan($planId, $status): JsonResponse
+    {
+        $plan = $this->healthPlanService->getPlanByIdStatus($planId, $status);
+
+        return response()->json($plan);
+    }
+
+    public function create(CreateHealthPlanRequest $request): JsonResponse
+    {
+        $plan = $this->healthPlanService->create($request->validated());
 
         return response()->json($plan);
     }
