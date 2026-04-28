@@ -6,9 +6,9 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthQuoteUaePassApiStatus;
 
 describe('HealthQuoteUaePassApiStatus', function () {
-    test('displayLabel returns em dash for empty', function () {
-        expect(HealthQuoteUaePassApiStatus::displayLabel(null))->toBe('—');
-        expect(HealthQuoteUaePassApiStatus::displayLabel(''))->toBe('—');
+    test('displayLabel returns null for empty', function () {
+        expect(HealthQuoteUaePassApiStatus::displayLabel(null))->toBe(null);
+        expect(HealthQuoteUaePassApiStatus::displayLabel(''))->toBe(null);
     });
 
     test('isStoredValue accepts persisted enum values only', function () {
