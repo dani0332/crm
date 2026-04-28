@@ -526,27 +526,34 @@ onUnmounted(() => {
                       <div class="md:hidden block">{{ user.name }}</div>
                       <div class="text-gray-500">{{ user.email }}</div>
                     </div>
-                    <button
-                      type="button"
-                      class="flex w-full gap-2 items-center px-2 py-1.5 rounded hover:bg-gray-100 group transition"
-                      @click.prevent="copyUploadDocumentLink"
-                    >
-                      <x-icon
-                        :icon="linkCopied ? 'copyCheck' : 'link'"
-                        size="sm"
-                        :class="
-                          linkCopied ? 'text-success-600' : 'text-primary-500'
-                        "
-                      />
-                      <span
-                        class="text-sm font-medium"
-                        :class="linkCopied ? 'text-success-600' : ''"
+                    <x-tooltip position="left">
+                      <button
+                        type="button"
+                        class="flex w-full gap-2 items-center px-2 py-1.5 rounded hover:bg-gray-100 group transition"
+                        @click.prevent="copyUploadDocumentLink"
                       >
-                        {{
-                          linkCopied ? 'Link Copied!' : 'Document Upload Link'
-                        }}
-                      </span>
-                    </button>
+                        <x-icon
+                          :icon="linkCopied ? 'copyCheck' : 'link'"
+                          size="sm"
+                          :class="
+                            linkCopied ? 'text-success-600' : 'text-primary-500'
+                          "
+                        />
+                        <span
+                          class="text-sm font-medium"
+                          :class="linkCopied ? 'text-success-600' : ''"
+                        >
+                          {{
+                            linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                          }}
+                        </span>
+                      </button>
+                      <template #tooltip>
+                        <div class="max-w-xs">
+                          This is your personal document upload link that you can share with the customer. Once the customer uploads documents, will they be sent to you by email.
+                        </div>
+                      </template>
+                    </x-tooltip>
                     <x-menu :items="userMenu" />
                   </x-popover-container>
                 </template>
