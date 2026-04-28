@@ -20,6 +20,7 @@ use Exception;
 
 class DicInsuranceService implements PolicyIssuanceInterface
 {
+    private const MISSING_HANDLER_MESSAGE_PREFIX = 'Missing handler for step: ';
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
 
@@ -82,7 +83,9 @@ class DicInsuranceService implements PolicyIssuanceInterface
     {
         $handler = $this->getStepHandler($step);
         if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-            return $this->responseHandler->buildStepResponse($step, false, 'Missing handler for step: '.$step, 'Missing handler for step: '.$step);
+            $message = self::MISSING_HANDLER_MESSAGE_PREFIX.$step;
+
+            return $this->responseHandler->buildStepResponse($step, false, $message, $message);
         }
 
         return $this->stepExecutor->{$handler}($quote, $process, $applyQuoteFailure);
@@ -211,7 +214,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
 
             $handler = $this->getStepHandler($currentStep);
             if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-                $error = 'Missing handler for step: '.$currentStep;
+                $error = self::MISSING_HANDLER_MESSAGE_PREFIX.$currentStep;
                 $failureResponse = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
 
                 break;
@@ -282,7 +285,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
      * @param  mixed  $throughAutomation
      * @return array<string, mixed>
      */
-    public function getStepsLockingStatus($quote, $throughAutomation = false): array
+    public function getStepsLockingStatus($quote): array
     {
         return [
             'policyIssuance' => $quote->policyIssuance,

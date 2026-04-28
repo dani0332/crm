@@ -65,21 +65,42 @@ class DicStepExecutor
         $result = $this->apiService->getPolicyDoc($quote, $process);
 
         if (! $result['status']) {
-            if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                    $quote,
-                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
-                );
-            }
+            return $this->buildGetPolicyDocResponseAfterFailedApi($quote, $applyQuoteFailure, $result);
+        }
 
-            return $this->withTravelDicFailureMeta(
-                $result,
+        return $this->completeGetPolicyDocStepAfterSuccessfulApi($quote, $applyQuoteFailure, $result);
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function buildGetPolicyDocResponseAfterFailedApi(TravelQuote $quote, bool $applyQuoteFailure, array $result): array
+    {
+        if ($applyQuoteFailure) {
+            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                $quote,
                 PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
             );
         }
 
+        return $this->withTravelDicFailureMeta(
+            $result,
+            PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function completeGetPolicyDocStepAfterSuccessfulApi(
+        TravelQuote $quote,
+        bool $applyQuoteFailure,
+        array $result,
+    ): array {
         $documentUrl = $this->apiService->extractDocumentUrlFromResponse($result['data'] ?? null);
         if (! $documentUrl) {
             $message = 'Document URL missing in GetPolicyDoc response (configure extractDocumentUrlFromResponse)';
@@ -102,6 +123,13 @@ class DicStepExecutor
 
         try {
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule DIC');
+
+            return $this->responseHandler->buildStepResponse(
+                PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
+                true,
+                'Policy document stored in IMCRM',
+                null,
+            );
         } catch (\Throwable $e) {
             LoggerService::error('DIC Travel: GetPolicyDoc download/upload failed', [
                 'quote_code' => $quote->code,
@@ -128,13 +156,6 @@ class DicStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             );
         }
-
-        return $this->responseHandler->buildStepResponse(
-            PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-            true,
-            'Policy document stored in IMCRM',
-            null,
-        );
     }
 
     /**
@@ -150,21 +171,42 @@ class DicStepExecutor
         $result = $this->apiService->getBrokerInvoice($quote, $process);
 
         if (! $result['status']) {
-            if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                    $quote,
-                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
-                );
-            }
+            return $this->buildGetBrokerInvoiceResponseAfterFailedApi($quote, $applyQuoteFailure, $result);
+        }
 
-            return $this->withTravelDicFailureMeta(
-                $result,
+        return $this->completeGetBrokerInvoiceStepAfterSuccessfulApi($quote, $applyQuoteFailure, $result);
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function buildGetBrokerInvoiceResponseAfterFailedApi(TravelQuote $quote, bool $applyQuoteFailure, array $result): array
+    {
+        if ($applyQuoteFailure) {
+            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                $quote,
                 PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             );
         }
 
+        return $this->withTravelDicFailureMeta(
+            $result,
+            PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
+    private function completeGetBrokerInvoiceStepAfterSuccessfulApi(
+        TravelQuote $quote,
+        bool $applyQuoteFailure,
+        array $result,
+    ): array {
         $documentUrl = $this->apiService->extractDocumentUrlFromResponse($result['data'] ?? null);
         if (! $documentUrl) {
             $message = 'Document URL missing in GetBrokerInvoice response (configure extractDocumentUrlFromResponse)';
@@ -187,6 +229,13 @@ class DicStepExecutor
 
         try {
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Broker Invoice DIC');
+
+            return $this->responseHandler->buildStepResponse(
+                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
+                true,
+                'Broker invoice stored and quote marked policy issued',
+                null,
+            );
         } catch (\Throwable $e) {
             LoggerService::error('DIC Travel: GetBrokerInvoice download/upload failed', [
                 'quote_code' => $quote->code,
@@ -213,13 +262,6 @@ class DicStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             );
         }
-
-        return $this->responseHandler->buildStepResponse(
-            PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-            true,
-            'Broker invoice stored and quote marked policy issued',
-            null,
-        );
     }
 
     /**
