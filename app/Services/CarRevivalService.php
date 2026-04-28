@@ -13,7 +13,9 @@ class CarRevivalService
 {
     public function markRevivalCommsTriggered(string $quoteUuid): void
     {
-        $carQuote = CarQuote::query()->where('uuid', $quoteUuid)->first();
+        $carQuote = CarQuote::query()->where('uuid', $quoteUuid)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->first();
 
         if (! $carQuote) {
             LoggerService::warning('CarRevivalService::markRevivalCommsTriggered - car quote not found', [

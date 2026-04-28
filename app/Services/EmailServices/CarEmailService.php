@@ -927,7 +927,7 @@ class CarEmailService extends BaseService
         $customerName = $carQuote->first_name.' '.$carQuote->last_name;
         $emailData->subject = $customerName."'s".' Car Insurance with Alfred '.$carQuote->code;
         $emailData->uuid = $carQuote->uuid;
-        $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
+        $dttAdvisor = getAppStorageValueByKey(ApplicationStorageEnums::DTT_ADVISOR);
         $advisor = explode(',', (string) $dttAdvisor);
         $emailData->advisorName = $advisor[0] ?? '';
         $emailData->advisorEmail = $advisor[1] ?? '';
