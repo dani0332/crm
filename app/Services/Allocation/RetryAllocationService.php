@@ -86,7 +86,8 @@ class RetryAllocationService
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where(function ($q) use ($exemptedLeadSources) {
                 $q->whereNotIn('source', $exemptedLeadSources)
-                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible());
+                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible())
+                    ->orWhere(fn ($reinstated) => $reinstated->whereRevivalReinstatedRetryEligible());
             })
             ->orderByDesc('created_at')
             ->where(function ($q) {
@@ -95,6 +96,7 @@ class RetryAllocationService
                     $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
                 });
                 $q->orWhere(fn ($sq) => $sq->whereRevivalIntentRetryEligible());
+                $q->orWhere(fn ($sq) => $sq->whereRevivalReinstatedRetryEligible());
             })
             ->take($chunkSize);
 

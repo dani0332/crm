@@ -682,4 +682,10 @@ class CarQuote extends BaseModel
             ->whereNull('advisor_id')
             ->whereRevivalIntentEligible();
     }
+
+    public function scopeWhereRevivalReinstatedRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL_REINSTATED)
+            ->whereNull('advisor_id');
+    }
 }
