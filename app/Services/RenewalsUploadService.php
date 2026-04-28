@@ -3913,11 +3913,13 @@ class RenewalsUploadService
         $transition = null;
         $target = null;
         $source = null;
+        $resolvedViaPersistedTransition = false;
 
         if ($lead->checkIsTransitionableLead()) {
             $transition = $lead->insuranceProviderTransition;
             $target = $transition->targetProvider;
             $source = $transition->sourceProvider;
+            $resolvedViaPersistedTransition = true;
         } else {
             // Fallback for pre-existing leads (e.g. Genesis RSA->AXA) where transition_id was not yet
             // persisted during a prior validation pass. Matches the historical resolution logic in
@@ -3944,11 +3946,18 @@ class RenewalsUploadService
                 'tags' => $carPlan !== null ? InsuranceProvidersTransitionEnum::tagForSourceCode($source->code) : '',
             ];
 
-            // Cache for subsequent calls on this lead instance
-            $this->transitionableLeadCache[$cacheKey] = [
-                'transitionId' => $lead->insurance_provider_transition_id,
-                'result' => $result,
-            ];
+            // Only cache when we resolved via the persisted transition_id. The cache's staleness key
+            // is $lead->insurance_provider_transition_id, and the fallback path resolves the
+            // transition from current $lead->data without writing it back to that column. Caching
+            // the fallback result would store ['transitionId' => null, 'result.transitionId' => N],
+            // and any later mutation to $lead->data (with the column still null) would be served
+            // the stale result, producing wrong isManualUpdate/tags during plan creation.
+            if ($resolvedViaPersistedTransition) {
+                $this->transitionableLeadCache[$cacheKey] = [
+                    'transitionId' => $lead->insurance_provider_transition_id,
+                    'result' => $result,
+                ];
+            }
 
             return $result;
         }
