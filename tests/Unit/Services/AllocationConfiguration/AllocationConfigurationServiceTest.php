@@ -175,3 +175,167 @@ it('updates only non-auh region and preserves auh when payload has only non-auh'
     expect($updated->config['auh']['micro_brackets'])->toHaveCount(1);
     expect($updated->config['auh']['micro_brackets'][0]['employees_max'])->toBe(10);
 });
+
+it('clears a bracket list when the payload includes that key with an empty array', function () {
+    $existing = AllocationConfiguration::on('sqlite')->create([
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL,
+        'config' => [
+            'auh' => [
+                'micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 1,
+                        'employees_max' => 10,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+                'non_micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 11,
+                        'employees_max' => 20,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+            ],
+            'non-auh' => [
+                'micro_brackets' => [],
+                'non_micro_brackets' => [],
+            ],
+        ],
+        'created_by' => $this->userId,
+    ]);
+
+    $updateData = [
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL->value,
+        'auh' => [
+            'micro_brackets' => [],
+            'non_micro_brackets' => [
+                [
+                    'departmentIds' => [1],
+                    'employees_min' => 11,
+                    'employees_max' => 20,
+                    'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                ],
+            ],
+        ],
+    ];
+
+    $updated = $this->service->updateConfiguration($existing, QuoteTypes::GROUP_MEDICAL, $updateData, $this->userId);
+
+    expect($updated->config['auh']['micro_brackets'])->toBeArray()->toBeEmpty();
+    expect($updated->config['auh']['non_micro_brackets'])->toHaveCount(1);
+});
+
+it('keeps a bracket list when the region is sent but that bracket key is omitted', function () {
+    $existing = AllocationConfiguration::on('sqlite')->create([
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL,
+        'config' => [
+            'auh' => [
+                'micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 1,
+                        'employees_max' => 5,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+                'non_micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 11,
+                        'employees_max' => 20,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+            ],
+            'non-auh' => [
+                'micro_brackets' => [],
+                'non_micro_brackets' => [],
+            ],
+        ],
+        'created_by' => $this->userId,
+    ]);
+
+    $updateData = [
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL->value,
+        'auh' => [
+            'non_micro_brackets' => [
+                [
+                    'departmentIds' => [1],
+                    'employees_min' => 11,
+                    'employees_max' => 30,
+                    'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                ],
+            ],
+        ],
+    ];
+
+    $updated = $this->service->updateConfiguration($existing, QuoteTypes::GROUP_MEDICAL, $updateData, $this->userId);
+
+    expect($updated->config['auh']['non_micro_brackets'][0]['employees_max'])->toBe(30);
+    expect($updated->config['auh']['micro_brackets'])->toHaveCount(1);
+    expect($updated->config['auh']['micro_brackets'][0]['employees_max'])->toBe(5);
+});
+
+it('preserves the other region when the payload includes both keys as empty arrays like emitData', function () {
+    $existing = AllocationConfiguration::on('sqlite')->create([
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL,
+        'config' => [
+            'auh' => [
+                'micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 1,
+                        'employees_max' => 25,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+                'non_micro_brackets' => [],
+            ],
+            'non-auh' => [
+                'micro_brackets' => [],
+                'non_micro_brackets' => [
+                    [
+                        'departmentIds' => [1],
+                        'employees_min' => 11,
+                        'employees_max' => 100,
+                        'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                    ],
+                ],
+            ],
+        ],
+        'created_by' => $this->userId,
+    ]);
+
+    $updateData = [
+        'quote_type_id' => $this->quoteTypeId,
+        'quote_type' => QuoteTypes::GROUP_MEDICAL->value,
+        'auh' => [
+            'micro_brackets' => [
+                [
+                    'departmentIds' => [1],
+                    'employees_min' => 1,
+                    'employees_max' => 30,
+                    'profiles' => [['advisorIds' => [1], 'planTypeIds' => [1]]],
+                ],
+            ],
+            'non_micro_brackets' => [],
+        ],
+        'non-auh' => [
+            'micro_brackets' => [],
+            'non_micro_brackets' => [],
+        ],
+    ];
+
+    $updated = $this->service->updateConfiguration($existing, QuoteTypes::GROUP_MEDICAL, $updateData, $this->userId);
+
+    expect($updated->config['auh']['micro_brackets'][0]['employees_max'])->toBe(30);
+    expect($updated->config['non-auh']['non_micro_brackets'])->toHaveCount(1);
+    expect($updated->config['non-auh']['non_micro_brackets'][0]['employees_max'])->toBe(100);
+});

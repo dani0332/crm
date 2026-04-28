@@ -97,8 +97,8 @@ class AllocationConfiguration extends Model implements AuditableContract
     {
         return new Attribute(
             get: fn () => $this->config['micro_brackets']
-                ?? ($this->config['auh'] ?? [])['micro_brackets'] ?? null
-                ?? ($this->config['non-auh'] ?? [])['micro_brackets'] ?? null
+                ?? data_get($this->config, 'auh.micro_brackets')
+                ?? data_get($this->config, 'non-auh.micro_brackets')
                 ?? [],
         );
     }
@@ -112,8 +112,8 @@ class AllocationConfiguration extends Model implements AuditableContract
     {
         return new Attribute(
             get: fn () => $this->config['non_micro_brackets']
-                ?? ($this->config['auh'] ?? [])['non_micro_brackets'] ?? null
-                ?? ($this->config['non-auh'] ?? [])['non_micro_brackets'] ?? null
+                ?? data_get($this->config, 'auh.non_micro_brackets')
+                ?? data_get($this->config, 'non-auh.non_micro_brackets')
                 ?? [],
         );
     }
