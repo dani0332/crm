@@ -39,7 +39,7 @@ const isActive = link => {
 const user = computed(() => page.props.auth.user);
 const ecomBaseUrl = computed(() => page.props.ecomBaseUrl);
 const uploadDocumentLink = computed(
-  () => `${ecomBaseUrl.value}/documents/upload?userId=${user.value?.id}`,
+  () => `${ecomBaseUrl.value}/adv/${user.value?.id}/docs/`,
 );
 const linkCopied = ref(false);
 
@@ -414,28 +414,25 @@ onUnmounted(() => {
                   </x-tooltip>
 
                   <x-tooltip position="top">
-                    <button
-                      type="button"
-                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition"
-                      :class="
-                        linkCopied
-                          ? 'text-success-600 bg-success-50'
-                          : 'text-primary-500 hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none'
-                      "
+                    <x-button
+                      size="sm"
+                      :color="linkCopied ? 'success' : 'orange'"
+                      class="flex items-center gap-1.5 whitespace-nowrap"
                       @click.prevent="copyUploadDocumentLink"
                     >
                       <x-icon
                         :icon="linkCopied ? 'copyCheck' : 'link'"
-                        size="lg"
+                        size="sm"
                       />
-                    </button>
+                      <span>{{
+                        linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                      }}</span>
+                    </x-button>
                     <template #tooltip>
-                      <div class="font-bold">
-                        {{
-                          linkCopied
-                            ? 'Link Copied!'
-                            : 'Copy Upload Document Link'
-                        }}
+                      <div class="max-w-xs">
+                        This is your personal document upload link that you can
+                        share with the customer. Once the customer uploads
+                        documents, will they be sent to you by email.
                       </div>
                     </template>
                   </x-tooltip>
@@ -546,7 +543,7 @@ onUnmounted(() => {
                         :class="linkCopied ? 'text-success-600' : ''"
                       >
                         {{
-                          linkCopied ? 'Link Copied!' : 'Upload Document Link'
+                          linkCopied ? 'Link Copied!' : 'Document Upload Link'
                         }}
                       </span>
                     </button>
