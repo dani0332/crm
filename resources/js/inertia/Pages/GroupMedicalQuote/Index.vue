@@ -642,7 +642,6 @@ const insurerAMLStatusOption = computed(() => {
           format="dd-MM-yyyy"
         />
         <x-select
-          v-if="!hasRole(rolesEnum.GMAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
