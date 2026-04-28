@@ -147,7 +147,7 @@ const validateSumAssured = value => {
   if (!Number.isInteger(sumAssured)) {
     return 'Sum Assured must be an integer (no decimal allowed)';
   }
-  
+
   if (sumAssured < 1 || sumAssured > 100000000) {
     return 'Sum Assured must be between 1 and 100,000,000';
   }
@@ -165,11 +165,15 @@ const validateAlphaOnly = value => {
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.submit('put', route('life-revival-quotes-update', props.quote.uuid), {
-      onError: errors => {
-        quoteForm.setError(errors);
+    quoteForm.submit(
+      'put',
+      route('life-revival-quotes-update', props.quote.uuid),
+      {
+        onError: errors => {
+          quoteForm.setError(errors);
+        },
       },
-    });
+    );
   }
 }
 const getBMI = () => {
