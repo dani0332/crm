@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\ApplicationStorageEnums;
 use App\Jobs\DicPolicyIssuanceStepJob;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -30,4 +31,10 @@ it('defaults unique lock window when retry delay storage is missing', function (
     $job = new DicPolicyIssuanceStepJob(1, 'IssuePolicy');
 
     expect($job->uniqueFor)->toBe(120);
+});
+
+it('uses unique-until-processing so in-handle retry dispatches are not swallowed by ShouldBeUnique', function (): void {
+    $job = new DicPolicyIssuanceStepJob(1, 'IssuePolicy');
+
+    expect($job)->toBeInstanceOf(ShouldBeUniqueUntilProcessing::class);
 });

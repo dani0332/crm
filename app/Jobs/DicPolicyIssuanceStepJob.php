@@ -16,7 +16,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,8 +25,11 @@ use Throwable;
 
 /**
  * Runs one DIC Travel EnsuredIT step asynchronously so {@see PolicyIssuanceJob} can dispatch-only and exit.
+ *
+ * Implements ShouldBeUniqueUntilProcessing (not ShouldBeUnique): the unique lock is released before `handle()` runs,
+ * so a delayed retry dispatch for the same step from inside `handle()` is not dropped as a duplicate.
  */
-class DicPolicyIssuanceStepJob implements ShouldBeUnique, ShouldQueue
+class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
