@@ -129,7 +129,21 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         TravelQuote $quote,
         DicInsuranceService $dicInsuranceService,
     ): void {
-        $stepResponse = $dicInsuranceService->runSingleDicAsyncStep($quote, $process, $this->step, false);
+        try {
+            $stepResponse = $dicInsuranceService->runSingleDicAsyncStep($quote, $process, $this->step, false);
+        } catch (Throwable $e) {
+            LoggerService::error('DIC Travel: async step threw exception (applying retry policy)', [
+                'policy_issuance_id' => $process->id,
+                'step' => $this->step,
+                'quote_code' => $quote->code,
+            ], exception: $e);
+
+            $stepResponse = [
+                'status' => false,
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+            ];
+        }
 
         if ($stepResponse['status'] ?? false) {
             $dicInsuranceService->updateProcessCompletedStepFromResponse($process->fresh(), $stepResponse);
