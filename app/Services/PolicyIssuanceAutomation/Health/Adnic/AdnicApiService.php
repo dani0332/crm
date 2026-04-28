@@ -111,6 +111,17 @@ class AdnicApiService
             );
         }
 
+        return $this->uploadDocumentsAfterValidation($quote, $process, $healthInsurerResponse, $insuredInfoDetails, $quoteDocuments);
+    }
+
+    /**
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  mixed  $healthInsurerResponse
+     * @param  mixed  $quoteDocuments
+     */
+    private function uploadDocumentsAfterValidation($quote, $process, $healthInsurerResponse, array $insuredInfoDetails, $quoteDocuments): array
+    {
         $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 
@@ -119,7 +130,7 @@ class AdnicApiService
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $allDocsDownloaded = true;
+        $allInsurerUploadsSucceeded = true;
 
         foreach ($insuredInfoDetails as $memberIndex => $insuredMember) {
             $memberSeqNo = $insuredMember?->MemberSeqNo ?? $memberIndex;
@@ -161,13 +172,13 @@ class AdnicApiService
                         'message' => $uploadDocResponse['message'] ?? 'Document upload failed',
                     ]);
 
-                    $allDocsDownloaded = false;
+                    $allInsurerUploadsSucceeded = false;
                     break 2;
                 }
             }
         }
 
-        if (! $allDocsDownloaded) {
+        if (! $allInsurerUploadsSucceeded) {
             $response['message'] = 'Some documents failed to upload';
             $response['error'] = 'Some documents failed to upload';
             $response['status'] = false;
@@ -211,14 +222,25 @@ class AdnicApiService
             return $response;
         }
 
+        return $this->uploadPolicyDocumentsToIMCRMFromIssueLog($quote, $process, $generatePolicyResponse, $response);
+    }
+
+    /**
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  mixed  $issuePolicyLog
+     * @param  array<string, mixed>  $response
+     */
+    private function uploadPolicyDocumentsToIMCRMFromIssueLog($quote, $process, $issuePolicyLog, array $response): array
+    {
         $endPoint = '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();
 
         // validation added before hitting api to awnic for downloading document
 
-        $generatePolicyResponse = $generatePolicyResponse?->response ? json_decode($generatePolicyResponse->response) : null;
-        $policyIssueResponse = $generatePolicyResponse?->data;
+        $decodedIssuePolicy = $issuePolicyLog?->response ? json_decode($issuePolicyLog->response) : null;
+        $policyIssueResponse = $decodedIssuePolicy?->data;
         $policyDocuments = data_get($policyIssueResponse, 'PolicyDocumentInfo');
 
         if ($policyDocuments === null) {
@@ -262,6 +284,13 @@ class AdnicApiService
             }
         }
 
+        /*
+         * ADNIC issue-policy returns PolicyDocumentInfo with exactly three document slots (policy document,
+         * commission note, tax invoice — see AdnicEnum::INSURER_DOCUMENT_KEY_*). The literal 3 is intentional:
+         * we only treat the step as complete when all three downloads succeed. If ADNIC changes the number of
+         * documents, this check fails so the integration mismatch is visible in logs and monitoring. Do not
+         * replace with count($policyDocuments) unless the insurer contract and IMCRM mappings are updated together.
+         */
         $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
         LoggerService::info('Document processing completed', extra: [

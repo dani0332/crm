@@ -7,6 +7,7 @@ namespace App\Traits;
 use App\Contracts\CsvExportableInterface;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\EmailExportService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -234,7 +235,7 @@ trait ModernCsvExportable
         }
 
         // Use the modern email export service
-        $emailExportService = app(\App\Services\EmailExportService::class);
+        $emailExportService = app(EmailExportService::class);
 
         $emailExportService->sendCsvByEmail(
             $this,

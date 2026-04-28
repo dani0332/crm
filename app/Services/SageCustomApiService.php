@@ -315,7 +315,7 @@ class SageCustomApiService
                                     $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $apBookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
                                 }
 
-                                $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                                $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
                                 $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                                 $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
                             }

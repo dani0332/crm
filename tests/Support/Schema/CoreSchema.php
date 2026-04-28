@@ -67,6 +67,7 @@ class CoreSchema
                 $table->unsignedBigInteger('subject_id')->nullable();
                 $table->string('causer_type')->nullable();
                 $table->unsignedBigInteger('causer_id')->nullable();
+                $table->json('attribute_changes')->nullable();
                 $table->text('properties')->nullable();
                 $table->string('batch_uuid')->nullable();
                 $table->string('code')->nullable();
@@ -792,6 +793,9 @@ class CoreSchema
                 $table->string('quote_request_type')->nullable();
                 $table->unsignedBigInteger('quote_type_id')->nullable();
                 $table->unsignedBigInteger('product_id')->nullable();
+                $table->string('certificate_number')->nullable();
+                $table->string('tax_invoice_no')->nullable();
+                $table->string('tax_invoice_buyer_no')->nullable();
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();
@@ -1237,6 +1241,8 @@ class CoreSchema
                 $table->boolean('is_ocr_processed')->default(false);
                 $table->unsignedBigInteger('quote_id')->nullable();
                 $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
+                $table->boolean('is_manual_override')->default(false);
+                $table->text('override_remarks')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             },

@@ -76,7 +76,6 @@ class AdnicRequestBuilder
         $sponsorCategory = AdnicEnum::SPONSER_CATEGORY_UAE;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
-        // $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
         $visaType = AdnicEnum::VISA_TYPE_EXISTING_VISA_HOLDER;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
         $memberCategory = AdnicEnum::MEMBER_CATEGORY_DUBAI_RESIDENCY; // Member Category is same as Sponsor Category
@@ -120,7 +119,7 @@ class AdnicRequestBuilder
                 'EmiratesId' => $this->emiratesIdIfMinLength($emiratesId, 15),
                 'EidApplicationNo' => $this->emiratesIdIfMaxLengthExclusive($emiratesId, 15) ?? null,
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
-                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
+                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates
                 'MemberCategory' => $memberCategory ?? '',
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
@@ -144,13 +143,13 @@ class AdnicRequestBuilder
             'SponsorInfo' => [
                 'SponserType' => $healthInsurerRequest?->SponsorInfo?->SponserType,
                 'SponserName' => $healthInsurerRequest?->SponsorInfo?->SponserName,
-                'MobileNo' => AdnicEnum::RESPONSIBLE_PERSON_DEFAULT_MOBILE,
-                'EmailId' => AdnicEnum::RESPONSIBLE_PERSON_DEFAULT_EMAIL,
+                'MobileNo' => $quote?->mobile_no ?? '',
+                'EmailId' => $quote?->email ?? '',
                 'Address' => $quote->emirate?->text ?? '',
                 'DateOfBirth' => $quote->dob ? date('d-m-Y', strtotime($quote->dob)) : null,
                 'Gender' => $this->mappingGender($quote->gender ?? null),
                 'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
-                'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
+                'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
                 'SponserCategory' => $sponsorCategory ?? '',
@@ -262,68 +261,6 @@ class AdnicRequestBuilder
         return $salaryBandMapping[$salaryBand] ?? null;
     }
 
-    private function mappingNationality($nationality): ?int
-    {
-        if (is_null($nationality)) {
-            return null;
-        }
-
-        $nationalityMapping = [
-            'EMIRATI' => 1,
-            'JORDANIAN' => 11,
-            'LEBANESE' => 12,
-            'SYRIAN' => 13,
-            'EGYPTIAN' => 14,
-            'ANTIGUAN' => 100,
-            'ARGENTINE' => 101,
-            'AUSTRIAN' => 102,
-            'AZERBAIJANI' => 103,
-            'BAHAMIAN' => 104,
-            'BARBADIAN' => 105,
-            'BELARUSIAN' => 106,
-            'BELGIAN' => 107,
-            'BELIZEAN' => 108,
-            'BENINESE' => 109,
-            'BHUTANESE' => 110,
-            'BOLIVIAN' => 111,
-            'MOTSWANA' => 112,
-            'BRUNEIAN' => 113,
-            'BULGARIAN' => 114,
-            'BURKINABE' => 115,
-            'BURUNDIAN' => 116,
-            'CAMBODIAN' => 117,
-            'CAMEROONIAN' => 118,
-            'CAPE VERDEAN' => 119,
-            'CENTRAL AFRICAN' => 120,
-            'CHADIAN' => 121,
-            'CHILEAN' => 122,
-            'CHINESE' => 123,
-            'COLOMBIAN' => 124,
-            'COMORAN' => 125,
-            'COOK ISLANDER' => 127,
-            'COSTA RICAN' => 128,
-            'IVORIAN' => 129,
-            'CROATIAN' => 130,
-            'CUBAN' => 131,
-            'CYPRIOT' => 132,
-            'CZECH' => 133,
-            'CONGOLESE' => 135,
-            'DANISH' => 136,
-            'DOMINICAN1' => 137,
-            'DOMINICAN' => 138,
-            'ECUADORIAN' => 139,
-            'SALVADORAN' => 140,
-            'EQUATOGUINEAN' => 141,
-            'ESTONIAN' => 142,
-            'FIJIAN' => 143,
-            'GABONESE' => 144,
-            'GAMBIAN' => 145,
-            'GEORGIAN' => 146,
-        ];
-
-        return $nationalityMapping[ucwords($nationality)] ?? null;
-    }
-
     private function mappingGender($gender): string
     {
         if (in_array($gender, [
@@ -352,49 +289,4 @@ class AdnicRequestBuilder
 
         return $maritalStatusMapping[$maritalStatus] ?? null;
     }
-
-    private function getFullName($member): string
-    {
-        $firstName = $member->first_name ?? '';
-        $lastName = $member->last_name ?? '';
-
-        return trim($firstName.' '.$lastName);
-    }
-
-    private function getRelationCode($relation): string
-    {
-        $relationMapping = [
-            'self' => 'S',
-            'spouse' => 'SP',
-            'child' => 'C',
-            'parent' => 'P',
-        ];
-
-        return $relationMapping[strtolower($relation)] ?? 'S';
-    }
-
-    private function getSalutation($gender): string
-    {
-        if (in_array($gender, [GenericRequestEnum::FEMALE, strtolower(GenericRequestEnum::FEMALE), GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE, GenericRequestEnum::FEMALE_SINGLE_VALUE])) {
-            return 'Ms';
-        }
-        if (in_array($gender, [GenericRequestEnum::FEMALE_MARRIED, GenericRequestEnum::FEMALE_MARRIED_VALUE])) {
-            return 'Mrs';
-        }
-
-        return 'Mr';
-    }
-
-    private function getProductType($quote): string
-    {
-        // TODO:: Get this product type from the Health Plan Name, Extract the first word and convert it to uppercase
-        return 'SHIFA';
-    }
-
-    private function getPlanType($quote): string
-    {
-        // TODO:: Get this plan type from the Health Plan Name, Extract the first word and convert it to uppercase
-        return 'GO';
-    }
-
 }

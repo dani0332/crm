@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Models\SendUpdateLog;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -24,14 +25,14 @@ class SageProcessesExport implements CsvExportableInterface
     private string $notAvailable = 'N/A';
 
     /**
-     * @var \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection
+     * @var Collection|\Illuminate\Database\Eloquent\Collection
      */
     private $failedProcesses;
 
     /**
      * Constructor
      *
-     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection  $failedProcesses
+     * @param  Collection|\Illuminate\Database\Eloquent\Collection  $failedProcesses
      */
     public function __construct($failedProcesses)
     {
@@ -113,7 +114,7 @@ class SageProcessesExport implements CsvExportableInterface
         }
 
         // Determine if this is SendUpdateLog or Main Lead
-        $isSendUpdate = $row->model_type === \App\Models\SendUpdateLog::class;
+        $isSendUpdate = $row->model_type === SendUpdateLog::class;
         $refId = $isSendUpdate ? $this->notAvailable : ($row->model?->code ?? $this->notAvailable);
         $suRefId = $isSendUpdate ? ($row->model?->code ?? $this->notAvailable) : $this->notAvailable;
 

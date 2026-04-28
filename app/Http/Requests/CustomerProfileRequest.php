@@ -70,7 +70,6 @@ class CustomerProfileRequest extends FormRequest
     {
         return [
             'customer_id.required' => 'Something went wrong. Customer not associated with this lead',
-            'emirate_of_registration_id.required' => 'Emirate of registration cannot be null or removed.',
             'emirate_of_registration_id.exists' => 'Emirate of Registration ID is invalid',
         ];
     }

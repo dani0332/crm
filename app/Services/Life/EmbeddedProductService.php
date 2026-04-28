@@ -126,4 +126,5 @@ class EmbeddedProductService extends BaseService
             ->where('is_selected', 1)
             ->update(['is_selected' => 0]);
     }
+
 }

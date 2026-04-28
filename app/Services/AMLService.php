@@ -1904,7 +1904,10 @@ class AMLService
         }
 
         return DB::transaction(function () use ($request, $quoteTypeId, $quote, $entityData): int {
-            if (isset($entityData['emirate_of_registration_id']) && $quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            if (isset($entityData['emirate_of_registration_id'])
+                && $quoteTypeId == QuoteTypeId::Business
+                && $quote instanceof BusinessQuote
+                && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
                 $quote->save();
             }

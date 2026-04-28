@@ -122,7 +122,6 @@ test('request builder has mapping methods for data transformation', function () 
 
     // Check that private mapping methods exist
     expect($reflection->hasMethod('mappingSalaryBand'))->toBeTrue()
-        ->and($reflection->hasMethod('mappingNationality'))->toBeTrue()
         ->and($reflection->hasMethod('mappingGender'))->toBeTrue()
         ->and($reflection->hasMethod('mappingMaritalStatus'))->toBeTrue();
 });
@@ -171,22 +170,6 @@ test('mapping marital status returns correct values', function () {
         ->and($method->invoke($this->builder, 3))->toBe(4) // Widowed
         ->and($method->invoke($this->builder, 4))->toBe(3) // Divorced
         ->and($method->invoke($this->builder, 99))->toBeNull(); // Invalid
-});
-
-// CRITICAL TEST: Nationality mapping returns correct values
-test('mapping nationality returns correct adnic codes', function () {
-    $reflection = new ReflectionClass($this->builder);
-    $method = $reflection->getMethod('mappingNationality');
-    $method->setAccessible(true);
-
-    expect($method->invoke($this->builder, 'EMIRATI'))->toBe(1)
-        ->and($method->invoke($this->builder, 'JORDANIAN'))->toBe(11)
-        ->and($method->invoke($this->builder, 'LEBANESE'))->toBe(12)
-        ->and($method->invoke($this->builder, 'SYRIAN'))->toBe(13)
-        ->and($method->invoke($this->builder, 'EGYPTIAN'))->toBe(14)
-        ->and($method->invoke($this->builder, 'CHINESE'))->toBe(123)
-        ->and($method->invoke($this->builder, null))->toBeNull()
-        ->and($method->invoke($this->builder, 'UNKNOWN_NATIONALITY'))->toBeNull();
 });
 
 // CRITICAL TEST: Document upload date format
