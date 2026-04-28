@@ -16,7 +16,6 @@ defineProps({
   insurerAMLStatus: Array,
   subSources: Array,
   emirates: Array,
-  assignmentTypes: Array,
 });
 
 const canExport = ref(false);
@@ -88,7 +87,6 @@ const filters = reactive({
   advisor_assigned_date: [],
   authorize_date: '',
   captured_date: '',
-  assignment_type: '',
   emirate_of_registration_id: [],
 });
 
@@ -151,8 +149,6 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
-  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
@@ -655,13 +651,7 @@ const insurerAMLStatusOption = computed(() => {
           name="created_at_end"
           label="Created Date End"
         />
-        <DatePicker
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+      
         <x-input
           v-model="filters.mobile_no"
           type="search"
