@@ -767,8 +767,6 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        
-
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
