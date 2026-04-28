@@ -484,9 +484,7 @@ const alignProfileAdvisorIdsToOptions = (mergedOptions, bracket) => {
     }
     profile.advisorIds = profile.advisorIds.map(rawId => {
       const key = advisorOptionKey(rawId);
-      const match = mergedOptions.find(
-        o => advisorOptionKey(o.value) === key,
-      );
+      const match = mergedOptions.find(o => advisorOptionKey(o.value) === key);
       return match ? match.value : normalizeAdvisorId(rawId);
     });
   });
