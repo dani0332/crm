@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\InsuranceProvidersTransitionEnum;
 use App\Models\CarPlan;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderTransition;
@@ -296,6 +297,41 @@ test('isTransitionableLeadForProcess returns non-transitionable when no transiti
         ->and($result['transitionId'])->toBeNull()
         ->and($result['insuranceProvider']->id)->toBe($provider->id)
         ->and($result['tags'])->toBe('');
+});
+
+test('isTransitionableLeadForProcess correctly identifies transitionable lead even when transition_id is missing (fallback)', function () {
+    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
+    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Gulf Gulf (AXA) Motor Prestige',
+        'repair_type' => 'AGENCY',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    // Lead has RSA insurer and AXA provider name, but NO transition_id
+    $lead = createTransitionableFeatureMockLead([
+        'insurer' => 'RSA',
+        'provider_name' => 'GIG AXA',
+        'plan_name' => 'Gulf Gulf (AXA) Motor Prestige',
+        'plan_type' => 'AGENCY',
+    ], null);
+
+    $service = createTransitionableFeatureService();
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    // Fallback should find the transition and return status true
+    expect($result['status'])->toBeTrue()
+        ->and($result['transitionId'])->not->toBeNull()
+        ->and($result['insuranceProvider']->id)->toBe($targetProvider->id)
+        ->and($result['carPlan']->id)->toBe($plan->id)
+        ->and($result['tags'])->toBe(InsuranceProvidersTransitionEnum::GENESIS);
 });
 
 test('isTransitionableLeadForProcess returns non-transitionable when stored transition is inactive', function () {

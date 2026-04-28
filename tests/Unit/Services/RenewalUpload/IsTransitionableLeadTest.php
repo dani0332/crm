@@ -388,8 +388,8 @@ test('isTransitionableLeadForProcess cache is bypassed safely when transition_id
 
     $result = $service->isTransitionableLeadForProcess($lead);
 
-    expect($result['status'])->toBeFalse()
-        ->and($result['transitionId'])->toBeNull()
+    expect($result['status'])->toBeTrue()
+        ->and($result['transitionId'])->toBe($transition->id)
         ->and($result['insuranceProvider']?->is($targetProvider))->toBeTrue();
 });
 

@@ -3910,22 +3910,47 @@ class RenewalsUploadService
         $rawData = $lead->data;
         $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
 
+        $transition = null;
+        $target = null;
+        $source = null;
+
         if ($lead->checkIsTransitionableLead()) {
             $transition = $lead->insuranceProviderTransition;
             $target = $transition->targetProvider;
             $source = $transition->sourceProvider;
+        } else {
+            // Fallback for pre-existing leads (e.g. Genesis RSA->AXA) where transition_id was not yet
+            // persisted during a prior validation pass. Matches the historical resolution logic in
+            // isTransitionableLeadWithCurrentData() to ensure plans created for in-flight leads
+            // receive the correct transitionable flags (isManualUpdate, tags).
+            $currentResolution = $this->resolveTransitionabilityFromCurrentData($leadData);
+            if ($currentResolution['transition']) {
+                $transition = $currentResolution['transition'];
+                $target = $currentResolution['targetProvider'];
+                $source = $currentResolution['sourceProvider'];
+            }
+        }
 
+        if ($transition && $target && $source) {
             $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $target->id);
 
             LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan_id' => $carPlan?->id]);
 
-            return [
+            $result = [
                 'status' => $carPlan !== null,
                 'carPlan' => $carPlan,
                 'insuranceProvider' => $target,
                 'transitionId' => $transition->id,
                 'tags' => $carPlan !== null ? InsuranceProvidersTransitionEnum::tagForSourceCode($source->code) : '',
             ];
+
+            // Cache for subsequent calls on this lead instance
+            $this->transitionableLeadCache[$cacheKey] = [
+                'transitionId' => $lead->insurance_provider_transition_id,
+                'result' => $result,
+            ];
+
+            return $result;
         }
 
         return $this->getNonTransitionableLeadConfig($leadData);
