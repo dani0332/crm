@@ -1170,6 +1170,7 @@ defineExpose({
               :rules="[isRequired]"
               placeholder="Select Emirate of Visa"
               class="w-full"
+              tooltip="Emirates where your family residency visa is issued"
             />
 
             <x-select

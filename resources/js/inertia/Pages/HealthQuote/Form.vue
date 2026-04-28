@@ -1096,6 +1096,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     class="w-full"
                     label="EMIRATE OF YOUR VISA"
                     required
+                    tooltip="Emirates where your family residency visa is issued"
                   />
 
                   <div data-pec-field>
