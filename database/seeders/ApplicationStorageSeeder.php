@@ -168,6 +168,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
+        $this->seedMotorRevivalWorkflow();
     }
 
     private function livaCarAutomationSeed()
@@ -1723,6 +1724,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMotorRevivalWorkflow()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c01d3d9c-e111-45ae-a40e-ff51ac6a7294/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

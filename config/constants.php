@@ -246,4 +246,7 @@ return [
     'DIC_API_TIMEOUT' => env('DIC_API_TIMEOUT', 90),
     'DIC_API_USERNAME' => env('DIC_API_USERNAME', ''),
     'DIC_API_PASSWORD' => env('DIC_API_PASSWORD', ''),
+    // MACRM API KEY & SECRET CONSTANTS
+    'MACRM_API_KEY' => env('MACRM_API_KEY'),
+    'MACRM_API_SECRET' => env('MACRM_API_SECRET'),
 ];
