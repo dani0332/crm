@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\MotorRevivalEnum;
+use App\Enums\MotorRevivalVoucherCode;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\Traits\Macrmable;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 
@@ -17,6 +21,7 @@ class MACRMService
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
         try {
+            /** @var Response $response */
             $response = Http::baseUrl(config('constants.MACRM_API_ENDPOINT'))
                 ->withBasicAuth(
                     config('constants.MACRM_BASIC_AUTH_USERNAME'),
@@ -145,5 +150,265 @@ class MACRMService
         }
 
         return $response;
+    }
+
+    public static function getAuthToken(): ?string
+    {
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        $apiKey = config('constants.MACRM_API_KEY');
+        $apiSecret = config('constants.MACRM_API_SECRET');
+
+        if (blank($apiKey) || blank($apiSecret) || blank($baseUrl)) {
+            LoggerService::warning(self::class.'::getAuthToken missing configuration.', [
+                'has_macrm_api_endpoint' => filled($baseUrl),
+                'has_macrm_api_key' => filled($apiKey),
+                'has_macrm_api_secret' => filled($apiSecret),
+            ]);
+
+            return null;
+        }
+
+        try {
+            /** @var Response $response */
+            $response = Http::acceptJson()
+                ->asJson()
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->post(rtrim($baseUrl, '/').'/v1/auth/token', [
+                    'api_key' => $apiKey,
+                    'api_secret' => $apiSecret,
+                ]);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::getAuthToken HTTP client exception.', [], $e);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            LoggerService::warning(self::class.'::getAuthToken unsuccessful HTTP response.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+        }
+
+        $token = data_get($response->json(), 'data.token');
+
+        return is_string($token) && $token !== '' ? $token : null;
+    }
+
+    public static function createVoucher(array $payload): array
+    {
+        $token = self::getAuthToken();
+        if ($token === null) {
+            LoggerService::warning(self::class.'::createVoucher cannot run: auth token missing.', [
+                'request_payload' => $payload,
+            ]);
+
+            return ['ok' => false, 'reason' => 'auth_token_unavailable'];
+        }
+
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        if (blank($baseUrl)) {
+            LoggerService::warning(self::class.'::createVoucher cannot run: MACRM_API_ENDPOINT not configured.', [
+                'request_payload' => $payload,
+            ]);
+
+            return ['ok' => false, 'reason' => 'missing_endpoint'];
+        }
+
+        $url = rtrim($baseUrl, '/').'/v1/vouchers';
+
+        LoggerService::info(self::class.'::createVoucher request', [
+            'url' => $url,
+            'request_payload' => $payload,
+        ]);
+
+        try {
+            /** @var Response $response */
+            $response = Http::acceptJson()
+                ->asJson()
+                ->withToken($token)
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->post($url, $payload);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::createVoucher HTTP client exception (no response).', [
+                'url' => $url,
+                'request_payload' => $payload,
+            ], $e);
+
+            return ['ok' => false, 'reason' => 'http_exception', 'message' => $e->getMessage()];
+        }
+
+        $json = $response->json();
+
+        if (! $response->successful()) {
+            LoggerService::warning(self::class.'::createVoucher unsuccessful HTTP response.', [
+                'url' => $url,
+                'http_status' => $response->status(),
+                'request_payload' => $payload,
+                'response_body_raw' => $response->body(),
+                'api_status' => data_get($json, 'status'),
+                'api_message' => data_get($json, 'message'),
+                'api_validation' => data_get($json, 'data'),
+            ]);
+        } else {
+            LoggerService::info(self::class.'::createVoucher success.', [
+                'url' => $url,
+                'http_status' => $response->status(),
+                'voucher_code' => data_get($payload, 'voucher_code'),
+                'api_message' => data_get($json, 'message'),
+            ]);
+        }
+
+        return [
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'json' => $json,
+        ];
+    }
+
+    public static function voucherCodeExists(string $code): ?bool
+    {
+        $token = self::getAuthToken();
+        if ($token === null) {
+            LoggerService::warning(self::class.'::voucherCodeExists auth token unavailable.', [
+                'code' => $code,
+            ]);
+
+            return null;
+        }
+
+        $baseUrl = config('constants.MACRM_API_ENDPOINT');
+        if (blank($baseUrl)) {
+            LoggerService::warning(self::class.'::voucherCodeExists MACRM_API_ENDPOINT is not configured.');
+
+            return null;
+        }
+
+        $url = rtrim($baseUrl, '/').'/v1/vouchers/code/'.rawurlencode($code);
+
+        try {
+            /** @var Response $response */
+            $response = Http::acceptJson()
+                ->withToken($token)
+                ->timeout((int) config('constants.LMS_EMAILS_TIMEOUT'))
+                ->get($url);
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::voucherCodeExists HTTP client exception.', [
+                'code' => $code,
+            ], $e);
+
+            return null;
+        }
+
+        if ($response->status() === 404) {
+            return false;
+        }
+
+        if ($response->successful()) {
+            $json = $response->json();
+            if (data_get($json, 'status') === true && filled(data_get($json, 'data'))) {
+                return true;
+            }
+
+            return false;
+        }
+
+        LoggerService::warning(self::class.'::voucherCodeExists unexpected HTTP response.', [
+            'code' => $code,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        return null;
+    }
+
+    public static function generateMotorRevivalVoucherForQuote(CarQuote $carQuote): ?string
+    {
+        $quoteUuid = $carQuote->uuid;
+        $voucherCode = MotorRevivalVoucherCode::TrialSevenDay->codeForQuoteUuid($quoteUuid);
+
+        try {
+            LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote start', [
+                'quote_uuid' => $quoteUuid,
+                'voucher_code' => $voucherCode,
+                'car_quote_id' => $carQuote->id,
+            ]);
+
+            $exists = self::voucherCodeExists($voucherCode);
+            LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote MACRM voucher existence check', [
+                'quote_uuid' => $quoteUuid,
+                'voucher_code' => $voucherCode,
+                'exists' => $exists,
+            ]);
+
+            if ($exists === true) {
+                LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote voucher already in MACRM, skipping create.', [
+                    'quote_uuid' => $quoteUuid,
+                    'voucher_code' => $voucherCode,
+                ]);
+
+                return $voucherCode;
+            }
+
+            $validFrom = now()->subDay();
+            $validTill = $validFrom->copy()->addDays(7);
+
+            $payload = [
+                'voucher_code' => $voucherCode,
+                'voucher_type' => 'trial_membership',
+                'duration_days' => 7,
+                'amount' => 10,
+                'valid_from' => $validFrom->format('Y-m-d H:i:s'),
+                'valid_till' => $validTill->format('Y-m-d H:i:s'),
+                'email' => $carQuote->email,
+                'customer_id' => null,
+                'max_claims' => 1,
+                'promotional_text' => 'Activate Your 7-Day Premium Membership',
+                'description' => 'Enjoy exclusive offers, rewards, priority benefits - no policy required.',
+                'source' => 'imcrm',
+                'is_active' => true,
+                'auto_claim' => true,
+                'cta_link' => config('constants.AFIA_WEBSITE_DOMAIN')."/set-layout/?header=off&footer=off&redirect=/car-insurance/quote/{$quoteUuid}/",
+                'reference_id' => $quoteUuid,
+                'reference_type' => strtoupper(QuoteTypes::CAR->value),
+                'cta_text' => MotorRevivalEnum::CTA_TEXT->value,
+                'max_claims_per_customer' => 1,
+            ];
+
+            LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote createVoucher request', [
+                'quote_uuid' => $quoteUuid,
+                'request_payload' => $payload,
+            ]);
+
+            $result = self::createVoucher($payload);
+            if (! ($result['ok'] ?? false)) {
+                LoggerService::warning(self::class.'::generateMotorRevivalVoucherForQuote createVoucher did not succeed.', [
+                    'quote_uuid' => $quoteUuid,
+                    'voucher_code' => $voucherCode,
+                    'create_ok' => $result['ok'] ?? null,
+                    'http_status' => $result['status'] ?? null,
+                    'create_response_json' => $result['json'] ?? null,
+                    'request_payload' => $payload,
+                ]);
+
+                return null;
+            }
+
+            LoggerService::info(self::class.'::generateMotorRevivalVoucherForQuote finished, returning code.', [
+                'quote_uuid' => $quoteUuid,
+                'voucher_code' => $voucherCode,
+            ]);
+
+            return $voucherCode;
+        } catch (Exception $e) {
+            LoggerService::warning(self::class.'::generateMotorRevivalVoucherForQuote unexpected exception (returning null).', [
+                'quote_uuid' => $quoteUuid,
+                'voucher_code' => $voucherCode,
+            ], $e);
+
+            return null;
+        }
     }
 }

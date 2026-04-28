@@ -23,6 +23,7 @@ use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
+use App\Http\Requests\EligibleForRevivalFollowupsRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -47,14 +48,17 @@ use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
+use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
@@ -648,6 +652,7 @@ class ApiController extends Controller
                 $quoteType = QuoteTypes::getName($request->quote_type_id);
 
                 match ($quoteType) {
+                    QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     QuoteTypes::LIFE => app(LifeRevivalService::class)
                         ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     default => null,
@@ -872,5 +877,44 @@ class ApiController extends Controller
         $this->emailStatusService->logEpEmailStatuses($request->validated());
 
         return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
+    }
+
+    public function eligibleForRevivalFollowups(EligibleForRevivalFollowupsRequest $request): JsonResponse
+    {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.': Dtt is not enabled from cms', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_OK, 'Dtt is not enabled from cms');
+        }
+
+        LoggerService::info(self::class.': Eligible for revival followups request received', extra: [
+            'quoteUID' => $request->quoteUID,
+        ]);
+
+        $carQuote = CarQuote::query()
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
+            ->where('uuid', $request->quoteUID)
+            ->first();
+
+        if (! $carQuote || ! $carQuote->carQuoteRequestDetail) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
+        }
+
+        $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
+
+        LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
+            'quoteUID' => $request->quoteUID,
+            'isEligible' => $isEligible,
+        ]);
+
+        return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
     }
 }

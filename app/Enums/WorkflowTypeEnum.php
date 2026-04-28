@@ -94,6 +94,10 @@ final class WorkflowTypeEnum extends Enum
     public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
     public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS = 'car_intro_email_without_vehicle_details';
 
+    // Motor Revival workflow
+    public const MOTOR_REVIVAL_OCB = 'motor_revival_ocb';
+    public const MOTOR_REVIVAL_FOLLOWUP = 'motor_revival_followup';
+
     // Life Revival OCB
     public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
 }
