@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Models\PolicyIssuanceLog;
 use BenSampo\Enum\Enum;
 
 /**
@@ -193,7 +194,10 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_DIC_TRAVEL_POLICY_ISSUANCE';
     public const DIC_NUMBER_OF_ALLOWED_RETRY = 'DIC_NUMBER_OF_ALLOWED_RETRY';
 
-    /** Max failed policy issuance log rows per async DIC Travel step before failing the lead. */
+    /**
+     * Max total API attempts per async DIC Travel step (including the first). One row is written to
+     * {@see PolicyIssuanceLog} per attempt; when attempt count reaches this value, the lead fails.
+     */
     public const DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP = 'DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP';
 
     /** Seconds to wait before retrying the same DIC API step after a failed attempt. */

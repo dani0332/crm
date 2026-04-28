@@ -150,12 +150,14 @@ class DicPolicyIssuanceStepJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        $failedCount = $this->countFailedLogsForStep($process->id, $this->step);
+        // Application storage value is the max total attempts per step (including this one). Count DB rows so
+        // retries align with actual API attempts and with {@see DicApiService} logging (step outcome, not raw HTTP).
+        $attemptCountForStep = $this->countAttemptLogsForStep($process->id, $this->step);
 
-        $maxFailedAttemptsPerStep = (int) getAppStorageValueByKey(ApplicationStorageEnums::DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP, 3);
+        $maxAttemptsPerStep = (int) getAppStorageValueByKey(ApplicationStorageEnums::DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP, 3);
         $retryDelaySeconds = (int) getAppStorageValueByKey(ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS, 90);
 
-        if ($failedCount < $maxFailedAttemptsPerStep) {
+        if ($attemptCountForStep < $maxAttemptsPerStep) {
             self::dispatch($process->id, $this->step)
                 ->delay(now()->addSeconds($retryDelaySeconds))
                 ->onQueue('policy-issuance-automation');
@@ -163,7 +165,8 @@ class DicPolicyIssuanceStepJob implements ShouldBeUnique, ShouldQueue
             LoggerService::info('DIC Travel: async step failed, retry scheduled', [
                 'policy_issuance_id' => $process->id,
                 'step' => $this->step,
-                'failed_log_count' => $failedCount,
+                'attempt_count_for_step' => $attemptCountForStep,
+                'max_attempts_per_step' => $maxAttemptsPerStep,
                 'delay_seconds' => $retryDelaySeconds,
             ]);
 
@@ -187,7 +190,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUnique, ShouldQueue
         LoggerService::info('DIC Travel: async step failed after max attempts', [
             'policy_issuance_id' => $process->id,
             'step' => $this->step,
-            'failed_log_count' => $failedCount,
+            'attempt_count_for_step' => $attemptCountForStep,
         ]);
     }
 
@@ -209,12 +212,11 @@ class DicPolicyIssuanceStepJob implements ShouldBeUnique, ShouldQueue
         ], exception: $exception);
     }
 
-    private function countFailedLogsForStep(int $policyIssuanceId, string $step): int
+    private function countAttemptLogsForStep(int $policyIssuanceId, string $step): int
     {
         return PolicyIssuanceLog::query()
             ->where('policy_issuance_id', $policyIssuanceId)
             ->where('step', $step)
-            ->where('status', PolicyIssuanceEnum::FAILED_STATUS)
             ->count();
     }
 

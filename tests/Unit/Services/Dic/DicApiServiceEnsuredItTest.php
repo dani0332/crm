@@ -61,7 +61,22 @@ it('issuePolicy returns mapped EnsuredIT error for already sold policy', functio
         ->and($result['message'])->toContain('already sold');
 });
 
-it('issuePolicy returns auth unavailable when HTTP client yields no response', function () {
+it('issuePolicy persists a failed log when HTTP client yields no response', function () {
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService
+        ->shouldReceive('storePolicyIssuanceLog')
+        ->once()
+        ->with(
+            Mockery::type(TravelQuote::class),
+            Mockery::type('array'),
+            Mockery::type('array'),
+            Mockery::type('string'),
+            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+            PolicyIssuanceEnum::FAILED_STATUS,
+            Mockery::type(PolicyIssuance::class),
+        );
+    app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
     $httpClient = Mockery::mock(DicHttpClient::class);
     $httpClient->shouldReceive('buildUrl')->andReturn('https://unit-dic.test/products/buy/client');
     $httpClient->shouldReceive('authenticatedRequest')->andReturn(null);
@@ -78,6 +93,40 @@ it('issuePolicy returns auth unavailable when HTTP client yields no response', f
 
     expect($result['status'])->toBeFalse()
         ->and($result['message'])->toBe(DicResponseHandler::MESSAGE_AUTH_TOKEN_UNAVAILABLE);
+});
+
+it('issuePolicy persists failed issuance log when HTTP succeeds but JSON body is not an array', function () {
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService
+        ->shouldReceive('storePolicyIssuanceLog')
+        ->once()
+        ->with(
+            Mockery::type(TravelQuote::class),
+            Mockery::type('array'),
+            [],
+            Mockery::type('string'),
+            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+            PolicyIssuanceEnum::FAILED_STATUS,
+            Mockery::type(PolicyIssuance::class),
+        );
+    app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
+    $httpClient = Mockery::mock(DicHttpClient::class);
+    $httpClient->shouldReceive('buildUrl')->andReturn('https://unit-dic.test/products/buy/client');
+    $httpClient->shouldReceive('authenticatedRequest')->andReturn(dicTestClientResponse('"not-an-array"', 200));
+    app()->instance(DicHttpClient::class, $httpClient);
+
+    $builder = Mockery::mock(DicRequestBuilder::class);
+    $builder->shouldReceive('buildIssuePolicyPayload')->andReturn(['policy_id' => '00000000-0000-4000-8000-0000000000aa']);
+
+    $quote = new TravelQuote;
+    $quote->code = 'UNIT-TQ-non-array';
+    $quote->insurer_quote_number = '00000000-0000-4000-8000-0000000000aa';
+
+    $service = new DicApiService(new DicResponseHandler, $builder);
+    $result = $service->issuePolicy($quote, new PolicyIssuance);
+
+    expect($result['status'])->toBeFalse();
 });
 
 it('getPolicyDoc maps 401 AUTH_ERROR for certificate download path', function () {
