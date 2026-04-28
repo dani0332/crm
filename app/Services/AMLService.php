@@ -1665,7 +1665,10 @@ class AMLService
             if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
                 if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                     if ($quote->isPolicyBooked()) {
-                        unset($insuredData['emirate_of_registration_id']);
+                        // Do not take emirate from the request (it may be empty or stale for booked policies).
+                        // If we unset, updateOrCreate creates a new insured with emirate = null when no row matches.
+                        // Carrying the quote's value keeps the insured row aligned for both update and first insert.
+                        $insuredData['emirate_of_registration_id'] = $quote->emirate_of_registration_id;
                         LoggerService::info('Entity Details', extra: [
                             'id_type' => $request->screening_id_type,
                             'id_number' => $request->screening_id_number,
@@ -1673,7 +1676,7 @@ class AMLService
                             'company_address' => $request->company_address,
                             'policy_booked' => true,
                             'industry_type_code' => $request->industry_type_code,
-                            'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                            'emirate_of_registration_id' => $insuredData['emirate_of_registration_id'],
                         ]);
                     }
                 }
