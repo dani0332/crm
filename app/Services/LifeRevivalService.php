@@ -240,6 +240,9 @@ class LifeRevivalService
 
     public function updateSource(string $quoteUuid, string $source): void
     {
+        LoggerService::info(self::class.' - updateSource request received',
+            ['quote_uuid' => $quoteUuid, 'source' => $source]);
+
         $quote = PersonalQuote::where('uuid', $quoteUuid)
             ->where('quote_type_id', QuoteTypeId::Life)
             ->where('source', LeadSourceEnum::REVIVAL)
@@ -247,7 +250,8 @@ class LifeRevivalService
             ->first();
 
         if (! $quote || ! $quote->lifeQuote) {
-            LoggerService::info("LifeRevivalService - source not updated since lead not found for Quote UUID: {$quoteUuid}");
+            LoggerService::info(self::class.' - source not updated since lead not found for Quote UUID: ',
+                ['quote_uuid' => $quoteUuid, 'source' => $source]);
 
             return;
         }
@@ -255,7 +259,8 @@ class LifeRevivalService
         $quote->update(['source' => $source]);
         $quote->lifeQuote->update(['source' => $source]);
 
-        LoggerService::info("LifeRevivalService - source updated to revival_replied - Quote UUID: {$quoteUuid}");
+        LoggerService::info(self::class.' - source updated to revival_replied - Quote UUID: ',
+            ['quote_uuid' => $quoteUuid, 'source' => $source]);
     }
 
     public function sendLifeRevialEmail(string $quoteUuid): void
