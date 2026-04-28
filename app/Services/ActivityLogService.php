@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Route;
@@ -177,7 +178,7 @@ class ActivityLogService extends BaseService
      */
     private function createActivityLog(
         string $logName,
-        ?\Illuminate\Contracts\Auth\Authenticatable $user,
+        ?Authenticatable $user,
         array $properties,
         string $description,
         Request $request

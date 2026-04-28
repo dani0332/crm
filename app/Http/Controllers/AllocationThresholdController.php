@@ -11,6 +11,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Services\HealthTeamRouting\HealthTeamRoutingLogService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class AllocationThresholdController extends Controller
@@ -27,7 +28,7 @@ class AllocationThresholdController extends Controller
     /**
      * Display a listing of the resource   .
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {

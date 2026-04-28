@@ -269,7 +269,7 @@ class OCRService
         // Update Accuracy Matrix cache after successful OCR processing
         try {
             $this->updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log error but don't interrupt OCR flow
             LoggerService::error('Accuracy Matrix update failed but OCR completed successfully - ', exception: $e);
         }
@@ -333,7 +333,7 @@ class OCRService
     }
 
     private function handleProcessingException(
-        \Exception $e,
+        Exception $e,
         Model $quote,
         QuoteTypes $quoteType,
         DocumentType $documentType,
@@ -491,7 +491,7 @@ class OCRService
                     $startTime
                 );
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleProcessingException(
                 $e,
                 $quote,

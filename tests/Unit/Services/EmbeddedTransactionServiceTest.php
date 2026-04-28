@@ -239,7 +239,7 @@ describe('retargetEpReminder', function () {
                     ->andReturnUsing(function () use (&$callCount) {
                         $callCount++;
                         if ($callCount === 1) {
-                            throw new \RuntimeException('Bird API connection failed');
+                            throw new RuntimeException('Bird API connection failed');
                         }
 
                         return (object) ['status_code' => Response::HTTP_OK, 'message' => 'OK'];

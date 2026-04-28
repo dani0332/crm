@@ -6,7 +6,7 @@ use App\Models\NationalityPool;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\NationalityPool>
+ * @extends Factory<NationalityPool>
  */
 class NationalityPoolFactory extends Factory
 {
