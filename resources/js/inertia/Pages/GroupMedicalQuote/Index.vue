@@ -651,7 +651,7 @@ const insurerAMLStatusOption = computed(() => {
           name="created_at_end"
           label="Created Date End"
         />
-      
+
         <x-input
           v-model="filters.mobile_no"
           type="search"
