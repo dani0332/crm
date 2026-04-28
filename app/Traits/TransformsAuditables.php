@@ -70,6 +70,7 @@ trait TransformsAuditables
     {
         $apiModelMap = [
             'App\Models\HealthQuoteRequestMemberDetails' => CustomerMembers::class,
+            'App\Models\HealthQuoteRequest' => HealthQuote::class,
         ];
 
         $audit = $data['audit'] ?? null;

@@ -18,12 +18,13 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
-use Carbon\Carbon;
 use App\Traits\TransformsAuditables;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -793,5 +794,29 @@ class HealthQuote extends Model implements AuditableContract
             ->first();
 
         return $insured !== null && $insured->customer_type === CustomerTypeEnum::Entity;
+    }
+
+    public static function customizeAuditTransformation($data): array
+    {
+        $lookupService = app(LookupService::class);
+
+        $leadSource = $data['model']?->source;
+
+        $insureCodeMapping = $lookupService->getHealthInsureOptions($leadSource)->pluck('text', 'code')->all();
+        $policyHolderCodeMapping = $lookupService->getPolicyHolder($leadSource)->pluck('text', 'code')->all();
+
+        $resolveText = function (array &$transformed, string $field, array $map): void {
+            $code = $transformed[$field] ?? null;
+            if ($code !== null) {
+                $transformed[$field.'_text'] = $map[$code] ?? null;
+            }
+        };
+
+        foreach (['transformedOld', 'transformedNew'] as $key) {
+            $resolveText($data[$key], 'insure_code', $insureCodeMapping);
+            $resolveText($data[$key], 'policy_holder_code', $policyHolderCodeMapping);
+        }
+
+        return $data;
     }
 }
