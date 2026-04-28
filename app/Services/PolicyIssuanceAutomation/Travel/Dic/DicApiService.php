@@ -109,8 +109,7 @@ class DicApiService
      */
     public function getPolicyDoc(TravelQuote $quote, PolicyIssuance $policyIssuance): array
     {
-        $policyId = '951173c4-f921-41e8-9903-66e053d8f2ce';
-        // $policyId = $quote->insurer_quote_number;
+        $policyId = $quote->insurer_quote_number;
 
         $path = 'policy-stores/'.$policyId.'/certificate:download';
         $url = DicHttpFacade::buildUrl($path);
