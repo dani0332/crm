@@ -86,8 +86,7 @@ class RetryAllocationService
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where(function ($q) use ($exemptedLeadSources) {
                 $q->whereNotIn('source', $exemptedLeadSources)
-                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible())
-                    ->orWhere(fn ($reinstated) => $reinstated->whereRevivalReinstatedRetryEligible());
+                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible());
             })
             ->orderByDesc('created_at')
             ->where(function ($q) {
