@@ -1903,7 +1903,7 @@ class AMLService
             }
         }
 
-        return DB::transaction(function () use ($request, $quoteTypeId, $quote, $entityData): int {
+        $persistEntityAndMapping = function () use ($request, $quoteTypeId, $quote, $entityData): int {
             if (isset($entityData['emirate_of_registration_id'])
                 && $quoteTypeId == QuoteTypeId::Business
                 && $quote instanceof BusinessQuote
@@ -1935,7 +1935,16 @@ class AMLService
             ]);
 
             return $entity->id;
-        });
+        };
+
+        // Avoid nesting DB::transaction when callers (e.g. customer profile / AML flows) already
+        // hold a transaction: a nested transaction uses a savepoint, so a failure here can roll
+        // back only this block while the outer work still commits, leaving BQR/entity/lead inconsistent.
+        if (DB::transactionLevel() === 0) {
+            return DB::transaction($persistEntityAndMapping);
+        }
+
+        return $persistEntityAndMapping();
     }
 
     private function updateCustomerData($request): void
