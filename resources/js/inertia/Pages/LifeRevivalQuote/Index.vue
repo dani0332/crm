@@ -9,7 +9,6 @@ const hasAnyRole = role => useHasAnyRole(role);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -276,9 +275,7 @@ const fixedValue = numberString => {
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="
-                filters.advisors = advisorOptions.map(a => a.value)
-              "
+              @select-all="filters.advisors = advisorOptions.map(a => a.value)"
               @clear="filters.advisors = []"
             />
           </template>
@@ -402,9 +399,7 @@ const fixedValue = numberString => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.tenure_of_insurance_id = tenureOptions.map(
-                  o => o.value,
-                )
+                filters.tenure_of_insurance_id = tenureOptions.map(o => o.value)
               "
               @clear="filters.tenure_of_insurance_id = []"
             />
@@ -429,7 +424,7 @@ const fixedValue = numberString => {
               { value: '500k-1m', label: '500k to less than 1M' },
               { value: 'gte1m', label: 'Greater than or equal to 1M' },
             ]"
-              class="border-l-0 rounded-tl-none rounded-bl-none"
+            class="border-l-0 rounded-tl-none rounded-bl-none"
           />
         </div>
         <x-select
