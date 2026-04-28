@@ -4604,7 +4604,7 @@ const validateEmirateOfVisa = () => {
     />
 
     <UaeSigningPassLogs
-      v-if="can(permissionEnum.API_LOG_VIEW)"
+      v-if="quote.uae_pass_api_status_text"
       :quoteUuid="quote.uuid"
       :quoteTypeId="$page.props.quoteTypeId"
       :expanded="sectionExpanded"
