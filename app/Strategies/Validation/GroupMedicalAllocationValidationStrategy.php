@@ -150,9 +150,9 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
         foreach (GroupMedicalRegionEnum::cases() as $region) {
             $regionKey = $region->value;
             $regionProvided = array_key_exists($regionKey, $data);
-            $region = $this->resolveRegionConfig($data, $regionKey);
-            $hasBrackets = (! empty($region['micro_brackets']) && count($region['micro_brackets']) > 0) ||
-                (! empty($region['non_micro_brackets']) && count($region['non_micro_brackets']) > 0);
+            $regionData = $this->resolveRegionConfig($data, $regionKey);
+            $hasBrackets = (! empty($regionData['micro_brackets']) && count($regionData['micro_brackets']) > 0) ||
+                (! empty($regionData['non_micro_brackets']) && count($regionData['non_micro_brackets']) > 0);
 
             if (! $regionProvided && ! $hasBrackets) {
                 continue;
@@ -160,8 +160,8 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
 
             $hasAnyRegion = $hasAnyRegion || $hasBrackets;
 
-            $this->validateBracketsForRegion($validator, $region, $regionKey, 'micro_brackets', 'planTypeIds', 'plan type');
-            $this->validateBracketsForRegion($validator, $region, $regionKey, 'non_micro_brackets', 'planTypeIds', 'plan type');
+            $this->validateBracketsForRegion($validator, $regionData, $regionKey, 'micro_brackets', 'planTypeIds', 'plan type');
+            $this->validateBracketsForRegion($validator, $regionData, $regionKey, 'non_micro_brackets', 'planTypeIds', 'plan type');
         }
 
         if (! $hasAnyRegion) {
@@ -179,7 +179,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
         return [
             "{$regionKey}" => ['sometimes', 'array'],
             "{$regionKey}.micro_brackets" => ['sometimes', 'array'],
-            "{$regionKey}.micro_brackets.*.departmentIds" => ['sometimes','nullable', 'array'],
+            "{$regionKey}.micro_brackets.*.departmentIds" => ['sometimes', 'nullable', 'array'],
             "{$regionKey}.micro_brackets.*.departmentIds.*" => ['integer', Rule::exists(Department::class, 'id')],
             "{$regionKey}.micro_brackets.*.employees_min" => ['required_with:'.$regionKey.'.micro_brackets', 'numeric', 'min:1', 'max:99999'],
             "{$regionKey}.micro_brackets.*.employees_max" => ['required_with:'.$regionKey.'.micro_brackets', 'numeric', 'gte:'.$regionKey.'.micro_brackets.*.employees_min', 'max:99999'],
@@ -190,7 +190,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
             "{$regionKey}.micro_brackets.*.profiles.*.planTypeIds.*" => ['integer'],
 
             "{$regionKey}.non_micro_brackets" => ['sometimes', 'array'],
-            "{$regionKey}.non_micro_brackets.*.departmentIds" => ['sometimes','nullable', 'array'],
+            "{$regionKey}.non_micro_brackets.*.departmentIds" => ['sometimes', 'nullable', 'array'],
             "{$regionKey}.non_micro_brackets.*.departmentIds.*" => ['integer', Rule::exists(Department::class, 'id')],
             "{$regionKey}.non_micro_brackets.*.employees_min" => ['required_with:'.$regionKey.'.non_micro_brackets', 'numeric', 'min:1', 'max:99999'],
             "{$regionKey}.non_micro_brackets.*.employees_max" => ['required_with:'.$regionKey.'.non_micro_brackets', 'numeric', 'gte:'.$regionKey.'.non_micro_brackets.*.employees_min', 'max:99999'],
