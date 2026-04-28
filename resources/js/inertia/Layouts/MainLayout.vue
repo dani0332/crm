@@ -424,7 +424,7 @@ onUnmounted(() => {
                         :icon="linkCopied ? 'copyCheck' : 'link'"
                         size="sm"
                       />
-                      <span>{{
+                      <span style="text-decoration: dotted underline">{{
                         linkCopied ? 'Link Copied!' : 'Document Upload Link'
                       }}</span>
                     </x-button>
@@ -541,6 +541,7 @@ onUnmounted(() => {
                         <span
                           class="text-sm font-medium"
                           :class="linkCopied ? 'text-success-600' : ''"
+                          style="text-decoration: dotted underline"
                         >
                           {{
                             linkCopied ? 'Link Copied!' : 'Document Upload Link'
