@@ -24,6 +24,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LifeRevivalService
 {
@@ -323,7 +324,9 @@ class LifeRevivalService
 
     private function updateQuoteStatus(PersonalQuote $quote): void
     {
-        $quote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
-        $quote->lifeQuote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+        DB::transaction(function () use ($quote): void {
+            $quote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+            $quote->lifeQuote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+        });
     }
 }
