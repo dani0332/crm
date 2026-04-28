@@ -389,4 +389,9 @@ trait QuoteAllocatable
             default => false,
         };
     }
+
+    public function isRevivalReinstated(): bool
+    {
+        return $this->source === LeadSourceEnum::REVIVAL_REINSTATED;
+    }
 }

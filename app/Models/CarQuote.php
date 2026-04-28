@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\MotorRevivalEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -686,6 +687,17 @@ class CarQuote extends BaseModel
     public function scopeWhereRevivalReinstatedRetryEligible(Builder $query): Builder
     {
         return $query->where('source', LeadSourceEnum::REVIVAL_REINSTATED)
-            ->whereNull('advisor_id');
+            ->whereNull('advisor_id')
+            ->where(function (Builder $eligibilityQuery) {
+                $eligibilityQuery
+                    ->where(function (Builder $nonSicOrAigQuery) {
+                        $nonSicOrAigQuery->sicFlowDisabled()->isNotAIG(QuoteTypes::CAR);
+                    })
+                    ->orWhere(function (Builder $sicOrAigQuery) {
+                        $sicOrAigQuery->where(function (Builder $flowTypeQuery) {
+                            $flowTypeQuery->sicFlowEnabled()->orWhere(fn (Builder $aigQuery) => $aigQuery->isAIG(QuoteTypes::CAR));
+                        })->advisorRequestedOrPaymentAuthorizedOrDeclined();
+                    });
+            });
     }
 }

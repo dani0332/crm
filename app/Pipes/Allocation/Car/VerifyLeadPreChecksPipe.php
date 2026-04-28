@@ -50,6 +50,13 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($lead->isRevivalCommsIntentHighOrMedium()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and has intent high or medium, continuing assignment');
             $continueAssignment = true;
+        } elseif ($lead->isRevivalReinstated()) {
+            if (($isSICFlowEnabled || $isAIG) && ! $lead->isAdvisorRequestedOrAuthorizedOrRequestedLinkOrDeclined()) {
+                LoggerService::info(self::class.'::verifyPreChecks - REVIVAL_REINSTATED lead is SIC/AIG without advisor/payment trigger, skipping assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - REVIVAL_REINSTATED lead passed flow checks, continuing assignment');
+                $continueAssignment = true;
+            }
         } elseif ($lead->hasExemptedSource()) {
             if ($lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment');
