@@ -163,6 +163,7 @@ Route::prefix('cms')->group(function () {
         Route::get('/', [HealthPlanController::class, 'getList']);
         Route::get('/{id}', [HealthPlanController::class, 'getPlan']);
         Route::post('/', [HealthPlanController::class, 'create']);
+        Route::put('/{id}', [HealthPlanController::class, 'update']);
     });
 });
 

@@ -51,4 +51,12 @@ class HealthPlanService extends BaseService
         return HealthPlan::create($data);
     }
 
+    public function update(int $id, array $data): void
+    {
+        $version = $this->deriveVersion($id);
+        HealthPlan::where('id', $id)->update($data);
+    }
+
+    private function deriveVersion(int $id): float {}
+
 }

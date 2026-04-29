@@ -41,4 +41,11 @@ class HealthPlanController extends Controller
 
         return response()->json($plan);
     }
+
+    public function update(UpdateHealthPlanRequest $request): JsonResponse
+    {
+        $plan = $this->healthPlanService->update($request->id, $request->validated());
+
+        return response()->json($plan);
+    }
 }
