@@ -19,10 +19,7 @@ class SyncSukoonDocumentsJob implements ShouldQueue
     protected $quoteTypeId;
     protected $transaction;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct($quote, $quoteTypeId, $transaction)
+    public function __construct($quote, $quoteTypeId, $transaction, private bool $isSendEmail = false)
     {
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
@@ -36,9 +33,12 @@ class SyncSukoonDocumentsJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->quote->code, LoggerFeatureEnum::EP_PROCESS_SYNC_DOCUMENT);
 
+        $initialPolicyStatus = $this->transaction->policy_status ?? '';
+
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
         $sukoonMedexService->syncAndProcessSukoonDocuments();
+        $sukoonMedexService->maybeSendDocumentsEmail($this->isSendEmail, $initialPolicyStatus);
     }
 
     /**

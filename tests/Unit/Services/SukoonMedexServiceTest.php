@@ -1,10 +1,14 @@
 <?php
 
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\VehicleTypeEnum;
+use App\Models\EmbeddedTransaction;
 use App\Services\SukoonMedexService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Queue;
 
 use function Pest\Laravel\partialMock;
 
@@ -137,4 +141,44 @@ describe('processPurchaseFlow send guard after provider sync', function () {
             EmbeddedTransactionEnum::STATUS_BOOKED
         ))->toBeFalse();
     });
+});
+
+describe('maybeSendDocumentsEmail', function () {
+    test('does not queue jobs when policy was already ready for sage before sync', function () {
+        Queue::fake();
+
+        $transaction = EmbeddedTransaction::make([
+            'policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
+        ]);
+        $transaction->setRelation('documents', new EloquentCollection([
+            (object) ['document_type_code' => QuoteDocumentsEnum::CAR_TAX_INVOICE, 'is_watermarked' => true],
+            (object) ['document_type_code' => QuoteDocumentsEnum::POLICY_SCHEDULE, 'is_watermarked' => true],
+        ]));
+
+        $service = new SukoonMedexService;
+        $reflection = new ReflectionClass(SukoonMedexService::class);
+        $transactionProperty = $reflection->getProperty('transaction');
+        $transactionProperty->setAccessible(true);
+        $transactionProperty->setValue($service, $transaction);
+
+        $policyStatusProperty = $reflection->getProperty('policyStatus');
+        $policyStatusProperty->setAccessible(true);
+        $policyStatusProperty->setValue($service, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE);
+
+        $service->maybeSendDocumentsEmail(true, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE);
+
+        Queue::assertNothingPushed();
+    });
+});
+
+describe('sanitizeToLettersAndSpacesOnly', function () {
+    test('keeps letters, spaces, and removes digits and punctuation', function (string $input, string $expected) {
+        expect(sanitizeToLettersAndSpacesOnly($input))->toBe($expected);
+    })->with([
+        'ascii letters' => ['John Doe', 'John Doe'],
+        'digits stripped' => ['John3 Doe2', 'John Doe'],
+        'punctuation stripped' => ["O'Brien-Smith!", 'OBrienSmith'],
+        'accented letters kept' => ['José Müller', 'José Müller'],
+        'empty string' => ['', ''],
+    ]);
 });
