@@ -15,8 +15,8 @@ use InvalidArgumentException;
 
 class DicHttpClient
 {
-    /** Laravel Redis cache key — value must be set via e.g. `Cache::store('redis')->put('dic-token', $bearer, $ttl)`. */
-    private const REDIS_TOKEN_KEY = 'dic-token';
+    /** Laravel Redis cache key — value set by {@see self::fetchAccessTokenAndCache}. */
+    public const REDIS_TOKEN_KEY = 'dic-token';
 
     private int $apiTimeout;
 
@@ -63,6 +63,7 @@ class DicHttpClient
             $response = $this->sendWithBearer($method, $fullUrl, $token, $data);
 
             if ($response->status() === 401) {
+                Cache::store('redis')->forget(self::REDIS_TOKEN_KEY);
                 $token = $this->getBearerToken();
                 if ($token === null) {
                     return null;
@@ -100,8 +101,65 @@ class DicHttpClient
     private function getBearerToken(): ?string
     {
         $value = Cache::store('redis')->get(self::REDIS_TOKEN_KEY);
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
 
-        return is_string($value) && $value !== '' ? $value : null;
+        return $this->fetchAccessTokenAndCache();
+    }
+
+    /**
+     * POST auth/generate (EnsuredIT) and store {@see self::REDIS_TOKEN_KEY} until shortly before `expiresIn`.
+     */
+    private function fetchAccessTokenAndCache(): ?string
+    {
+        $username = (string) config('constants.DIC_API_USERNAME', '');
+        $password = (string) config('constants.DIC_API_PASSWORD', '');
+        $url = $this->buildUrl('auth/generate');
+
+        $token = null;
+        $response = null;
+
+        try {
+            $response = Http::timeout($this->apiTimeout)
+                ->acceptJson()
+                ->asJson()
+                ->post($url, [
+                    'username' => $username,
+                    'password' => $password,
+                ]);
+        } catch (Exception $ex) {
+            LoggerService::error('DIC API token request exception', [], $ex);
+        }
+
+        if ($response !== null && $response->successful()) {
+            $payload = $response->json();
+            $accessToken = $payload['accessToken'] ?? null;
+            if (is_string($accessToken) && $accessToken !== '') {
+                $expiresIn = (int) ($payload['expiresIn'] ?? 1800);
+                $ttlSeconds = max(1, $expiresIn - 30);
+
+                Cache::store('redis')->put(self::REDIS_TOKEN_KEY, $accessToken, $ttlSeconds);
+
+                LoggerService::info('DIC API access token cached in Redis', [
+                    'ttl_seconds' => $ttlSeconds,
+                    'expires_in_reported' => $expiresIn,
+                ]);
+
+                $token = $accessToken;
+            } else {
+                LoggerService::error('DIC API token response missing accessToken', [
+                    'response_body' => $response->body(),
+                ]);
+            }
+        } elseif ($response !== null) {
+            LoggerService::error('DIC API token request failed', [
+                'status' => $response->status(),
+                'response_body' => $response->body(),
+            ]);
+        }
+
+        return $token;
     }
 
     /**
