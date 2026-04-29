@@ -188,6 +188,10 @@ const dateOnly = value => {
   return m.isValid() ? m.format('YYYY-MM-DD') : String(value).trim();
 };
 
+const isPolicyholderInsuredMember = computed(() => {
+  return page.props.membersDetails?.find(x => x.is_insured == 1 && x.is_policy_holder == 1) ? true : false;
+});
+
 const getScreeningInsuredFirstName = () =>
   page.props.insuredDetails?.insured?.first_name ??
   (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
@@ -202,13 +206,13 @@ const getScreeningInsuredLastName = () =>
 
 const getScreeningNationalityId = () =>
   page.props.insuredDetails?.insured?.nationality_id ??
-  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value
     ? quoteRequest?.nationality_id
     : null);
 
 const getScreeningDob = () =>
   page.props.insuredDetails?.insured?.dob ??
-  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value
     ? dateOnly(quoteRequest?.dob)
     : null);
 
@@ -218,7 +222,7 @@ const getScreeningGender = () => {
     [genericRequestEnum.FEMALE_SINGLE_VALUE]: genericRequestEnum.FEMALE_SINGLE,
   };
 
-  const isHealthQuote = page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health;
+  const isHealthQuote = page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value;
 
   return (
     page.props.insuredDetails?.insured?.gender ??
