@@ -897,7 +897,7 @@ class ApiController extends Controller
         ]);
 
         $carQuote = CarQuote::query()
-            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id', 'created_at'])
             ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
             ->where('uuid', $request->quoteUID)
             ->first();
@@ -939,10 +939,15 @@ class ApiController extends Controller
             'all' => 'required|boolean',
             'debug' => 'required|boolean',
             'getData' => 'required|boolean',
+            'checkCount' => 'required|boolean',
+            'checkCountValue' => 'required|integer',
         ]);
 
         if ($request->filled('debug') && $request->debug) {
-            $dttRevivalRecords = DttRevival::where('follow_up_email_count', 0)
+            $dttRevivalRecords = DttRevival::query()
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
                 ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
                 ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
                 ->where('quote_type_id', QuoteTypes::CAR->id())
@@ -957,7 +962,9 @@ class ApiController extends Controller
 
         if ($request->filled('all') && $request->all) {
             DttRevival::query()
-                ->where('follow_up_email_count', 0)
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
                 ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
                 ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
                 ->where('quote_type_id', QuoteTypes::CAR->id())
@@ -967,7 +974,12 @@ class ApiController extends Controller
                     }
                 });
         } elseif ($request->filled('dttRevivalIds') && $request->dttRevivalIds) {
-            $dttRevivalRecords = DttRevival::whereIn('id', $request->dttRevivalIds)->where('follow_up_email_count', 0)->get();
+            $dttRevivalRecords = DttRevival::query()
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
+                ->whereIn('id', $request->dttRevivalIds)
+                ->get();
             foreach ($dttRevivalRecords as $dttRevivalRecord) {
                 $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
             }
