@@ -1554,13 +1554,14 @@ class SplitPaymentService
         );
 
         // Split CC job: insurer codes that gate processing with TCH (ALNC, AXA, RSA, ADNIC)
-        $alncAxaRsaAdnicProviderCodes = [
+        $allowedProviders = [
             InsuranceProvidersEnum::ALNC,
             InsuranceProvidersEnum::AXA,
             InsuranceProvidersEnum::RSA,
             InsuranceProvidersEnum::ADNIC,
+            InsuranceProvidersEnum::DIC,
         ];
-        $isAlncAxaRsaAdnicProvider = in_array($insuranceProvider, $alncAxaRsaAdnicProviderCodes);
+        $isAllowedProvider = in_array($insuranceProvider, $allowedProviders);
 
         // check if cyber quote
         $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
@@ -1573,7 +1574,7 @@ class SplitPaymentService
         // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTchQuote && $isAlncAxaRsaAdnicProvider) ||
+            ($isTchQuote && $isAllowedProvider) ||
             ($isCyberQuote && $isAwni)
         );
 
