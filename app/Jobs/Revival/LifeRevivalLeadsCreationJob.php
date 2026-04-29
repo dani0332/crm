@@ -44,49 +44,61 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
             ->where('is_revived', false)
             ->find($this->personalQuoteId);
 
-        if ($this->lead === null || $this->lead->lifeQuote === null) {
-            LoggerService::info('Life revival job: lead or life quote not found', extra: [
+        $lead = $this->lead;
+
+        if ($lead === null || $lead->lifeQuote === null) {
+            LoggerService::info('Life revival job: lead or life quote not found', [
                 'personal_quote_id' => $this->personalQuoteId,
             ]);
 
             return;
         }
 
+        $lifeQuote = $lead->lifeQuote;
+
         $payload = [
-            'firstName' => $this->lead->first_name,
-            'lastName' => $this->lead->last_name,
-            'email' => $this->lead->email,
-            'mobileNo' => $this->lead->mobile_no ?? null,
-            'gender' => $this->lead->gender ?? '',
-            'dob' => $this->lead->dob ?? null,
-            'nationalityId' => $this->lead->nationality_id ?? 0,
-            'paymentStatusId' => $this->lead->payment_status_id ?? 0,
-            'quoteStatusId' => $this->lead->quote_status_id ?? 0,
+            'firstName' => $lead->first_name,
+            'lastName' => $lead->last_name,
+            'email' => $lead->email,
+            'mobileNo' => $lead->mobile_no ?? null,
+            'gender' => $lead->gender ?? '',
+            'dob' => $lead->dob ?? null,
+            'nationalityId' => $lead->nationality_id ?? 0,
+            'paymentStatusId' => $lead->payment_status_id ?? 0,
+            'quoteStatusId' => $lead->quote_status_id ?? 0,
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'othersInfo' => '',
-            'isSmoker' => $this->lead->lifeQuote->is_smoker,
-            'sumInsuredValue' => (int) $this->lead->lifeQuote->sum_insured_value,
-            'sumInsuredCurrencyId' => $this->lead->lifeQuote->sum_insured_currency_id,
-            'maritalStatusId' => $this->lead->lifeQuote->marital_status_id,
-            'purposeOfInsuranceId' => $this->lead->lifeQuote->purpose_of_insurance_id ?? 0,
-            'tenureOfInsuranceId' => $this->lead->lifeQuote->tenure_of_insurance_id ?? 0,
-            'numberOfYearsId' => $this->lead->lifeQuote->number_of_years_id ?? 0,
+            'isSmoker' => $lifeQuote->is_smoker,
+            'sumInsuredValue' => (int) $lifeQuote->sum_insured_value,
+            'sumInsuredCurrencyId' => $lifeQuote->sum_insured_currency_id,
+            'maritalStatusId' => $lifeQuote->marital_status_id,
+            'purposeOfInsuranceId' => $lifeQuote->purpose_of_insurance_id ?? 0,
+            'tenureOfInsuranceId' => $lifeQuote->tenure_of_insurance_id ?? 0,
+            'numberOfYearsId' => $lifeQuote->number_of_years_id ?? 0,
             'source' => LeadSourceEnum::REVIVAL,
             'referenceUrl' => 'IMCRM',
             'lang' => 'EN',
-            'height' => $this->lead->lifeQuote->height ?? 0,
-            'weight' => $this->lead->lifeQuote->weight ?? 0,
             'typeOfInsurance' => 'Life Insurance',
             'whatsappConsent' => 1,
         ];
 
-        LoggerService::info("Creating Life Revival Lead for lead {$this->lead->uuid}", extra: [
+        if ($lifeQuote->height !== null) {
+            $payload['height'] = $lifeQuote->height;
+        }
+
+        if ($lifeQuote->weight !== null) {
+            $payload['weight'] = $lifeQuote->weight;
+        }
+
+        LoggerService::info('Creating Life Revival Lead', [
+            'lead_uuid' => $lead->uuid,
             'payload' => $payload,
         ]);
         $capiResponse = Capi::request('/api/v2-save-life-quote', 'post', $payload);
 
         if (isset($capiResponse->errors)) {
-            LoggerService::error('Error Creating Life Revival Lead '.$this->lead->uuid, extra: [
+            LoggerService::error('Error creating Life Revival Lead from CAPI response', [
+                'lead_uuid' => $lead->uuid,
                 'payload' => $payload,
                 'url' => '/api/v2-save-life-quote',
                 'response' => $capiResponse,
@@ -97,32 +109,41 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
         try {
             app(LifeRevivalService::class)->sendLifeRevialEmail($capiResponse->quoteUID);
-        } catch (\Exception $e) {
-            LoggerService::warning('LifeRevivalLeadsCreationJob - Error sending DTT revival email', extra: [
-                'error' => $e->getMessage(),
+        } catch (Throwable $e) {
+            LoggerService::warning('LifeRevivalLeadsCreationJob - Error sending DTT revival email', [
                 'quote_uuid' => $capiResponse->quoteUID,
-                'lead_uuid' => $this->lead->uuid,
+                'lead_uuid' => $lead->uuid,
                 'personal_quote_id' => $this->personalQuoteId,
-                'exception' => $e->getTraceAsString(),
-            ]);
+            ], $e);
         }
 
         $lifeRevivalQuoteUUID = $capiResponse->quoteUID;
-        LoggerService::info("New Life Revival Lead created successfully with quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
+        LoggerService::info('New Life Revival Lead created successfully', [
+            'quote_uuid' => $lifeRevivalQuoteUUID,
+            'parent_lead_uuid' => $lead->uuid,
+        ]);
 
-        DB::transaction(function () use ($lifeRevivalQuoteUUID) {
+        DB::transaction(function () use ($lifeRevivalQuoteUUID, $lead) {
             // Get the life revival quote
             $lifeRevivalQuote = PersonalQuote::where('uuid', $lifeRevivalQuoteUUID)->first();
-            LoggerService::info("Life Revival QuoteId: {$lifeRevivalQuote?->id}");
+            LoggerService::info('Life revival child quote resolved', [
+                'life_revival_quote_id' => $lifeRevivalQuote?->id,
+                'quote_uuid' => $lifeRevivalQuoteUUID,
+            ]);
 
             // Save DTT revival record
             $dttRevivalService = app(DTTRevivalService::class);
-            $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $this->lead->id, QuoteTypes::LIFE->id());
-            LoggerService::info("DTT Revival record created successfully for quote UUID {$lifeRevivalQuoteUUID} from parent lead {$this->lead->uuid}");
+            $dttRevivalService->create($lifeRevivalQuote?->id ?? 0, $lifeRevivalQuoteUUID, $lead->id, QuoteTypes::LIFE->id());
+            LoggerService::info('DTT Revival record created successfully', [
+                'quote_uuid' => $lifeRevivalQuoteUUID,
+                'parent_lead_uuid' => $lead->uuid,
+            ]);
 
             // Mark life quote as revived
-            $this->lead->update(['is_revived' => true]);
-            LoggerService::info("Life quote marked as revived for lead {$this->lead->uuid}");
+            $lead->update(['is_revived' => true]);
+            LoggerService::info('Life quote marked as revived', [
+                'lead_uuid' => $lead->uuid,
+            ]);
         });
     }
 
@@ -133,6 +154,8 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        LoggerService::error('LifeRevivalLeadsCreationJob - Failed - '.$this->personalQuoteId.' Error: '.$exception->getMessage());
+        LoggerService::error('LifeRevivalLeadsCreationJob failed', [
+            'personal_quote_id' => $this->personalQuoteId,
+        ], $exception);
     }
 }
