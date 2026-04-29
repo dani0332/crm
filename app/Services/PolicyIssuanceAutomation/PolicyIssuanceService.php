@@ -10,11 +10,13 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
@@ -664,10 +666,20 @@ class PolicyIssuanceService
     }
 
     /**
-     * Travel DIC: persist failure on the quote, then {@see allocateLead} (same AutomationFailedJob path as Car/Cyber).
+     * Travel DIC: persist failure on the quote, then allocate if needed and notify via
+     * {@see SendTravelAllianceFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
+     * matching {@see AllianceInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
      */
     public function applyTravelDicAutomationFailure(TravelQuote $quote, int $insurerApiStatusId, string $processInvolved, ?int $apiIssuanceStatusId = null): void
     {
+        $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Travel DIC failure handling', extra: [
+            'quote_code' => $quote->code,
+            'insurer_api_status_id' => $insurerApiStatusId,
+            'process_involved' => $processInvolved,
+        ]);
+
         $apiIssuanceStatusId ??= PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
 
         $quote->update([
@@ -676,12 +688,44 @@ class PolicyIssuanceService
         ]);
         $quote->refresh();
 
-        $this->allocateLead(
-            QuoteTypes::TRAVEL->value,
-            $quote,
-            false,
-            PolicyIssuanceEnum::getInsurerAPIStatuses($insurerApiStatusId),
-            $processInvolved,
-        );
+        $this->allocateTravelDicFailedLeadForBirdNotification($quote, $isInsurerApiStatusAlreadyFailed);
+    }
+
+    /**
+     * Post–DIC failure: same allocation + Bird email path as {@see AllianceInsuranceService::allocateLead},
+     * without {@see AutomationFailedJob}.
+     */
+    private function allocateTravelDicFailedLeadForBirdNotification(TravelQuote $quote, bool $isInsurerApiStatusAlreadyFailed): void
+    {
+        $uuid = $quote->uuid;
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to allocate lead (DIC) ................ Ref-ID: '.$uuid);
+
+        $advisorId = $quote->advisor_id;
+
+        if (! $advisorId) {
+            $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+            LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                'advisorId' => $advisorId,
+                'allocation_response' => $response ?? null,
+            ]);
+            $quote->refresh();
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
+            'advisorId' => $advisorId,
+        ]);
+
+        if (! $advisorId) {
+            return;
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+        if (! $isInsurerApiStatusAlreadyFailed && $quote->insurer_api_status != null) {
+            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+        }
     }
 }

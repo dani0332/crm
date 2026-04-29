@@ -21,7 +21,7 @@ class DicStepExecutor
     ) {}
 
     /**
-     * @param  bool  $applyQuoteFailure  When false (async Bus steps), quote/AutomationFailedJob are handled by {@see DicPolicyIssuanceStepJob}.
+     * @param  bool  $applyQuoteFailure  When false (async Bus steps), quote / Bird failed-allocation email are handled by {@see DicPolicyIssuanceStepJob}.
      * @return array<string, mixed>
      */
     public function executeIssuePolicyStep(TravelQuote $quote, PolicyIssuance $process, bool $applyQuoteFailure = true): array
