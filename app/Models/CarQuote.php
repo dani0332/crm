@@ -671,7 +671,7 @@ class CarQuote extends BaseModel
                 })->orWhere(function ($m) {
                     $m->where('engagement_level', MotorRevivalEnum::MEDIUM_INTENT->value)
                         ->whereNotNull('engagement_level_updated_at')
-                        ->where('engagement_level_updated_at', '<', now()->subMinutes(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_MINUTES));
+                        ->where('engagement_level_updated_at', '<', now()->subHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS));
                 });
             });
         });
