@@ -38,7 +38,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
      */
     public function __construct(
         public int $dttRevivalId,
-        public object $emailData,
+        public ?object $emailData = null,
     ) {
         $this->onQueue('renewals');
     }
@@ -97,6 +97,16 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 'advisor_id' => $lead?->advisor_id,
                 'quote_status_id' => $lead?->quote_status_id,
                 'payment_status_id' => $lead?->payment_status_id,
+            ]);
+
+            return;
+        }
+
+        if ($this->emailData === null) {
+            LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
             ]);
 
             return;
