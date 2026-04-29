@@ -18,9 +18,9 @@ class HealthPlanController extends Controller
 
         return response()->json($plans);
     }
-    public function getPlan($planId, $status): JsonResponse
+    public function getPlan($id): JsonResponse
     {
-        $plan = $this->healthPlanService->getPlanByIdStatus($planId, $status);
+        $plan = $this->healthPlanService->getPlanById($id);
 
         return response()->json($plan);
     }

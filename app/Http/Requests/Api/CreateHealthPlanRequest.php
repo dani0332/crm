@@ -2,28 +2,24 @@
 
 namespace App\Http\Requests\Api;
 
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Enums\HealthBusinessTypeEnum;
+use App\Enums\HealthPlanTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class CreateHealthPlanRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return false;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            'code' => 'required|unique:health_plan,code',
+            'text' => 'required',
+            'health_business_type' => ['required', new Enum(HealthBusinessTypeEnum::class)],
+            'health_plan_type' => ['nullable', new Enum(HealthPlanTypeEnum::class)],
+            'health_rating_eligibility_id' => 'nullable|exists:health_rating_eligibilities,id',
+            'health_network_id' => 'nullable|exists:health_networks,id',
+            'is_active' => 'required|boolean',
+            'is_hidden' => 'required|boolean',
         ];
     }
 }

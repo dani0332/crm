@@ -160,7 +160,9 @@ Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
 // Cms Api Routes
 Route::prefix('cms')->group(function () {
     Route::group(['prefix' => 'plans'], function () {
-        Route::get('/{planId}', [HealthPlanController::class, 'getPlan']);
+        Route::get('/', [HealthPlanController::class, 'getList']);
+        Route::get('/{id}', [HealthPlanController::class, 'getPlan']);
+        Route::post('/', [HealthPlanController::class, 'create']);
     });
 });
 

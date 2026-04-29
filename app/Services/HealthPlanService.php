@@ -16,14 +16,12 @@ class HealthPlanService extends BaseService
             ->firstWhere('code', $code);
     }
 
-    public function getPlanByIdStatus(int $id, string $status): Collection
+    public function getPlanById(int $id): ?HealthPlan
     {
         return HealthPlan::select('id', 'code', 'text', 'text_ar', 'provider_id', 'health_business_type',
             'plan_type_id', 'health_rating_eligibility_id', 'health_network_id', 'maf_link', 'is_hidden', 'is_active',
             'status', 'version', 'cohort_enabled', 'gender_enabled', 'marital_status_enabled', 'created_at', 'updated_at', 'deleted_at')
-            ->where('status', strtolower($status))
-            ->where('id', $id)
-            ->get(); // It can be multiple records in case of archive status so its collection
+            ->firstWhere('id', $id);
     }
 
     public function getList(Request $request): LengthAwarePaginator|Collection
@@ -34,7 +32,7 @@ class HealthPlanService extends BaseService
             'plan_type_id', 'health_rating_eligibility_id', 'health_network_id', 'is_hidden', 'is_active',
             'status', 'version', 'created_at', 'updated_at', 'deleted_at'
         )
-            ->where('status', strtolower($request->status ?? HealthPlanRateSheetStatusEnum::ACTIVE))
+            ->where('status', strtolower($request->status ?? HealthPlanRateSheetStatusEnum::ACTIVE->value))
             ->when($request->provider_id, function ($query) use ($request) {
                 $query->where('provider_id', $request->provider_id);
             })
@@ -44,7 +42,7 @@ class HealthPlanService extends BaseService
             ->orderByDesc('id');
 
         if ($request->has('per_page')) {
-            $perPage = (int) $request->get('per_page', 15);
+            $perPage = (int) $request->get('per_page', 10);
 
             return $query->paginate($perPage);
         } else {
