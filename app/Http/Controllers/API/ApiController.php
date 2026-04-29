@@ -897,7 +897,7 @@ class ApiController extends Controller
         ]);
 
         $carQuote = CarQuote::query()
-            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id', 'created_at'])
             ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
             ->where('uuid', $request->quoteUID)
             ->first();
