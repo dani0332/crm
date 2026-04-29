@@ -20,15 +20,13 @@ class AdvisorController extends Controller
 
         $users = User::whereHas('roles', function ($query) use ($advisorRoles) {
             $query->whereIn('name', $advisorRoles);
-        });
-
-        if (! empty($departmentIds)) {
-            $users->whereHas('departments', function ($query) use ($departmentIds) {
-                $query->whereIn('departments.id', $departmentIds);
-            });
-        }
-
-        $users = $users->activeUser()
+        })
+            ->when($departmentIds, function ($query) use ($departmentIds) {
+                $query->whereHas('departments', function ($q) use ($departmentIds) {
+                    $q->whereIn('departments.id', $departmentIds);
+                });
+            })
+            ->activeUser()
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
