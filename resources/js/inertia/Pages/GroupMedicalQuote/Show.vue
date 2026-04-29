@@ -213,7 +213,11 @@ const onLoadHistoryData = async () => {
 
     const prefix = hasOldAdvisor ? 'Advisor Re-assigned' : 'Advisor Assigned';
 
-    const advisorText = hasNewAdvisor ? `${prefix}: ${row.NewAdvisor}` : '';
+    const advisorText = hasNewAdvisor
+      ? hasOldAdvisor
+        ? `${prefix}: ${row.OldAdvisor} → ${row.NewAdvisor}`
+        : `${prefix}: ${row.NewAdvisor}`
+      : '';
 
     return {
       ...row,
@@ -880,7 +884,12 @@ function handleOcrNotification(event) {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
-                <dd>{{ quote.number_of_employees }}</dd>
+                <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ quote?.group_medical_type?.text ?? 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">

@@ -64,6 +64,7 @@ class GroupMedicalExport implements CsvExportableInterface
     {
         $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+        $assignmentTypeText = $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '';
 
         return [
             $quote->code,
@@ -73,7 +74,7 @@ class GroupMedicalExport implements CsvExportableInterface
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
-            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText((int) $quote->assignment_type) : '',
+            $assignmentTypeText,
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,

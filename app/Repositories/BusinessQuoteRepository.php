@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Services\BranchAssignmentService;
 use App\Traits\CentralTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -107,6 +108,21 @@ class BusinessQuoteRepository extends BaseRepository
             $ids = self::normalizeEmirateOfRegistrationIds($requestParams['emirate_of_registration_id']);
             if ($ids !== []) {
                 $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
+            }
+        }
+
+        $filtersForAdvisorDate = ! empty($requestParams) ? $requestParams : request()->all();
+        if (! empty($filtersForAdvisorDate['advisor_assigned_date'])) {
+            $dateRange = $filtersForAdvisorDate['advisor_assigned_date'];
+            while (is_array($dateRange) && isset($dateRange[0]) && is_array($dateRange[0])) {
+                $dateRange = $dateRange[0];
+            }
+            if (is_array($dateRange) && count($dateRange) >= 2) {
+                $dateFrom = Carbon::parse($dateRange[0])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::parse($dateRange[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('businessQuoteRequestDetail', function ($q) use ($dateFrom, $dateTo) {
+                    $q->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
             }
         }
 

@@ -113,6 +113,7 @@ class AmtController extends Controller
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
+                DB::raw('DATE_FORMAT(bqrd.advisor_assigned_date, "%d-%b-%Y %r") as advisor_assigned_date'),
                 'bqr.policy_number',
                 'bqr.renewal_batch',
                 'rb.name as renewal_batch_text',
@@ -142,6 +143,15 @@ class AmtController extends Controller
                 'bqr.is_branch_applicable',
                 'bqr.emirate_of_registration_id',
                 'e.text as emirate_of_registration_text',
+                DB::raw('(CASE
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SYSTEM_ASSIGNED.' THEN "System Assigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SYSTEM_REASSIGNED.' THEN "System Reassigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::MANUAL_ASSIGNED.' THEN "Manual Assigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::MANUAL_REASSIGNED.' THEN "Manual Reassigned"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::BOUGHT_LEAD.' THEN "Bought Lead"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD.' THEN "Reassigned as Bought Lead"
+                    WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
+                    ELSE "" END) as assignment_type_text'),
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -292,6 +302,10 @@ class AmtController extends Controller
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
+        if ($request->filled('assignment_type') && strtolower((string) $request->assignment_type) !== 'all') {
+            $data->where('bqr.assignment_type', $request->assignment_type);
+        }
+
         // Apply authorize_date filter
         if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
             $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
@@ -431,7 +445,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */

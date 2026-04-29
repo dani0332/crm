@@ -16,11 +16,16 @@ defineProps({
   insurerAMLStatus: Array,
   subSources: Array,
   emirates: Array,
+  assignmentTypes: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const canExport = ref(false);
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
   useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
@@ -85,6 +90,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisor_assigned_date: [],
+  assignment_type: 'all',
   authorize_date: '',
   captured_date: '',
   emirate_of_registration_id: [],
@@ -149,6 +155,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
@@ -156,6 +163,7 @@ const tableHeader = [
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CREATED AT', value: 'created_at' },
+  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'Updated AT', value: 'updated_at' },
   {
     text: 'POLICY EXPIRY DATE',
@@ -172,9 +180,29 @@ const tableHeader = [
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 
+const filteredTableHeader = computed(() => {
+  if (hasRole(rolesEnum.GMAdvisor)) {
+    return tableHeader.filter(
+      column => column.value !== 'assignment_type_text',
+    );
+  }
+  return tableHeader;
+});
+
 function resetFilters() {
   for (const key in filters) {
-    filters[key] = key === 'emirate_of_registration_id' ? [] : '';
+    
+    if (key === 'assignment_type') {
+      filters[key] = 'all';
+    } else if (key === 'advisor_assigned_date') {
+      filters[key] = [];
+    }
+    else if (key === 'emirate_of_registration_id') {
+      filters[key] = [];
+    }
+    else {
+      filters[key] = '';
+    }
   }
   router.visit(route('amt.index'), {
     method: 'get',
@@ -213,6 +241,9 @@ function filterQuotes(isValid) {
     ) {
       delete filters[key];
     }
+  }
+  if (filters.assignment_type === 'all') {
+    delete filters.assignment_type;
   }
   // if (filters.created_at_start) {
   //   filters.created_at_start = filters.created_at_start.split('T')[0];
@@ -661,6 +692,16 @@ const insurerAMLStatusOption = computed(() => {
           label="Mobile Number"
         />
         <x-select
+          v-model="filters.assignment_type"
+          label="Assignment Type"
+          name="assignment_type"
+          placeholder="Search by Assignment Type"
+          :options="page.props.assignmentTypes || []"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter Assignment Type...."
+        />
+        <x-select
           v-model="filters.leadStatus"
           name="quote_status_id"
           placeholder="Search by Lead Status"
@@ -904,7 +945,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page

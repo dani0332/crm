@@ -123,6 +123,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(BusinessInsuranceType::class);
     }
 
+    public function groupMedicalType()
+    {
+        return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
+    }
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);

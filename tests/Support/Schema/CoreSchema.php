@@ -171,6 +171,15 @@ class CoreSchema
                 $table->integer('sort_order')->nullable();
                 $table->timestamps();
             },
+            'allocation_configurations' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('quote_type');
+                $table->json('config')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->unsignedBigInteger('updated_by')->nullable();
+                $table->timestamps();
+            },
             'car_make' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
