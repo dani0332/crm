@@ -96,6 +96,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
+
+    Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');

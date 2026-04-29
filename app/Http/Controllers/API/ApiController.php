@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
@@ -45,10 +46,12 @@ use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
 use App\Models\CarQuote;
+use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -60,6 +63,7 @@ use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
@@ -71,6 +75,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\RewatermarkQuoteDocumentsService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -905,6 +910,16 @@ class ApiController extends Controller
             return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
         }
 
+        // if car create date lies in between 29APril 00:00:00 and 29APril 23:59:59 then return true
+        if (Carbon::parse($carQuote->created_at)->between(Carbon::parse('2026-04-29 00:00:00'), Carbon::parse('2026-04-29 23:59:59'))) {
+            LoggerService::info(self::class.': Car create date lies in between 29APril 00:00:00 and 29APril 23:59:59', extra: [
+                'quoteUID' => $request->quoteUID,
+                'created_at' => $carQuote->created_at,
+            ]);
+
+            return apiResponse(true, Response::HTTP_OK, 'Revival followups already triggered today');
+        }
+
         $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
 
         LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
@@ -913,5 +928,82 @@ class ApiController extends Controller
         ]);
 
         return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
+    }
+
+    public function reTriggerRevivalFollowups(Request $request)
+    {
+        Log::withContext(['feature' => 're-trigger-revival-followups-request-received']);
+
+        $request->validate([
+            'dttRevivalIds' => 'sometimes|array',
+            'all' => 'required|boolean',
+            'debug' => 'required|boolean',
+            'getData' => 'required|boolean',
+        ]);
+
+        if ($request->filled('debug') && $request->debug) {
+            $dttRevivalRecords = DttRevival::where('follow_up_email_count', 0)
+                ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
+                ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
+                ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->when($request->filled('getData') && $request->getData, function ($query) {
+                    return $query->get();
+                }, function ($query) {
+                    return $query->count();
+                });
+
+            return apiResponse($dttRevivalRecords, Response::HTTP_OK, 'Dtt revival records');
+        }
+
+        if ($request->filled('all') && $request->all) {
+            DttRevival::query()
+                ->where('follow_up_email_count', 0)
+                ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
+                ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
+                ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->chunk(100, function ($dttRevivalRecords) {
+                    foreach ($dttRevivalRecords as $dttRevivalRecord) {
+                        $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
+                    }
+                });
+        } elseif ($request->filled('dttRevivalIds') && $request->dttRevivalIds) {
+            $dttRevivalRecords = DttRevival::whereIn('id', $request->dttRevivalIds)->where('follow_up_email_count', 0)->get();
+            foreach ($dttRevivalRecords as $dttRevivalRecord) {
+                $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
+            }
+        } else {
+            return apiResponse(false, Response::HTTP_BAD_REQUEST, 'Invalid request');
+        }
+
+        return apiResponse(true, Response::HTTP_OK, 'Revival followups re-triggered successfully');
+    }
+
+    private function reTriggerRevivalFollowupsForQuote($dttRevivalRecord)
+    {
+        $carQuote = CarQuote::query()->where('uuid', $dttRevivalRecord->uuid)->first();
+
+        if (! $carQuote) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'id' => $dttRevivalRecord->id,
+                'uuid' => $dttRevivalRecord->uuid,
+            ]);
+
+            return;
+        }
+
+        $previousAdvisor = null;
+        if (! empty($carQuote->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
+        }
+
+        $emailData = app(CarEmailService::class)->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
+        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
+
+        CarRevivalFollowUpEmailJob::dispatch($dttRevivalRecord->id, $emailData);
+
+        LoggerService::info(self::class.': CarRevivalFollowUpEmailJob dispatched for revival re-trigger', extra: [
+            'id' => $dttRevivalRecord->id,
+            'uuid' => $dttRevivalRecord->uuid,
+        ]);
     }
 }
