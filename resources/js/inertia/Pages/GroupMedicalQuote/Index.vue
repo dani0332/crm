@@ -191,16 +191,13 @@ const filteredTableHeader = computed(() => {
 
 function resetFilters() {
   for (const key in filters) {
-    
     if (key === 'assignment_type') {
       filters[key] = 'all';
     } else if (key === 'advisor_assigned_date') {
       filters[key] = [];
-    }
-    else if (key === 'emirate_of_registration_id') {
+    } else if (key === 'emirate_of_registration_id') {
       filters[key] = [];
-    }
-    else {
+    } else {
       filters[key] = '';
     }
   }
