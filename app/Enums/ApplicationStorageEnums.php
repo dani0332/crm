@@ -202,6 +202,9 @@ final class ApplicationStorageEnums extends Enum
     /** Seconds to wait before retrying the same DIC API step after a failed attempt. */
     public const DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS = 'DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS';
 
+    /** When enabled, automation batch includes {@see PolicyIssuanceEnum::TIMEOUT_STATUS} records for DIC Travel. */
+    public const ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE';
+
     public const ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL';
     public const HOME_OCB_AUTOMATED_FOLLOWUPS = 'HOME_OCB_AUTOMATED_FOLLOWUPS';

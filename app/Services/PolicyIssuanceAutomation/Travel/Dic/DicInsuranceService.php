@@ -109,6 +109,11 @@ class DicInsuranceService implements PolicyIssuanceInterface
         return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_DIC_TRAVEL_POLICY_ISSUANCE);
     }
 
+    public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
+    {
+        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE);
+    }
+
     public function createPolicyIssuanceSchedule($quote, $insurer): mixed
     {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::DIC_TRAVEL_POLICY_AUTOMATION);
