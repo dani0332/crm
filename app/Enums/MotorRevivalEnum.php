@@ -28,8 +28,8 @@ enum MotorRevivalEnum: string
     // MACRM voucher values
     case CTA_TEXT = 'View Car Quotes';
 
-    public const ILA_HIGH_INTENT_WAIT_MINUTES = 2; // Minutes
-    public const ILA_MEDIUM_INTENT_WAIT_MINUTES = 5; // Minutes
+    public const ILA_HIGH_INTENT_WAIT_MINUTES = 15;
+    public const ILA_MEDIUM_INTENT_WAIT_HOURS = 3;
 
     public static function getEngagementLevelLabel(?string $storedValue): string
     {
