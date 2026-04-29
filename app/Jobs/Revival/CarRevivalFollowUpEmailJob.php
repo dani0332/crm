@@ -45,6 +45,17 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
     public function handle(): void
     {
+        // returning for legacy leads which were queued before the enhancement
+        if (! isset($this->emailData)) {
+            LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
+            ]);
+
+            return;
+        }
+
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::warning(self::class.': DTT disabled in CMS (job was queued anyway)', [
@@ -97,16 +108,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 'advisor_id' => $lead?->advisor_id,
                 'quote_status_id' => $lead?->quote_status_id,
                 'payment_status_id' => $lead?->payment_status_id,
-            ]);
-
-            return;
-        }
-
-        if (!isset($this->emailData)) {
-            LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $this->dttRevival->id,
-                'child_quote_uuid' => $this->dttRevival->uuid,
             ]);
 
             return;
