@@ -46,10 +46,7 @@ class LifeRevivalCommand extends Command
 
     private function processRevivalLeads($revivalLeads)
     {
-        // Filter out the leads with null height or weight
-        $leads = $revivalLeads->filter(fn ($lead) => $lead->lifeQuote->height != null && $lead->lifeQuote->weight != null)
-            ->values()
-            ->all();
+        $leads = $revivalLeads->values()->all();
 
         if ($leads != null && count($leads)) {
             LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($leads));
