@@ -8,15 +8,12 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
-use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
-use App\Services\UserService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -102,8 +99,18 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             return;
         }
 
+        if ($this->emailData === null) {
+            LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
+                'flow' => self::LOG_FLOW,
+                'dtt_revival_id' => $this->dttRevival->id,
+                'child_quote_uuid' => $this->dttRevival->uuid,
+            ]);
+
+            return;
+        }
+
         try {
-            $this->sendFollowUpEmail($lead);
+            $this->sendFollowUpEmail($this->emailData, $lead);
         } catch (Throwable $exception) {
             LoggerService::warning(self::class.': exception in handle', [
                 'flow' => self::LOG_FLOW,
@@ -117,10 +124,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         }
     }
 
-    private function sendFollowUpEmail(CarQuote $lead): void
+    private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
     {
-        $emailData = $this->resolveEmailData($lead);
-
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
@@ -159,22 +164,5 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             'exception_class' => $exception::class,
             'exception_message' => $exception->getMessage(),
         ]);
-    }
-
-    private function resolveEmailData(CarQuote $lead): object
-    {
-        if ($this->emailData !== null) {
-            return $this->emailData;
-        }
-
-        $previousAdvisor = null;
-        if (! empty($lead->previous_advisor_id)) {
-            $previousAdvisor = app(UserService::class)->getUserById($lead->previous_advisor_id);
-        }
-
-        $emailData = app(CarEmailService::class)->buildDttRevivalBirdEmailPayload($lead, $previousAdvisor);
-        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
-
-        return $emailData;
     }
 }
