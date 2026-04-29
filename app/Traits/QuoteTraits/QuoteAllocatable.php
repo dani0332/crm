@@ -385,7 +385,7 @@ trait QuoteAllocatable
 
         return match ($detail->engagement_level) {
             MotorRevivalEnum::INTENT_HIGH->value => now()->greaterThan($updatedAt->copy()->addMinutes(MotorRevivalEnum::ILA_HIGH_INTENT_WAIT_MINUTES)),
-            MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addMinutes(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_MINUTES)),
+            MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS)),
             default => false,
         };
     }
