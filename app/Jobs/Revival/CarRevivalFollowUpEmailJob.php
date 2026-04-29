@@ -33,6 +33,9 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     public $backoff = 300;
     private $dttRevival = null;
 
+    /**
+     * @param  object  $emailData  Same Bird payload as {@see CarRevivalLeadsCreationJob} (from {@see CarEmailService::buildDttRevivalBirdEmailPayload} when not dispatched from that job).
+     */
     public function __construct(
         public int $dttRevivalId,
         public ?object $emailData = null,
