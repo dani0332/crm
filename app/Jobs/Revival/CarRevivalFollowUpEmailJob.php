@@ -8,12 +8,15 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\UserService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,12 +36,9 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     public $backoff = 300;
     private $dttRevival = null;
 
-    /**
-     * @param  object  $emailData  Same Bird payload as {@see CarRevivalLeadsCreationJob} (from {@see CarEmailService::buildDttRevivalBirdEmailPayload} when not dispatched from that job).
-     */
     public function __construct(
         public int $dttRevivalId,
-        public object $emailData,
+        public ?object $emailData = null,
     ) {
         $this->onQueue('renewals');
     }
@@ -103,7 +103,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         }
 
         try {
-            $this->sendFollowUpEmail($this->emailData, $lead);
+            $this->sendFollowUpEmail($lead);
         } catch (Throwable $exception) {
             LoggerService::warning(self::class.': exception in handle', [
                 'flow' => self::LOG_FLOW,
@@ -117,8 +117,10 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         }
     }
 
-    private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
+    private function sendFollowUpEmail(CarQuote $lead): void
     {
+        $emailData = $this->resolveEmailData($lead);
+
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
@@ -157,5 +159,22 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             'exception_class' => $exception::class,
             'exception_message' => $exception->getMessage(),
         ]);
+    }
+
+    private function resolveEmailData(CarQuote $lead): object
+    {
+        if ($this->emailData !== null) {
+            return $this->emailData;
+        }
+
+        $previousAdvisor = null;
+        if (! empty($lead->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($lead->previous_advisor_id);
+        }
+
+        $emailData = app(CarEmailService::class)->buildDttRevivalBirdEmailPayload($lead, $previousAdvisor);
+        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
+
+        return $emailData;
     }
 }
