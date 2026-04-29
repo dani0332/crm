@@ -449,10 +449,10 @@ class PolicyIssuanceService
 
         $hasFailureContext = ! empty($statusAPIFailed) && ! empty($processInvolved);
         $isCarOrCyber = in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value], true);
-        $isTravel = $quoteType === QuoteTypes::TRAVEL->value;
         // Other LOBs (e.g. Home policy issuance): add `$quoteType === QuoteTypes::HOME->value` and extend `resolveAutomationFailureRouting`.
+        // Travel failures use insurer-specific paths (e.g. {@see applyTravelDicAutomationFailure}, Alliance allocateLead); they do not populate `$statusAPIFailed` here.
 
-        if ($hasFailureContext && (($isCarOrCyber && ! $isPolicyBooked) || $isTravel)) {
+        if ($hasFailureContext && $isCarOrCyber && ! $isPolicyBooked) {
             $this->dispatchAutomationFailedJob(
                 $quote->id,
                 $quoteType,
