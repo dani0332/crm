@@ -17,6 +17,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CurrencyType;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifePurposeOfInsurance;
+use App\Models\LifeQuote;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -328,5 +329,50 @@ class LifeRevivalService
             $quote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
             $quote->lifeQuote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
         });
+    }
+
+    public function getRevivalPayload(PersonalQuote $lead, LifeQuote $lifeQuote): array
+    {
+        $payload = [
+            'firstName' => $lead->first_name,
+            'lastName' => $lead->last_name,
+            'email' => $lead->email,
+            'mobileNo' => $lead->mobile_no ?? '',
+            'source' => LeadSourceEnum::REVIVAL,
+            'referenceUrl' => 'IMCRM',
+            'quoteTypeId' => QuoteTypes::LIFE->id(),
+            'othersInfo' => '',
+            'lang' => 'EN',
+            'typeOfInsurance' => 'Life Insurance',
+            'whatsappConsent' => 1,
+        ];
+
+        foreach ($this->optionalLifeQuoteCapiFields($lead, $lifeQuote) as $key => $value) {
+            if ($value !== null) {
+                $payload[$key] = $value;
+            }
+        }
+
+        return $payload;
+    }
+
+    private function optionalLifeQuoteCapiFields(PersonalQuote $lead, LifeQuote $lifeQuote): array
+    {
+        return [
+            'gender' => $lead->gender,
+            'dob' => $lead->dob,
+            'nationalityId' => $lead->nationality_id,
+            'sumInsuredValue' => $lifeQuote->sum_insured_value !== null ? (int) $lifeQuote->sum_insured_value : null,
+            'sumInsuredCurrencyId' => $lifeQuote->sum_insured_currency_id,
+            'maritalStatusId' => $lifeQuote->marital_status_id,
+            'purposeOfInsuranceId' => $lifeQuote->purpose_of_insurance_id,
+            'tenureOfInsuranceId' => $lifeQuote->tenure_of_insurance_id,
+            'height' => $lifeQuote->height,
+            'weight' => $lifeQuote->weight,
+            'isSmoker' => $lifeQuote->is_smoker,
+            'paymentStatusId' => $lead->payment_status_id,
+            'quoteStatusId' => $lead->quote_status_id,
+            'numberOfYearsId' => $lifeQuote->number_of_years_id,
+        ];
     }
 }

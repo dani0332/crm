@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Jobs\Revival;
 
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
@@ -37,7 +36,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(LifeRevivalService $lifeRevivalService): void
     {
         $this->lead = PersonalQuote::query()
             ->with('lifeQuote')
@@ -56,39 +55,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
         $lifeQuote = $lead->lifeQuote;
 
-        $payload = [
-            'firstName' => $lead->first_name,
-            'lastName' => $lead->last_name,
-            'email' => $lead->email,
-            'mobileNo' => $lead->mobile_no ?? null,
-            'gender' => $lead->gender ?? '',
-            'dob' => $lead->dob ?? null,
-            'nationalityId' => $lead->nationality_id ?? 0,
-            'paymentStatusId' => $lead->payment_status_id ?? 0,
-            'quoteStatusId' => $lead->quote_status_id ?? 0,
-            'quoteTypeId' => QuoteTypes::LIFE->id(),
-            'othersInfo' => '',
-            'isSmoker' => $lifeQuote->is_smoker,
-            'sumInsuredValue' => (int) $lifeQuote->sum_insured_value,
-            'sumInsuredCurrencyId' => $lifeQuote->sum_insured_currency_id,
-            'maritalStatusId' => $lifeQuote->marital_status_id,
-            'purposeOfInsuranceId' => $lifeQuote->purpose_of_insurance_id ?? 0,
-            'tenureOfInsuranceId' => $lifeQuote->tenure_of_insurance_id ?? 0,
-            'numberOfYearsId' => $lifeQuote->number_of_years_id ?? 0,
-            'source' => LeadSourceEnum::REVIVAL,
-            'referenceUrl' => 'IMCRM',
-            'lang' => 'EN',
-            'typeOfInsurance' => 'Life Insurance',
-            'whatsappConsent' => 1,
-        ];
-
-        if ($lifeQuote->height !== null) {
-            $payload['height'] = $lifeQuote->height;
-        }
-
-        if ($lifeQuote->weight !== null) {
-            $payload['weight'] = $lifeQuote->weight;
-        }
+        $payload = $lifeRevivalService->getRevivalPayload($lead, $lifeQuote);
 
         LoggerService::info('Creating Life Revival Lead', [
             'lead_uuid' => $lead->uuid,
@@ -108,7 +75,7 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
         }
 
         try {
-            app(LifeRevivalService::class)->sendLifeRevialEmail($capiResponse->quoteUID);
+            $lifeRevivalService->sendLifeRevialEmail($capiResponse->quoteUID);
         } catch (Throwable $e) {
             LoggerService::warning('LifeRevivalLeadsCreationJob - Error sending DTT revival email', [
                 'quote_uuid' => $capiResponse->quoteUID,
