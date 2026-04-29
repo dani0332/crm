@@ -94,7 +94,8 @@ class LeadAllocationService extends BaseService
                 ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
-            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
                 $departmentIds = auth()->user()->department()->pluck('id')->toArray();
                 $query->whereIn('u.department_id', $departmentIds);
             } elseif (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {

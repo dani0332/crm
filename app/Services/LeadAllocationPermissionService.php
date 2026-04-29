@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Http\Controllers\LeadAllocationController;
 use App\Models\LeadAllocation;
 use Illuminate\Http\Request;
 
@@ -63,28 +64,59 @@ class LeadAllocationPermissionService
     }
 
     /**
-     * Shared POST routes (toggle-reset-cap, etc.) are used by multiple LOB UIs. Resolve
-     * the lead allocation row the same way as the controller, then require dashboard|edit
-     * for that LOB.
-     *
-     * Matches controller resolution order: leadId, laId, or latest row for userId (see
-     * LeadAllocationController updateResetCapSwitch and related methods).
+     * Authorize shared toggles that resolve the row like {@see LeadAllocationController::updateResetCapSwitch}
+     * and {@see LeadAllocationController::updateBlStatus}: `isset(leadId)` targets that id, otherwise `user_id`.
+     * Extra keys such as `laId` are ignored by those controllers and must not affect authorization.
      */
-    public static function authorizeMutateForSharedToggleRequest(Request $request): void
+    public static function authorizeMutateForSharedToggleLeadOrUser(Request $request): void
+    {
+        $leadAllocation = self::resolveLeadAllocationForLeadOrUser($request);
+        self::authorizeMutateForResolvedSharedToggleRow($leadAllocation);
+    }
+
+    /**
+     * Authorize shared toggles that resolve the row like {@see LeadAllocationController::updateNormalLeadAllocationStatus}
+     * and {@see LeadAllocationController::updateBLResetCap}: `isset(laId)` targets that id, otherwise `user_id`.
+     * Extra keys such as `leadId` are ignored by those controllers and must not affect authorization.
+     */
+    public static function authorizeMutateForSharedToggleLaOrUser(Request $request): void
+    {
+        $leadAllocation = self::resolveLeadAllocationForLaOrUser($request);
+        self::authorizeMutateForResolvedSharedToggleRow($leadAllocation);
+    }
+
+    private static function resolveLeadAllocationForLeadOrUser(Request $request): ?LeadAllocation
     {
         $query = LeadAllocation::query()->with(['leadAllocationUser']);
 
-        if ($request->filled('laId')) {
-            $query->where('id', $request->laId);
-        } elseif ($request->filled('leadId')) {
+        if (isset($request->leadId)) {
             $query->where('id', $request->leadId);
-        } elseif ($request->filled('userId')) {
+        } elseif (isset($request->userId)) {
             $query->where('user_id', $request->userId);
         } else {
-            abort(403, 'Unauthorized action.');
+            return null;
         }
 
-        $leadAllocation = $query->latest()->first();
+        return $query->latest()->first();
+    }
+
+    private static function resolveLeadAllocationForLaOrUser(Request $request): ?LeadAllocation
+    {
+        $query = LeadAllocation::query()->with(['leadAllocationUser']);
+
+        if (isset($request->laId)) {
+            $query->where('id', $request->laId);
+        } elseif (isset($request->userId)) {
+            $query->where('user_id', $request->userId);
+        } else {
+            return null;
+        }
+
+        return $query->latest()->first();
+    }
+
+    private static function authorizeMutateForResolvedSharedToggleRow(?LeadAllocation $leadAllocation): void
+    {
         if ($leadAllocation === null) {
             abort(403, 'Unauthorized action.');
         }
