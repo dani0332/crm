@@ -46,6 +46,8 @@ enum QuoteFlowType: int
     case CYBER_AUTOMATION_FAILED = 44;
     case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
+    case MOTOR_REVIVAL_OCB = 70;
+    case MOTOR_REVIVAL_FOLLOWUP = 71;
 
     case DEVICE_AUTOMATED_FOLLOWUPS = 50;
     case DEVICE_OCB_INTRO_EMAIL = 51;
@@ -95,6 +97,8 @@ enum QuoteFlowType: int
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
             QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS => 'device_automated_followups',
             QuoteFlowType::DEVICE_OCB_INTRO_EMAIL => 'device_ocb_intro_email',
+            QuoteFlowType::MOTOR_REVIVAL_OCB => 'motor_revival_ocb',
+            QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP => 'motor_revival_followup',
         };
     }
 
@@ -145,6 +149,8 @@ enum QuoteFlowType: int
             42 => QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS,
             43 => QuoteFlowType::CYBER_NEW_POLICY,
             44 => QuoteFlowType::CYBER_AUTOMATION_FAILED,
+            70 => QuoteFlowType::MOTOR_REVIVAL_OCB,
+            71 => QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP,
             default => null,  // Return null if the value doesn't match any case
         };
     }

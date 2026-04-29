@@ -129,6 +129,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'ecomBaseUrl' => config('constants.ECOM_BASE_URL'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -255,81 +256,155 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PET_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::PET_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::UtmLeadsSalesReport,
             PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_EDIT,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Health',
                         route('lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'health'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Car',
                         route('car-lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Travel',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::TRAVEL]),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Life',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
                         fn ($s) => $s->attributes(['icon' => 'life'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Home',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
                         fn ($s) => $s->attributes(['icon' => 'home'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::PET_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::PET_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Pet',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
                         fn ($s) => $s->attributes(['icon' => 'pet'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Corpline',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CORPLINE]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Cycle',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYCLE]),
                         fn ($s) => $s->attributes(['icon' => 'cycle'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Savings',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::SAVINGS]),
                         fn ($s) => $s->attributes(['icon' => 'savings'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
@@ -343,7 +418,11 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Cyber',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
                         fn ($s) => $s->attributes(['icon' => 'cyber'])
