@@ -99,7 +99,6 @@ class AmtController extends Controller
                 'bqr.first_name',
                 'bqr.last_name',
                 'bqr.assignment_type',
-                'bqrd.advisor_assigned_date',
                 'qs.text as leadStatus',
                 DB::raw('DATE_FORMAT(bqr.created_at, "%d-%b-%Y %r") as created_at'),
                 DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
@@ -282,10 +281,6 @@ class AmtController extends Controller
 
         if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        if (isset($request->assignment_type) && $request->assignment_type !== '' && $request->assignment_type !== 'all') {
-            $data->where('bqr.assignment_type', $request->assignment_type);
         }
 
         if (isset($request->emirate_of_registration_id) && $request->emirate_of_registration_id !== '') {
