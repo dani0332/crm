@@ -49,8 +49,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         if (! isset($this->emailData)) {
             LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
                 'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $this->dttRevival->id,
-                'child_quote_uuid' => $this->dttRevival->uuid,
             ]);
 
             return;
