@@ -2107,5 +2107,4 @@ class SendEmailCustomerService extends BaseService
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
-
 }

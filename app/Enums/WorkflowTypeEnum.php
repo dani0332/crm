@@ -96,4 +96,8 @@ final class WorkflowTypeEnum extends Enum
     // Non-motor renewals
     public const CQF_NON_MOTOR_RENEWALS = 'cqf_non_motor_renewals';
     public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS = 'car_intro_email_without_vehicle_details';
+
+    // Motor Revival workflow
+    public const MOTOR_REVIVAL_OCB = 'motor_revival_ocb';
+    public const MOTOR_REVIVAL_FOLLOWUP = 'motor_revival_followup';
 }
