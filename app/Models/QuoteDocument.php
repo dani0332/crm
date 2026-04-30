@@ -17,7 +17,6 @@ class QuoteDocument extends Model implements AuditableContract
     use Auditable, HasFactory, SoftDeletes, SpatieActivityLog;
 
     protected $table = 'quote_documents';
-    protected $guarded = [];
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
