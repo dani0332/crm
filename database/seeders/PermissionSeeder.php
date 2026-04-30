@@ -51,6 +51,7 @@ class PermissionSeeder extends Seeder
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
         $this->addEpDocumentManualOverridePermission();
+        $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
     }
 
@@ -130,6 +131,28 @@ class PermissionSeeder extends Seeder
                 } else {
                     LoggerService::info("Role {$role->name} already has permission {$permission->name}");
                 }
+            }
+        }
+    }
+
+    private function addConversionOptimizationEngineReportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+            } else {
+                LoggerService::info("Role {$role->name} already has permission {$permission->name}");
             }
         }
     }
