@@ -84,7 +84,8 @@ class DttFollowUp extends Command
                 ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
                     foreach ($unreplied as $item) {
                         // Pass only the ID to avoid serialization issues with full model
-                        $jobs[] = CarRevivalFollowUpEmailJobOld::dispatch($item->id)->delay(now()->addSeconds(10 + $delayCounter));
+                        $jobs[] = (new CarRevivalFollowUpEmailJobOld($item->id))
+                            ->delay(now()->addSeconds(10 + $delayCounter));
                         $delayCounter += 10;
                     }
                 });
