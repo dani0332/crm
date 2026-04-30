@@ -914,7 +914,7 @@ class SageApiService
         $skipBookPolicyDocumentJob = false;
         if (in_array($quoteTypeId, [QuoteTypeId::Travel, QuoteTypeId::Cyber])) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+            if (in_array($quote->policyIssuance?->status, [PolicyIssuanceEnum::COMPLETED_STATUS, PolicyIssuanceEnum::PROCESSING_STATUS]) && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
