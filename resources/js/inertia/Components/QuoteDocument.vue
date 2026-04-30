@@ -38,6 +38,15 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+
+// Restricted internal types require compliance-document-upload; others are always listed.
+const canViewDocumentTypeInUploadModal = documentType => {
+  if (!documentType.is_restricted_internal_document) {
+    return true;
+  }
+
+  return can(permissionEnum.COMPLIANCE_DOCUMENT_UPLOAD);
+};
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
@@ -455,11 +464,11 @@ const openDocumentInNewTab = async item => {
               </x-tooltip>
             </div>
           </template>
-          <div
-            v-for="documentType in docType"
-            :key="documentType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
+          <template v-for="documentType in docType" :key="documentType.id">
+            <div
+              v-if="canViewDocumentTypeInUploadModal(documentType)"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
+            >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
                 {{ documentType.text }}
@@ -523,7 +532,8 @@ const openDocumentInNewTab = async item => {
                 </a>
               </template>
             </div>
-          </div>
+            </div>
+          </template>
         </x-tab>
       </x-tab-group>
     </x-modal>

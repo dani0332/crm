@@ -316,6 +316,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
+            dd($documentType->is_restricted_internal_document);
             LoggerService::info('Creating quote document record in database');
             $quoteDocument = $quote->documents()->create([
                 'doc_name' => 'original_'.$docName,
