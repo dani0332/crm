@@ -54,9 +54,9 @@ class DttFollowUp extends Command
                 return Command::SUCCESS;
             }
 
-            $date = $this->option('date');
-            $carbon = $date
-                ? Carbon::parse((string) $date)->startOfDay()
+            $dateOption = $this->option('date');
+            $carbon = filled($dateOption)
+                ? Carbon::parse((string) $dateOption)->startOfDay()
                 : Carbon::now();
 
             $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
