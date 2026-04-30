@@ -9,6 +9,7 @@ use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
@@ -204,6 +205,19 @@ class Kernel extends ConsoleKernel
             default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
             environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
+
+        $schedule
+            ->command(
+                'reports:conversion-optimization-scheduled-export '.ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS
+            )
+            ->mondays()
+            ->at('10:00')
+            ->timezone('Asia/Dubai')
+            ->onOneServer()
+            ->withoutOverlapping();
+
+        // Alternate recipient set: add a new ApplicationStorageEnums constant + application_storage row, then e.g.:
+        // $schedule->command('reports:conversion-optimization-scheduled-export OTHER_KEY_NAME')->environments(['production'])->mondays()->at('10:00')->onOneServer()->withoutOverlapping();
     }
 
     /**
