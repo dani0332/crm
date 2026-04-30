@@ -15,6 +15,8 @@ class HealthPlanStatusValidRule implements ValidationRule
 
         if (! $healthPlan) {
             $fail('Health plan not found');
+
+            return;
         }
 
         if ($healthPlan->status !== HealthPlanRateSheetStatusEnum::DRAFT) {

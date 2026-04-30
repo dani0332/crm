@@ -7,6 +7,7 @@ use App\Models\HealthPlan;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class HealthPlanService extends BaseService
 {
@@ -98,6 +99,8 @@ class HealthPlanService extends BaseService
 
     public function delete(int $id): void
     {
-        HealthPlan::destroy($id);
+        DB::transaction(function () use ($id) {
+            HealthPlan::destroy($id);
+        });
     }
 }

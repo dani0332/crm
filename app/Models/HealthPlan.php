@@ -6,6 +6,7 @@ use App\Enums\HealthPlanRateSheetStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HealthPlan extends Model
 {
@@ -50,5 +51,17 @@ class HealthPlan extends Model
     public function healthPlanType(): BelongsTo
     {
         return $this->belongsTo(HealthPlanType::class, 'plan_type_id');
+    }
+
+    public function rates(): HasMany
+    {
+        return $this->hasMany(HealthRate::class, 'health_plan_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (HealthPlan $healthPlan) {
+            $healthPlan->rates()->delete();
+        });
     }
 }

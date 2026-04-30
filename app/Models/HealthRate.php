@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HealthRate extends Model
 {
@@ -21,4 +22,9 @@ class HealthRate extends Model
         'status',
         'is_active',
     ];
+
+    public function healthPlan(): BelongsTo
+    {
+        return $this->belongsTo(HealthPlan::class, 'health_plan_id');
+    }
 }

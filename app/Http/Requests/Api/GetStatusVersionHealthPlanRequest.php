@@ -27,8 +27,7 @@ class GetStatusVersionHealthPlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'parent_id.exists' => 'Parent plan does not exist',
-            'status.in' => 'Invalid status',
+            'parent_id.exists' => 'Plan does not exist',
         ];
     }
 
