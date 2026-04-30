@@ -111,6 +111,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'visaCategory:id,text',
             'policyHolderCategory:id,code,text',
             'genderLookup:id,code,text',
+            'latestInsured',
         ]);
     }
 

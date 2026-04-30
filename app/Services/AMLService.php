@@ -1639,10 +1639,7 @@ class AMLService
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            if ($isEntity) {
-                app(HealthQuoteService::class)->updateHealthEntityData($quote, $request);
-            }
-
+            app(HealthQuoteService::class)->updateHealthData($quote, $request, $isEntity);
             app(HealthQuoteRevampMigrationService::class)->dispatchForNonEntityLead(
                 $quote->id,
                 $quote->quote_status_id,

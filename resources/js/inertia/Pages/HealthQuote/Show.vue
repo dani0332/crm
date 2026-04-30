@@ -2247,13 +2247,13 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </dt>
                 <dd>{{ coverForText }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="isIndividualAndFamilies">
+              <div class="grid sm:grid-cols-2" v-if="enabledCustomerType == page.props.customerTypeEnum.Individual && isIndividualAndFamilies">
                 <dt class="font-medium">
                   WHO WOULD THE CUSTOMER LIKE TO INSURE?
                 </dt>
                 <dd>{{ page.props.insureCodeOptions.find(option => option.code === quote.insure_code)?.text ?? 'N/A' }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="isIndividualAndFamilies">
+              <div class="grid sm:grid-cols-2" v-if="enabledCustomerType == page.props.customerTypeEnum.Individual && isIndividualAndFamilies">
                 <dt class="font-medium">
                   WHO WILL BE THE POLICYHOLDER?
                 </dt>

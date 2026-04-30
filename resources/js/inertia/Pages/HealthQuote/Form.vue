@@ -508,20 +508,9 @@ function preprocessFormData() {
             visa_category_id: quoteForm.visa_category_id,
           };
         }
+
+        quoteForm.member_category_id = null;
       }
-
-    quoteForm.member_category_id = null;
-  }
-
-  if (!isCustomerTypeIndividual.value) {
-    quoteForm.policy_holder_category_code = null;
-    quoteForm.member_category_id = null;
-    quoteForm.visa_category_id = null;
-    quoteForm.salary_band_id = null;
-    quoteForm.gender = null;
-    quoteForm.marital_status_id = null;
-    quoteForm.insure_code = null;
-    quoteForm.policy_holder_code = null;
   }
 }
 
@@ -899,7 +888,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   @update:model-value="requestQuoteCategoryFieldUpdate('policy_holder_code', $event)"
                 /> 
               </div>
-              <div v-if="isIndividualAndFamilies && converageInfo" class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2">
+              <div v-if="isCustomerTypeIndividual && isIndividualAndFamilies && converageInfo" class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2">
                   <div> <b>Please note:</b> {{ converageInfo }} </div>
               </div>
               

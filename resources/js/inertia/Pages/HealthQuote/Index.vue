@@ -1429,32 +1429,38 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-member_category.text="item">
         <p>
-          {{ item.member_category?.text ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.member_category?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-policy_holder_category.text="item">
         <p>
-          {{ item.policy_holder_category?.text ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.policy_holder_category?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-visa_category.text="item">
         <p>
-          {{ item.visa_category?.text ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.visa_category?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-gender_lookup.text="item">
         <p>
-          {{ item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-marital_status.text="item">
         <p>
-          {{ item.marital_status?.text ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.marital_status?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-salary_band.text="item">
         <p>
-          {{ item.salary_band?.text ?? 'N/A' }}
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
       </template>
     </DataTable>

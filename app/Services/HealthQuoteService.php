@@ -442,6 +442,7 @@ class HealthQuoteService extends BaseService
     {
         return $quotes->map(function ($quote) {
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+            $quote->is_entity = $quote->isEntity();
 
             return $quote;
         });
@@ -494,12 +495,18 @@ class HealthQuoteService extends BaseService
         }
 
         $customer = $healthQuote?->customer;
+        $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $priceStartingFrom = $healthQuote?->price_starting_from ?? null;
         $members = collect($request->members);
         $principalMember = $members->firstWhere('is_principal', 1);
         $mobileNo = ($request->mobile_dial_code ?? '').($request->mobile_national_no ?? '');
-        $emirateOfVisaId = $request->customer_type == CustomerTypeEnum::Entity ? $healthQuote->emirate_of_your_visa_id : ($principalMember['emirate_of_your_visa_id'] ?? null);
+        $emirateOfVisaId = $isEntity ? $healthQuote->emirate_of_your_visa_id : ($principalMember['emirate_of_your_visa_id'] ?? null);
+        $nationalityId = $isEntity ? $healthQuote->nationality_id : ($principalMember['nationality_id'] ?? null);
+        $gender = $isEntity ? $healthQuote->gender : ($principalMember['gender'] ?? null);
+        $dob = $isEntity ? $healthQuote->dob : ($principalMember['dob'] ?? null);
+        $salaryBandId = $isEntity ? $healthQuote->salary_band_id : ($principalMember['salary_band_id'] ?? null);
+        $memberCategoryId = $isEntity ? $healthQuote->member_category_id : ($principalMember['member_category_id'] ?? null);
         $dataArr = [
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'quoteUID' => $id,
@@ -528,18 +535,23 @@ class HealthQuoteService extends BaseService
                 'coverForId' => $request->cover_for_id,
 
                 // principal member details
-                'memberCategoryId' => $principalMember['member_category_id'] ?? null,
+                'memberCategoryId' => $memberCategoryId,
                 'emirateOfYourVisaId' => $emirateOfVisaId,
-                'nationalityId' => $principalMember['nationality_id'] ?? null,
-                'gender' => $principalMember['gender'] ?? null,
-                'dob' => $principalMember['dob'] ?? null,
-                'salaryBandId' => $principalMember['salary_band_id'] ?? null,
+                'nationalityId' => $nationalityId,
+                'gender' => $gender,
+                'dob' => $dob,
+                'salaryBandId' => $salaryBandId,
 
                 // confirm with Waleeb about this param
                 'priceStartingFrom' => $priceStartingFrom,
                 'customerType' => $request->customer_type ?? null,
             ],
         ];
+
+        if ($isEntity) {
+            $dataArr['data']['visaCategoryId'] = $healthQuote->visa_category_id;
+            $dataArr['data']['maritalStatusId'] = $healthQuote->marital_status_id;
+        }
 
         if ($request->customer_type == CustomerTypeEnum::Individual) {
             $dataArr['data']['memberDetails'] = $members->map(fn ($member) => $this->prepareMemberDetailPayload($member))->all();
@@ -1952,7 +1964,7 @@ class HealthQuoteService extends BaseService
         return [$startOfMonth, $endOfPreviousDay];
     }
 
-    public function updateHealthEntityData($quote, $request): void
+    public function updateHealthData($quote, $request, $isEntity): void
     {
         if (! $quote) {
             LoggerService::info('Quote not found', extra: [
@@ -1962,15 +1974,18 @@ class HealthQuoteService extends BaseService
             return;
         }
 
-        $quote->emirate_of_your_visa_id = $request->emirate_of_registration_id;
-        $quote->member_category_id = null;
-        $quote->policy_holder_category_code = null;
-        $quote->visa_category_id = null;
-        $quote->gender = null;
-        $quote->marital_status_id = null;
-        $quote->salary_band_id = null;
-        $quote->insure_code = null;
-        $quote->policy_holder_code = null;
+        if ($isEntity) {
+            $quote->emirate_of_your_visa_id = $request->emirate_of_registration_id;
+        } else {
+            $principalMember = $quote->activeMembers
+                ->where('is_principal', 1)
+                ->where('customer_type', CustomerTypeEnum::Individual)
+                ->first();
+            if ($principalMember) {
+                $quote->emirate_of_your_visa_id = $principalMember->emirate_of_your_visa_id;
+            }
+        }
+
         $quote->save();
     }
 }
