@@ -1027,12 +1027,57 @@ class ApiController extends Controller
     {
         $validated = $request->validate([
             'date' => 'required|string|date_format:Y-m-d',
+            'debug' => 'required|boolean',
         ]);
+
+        if ($request->filled('debug') && $request->debug) {
+            $records = $this->getDttRevivalRecords($validated['date']);
+
+            return apiResponse($records, Response::HTTP_OK, 'Dtt revival records');
+        }
 
         Artisan::call('Dtt:followup', [
             '--date' => $validated['date'],
         ]);
 
         return apiResponse(true, Response::HTTP_OK, 'Dtt follow-up command executed');
+    }
+
+    private function getDttRevivalRecords($dateOption)
+    {
+
+        $carbon = filled($dateOption)
+            ? Carbon::parse((string) $dateOption)->startOfDay()
+            : Carbon::now();
+
+        $followUpAnchorDate = filled($dateOption)
+            ? Carbon::parse((string) $dateOption)->toDateString()
+            : null;
+
+        $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
+        $sevenDaysBefore = $carbon->copy()->subDays(7)->toDateString();
+        $thirteenDaysBefore = $carbon->copy()->subDays(13)->toDateString();
+        $twentyDaysBefore = $carbon->copy()->subDays(20)->toDateString();
+        $twentyEightDaysBefore = $carbon->copy()->subDays(28)->toDateString();
+
+        $logPrefix = 'carRevivalFollowUpEmailJob -';
+
+        $jobs = [];
+        $delayCounter = 0;
+
+        // Use chunking to avoid memory issues with large datasets
+        $records = DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
+            $q->whereDate('created_at', '=', $twoDaysBefore);
+            $q->orWhereDate('created_at', '=', $sevenDaysBefore);
+            $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
+        })
+            ->whereDate('created_at', '<=', Carbon::parse('2026-04-29 23:59:59')->toDateString())
+            ->where('reply_received', 0)
+            ->select('id', 'uuid') // Only select needed fields to reduce memory usage
+            ->count();
+        dd($records);
+
     }
 }
