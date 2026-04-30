@@ -341,11 +341,7 @@ class AmtController extends Controller
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
         $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
-        $quotes = $data->simplePaginate(15)->withQueryString()->through(function ($quote) {
-            $quote->assignment_type_id = $quote->assignment_type;
-
-            return $quote;
-        });
+        $quotes = $data->simplePaginate(15)->withQueryString();
 
         $this->postProcessAmtQuotes($quotes);
 
