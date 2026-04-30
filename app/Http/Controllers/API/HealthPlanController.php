@@ -55,4 +55,14 @@ class HealthPlanController extends Controller
             'data' => new HealthPlanResource($plan),
         ]);
     }
+
+    public function getStatusVersions(Request $request): JsonResponse
+    {
+        $plans = $this->healthPlanService->getStatusVersions($request->parentId, $request->status);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => HealthPlanResource::collection($plans),
+        ]);
+    }
 }
