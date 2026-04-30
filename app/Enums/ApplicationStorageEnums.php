@@ -425,6 +425,9 @@ final class ApplicationStorageEnums extends Enum
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
 
+    // Motor Revival OCB Workflow
+    public const MOTOR_REVIVAL_WORKFLOW = 'MOTOR_REVIVAL_WORKFLOW';
+
     /**
      * {@see application_storage.value} JSON shape:
      * {"to_email":"","cc_emails":[],"batch":{"start":"Y-m-d","end":"Y-m-d"},"filters":{...optional...}}

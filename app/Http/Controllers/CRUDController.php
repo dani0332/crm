@@ -99,6 +99,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
+use App\Services\CommunicationEventLogService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
@@ -920,6 +921,8 @@ class CRUDController extends Controller
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car));
 
+                $communicationEventLogs = app(CommunicationEventLogService::class)->getLogsForQuoteUuid($record->uuid);
+
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
                     'sendUpdateOptions',
@@ -1023,6 +1026,7 @@ class CRUDController extends Controller
                     'rtaConfigurationData',
                     'LIVAEnums',
                     'carTypeofInsurance',
+                    'communicationEventLogs',
                 ]));
             }
 
