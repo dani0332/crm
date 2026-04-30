@@ -12,6 +12,21 @@ class HealthPlan extends Model
     use HasFactory;
 
     protected $table = 'health_plan';
+    protected $fillable = [
+        'code',
+        'text',
+        'text_ar',
+        'provider_id',
+        'health_business_type',
+        'plan_type_id',
+        'health_rating_eligibility_id',
+        'health_network_id',
+        'is_hidden',
+        'is_active',
+        'status',
+        'version',
+        'parent_id',
+    ];
     protected $attributes = [
         'status' => HealthPlanRateSheetStatusEnum::DRAFT,
         'version' => 1.0,

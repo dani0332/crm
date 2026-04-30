@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateHealthPlanRequest;
 use App\Http\Requests\Api\HealthPlanDetailRequest;
+use App\Http\Requests\Api\UpdateHealthPlanRequest;
 use App\Http\Resources\HealthPlanResource;
 use App\Services\HealthPlanService;
 use Illuminate\Http\JsonResponse;
@@ -39,13 +40,19 @@ class HealthPlanController extends Controller
     {
         $plan = $this->healthPlanService->create($request->validated());
 
-        return response()->json($plan);
+        return response()->json([
+            'status' => 'success',
+            'data' => new HealthPlanResource($plan),
+        ]);
     }
 
     public function update(UpdateHealthPlanRequest $request): JsonResponse
     {
         $plan = $this->healthPlanService->update($request->id, $request->validated());
 
-        return response()->json($plan);
+        return response()->json([
+            'status' => 'success',
+            'data' => new HealthPlanResource($plan),
+        ]);
     }
 }

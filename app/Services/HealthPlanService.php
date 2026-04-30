@@ -51,12 +51,39 @@ class HealthPlanService extends BaseService
         return HealthPlan::create($data);
     }
 
-    public function update(int $id, array $data): void
+    public function update(int $id, array $data): HealthPlan
     {
-        $version = $this->deriveVersion($id);
-        HealthPlan::where('id', $id)->update($data);
+        $currentPlan = HealthPlan::find($id);
+
+        // Check if it's draft, update same version
+        if ($currentPlan->status == HealthPlanRateSheetStatusEnum::DRAFT) {
+            HealthPlan::where('id', $id)->update($data);
+
+            return $currentPlan;
+        }
+
+        // Otherwise create new draft version
+        $data['version'] = $this->deriveVersion($currentPlan);
+        $data['parent_id'] = $id;
+
+        return HealthPlan::create($data);
     }
 
-    private function deriveVersion(int $id): float {}
+    private function deriveVersion(HealthPlan $plan): float
+    {
+        // When we edit active version, get next draft version
+        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE) {
+            return $plan->version + 0.1;
+        }
 
+        // When we publish draft version
+        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT) {
+            $version = ceil($plan->version).'.0';
+
+            return (float) $version;
+        }
+
+        // Else archive version
+        return $plan->version;
+    }
 }
