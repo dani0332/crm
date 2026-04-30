@@ -773,8 +773,12 @@ class SageApiService
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $quote?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+
+            if (! $emirate) {
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical'];
+            }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
 
@@ -933,6 +937,12 @@ class SageApiService
             LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
 
             return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL && ! $quote->emirate_of_registration_id) {
+            LoggerService::info('Emirate of registration is mandatory for SAGE posting.', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Emirate of registration is mandatory for SAGE posting.'];
         }
 
         if (! $isPolicyBookedOnSage) {
