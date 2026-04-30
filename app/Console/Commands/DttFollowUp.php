@@ -20,7 +20,7 @@ class DttFollowUp extends Command
      *
      * @var string
      */
-    protected $signature = 'Dtt:followup';
+    protected $signature = 'Dtt:followup {--date= : Anchor date (Y-m-d) for follow-up windows; defaults to now when omitted}';
 
     /**
      * The console command description.
@@ -54,11 +54,16 @@ class DttFollowUp extends Command
                 return Command::SUCCESS;
             }
 
-            $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
-            $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
-            $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
-            $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
-            $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
+            $date = $this->option('date');
+            $carbon = $date
+                ? Carbon::parse((string) $date)->startOfDay()
+                : Carbon::now();
+
+            $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
+            $sevenDaysBefore = $carbon->copy()->subDays(7)->toDateString();
+            $thirteenDaysBefore = $carbon->copy()->subDays(13)->toDateString();
+            $twentyDaysBefore = $carbon->copy()->subDays(20)->toDateString();
+            $twentyEightDaysBefore = $carbon->copy()->subDays(28)->toDateString();
 
             $logPrefix = 'carRevivalFollowUpEmailJob -';
 
@@ -79,7 +84,7 @@ class DttFollowUp extends Command
                 ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
                     foreach ($unreplied as $item) {
                         // Pass only the ID to avoid serialization issues with full model
-                        $jobs[] = (new CarRevivalFollowUpEmailJobOld($item->id))->delay(now()->addSeconds(10 + $delayCounter));
+                        $jobs[] = CarRevivalFollowUpEmailJobOld::dispatch($item->id)->delay(now()->addSeconds(10 + $delayCounter));
                         $delayCounter += 10;
                     }
                 });

@@ -82,6 +82,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1020,5 +1021,18 @@ class ApiController extends Controller
             'id' => $dttRevivalRecord->id,
             'uuid' => $dttRevivalRecord->uuid,
         ]);
+    }
+
+    public function reTriggerRevivalFollowupsWithDate(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        Artisan::call('Dtt:followup', [
+            '--date' => $validated['date'],
+        ]);
+
+        return apiResponse(true, Response::HTTP_OK, 'Dtt follow-up command executed');
     }
 }
