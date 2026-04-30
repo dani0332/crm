@@ -20,5 +20,13 @@ if [ -z "$STAGED_PHP" ]; then
     exit 0
 fi
 
-echo "$STAGED_PHP" | xargs vendor/bin/pint
+# On Windows (incl. Git Bash with Herd, which only exposes php.bat), use the
+# Composer-generated .bat wrapper so we don't rely on a `php` shim being on PATH.
+if [ "$OS" = "Windows_NT" ] && [ -f vendor/bin/pint.bat ]; then
+    PINT_CMD="vendor/bin/pint.bat"
+else
+    PINT_CMD="vendor/bin/pint"
+fi
+
+echo "$STAGED_PHP" | xargs "$PINT_CMD"
 echo "$STAGED_PHP" | xargs git add
