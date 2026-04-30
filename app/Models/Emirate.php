@@ -11,6 +11,9 @@ class Emirate extends BaseModel
 
     protected $table = 'emirates';
 
+    /**
+     * Local scope: {@code Emirate::query()->withActive()}.
+     */
     public function scopeWithActive($query)
     {
         return $query->where('is_active', 1);
@@ -18,8 +21,8 @@ class Emirate extends BaseModel
 
     public static function getActiveEmirates()
     {
-        return Cache::remember('active_emirates', now()->addHours(24), function () {
-            return self::where('is_active', 1)->select('id', 'text')->get();
+        return Cache::remember('active_emirates_all', now()->addHours(24), function () {
+            return self::where('is_active', 1)->select('id', 'text')->orderBy('text', 'asc')->get();
         });
     }
 }
