@@ -65,6 +65,8 @@ class DatabaseSeeder extends Seeder
             HealthGroupNationalitySeeder::class,*/
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
+            ConverILAGroupMedicalConfigurationBranchWise::class,
         ]);
     }
 }

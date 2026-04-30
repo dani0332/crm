@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
@@ -39,14 +40,16 @@ class GroupMedicalExport implements CsvExportableInterface
             'ADVISOR',
             'OE / AE',
             'BRANCH',
+            'ASSIGNMENT TYPE',
+            'ADVISOR ASSIGNED DATE',
             'PREMIUM',
             'COMPANY NAME',
+            'EMIRATE OF REGISTRATION',
             'POLICY NUMBER',
             'LOST REASON',
             'SOURCE',
             'IMCRM SUB-SOURCE',
             'CREATED DATE',
-            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
@@ -59,8 +62,9 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function map($quote): array
     {
-        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+        $assignmentTypeText = $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '';
 
         return [
             $quote->code,
@@ -70,14 +74,16 @@ class GroupMedicalExport implements CsvExportableInterface
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
+            $assignmentTypeText,
+            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
+            $quote?->emirate?->text ?? '',
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
             optional($quote->subSource)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
-            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
