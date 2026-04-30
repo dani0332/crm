@@ -1026,7 +1026,7 @@ class ApiController extends Controller
     public function reTriggerRevivalFollowupsWithDate(Request $request)
     {
         $validated = $request->validate([
-            'date' => 'required|date_format:Y-m-d',
+            'date' => 'required|string|date_format:Y-m-d',
         ]);
 
         Artisan::call('Dtt:followup', [
