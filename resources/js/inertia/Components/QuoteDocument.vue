@@ -469,69 +469,69 @@ const openDocumentInNewTab = async item => {
               v-if="canViewDocumentTypeInUploadModal(documentType)"
               class="grid md:grid-cols-2 gap-2 my-4 border-b"
             >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ documentType.text }}
-                <span class="text-red-500">
-                  {{ documentType.is_required ? '*' : '' }}</span
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                  <span class="text-red-500">
+                    {{ documentType.is_required ? '*' : '' }}</span
+                  >
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
+
+                <x-alert
+                  v-if="successStatus[documentType.id]"
+                  type="success"
+                  color="success"
+                  light
                 >
-              </h5>
-              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-              <p class="text-xs">
-                Supported: {{ documentType.accepted_files }}
-              </p>
-              <p class="text-xs">
-                Max file size: {{ documentType.max_size }} MB
-              </p>
+                  <p class="text-sm">File uploaded successfully</p>
+                </x-alert>
 
-              <x-alert
-                v-if="successStatus[documentType.id]"
-                type="success"
-                color="success"
-                light
-              >
-                <p class="text-sm">File uploaded successfully</p>
-              </x-alert>
-
-              <x-alert
-                v-if="errorMsg[documentType.id]"
-                type="error"
-                color="error"
-                light
-              >
-                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
-              </x-alert>
-            </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="documentType.id"
-                :accept="documentType.accepted_files"
-                :max-files="documentType.max_files"
-                :max-size="documentType.max_size"
-                :loading="uploadingStatus[documentType.id]"
-                :document-type-code="documentType.code"
-                :isDisabled="
-                  documentType.code == documentTypeCodeEnum.AUDIT &&
-                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
-                "
-                :multiple="true"
-                @change="uploadFile(documentType, $event, key)"
-              />
-
-              <template
-                v-for="quoteDocument in quoteDocuments.filter(
-                  d => d.document_type_code == documentType.code,
-                )"
-                :key="quoteDocument.id"
-              >
-                <a
-                  @click.prevent="openDocumentInNewTab(quoteDocument)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                <x-alert
+                  v-if="errorMsg[documentType.id]"
+                  type="error"
+                  color="error"
+                  light
                 >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-              </template>
-            </div>
+                  <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+                </x-alert>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="uploadingStatus[documentType.id]"
+                  :document-type-code="documentType.code"
+                  :isDisabled="
+                    documentType.code == documentTypeCodeEnum.AUDIT &&
+                    !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                  "
+                  :multiple="true"
+                  @change="uploadFile(documentType, $event, key)"
+                />
+
+                <template
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                >
+                  <a
+                    @click.prevent="openDocumentInNewTab(quoteDocument)"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  >
+                    {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                  </a>
+                </template>
+              </div>
             </div>
           </template>
         </x-tab>
