@@ -1274,7 +1274,11 @@ class CoreSchema
                 $table->string('category')->nullable();
                 $table->boolean('is_required')->default(0);
                 $table->boolean('is_required_for_send_policy')->default(0);
+                $table->string('folder_path')->nullable();
+                $table->boolean('send_to_customer')->default(0);
+                $table->boolean('is_restricted_internal_document')->default(false);
                 $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
+                $table->string('business_type_of_customer')->nullable();
                 $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
