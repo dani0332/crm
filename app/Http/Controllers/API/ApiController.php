@@ -951,6 +951,7 @@ class ApiController extends Controller
                 ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
                 ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
                 ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->where('reply_received', 0)
                 ->when($request->filled('getData') && $request->getData, function ($query) {
                     return $query->get();
                 }, function ($query) {
@@ -968,6 +969,7 @@ class ApiController extends Controller
                 ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
                 ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
                 ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->where('reply_received', 0)
                 ->chunk(100, function ($dttRevivalRecords) {
                     foreach ($dttRevivalRecords as $dttRevivalRecord) {
                         $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
@@ -978,6 +980,7 @@ class ApiController extends Controller
                 ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
                     return $query->where('follow_up_email_count', $request->checkCountValue);
                 })
+                ->where('reply_received', 0)
                 ->whereIn('id', $request->dttRevivalIds)
                 ->get();
             foreach ($dttRevivalRecords as $dttRevivalRecord) {
