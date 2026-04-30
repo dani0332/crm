@@ -6,6 +6,7 @@ use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class HealthPlanService extends BaseService
 {
@@ -85,5 +86,13 @@ class HealthPlanService extends BaseService
 
         // Else archive version
         return $plan->version;
+    }
+
+    public function getStatusVersions(int $parentId, string $status): Collection
+    {
+        return HealthPlan::where('parent_id', $parentId)
+            ->where('status', $status)
+            ->orderByDesc('id')
+            ->get();
     }
 }

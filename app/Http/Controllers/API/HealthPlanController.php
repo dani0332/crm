@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateHealthPlanRequest;
+use App\Http\Requests\Api\GetStatusVersionHealthPlanRequest;
 use App\Http\Requests\Api\HealthPlanDetailRequest;
 use App\Http\Requests\Api\UpdateHealthPlanRequest;
 use App\Http\Resources\HealthPlanResource;
@@ -56,7 +57,7 @@ class HealthPlanController extends Controller
         ]);
     }
 
-    public function getStatusVersions(Request $request): JsonResponse
+    public function getStatusVersions(GetStatusVersionHealthPlanRequest $request): JsonResponse
     {
         $plans = $this->healthPlanService->getStatusVersions($request->parentId, $request->status);
 
