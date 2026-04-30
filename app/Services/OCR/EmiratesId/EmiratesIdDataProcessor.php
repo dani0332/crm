@@ -85,9 +85,6 @@ class EmiratesIdDataProcessor
                 $this->updateCustomerTableInsuredFields($insured);
             }
 
-            // Update insured fields in customer table
-            $this->updateCustomerTableInsuredFields($insured);
-
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
                 'quoteId' => $this->quote->id,
