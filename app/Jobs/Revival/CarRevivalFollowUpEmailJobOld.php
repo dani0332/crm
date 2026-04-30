@@ -36,15 +36,17 @@ class CarRevivalFollowUpEmailJobOld implements ShouldQueue
     public $backoff = 300;
     private $dttRevival = null;
     private $dttRevivalId = null;
+    private ?string $followUpAnchorDate = null;
 
     /**
      * Create a new job instance.
      *
-     * @return void
+     * @param  mixed  $dttRevivalId
      */
-    public function __construct($dttRevivalId)
+    public function __construct($dttRevivalId, ?string $followUpAnchorDate = null)
     {
         $this->dttRevivalId = $dttRevivalId;
+        $this->followUpAnchorDate = $followUpAnchorDate;
         $this->onQueue('renewals');
     }
 
@@ -83,7 +85,9 @@ class CarRevivalFollowUpEmailJobOld implements ShouldQueue
             return false;
         }
 
-        $today = Carbon::today();
+        $today = $this->followUpAnchorDate !== null
+            ? Carbon::parse($this->followUpAnchorDate)->startOfDay()
+            : Carbon::today();
 
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
@@ -256,11 +260,11 @@ class CarRevivalFollowUpEmailJobOld implements ShouldQueue
             }
 
             if (! $dueDateMatched) {
-                LoggerService::info('Skipping dtt follow-up because today is not a due follow-up date', [
+                LoggerService::info('Skipping dtt follow-up because comparison date is not a due follow-up date', [
                     'dtt_revival_id' => $this->dttRevival->id,
                     'child_quote_uuid' => $this->dttRevival->uuid,
                     'created_at' => (string) $created_at,
-                    'today' => $today->toDateString(),
+                    'comparison_date' => $today->toDateString(),
                 ]);
 
                 return false;

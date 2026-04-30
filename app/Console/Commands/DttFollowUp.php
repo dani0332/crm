@@ -59,6 +59,10 @@ class DttFollowUp extends Command
                 ? Carbon::parse((string) $dateOption)->startOfDay()
                 : Carbon::now();
 
+            $followUpAnchorDate = filled($dateOption)
+                ? Carbon::parse((string) $dateOption)->toDateString()
+                : null;
+
             $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
             $sevenDaysBefore = $carbon->copy()->subDays(7)->toDateString();
             $thirteenDaysBefore = $carbon->copy()->subDays(13)->toDateString();
@@ -81,10 +85,10 @@ class DttFollowUp extends Command
                 ->whereDate('created_at', '<=', self::LEGACY_FOLLOW_UP_CUTOFF_DATE)
                 ->where('reply_received', 0)
                 ->select('id', 'uuid') // Only select needed fields to reduce memory usage
-                ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
+                ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter, $followUpAnchorDate) {
                     foreach ($unreplied as $item) {
                         // Pass only the ID to avoid serialization issues with full model
-                        $jobs[] = (new CarRevivalFollowUpEmailJobOld($item->id))
+                        $jobs[] = (new CarRevivalFollowUpEmailJobOld($item->id, $followUpAnchorDate))
                             ->delay(now()->addSeconds(10 + $delayCounter));
                         $delayCounter += 10;
                     }
