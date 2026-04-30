@@ -638,9 +638,6 @@ const insurerAMLStatusOption = computed(() => {
           label="Email"
         />
 
-       
-
-
         <x-input
           v-model="filters.mobile_no"
           type="search"
@@ -692,8 +689,6 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-       
-        
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -701,7 +696,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        
+
         <x-select
           v-model="filters.assignment_type"
           label="Assignment Type"
