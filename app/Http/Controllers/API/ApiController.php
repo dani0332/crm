@@ -46,7 +46,7 @@ use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
-use App\Jobs\Revival\CarRevivalFollowUpEmailJobNew;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
@@ -1014,9 +1014,9 @@ class ApiController extends Controller
         $emailData = app(CarEmailService::class)->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
         $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
 
-        CarRevivalFollowUpEmailJobNew::dispatch($dttRevivalRecord->id, $emailData);
+        CarRevivalFollowUpEmailJob::dispatch($dttRevivalRecord->id, $emailData);
 
-        LoggerService::info(self::class.': CarRevivalFollowUpEmailJobNew dispatched for revival re-trigger', extra: [
+        LoggerService::info(self::class.': CarRevivalFollowUpEmailJob dispatched for revival re-trigger', extra: [
             'id' => $dttRevivalRecord->id,
             'uuid' => $dttRevivalRecord->uuid,
         ]);

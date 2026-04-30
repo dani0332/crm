@@ -214,7 +214,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                     } else {
                         $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
 
-                        CarRevivalFollowUpEmailJobNew::dispatch($dttRevival->id, $emailData);
+                        CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
 
                         LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
                             'flow' => self::LOG_FLOW,
