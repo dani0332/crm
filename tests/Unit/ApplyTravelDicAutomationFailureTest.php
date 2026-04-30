@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\TravelQuote;
@@ -81,5 +82,40 @@ it('does not dispatch travel alliance failed allocation job when insurer API was
     });
 
     Queue::assertNotPushed(SendTravelAllianceFailedAllocationEmailJob::class);
+    Queue::assertNotPushed(AutomationFailedJob::class);
+});
+
+it('allocateLead never dispatches AutomationFailedJob for travel failure context because travel uses insurer-specific flows', function (): void {
+    Queue::fake();
+
+    $userId = DB::table('users')->insertGetId([
+        'name' => 'Advisor',
+        'email' => 'advisor'.Str::random(8).'@example.com',
+        'password' => 'secret',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $travelId = DB::table('travel_quote_request')->insertGetId([
+        'uuid' => (string) Str::uuid(),
+        'code' => 'TRV-ALLOCATE-1',
+        'advisor_id' => $userId,
+        'insurer_api_status_id' => null,
+        'api_issuance_status_id' => null,
+        'quote_status_id' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $travelQuote = TravelQuote::query()->findOrFail($travelId);
+
+    app(PolicyIssuanceService::class)->allocateLead(
+        QuoteTypes::TRAVEL->value,
+        $travelQuote,
+        false,
+        PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED,
+        PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+    );
+
     Queue::assertNotPushed(AutomationFailedJob::class);
 });

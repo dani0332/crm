@@ -519,14 +519,6 @@ class PolicyIssuanceService
 
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
     {
-        if ($quoteType === QuoteTypes::TRAVEL->value) {
-            return [
-                QuoteTypeId::Travel,
-                WorkflowTypeEnum::TRAVEL_POLICY_ISSUANCE_AUTOMATION_FAILED,
-                UserNameEnum::PA_USER,
-            ];
-        }
-
         $isCyber = $quoteType === QuoteTypes::CYBER->value;
 
         $quoteTypeId = $isCyber ? QuoteTypeId::Cyber : QuoteTypeId::Car;
