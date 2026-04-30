@@ -92,7 +92,8 @@ class DocumentTypeRepository extends BaseRepository
     public function fetchQuoteDocumentsSentToCustomerCode($quoteType, $quote)
     {
         $documentTypes = DocumentType::sendToCustomer()
-            ->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
+            ->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))
+            ->notRestrictedInternalDocument();
 
         // Return all document types if the quote's insurance type is either car fleet or group medical health.
         if (in_array($quote->business_type_of_insurance_id, [quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet), quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)])) {
