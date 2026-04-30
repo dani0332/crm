@@ -137,8 +137,7 @@ class CarRevivalFollowUpEmailJobOld implements ShouldQueue
             $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
 
             try {
-                // $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
-                $listQuotePlans = [];
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
             } catch (\Exception $exception) {
                 LoggerService::info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
 
