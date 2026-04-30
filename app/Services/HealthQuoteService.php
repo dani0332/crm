@@ -169,7 +169,7 @@ class HealthQuoteService extends BaseService
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'insured.id_type as insured_id_type',
             'insured.id_number as insured_id_number',
-            'c.emirates_id_expiry_date',
+            'insured_kyc.id_expiry_date as emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
