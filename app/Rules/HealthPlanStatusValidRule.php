@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Rules;
+
+use App\Enums\HealthPlanRateSheetStatusEnum;
+use App\Models\HealthPlan;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+
+class HealthPlanStatusValidRule implements ValidationRule
+{
+    public function validate(string $attribute, mixed $value, Closure $fail): void
+    {
+        $healthPlan = HealthPlan::find($value);
+
+        if (! $healthPlan) {
+            $fail('Health plan not found');
+        }
+
+        if ($healthPlan->status !== HealthPlanRateSheetStatusEnum::DRAFT) {
+            $fail('Only draft health plans can be deleted');
+        }
+    }
+}

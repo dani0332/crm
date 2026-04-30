@@ -95,4 +95,9 @@ class HealthPlanService extends BaseService
             ->orderByDesc('id')
             ->get();
     }
+
+    public function delete(int $id): void
+    {
+        HealthPlan::destroy($id);
+    }
 }

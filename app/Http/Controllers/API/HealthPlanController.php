@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateHealthPlanRequest;
+use App\Http\Requests\Api\DeleteHealthPlanRequest;
 use App\Http\Requests\Api\GetStatusVersionHealthPlanRequest;
 use App\Http\Requests\Api\HealthPlanDetailRequest;
 use App\Http\Requests\Api\UpdateHealthPlanRequest;
@@ -64,6 +65,15 @@ class HealthPlanController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => HealthPlanResource::collection($plans),
+        ]);
+    }
+
+    public function delete(DeleteHealthPlanRequest $request): JsonResponse
+    {
+        $this->healthPlanService->delete($request->id);
+
+        return response()->json([
+            'status' => 'success',
         ]);
     }
 }
