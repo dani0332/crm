@@ -638,6 +638,37 @@ const insurerAMLStatusOption = computed(() => {
           label="Email"
         />
 
+       
+
+
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          class="w-full"
+          placeholder="Search by Company Name"
+          label="Company Name"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+        />
+
         <x-select
           v-model="filters.emirate_of_registration_id"
           name="emirate_of_registration_id[]"
@@ -661,33 +692,16 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        <x-input
-          v-model="filters.company_name"
-          type="search"
-          name="company_name"
-          class="w-full"
-          placeholder="Search by Company Name"
-          label="Company Name"
-        />
+       
+        
         <DatePicker
-          v-model="filters.created_at_start"
+          v-model="filters.advisor_assigned_date"
           name="created_at_start"
-          label="Created Date Start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-model="filters.created_at_end"
-          name="created_at_end"
-          label="Created Date End"
-        />
-
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-          label="Mobile Number"
-        />
+        
         <x-select
           v-model="filters.assignment_type"
           label="Assignment Type"
