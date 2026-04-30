@@ -161,7 +161,7 @@ class ConversionOptimizationScheduledExportService
                 'user_id' => $user->id,
                 'recipientEmail' => $toEmailNormalized,
                 'ccRecipients' => $ccEmails,
-                'exportTitle' => 'Scheduled Conversion Optimization Report',
+                'exportTitle' => 'Scheduled Conversion Optimization Engine',
             ]);
 
             $export = new ConversionOptimizationReportExport(

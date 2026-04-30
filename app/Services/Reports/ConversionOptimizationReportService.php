@@ -641,7 +641,7 @@ class ConversionOptimizationReportService extends BaseService
                 $row->required_sales = $this->roundWithPointOneFractionBias(
                     (float) $row->expected_sales - (float) $row->sale_leads
                 );
-                $row->new_conversion = (
+                $row->new_conversion = $this->roundWithPointOneFractionBias(
                     ($row->expected_sales / (float) $row->total_leads) * 100
                 );
             }
