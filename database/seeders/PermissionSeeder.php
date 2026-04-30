@@ -51,6 +51,7 @@ class PermissionSeeder extends Seeder
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
         $this->addEpDocumentManualOverridePermission();
+        $this->addComplianceDocumentUploadPermission();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -130,6 +131,35 @@ class PermissionSeeder extends Seeder
                     LoggerService::info("Role {$role->name} already has permission {$permission->name}");
                 }
             }
+        }
+    }
+
+    private function addComplianceDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPLIANCE_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $role = Role::query()
+            ->where('guard_name', 'web')
+            ->where('name', RolesEnum::ComplianceSuperUser)
+            ->first();
+
+        if ($role === null) {
+            LoggerService::info('COMPLIANCE_SUPER_USER role not found; skipping compliance-document-upload assignment');
+
+            return;
+        }
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+            LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+        } else {
+            LoggerService::info("Role {$role->name} already has permission {$permission->name}");
         }
     }
 }

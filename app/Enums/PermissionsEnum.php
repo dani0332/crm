@@ -439,6 +439,7 @@ final class PermissionsEnum extends Enum
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
     public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
+    public const COMPLIANCE_DOCUMENT_UPLOAD = 'compliance-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
