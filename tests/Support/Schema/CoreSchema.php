@@ -1259,7 +1259,7 @@ class CoreSchema
             },
             'document_types' => function (Blueprint $table) {
                 $table->id();
-                $table->string('code')->unique();
+                $table->string('code');
                 $table->string('text');
                 $table->text('description')->nullable();
                 $table->boolean('is_active')->default(1);
@@ -1280,6 +1280,7 @@ class CoreSchema
                 $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
                 $table->string('business_type_of_customer')->nullable();
                 $table->timestamps();
+                $table->unique(['code', 'quote_type_id', 'business_type_of_insurance_id', 'business_type_of_customer']);
             },
             'generic_document_types' => function (Blueprint $table) {
                 $table->id();

@@ -13,42 +13,86 @@ use Tests\Helpers\TestSchemaCreator;
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     DB::connection('sqlite')->table('document_types')->delete();
+    DB::connection('sqlite')->table('business_type_of_insurance')->delete();
 });
 
-it('seeds car compliance approval document type', function () {
+it('seeds compliance approval document type for each configured non-business quote type', function () {
     (new DocumentTypesSeeder)->run();
 
-    $documentType = DocumentType::query()
+    $nonBusiness = DocumentType::query()
         ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
-        ->where('quote_type_id', QuoteTypeId::Car)
-        ->first();
+        ->where('quote_type_id', '!=', QuoteTypeId::Business)
+        ->orderBy('quote_type_id')
+        ->get();
 
-    expect($documentType)->not->toBeNull()
-        ->and($documentType->text)->toContain('Compliance Approvals')
-        ->and($documentType->description)->toContain('internal restricted')
-        ->and((int) $documentType->is_active)->toBe(1)
-        ->and((int) $documentType->quote_type_id)->toBe(QuoteTypeId::Car)
-        ->and($documentType->folder_path)->toBe('car')
-        ->and($documentType->accepted_files)->toBe('.pdf')
-        ->and((int) $documentType->max_files)->toBe(10)
-        ->and((int) $documentType->max_size)->toBe(25)
-        ->and((int) $documentType->is_required)->toBe(0)
-        ->and((int) $documentType->send_to_customer)->toBe(0)
-        ->and((int) $documentType->receive_from_customer)->toBe(0)
-        ->and($documentType->category)->toBe(DocumentTypeCategory::QUOTE)
-        ->and((int) $documentType->is_required_for_send_policy)->toBe(0)
-        ->and($documentType->sort_order)->toBeNull()
-        ->and((int) $documentType->is_restricted_internal_document)->toBe(1);
+    expect($nonBusiness)->toHaveCount(14);
+
+    $car = $nonBusiness->firstWhere('quote_type_id', QuoteTypeId::Car);
+    expect($car)->not->toBeNull()
+        ->and($car->folder_path)->toBe('car')
+        ->and($car->text)->toContain('Compliance Approvals')
+        ->and((int) $car->is_restricted_internal_document)->toBe(1)
+        ->and($car->category)->toBe(DocumentTypeCategory::QUOTE)
+        ->and($car->business_type_of_insurance_id)->toBeNull()
+        ->and($car->business_type_of_customer)->toBeNull();
+
+    $travel = $nonBusiness->firstWhere('quote_type_id', QuoteTypeId::Travel);
+    expect($travel)->not->toBeNull()
+        ->and($travel->folder_path)->toBe('travel');
+});
+
+it('seeds business compliance rows per active insurance type for IBTC and CBTC', function () {
+    $db = DB::connection('sqlite');
+    $db->table('business_type_of_insurance')->insert([
+        ['code' => 'BTI_A', 'text' => 'Type A', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ['code' => 'BTI_B', 'text' => 'Type B', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    (new DocumentTypesSeeder)->run();
+
+    $businessRows = DocumentType::query()
+        ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
+        ->where('quote_type_id', QuoteTypeId::Business)
+        ->orderBy('business_type_of_insurance_id')
+        ->orderBy('business_type_of_customer')
+        ->get();
+
+    expect($businessRows)->toHaveCount(4);
+
+    $expectedInsuranceIds = $db->table('business_type_of_insurance')->where('is_active', 1)->orderBy('id')->pluck('id')->sort()->values()->all();
+
+    $ibtc = $businessRows->where('business_type_of_customer', DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER);
+    expect($ibtc)->toHaveCount(2)
+        ->and($ibtc->pluck('business_type_of_insurance_id')->sort()->values()->all())->toBe($expectedInsuranceIds);
+
+    $cbtc = $businessRows->where('business_type_of_customer', DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER);
+    expect($cbtc)->toHaveCount(2)
+        ->and($cbtc->pluck('business_type_of_insurance_id')->sort()->values()->all())->toBe($expectedInsuranceIds);
+
+    foreach ($businessRows as $row) {
+        expect($row->folder_path)->toBe('business');
+    }
 });
 
 it('is idempotent when run twice', function () {
+    DB::connection('sqlite')->table('business_type_of_insurance')->insert([
+        ['code' => 'BTI_A', 'text' => 'Type A', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
     (new DocumentTypesSeeder)->run();
     (new DocumentTypesSeeder)->run();
 
     expect(
         DocumentType::query()
             ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
-            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_type_id', '!=', QuoteTypeId::Business)
             ->count()
-    )->toBe(1);
+    )->toBe(14);
+
+    expect(
+        DocumentType::query()
+            ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
+            ->where('quote_type_id', QuoteTypeId::Business)
+            ->count()
+    )->toBe(2);
 });
