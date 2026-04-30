@@ -330,7 +330,6 @@ class QuoteDocumentService extends BaseService
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
-                'document_category' => $data['document_category'] ?? null,
                 'created_by_id' => auth()->id() ?? null,
                 'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
             ]);
