@@ -41,7 +41,7 @@ class EmiratesIdDataProcessor
     {
         try {
             DB::beginTransaction();
-            $isPrincipal = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
+            $isPolicyHolder = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
 
             $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
@@ -55,12 +55,12 @@ class EmiratesIdDataProcessor
                 // Check if it's principal
                 $memberDetail = CustomerMembers::find($this->memberDetailId);
 
-                if ($memberDetail && $memberDetail->is_principal) {
-                    $isPrincipal = true;
+                if ($memberDetail && $memberDetail->is_policy_holder) {
+                    $isPolicyHolder = true;
                 }
             }
 
-            if ($this->memberDetailId == 0 || $isPrincipal) {
+            if ($this->memberDetailId == 0 || $isPolicyHolder) {
                 $insured = $this->getOrCreateInsuredRecord();
                 if (! $insured) {
                     throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
@@ -80,10 +80,10 @@ class EmiratesIdDataProcessor
                 $insuredUpdated = $this->updateInsuredTable($insured);
                 $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
-            }
 
-            // Update insured fields in customer table
-            $this->updateCustomerTableInsuredFields($insured);
+                // Update insured fields in customer table
+                $this->updateCustomerTableInsuredFields($insured);
+            }
 
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
