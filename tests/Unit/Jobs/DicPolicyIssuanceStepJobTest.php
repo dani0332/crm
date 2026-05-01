@@ -17,8 +17,6 @@ use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Http\Client\ConnectionException as IlluminateConnectionException;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 afterEach(function (): void {
@@ -63,23 +61,18 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
         'text' => 'DIC Test',
     ]);
 
-    $travelId = DB::table('travel_quote_request')->insertGetId([
-        'uuid' => (string) Str::uuid(),
+    $travelQuote = TravelQuote::factory()->create([
         'code' => 'TRV-ASYNC-EX',
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
-    $process = PolicyIssuance::query()->create([
-        'insurance_provider_id' => $provider->id,
-        'model_type' => TravelQuote::class,
-        'model_id' => $travelId,
-        'quote_type' => QuoteTypes::TRAVEL->value,
-        'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
-        'completed_step' => null,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    $process = PolicyIssuance::factory()
+        ->forQuote($travelQuote)
+        ->processing()
+        ->create([
+            'insurance_provider_id' => $provider->id,
+            'quote_type' => QuoteTypes::TRAVEL->value,
+            'completed_step' => null,
+        ]);
 
     $dic = Mockery::mock(DicInsuranceService::class);
     $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
@@ -115,23 +108,18 @@ it('fails issuance immediately without retry when runSingleDicAsyncStep throws n
         'text' => 'DIC Test',
     ]);
 
-    $travelId = DB::table('travel_quote_request')->insertGetId([
-        'uuid' => (string) Str::uuid(),
+    $travelQuote = TravelQuote::factory()->create([
         'code' => 'TRV-NO-RETRY',
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
-    $process = PolicyIssuance::query()->create([
-        'insurance_provider_id' => $provider->id,
-        'model_type' => TravelQuote::class,
-        'model_id' => $travelId,
-        'quote_type' => QuoteTypes::TRAVEL->value,
-        'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
-        'completed_step' => null,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    $process = PolicyIssuance::factory()
+        ->forQuote($travelQuote)
+        ->processing()
+        ->create([
+            'insurance_provider_id' => $provider->id,
+            'quote_type' => QuoteTypes::TRAVEL->value,
+            'completed_step' => null,
+        ]);
 
     $dic = Mockery::mock(DicInsuranceService::class);
     $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
@@ -169,38 +157,25 @@ it('marks issuance failed after max attempts when runSingleDicAsyncStep throws',
         'text' => 'DIC Test',
     ]);
 
-    $travelId = DB::table('travel_quote_request')->insertGetId([
-        'uuid' => (string) Str::uuid(),
+    $travelQuote = TravelQuote::factory()->create([
         'code' => 'TRV-ASYNC-MAX',
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
-    $process = PolicyIssuance::query()->create([
-        'insurance_provider_id' => $provider->id,
-        'model_type' => TravelQuote::class,
-        'model_id' => $travelId,
-        'quote_type' => QuoteTypes::TRAVEL->value,
-        'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
-        'completed_step' => null,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    for ($i = 0; $i < 3; $i++) {
-        DB::table('policy_issuance_logs')->insert([
-            'policy_issuance_id' => $process->id,
-            'model_type' => null,
-            'model_id' => null,
-            'step' => PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
-            'status' => null,
-            'payload' => null,
-            'response' => null,
-            'endPoint' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
+    $process = PolicyIssuance::factory()
+        ->forQuote($travelQuote)
+        ->processing()
+        ->create([
+            'insurance_provider_id' => $provider->id,
+            'quote_type' => QuoteTypes::TRAVEL->value,
+            'completed_step' => null,
         ]);
-    }
+
+    PolicyIssuanceLog::factory()
+        ->count(3)
+        ->create([
+            'policy_issuance_id' => $process->id,
+            'step' => PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+        ]);
 
     $dic = Mockery::mock(DicInsuranceService::class);
     $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
