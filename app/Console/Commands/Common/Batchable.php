@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Common;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\RenewalBatch;
 use Carbon\Carbon;
 use Exception;
@@ -59,9 +60,9 @@ trait Batchable
     protected function generateBatchNumbers($startDate = null)
     {
         $batchArray = [];
-
+        $renewalDaysThreshold = (int) getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD);
         $today = $startDate ? Carbon::parse($startDate) : now()->startOfWeek();
-        $endDate = $today->copy()->addDays(90);
+        $endDate = $today->copy()->addDays($renewalDaysThreshold);
 
         $currentDate = $today;
 
