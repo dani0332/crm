@@ -628,12 +628,12 @@ class ReportsController extends Controller
 
         if ($request->exportType === ExportTypeEnum::Email->value) {
             LoggerService::info('Email CSV');
-            $request['exportTitle'] = 'Conversion Optimization Report';
+            $request['exportTitle'] = 'Conversion Optimization Engine';
 
-            return $exportClass->emailCSV('Conversion Optimization Report', $request->all());
+            return $exportClass->emailCSV('Conversion Optimization Engine', $request->all());
         }
 
-        return $exportClass->download('Conversion Optimization Report');
+        return $exportClass->download('Conversion Optimization Engine');
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
