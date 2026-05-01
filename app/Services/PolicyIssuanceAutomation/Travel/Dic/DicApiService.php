@@ -36,7 +36,8 @@ class DicApiService
             'url' => $url,
         ]);
 
-        if ($payload === [] || ! isset($payload['policy_id'])) {
+        $policyId = $payload['policy_id'] ?? null;
+        if (! is_string($policyId) || trim($policyId) === '') {
             $result = $this->responseHandler->issuePolicyInvalidPayloadResponse();
             $this->policyIssuanceService->storePolicyIssuanceLog(
                 $quote,

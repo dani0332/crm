@@ -27,6 +27,50 @@ afterEach(function () {
     Mockery::close();
 });
 
+it('issuePolicy returns invalid payload without HTTP when policy_id is empty string', function () {
+    $httpClient = Mockery::mock(DicHttpClient::class);
+    $httpClient->shouldReceive('buildUrl')
+        ->once()
+        ->with('products/buy/client')
+        ->andReturn('https://unit-dic.test/products/buy/client');
+    $httpClient->shouldNotReceive('authenticatedRequest');
+    app()->instance(DicHttpClient::class, $httpClient);
+
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService
+        ->shouldReceive('storePolicyIssuanceLog')
+        ->once()
+        ->with(
+            Mockery::type(TravelQuote::class),
+            Mockery::on(fn (array $p): bool => array_key_exists('policy_id', $p) && $p['policy_id'] === ''),
+            Mockery::type('array'),
+            'https://unit-dic.test/products/buy/client',
+            PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+            PolicyIssuanceEnum::FAILED_STATUS,
+            Mockery::type(PolicyIssuance::class),
+        );
+    app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
+    $builder = Mockery::mock(DicRequestBuilder::class);
+    $builder->shouldReceive('buildIssuePolicyPayload')
+        ->once()
+        ->andReturn([
+            'policy_id' => '',
+            'payment_details' => ['Transaction_id' => null],
+        ]);
+
+    $quote = new TravelQuote;
+    $quote->code = 'UNIT-TQ-empty-policy-id';
+    $quote->insurer_quote_number = '';
+
+    $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
+    $result = $service->issuePolicy($quote, new PolicyIssuance);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['completed_step'])->toBe(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY)
+        ->and($result['error'])->toContain('policy_id');
+});
+
 it('issuePolicy returns mapped EnsuredIT error for already sold policy', function () {
     $httpClient = Mockery::mock(DicHttpClient::class);
     $httpClient->shouldReceive('buildUrl')
