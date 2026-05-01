@@ -7,6 +7,7 @@ use App\Enums\InsuranceProviderEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\DicPolicyIssuanceStepJob;
+use App\Models\ApplicationStorage;
 use App\Models\InsuranceProvider;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
@@ -31,13 +32,10 @@ beforeEach(function (): void {
 });
 
 it('sets unique lock window from application storage retry delay', function (): void {
-    DB::table('application_storage')->insert([
+    ApplicationStorage::factory()->create([
         'key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS,
         'value' => '100',
         'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-        'deleted_at' => null,
     ]);
 
     $job = new DicPolicyIssuanceStepJob(1, 'IssuePolicy');
@@ -60,13 +58,9 @@ it('uses unique-until-processing so in-handle retry dispatches are not swallowed
 it('schedules delayed async step retry when runSingleDicAsyncStep throws', function (): void {
     Bus::fake();
 
-    $provider = InsuranceProvider::query()->create([
+    $provider = InsuranceProvider::factory()->create([
         'code' => InsuranceProviderEnum::DIC->value,
         'text' => 'DIC Test',
-        'sort_order' => 1,
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
     $travelId = DB::table('travel_quote_request')->insertGetId([
@@ -96,7 +90,7 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
     app()->instance(DicInsuranceService::class, $dic);
 
     (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
-        ->handle(app(DicInsuranceService::class));
+        ->handle(app(DicInsuranceService::class), app(PolicyIssuanceService::class));
 
     expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::PROCESSING_STATUS);
 
@@ -116,13 +110,9 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
 it('fails issuance immediately without retry when runSingleDicAsyncStep throws non-transport exception', function (): void {
     Bus::fake();
 
-    $provider = InsuranceProvider::query()->create([
+    $provider = InsuranceProvider::factory()->create([
         'code' => InsuranceProviderEnum::DIC->value,
         'text' => 'DIC Test',
-        'sort_order' => 1,
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
     $travelId = DB::table('travel_quote_request')->insertGetId([
@@ -164,7 +154,7 @@ it('fails issuance immediately without retry when runSingleDicAsyncStep throws n
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 
     (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
-        ->handle(app(DicInsuranceService::class));
+        ->handle(app(DicInsuranceService::class), app(PolicyIssuanceService::class));
 
     expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::FAILED_STATUS);
 
@@ -174,13 +164,9 @@ it('fails issuance immediately without retry when runSingleDicAsyncStep throws n
 it('marks issuance failed after max attempts when runSingleDicAsyncStep throws', function (): void {
     Bus::fake();
 
-    $provider = InsuranceProvider::query()->create([
+    $provider = InsuranceProvider::factory()->create([
         'code' => InsuranceProviderEnum::DIC->value,
         'text' => 'DIC Test',
-        'sort_order' => 1,
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
     $travelId = DB::table('travel_quote_request')->insertGetId([
@@ -237,7 +223,7 @@ it('marks issuance failed after max attempts when runSingleDicAsyncStep throws',
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 
     (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
-        ->handle(app(DicInsuranceService::class));
+        ->handle(app(DicInsuranceService::class), app(PolicyIssuanceService::class));
 
     expect($process->fresh()->status)->toBe(PolicyIssuanceEnum::FAILED_STATUS);
 

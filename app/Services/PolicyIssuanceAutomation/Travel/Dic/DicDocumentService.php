@@ -13,6 +13,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class DicDocumentService
 {
@@ -40,7 +41,7 @@ class DicDocumentService
                 'document_code' => $documentCode,
             ]);
 
-            throw new \RuntimeException('DIC Travel: document type not found for code '.$documentCode);
+            throw new RuntimeException('DIC Travel: document type not found for code '.$documentCode);
         }
 
         // S3 pre-signed URLs: one GET; avoid a separate HEAD (often not allowed on the same presigned request).
@@ -49,7 +50,7 @@ class DicDocumentService
             ->get($documentUrl);
 
         if (! $download->successful() || $download->body() === '') {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'DIC Travel: failed to download document from URL (HTTP '.($download->status() ?? 0).')',
             );
         }

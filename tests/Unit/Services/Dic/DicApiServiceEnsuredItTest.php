@@ -53,7 +53,7 @@ it('issuePolicy returns mapped EnsuredIT error for already sold policy', functio
     $quote->code = 'UNIT-TQ-1';
     $quote->insurer_quote_number = '00000000-0000-4000-8000-0000000000aa';
 
-    $service = new DicApiService(new DicResponseHandler, $builder);
+    $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
 
     expect($result['status'])->toBeFalse()
@@ -88,7 +88,7 @@ it('issuePolicy persists a failed log when HTTP client yields no response', func
     $quote = new TravelQuote;
     $quote->code = 'UNIT-TQ-2';
 
-    $service = new DicApiService(new DicResponseHandler, $builder);
+    $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
 
     expect($result['status'])->toBeFalse()
@@ -123,7 +123,7 @@ it('issuePolicy persists failed issuance log when HTTP succeeds but JSON body is
     $quote->code = 'UNIT-TQ-non-array';
     $quote->insurer_quote_number = '00000000-0000-4000-8000-0000000000aa';
 
-    $service = new DicApiService(new DicResponseHandler, $builder);
+    $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
 
     expect($result['status'])->toBeFalse();
@@ -146,12 +146,44 @@ it('getPolicyDoc maps 401 AUTH_ERROR for certificate download path', function ()
     $quote->code = 'UNIT-TQ-3';
     $quote->insurer_quote_number = $policyId;
 
-    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class));
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
     $result = $service->getPolicyDoc($quote, new PolicyIssuance);
 
     expect($result['status'])->toBeFalse()
         ->and($result['completed_step'])->toBe(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC)
         ->and($result['message'])->toContain('token expired');
+});
+
+it('getPolicyDoc returns failure without HTTP when insurer_quote_number is missing', function () {
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService
+        ->shouldReceive('storePolicyIssuanceLog')
+        ->once()
+        ->with(
+            Mockery::type(TravelQuote::class),
+            [],
+            Mockery::type('array'),
+            'dic-get-policy-doc/missing-insurer-quote-number',
+            PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
+            PolicyIssuanceEnum::FAILED_STATUS,
+            Mockery::type(PolicyIssuance::class),
+        );
+    app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
+    $quote = new TravelQuote;
+    $quote->code = 'UNIT-TQ-no-policy-id';
+    $quote->insurer_quote_number = null;
+
+    $service = new DicApiService(
+        new DicResponseHandler,
+        Mockery::mock(DicRequestBuilder::class),
+        app(PolicyIssuanceService::class),
+    );
+    $result = $service->getPolicyDoc($quote, new PolicyIssuance);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['completed_step'])->toBe(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC)
+        ->and($result['error'])->toContain('insurer_quote_number');
 });
 
 it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function () {
@@ -171,7 +203,7 @@ it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function (
     $quote->code = 'UNIT-TQ-4';
     $quote->insurer_quote_number = $policyId;
 
-    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class));
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
     $result = $service->getBrokerInvoice($quote, new PolicyIssuance);
 
     expect($result['status'])->toBeFalse()

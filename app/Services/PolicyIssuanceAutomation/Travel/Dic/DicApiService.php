@@ -16,6 +16,7 @@ class DicApiService
     public function __construct(
         private DicResponseHandler $responseHandler,
         private DicRequestBuilder $requestBuilder,
+        private PolicyIssuanceService $policyIssuanceService,
     ) {}
 
     /**
@@ -37,7 +38,7 @@ class DicApiService
 
         if ($payload === [] || ! isset($payload['policy_id'])) {
             $result = $this->responseHandler->issuePolicyInvalidPayloadResponse();
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+            $this->policyIssuanceService->storePolicyIssuanceLog(
                 $quote,
                 $payload,
                 ['error' => $result['error'] ?? $result['message'] ?? 'invalid_payload'],
@@ -53,7 +54,7 @@ class DicApiService
         $httpResponse = DicHttpFacade::authenticatedRequest('POST', $url, $payload);
         if ($httpResponse === null) {
             $result = $this->responseHandler->issuePolicyAuthFailureResponse();
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+            $this->policyIssuanceService->storePolicyIssuanceLog(
                 $quote,
                 $payload,
                 ['error' => $result['error'] ?? $result['message']],
@@ -74,7 +75,7 @@ class DicApiService
             ? PolicyIssuanceEnum::SUCCESS_STATUS
             : PolicyIssuanceEnum::FAILED_STATUS;
 
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+        $this->policyIssuanceService->storePolicyIssuanceLog(
             $quote,
             $payload,
             is_array($responseBody) ? $responseBody : [],
@@ -110,64 +111,22 @@ class DicApiService
     public function getPolicyDoc(TravelQuote $quote, PolicyIssuance $policyIssuance): array
     {
         $policyId = $quote->insurer_quote_number;
-
-        $path = 'policy-stores/'.$policyId.'/certificate:download';
-        $url = DicHttpFacade::buildUrl($path);
-
-        $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
-        if ($httpResponse === null) {
-            $result = $this->responseHandler->authTokenUnavailableStepResponse(
+        if ($policyId === null || $policyId === '') {
+            return $this->missingInsurerQuoteNumberFailure(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-            );
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
                 $quote,
-                [],
-                ['error' => $result['error'] ?? $result['message']],
-                $url,
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-                PolicyIssuanceEnum::FAILED_STATUS,
                 $policyIssuance,
+                'dic-get-policy-doc/missing-insurer-quote-number',
             );
-
-            return $result;
         }
 
-        $responseBody = $httpResponse->json() ?? [];
-
-        if ($httpResponse->failed()) {
-            $result = $this->responseHandler->buildStepResponseFromEnsuredItFailure(
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-                $httpResponse,
-            );
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
-                $quote,
-                [],
-                is_array($responseBody) ? $responseBody : [],
-                $url,
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-                PolicyIssuanceEnum::FAILED_STATUS,
-                $policyIssuance,
-            );
-
-            return $result;
-        }
-
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+        return $this->runAuthenticatedDicGetStep(
             $quote,
-            [],
-            is_array($responseBody) ? $responseBody : [],
-            $url,
-            PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-            PolicyIssuanceEnum::SUCCESS_STATUS,
             $policyIssuance,
-        );
-
-        return $this->responseHandler->buildStepResponse(
+            'policy-stores/'.$policyId.'/certificate:download',
             PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
-            true,
             'DIC GetPolicyDoc completed',
-            null,
-            is_array($responseBody) ? $responseBody : [],
+            true,
         );
     }
 
@@ -177,65 +136,120 @@ class DicApiService
     public function getBrokerInvoice(TravelQuote $quote, PolicyIssuance $policyIssuance): array
     {
         $policyId = $quote->insurer_quote_number;
+        if ($policyId === null || $policyId === '') {
+            return $this->missingInsurerQuoteNumberFailure(
+                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
+                $quote,
+                $policyIssuance,
+                'dic-get-broker-invoice/missing-insurer-quote-number',
+            );
+        }
 
-        $path = 'policy-stores/invoice/'.$policyId.':download';
+        return $this->runAuthenticatedDicGetStep(
+            $quote,
+            $policyIssuance,
+            'policy-stores/invoice/'.$policyId.':download',
+            PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
+            'DIC GetBrokerInvoice completed',
+            false,
+        );
+    }
+
+    /**
+     * Shared EnsuredIT GET (authenticated) flow for document / invoice download steps.
+     *
+     * @param  string  $step  {@see PolicyIssuanceEnum} step constant
+     * @return array<string, mixed>
+     */
+    private function runAuthenticatedDicGetStep(
+        TravelQuote $quote,
+        PolicyIssuance $policyIssuance,
+        string $path,
+        string $step,
+        string $successMessage,
+        bool $coerceSuccessPayloadToArray,
+    ): array {
         $url = DicHttpFacade::buildUrl($path);
-
         $httpResponse = DicHttpFacade::authenticatedRequest('GET', $url);
         if ($httpResponse === null) {
-            $result = $this->responseHandler->authTokenUnavailableStepResponse(
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-            );
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+            $result = $this->responseHandler->authTokenUnavailableStepResponse($step);
+            $this->policyIssuanceService->storePolicyIssuanceLog(
                 $quote,
                 [],
                 ['error' => $result['error'] ?? $result['message']],
                 $url,
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
+                $step,
                 PolicyIssuanceEnum::FAILED_STATUS,
                 $policyIssuance,
             );
+        } else {
+            $responseBody = $httpResponse->json() ?? [];
+            $normalizedForLog = is_array($responseBody) ? $responseBody : [];
 
-            return $result;
+            if ($httpResponse->failed()) {
+                $result = $this->responseHandler->buildStepResponseFromEnsuredItFailure(
+                    $step,
+                    $httpResponse,
+                );
+                $this->policyIssuanceService->storePolicyIssuanceLog(
+                    $quote,
+                    [],
+                    $normalizedForLog,
+                    $url,
+                    $step,
+                    PolicyIssuanceEnum::FAILED_STATUS,
+                    $policyIssuance,
+                );
+            } else {
+                $this->policyIssuanceService->storePolicyIssuanceLog(
+                    $quote,
+                    [],
+                    $normalizedForLog,
+                    $url,
+                    $step,
+                    PolicyIssuanceEnum::SUCCESS_STATUS,
+                    $policyIssuance,
+                );
+                $successPayload = $coerceSuccessPayloadToArray ? $normalizedForLog : $responseBody;
+                $result = $this->responseHandler->buildStepResponse(
+                    $step,
+                    true,
+                    $successMessage,
+                    null,
+                    $successPayload,
+                );
+            }
         }
 
-        $responseBody = $httpResponse->json() ?? [];
+        return $result;
+    }
 
-        if ($httpResponse->failed()) {
-            $result = $this->responseHandler->buildStepResponseFromEnsuredItFailure(
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-                $httpResponse,
-            );
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
-                $quote,
-                [],
-                is_array($responseBody) ? $responseBody : [],
-                $url,
-                PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-                PolicyIssuanceEnum::FAILED_STATUS,
-                $policyIssuance,
-            );
-
-            return $result;
-        }
-
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+    /**
+     * @return array<string, mixed>
+     */
+    private function missingInsurerQuoteNumberFailure(
+        string $step,
+        TravelQuote $quote,
+        PolicyIssuance $policyIssuance,
+        string $logEndpoint,
+    ): array {
+        $result = $this->responseHandler->buildStepResponse(
+            $step,
+            false,
+            'DIC step requires insurer_quote_number (EnsuredIT policy id) on the quote.',
+            'DIC: missing insurer_quote_number',
+        );
+        $this->policyIssuanceService->storePolicyIssuanceLog(
             $quote,
             [],
-            is_array($responseBody) ? $responseBody : [],
-            $url,
-            PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-            PolicyIssuanceEnum::SUCCESS_STATUS,
+            ['error' => $result['error'] ?? $result['message']],
+            $logEndpoint,
+            $step,
+            PolicyIssuanceEnum::FAILED_STATUS,
             $policyIssuance,
         );
 
-        return $this->responseHandler->buildStepResponse(
-            PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
-            true,
-            'DIC GetBrokerInvoice completed',
-            null,
-            $responseBody,
-        );
+        return $result;
     }
 
     /**

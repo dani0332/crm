@@ -36,6 +36,8 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public const QUEUE_NAME = 'policy-issuance-automation';
+
     public int $timeout = 180;
     public int $tries = 1;
 
@@ -48,7 +50,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         public int $policyIssuanceId,
         public string $step,
     ) {
-        $this->onQueue('policy-issuance-automation');
+        $this->onQueue(self::QUEUE_NAME);
         $retryDelaySeconds = (int) getAppStorageValueByKey(ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS, 90, true);
         $this->uniqueFor = max(120, $retryDelaySeconds + 30);
     }
@@ -58,8 +60,22 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         return 'dic-travel-policy-step-'.$this->policyIssuanceId.'-'.$this->step;
     }
 
-    public function handle(DicInsuranceService $dicInsuranceService): void
+    public function handle(DicInsuranceService $dicInsuranceService, PolicyIssuanceService $policyIssuanceService): void
     {
+        if (! $dicInsuranceService->isPolicyIssuanceAutomationEnabled()) {
+            $process = PolicyIssuance::query()->find($this->policyIssuanceId);
+            if ($process) {
+                $this->markProcessFailed($process, 'DIC Travel automation is disabled');
+            } else {
+                LoggerService::info('DIC async step skipped: policy issuance not found', [
+                    'policy_issuance_id' => $this->policyIssuanceId,
+                    'step' => $this->step,
+                ]);
+            }
+
+            return;
+        }
+
         $process = PolicyIssuance::query()
             ->with(['insuranceProvider', 'model'])
             ->find($this->policyIssuanceId);
@@ -87,7 +103,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         } elseif (! ($quote = $process->model) instanceof TravelQuote) {
             $this->markProcessFailed($process, 'Invalid quote model for DIC Travel');
         } else {
-            $this->continueDicAsyncPipeline($process, $quote, $dicInsuranceService);
+            $this->continueDicAsyncPipeline($process, $quote, $dicInsuranceService, $policyIssuanceService);
         }
     }
 
@@ -95,6 +111,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         PolicyIssuance $process,
         TravelQuote $quote,
         DicInsuranceService $dicInsuranceService,
+        PolicyIssuanceService $policyIssuanceService,
     ): void {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::DIC_TRAVEL_POLICY_AUTOMATION);
 
@@ -110,12 +127,6 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
-        if (! $dicInsuranceService->isPolicyIssuanceAutomationEnabled()) {
-            $this->markProcessFailed($process, 'DIC Travel automation is disabled');
-
-            return;
-        }
-
         $validation = $dicInsuranceService->validateBeforeDicAsyncRun($quote);
         if (! $validation['status']) {
             $message = $validation['error'] ?? $validation['message'] ?? 'DIC validation failed';
@@ -124,13 +135,14 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
-        $this->runDicStepAfterValidationPassed($process, $quote, $dicInsuranceService);
+        $this->runDicStepAfterValidationPassed($process, $quote, $dicInsuranceService, $policyIssuanceService);
     }
 
     private function runDicStepAfterValidationPassed(
         PolicyIssuance $process,
         TravelQuote $quote,
         DicInsuranceService $dicInsuranceService,
+        PolicyIssuanceService $policyIssuanceService,
     ): void {
         try {
             $stepResponse = $dicInsuranceService->runSingleDicAsyncStep($quote, $process, $this->step, false);
@@ -147,12 +159,12 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
                     'error' => $e->getMessage(),
                     'message' => $e->getMessage(),
                 ];
-                $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $stepResponse);
+                $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $policyIssuanceService, $stepResponse);
 
                 return;
             }
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+            $policyIssuanceService->storePolicyIssuanceLog(
                 $quote,
                 [],
                 [
@@ -185,7 +197,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
                     'quote_code' => $quote->code,
                 ]);
             } else {
-                self::dispatch($process->id, $next)->onQueue('policy-issuance-automation');
+                self::dispatch($process->id, $next)->onQueue(self::QUEUE_NAME);
                 LoggerService::info('DIC Travel: async next step dispatched', [
                     'policy_issuance_id' => $process->id,
                     'next_step' => $next,
@@ -205,7 +217,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         if ($attemptCountForStep < $maxAttemptsPerStep) {
             self::dispatch($process->id, $this->step)
                 ->delay(now()->addSeconds($retryDelaySeconds))
-                ->onQueue('policy-issuance-automation');
+                ->onQueue(self::QUEUE_NAME);
 
             LoggerService::info('DIC Travel: async step failed, retry scheduled', [
                 'policy_issuance_id' => $process->id,
@@ -218,7 +230,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
-        $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $stepResponse);
+        $this->finalizeDicAsyncStepAsPermanentlyFailed($process, $quote, $dicInsuranceService, $policyIssuanceService, $stepResponse);
 
         LoggerService::info('DIC Travel: async step failed after max attempts', [
             'policy_issuance_id' => $process->id,
@@ -250,11 +262,12 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         PolicyIssuance $process,
         TravelQuote $quote,
         DicInsuranceService $dicInsuranceService,
+        PolicyIssuanceService $policyIssuanceService,
         array $stepResponse,
     ): void {
         $ctx = $dicInsuranceService->resolveTravelDicAsyncFailureContext($this->step, $stepResponse);
 
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+        $policyIssuanceService->applyTravelDicAutomationFailure(
             $quote->fresh(),
             $ctx['insurer_api_status_id'],
             $ctx['process_involved'],
