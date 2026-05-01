@@ -9,6 +9,7 @@ use App\Enums\EnvEnum;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class EmailExportService
@@ -99,27 +100,50 @@ class EmailExportService
         $emailConfig = $this->getEmailConfiguration($subject);
         $emailParams = $this->buildEmailParameters($attachmentFilePath, $requestParams);
 
-        Mail::send(
-            ['html' => 'ExportCSVMail'],
-            $emailParams,
-            function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $attachmentFilePath) {
-                $message->to($recipientEmail);
+        try {
+            Mail::mailer()->getSymfonyTransport()->stop();
 
-                if (! empty($ccRecipients)) {
-                    $message->cc($ccRecipients);
+            Mail::send(
+                ['html' => 'ExportCSVMail'],
+                $emailParams,
+                function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $attachmentFilePath) {
+                    $message->to($recipientEmail);
+
+                    if (! empty($ccRecipients)) {
+                        $message->cc($ccRecipients);
+                    }
+
+                    $message->subject($emailConfig['subject']);
+                    $message->from($emailConfig['fromEmail'], $emailConfig['fromName']);
+
+                    // Attach file with appropriate MIME type
+                    $mimeType = $this->getMimeType($attachmentFilePath);
+                    $message->attach($attachmentFilePath, [
+                        'as' => basename($attachmentFilePath),
+                        'mime' => $mimeType,
+                    ]);
                 }
+            );
 
-                $message->subject($emailConfig['subject']);
-                $message->from($emailConfig['fromEmail'], $emailConfig['fromName']);
+            // Log successful email send
+            Log::info('Export email sent successfully', [
+                'recipient' => $recipientEmail,
+                'subject' => $emailConfig['subject'],
+                'file' => basename($attachmentFilePath),
+            ]);
+        } catch (\Throwable $e) {
+            // Log email sending failure
+            Log::error('Failed to send export email', [
+                'recipient' => $recipientEmail,
+                'subject' => $emailConfig['subject'],
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
-                // Attach file with appropriate MIME type
-                $mimeType = $this->getMimeType($attachmentFilePath);
-                $message->attach($attachmentFilePath, [
-                    'as' => basename($attachmentFilePath),
-                    'mime' => $mimeType,
-                ]);
-            }
-        );
+            // Re-throw exception so job can handle it properly
+            throw new \Exception("Failed to send email to {$recipientEmail}: {$e->getMessage()}", 0, $e);
+        }
     }
 
     /**

@@ -3,12 +3,14 @@
 namespace Tests\Helpers\Payments;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Payment test data helper.
@@ -66,7 +68,7 @@ class PaymentTestDataHelper
         // Get or create Admin role
         // Uses default connection (SQLite in tests as configured in phpunit.xml)
         $adminRole = Role::firstOrCreate(
-            ['name' => \App\Enums\RolesEnum::Admin, 'guard_name' => 'web'],
+            ['name' => RolesEnum::Admin, 'guard_name' => 'web'],
             ['created_at' => now(), 'updated_at' => now()]
         );
 
@@ -88,7 +90,7 @@ class PaymentTestDataHelper
         }
 
         // Clear permission cache to ensure permissions are available immediately
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Refresh user to ensure permissions are loaded
         $user->refresh();

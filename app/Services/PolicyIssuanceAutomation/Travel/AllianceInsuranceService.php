@@ -674,7 +674,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         // upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -687,9 +687,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ]);
 
         if ($newDocument->exists) {
-            WatermarkDocumentsJob::dispatch(
-                $newDocument->id, $quote->uuid, $documentType->id
-            );
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);

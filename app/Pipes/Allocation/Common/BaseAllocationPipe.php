@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\CarQuote;
@@ -62,7 +63,17 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function resolveLead()
     {
-        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
+        $leadQuery = $this->allocationRequest->model()
+            ->where('uuid', $this->allocationRequest->getQuoteUUID())
+            ->when(
+                $this->allocationRequest->getQuoteType() === QuoteTypes::CAR
+                    && ! $this->allocationRequest->getQuoteType()->isPersonalQuote(),
+                fn ($query) => $query->with([
+                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at',
+                ])
+            );
+
+        $lead = $leadQuery->first();
 
         if (! $lead) {
             LoggerService::info('Lead not found');
@@ -204,7 +215,8 @@ abstract class BaseAllocationPipe extends AllocationService
             UserStatusEnum::OFFLINE,
         ];
 
-        if (! $this->allocationRequest->isReassignmentJob()) {
+        // We need to add unavailable status if the lead is not a reassignment job or the lead is an AI advisor assigned
+        if (! $this->allocationRequest->isReassignmentJob() || $this->lead->isAIAdvisorAssigned()) {
             $statuses[] = UserStatusEnum::UNAVAILABLE;
         }
 
@@ -299,6 +311,10 @@ abstract class BaseAllocationPipe extends AllocationService
         }
 
         if ($this->lead instanceof CarQuote || $this->lead instanceof TravelQuote || $this->lead instanceof HealthQuote) {
+            $this->lead->sic_flow_enabled = 0;
+        }
+
+        if ($this->lead instanceof PersonalQuote && $this->lead->isCyber()) {
             $this->lead->sic_flow_enabled = 0;
         }
 

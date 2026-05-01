@@ -2,6 +2,7 @@
 
 namespace App\Pipes\Allocation\Car;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -43,7 +44,12 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 'isPUA' => $lead->isPUA(),
                 'sicAdvisorRequested' => $lead->sic_advisor_requested,
             ]);
-        } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested()) {
+        } elseif ($lead->isRevivalCommsIntentHighOrMedium()) {
+            $teamName = TeamNameEnum::ORGANIC;
+            LoggerService::info('Lead is a Revival lead and has intent high or medium. Assigning to Organic team.', [
+                'engagement_level' => $lead->carQuoteRequestDetail?->engagement_level,
+            ]);
+        } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested() && ! in_array($lead->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
         } elseif ($isSIC && $lead->isPaymentLinkRequested()) {

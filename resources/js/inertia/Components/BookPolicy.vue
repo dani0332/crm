@@ -5,6 +5,7 @@ const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 import NProgress from 'nprogress';
 import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
+import BookPolicySendPolicyDocumentsPanel from '@/inertia/Components/BookPolicySendPolicyDocumentsPanel.vue';
 const { isRequired } = useRules();
 import { h, defineComponent } from 'vue';
 
@@ -81,11 +82,15 @@ const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const commissionPercentageExceedsLimit = ref(false);
 const showCommissionPercentageExceedsLimitAlert = ref(false);
+const isParentCancelReissuePen =
+  props.bookPolicyDetails.isParentPolicyCancellationReissuedPending;
 
 const dateToYMD = date => {
   if (date) {
@@ -252,6 +257,8 @@ let is_lacking_payment = ref(
 );
 
 const isLifeLead = props.quoteType === quoteTypeCodeEnum.Life.toLowerCase();
+const isSavingsLead =
+  props.quoteType?.toLowerCase() === quoteTypeCodeEnum.SAVINGS?.toLowerCase();
 
 watch(
   () => page.props.bookPolicyDetails.isLackingOfPayment,
@@ -447,7 +454,7 @@ const calculateCommissionPercentage = (
 };
 
 const calculateCommissionBasedOnCurrency = () => {
-  if (isLifeLead && bpForm.currency !== 'AED') {
+  if ((isLifeLead || isSavingsLead) && bpForm.currency !== 'AED') {
     const exchangeRate = Number(bpForm.exchange_rate) || 0;
     const commissionBasedOnCurrency =
       Number(bpForm.commission_based_on_currency) || 0;
@@ -459,6 +466,8 @@ const calculateCommissionBasedOnCurrency = () => {
     } else {
       bpForm.commission_vat_not_applicable = '';
     }
+    // Trigger commission calculation to update totals and percentage
+    calculateCommission();
   }
 };
 
@@ -555,8 +564,8 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
-  // for life only
-  if (isLifeLead) {
+  // for life and savings
+  if (isLifeLead || isSavingsLead) {
     if (bpForm.currency !== 'AED') {
       return true;
     } else {
@@ -587,11 +596,13 @@ const disableCommissionVatApplicable = computed(() => {
 });
 
 const showCurrencyFields = computed(() => {
-  return isLifeLead && !props.isPlanDetailSectionEnabled;
+  // For life: show only when plan details section is not enabled
+  // For savings: always show (no plan details check needed)
+  return (isLifeLead && !props.isPlanDetailSectionEnabled) || isSavingsLead;
 });
 
 const showNonAEDFields = computed(() => {
-  return isLifeLead && bpForm.currency !== 'AED';
+  return (isLifeLead || isSavingsLead) && bpForm.currency !== 'AED';
 });
 
 const currencyOptions = [
@@ -810,14 +821,18 @@ watch(
 watch(
   () => bpForm.currency,
   newCurrency => {
-    if (isLifeLead) {
+    if (isLifeLead || isSavingsLead) {
       if (newCurrency === 'AED') {
         // Clear calculated fields when switching to AED
         bpForm.commission_based_on_currency = '';
         bpForm.exchange_rate = '';
+        // Recalculate commission after clearing currency-based fields
+        calculateCommission();
       } else {
         // Clear commission_vat_not_applicable when switching away from AED
         bpForm.commission_vat_not_applicable = '';
+        // Recalculate commission after clearing
+        calculateCommission();
       }
     }
   },
@@ -1815,6 +1830,30 @@ const isDocTypeLoading = docType => {
                     </template>
                   </x-tooltip>
                 </template>
+                <template
+                  v-else-if="
+                    isParentCancelReissuePen &&
+                    can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                >
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      class="mt-4 mr-2"
+                      color="orange"
+                      disabled
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span>
+                        {{
+                          `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
                 <template v-else>
                   <x-button
                     size="sm"
@@ -1943,11 +1982,17 @@ const isDocTypeLoading = docType => {
                   <template
                     v-if="
                       (props.bookPolicyDetails?.bookButton ||
-                        props.bookPolicyDetails?.policyCancelled) &&
+                        props.bookPolicyDetails?.policyCancelled ||
+                        isParentCancelReissuePen) &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                    <x-tooltip
+                      v-if="
+                        props.bookPolicyDetails.policyCancelled ||
+                        isParentCancelReissuePen
+                      "
+                    >
                       <x-button
                         size="sm"
                         class="mt-4 mr-2"
@@ -1955,7 +2000,8 @@ const isDocTypeLoading = docType => {
                         :disabled="
                           disableBookPolicyButton ||
                           isAMLNotClearedForTravelQuote ||
-                          disableIfPolicyFailedAndNoBookingFailedEditPermission
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                          isParentCancelReissuePen
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -2014,6 +2060,10 @@ const isDocTypeLoading = docType => {
                 {{ productionProcessTooltipEnum.ABU_DHABI_BRANCH_BOOKING_NOTE }}
               </p>
             </template>
+            <BookPolicySendPolicyDocumentsPanel
+              v-if="hasRole(rolesEnum.Engineering)"
+              :book-policy-details="props.bookPolicyDetails"
+            />
           </div>
         </x-form>
       </template>

@@ -1,0 +1,1286 @@
+# Policy Issuance Automation Architecture
+
+## Overview
+The Policy Issuance Automation system is a comprehensive, modular architecture designed to automate the complete policy issuance workflow with insurance providers. It provides a standardized interface for integrating multiple insurers across different Lines of Business (LOB) - Car, Health, and Travel.
+
+### Core Purpose
+- Automate the entire policy issuance lifecycle from quote to booked policy
+- Provide consistent error handling, logging, and retry mechanisms
+- Enable seamless integration with multiple insurance providers through a common interface
+- Maintain data integrity and audit trails throughout the automation process
+
+### Key Features
+- **Multi-step automation**: Sequential step execution with state management
+- **Provider-agnostic design**: Common interface for all insurance providers
+- **Comprehensive logging**: Detailed audit trails using LoggerService
+- **Validation at each step**: Pre-validation before API calls
+- **Retry mechanisms**: Handles timeouts and transient failures
+- **Document management**: Automated document upload/download and storage
+- **Status tracking**: Real-time tracking of automation progress
+- **Queue-based processing**: Asynchronous job processing for scalability
+
+---
+
+## Architecture Layers
+
+### 1. Interface Layer
+```
+PolicyIssuanceInterface
+├── executeSteps($process)
+└── createPolicyIssuanceSchedule($quote, $insurer)
+```
+
+**Purpose**: Defines the contract that all insurance provider services must implement.
+
+**Implementation**: Each insurance provider (Adnic, GIG, Liva, Alliance) implements this interface.
+
+### 2. Service Layer Architecture
+
+```
+PolicyIssuanceAutomation/
+├── PolicyIssuanceService              # Core orchestration service
+├── Health/
+│   └── Adnic/
+│       ├── AdnicInsuranceService      # Main orchestrator (implements Interface)
+│       ├── AdnicStepExecutor          # Step execution logic
+│       ├── AdnicApiService            # API communication layer
+│       ├── AdnicBookPolicyService     # Booking process handler
+│       ├── AdnicValidationService     # Data validation
+│       ├── AdnicQuoteUpdaterService   # Quote/Payment updates
+│       ├── AdnicDocumentHandler       # Document operations
+│       ├── AdnicHttpClient            # HTTP client
+│       ├── AdnicRequestBuilder        # Payload builder
+│       └── AdnicResponseHandler       # Response parser
+├── Car/
+│   ├── GIGInsuranceService
+│   └── LivaInsuranceService
+└── Travel/
+    └── AllianceInsuranceService
+```
+
+---
+
+## Core Components (Adnic Health Example)
+
+### 1. **AdnicInsuranceService** (Main Orchestrator)
+**Responsibility**:
+- Implements `PolicyIssuanceInterface`
+- Manages the overall automation flow
+- Coordinates between different services
+- Tracks step progression
+- Handles automation enablement checks
+
+**Key Methods**:
+- `createPolicyIssuanceSchedule()` - Initiates automation schedule
+- `executeSteps()` - Main entry point for step execution
+- `executeStepSequence()` - Sequential step execution with state management
+- `getNextStep()` - Determines next step based on completed steps
+- `isPolicyIssuanceAutomationEnabled()` - Feature toggle check
+- `getStepsLockingStatus()` - UI locking status for manual intervention
+
+**Pattern**: Strategy Pattern + Chain of Responsibility
+
+### 2. **AdnicStepExecutor** (Step Execution Layer)
+**Responsibility**:
+- Executes individual automation steps
+- Delegates to appropriate service methods
+- Updates automation status after each step
+- Handles step-specific error scenarios
+
+**Step Handlers**:
+```php
+private array $stepHandlers = [
+    AdnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
+    AdnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
+    AdnicEnum::STEP_UPLOAD_POLICY_DOCS => 'executeUploadPolicyDocumentsStep',
+    AdnicEnum::STEP_BOOK_POLICY => 'executeBookPolicyStep',
+];
+```
+
+**Pattern**: Command Pattern
+
+### 3. **AdnicApiService** (API Communication Layer)
+**Responsibility**:
+- Direct interaction with insurance provider APIs
+- Orchestrates API calls with proper payloads and headers
+- Stores API logs for audit trails
+- Updates quote and payment data after successful API calls
+
+**Key Methods**:
+- `issuePolicy()` - Creates policy with insurer
+- `uploadDocuments()` - Uploads customer documents to insurer
+- `uploadPolicyDocumentsToIMCRM()` - Downloads insurer docs and uploads to IMCRM
+
+**Dependencies**: RequestBuilder, ResponseHandler, DocumentHandler, QuoteUpdater
+
+### 4. **AdnicHttpClient** (HTTP Layer)
+**Responsibility**:
+- Manages HTTP communication with insurance provider
+- Configures authentication, headers, and timeouts
+- Provides consistent error handling for HTTP errors
+- Centralizes API configuration
+
+**Configuration**:
+- Base URL from config
+- Authorization token and subscription key
+- Configurable timeout from ApplicationStorage
+- Standard headers (Content-Type, Accept, Auth headers)
+
+**Pattern**: Facade Pattern for HTTP client
+
+### 5. **AdnicRequestBuilder** (Payload Builder)
+**Responsibility**:
+- Constructs API request payloads from domain models
+- Formats dates, addresses, and other data as per API requirements
+- Builds headers for specific API calls
+- Encapsulates payload structure knowledge
+
+**Key Methods**:
+- `buildIssuePolicyPayload()` - Policy creation payload
+- `buildUploadDocumentsPayload()` - Document upload payload
+- `buildDownloadDocumentPayload()` - Document download payload
+- `buildIssuePolicyHeaders()` - Custom headers for policy issuance
+
+**Pattern**: Builder Pattern
+
+### 6. **AdnicResponseHandler** (Response Parser)
+**Responsibility**:
+- Normalizes API responses into consistent structure
+- Parses success/error responses
+- Builds standardized step response arrays
+- Handles HTTP status codes and API-specific error formats
+
+**Response Structure**:
+```php
+[
+    'status' => bool,           // Success/failure
+    'completed_step' => string, // Last completed step
+    'message' => string,        // User-friendly message
+    'error' => mixed,          // Error details
+    'data' => mixed,           // Response data
+]
+```
+
+**Key Methods**:
+- `parseHttpResponse()` - Parse HTTP response to standard format
+- `buildStepResponse()` - Build consistent step response
+- `hasApiErrors()` - Check for API-level errors
+- `extractErrorMessage()` - Extract error messages
+
+**Pattern**: Adapter Pattern
+
+### 7. **AdnicValidationService** (Validation Layer)
+**Responsibility**:
+- Pre-validates data before API calls
+- Validates quote data completeness
+- Validates document availability
+- Validates booking prerequisites
+- Prevents unnecessary API calls with invalid data
+
+**Validation Types**:
+- **Required Data Validation**: Customer, payment, plan details
+- **Document Validation**: Emirates ID, required documents
+- **Download Documents Validation**: Document IDs availability
+- **Book Policy Validation**: Booking details completeness
+
+**Pattern**: Validator Pattern
+
+### 8. **AdnicBookPolicyService** (Booking Process)
+**Responsibility**:
+- Manages final booking process
+- Updates booking details
+- Triggers Sage process integration
+- Manages UI step locking status
+- Determines editable steps based on automation state
+
+**Key Methods**:
+- `bookPolicy()` - Execute complete booking process
+- `updateBookingDetails()` - Update payment and commission details
+- `getStepsLockingStatus()` - Determine UI editability
+
+**Integration Points**:
+- CentralService for booking updates
+- SageApiService for booking to Sage
+- BookPolicyRequest validation
+
+### 9. **AdnicQuoteUpdaterService** (Data Updater)
+**Responsibility**:
+- Updates quote data from API responses
+- Updates payment and commission information
+- Maintains data consistency between systems
+- Updates policy numbers, dates, and amounts
+
+**Key Methods**:
+- `updateQuoteFromIssuePolicyResponse()` - Updates quote with policy details
+- `updatePaymentFromIssuePolicyResponse()` - Updates payment with commission
+
+**Updates**:
+- Policy number, dates, amounts
+- VAT and commission details
+- Document IDs from insurer
+- Quote status transitions
+
+### 10. **AdnicDocumentHandler** (Document Management)
+**Responsibility**:
+- Fetches documents from Azure storage
+- Validates document types and formats
+- Uploads documents to insurer and IMCRM
+- Maps document types between systems
+- Handles base64 encoding/decoding
+
+**Key Features**:
+- Document type mapping (HEA_EID → insurer codes)
+- MIME type validation (PDF, JPEG, PNG)
+- Azure storage integration
+- Document content validation
+
+**Methods**:
+- `fetchDocumentContent()` - Retrieve from Azure
+- `uploadAndAttachToQuoteDocuments()` - Upload to IMCRM
+- `getDocumentByType()` - Find documents by type
+- `getDocTypeCodeForHealth()` - Map to insurer codes
+- `getDocTypeCodeForIMCRM()` - Map to IMCRM codes
+
+---
+
+## Automation Flow (Adnic Health Example)
+
+### Step 1: IssuePolicy
+**Purpose**: Create policy with insurance provider
+
+**Process**:
+1. Validate required data (customer, nationality, plan, payment)
+2. Build issue policy payload with customer and plan details
+3. Call insurer API `/cyber/generatePolicy`
+4. Parse response and extract policy details
+5. Update quote with policy number, dates, amounts
+6. Update payment with commission and invoice details
+7. Store API log for audit
+8. Mark step as completed
+
+**Success Criteria**:
+- API returns successful response
+- Policy number generated
+- Quote updated with policy details
+- Step marked as `STEP_ISSUE_POLICY`
+
+**Failure Handling**:
+- Log detailed error
+- Update insurer API status
+- Store failed log
+- Return error response
+
+### Step 2: UploadDocuments
+**Purpose**: Upload required customer documents to insurer
+
+**Process**:
+1. Validate insurer quote number exists
+2. Validate required documents uploaded (Emirates ID)
+3. Fetch document content from Azure storage
+4. Validate document MIME type
+5. Convert to base64 encoding
+6. Build upload payload with document details
+7. Call insurer API `/cyber/uploadDocument` for each document
+8. Parse response and check upload status
+9. Store API log
+10. Mark step as completed if all documents uploaded
+
+**Success Criteria**:
+- All required documents uploaded successfully
+- API confirms receipt
+- Step marked as `STEP_UPLOAD_DOCUMENTS`
+
+**Failure Handling**:
+- Stop on first failed document
+- Log detailed error
+- Update insurer API status
+- Return error with specific document
+
+### Step 3: UploadPolicyDocumentsToIMCRM
+**Purpose**: Download policy documents from insurer and upload to IMCRM
+
+**Process**:
+1. Validate document IDs exist (policy, tax invoice, debit note)
+2. For each document ID:
+   - Build download payload
+   - Call insurer API `/cyber/downloadDocument`
+   - Parse response and get base64 content
+   - Upload to IMCRM using QuoteDocumentService
+   - Map document type to IMCRM codes
+   - Store API log
+3. Validate all 3 documents downloaded and uploaded
+4. Mark step as completed
+
+**Documents**:
+- `HEA_EID` - Tax Invoice (insurer_tax_invoice_doc_id)
+- `CTIRBB` - Debit Note (insurer_debit_note_doc_id)
+- `POLICY_SCHEDULE` - Policy Document (insurer_policy_doc_id)
+
+**Success Criteria**:
+- All 3 documents downloaded from insurer
+- All 3 documents uploaded to IMCRM
+- Step marked as `STEP_UPLOAD_POLICY_DOCS`
+
+**Failure Handling**:
+- Log failed documents
+- Return error with document names
+- Update insurer API status
+
+### Step 4: BookPolicy
+**Purpose**: Finalize booking and trigger Sage integration
+
+**Process**:
+1. Update booking details:
+   - Build booking payload from payment data
+   - Validate using BookPolicyRequest
+   - Update via CentralService
+2. Validate book policy prerequisites:
+   - Validate using SendBookPolicyRequest
+   - Check all required fields
+3. Create Sage process:
+   - Build Sage request
+   - Post to SageApiService
+   - Store policy issuance log
+4. Mark step as completed
+
+**Success Criteria**:
+- Booking details updated successfully
+- Validation passes
+- Sage process created
+- Step marked as `STEP_BOOK_POLICY`
+
+**Failure Handling**:
+- Stop on first failure
+- Log detailed error at each sub-step
+- Update insurer API status
+- Return specific error message
+
+---
+
+## Design Patterns & Principles
+
+### 1. Single Responsibility Principle (SRP)
+Each service has a single, well-defined responsibility:
+- **HttpClient**: HTTP communication only
+- **RequestBuilder**: Payload construction only
+- **ResponseHandler**: Response parsing only
+- **ValidationService**: Data validation only
+- **DocumentHandler**: Document operations only
+
+### 2. Dependency Injection
+All services use constructor injection for dependencies:
+```php
+public function __construct(
+    private AdnicStepExecutor $stepExecutor,
+    private AdnicValidationService $validationService,
+    private AdnicBookPolicyService $bookPolicyService,
+    private AdnicResponseHandler $responseHandler,
+) {}
+```
+
+### 3. Interface Segregation
+`PolicyIssuanceInterface` defines minimal required methods:
+- `executeSteps($process)`
+- `createPolicyIssuanceSchedule($quote, $insurer)`
+
+### 4. Chain of Responsibility
+Step execution flows through a chain:
+```
+AdnicInsuranceService → AdnicStepExecutor → AdnicApiService → AdnicHttpClient
+```
+
+### 5. Strategy Pattern
+Different insurance providers implement the same interface with provider-specific strategies.
+
+### 6. Builder Pattern
+`AdnicRequestBuilder` constructs complex payloads step-by-step.
+
+### 7. Facade Pattern
+`AdnicHttpFacade` provides a simplified interface to the HTTP client.
+
+### 8. Adapter Pattern
+`AdnicResponseHandler` adapts various API response formats to a consistent structure.
+
+### 9. Factory Pattern
+`PolicyIssuanceService::init()` creates appropriate service instance based on quote type and insurer.
+
+---
+
+## Key Implementation Guidelines
+
+### 1. Strict Typing
+**ALWAYS use strict typing in all automation files:**
+```php
+declare(strict_types=1);
+```
+
+### 2. Comprehensive Logging
+**Log at every significant step:**
+```php
+LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
+LoggerService::info('Step description', extra: [
+    'process_id' => $process->id,
+    'step' => $currentStep,
+    // ... relevant context
+]);
+```
+
+**Log Types**:
+- `info()` - Successful operations, step completion
+- `error()` - Failures, exceptions
+- `warning()` - Automation disabled, configuration issues
+
+**Context Data**:
+- Process ID, Quote ID, Quote Code
+- Step name, Handler name
+- API endpoint, Payload keys
+- Error messages, Status codes
+
+### 3. Consistent Response Structure
+**All methods return standardized response:**
+```php
+return [
+    'status' => bool,           // true = success, false = failure
+    'completed_step' => string, // Step identifier
+    'message' => string,        // User-friendly message
+    'error' => mixed,          // Error details (null on success)
+    'data' => mixed,           // Response data (null on failure)
+];
+```
+
+### 4. Pre-Validation Before API Calls
+**Always validate data before making API calls:**
+```php
+$validationResult = $this->validationService->validateRequiredData($quote);
+if (!$validationResult['status']) {
+    return $validationResult;
+}
+```
+
+**Benefits**:
+- Prevents unnecessary API calls
+- Provides clear error messages
+- Saves API costs
+- Improves user experience
+
+### 5. API Log Storage
+**Store every API call for audit trails:**
+```php
+app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+    $quote,
+    $payload,           // Request payload
+    $response,          // Response data
+    $endpoint,          // Full URL
+    $step,             // Step identifier
+    $status,           // SUCCESS_STATUS or FAILED_STATUS
+    $process           // PolicyIssuance model
+);
+```
+
+### 6. Step Progression Management
+**Update completed step after each success:**
+```php
+if (($response['status'] ?? false) && isset($response['completed_step'])) {
+    $process->update(['completed_step' => $response['completed_step']]);
+    $process->refresh();
+}
+```
+
+### 7. Error Handling Strategy
+
+**Exception Handling**:
+```php
+try {
+    // Step execution
+} catch (Exception $e) {
+    $response['error'] = $e->getMessage();
+    LoggerService::error('Exception occurred', extra: [
+        'process_id' => $process->id,
+    ], exception: $e);
+    return $response;
+}
+```
+
+**API Error Handling**:
+```php
+if (!$apiResponse['status']) {
+    LoggerService::error('API call failed', extra: [
+        'endpoint' => $endPoint,
+        'error' => $apiResponse['error'] ?? AdnicEnum::UNKNOWN_ERROR,
+    ]);
+    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
+        $quote,
+        $quoteType,
+        $failedStatusId,
+        $automationStatusId,
+        $stepName
+    );
+    return $apiResponse;
+}
+```
+
+### 8. HTTP Client Configuration
+**Centralize API configuration:**
+```php
+private string $baseUrl;      // From config
+private array $authParam;     // Authorization credentials
+private array $baseHeaders;   // Standard headers
+private int $apiTimeout;      // From ApplicationStorage
+```
+
+**Timeout Configuration**:
+- Retrieve from `ApplicationStorage` for runtime configurability
+- Apply to all HTTP requests via client builder
+- Log timeout value in API calls
+
+### 9. Document Handling
+**Document Flow**:
+1. **Fetch**: Azure Storage → Application
+2. **Validate**: MIME type, content
+3. **Transform**: Base64 encoding
+4. **Upload**: Application → Insurer or IMCRM
+5. **Map**: Document type codes between systems
+
+**MIME Type Validation**:
+```php
+private const ALLOWED_DOCUMENT_MIME_TYPES = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png'
+];
+```
+
+### 10. State Management
+
+**Process States** (in `PolicyIssuance` model):
+- `PENDING_STATUS` - Waiting to be processed
+- `PROCESSING_STATUS` - Currently being processed
+- `BOOKING_PENDING_STATUS` - Waiting for booking
+- `TIMEOUT_STATUS` - Timed out, eligible for retry
+- `FAILED_STATUS` - Failed, manual intervention required
+
+**Completed Steps** (in `completed_step` field):
+- `null` - No steps completed
+- `STEP_ISSUE_POLICY` - Policy created
+- `STEP_UPLOAD_DOCUMENTS` - Documents uploaded
+- `STEP_UPLOAD_POLICY_DOCS` - Policy docs retrieved
+- `STEP_BOOK_POLICY` - Booking completed
+
+### 11. Feature Toggle Pattern
+**Always check if automation is enabled:**
+```php
+public function isPolicyIssuanceAutomationEnabled(): bool
+{
+    return app(ApplicationStorageService::class)
+        ->getValueByKey(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE);
+}
+```
+
+**Benefits**:
+- Runtime enable/disable without deployment
+- A/B testing capabilities
+- Gradual rollout
+- Emergency shutdown
+
+### 12. Retry Mechanism
+**Timeout retry configuration:**
+```php
+public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
+{
+    return (bool) app(ApplicationStorageService::class)
+        ->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE);
+}
+```
+
+### 13. UI Integration - Steps Locking
+**Determine editable steps based on automation state:**
+```php
+public function getStepsLockingStatus($quote, $throughAutomation = false): array
+{
+    return [
+        'policyIssuance' => $policyIssuance,
+        'isEditPolicyDetailsDisabled' => bool,
+        'isEditBookingDetailsDisabled' => bool,
+        'message' => string,
+        'insurer_api_status' => string,
+    ];
+}
+```
+
+**Rules**:
+- `throughAutomation = true`: All steps editable
+- No policy issuance: All steps editable
+- Failed status: Editable based on completed step
+- Processing status: Limited editability
+
+---
+
+## Integration Points
+
+### 1. Queue System
+**Job Dispatch**:
+```php
+PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)
+    ->onQueue('policy-issuance-automation');
+```
+
+**Benefits**:
+- Asynchronous processing
+- Scalability
+- Retry capabilities
+- Load distribution
+
+### 2. PolicyIssuanceService
+**Core service that manages all automation:**
+- `schedulePolicyIssuance()` - Create automation schedule
+- `init()` - Factory method for provider services
+- `executePolicyIssuanceAutomationSteps()` - Command handler
+- `storePolicyIssuanceLog()` - Audit trail storage
+- `updateAPIIssuanceAndInsurerStatus()` - Status updates
+
+### 3. External Services Integration
+- **CentralService**: Booking details updates
+- **SageApiService**: Sage ERP integration
+- **QuoteDocumentService**: Document management
+- **ApplicationStorageService**: Feature toggles and configuration
+- **LoggerService**: Centralized logging
+
+### 4. Database Models
+- **PolicyIssuance**: Automation process tracking
+- **PolicyIssuanceLog**: API call audit logs
+- **PersonalQuote**: Quote data storage
+- **Payment**: Payment and commission data
+- **QuoteDocument**: Document attachments
+
+---
+
+## Testing Strategy
+
+### 1. Unit Tests
+**Test individual service methods in isolation:**
+- Mock dependencies
+- Test success scenarios
+- Test error scenarios
+- Validate response structure
+
+### 2. Integration Tests
+**Test service interactions:**
+- Test step progression
+- Test API integration
+- Test database updates
+- Test document flow
+
+### 3. Feature Tests
+**Test complete automation flow:**
+- Test full step sequence
+- Test retry mechanisms
+- Test failure handling
+- Test status updates
+
+### 4. Mock External APIs
+**Mock insurance provider APIs for testing:**
+```php
+Http::fake([
+    '*cyber/generatePolicy' => Http::response($successResponse, 200),
+    '*cyber/uploadDocument' => Http::response($uploadResponse, 200),
+]);
+```
+
+---
+
+## Configuration Management
+
+### 1. Environment Configuration (config/constants.php)
+```php
+'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL'),
+'ADNIC_AUTHORIZATION_TOKEN' => env('ADNIC_AUTHORIZATION_TOKEN'),
+'ADNIC_SUBSCRIPTION_KEY' => env('ADNIC_SUBSCRIPTION_KEY'),
+'ADNIC_API_BROKER_NO' => env('ADNIC_API_BROKER_NO'),
+```
+
+### 2. Runtime Configuration (ApplicationStorage)
+- `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE` - Feature toggle
+- `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE` - Retry toggle
+- `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT` - API timeout in seconds
+
+### 3. Enum Constants (AdnicEnum)
+```php
+public const STEP_ISSUE_POLICY = 'IssuePolicy';
+public const STEP_UPLOAD_DOCUMENTS = 'UploadDocuments';
+public const STEP_UPLOAD_POLICY_DOCS = 'UploadPolicyDocumentsToIMCRM';
+public const STEP_BOOK_POLICY = 'BookPolicy';
+```
+
+---
+
+## Service Provider Registration
+
+```php
+class AdnicServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        App::bind('AdnicHttpClient', function () {
+            return new AdnicHttpClient;
+        });
+    }
+
+    public function boot()
+    {
+        App::bind(AdnicInsuranceService::class, function ($app) {
+            return new AdnicInsuranceService(
+                $app->make(AdnicStepExecutor::class),
+                $app->make(AdnicValidationService::class),
+                $app->make(AdnicBookPolicyService::class),
+                $app->make(AdnicResponseHandler::class),
+            );
+        });
+    }
+}
+```
+
+**Register in `config/app.php`:**
+```php
+'providers' => [
+    // ...
+    App\Providers\AdnicServiceProvider::class,
+],
+```
+
+---
+
+## Facade Registration
+
+```php
+class AdnicHttpFacade extends Facade
+{
+    protected static function getFacadeAccessor()
+    {
+        return AdnicHttpClient::class;
+    }
+}
+```
+
+**Usage**:
+```php
+use App\Facades\AdnicHttpFacade;
+
+$response = AdnicHttpFacade::post($endPoint, $payload, $headers);
+```
+
+---
+
+## Adding New Insurance Provider Integration
+
+### Step-by-Step Guide
+
+#### 1. Create Provider Directory Structure
+```
+app/Services/PolicyIssuanceAutomation/{LOB}/{ProviderName}/
+├── {Provider}InsuranceService.php
+├── {Provider}StepExecutor.php
+├── {Provider}ApiService.php
+├── {Provider}HttpClient.php
+├── {Provider}RequestBuilder.php
+├── {Provider}ResponseHandler.php
+├── {Provider}ValidationService.php
+├── {Provider}BookPolicyService.php
+├── {Provider}QuoteUpdaterService.php
+└── {Provider}DocumentHandler.php
+```
+
+#### 2. Implement PolicyIssuanceInterface
+```php
+class {Provider}InsuranceService implements PolicyIssuanceInterface
+{
+    public function executeSteps($process) { }
+    public function createPolicyIssuanceSchedule($quote, $insurer) { }
+    public function isPolicyIssuanceAutomationEnabled(): bool { }
+    public function getNextStep($completedStep = null): ?string { }
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array { }
+}
+```
+
+#### 3. Define Step Constants
+```php
+class {Provider}Enum
+{
+    public const STEP_1 = 'Step1Name';
+    public const STEP_2 = 'Step2Name';
+    // ... define all steps
+    public const UNKNOWN_ERROR = 'Unknown error';
+}
+```
+
+#### 4. Implement Step Handlers
+```php
+class {Provider}StepExecutor
+{
+    private array $stepHandlers = [
+        {Provider}Enum::STEP_1 => 'executeStep1',
+        // ... map all steps
+    ];
+}
+```
+
+#### 5. Create HTTP Client
+```php
+class {Provider}HttpClient
+{
+    private string $baseUrl;
+    private array $authParam;
+    private array $baseHeaders;
+    private int $apiTimeout;
+
+    public function post(string $endPoint, array $payload = [], array $headers = []): Response { }
+}
+```
+
+#### 6. Create Service Provider
+```php
+class {Provider}ServiceProvider extends ServiceProvider
+{
+    public function boot()
+    {
+        App::bind({Provider}InsuranceService::class, function ($app) {
+            return new {Provider}InsuranceService(
+                $app->make({Provider}StepExecutor::class),
+                // ... inject dependencies
+            );
+        });
+    }
+}
+```
+
+#### 7. Register in PolicyIssuanceService
+```php
+public function init($quoteType, $insurerCode)
+{
+    return match (ucfirst($quoteType)) {
+        QuoteTypes::{LOB}->value => match ($insurerCode) {
+            InsuranceProvidersEnum::{CODE} => new {Provider}InsuranceService,
+            default => null,
+        },
+        default => null,
+    };
+}
+```
+
+#### 8. Add Feature Toggles
+```php
+// ApplicationStorageEnums
+public const ENABLE_{PROVIDER}_{LOB}_POLICY_ISSUANCE = 'enable_{provider}_{lob}_policy_issuance';
+public const {PROVIDER}_{LOB}_AUTOMATION_API_TIMEOUT = '{provider}_{lob}_automation_api_timeout';
+```
+
+#### 9. Add Configuration
+```php
+// config/constants.php
+'{PROVIDER}_API_BASE_URL' => env('{PROVIDER}_API_BASE_URL'),
+'{PROVIDER}_AUTHORIZATION_TOKEN' => env('{PROVIDER}_AUTHORIZATION_TOKEN'),
+```
+
+#### 10. Create Tests
+- Unit tests for each service
+- Integration tests for API calls
+- Feature tests for complete flow
+
+---
+
+## Performance Considerations
+
+### 1. Database Optimization
+- Use `select()` to fetch only required fields
+- Eager load relationships with `with()`
+- Use chunking for bulk processing
+- Index `policy_issuance` table fields
+
+### 2. API Optimization
+- Implement timeout configuration
+- Use retry mechanisms for timeouts
+- Batch document uploads where possible
+- Cache authentication tokens if applicable
+
+### 3. Queue Optimization
+- Use dedicated queue for automation
+- Configure worker count based on volume
+- Implement job timeout
+- Monitor failed jobs
+
+### 4. Memory Management
+- Process large document sets in chunks
+- Release model references after use
+- Use generators for large collections
+- Monitor memory usage in logs
+
+---
+
+## Monitoring & Alerting
+
+### 1. Log Monitoring
+**Track key metrics:**
+- Automation success rate
+- Step-wise failure rates
+- API response times
+- Timeout occurrences
+
+### 2. Failed Job Monitoring
+**Monitor queue:**
+- Failed job count
+- Retry attempts
+- Error patterns
+- Stuck jobs
+
+### 3. Status Tracking
+**Dashboard metrics:**
+- Pending automations count
+- Processing automations count
+- Failed automations count
+- Average completion time
+
+### 4. Alert Configuration
+**Set up alerts for:**
+- High failure rate (> threshold)
+- Stuck processes (> time limit)
+- API errors (> threshold)
+- Queue backlog (> size limit)
+
+---
+
+## Troubleshooting Guide
+
+### Common Issues
+
+#### 1. Automation Not Starting
+**Check**:
+- Feature toggle enabled
+- PolicyIssuance record created
+- Queue worker running
+- Job dispatched successfully
+
+#### 2. Step Failing Repeatedly
+**Check**:
+- Validation errors in logs
+- API connectivity
+- Data completeness
+- Document availability
+
+#### 3. Documents Not Uploading
+**Check**:
+- Azure storage connectivity
+- Document MIME type
+- Document size
+- Base64 encoding
+
+#### 4. Booking Process Failing
+**Check**:
+- Booking details completeness
+- Sage API availability
+- Commission calculation
+- Payment split data
+
+---
+
+## Security Considerations
+
+### 1. API Authentication
+- Store credentials in environment variables
+- Never log sensitive credentials
+- Use secure token storage
+- Rotate tokens periodically
+
+### 2. Document Security
+- Validate document MIME types
+- Scan for malicious content
+- Use secure storage (Azure)
+- Implement access controls
+
+### 3. Data Privacy
+- Mask sensitive data in logs
+- Encrypt data in transit
+- Implement audit trails
+- Follow GDPR compliance
+
+### 4. Authorization
+- Validate user permissions
+- Implement role-based access
+- Audit automation triggers
+- Monitor manual interventions
+
+---
+
+## Best Practices Summary
+
+### DO:
+✅ Always use strict typing (`declare(strict_types=1)`)
+✅ Log comprehensively at every step
+✅ Validate data before API calls
+✅ Use dependency injection
+✅ Return consistent response structure
+✅ Store API logs for audit
+✅ Update step progression after each success
+✅ Handle exceptions gracefully
+✅ Use feature toggles for runtime control
+✅ Implement retry mechanisms
+✅ Follow Single Responsibility Principle
+✅ Use meaningful variable and method names
+✅ Add inline documentation
+✅ Test thoroughly (unit, integration, feature)
+
+### DON'T:
+❌ Skip validation steps
+❌ Make API calls without logging
+❌ Hardcode configuration values
+❌ Ignore error responses
+❌ Update status without validation
+❌ Skip dependency injection
+❌ Return inconsistent response structures
+❌ Log sensitive data
+❌ Couple services tightly
+❌ Skip exception handling
+❌ Ignore timeout configurations
+❌ Deploy without testing
+
+---
+
+## Update Protocol
+
+**CRITICAL**: This architecture documentation must be updated after each significant module change to maintain accuracy and consistency across the codebase. When implementing new features, modifying existing ones, or adding new insurance provider integrations, follow this protocol:
+
+### 1. Review Current Patterns
+**Before making changes:**
+- Review existing service implementations (Adnic, GIG, Liva, Alliance)
+- Identify patterns used in current implementations
+- Ensure new code follows established architectural patterns
+- Check consistency with Single Responsibility Principle
+- Validate proper use of dependency injection
+- Verify adherence to interface contracts
+
+### 2. Update Architecture Documentation
+**When patterns change:**
+- Document new service classes and their responsibilities
+- Update component diagrams and flow descriptions
+- Add new steps or modify existing step definitions
+- Document new design patterns if introduced
+- Update integration points section
+- Revise examples to reflect current implementation
+- Add new provider-specific sections if applicable
+
+### 3. Validate Security Implementations
+**Security checklist:**
+- Ensure API credentials stored in environment variables
+- Verify sensitive data is not logged (tokens, passwords)
+- Validate document MIME type checking is in place
+- Confirm authentication headers properly configured
+- Check that error messages don't expose sensitive information
+- Verify Azure storage access uses secure connections
+- Ensure audit logs capture security-relevant events
+
+### 4. Test Pattern Consistency
+**Cross-module validation:**
+- Verify patterns work across different LOBs (Car, Health, Travel)
+- Test that new provider integrations follow same structure
+- Validate response structures are consistent
+- Ensure error handling follows established patterns
+- Confirm logging patterns are uniform
+- Test step progression logic consistency
+- Validate feature toggle implementation
+
+### 5. Update Integration Points
+**When integrations change:**
+- Update PolicyIssuanceService::init() factory method
+- Register new service providers in config/app.php
+- Update job queue configurations if needed
+- Document new external service dependencies
+- Update database model relationships if changed
+- Verify backward compatibility with existing integrations
+
+### 6. Verify API Contracts
+**API interface validation:**
+- Ensure PolicyIssuanceInterface methods implemented correctly
+- Validate all services return consistent response structure
+- Check that step identifiers follow naming conventions
+- Verify HTTP client configuration is standardized
+- Confirm timeout configurations are externalized
+- Validate request/response logging is comprehensive
+
+### 7. Check Enum Usage
+**Enum consistency:**
+- Ensure step constants follow naming convention (STEP_*)
+- Validate response constants are defined (RESPONSE_*)
+- Confirm status constants are properly used
+- Check that enum values are used instead of magic strings
+- Verify new enum values are added to appropriate classes
+- Update documentation with new enum constants
+
+### 8. Validate Logging
+**Logging requirements:**
+- Ensure LoggerService used throughout automation flow
+- Verify logging starts with startQuoteLogging()
+- Confirm each step logs start, success, and failure
+- Check that extra context data is meaningful and complete
+- Validate sensitive data is excluded from logs
+- Ensure exception logging includes full context
+- Verify log levels are appropriate (info, error, warning)
+
+### 9. Performance Review
+**Performance validation:**
+- Check that database queries use specific field selection
+- Verify eager loading is used to prevent N+1 queries
+- Ensure large datasets are processed in chunks
+- Validate API timeout configurations are appropriate
+- Check memory usage for document processing
+- Review queue processing efficiency
+- Monitor API response times after changes
+
+### 10. Update Feature Toggles
+**Configuration management:**
+- Add new feature toggles to ApplicationStorageEnums
+- Document toggle purpose and expected values
+- Update isPolicyIssuanceAutomationEnabled() implementations
+- Ensure runtime configuration is properly retrieved
+- Document default values and toggle behavior
+- Add toggles to monitoring and alerting systems
+
+### 11. Backward Compatibility
+**Compatibility checks:**
+- Ensure existing policy issuance processes can complete
+- Verify database schema changes are backward compatible
+- Check that API log format changes don't break reporting
+- Validate existing queue jobs can process updated data
+- Test that UI integrations remain functional
+- Ensure old step identifiers still work during transition
+
+### 12. Testing Strategy Update
+**Test coverage:**
+- Write unit tests for all new service methods
+- Add integration tests for new API endpoints
+- Create feature tests for complete automation flows
+- Test error scenarios and edge cases
+- Validate retry mechanism with failure scenarios
+- Test timeout handling and recovery
+- Mock external services appropriately
+
+### 13. Documentation Update
+**Keep documentation current:**
+- Update inline PHPDoc blocks for all changed methods
+- Revise this architecture document with new patterns
+- Update troubleshooting guide with new issues encountered
+- Document new configuration variables
+- Add examples for new provider implementations
+- Update best practices based on lessons learned
+- Revise testing strategy section
+
+### 14. Code Review Process
+**Review checklist:**
+- All automation changes require peer review
+- Verify strict typing is used throughout
+- Check that dependency injection is properly implemented
+- Validate error handling is comprehensive
+- Ensure logging meets requirements
+- Confirm tests are adequate
+- Review security implications
+
+### 15. Deployment Strategy
+**Safe rollout:**
+- Deploy with feature toggle disabled initially
+- Test in staging environment with real scenarios
+- Enable for small percentage of users first
+- Monitor logs and error rates closely
+- Have rollback plan ready
+- Document deployment steps and configuration
+- Communicate deployment to stakeholders
+
+### 16. Post-Deployment Validation
+**After deployment:**
+- Monitor automation success rates
+- Check error logs for unexpected issues
+- Validate API call logs are being stored correctly
+- Verify queue processing is working
+- Monitor performance metrics
+- Collect feedback from support team
+- Document any issues and resolutions
+
+### Change Log Format
+When documenting changes, use this format:
+
+```markdown
+### [Version] - YYYY-MM-DD
+**Changed By**: [Developer Name]
+**Module**: [Insurance Provider/LOB]
+
+#### Added
+- New service: [ServiceName] - [Purpose]
+- New step: [STEP_NAME] - [Description]
+- New feature toggle: [TOGGLE_NAME]
+
+#### Modified
+- [ServiceName].[methodName]: [Reason for change]
+- [Flow description]: [What changed]
+
+#### Removed
+- Deprecated: [What was removed and why]
+
+#### Security
+- [Any security-related changes]
+
+#### Breaking Changes
+- [List any breaking changes with migration guide]
+
+#### Notes
+- [Additional context, gotchas, or important information]
+```
+
+### When to Update This Document
+
+Update this architecture document when:
+1. ✅ Adding a new insurance provider integration
+2. ✅ Modifying the step execution flow
+3. ✅ Changing response structures or interfaces
+4. ✅ Adding or removing automation steps
+5. ✅ Modifying error handling patterns
+6. ✅ Changing logging strategies
+7. ✅ Updating validation logic
+8. ✅ Modifying document handling
+9. ✅ Changing queue processing
+10. ✅ Adding new configuration options
+11. ✅ Discovering new best practices
+12. ✅ Resolving significant bugs that require pattern changes
+
+### Update Responsibility
+
+- **Primary Owner**: Backend Team Lead
+- **Reviewers**: Senior Developers, Architects
+- **Approval**: Technical Lead must approve architectural changes
+- **Communication**: Notify team in #development channel
+- **Timeline**: Document updates must be completed within same sprint as code changes
+
+---
+
+## References
+
+### Related Files
+- `app/Interfaces/PolicyIssuanceInterface.php` - Core interface
+- `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php` - Main orchestration
+- `app/Jobs/PolicyIssuanceJob.php` - Queue job handler
+- `app/Models/PolicyIssuance.php` - Process model
+- `app/Models/PolicyIssuanceLog.php` - Log model
+
+### Related Enums
+- `PolicyIssuanceEnum` - Status constants
+- `QuoteStatusEnum` - Quote status constants
+- `QuoteTypes` - LOB types
+- `InsuranceProvidersEnum` - Provider codes
+
+### Related Services
+- `LoggerService` - Centralized logging
+- `ApplicationStorageService` - Runtime configuration
+- `CentralService` - Booking operations
+- `SageApiService` - ERP integration
+- `QuoteDocumentService` - Document management
+
+---
+
+**Last Updated**: 2025-12-11
+**Architecture Version**: 1.0
+**Primary Implementation**: Adnic Health Policy Issuance Automation

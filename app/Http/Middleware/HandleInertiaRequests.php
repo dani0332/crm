@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\ClaimsEnum;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -35,6 +36,7 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
@@ -113,6 +115,7 @@ class HandleInertiaRequests extends Middleware
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),
+            'quoteTypeIds' => QuoteTypeId::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
@@ -122,11 +125,11 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'ecomBaseUrl' => config('constants.ECOM_BASE_URL'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -134,7 +137,7 @@ class HandleInertiaRequests extends Middleware
             'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
-            'authorisePaymentCount' => Cache::remember("shared_authorisepayment_count_{$authID}", now()->addMinutes(5), fn () => app(PaymentRepository::class)->getAuthorisePaymentCount()),
+            'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),
@@ -150,6 +153,7 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'claimsEnum' => ClaimsEnum::asArray(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
@@ -164,6 +168,7 @@ class HandleInertiaRequests extends Middleware
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ];
     }
 
@@ -223,6 +228,7 @@ class HandleInertiaRequests extends Middleware
                 PermissionsEnum::UtmLeadsSalesReport,
                 PermissionsEnum::RENEWAL_BATCH_REPORT,
                 PermissionsEnum::CONVERSION_AS_AT_REPORT,
+                PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
                 PermissionsEnum::MANAGEMENT_REPORT,
                 PermissionsEnum::VIEW_ALL_REPORTS,
             ],
@@ -233,6 +239,7 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Conversion', route('advisor-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Conversion Optimization Engine', route('conversion-optimization-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Advisor Performance', route('advisor-performance-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Distribution', route('advisor-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::VIEW_ALL_REPORTS]), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
@@ -251,83 +258,176 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PET_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::PET_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_EDIT,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Health',
                         route('lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'health'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Car',
                         route('car-lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::TRAVEL_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Travel',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::TRAVEL]),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::LIFE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Life',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
                         fn ($s) => $s->attributes(['icon' => 'life'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::HOME_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Home',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
                         fn ($s) => $s->attributes(['icon' => 'home'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::PET_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::PET_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Pet',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
                         fn ($s) => $s->attributes(['icon' => 'pet'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Corpline',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CORPLINE]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CYCLE_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Cycle',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYCLE]),
                         fn ($s) => $s->attributes(['icon' => 'cycle'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::YACHT_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Savings',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::SAVINGS]),
                         fn ($s) => $s->attributes(['icon' => 'savings'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_EDIT,
+                        ]),
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        // CLAIM_ALLOCATION_DASHBOARD
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)
+                            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true),
+                        'Claims',
+                        route('claim-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+                        ]),
+                        'Cyber',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
+                        fn ($s) => $s->attributes(['icon' => 'cyber'])
                     );
             });
         }
@@ -358,6 +458,19 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)
+            && ! getAppStorageValueByKey(ApplicationStorageEnums::DISABLE_CLAIMS_MODULE, false, useCache: true)) {
+            $nav = $nav->add('Services', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CLAIM_LIST),
+                        'Claims',
+                        route('claims.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
@@ -451,6 +564,7 @@ class HandleInertiaRequests extends Middleware
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
                 ->addIf((auth()->user()->can(PermissionsEnum::YachtQuotesList) || (userHasProduct(quoteTypeCode::Yacht) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf((auth()->user()->can(PermissionsEnum::CYBER_QUOTES_LIST) || (userHasProduct(quoteTypeCode::CYBER) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cyber Quotes', route('cyber-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cyber']))
                 ->addIf((auth()->user()->can(PermissionsEnum::JetskiQuotesList) || (userHasProduct(quoteTypeCode::Jetski) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
         });
         /* personal quotes section end */
@@ -527,11 +641,11 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TRANSAPP_SEARCH])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        auth()->user()->can(PermissionsEnum::TRANSAPP_SEARCH),
                         'Search Transaction',
                         route('home'),
                         fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
@@ -563,17 +677,22 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::CustomersList)) {
+        if (auth()->user()->canAny([
+            PermissionsEnum::CustomersList,
+            PermissionsEnum::CustomersUpload,
+            PermissionsEnum::LEADS_BY_EMAIL,
+        ])
+        ) {
             $nav = $nav->add('Customers', '', function (Section $section) {
                 $section
-                    ->add('Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::CustomersList), 'Search', route('customers-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CustomersUpload),
                         'Uploads',
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->canAny([PermissionsEnum::LEADS_BY_EMAIL, PermissionsEnum::CustomersList]), 'Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -731,12 +850,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'Allocation Audit',
                         route('admin.allocation-audit.index'),
@@ -746,6 +859,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
@@ -838,6 +957,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
+                                'GBP Eligible Nationalities',
+                                route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

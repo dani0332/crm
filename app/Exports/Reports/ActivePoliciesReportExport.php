@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class ActivePoliciesReportExport implements CsvExportableInterface
@@ -42,7 +43,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing
      */
-    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    public function getQuery(array $requestParams = []): ?Builder
     {
         $request = request()->merge($requestParams);
 
@@ -58,6 +59,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             'PEC Policy Count',
             'Price (VAT applicable)',
             'Price (VAT not applicable)',
+            'Branch',
         ];
     }
 
@@ -70,6 +72,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             $this->resolveNumberFormat($quote->pec_count ?? 0),
             $this->resolveNumberFormat($quote->price_with_vat ?? 0),
             $this->resolveNumberFormat($quote->price_without_vat ?? 0),
+            $quote->branch_name ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

@@ -59,7 +59,10 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Inertia\Response;
@@ -241,7 +244,6 @@ class TravelController extends Controller
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (isset($fields['advisor_id']) && ! empty($fields['advisor_id']) && isset($fields['advisor_id']['value']) && $fields['advisor_id']['value'] === 'Customer Happiness Centre') {
             $fields['advisor_id']['value'] = 'Auto Issued';
@@ -258,7 +260,7 @@ class TravelController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $emirates = Emirate::getOptions('id', 'text', true);
         $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
@@ -309,7 +311,6 @@ class TravelController extends Controller
             'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
             'documentType' => $documentType,
-            'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
             'activities' => $activities,
@@ -326,7 +327,6 @@ class TravelController extends Controller
             'message' => session('message'),
             'quoteType' => QuoteTypes::TRAVEL,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'storageUrl' => storageUrl(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -408,6 +408,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
@@ -421,6 +422,7 @@ class TravelController extends Controller
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
+            'emirates' => $emirates,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
             'subSources' => $subSources,
@@ -435,7 +437,7 @@ class TravelController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(StoreTravelRequest $request)
@@ -504,6 +506,7 @@ class TravelController extends Controller
             : 'Pending';
 
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
@@ -518,6 +521,7 @@ class TravelController extends Controller
             'customerAddressData' => $customerAddressData,
             'courierQuoteStatus' => $courierQuoteStatus,
             'subSources' => $subSources,
+            'emirates' => $emirates,
             'leadSourceParams' => [], // Empty for edit mode
         ]);
     }
@@ -525,7 +529,7 @@ class TravelController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -629,7 +633,7 @@ class TravelController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {

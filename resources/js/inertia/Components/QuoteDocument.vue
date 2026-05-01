@@ -1,12 +1,12 @@
 <script setup>
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  storageUrl: String,
   expanded: {
     type: Boolean,
     required: false,
@@ -19,6 +19,10 @@ defineProps({
   inslyId: String,
   sendPolicy: Boolean,
   bookPolicyDetails: Array,
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -34,11 +38,14 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -81,7 +88,7 @@ const docForm = reactive({
   file: null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
+const uploadFile = (doc, filesWithInfo, documentTypeKey) => {
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
@@ -102,6 +109,8 @@ const uploadFile = (doc, filesWithInfo) => {
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
   formData.append('quote_type', usePage().props.quoteType);
+  formData.append('document_type_key', documentTypeKey);
+
   files.forEach(file => {
     formData.append('files[]', file.file);
   });
@@ -209,31 +218,6 @@ onMounted(() => {
   window.addEventListener('document-notification', handleDocumentNotification);
 });
 
-const getS3TempUrl = async docURL => {
-  try {
-    NProgress.start();
-    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-      docURL,
-    });
-    NProgress.done();
-    // Check if the request was successful and the response contains the URL
-    if (response.status === 200 && response.data.url) {
-      // Open the URL in a new tab
-      window.open(response.data.url, '_blank');
-    } else {
-      notification.error({
-        title: response.data.error,
-        position: 'top',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      title: error,
-      position: 'top',
-    });
-    console.error('An error occurred:', error);
-  }
-};
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
 const handleDocumentNotification = event => {
@@ -250,6 +234,52 @@ onUnmounted(() => {
     handleDocumentNotification,
   );
 });
+
+const issuanceDocDisableToolTip = ref('');
+const isPolicyLocked = quoteStatusId => {
+  return [
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(quoteStatusId);
+};
+
+const isIssuingDocumentsTabDisabled = key => {
+  let quoteStatusId = page.props.quote.quote_status_id;
+  if (
+    key === documentTypeEnum.ISSUING_DOCUMENTS &&
+    isPolicyLocked(quoteStatusId)
+  ) {
+    let status = '';
+    if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
+      status = 'booked';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_QUEUED) {
+      status = 'in queued';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_FAILED) {
+      status = 'failed';
+    }
+
+    issuanceDocDisableToolTip.value = `Issuing Document uploads are not allowed after policy is ${status}. Please use Send Update (CPU) to upload additional issuing documents.`;
+
+    return true;
+  }
+
+  return false;
+};
+const { openTempUrl } = useDocumentTempUrl();
+
+const filteredQuoteDocuments = computed(() =>
+  (props.quoteDocuments || []).filter(
+    d => d.document_type_code !== documentTypeCodeEnum.BOR_SIGN,
+  ),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
+  }
+};
 </script>
 
 <template>
@@ -348,11 +378,7 @@ onUnmounted(() => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="
-            quoteDocuments.filter(
-              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
-            ) || []
-          "
+          :items="filteredQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -360,21 +386,17 @@ onUnmounted(() => {
         >
           <template #item-original_name="item">
             <a
-              v-if="hasAnyRole([rolesEnum.BetaUser])"
-              @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
+              @click.prevent="openDocumentInNewTab(item)"
             >
-              {{ item.original_name }}
+              <span>{{ item.original_name }}</span>
             </a>
-
-            <a
-              v-else
-              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
-              target="_blank"
-              class="text-primary-600 cursor-pointer"
+            <span
+              v-if="hasRole(rolesEnum.Engineering) && item.document_type_code"
+              class="text-gray-600 text-xs font-mono block mt-0.5"
             >
-              {{ item.original_name }}
-            </a>
+              {{ item.document_type_code }}
+            </span>
           </template>
           <template
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
@@ -424,11 +446,22 @@ onUnmounted(() => {
           v-for="(docType, key, index) in documentTypes"
           :key="index"
           :disabled="
-            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
-            !quote.insurance_provider_id &&
-            !quote.plan_id
+            (key === documentTypeEnum.ISSUING_DOCUMENTS &&
+              !quote.insurance_provider_id &&
+              !quote.plan_id) ||
+            isIssuingDocumentsTabDisabled(key)
           "
         >
+          <template #tab v-if="isIssuingDocumentsTabDisabled(key)">
+            <div class="flex items-center justify-center">
+              <x-tooltip placement="right">
+                <span class="font-medium">{{ key.replace(/_/g, ' ') }}</span>
+                <template #tooltip>
+                  {{ issuanceDocDisableToolTip }}
+                </template>
+              </x-tooltip>
+            </div>
+          </template>
           <div
             v-for="documentType in docType"
             :key="documentType.id"
@@ -447,6 +480,12 @@ onUnmounted(() => {
               </p>
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
+              </p>
+              <p
+                v-if="hasRole(rolesEnum.Engineering) && documentType.code"
+                class="text-xs"
+              >
+                Document type code: {{ documentType.code }}
               </p>
 
               <x-alert
@@ -480,7 +519,7 @@ onUnmounted(() => {
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
                 :multiple="true"
-                @change="uploadFile(documentType, $event)"
+                @change="uploadFile(documentType, $event, key)"
               />
 
               <template
@@ -490,22 +529,21 @@ onUnmounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  v-if="hasAnyRole([rolesEnum.BetaUser])"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-                <a
-                  v-else
-                  :href="
-                    storageUrl +
-                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
-                  "
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                  <span>{{
+                    quoteDocument.original_name || quoteDocument.doc_name
+                  }}</span>
+                  <span
+                    v-if="
+                      hasRole(rolesEnum.Engineering) &&
+                      quoteDocument.document_type_code
+                    "
+                    class="text-gray-600 font-mono block truncate"
+                  >
+                    {{ quoteDocument.document_type_code }}
+                  </span>
                 </a>
               </template>
             </div>

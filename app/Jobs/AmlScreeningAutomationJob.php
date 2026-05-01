@@ -9,10 +9,12 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\AmlAutomation;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -33,68 +35,54 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
     private $className = 'AmlScreeningAutomationJob';
-    private TravelQuote $quoteRequest;
+    private TravelQuote|PersonalQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(QuoteTypes $quoteType, TravelQuote $quoteRequest)
+    public function __construct(QuoteTypes $quoteType, TravelQuote|PersonalQuote $quoteRequest)
     {
         $this->quoteType = $quoteType;
         $this->quoteRequest = $quoteRequest;
         $this->quoteRefId = $this->quoteRequest?->code ?? '';
-        $this->uniqueKey = strtolower($this->quoteRefId);
+        $this->uniqueKey = strtolower($this->quoteRefId).'-'.strtolower($quoteType->value);
     }
 
     /**
      * Execute the job.
+     *
+     * Refactored to reduce Cognitive Complexity as per SonarQube guidelines.
      */
     public function handle()
     {
-        $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
-        if (! $isAmlAutomationEnabled) {
-            LoggerService::info($this->className.' is not enabled from cms. Ref-ID: '.$this->quoteRefId);
+        $exitReason = $this->getExitReason();
+        $loggerPrefix = $this->className.' - Ref-ID: '.$this->quoteRefId.' - ';
+
+        if ($exitReason !== null) {
+            LoggerService::info($loggerPrefix.' Exiting job with reason: '.$exitReason);
 
             return;
         }
 
-        if (! $this->quoteRequest) {
-            LoggerService::info($this->className.' Quote not found');
+        $customerInfo = $this->getCustomerInfo();
+        if (empty($customerInfo)) {
+            $this->logAndReturn($loggerPrefix, 'Customer info not found or incomplete');
 
             return;
         }
 
-        $this->quoteRequest->refresh();
-        LoggerService::startQuoteLogging($this->quoteRequest);
-
-        $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-        $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
-        $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
-
-        if (! $isApiIssuanceStatusYes || ! $isAMLPending || ! $isAutomationInQueue) {
-            return;
-        }
-
-        $travelQuoteService = app(TravelQuoteService::class);
-
-        // Get customer required travel info
-        $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
-        if (empty($customerTravelInfo['id'])) {
-            return;
-        }
-
-        // Check customer required travel info is complete
-        $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
-        if (! $checkCustomerTravelInfo['status']) {
-            LoggerService::info($this->className.' - Ref-ID: '.$this->quoteRefId.' - '.$checkCustomerTravelInfo['message']);
+        $checkCustomerInfo = $this->checkCustomerInfoIsComplete($customerInfo);
+        if (! $checkCustomerInfo['status']) {
+            $msg = $checkCustomerInfo['message'] ?? 'Customer info incomplete';
+            $this->logAndReturn($loggerPrefix, $msg, $msg);
 
             return;
         }
 
-        $idType = 'passport';
-        $idNumber = $customerTravelInfo['passport'] ?? null;
+        $idType = $customerInfo['id_type'] ?? 'passport';
+        $idNumber = $customerInfo['id_number'] ?? null;
 
         $amlAutomation = AmlAutomation::updateOrCreate(
             ['code' => $this->quoteRefId],
@@ -103,44 +91,166 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
-            LoggerService::info($this->className.' - Ref-ID: '.$this->quoteRefId.' - getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
+            LoggerService::info($loggerPrefix.' getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
 
-            $customer = $customerTravelInfo;
-            if (! empty($insuredPersonData)) {
-                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData];
-            }
+            $customer = ! empty($insuredPersonData)
+                ? [...$customerInfo, ...(array) $insuredPersonData]
+                : $customerInfo;
 
-            // Prepare AML check request data
-            $amlRequestData = [
-                'is_automation' => true,
-                'customer_id' => $customer['customer_id'],
-                'customer_type' => CustomerTypeEnum::Individual,
-                'quote_type' => $this->quoteType->value,
-                'screening_id_type' => $idType,
-                'screening_id_number' => $idNumber,
-                'insured_first_name' => $customer['first_name'],
-                'insured_last_name' => $customer['last_name'],
-                'nationality_id' => $customer['nationality_id'],
-                'dob' => $customer['dob'],
-                'screening_gender' => $customer['gender'],
-            ];
+            $amlRequestData = $this->buildAmlRequestData($customer, $idType, $idNumber);
 
             $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
-            if (! $quoteAmlProcessCall->status) {
-                $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Failed: '.$quoteAmlProcessCall->message]);
-                LoggerService::info($this->className.' - Ref-ID: '.$this->quoteRefId.' - Completed - AmlProcessCall - failed: '.$quoteAmlProcessCall->message);
 
-                return;
-            }
-
-            $this->quoteRequest->refresh();
-            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            LoggerService::info($this->className.' - Ref-ID: '.$this->quoteRefId.' - Completed - AmlProcessCall - response: '.$quoteAmlProcessCall->message);
+            $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix);
 
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
-            LoggerService::error($this->className.' - Ref-ID: '.$this->quoteRefId.' - Exception: '.$e->getMessage());
+            LoggerService::error($loggerPrefix.' Exception: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Determines if early exit is needed and returns exit reason if so, otherwise null.
+     * Limits returns to a maximum of 3.
+     */
+    private function getExitReason(): ?string
+    {
+        $exitReason = null;
+
+        if (! $this->isAmlAutomationEnabled()) {
+            $exitReason = 'AML Automation is not enabled';
+        } elseif (! $this->quoteRequest) {
+            LoggerService::info($this->className.' Quote not found');
+            $exitReason = 'Quote not found';
+        } else {
+            $this->quoteRequest->refresh();
+            LoggerService::startQuoteLogging($this->quoteRequest);
+
+            if (! $this->preconditionsMet()) {
+                $exitReason = 'Preconditions not met';
+            }
+        }
+
+        return $exitReason;
+    }
+
+    /**
+     * Helper to log customer info errors and exit.
+     */
+    private function logAndReturn(string $loggerPrefix, string $infoMessage, ?string $exitReason = null): void
+    {
+        LoggerService::info($loggerPrefix.' '.$infoMessage);
+        LoggerService::info($loggerPrefix.' Exiting job with reason: '.($exitReason ?? $infoMessage));
+    }
+
+    private function isAmlAutomationEnabled(): bool
+    {
+        $enabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
+        if (! $enabled) {
+            LoggerService::info($this->className.' is not enabled from cms. Ref-ID: '.$this->quoteRefId);
+        }
+
+        return (bool) $enabled;
+    }
+
+    private function preconditionsMet(): bool
+    {
+        $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+        $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
+
+        $isAutomationInQueue = false;
+        if ($this->quoteType === QuoteTypes::TRAVEL) {
+            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
+        } elseif ($this->quoteType === QuoteTypes::CYBER) {
+            $amlAutomation = AmlAutomation::where('code', $this->quoteRefId)->first();
+            $isAutomationInQueue = $amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
+        }
+
+        return $isApiIssuanceStatusYes && $isAMLPending && $isAutomationInQueue;
+    }
+
+    private function buildAmlRequestData($customer, $idType, $idNumber): array
+    {
+        return [
+            'is_automation' => true,
+            'customer_id' => $customer['customer_id'],
+            'customer_type' => CustomerTypeEnum::Individual,
+            'quote_type' => $this->quoteType->value,
+            'screening_id_type' => $idType,
+            'screening_id_number' => $idNumber,
+            'insured_first_name' => $customer['first_name'],
+            'insured_last_name' => $customer['last_name'],
+            'nationality_id' => $customer['nationality_id'],
+            'dob' => $customer['dob'],
+            'screening_gender' => $customer['gender'],
+        ];
+    }
+
+    private function processAmlResult($quoteAmlProcessCall, $amlAutomation, string $loggerPrefix): void
+    {
+        if (! $quoteAmlProcessCall->status) {
+            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Failed: '.$quoteAmlProcessCall->message]);
+            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$quoteAmlProcessCall->message);
+        } else {
+            $this->quoteRequest->refresh();
+            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
+            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - response: '.$quoteAmlProcessCall->message);
+        }
+    }
+
+    /**
+     * Get customer information based on quote type.
+     */
+    private function getCustomerInfo(): ?array
+    {
+        $customerInfo = null;
+
+        if ($this->quoteType === QuoteTypes::TRAVEL) {
+            $travelQuoteService = app(TravelQuoteService::class);
+            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
+
+            if (! empty($customerTravelInfo['id'])) {
+                $customerInfo = [
+                    'id' => $customerTravelInfo['id'],
+                    'code' => $customerTravelInfo['code'],
+                    'customer_id' => $customerTravelInfo['customer_id'],
+                    'first_name' => $customerTravelInfo['first_name'],
+                    'last_name' => $customerTravelInfo['last_name'],
+                    'dob' => $customerTravelInfo['dob'],
+                    'nationality_id' => $customerTravelInfo['nationality_id'],
+                    'gender' => $customerTravelInfo['gender'],
+                    'id_type' => 'passport',
+                    'id_number' => $customerTravelInfo['passport'] ?? null,
+                ];
+            }
+        } elseif ($this->quoteType === QuoteTypes::CYBER) {
+            $cyberQuoteService = app(CyberQuoteService::class);
+            $customerCyberInfo = (array) $cyberQuoteService->getCustomerCyberInfo($this->quoteRequest->id, $this->quoteType->value);
+
+            if (! empty($customerCyberInfo['id'])) {
+                $customerInfo = $customerCyberInfo;
+            }
+        }
+
+        return $customerInfo;
+    }
+
+    /**
+     * Check if customer information is complete.
+     */
+    private function checkCustomerInfoIsComplete(array $customerInfo): array
+    {
+        if ($this->quoteType === QuoteTypes::TRAVEL) {
+            $travelQuoteService = app(TravelQuoteService::class);
+
+            return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerInfo);
+        } elseif ($this->quoteType === QuoteTypes::CYBER) {
+            $cyberQuoteService = app(CyberQuoteService::class);
+
+            return $cyberQuoteService->checkCustomerCyberInfoIsComplete($customerInfo);
+        }
+
+        return ['status' => false, 'message' => 'Unknown quote type'];
     }
 
     public function middleware()

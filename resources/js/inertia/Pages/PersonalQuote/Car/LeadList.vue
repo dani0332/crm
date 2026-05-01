@@ -1,6 +1,6 @@
 <script setup>
-import LeadAssignment from '../Partials/LeadAssignment.vue';
 import CreateLeadModal from '../../../Components/CreateLeadModal.vue';
+import LeadAssignment from '../Partials/LeadAssignment.vue';
 
 defineProps({
   quotes: Object,
@@ -492,6 +492,13 @@ function setQueryStringFilters() {
   for (const [key, value] of Object.entries(params)) {
     // Check for indexed array format like quote_status_id[0], quote_status_id[1]
     const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+    /**
+     * Matches strings like "teams[0]" and return full match and your captured groups.
+     * [0]: Full match ("teams[0]")
+     * [1]: Base name ("teams")
+     * [2]: Numeric index ("0")
+     * Returns null if the index is missing, e.g., "teams[]".
+     */
 
     if (arrayMatch) {
       const [, fieldName, index] = arrayMatch;
@@ -543,7 +550,12 @@ function setQueryStringFilters() {
 const fetchTeamUsers = () => {
   loader.advisorTeamOptions = true;
   axios
-    .post('/get-users-by-team', { team_filter: filters.teams })
+    .post('/get-users-by-team', {
+      team_filter:
+        filters.teams.length > 0
+          ? filters.teams
+          : teamOptions.value.map(item => item.value),
+    })
     .then(response => {
       if (
         response.data.length > 0 &&
@@ -606,6 +618,11 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
+  // if(params.payment_status_id) {
+  // TODO: add flag so this runs only from report page (fetchTeamUsers)
+  // }
+  fetchTeamUsers();
+
   setQueryStringFilters();
   let filtersCleaned = cleanObj(filters);
 
@@ -981,6 +998,7 @@ const onConfirmPUAExport = () => {
           placeholder="Please select payment status"
           class="w-full"
           filterable
+          multiple
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -1154,7 +1172,10 @@ const onConfirmPUAExport = () => {
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.teams = teamOptions.map(item => item.value)"
+              @select-all="
+                ((filters.teams = teamOptions.map(item => item.value)),
+                fetchTeamUsers())
+              "
               @clear="filters.teams = []"
             />
           </template>

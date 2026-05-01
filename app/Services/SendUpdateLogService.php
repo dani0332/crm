@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarVehicleUse;
+use App\Enums\CurrencyEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
@@ -52,9 +53,11 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -96,6 +99,7 @@ class SendUpdateLogService
             'renewal_batch',
             'policy_expiry_date',
             'vat',
+            'is_branch_applicable',
         ];
 
         $requestDetailsSkipColumns = [
@@ -388,7 +392,7 @@ class SendUpdateLogService
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
                 // Check if relationObject is a Collection
-                if ($relationObject instanceof \Illuminate\Database\Eloquent\Collection) {
+                if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
                     if ($relation == 'travelDestinations') {
                         $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
@@ -674,7 +678,7 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $quote = $repository::getBy('uuid', $quoteUuid);
+            $quote = $quoteType !== QuoteTypes::CYBER->value ? $repository::getBy('uuid', $quoteUuid) : app(CyberQuoteService::class)->getOne($quoteUuid);
             $payments = $quote?->payments ?? null;
             if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
@@ -867,7 +871,7 @@ class SendUpdateLogService
 
             info('Book Update - Payment Details Updated');
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
@@ -1143,7 +1147,7 @@ class SendUpdateLogService
         } else {
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
-            $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
+            $response = SageProcess::create($sageProcessData);
             if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
                 $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
             }
@@ -1261,7 +1265,7 @@ class SendUpdateLogService
 
             DB::commit();
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             DB::rollBack();
             info('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
@@ -1326,8 +1330,8 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category->code;
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
+            $docCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', $docCodes)->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
@@ -1353,11 +1357,22 @@ class SendUpdateLogService
             $notes = $sendUpdateLog?->notes ?? '';
         }
 
+        if ($quoteTypeId == QuoteTypeId::Cyber) {
+            $documents[] = [
+                'doc_url' => ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '',
+                'document_type_text' => 'InsuranceMarket.ae™ Policy Wording.pdf',
+                'isPolicyWording' => true,
+            ];
+        }
         $emailData = (object) [
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'reason' => $notes ?? '',
             'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
             'insuranceCompany' => $quote?->insuranceProvider?->text ?? '',
+            'providerName' => $quote?->insuranceProvider?->text ?? '',
+            'coverage' => isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote?->cyberPlanDetail?->coverage)
+                ? CurrencyEnum::USD->value.' '.number_format($quote?->cyberPlanDetail?->coverage)
+                : '-',
             'planName' => $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-',
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
@@ -1753,9 +1768,10 @@ class SendUpdateLogService
 
         $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType);
 
+        // Preserve send_update_log's provider/plan when getProviderDetails returns null (e.g. legacy leads without plan on main payment)
         $bookingDetails = array_merge($bookingDetails, [
-            'insurance_provider_id' => $insuranceProviderId,
-            'plan_id' => $planId,
+            'insurance_provider_id' => $insuranceProviderId ?? $sendUpdate?->insurance_provider_id,
+            'plan_id' => $planId ?? $sendUpdate?->plan_id,
         ]);
 
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
@@ -1841,7 +1857,7 @@ class SendUpdateLogService
      * @param $sendUpdateLog - Send Update Log
      * @return string
      */
-    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null): string
+    public function disableMainBtn($sendUpdateLog, $payment, $brokerCommission, $quote): string
     {
         LoggerService::info('fn:disableMainBtn - Start - SendUpdateLogService');
 
@@ -1851,6 +1867,14 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::CIR,
         ]) && empty($sendUpdateLog->endorsement_number)) {
             return 'Endorsement Number is required before proceeding.';
+        }
+
+        if (
+            $sendUpdateLog->category?->code == SendUpdateLogStatusEnum::CIR &&
+            ! $quote->policy_booking_date &&
+            $quote->source != LeadSourceEnum::INSLY
+        ) {
+            return 'Please complete the main policy booking before continuing with cancellation.';
         }
 
         if (isTapEnabled()) {

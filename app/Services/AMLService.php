@@ -18,8 +18,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -38,6 +38,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
+use App\Models\CyberQuote;
 use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
@@ -62,11 +63,11 @@ use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
+use App\Services\AML\AMLInsurerService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
@@ -75,6 +76,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
@@ -94,16 +96,18 @@ class AMLService
                 $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
             }
         }
+
         $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
-            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'),
-            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-15'),
+            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'), // Need to confirm because, no need to check migrated data for bike quotes
+            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-15'), // Need to confirm because, no need to check migrated data for yacht quotes
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
-            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
-            (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
+            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'), // Need to confirm because, no need to check migrated data for life quotes
+            (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'), // Need to confirm because, no need to check migrated data for savings quotes
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
         return Carbon::createFromFormat(
@@ -123,6 +127,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
 
@@ -142,156 +147,164 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYBER->id() => CyberQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
     public static function getQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        if ($quoteTypeId == QuoteTypes::CAR->id()) {
-            $quoteRequestDetails = CarQuote::with([
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-                'customer.detail',
-                'uaeLicenseHeldFor',
-                'carMake',
-                'carModel',
-                'emirate',
-                'carTypeInsurance',
-                'claimHistory',
-                'nationality',
-                'carQuoteRequestDetail',
-                'plan.insuranceProvider',
-                'vehicleDriverDetail',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
-                'quoteDetail',
-                'homeQuote',
-                'homeQuote.possessionType',
-                'homeQuote.accommodationType',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
-            $quoteRequestDetails = HealthQuote::with([
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-                'customer.detail',
-                'healthCoverFor',
-                'maritalStatus',
-                'emirate',
-                'nationality',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::LIFE->id())->with([
-                'quoteStatus',
-                'paymentStatus',
-                'customer.detail',
-                'nationality',
-                'payments' => function ($q) {
-                    $q->with([
-                        'paymentMethod',
-                        'getCustomerPaymentInstrument',
-                        'paymentStatus',
-                    ]);
-                },
-                'lifeQuote' => function ($q) {
-                    $q->with([
-                        'children',
-                        'currency',
-                        'maritalStatus',
-                        'purposeOfInsurance',
-                        'insuranceTenure',
-                        'numberOfYears',
-                    ]);
-                },
+        $quoteTypeId = (int) $quoteTypeId;
+        $commonRelations = [
+            'quoteStatus',
+            'payments.paymentMethod',
+            'payments.getCustomerPaymentInstrument',
+            'paymentStatus',
+            'customer.detail',
+        ];
 
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
-            $quoteRequestDetails = BusinessQuote::with([
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-                'customer.detail',
-                'businessTypeOfInsurance',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
-            $quoteRequestDetails = TravelQuote::with([
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-                'customer.detail',
-                'regionCoverFor',
-                'travelCoverFor',
-                'nationality',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
-                'petQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
-                'quoteDetail',
-                'bikeQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::CYCLE->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())->with([
-                'cycleQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::YACHT->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::YACHT->id())->with([
-                'yachtQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::JETSKI->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())->with([
-                'jetskiQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
-        } elseif ($quoteTypeId == QuoteTypes::SAVINGS->id()) {
-            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::SAVINGS->id())->with([
-                'savingsQuote',
-                'customer.detail',
-                'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
-                'paymentStatus',
-            ])->where('id', $quoteRequestId)->firstOrFail();
+        // Define quote type specific configurations
+        $quoteTypeConfig = match ($quoteTypeId) {
+            QuoteTypes::getId(QuoteTypes::CAR) => [
+                'model' => CarQuote::class,
+                'relations' => array_merge($commonRelations, [
+                    'uaeLicenseHeldFor',
+                    'carMake',
+                    'carModel',
+                    'emirate',
+                    'carTypeInsurance',
+                    'claimHistory',
+                    'nationality',
+                    'carQuoteRequestDetail',
+                    'plan.insuranceProvider',
+                    'vehicleDriverDetail',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::HEALTH) => [
+                'model' => HealthQuote::class,
+                'relations' => array_merge($commonRelations, [
+                    'healthCoverFor',
+                    'maritalStatus',
+                    'emirate',
+                    'nationality',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::BUSINESS) => [
+                'model' => BusinessQuote::class,
+                'relations' => array_merge($commonRelations, [
+                    'businessTypeOfInsurance',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::TRAVEL) => [
+                'model' => TravelQuote::class,
+                'relations' => array_merge($commonRelations, [
+                    'regionCoverFor',
+                    'travelCoverFor',
+                    'nationality',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::HOME) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'quoteDetail',
+                    'homeQuote',
+                    'homeQuote.possessionType',
+                    'homeQuote.accommodationType',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::LIFE) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => [
+                    'quoteStatus',
+                    'paymentStatus',
+                    'customer.detail',
+                    'nationality',
+                    'payments' => function ($q) {
+                        $q->with([
+                            'paymentMethod',
+                            'getCustomerPaymentInstrument',
+                            'paymentStatus',
+                        ]);
+                    },
+                    'lifeQuote' => function ($q) {
+                        $q->with([
+                            'children',
+                            'currency',
+                            'maritalStatus',
+                            'purposeOfInsurance',
+                            'insuranceTenure',
+                            'numberOfYears',
+                        ]);
+                    },
+                ],
+            ],
+            QuoteTypes::getId(QuoteTypes::PET) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'petQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::BIKE) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'quoteDetail',
+                    'bikeQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::CYCLE) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'cycleQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::YACHT) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'yachtQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::JETSKI) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'jetskiQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::SAVINGS) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'savingsQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::CYBER) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'cyberQuote',
+                ]),
+            ],
+            default => abort(404),
+        };
+
+        // Build query based on configuration
+        $model = $quoteTypeConfig['model'];
+        $query = $model::query();
+
+        // Apply quote type filter for personal quotes
+        if (isset($quoteTypeConfig['personal_quote']) && $quoteTypeConfig['personal_quote']) {
+            $query->byQuoteTypeId($quoteTypeId);
         }
 
-        return $quoteRequestDetails;
+        // Apply relationships and fetch
+        return $query->with($quoteTypeConfig['relations'])
+            ->where('id', $quoteRequestId)
+            ->firstOrFail();
     }
 
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
@@ -577,31 +590,6 @@ class AMLService
         return $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request, $matchResultsForUpdate);
     }
 
-    public static function getKycType($quoteTypeId, $quoteRequestId)
-    {
-        $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
-            ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->standardAmlFilters()
-            ->orderBy('id', 'desc')
-            ->value('splitted_customer_code');
-
-        if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::EntityShort;
-        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
-
-            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
-            if ($quote->registration_type == CarRegistrationType::COMPANY) {
-                $status = CustomerTypeEnum::EntityShort;
-            } else {
-                $status = CustomerTypeEnum::IndividualShort;
-            }
-        } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::IndividualShort;
-        }
-
-        return $status;
-    }
-
     public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
     {
         LoggerService::info('fn:checkAMLStatusFailed - AMLService');
@@ -803,11 +791,11 @@ class AMLService
             return false;
         }
 
-        $insuredPersonDetails = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteDetails->id,
-            'customer_id' => $quoteDetails->customer_id,
-        ])->with(['customer', 'insured'])->latest('updated_at')->first();
+        $insuredPersonDetails = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteDetails->id)
+            ->where('customer_id', $quoteDetails->customer_id)
+            ->with(['customer', 'insured'])
+            ->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$providerCode);
 
@@ -833,7 +821,7 @@ class AMLService
             }
 
             try {
-                $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
+                $getQuoteResponse = app(AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('Successfully retrieved and updated quote details from insurer', extra: [
@@ -869,11 +857,11 @@ class AMLService
                     LoggerService::info('Failed to retrieve quote details from insurer', extra: [
                         'quote_type_id' => $quoteTypeId,
                         'customer_type' => $customerType,
-                        'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                        'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                     ]);
                     $screeningResponse = [
                         'status' => AMLStatusCode::AMLPending,
-                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
+                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')',
                         'screening_type' => $screeningType,
                     ];
 
@@ -890,13 +878,13 @@ class AMLService
                         LoggerService::info('GetQuote API failed: Setting to Pending', extra: [
                             'quote_type_id' => $quoteTypeId,
                             'customer_type' => $customerType,
-                            'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                            'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                         ]);
                         $screeningResponse['message'] = $getQuoteResponse['message'] ?? 'Insurer GetQuote API failed';
                         $screeningResponse['is_get_quote_api_failed'] = true;
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 LoggerService::info('Exception while calling getQuote API for renewal upload', extra: [
                     'quote_type_id' => $quoteTypeId,
                     'customer_type' => $customerType,
@@ -1338,82 +1326,6 @@ class AMLService
         return $gender;
     }
 
-    public function getKYCLogs($quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info('fn:getKYCLogs - AMLService');
-
-        return AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->standardAmlFilters()
-            ->orderBy('created_at', 'asc')->get();
-    }
-
-    public function getAMLLookups($insuranceProviderId = null, $lookupsKeys = [])
-    {
-        LoggerService::info('fn:getAMLLookups - AMLService');
-
-        if ($insuranceProviderId && ! empty($lookupsKeys)) {
-            return Lookup::whereIn('key', $lookupsKeys)
-                ->where('insurance_provider_id', $insuranceProviderId)
-                ->get()
-                ->groupBy('key')
-                ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
-        }
-
-        $lookupsForAML = [
-            LookupsEnum::RESIDENT_STATUS,
-            LookupsEnum::DOCUMENT_ID_TYPE,
-            LookupsEnum::ENTITY_DOCUMENT_TYPE,
-            LookupsEnum::MODE_OF_CONTACT,
-            LookupsEnum::MODE_OF_DELIVERY,
-            LookupsEnum::EMPLOYMENT_SECTOR,
-            LookupsEnum::LEGAL_STRUCTURE,
-            LookupsEnum::ISSUANCE_PLACE,
-            LookupsEnum::ISSUING_AUTHORITY,
-            LookupsEnum::COMPANY_POSITION,
-            LookupsEnum::PROFESSIONAL_TITLE,
-            LookupsEnum::UBO_RELATION,
-            LookupsEnum::COMPANY_TYPE,
-            LookupsEnum::MEMBER_RELATION,
-        ];
-
-        return Lookup::whereIn('key', $lookupsForAML)->get()->groupBy('key')
-            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
-    }
-
-    public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
-        $customerInsured = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $customerId,
-        ])
-            ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->latest('updated_at')
-            ->first();
-
-        if (! $customerInsured) {
-            LoggerService::info('No CustomerInsured record found', [
-                'customer_id' => $customerId,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-            ]);
-        }
-
-        return $customerInsured;
-    }
-
-    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
-    public function getEntityDetails($quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
-        return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
-            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
-            ->first() ?? [];
-    }
-
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
     {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_SCREENING);
@@ -1563,7 +1475,7 @@ class AMLService
             LoggerService::info('Quote Kyc Decision updated Successfully');
 
             return true;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::error($ex->getMessage());
         }
 
@@ -1602,7 +1514,7 @@ class AMLService
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
 
             $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
@@ -1709,46 +1621,73 @@ class AMLService
         return $data;
     }
 
-    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
+    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening, $checkApplicableForScreening = true)
     {
         LoggerService::info('Processing Insured Data for Screening');
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
 
-        $insured = $this->createOrUpdateInsured($request, $isEntity);
+        $insured = $this->createOrUpdateInsured($request, $isEntity, $quoteTypeId, $quote);
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
 
         $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
-        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+
+        $shouldApplicableForScreening = false;
+        if ($checkApplicableForScreening) {
+            $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+        }
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
 
         return [$shouldApplicableForScreening, $insured, $entityId];
     }
 
-    private function createOrUpdateInsured($request, bool $isEntity): Insured
+    private function createOrUpdateInsured($request, bool $isEntity, $quoteTypeId, $quote): Insured
     {
         if ($isEntity) {
-
             LoggerService::info('Entity Details', extra: [
-                'trade_license_no' => $request->trade_license_no,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
 
+            $insuredData = [
+                'company_name' => $request->company_name,
+                'company_address' => $request->company_address,
+                'industry_type_code' => $request->industry_type_code,
+                'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                'trade_license_no' => $request->screening_id_number,
+            ];
+
+            if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+                if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                    if ($quote->isPolicyBooked()) {
+                        // Do not take emirate from the request (it may be empty or stale for booked policies).
+                        // If we unset, updateOrCreate creates a new insured with emirate = null when no row matches.
+                        // Carrying the quote's value keeps the insured row aligned for both update and first insert.
+                        $insuredData['emirate_of_registration_id'] = $quote->emirate_of_registration_id;
+                        LoggerService::info('Entity Details', extra: [
+                            'id_type' => $request->screening_id_type,
+                            'id_number' => $request->screening_id_number,
+                            'company_name' => $request->company_name,
+                            'company_address' => $request->company_address,
+                            'policy_booked' => true,
+                            'industry_type_code' => $request->industry_type_code,
+                            'emirate_of_registration_id' => $insuredData['emirate_of_registration_id'],
+                        ]);
+                    }
+                }
+            }
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Entity,
-                'trade_license_no' => $request->trade_license_no,
-            ], [
-                'company_name' => $request->company_name,
-                'company_address' => $request->company_address,
-                'industry_type_code' => $request->industry_type_code,
-                'emirate_of_registration_id' => $request->emirate_of_registration_id,
-            ]);
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
+            ], $insuredData);
         } else {
-            // todo: remove get insured details after id_number format is consistent
+            // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
                 ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
@@ -1758,6 +1697,7 @@ class AMLService
                     $query->where('id_number', $request->screening_id_number);
                 })
                 ->first();
+
             $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
             LoggerService::info('Individual Details', extra: [
@@ -1766,9 +1706,9 @@ class AMLService
                 'formatted_id_number' => $idNumber,
                 'insured_first_name' => $request->insured_first_name,
                 'insured_last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
 
             $insured = Insured::updateOrCreate([
@@ -1778,9 +1718,9 @@ class AMLService
             ], [
                 'first_name' => $request->insured_first_name,
                 'last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
         }
 
@@ -1816,52 +1756,69 @@ class AMLService
         return $getPersonalQuote;
     }
 
-    private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
+    public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
         $isCustomerInsuredAssociationUpdated = false;
 
-        // Check for orphaned record (without quote mapping) first
-        $orphanedRecord = CustomerInsured::where([
-            'customer_id' => $request->customer_id,
-            'insured_id' => $insured->id,
-        ])->whereNull('quote_type_id')
-            ->whereNull('quote_request_id')
-            ->first();
-
-        // Create or update the customer-insured mapping
-        if ($orphanedRecord) {
-            // Update the existing orphaned record instead of deleting and creating new
-            $isCustomerInsuredAssociationUpdated = true;
-            $orphanedRecord->update([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-                'updated_at' => now(),
-            ]);
-
-            LoggerService::info('Updated orphaned customer_insured record', extra: [
-                'customer_insured_id' => $orphanedRecord->id,
+        // Consolidate all customer-insured mapping logic in a single transaction to reduce lock contention
+        DB::transaction(function () use ($request, $quoteTypeId, $quote, $insured, &$isCustomerInsuredAssociationUpdated) {
+            // First, check for orphaned record with lock
+            $orphanedRecord = CustomerInsured::where([
                 'customer_id' => $request->customer_id,
                 'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ]);
-        } else {
-            // Check existing quote mapping
-            $existingQuoteMapping = CustomerInsured::where([
-                'customer_id' => $request->customer_id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ])->orderBy('updated_at', 'desc')->first();
+            ])->whereNull('quote_type_id')
+                ->whereNull('quote_request_id')
+                ->lockForUpdate()
+                ->first();
 
-            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
-                // Create new record or update existing quote mapping
+            if ($orphanedRecord) {
+                // Update the existing orphaned record instead of deleting and creating new
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                // Deactivate existing records for this quote first
+                // MySQL UPDATE queries inherently acquire exclusive row locks, ensuring atomic deactivation.
+                CustomerInsured::forQuote($quoteTypeId, $quote->id)
+                    ->update(['is_active' => false]);
+
+                $orphanedRecord->update([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
+
+                LoggerService::info('Updated orphaned customer_insured record', extra: [
+                    'customer_insured_id' => $orphanedRecord->id,
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ]);
+
+                return;
+            }
+
+            // If no orphaned record was found, check for existing quote mapping
+            $existingQuoteMapping = CustomerInsured::active()
+                ->where([
+                    'customer_id' => $request->customer_id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ])
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
+                // Insured changed for this quote
+                $isCustomerInsuredAssociationUpdated = true;
+
+                // Use createOrUpdateActive to handle deactivation and update atomically
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $request->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ], [], true);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1875,19 +1832,21 @@ class AMLService
             } elseif (! $existingQuoteMapping) {
                 // This is a completely new quote-insured association
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                // Use createOrUpdateActive to handle deactivation and creation atomically
+                CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ], [], true);
 
                 LoggerService::info('New insured association created for quote', extra: [
                     'insured_id' => $insured->id,
                     'quote_id' => $quote->id,
                 ]);
             }
-        }
+        });
 
         return $isCustomerInsuredAssociationUpdated;
     }
@@ -1917,7 +1876,7 @@ class AMLService
         return false;
     }
 
-    // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
+    // Reminder:: this function is added because universal search, customer members and Sage have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
         if ($isEntity) {
@@ -1932,36 +1891,63 @@ class AMLService
     private function handleEntityData($request, $quoteTypeId, $quote): int
     {
         $entityData = [
-            'trade_license_no' => $request->trade_license_no,
+            'trade_license_no' => $request->screening_id_number,
             'company_name' => $request->company_name,
             'company_address' => $request->company_address,
             'industry_type_code' => $request->industry_type_code,
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        LoggerService::info('Handle Legacy Entity Data', extra: $entityData);
-
-        $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
-        $entity->fill($entityData);
-
-        if (! $entity->exists) {
-            $entity->save();
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
-        } elseif ($entity->isDirty()) {
-            $entity->save();
+        if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                if ($quote->isPolicyBooked()) {
+                    unset($entityData['emirate_of_registration_id']);
+                }
+            }
         }
 
-        $entity->refresh();
+        $persistEntityAndMapping = function () use ($request, $quoteTypeId, $quote, $entityData): int {
+            if (isset($entityData['emirate_of_registration_id'])
+                && $quoteTypeId == QuoteTypeId::Business
+                && $quote instanceof BusinessQuote
+                && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
+                $quote->save();
+            }
 
-        QuoteRequestEntityMapping::updateOrCreate([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ], [
-            'entity_id' => $entity->id,
-            'entity_type_code' => $request->entity_type_code,
-        ]);
+            LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
-        return $entity->id;
+            $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
+            $entity->fill($entityData);
+
+            if (! $entity->exists) {
+                $entity->save();
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            } elseif ($entity->isDirty()) {
+                $entity->save();
+            }
+
+            $entity->refresh();
+
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ], [
+                'entity_id' => $entity->id,
+                'entity_type_code' => $request->entity_type_code,
+            ]);
+
+            return $entity->id;
+        };
+
+        // Avoid nesting DB::transaction when callers (e.g. customer profile / AML flows) already
+        // hold a transaction: a nested transaction uses a savepoint, so a failure here can roll
+        // back only this block while the outer work still commits, leaving BQR/entity/lead inconsistent.
+        if (DB::transactionLevel() === 0) {
+            return DB::transaction($persistEntityAndMapping);
+        }
+
+        return $persistEntityAndMapping();
     }
 
     private function updateCustomerData($request): void
@@ -1998,11 +1984,11 @@ class AMLService
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
         // Debug: Log the received parameters
-        \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
+        Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
         // Create request object from parameters or use global request as fallback
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2012,7 +1998,7 @@ class AMLService
         $endDate = $request->get('amlCreatedEndDate');
 
         // Debug: Log the extracted dates and other filters
-        \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
+        Log::info('AMLService Extracted Filters:', [
             'startDate' => $startDate,
             'endDate' => $endDate,
             'searchType' => $request->get('searchType'),
@@ -2241,6 +2227,7 @@ class AMLService
             ->select(['ci.quote_request_id', 'ci.insured_id', 'ci.customer_id', 'ci.quote_type_id'])
             ->whereIn('ci.quote_request_id', $quoteIds)
             ->where('ci.quote_type_id', $quoteTypeId)
+            ->where('ci.is_active', true)
             ->get()
             ->keyBy('quote_request_id');
 
@@ -2483,7 +2470,7 @@ class AMLService
                 $response['is_insured_driver_same'] = $vehicleDriverDetails['is_insured_and_driver_same'];
             }
             LoggerService::info(__FUNCTION__.' - '.$message);
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
@@ -2491,7 +2478,7 @@ class AMLService
         return $response;
     }
 
-    public function autoCaptureAMLValidationCheck($quote)
+    public function autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase = false)
     {
         if ($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
@@ -2499,91 +2486,13 @@ class AMLService
             return false;
         }
 
-        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared && ! $isHealthAndSTPCase) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
 
             return false;
         }
 
         return true;
-    }
-
-    /**
-     * Check if insurer sync is enabled for the given quote type and request.
-     */
-    public function isInsurerSyncEnabled($quoteType, $quote): bool
-    {
-        $insurerScreenType = [
-            InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
-        ];
-
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
-
-        if (! in_array($insuranceProvider?->code, array_keys($insurerScreenType))) {
-            return false;
-        }
-
-        if (
-            $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
-            auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
-        ) {
-            return true;
-        }
-
-        $kycLogs = KycLog::withTrashed()->where([
-            'quote_request_id' => $quote->id,
-            'quote_type_id' => $quoteType->id,
-        ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
-
-        if (! $kycLogs || is_null($kycLogs->results)) {
-            return false;
-        }
-
-        $screeningResult = json_decode($kycLogs->results);
-
-        if (! isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
-            return false;
-        }
-
-        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
-            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
-    }
-
-    public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteUID)
-    {
-        try {
-            $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-            $quoteDetails = $this->getQuoteObjectBy($quoteType, $quoteUID, 'uuid');
-            $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
-
-            return match (ucfirst($quoteType)) {
-                QuoteTypes::CAR->value => match ($insurerCode->code) {
-                    InsuranceProvidersEnum::RSA => app(LIVAInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
-                    InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
-
-                    default => [
-                        'success' => false,
-                        'message' => 'Insurer not supported for quote type: '.$quoteType,
-                        'data' => null,
-                    ],
-                },
-                default => [
-                    'success' => false,
-                    'message' => 'Quote type not supported: '.$quoteType,
-                    'data' => null,
-                ],
-            };
-        } catch (\Exception $e) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception: '.$e->getMessage().' - QuoteUID: '.$quoteUID);
-
-            return [
-                'success' => false,
-                'message' => 'Exception occurred: '.$e->getMessage(),
-                'data' => null,
-            ];
-        }
     }
 
     public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
@@ -2635,7 +2544,7 @@ class AMLService
             InsuranceProvidersEnum::AFNIC,
             InsuranceProvidersEnum::AWNI,
         ])) {
-            return $this->getAMLLookups($insuranceProviderId, [
+            return app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
                 LookupsEnum::VEHICLE_COLOR,
@@ -2679,5 +2588,19 @@ class AMLService
         }
 
         return [];
+    }
+
+    public function isPolicyAutomationEnabled(string $quoteTypeCode, ?string $insuranceProviderCode): bool
+    {
+        if ($quoteTypeCode !== quoteTypeCode::Car || ! $insuranceProviderCode) {
+            return false;
+        }
+
+        $policyIssuanceService = app(PolicyIssuanceService::class)->init(
+            $quoteTypeCode,
+            $insuranceProviderCode
+        );
+
+        return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 }

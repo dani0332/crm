@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -20,33 +21,45 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
+use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
+use App\Http\Requests\EligibleForRevivalFollowupsRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
+use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Http\Resources\GenericDocumentResource;
+use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
+use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
+use App\Jobs\TagPCQualifiedJob;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
+use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
@@ -54,19 +67,23 @@ use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
-use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Services\Reports\ConversionOptimizationScheduledExportService;
+use App\Services\RewatermarkQuoteDocumentsService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiController extends Controller
 {
@@ -130,7 +147,28 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
-        return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $request->quoteId);
+
+        // Basic validation: quote type must not be numeric
+        if (is_numeric($request->quoteType)) {
+            LoggerService::info('Payment Status Update API - Quote Type Not Valid', extra: [
+                'quote_type' => $request->quoteType,
+                'quote_id' => $request->quoteId,
+                'reason' => 'Quote type must be a string, not numeric',
+            ]);
+
+            return response()->json(['message' => 'Quote type not valid'], 422);
+        }
+
+        // Dispatch job to process payment status update in background
+        ProcessPaymentStatusUpdateJob::dispatch($request->quoteType, $request->quoteId);
+
+        LoggerService::info('Payment Status Update API - Job dispatched', extra: [
+            'quote_type' => $request->quoteType,
+            'quote_id' => $request->quoteId,
+        ]);
+
+        return response()->json(['message' => 'Payment notification successfully queued']);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -169,17 +207,17 @@ class ApiController extends Controller
     {
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
-        $flowId = $request->flowId ?? null;
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
+        $workflowId = $request->workflowId;
+        LoggerService::info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
+            LoggerService::info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow, $flowId);
+        $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
 
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
@@ -289,6 +327,7 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
+        $quoteType = ucfirst(strtolower($quoteType));
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         if ($quoteTypeId) {
             LoggerService::startQuoteLogging(QuoteTypes::getName($quoteTypeId)->refId($quoteUuid));
@@ -299,6 +338,11 @@ class ApiController extends Controller
         ]);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
+
+        if (! $quote) {
+            return response()->json(['success' => false, 'message' => 'Quote not found']);
+        }
+
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
@@ -317,8 +361,11 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
-                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
+                // reason for adding this check on process involved is because we not triggering the payment capture failure for car AXA
+                $processInvolved = $isCyberLob ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, $processInvolved);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
                 $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
@@ -389,80 +436,16 @@ class ApiController extends Controller
 
     public function tagPrivateClients(Request $request)
     {
-        LoggerService::info(self::class.': Private client tag exercise has been initiated');
-
         $request->validate([
-            'batch_size' => 'required|integer|min:1',
-            'cursor' => 'nullable|string',
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
         ]);
 
-        try {
+        LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-            $batchSize = $request->input('batch_size');
-            $cursor = $request->input('cursor');
+        dispatch(new TagPCQualifiedJob($request->input('uuids')));
 
-            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
-
-            if ($cursor) {
-                $quotes->where('id', '>', $cursor);
-            }
-
-            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
-
-            if ($quotes->isEmpty()) {
-                LoggerService::info(self::class.': No quotes found without PCP tag');
-
-                return apiResponse(
-                    null,
-                    Response::HTTP_OK,
-                    'No quotes found without PCP tag.'
-                );
-            }
-
-            $nextCursor = $quotes->last()->id;
-            $hasMore = $quotes->count() === $batchSize;
-
-            $data = [
-                'data' => [
-                    'next_cursor' => $nextCursor,
-                    'has_more' => $hasMore,
-                ],
-                'message' => 'Private client tagging exercise has been completed.',
-                'status' => 'success',
-            ];
-
-            foreach ($quotes as $quote) {
-
-                $customerData = [
-                    'customer_id' => $quote->customer->id,
-                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                    'email' => $quote->customer->email,
-                ];
-
-                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
-
-                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                LoggerService::endLogging();
-
-                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
-            }
-
-            return apiResponse($data, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
-
-            return apiResponse(
-                $e->getMessage(),
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'An error occurred while completing the private client tagging exercise.'
-            );
-        }
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
     }
 
     public function tagPcpCustomers(Request $request)
@@ -524,11 +507,14 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-
+    public function assignClaim(ClaimAssignmentRequest $request)
+    {
+        return $this->apiService->processClaimAssignment($request);
+    }
     /**
      * Export email status logs as Excel file for a specific quote
      *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     * @return StreamedResponse
      */
     public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
     {
@@ -578,6 +564,59 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    /**
+     * Manually run the same flow as {@see ReportsConversionOptimizationScheduledExportCommand}
+     * (reads recipient JSON from {@see ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS}
+     * or an optional `application_storage_key`).
+     */
+    public function triggerConversionOptimizationScheduledExport(
+        Request $request,
+        ConversionOptimizationScheduledExportService $scheduledExportService
+    ): JsonResponse {
+        try {
+            $validated = $request->validate([
+                'application_storage_key' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $storageKey = isset($validated['application_storage_key']) && trim($validated['application_storage_key']) !== ''
+                ? trim($validated['application_storage_key'])
+                : ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS;
+
+            LoggerService::info(self::class.': Manual conversion optimization scheduled export trigger', [
+                'application_storage_key' => $storageKey,
+            ]);
+
+            if ($scheduledExportService->dispatchScheduledExport($storageKey)) {
+                return apiResponse(
+                    ['application_storage_key' => $storageKey],
+                    Response::HTTP_OK,
+                    'Conversion optimization scheduled export dispatched.'
+                );
+            }
+
+            return apiResponse(
+                ['application_storage_key' => $storageKey],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Conversion optimization scheduled export was not dispatched; see logs.'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            LoggerService::error(self::class.': Conversion optimization scheduled export trigger failed', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to trigger conversion optimization scheduled export.'
+            );
+        }
+    }
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 
     public function missingDocsReminder($quoteUuid)
@@ -640,17 +679,34 @@ class ApiController extends Controller
     /**
      * Update customer replied status in email_status table
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
         try {
-            $emailStatusService = app(EmailStatusService::class);
-            $result = $emailStatusService->updateCustomerRepliedStatus(
-                $request->quote_uuid,
-                $request->quote_type_id,
-                $request->email_subject
-            );
+            $result = DB::transaction(function () use ($request) {
+
+                $emailStatusService = app(EmailStatusService::class);
+
+                $result = $emailStatusService->updateCustomerRepliedStatus(
+                    $request->quote_uuid,
+                    $request->quote_type_id,
+                    $request->email_subject
+                );
+
+                if (! $result->success) {
+                    return $result;
+                }
+
+                $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+                match ($quoteType) {
+                    QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    default => null,
+                };
+
+                return $result;
+            });
 
             if ($result->success) {
                 return response()->json([
@@ -674,6 +730,41 @@ class ApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while updating customer replied status',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Dispatch job to check document upload after 24 hours of payment authorization.
+     * Prevents duplicate job dispatch for the same payment code.
+     */
+    public function checkDocumentUploadAfterPayment(CheckDocumentUploadAfterPaymentRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+            $paymentCode = $validated['payment_code'];
+
+            LoggerService::info("CheckDocumentUploadAfterPayment: Starting job execution for payment code: {$paymentCode}");
+
+            // Dispatch job with 24 hours delay
+            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
+                ->delay(now()->addHours(24));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
+                'payment_code' => $paymentCode,
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            $paymentCodeForError = $request->input('payment_code', 'unknown');
+
+            LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while dispatching the job',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -719,6 +810,27 @@ class ApiController extends Controller
         }
     }
 
+    public function stpAdvisorNotification(STPAdvisorNotificationRequest $request)
+    {
+        try {
+            $response = app(ApiService::class)->stpAdvisorNotification($request);
+
+            return response()->json([
+                'success' => $response['success'],
+                'message' => $response['message'],
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': STP advisor notification failed', [
+                'error' => $e->getMessage(),
+                'exception' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while sending STP advisor notification: '.$e->getMessage(),
+            ], 500);
+        }
+    }
     public function exportFailedIlaLeads($quoteType)
     {
         try {
@@ -739,6 +851,14 @@ class ApiController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+
+    public function rewatermarkQuoteDocuments(RewatermarkQuoteDocumentsRequest $request, RewatermarkQuoteDocumentsService $service)
+    {
+        $result = $service->handle($request->validated());
+
+        return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
+    }
+
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(
@@ -797,5 +917,51 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function logEpEmailStatuses(LogEpEmailStatusesRequest $request)
+    {
+        $this->emailStatusService->logEpEmailStatuses($request->validated());
+
+        return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
+    }
+
+    public function eligibleForRevivalFollowups(EligibleForRevivalFollowupsRequest $request): JsonResponse
+    {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.': Dtt is not enabled from cms', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_OK, 'Dtt is not enabled from cms');
+        }
+
+        LoggerService::info(self::class.': Eligible for revival followups request received', extra: [
+            'quoteUID' => $request->quoteUID,
+        ]);
+
+        $carQuote = CarQuote::query()
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
+            ->where('uuid', $request->quoteUID)
+            ->first();
+
+        if (! $carQuote || ! $carQuote->carQuoteRequestDetail) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
+        }
+
+        $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
+
+        LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
+            'quoteUID' => $request->quoteUID,
+            'isEligible' => $isEligible,
+        ]);
+
+        return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
     }
 }

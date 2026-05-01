@@ -19,8 +19,13 @@ use App\Services\CarQuoteService;
 use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class CarQuoteController extends Controller
 {
@@ -31,7 +36,7 @@ class CarQuoteController extends Controller
     ) {}
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function getCarSoldQuotes()
     {
@@ -46,7 +51,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function getCarUncontactableQuotes()
     {
@@ -61,7 +66,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index(Request $request)
     {
@@ -83,7 +88,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create()
     {
@@ -93,9 +98,9 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(CarQuoteRequest $request)
     {
@@ -109,7 +114,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -126,7 +131,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
@@ -134,7 +139,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update($uuid, CarQuoteRequest $request)
     {
@@ -145,7 +150,7 @@ class CarQuoteController extends Controller
 
     /**
      * @param  Request  $requestvabovabovabovabo
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function changeInsurer(ChangeInsurerRequest $request)
     {
@@ -183,17 +188,21 @@ class CarQuoteController extends Controller
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             $message = 'Plan has been updated';
 
-            return redirect()->back()->with('message', $message);
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
+            if ($request->expectsJson()) {
+                return $message;
             }
-            $message = 'Car Plan has not been updated '.$responseMessage;
+
+            return redirect()->back()->with('message', $message);
         }
 
-        return redirect()->back()->with('error', $message);
+        if (isset($response->message)) {
+            $responseMessage = $response->message;
+        } else {
+            $responseMessage = $response;
+        }
+        $message = 'Car Plan has not been updated '.$responseMessage;
+
+        return $request->expectsJson() ? $message : redirect()->back()->with('message', $message);
     }
 
     public function carPlansByInsuranceProvider(Request $request)

@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -21,13 +20,14 @@ use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function model()
     {
@@ -85,30 +85,6 @@ class SendUpdateLogRepository extends BaseRepository
             } elseif ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = $quote?->insurance_provider_id ?? null;
                 LoggerService::info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
-            }
-
-            // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
-            // subtype 'Midterm policy cancellation, then it will update the quote status to 'Cancellation Pending'.
-            if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::MPC)) {
-                if (! checkPersonalQuotes($quoteType)) {
-                    $model = 'App\\Models\\'.$quoteType.'Quote';
-                    $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
-                }
-                $this->fetchUpdateQuoteStatusLog($data['quote_type_id'], $data['quote_uuid'], QuoteStatusEnum::CancellationPending);
-                $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
-                QuoteStatusLog::create([
-                    'quote_type_id' => $data['quote_type_id'],
-                    'quote_request_id' => $data['personal_quote_id'],
-                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
-                ]);
-
-                LoggerService::info('Quote status changed', extra: [
-                    'code' => $code,
-                    'uuid' => $uuid,
-                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
-                ]);
-
-                $personalQuote->save();
             }
 
             $sendUpdate = $this->create(array_merge([
@@ -207,6 +183,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_with_vat' => $data['price_with_vat'],
                 'price_vat_applicable' => $data['price_vat_applicable'],
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
+                'total_vat_amount' => $data['total_vat_amount'] ?? $sendUpdate->total_vat_amount,
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => $status ?? $sendUpdate->status,
@@ -355,8 +332,6 @@ class SendUpdateLogRepository extends BaseRepository
             $isNegative = $sendUpdateLogService->isNegativeValue($sendUpdate);
             $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
-                // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
-                // 'invoice_description' => $data['invoice_description'],
                 'transaction_payment_status' => $data['transaction_payment_status'],
                 'invoice_date' => $data['invoice_date'],
                 'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'] ?? null,
@@ -366,30 +341,32 @@ class SendUpdateLogRepository extends BaseRepository
                 'commission_vat_not_applicable' => $data['commission_vat_not_applicable'] ?? null,
                 'vat_on_commission' => $data['vat_on_commission'] ?? null,
                 'total_commission' => $data['total_commission'] ?? null,
-                'total_vat_amount' => $data['total_vat_amount'] ?? null,
+                'total_vat_amount' => strToFloat($data['total_vat_amount'] ?? null, $isNegative),
                 'price_vat_applicable' => strToFloat($data['price_vat_applicable'] ?? null, $isNegative),
                 'price_vat_not_applicable' => strToFloat($data['price_vat_not_applicable'] ?? null, $isNegative),
                 'commission_vat_applicable' => strToFloat($data['commission_vat_applicable'] ?? null, $isNegative),
                 'price_with_vat' => $data['price_with_vat'] ?? null,
             ];
-            // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
-            // booking details, so we don't need to add null reversal_invoice on other options details.
+
             if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD) {
                 $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
             $result = $sendUpdate->update($bookingDetails);
             LoggerService::info('Send Update Log Updated successfully');
-            $sendUpdate->save(); // This save is used because sometime object not refresh properly
+            $sendUpdate->save();
             $sendUpdate->refresh();
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 LoggerService::info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
+
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
+
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
+
                 if ($payment->discount_value && (empty($sendUpdate->discount) || $sendUpdate->discount == 0)) {
                     $sendUpdate->update(['discount' => $payment->discount_value]);
                 }
@@ -587,29 +564,35 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateQuoteStatusLog($quoteTypeId, $quoteUuid, $quoteStatusId)
     {
-        info('function fetchUpdateQuoteStatusLog started - quote UUID: '.$quoteUuid);
+        LoggerService::info('fn:fetchUpdateQuoteStatusLog - SendUpdateLogRepository');
 
         try {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-            $modelClass = 'App\\Models\\'.$quoteType.'Quote';
-            $quote = $modelClass::where('uuid', $quoteUuid)->firstOrFail();
-            $previousStatusId = $quote->quote_status_id;
+            $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
+            if ($quote && $quote?->policy_booking_date) {
+                $previousStatusId = $quote->quote_status_id;
 
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => $quoteStatusId,
-                'previous_quote_status_id' => $previousStatusId,
-                'created_by' => auth()->user()->id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+                $quote->update([
+                    'quote_status_id' => $quoteStatusId,
+                    'quote_status_date' => now(),
+                ]);
 
-            info('Quote status updated successfully - quote UUID: '.$quoteUuid.', Status changed from '.$previousStatusId.' to '.$quoteStatusId);
+                QuoteStatusLog::create([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'current_quote_status_id' => $quoteStatusId,
+                    'previous_quote_status_id' => $previousStatusId,
+                    'created_by' => auth()->user()->id,
+                ]);
+
+                LoggerService::info('Quote status updated successfully', extra: [
+                    'previousStatusId' => $previousStatusId,
+                    'newStatusId' => $quoteStatusId,
+                ]);
+            }
         } catch (\Exception $ex) {
-            info('Error while updating Quote status - quote UUID: '.$quoteUuid.' - Exception: '.$ex->getMessage());
+            LoggerService::error('Error while updating Quote status', exception: $ex);
         }
-        info('function fetchUpdateQuoteStatusLog ended - quote UUID: '.$quoteUuid);
     }
 
     public function fetchGetQuoteFromSendUpdateLog($sendUpdateLog)

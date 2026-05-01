@@ -178,7 +178,7 @@
 
 <body>
 <div id="header">
-    <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo" width="300">
+    <img src="{{'data:image/jpeg;base64,'.base64_encode(file_get_contents(public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg')))}}" alt="Insurance Market Logo" width="800" style="width: 100%; max-width: 800px;">
 </div>
 <hr>
 
@@ -231,8 +231,8 @@
 
                     @foreach($data['score_list'] as $index => $score)
                             <?php
-                            $color = $index >= 0 && $index <= 7? 'customer_color' : ($index >= 8 && $index <= 12 ? 'geographic_color' : ($index <= 13 ? 'product_color':($index >= 14 && $index <= 17 ? 'transaction_color':($index <= 17 ? 'delivery_color': ($index <= 18 ? 'delivery_color': 'delivery_color')))));
-                            $cc = $index >= 0 && $index <= 7? 'customer_color' : ($index >= 8 && $index <= 11 ? 'geographic_color' : ($index <= 12 ? 'product_color':($index >= 13 && $index < 16 ? 'transaction_color':($index >= 17 ? 'delivery_color':'delivery_color'))))
+                            $color = $index >= 0 && $index <= 7 ? 'customer_color' : ($index >= 8 && $index <= 12 ? 'geographic_color' : ($index <= 13 ? 'product_color' : ($index >= 14 && $index <= 17 ? 'transaction_color' : ($index <= 17 ? 'delivery_color' : ($index <= 18 ? 'delivery_color' : 'delivery_color')))));
+                            $cc = $index >= 0 && $index <= 7 ? 'customer_color' : ($index >= 8 && $index <= 11 ? 'geographic_color' : ($index <= 12 ? 'product_color' : ($index >= 13 && $index < 16 ? 'transaction_color' : ($index >= 17 ? 'delivery_color' : 'delivery_color'))))
                             ?>
                         @if($quoteType != 'business')
                             <tr class={{$cc}}>

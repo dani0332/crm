@@ -28,6 +28,8 @@ use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\MACRMService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
@@ -214,6 +216,7 @@ class CarEmailService extends BaseService
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
                 'isRenewal' => ($plan->isRenewal ?? false),
+                'tags' => $plan->tags ?? null,
             ];
         }
 
@@ -366,7 +369,9 @@ class CarEmailService extends BaseService
 
     public function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
     {
-        if (count($plans) == 0) {
+        $planCount = is_countable($plans) ? count($plans) : 0;
+
+        if ($planCount < 1) {
             // No plans with available ratings, build email data for the specific case
             return $this->buildNoPlansEmailData($lead, $previousAdvisor, $tierRId);
         } else {
@@ -734,19 +739,27 @@ class CarEmailService extends BaseService
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+            // Generate a public URL using generic method
+            $url = app(QuoteDocumentService::class)->getDocumentUrl(
                 $tempFilePath,
-                now()->addMinutes(10)
+                'azureIMPrivate',
+                10
             );
+
+            if (! $url) {
+                LoggerService::error(self::class.' - attachCarOCBPDF - Failed to generate temporary URL: File does not exist for Ref-ID: '.$quoteUID);
+
+                return '';
+            }
+
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$url);
 
-            return $publicUrl;
+            return $url;
         } catch (\Exception $e) {
             // Log the error details
             LoggerService::error(self::class." - Error: attachCarOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
@@ -897,5 +910,41 @@ class CarEmailService extends BaseService
         } catch (\Exception $exception) {
             LoggerService::error(self::class.' - sendFollowUpEmailForCQF - Error while sending quote workflow for lead ', exception: $exception);
         }
+    }
+
+    public function buildDttRevivalOcbEmailData($carQuote, $previousAdvisor): object
+    {
+        $advisor = User::where('id', $carQuote->advisor_id)->first();
+        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
+        $emailData->isReAssignment = ! empty($previousAdvisor);
+
+        return $emailData;
+    }
+
+    public function buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor): object
+    {
+        $emailData = $this->buildDttRevivalOcbEmailData($carQuote, $previousAdvisor);
+        $customerName = $carQuote->first_name.' '.$carQuote->last_name;
+        $emailData->subject = $customerName."'s".' Car Insurance with Alfred '.$carQuote->code;
+        $emailData->uuid = $carQuote->uuid;
+        $dttAdvisor = getAppStorageValueByKey(ApplicationStorageEnums::DTT_ADVISOR);
+        $advisor = explode(',', (string) $dttAdvisor);
+        $emailData->advisorName = $advisor[0] ?? '';
+        $emailData->advisorEmail = $advisor[1] ?? '';
+        $emailData->tag = 'dtt-initial-email';
+        $emailData->lob = QuoteTypes::CAR->id();
+
+        $emailData->whatsAppNumber = ! empty($carQuote->mobile_no) ? formatMobileNo($carQuote->mobile_no) : '';
+        $emailData->carMake = (string) $carQuote->car_make_id;
+        $emailData->carModel = (string) $carQuote->car_model_id;
+        $voucherCode = MACRMService::generateMotorRevivalVoucherForQuote($carQuote);
+        $emailData->voucherCode = $voucherCode ?? '';
+        $emailData->myAlfredurl = filled($voucherCode)
+            ? 'https://myalfred.com/voucher/'.rawurlencode($voucherCode)
+            : '';
+        $emailData->refID = $carQuote->code;
+        $emailData->quoteUID = $carQuote->uuid;
+
+        return $emailData;
     }
 }

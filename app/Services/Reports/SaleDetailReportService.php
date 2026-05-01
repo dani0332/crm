@@ -100,9 +100,10 @@ class SaleDetailReportService extends ManagementReport
                 'p.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
-            )
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+            );
+        $this->paymentJoin($query);
+        $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
@@ -135,6 +136,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id');
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

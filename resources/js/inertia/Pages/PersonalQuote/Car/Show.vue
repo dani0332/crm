@@ -1,22 +1,25 @@
 <script setup>
-import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
-import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage, router } from '@inertiajs/vue3';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import { usePayment } from '@/inertia/Composables/usePayment';
+import {
+  applyEmiratesNumberMasking,
+  useLazyLoadSection,
+} from '@/inertia/Composables/utilities.js';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
+import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
-import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
-import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import { usePayment } from '@/inertia/Composables/usePayment';
 
 defineProps({
   quote: Object,
@@ -30,7 +33,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -67,7 +69,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -120,6 +121,10 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
+  communicationEventLogs: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -149,6 +154,7 @@ const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const leadSource = page.props.leadSourceEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -169,6 +175,7 @@ const prepareDate = date => {
     date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1]
   );
 };
+
 const leadStatusForm = useForm({
   modelType: 'Car',
   leadId: page.props.record.id,
@@ -436,6 +443,13 @@ const onLoadAvailablePlansData = async () => {
       isLoadingAvailablePlans.value = false;
     });
 };
+
+// Lazy load Available Plans using Intersection Observer (generic composable)
+const { sectionRef: plansSectionRef, isLoaded: plansLoaded } =
+  useLazyLoadSection(onLoadAvailablePlansData, {
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
 
 const loadEmbeddedProducts = async () => {
   let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
@@ -1351,20 +1365,7 @@ const closeModal = v => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
-onMounted(() => {
-  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  onLoadAvailablePlansData();
-  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
-    getFollowUpsByQuote();
-  }
-  window.addEventListener('ocr-notification', handleOcrNotification);
-  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
-  window.addEventListener(
-    'customer-verification-updated',
-    handleCustomerVerificationUpdated,
-  );
-});
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
@@ -1452,7 +1453,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
-  trade_license_no: page.props.record.trade_license_no ?? null,
+  trade_license_no:
+    page.props.record.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.record.insured_id_number
+      : null,
   company_name: page.props.record.company_name ?? null,
   company_address: page.props.record.company_address ?? null,
   entity_type_code: page.props.record.entity_type_code ?? 'Parent',
@@ -1507,8 +1511,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1533,7 +1537,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.record.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1543,7 +1547,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1601,6 +1605,24 @@ if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
+    getFollowUpsByQuote();
+  }
+  window.addEventListener('ocr-notification', handleOcrNotification);
+  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
+
+  if (isPlanDetailEnabled.value) {
+    loadEmbeddedProducts();
+  }
+});
 
 const copyUploadURL = () => {
   copy(page.props.docUploadURL);
@@ -1890,6 +1912,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -2449,6 +2473,18 @@ const handleCancelConfirmationModal = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ record.driver_gender ?? '' }}</dd>
                 </div>
               </dl>
             </div>
@@ -3265,9 +3301,8 @@ const handleCancelConfirmationModal = () => {
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
                   <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
                     >Document</a
                   >
                 </p>
@@ -3512,7 +3547,7 @@ const handleCancelConfirmationModal = () => {
       :vatPrice="vatPercentage"
     />
 
-    <div v-else class="p-4 rounded shadow mb-6 bg-white">
+    <div v-else ref="plansSectionRef" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -3524,7 +3559,10 @@ const handleCancelConfirmationModal = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+          <div
+            v-if="!plansLoaded || isLoadingAvailablePlans"
+            class="flex justify-center my-8"
+          >
             <x-spinner size="lg" />
           </div>
           <template v-else>
@@ -3899,7 +3937,10 @@ const handleCancelConfirmationModal = () => {
                   </div>
                   <span>
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.id"
+                      v-if="
+                        !selectedProviderPlan?.id ||
+                        String(selectedProviderPlan.id) !== String(item.id)
+                      "
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="quoteType"
@@ -4112,7 +4153,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4234,7 +4274,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"
@@ -4363,6 +4402,11 @@ const handleCancelConfirmationModal = () => {
         </template>
       </Collapsible>
     </div>
+
+    <CommunicationEventLog
+      :communication-event-logs="communicationEventLogs"
+      :expanded="sectionExpanded"
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -4615,6 +4659,7 @@ const handleCancelConfirmationModal = () => {
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

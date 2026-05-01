@@ -12,9 +12,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -105,6 +107,8 @@ class BusinessQuoteService extends BaseService
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
+                'i.id_type as insured_id_type',
+                'i.id_number as insured_id_number',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -169,7 +173,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
+                $query->where('ci.is_active', '=', true);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
@@ -300,6 +304,7 @@ class BusinessQuoteService extends BaseService
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
+            'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -851,9 +856,9 @@ class BusinessQuoteService extends BaseService
         // Send a single email for all assigned leads
         if (! empty($updatedLeadIds) && $supportUserId) {
             try {
-                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
-                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
-                    \Illuminate\Support\Facades\Auth::id(),
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
@@ -870,7 +875,7 @@ class BusinessQuoteService extends BaseService
 
         // Return success message if any leads were updated
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            $supportUserName = User::find($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }

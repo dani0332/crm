@@ -2,16 +2,30 @@
 
 namespace App\Models;
 
+use App\Observers\TeamObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
+#[ObservedBy(TeamObserver::class)]
 class Team extends Model implements AuditableContract
 {
     use Auditable, HasFactory;
 
     protected $table = 'teams';
+    protected $fillable = [
+        'name',
+        'code',
+        'type',
+        'is_active',
+        'parent_team_id',
+        'min_price',
+        'max_price',
+        'allocation_threshold_enabled',
+        'category',
+    ];
 
     public function getCreatedAtAttribute($date)
     {

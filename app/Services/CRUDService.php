@@ -38,6 +38,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -147,11 +148,9 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($modelType, $leadCode) {
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($leadCode) {
             $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
-            if (strtolower($modelType) == 'business') {
-                $modelType = 'Corpline';
-            }
+
             $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
                 return $item;
             });
@@ -203,7 +202,8 @@ class CRUDService extends BaseService
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes"),
+                DB::raw("(SELECT NAME FROM users WHERE id = NULLIF(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), IF(JSON_EXTRACT(a.new_values, '$.advisor_id') IS NULL, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), NULL))) AS OldAdvisor"),
             )
             ->where(function ($query) {
                 $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
@@ -328,7 +328,7 @@ class CRUDService extends BaseService
 
                         $azureFileName = get_guid().'_'.$fileName;
                         $azureFilePath = $request->file('mo_proof_document')
-                            ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                            ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                         $carLostQuoteLog->documents()->create([
                             'name' => $fileName,
@@ -354,7 +354,7 @@ class CRUDService extends BaseService
 
                     $azureFileName = get_guid().'_'.$fileName;
                     $azureFilePath = $request->file('proof_document')
-                        ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                        ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                     $carLostQuoteLog->documents()->create([
                         'name' => $fileName,
@@ -417,7 +417,8 @@ class CRUDService extends BaseService
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
@@ -585,11 +586,11 @@ class CRUDService extends BaseService
         $key = '';
         if ($type == quoteTypeCode::Car) {
             if ($quotePlansCount == 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE;
             } elseif ($quotePlansCount > 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE;
             } else {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE;
             }
         } elseif ($type == quoteTypeCode::Bike) {
             $key = 'SIB_BIKE_QUOTE_PLAN_TEMPLATE';
@@ -638,13 +639,13 @@ class CRUDService extends BaseService
                                 'is_fulfilled' => 0,
                                 'action_type' => 'CAPTURE',
                                 'amount' => $amount,
-                                'created_by' => $createdBy ?? auth()->user()->email,
+                                'created_by' => $createdBy ?? auth()->user()?->email,
                                 'is_manager_approved' => 1,
                             ]
                         );
                         LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
-                    } catch (\Illuminate\Database\QueryException $e) {
+                    } catch (QueryException $e) {
                         LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
                             LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');

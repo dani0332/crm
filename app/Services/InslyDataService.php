@@ -6,12 +6,13 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\InslyBatchLog;
 use App\Models\InslyDataMapping;
+use GuzzleHttp\Client;
 
 class InslyDataService extends BaseService
 {
     public static function GetDataFromInsly($nextStartDate, $nextEndDate)
     {
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $user = config('constants.INSLY_API_RENEWAL_USERNAME');
         $pass = config('constants.INSLY_API_RENEWAL_PASSWORD');
         $uri = config('constants.INSLY_API_RENEWAL_URI');

@@ -239,7 +239,7 @@ class SukoonDemocranceService
                 $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
                 $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
                 $docUrl = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
+                $filePathAzure = Storage::disk('azureIMPrivate')->put($docUrl, $content);
                 $docUuid = $this->generateUniqueUuid();
 
                 $document = $embeddedTransaction->documents()->where('document_type_code', $documentType->code)->first();
@@ -403,6 +403,7 @@ class SukoonDemocranceService
      * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
+    // Reminder:: this not being in used on Production - discussed with Jawad (Only used for Car quotes - already back tracked in the code)
     private function prepareUserDetails($quote, $transaction)
     {
         $shortCode = $transaction->product->embeddedProduct->short_code;
@@ -411,8 +412,8 @@ class SukoonDemocranceService
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
-            $firstName = ($quote->customer?->latestInsured?->first_name ?? $quote->customer?->insured_first_name) ?? '';
-            $lastName = ($quote->customer?->latestInsured?->last_name ?? $quote->customer?->insured_last_name) ?? '';
+            $firstName = ($quote?->latestInsured?->first_name ?? $quote?->customer?->insured_first_name) ?? '';
+            $lastName = ($quote?->latestInsured?->last_name ?? $quote?->customer?->insured_last_name) ?? '';
         }
 
         return [

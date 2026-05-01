@@ -1064,7 +1064,7 @@ class SplitPaymentService
             if ($payment->paymentable_type == PersonalQuote::class) {
                 $quoteTypeId = $quoteModel->quote_type_id;
             }
-            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ((in_array($payment->paymentable_type, $ecommQuotes) || in_array($quoteTypeId, [QuoteTypeId::Life, QuoteTypeId::Cyber])) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
@@ -1240,7 +1240,8 @@ class SplitPaymentService
         }
 
         $computedPrice = 0;
-        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home];
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER];
+        $noVatLobs = [quoteTypeCode::Life, quoteTypeCode::SAVINGS];
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
@@ -1260,7 +1261,11 @@ class SplitPaymentService
             }
         }
 
-        if (isset($quoteModel)) {
+        // For Life and Savings LOBs - use masterTotalPrice directly, no VAT
+        if (in_array($modelType, $noVatLobs) && $masterTotalPrice > 0) {
+            $computedPrice = $masterTotalPrice;
+            $priceVatNotApplicable = 0;
+        } elseif (isset($quoteModel)) {
             if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
                 $computedPrice = $quoteModel->price_vat_applicable;
                 LoggerService::info('SplitPaymentService - Using price_vat_applicable from quote for payment code: '.$paymentCode, extra: [
@@ -1284,7 +1289,11 @@ class SplitPaymentService
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
+            // For Life and Savings LOBs - no VAT calculation, price_vat_applicable = total_price
+            if (in_array($modelType, $noVatLobs)) {
+                $priceWithoutVat = $computedPrice;
+                $vat = 0;
+            } elseif (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
@@ -1400,6 +1409,8 @@ class SplitPaymentService
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     if ($paymentSplit->payment_amount != $payment->total_amount) {
                         $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->price_vat_applicable = $payment->price_vat_applicable;
+                        $paymentSplit->price_vat = $payment->price_vat;
                     }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
@@ -1417,7 +1428,9 @@ class SplitPaymentService
                     $paymentSplit->payment_method = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
-                    $paymentSplit->save();
+                    PaymentSplits::withoutEvents(function () use ($paymentSplit) {
+                        $paymentSplit->save();
+                    });
                 }
             }
         }
@@ -1427,6 +1440,12 @@ class SplitPaymentService
     {
         try {
             LoggerService::info("createPolicyIssuanceAutomation called for quote: {$quote->code}");
+
+            if ($payment?->send_update_log_id > 0) {
+                LoggerService::info('Payment is from send update log - skipping policy issuance automation');
+
+                return;
+            }
 
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
@@ -1471,7 +1490,8 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -1521,20 +1541,40 @@ class SplitPaymentService
             ]
         );
 
-        // Check if the job is triggered for Travel or Car quotes
-        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value]);
-        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
+        // Travel / Car / Health (TCH) — split-payment job gate for these LOBs
+        $travelCarHealthModelTypes = [
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::CAR->value,
+            QuoteTypes::HEALTH->value,
+        ];
+        $isTchQuote = in_array($modelType, $travelCarHealthModelTypes);
+        LoggerService::info(
+            "Split payment Code: {$paymentCode} isTchQuote: ".($isTchQuote ? 'true' : 'false'),
+            ['travelCarHealthModelTypes' => $travelCarHealthModelTypes]
+        );
 
-        // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
-        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
+        // Split CC job: insurer codes that gate processing with TCH (ALNC, AXA, RSA, ADNIC)
+        $alncAxaRsaAdnicProviderCodes = [
+            InsuranceProvidersEnum::ALNC,
+            InsuranceProvidersEnum::AXA,
+            InsuranceProvidersEnum::RSA,
+            InsuranceProvidersEnum::ADNIC,
+        ];
+        $isAlncAxaRsaAdnicProvider = in_array($insuranceProvider, $alncAxaRsaAdnicProviderCodes);
+
+        // check if cyber quote
+        $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
+        $isAwni = $insuranceProvider == InsuranceProvidersEnum::AWNI;
+        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false'));
 
         // Only process if payment is not approved and:
         // - not from job, or
-        // - from job AND is Travel/Car AND provider is ALNC/AXA
+        // - from job AND is Travel/Car/Health AND provider is ALNC/AXA/RSA/ADNIC
+        // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTravelOrCarQuote && $isAlncOrAxa)
+            ($isTchQuote && $isAlncAxaRsaAdnicProvider) ||
+            ($isCyberQuote && $isAwni)
         );
 
         LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: ".($shouldProcess ? 'true' : 'false'));

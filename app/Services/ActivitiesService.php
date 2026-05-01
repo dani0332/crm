@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -161,6 +162,7 @@ class ActivitiesService extends BaseService
             quoteTypeCode::GroupMedical => QuoteTypeId::Business,
             quoteTypeCode::CompanyCar => QuoteTypeId::CompanyCar,
             quoteTypeCode::SAVINGS => QuoteTypeId::Savings,
+            quoteTypeCode::CYBER => QuoteTypeId::Cyber,
         ];
 
         $modelType = ucwords($modelType);
@@ -205,7 +207,7 @@ class ActivitiesService extends BaseService
      * @param  string  $title
      * @param  string  $description
      * @param  string  $dueDate
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function createActivityApi($entityUId, $quoteTypeId, $activityType, $title, $description, $dueDate)
     {
@@ -315,7 +317,7 @@ class ActivitiesService extends BaseService
     private function buildActivityUrl($modelType, $record)
     {
         $quoteTypeCode = strtolower($modelType->code);
-        if ($modelType->code == QuoteTypeCode::Business) {
+        if ($modelType->code == quoteTypeCode::Business) {
             $path = "quotes/business/{$record->uuid}";
         } elseif (checkPersonalQuotes($modelType->code)) {
             $path = "personal-quotes/{$quoteTypeCode}/{$record->uuid}";

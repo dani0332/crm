@@ -13,7 +13,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\SendFTCEmailJob;
@@ -558,7 +557,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the decline of a payment by updating the payment record with the decline reason,
      * updating the status of the quote model, and logging the transaction decline.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return string The result of the transaction processing.
      */
     private function handlePaymentDecline($request)
@@ -593,7 +592,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the approval of a payment by updating the collected amount for split payments,
      * logging the approval process, and calling the appropriate service to handle the approval.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
     public function handlePaymentApprove($request)
@@ -812,7 +811,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments with an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateUpfrontStatus($payment)
@@ -845,7 +844,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments that do not have an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateNonUpfrontStatus($payment)
@@ -999,7 +998,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function getPaymentsCountByLeadCode($quoteCode)
     {
-        return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
+        return $this->where('code', 'LIKE', "{$quoteCode}%")->count();
     }
 
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
@@ -1141,7 +1140,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($user = null, $teamIds = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null): int
     {
         $user = $user ?: Auth::user();
         if (! $user) {
@@ -1149,20 +1148,26 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
+        $isManager = $user->hasAnyRole(getManagerRoles());
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        $personalCount = DB::table('payments')
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user);
+
+        return Payment::query()
+            ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user, $allowedQuoteTypeIds) {
+                $query->when($isManager, function ($q) use ($userTeamIds) {
+                    $q->whereHas('advisor.teams', function ($teamQuery) use ($userTeamIds) {
+                        $teamQuery->whereIn('teams.id', $userTeamIds);
+                    });
+                }, function ($q) use ($user) {
+                    $q->where('advisor_id', $user->id);
+                })
+                    ->whereIn('quote_type_id', $allowedQuoteTypeIds);
+            })
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('authorized_at', '>=', $thirtyDaysAgo)
             ->distinct()
-            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
-
-        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
-        } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
-        }
-
-        return $personalCount->count('payments.id');
+            ->count('id');
     }
 
     public function fetchMainQuotePayment($quote)

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Logger\LoggerService;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -20,19 +21,22 @@ class CapiService
     {
         $this->baseUrl = config('constants.CENTRAL_API_ENDPOINT');
 
+        $timeout = config('constants.CENTRAL_API_TIMEOUT');
+        $timeout = empty($timeout) ? 30 : (int) $timeout;
+
         $this->client = Http::withBasicAuth(config('constants.CENTRAL_API_USER'), config('constants.CENTRAL_API_PWD'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
                 'x-api-token' => config('constants.CENTRAL_API_TOKEN'),
 
-            ])->timeout(config('constants.CENTRAL_API_TIMEOUT'));
+            ])->timeout($timeout);
     }
 
     /**
      * send request to ken.
      *
-     * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
+     * @return PromiseInterface|Response
      *
      * @throws \Exception
      */

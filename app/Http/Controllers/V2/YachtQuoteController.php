@@ -51,13 +51,16 @@ use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class YachtQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -90,7 +93,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -117,7 +120,7 @@ class YachtQuoteController extends Controller
     /**
      * @param  $quoteTypeCode
      * @param  BikeQuoteRequest  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(YachtQuoteRequest $request)
     {
@@ -133,7 +136,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -149,7 +152,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
@@ -198,7 +201,6 @@ class YachtQuoteController extends Controller
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Yacht);
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $sendUpdateOptions = [];
@@ -232,7 +234,6 @@ class YachtQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl(),
             'modelType' => QuoteTypes::YACHT,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::YachtManager),
             'embeddedProducts' => $embeddedProducts,
@@ -244,7 +245,6 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'noteDocumentType' => $noteDocumentType,
             'quoteDocuments' => $quoteNotes,
-            'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
@@ -406,6 +406,7 @@ class YachtQuoteController extends Controller
 
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Yacht);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Yacht);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('YachtQuote/Cards', [
             'quotes' => $quotes,
@@ -419,6 +420,7 @@ class YachtQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : YachtQuoteRepository::getData(true, true),
             'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
             'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
+            'renewalBatches' => $renewalBatches,
         ]);
     }
 }

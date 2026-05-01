@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmirateUpdateSourceEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -59,16 +60,12 @@ use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
-use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -89,7 +86,10 @@ use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -121,6 +121,7 @@ class CentralController extends Controller
             QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::CYBER->value,
         ])) {
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
@@ -215,6 +216,18 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
+        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
+        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+
+        if (! $quote) {
+            LoggerService::info('Quote not found', extra: [
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ]);
+
+            return redirect()->back()->with('error', 'Quote not found');
+        }
+
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
@@ -223,43 +236,21 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
-            // todo: remove get insured details after id_number format is consistent
-            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
-                ->where('id_type', 'emiratesId')
-                ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
-                ->first();
-            $idNumber = $insured?->id_number ?? $customerProfileRequest->emirates_id_number;
-
-            $insuredPersonDetails = Insured::updateOrCreate([
-                'id_type' => 'emiratesId',
-                'id_number' => $idNumber,
-                'customer_type' => $customerProfileRequest->customer_type,
-            ], [
-                'first_name' => $customerProfileRequest->insured_first_name,
-                'last_name' => $customerProfileRequest->insured_last_name,
+            $customerProfileRequest->merge([
+                'screening_id_type' => GenericRequestEnum::EMIRATES_ID,
+                'screening_id_number' => $customerProfileRequest->emirates_id_number,
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
-                'gender' => $customer->screening_gender,
-            ]);
-
-            CustomerInsured::updateOrCreate([
-                'quote_type_id' => $customerProfileRequest->quote_type_id,
-                'quote_request_id' => $customerProfileRequest->quote_request_id,
-            ], [
-                'customer_id' => $customerProfileRequest->customer_id,
-                'insured_id' => $insuredPersonDetails->id,
-                'updated_at' => now(),
+                'screening_gender' => $customer->screening_gender,
             ]);
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
-            $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
-
-            QuoteRequestEntityMapping::updateOrCreate([
-                'quote_type_id' => $customerProfileRequest->quote_type_id,
-                'quote_request_id' => $customerProfileRequest->quote_request_id,
-            ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
+            $customerProfileRequest->merge([
+                'customer_id' => $quote->customer_id,
+                'screening_id_type' => GenericRequestEnum::TRADE_LICENSE,
+                'screening_id_number' => $customerProfileRequest->trade_license_no,
+            ]);
 
             if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
                 CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
@@ -269,17 +260,22 @@ class CentralController extends Controller
             }
         }
 
-        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
-        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
-        if ($quote) {
-            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
-        }
+        Context::add('emirate_update_source', EmirateUpdateSourceEnum::ENTITY_PROFILE_UPDATE->value);
+
+        app(AMLService::class)->processInsuredDataForScreening(
+            $customerProfileRequest,
+            $customerProfileRequest->quote_type_id,
+            $quote,
+            [],
+            false);
+
+        app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
 
         return redirect()->back();
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
@@ -306,7 +302,7 @@ class CentralController extends Controller
             }
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $paymentCode = $validatedData['payment_code'] ?? '';
             LoggerService::info('Quote Code: '.$paymentCode.' fn: updateBookingPolicy error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -368,7 +364,7 @@ class CentralController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
@@ -606,7 +602,7 @@ class CentralController extends Controller
             }
 
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             return response()->json(['message' => ['Something went wrong. Please try again later.']], 500);
@@ -776,7 +772,7 @@ class CentralController extends Controller
                     LoggerService::info("File does not exist: {$file['path']}");
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $appTrace = collect($e->getTrace())
                 ->filter(function ($trace) {
                     // Check if any value in the trace contains 'App/' or 'app/'
@@ -796,7 +792,7 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    public function voidPayment(Request $request): JsonResponse
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT);
         $response = app(CentralService::class)->voidPayment($request);
@@ -906,7 +902,7 @@ class CentralController extends Controller
         }
     }
 
-    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    public function deletePayment(Request $request): JsonResponse
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_PARENT_PAYMENT);
         $validatedRequest = (object) $request->validate([

@@ -1,6 +1,8 @@
 <script setup>
 import { setQueryStringFilters } from '../../Composables/utilities.js';
 
+const page = usePage();
+
 defineProps({
   embeddedProduct: Object,
   ep_enums: Object,
@@ -8,6 +10,10 @@ defineProps({
   sage_statuses: Array,
   payment_statuses: Array,
   policy_statuses: Array,
+  reportLobFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const dateFormat = date =>
@@ -36,15 +42,17 @@ const filters = reactive({
   ep_payment_status: [],
   ep_api_status: [],
   ep_sage_status: [],
+  tax_invoice_no: '',
+  tax_invoice_buyer_no: '',
+  lob: [],
 });
 
 const getLink = (quote_uuid, quote_type_id, ref_id) =>
   buildCdbidLink(quote_uuid, quote_type_id, ref_id);
 
-const page = usePage();
-
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
+  { text: 'Line of Business', value: 'lob' },
   { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Date of Issuance', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
@@ -65,6 +73,8 @@ const tableHeader = [
   { text: 'EP Sage Status', value: 'ep_sage_status' },
 
   { text: 'Certificate Number', value: 'certificate_number' },
+  { text: 'Tax Invoice Number', value: 'tax_invoice_no' },
+  { text: 'Tax Invoice Raised by Buyer Number', value: 'tax_invoice_buyer_no' },
   { text: 'Model Year', value: 'model_year' },
   { text: 'Make', value: 'make' },
   { text: 'Model', value: 'model' },
@@ -113,6 +123,9 @@ function filterTransactions(isValid) {
     if (filters[key] === '') {
       delete filters[key];
     }
+    if (Array.isArray(filters[key]) && filters[key].length === 0) {
+      delete filters[key];
+    }
   }
 
   router.visit(
@@ -140,7 +153,12 @@ function filterTransactions(isValid) {
 
 function exportReport() {
   const filteredData = Object.fromEntries(
-    Object.entries(filters).filter(([key, value]) => value !== null),
+    Object.entries(filters).filter(
+      ([, value]) =>
+        value !== null &&
+        value !== '' &&
+        !(Array.isArray(value) && value.length === 0),
+    ),
   );
   const data = useObjToUrl(filteredData);
   const url = route(
@@ -217,11 +235,27 @@ watch(
 
 const filteredHeaders = computed(() => {
   return tableHeader.filter(header => {
+    if (header.value === 'lob') {
+      return (page.props.reportLobFilterOptions?.length ?? 0) > 0;
+    }
+
     if (header.value === 'sync_status') {
       return (
         page.props.embeddedProduct.detail.short_code ===
         page.props.ep_enums.COURIER
       );
+    }
+
+    // Show Tax Invoice columns only for MDX, RDX, and ECB
+    if (
+      header.value === 'tax_invoice_no' ||
+      header.value === 'tax_invoice_buyer_no'
+    ) {
+      return [
+        page.props.ep_enums.ECB,
+        page.props.ep_enums.RDX,
+        page.props.ep_enums.MDX,
+      ].includes(page.props.embeddedProduct.detail.short_code);
     }
 
     if (
@@ -372,6 +406,40 @@ const showEpSageStatusFilter = (function () {
             placeholder="Search by Ref-ID"
           />
         </div>
+        <div v-if="(page.props.reportLobFilterOptions?.length ?? 0) > 0">
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Line of Business
+            </label>
+            <template #tooltip>
+              Line of Business for the underlying policy
+            </template>
+          </x-tooltip>
+          <x-select
+            v-model="filters.lob"
+            placeholder="Filter by Line of Business"
+            :options="page.props.reportLobFilterOptions"
+            deselect-all
+            filterable
+            filterPlaceholder="Filter Line of Business...."
+            class="w-full"
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.lob = page.props.reportLobFilterOptions.map(
+                    o => o.value,
+                  )
+                "
+                @clear="filters.lob = []"
+              />
+            </template>
+          </x-select>
+        </div>
         <div v-if="showCertificateNumberFilter">
           <x-tooltip placement="bottom">
             <label
@@ -510,6 +578,54 @@ const showEpSageStatusFilter = (function () {
             filterable
             filterPlaceholder="Filter EP Sage Status...."
             label="EP Sage Status"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Number
+            </label>
+            <template #tooltip> Tax Invoice Number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_no"
+            type="search"
+            name="tax_invoice_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Number"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Raised by Buyer Number
+            </label>
+            <template #tooltip> Tax Invoice Raised by Buyer Number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_buyer_no"
+            type="search"
+            name="tax_invoice_buyer_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Raised by Buyer Number"
           />
         </div>
       </div>

@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class SaleSummaryReportExport implements CsvExportableInterface
@@ -57,7 +58,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing
      */
-    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    public function getQuery(array $requestParams = []): ?Builder
     {
         $request = request()->merge($requestParams);
 
@@ -96,8 +97,11 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
     public function headings(): array
     {
-        $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
-
+        $groupByColumn = match ($this->groupByColumn) {
+            'support_user' => 'OE/AE',
+            'branch_name' => 'branch',
+            default => $this->groupByColumn,
+        };
         $headings = [
             ucwords(str_replace('_', ' ', $groupByColumn)),
         ];
@@ -106,7 +110,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             $headings[] = 'Department';
         }
 
-        return [
+        $headings = [
             ...$headings,
             'Total Policies',
             'Total Endorsements',
@@ -121,6 +125,12 @@ class SaleSummaryReportExport implements CsvExportableInterface
             'Total Endorsement Amount',
             'Total Price',
         ];
+
+        if ($this->groupByColumn != 'branch_name') {
+            $headings[] = 'Branch';
+        }
+
+        return $headings;
     }
 
     public function map($quote): array
@@ -132,10 +142,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         ];
 
         $groupBy = $groupByColumnMapping[$groupBy] ?? $groupBy;
-
-        $values = [
-            $quote->{$groupBy} ?? 'N/A',
-        ];
+        $values[] = $quote->{$groupBy} ?? 'N/A';
 
         if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
@@ -156,6 +163,10 @@ class SaleSummaryReportExport implements CsvExportableInterface
             'total_price' => $this->resolveNumberFormat($quote->total_price ?? 0),
         ]);
 
+        if ($this->groupByColumn != 'branch_name') {
+            $numericValues->put('branch_name', $quote->branch_name ?? 'N/A');
+        }
+
         foreach ($this->columnTotals->keys() as $field) {
             $this->columnTotals->put($field, $this->columnTotals->get($field, 0) + ($numericValues->get($field) ?? 0));
         }
@@ -170,7 +181,12 @@ class SaleSummaryReportExport implements CsvExportableInterface
     {
         $totalsRow = array_fill(0, count($this->map((object) [])), '');
         $totalsRow[0] = 'Totals';
-        $offset = in_array($this->groupByColumn, ['advisor', 'support_user']) ? 2 : 1; // Adjust for department column
+        // Adjust offset for: groupBy column (1) + optional department column (1) + branch column (1)
+        $offset = 1;
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
+            $offset = 2;
+        }
+
         foreach ($this->columnTotals->keys() as $index => $key) {
             $totalsRow[$index + $offset] = $this->resolveNumberFormat($this->columnTotals->get($key));
         }

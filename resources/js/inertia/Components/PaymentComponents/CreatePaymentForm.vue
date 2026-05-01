@@ -11,6 +11,8 @@ import {
   PaymentFormVerification,
   PaymentFormFooter,
 } from './PaymentFormComps/index.js';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+const { getTempUrl } = useDocumentTempUrl();
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -775,6 +777,9 @@ const providerName = computed(() => {
   if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
+  if (props.quoteType == quoteTypeCodeEnum.CYBER) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...props.quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
@@ -1099,6 +1104,20 @@ const initializePaymentForm = (
     paymentMethodsForm.frequency =
       paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
+  } else if (
+    props.quoteType === quoteTypeCodeEnum.SAVINGS &&
+    props.quoteRequest?.savings_quote?.payment_term
+  ) {
+    // Special handling for savings quotes - map payment term to frequency during edit
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      3: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest?.savings_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = payment.frequency;
   }
@@ -1217,17 +1236,28 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   resetTotalPayments();
   calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
+
+  const isEditMode = paymentMethodsForm.status === 'edit';
+  const shouldPreservePaymentNo =
+    isEditMode && !noPaymentUpdate && oldTotalPayments.value > 0;
+
   if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '12';
+    }
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '4';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
   ) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '2';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
   ) {
@@ -1251,7 +1281,8 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
     ) {
       totalPayments.value.splice(0, 1);
     }
-  } else {
+  } else if (!shouldPreservePaymentNo) {
+    // Preserve existing payment_no when editing, only set if creating new payment
     paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
@@ -2042,7 +2073,7 @@ const uploadDocument = (doc, files, count) => {
  *
  * @param {number} fileId - ID of the file to display initially
  */
-const openInnerModal = fileId => {
+const openInnerModal = async fileId => {
   // Prepare the files array for the gallery modal by combining files from different sources
   filesTest.value = [
     ...fileUploadModels.value.flat(),
@@ -2055,9 +2086,20 @@ const openInnerModal = fileId => {
     item => item.id === fileId,
   );
 
-  // Open the modal
-  // isGalleryModelOpen.value = true;
-  emit('update-gallery-model-open', true);
+  // Get the current file
+  const currentFile = filesTest.value[currentFileIndex.value];
+
+  if (currentFile && currentFile.doc_url) {
+    // Use centralized composable to get the URL
+    const documentUrl = await getTempUrl(currentFile.doc_url);
+
+    if (documentUrl) {
+      // Set the URL first, then open the modal
+      emit('update-current-file-url', documentUrl);
+      // Now open the modal
+      emit('update-gallery-model-open', true);
+    }
+  }
 };
 
 const deleteDocument = (docName, count, doc_id, doc_uuid) => {
@@ -2660,6 +2702,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :quoteType="quoteType"
       :quoteTypeCodeEnum="quoteTypeCodeEnum"
       :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
+      :sendUpdate="sendUpdate"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"

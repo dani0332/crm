@@ -3,6 +3,7 @@ import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
 import DocumentNotification from '../Components/DocumentNotification.vue';
+import STPAdvisorNotification from '../Components/STPAdvisorNotification.vue';
 const page = usePage();
 
 const props = defineProps({
@@ -36,8 +37,28 @@ const isActive = link => {
 };
 
 const user = computed(() => page.props.auth.user);
+const ecomBaseUrl = computed(() => page.props.ecomBaseUrl);
+const uploadDocumentLink = computed(
+  () => `${ecomBaseUrl.value}/adv/${user.value?.id}/docs/`,
+);
+const linkCopied = ref(false);
+
+const copyUploadDocumentLink = async () => {
+  try {
+    await navigator.clipboard.writeText(uploadDocumentLink.value);
+    linkCopied.value = true;
+    setTimeout(() => {
+      linkCopied.value = false;
+    }, 2000);
+  } catch {
+    linkCopied.value = false;
+  }
+};
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
-const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
+const authorisePaymentCountProp = computed(
+  () => page.props.authorisePaymentCount,
+);
+const authorisePaymentCount = ref(authorisePaymentCountProp.value);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
@@ -125,6 +146,93 @@ const getHTML = (buttonText, data, activityType) => {
 const isReceiveNotificationsEnabled = computed(() => {
   let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
   return can(permission);
+});
+
+// Real-time authorised payment count updates
+let paymentCountWorker = null;
+
+const listenToAuthorisedPaymentCount = () => {
+  if (!user.value?.id) {
+    return;
+  }
+
+  const channelName = `public.${page.props.appEnv}.authorised-payment-count`;
+  const eventName = 'authorised.payment.count.updated';
+
+  paymentCountWorker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  paymentCountWorker.port.addEventListener('message', e => {
+    console.log('[AuthorisedPaymentCount] Broadcast received:', {
+      event: e.data,
+      currentUserId: user.value?.id,
+      matches: e.data.userId === user.value?.id,
+    });
+
+    // Only update if the event is for the current user
+    if (e.data.userId === user.value.id) {
+      console.log('[AuthorisedPaymentCount] Updating count:', {
+        oldCount: authorisePaymentCount.value,
+        newCount: e.data.count,
+      });
+      authorisePaymentCount.value = e.data.count;
+    } else {
+      console.log(
+        '[AuthorisedPaymentCount] Broadcast ignored - not for current user',
+        {
+          broadcastUserId: e.data.userId,
+          currentUserId: user.value?.id,
+        },
+      );
+    }
+  });
+
+  paymentCountWorker.onerror = function (error) {
+    console.log('Payment count worker error:', error.message);
+    if (paymentCountWorker) {
+      paymentCountWorker.port.close();
+    }
+  };
+
+  paymentCountWorker.port.start();
+
+  console.log('[AuthorisedPaymentCount] Subscribing to channel:', {
+    channel: channelName,
+    event: eventName,
+  });
+
+  // Subscribe to channel/event
+  paymentCountWorker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
+  });
+};
+
+// Watch for prop changes to sync initial value
+watch(
+  () => authorisePaymentCountProp.value,
+  newValue => {
+    authorisePaymentCount.value = newValue;
+  },
+);
+
+onMounted(() => {
+  listenToAuthorisedPaymentCount();
+});
+
+onUnmounted(() => {
+  if (paymentCountWorker) {
+    const channelName = `public.${page.props.appEnv}.authorised-payment-count`;
+    const eventName = 'authorised.payment.count.updated';
+    paymentCountWorker.port.postMessage({
+      action: 'unsubscribe',
+      channel: channelName,
+      event: eventName,
+    });
+    paymentCountWorker.port.close();
+  }
 });
 </script>
 
@@ -304,6 +412,29 @@ const isReceiveNotificationsEnabled = computed(() => {
                       </div>
                     </template>
                   </x-tooltip>
+
+                  <x-tooltip position="top">
+                    <x-button
+                      size="sm"
+                      :color="linkCopied ? 'success' : 'orange'"
+                      class="flex items-center gap-1.5 whitespace-nowrap"
+                      @click.prevent="copyUploadDocumentLink"
+                    >
+                      <x-icon
+                        :icon="linkCopied ? 'copyCheck' : 'link'"
+                        size="sm"
+                      />
+                      <span style="text-decoration: dotted underline">{{
+                        linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                      }}</span>
+                    </x-button>
+                    <template #tooltip>
+                      <div class="max-w-xs">
+                        Copy and share this secure link so your customer can
+                        upload documents, which will be emailed to your inbox
+                      </div>
+                    </template>
+                  </x-tooltip>
                 </div>
               </div>
             </div>
@@ -315,6 +446,7 @@ const isReceiveNotificationsEnabled = computed(() => {
               <PaymentExpireNotifications
                 v-if="isReceiveNotificationsEnabled"
               />
+              <STPAdvisorNotification v-if="isReceiveNotificationsEnabled" />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">
@@ -393,6 +525,36 @@ const isReceiveNotificationsEnabled = computed(() => {
                       <div class="md:hidden block">{{ user.name }}</div>
                       <div class="text-gray-500">{{ user.email }}</div>
                     </div>
+                    <x-tooltip position="left">
+                      <button
+                        type="button"
+                        class="flex w-full gap-2 items-center px-2 py-1.5 rounded hover:bg-gray-100 group transition"
+                        @click.prevent="copyUploadDocumentLink"
+                      >
+                        <x-icon
+                          :icon="linkCopied ? 'copyCheck' : 'link'"
+                          size="sm"
+                          :class="
+                            linkCopied ? 'text-success-600' : 'text-primary-500'
+                          "
+                        />
+                        <span
+                          class="text-sm font-medium"
+                          :class="linkCopied ? 'text-success-600' : ''"
+                          style="text-decoration: dotted underline"
+                        >
+                          {{
+                            linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                          }}
+                        </span>
+                      </button>
+                      <template #tooltip>
+                        <div class="max-w-xs">
+                          Copy and share this secure link so your customer can
+                          upload documents, which will be emailed to your inbox
+                        </div>
+                      </template>
+                    </x-tooltip>
                     <x-menu :items="userMenu" />
                   </x-popover-container>
                 </template>

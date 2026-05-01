@@ -39,6 +39,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -151,6 +153,8 @@ class TravelQuoteService extends BaseService
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+            'insured.id_type as insured_id_type',
+            'insured.id_number as insured_id_number',
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -230,7 +234,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Travel]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -325,7 +329,7 @@ class TravelQuoteService extends BaseService
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
-                $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
+                $memberDob = Carbon::parse($member['dob'])->format('Y-m-d');
                 $memberData = new \stdClass;
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
@@ -828,7 +832,7 @@ class TravelQuoteService extends BaseService
             ...$extraData,
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -854,7 +858,7 @@ class TravelQuoteService extends BaseService
                 return $getdecodeContents;
 
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);

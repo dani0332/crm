@@ -27,7 +27,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
-use App\Services\AMLService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -328,7 +328,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $documentTypeFailedCount = 0;
 
             foreach ($documentsForThisType as $quoteDocument) {
-                $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
+                $documentFile = Storage::disk('azureIMPrivate')->get($quoteDocument->doc_url);
                 $docFileBase64 = base64_encode($documentFile);
                 // Create payload with guaranteed field order for GIG API
                 $payload = [];
@@ -851,7 +851,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -864,11 +864,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         ]);
 
         if ($newDocument->exists) {
-            WatermarkDocumentsJob::dispatch(
-                $newDocument->id,
-                $quote->uuid,
-                $documentType->id
-            );
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
         }
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
@@ -1176,9 +1173,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
-        $colors = collect(app(AMLService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
-            LookupsEnum::VEHICLE_COLOR,
-        ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
+        $colors = app(AMLLookupsService::class)
+            ->getAMLLookups($quoteDetails?->plan?->provider_id, [LookupsEnum::VEHICLE_COLOR])
+            ->get('vehicle_color', collect())
+            ->pluck('text', 'code')
+            ->toArray();
 
         $othersColorCode = collect($colors ?? [])->filter(function ($text, $code) {
             return stripos($text, 'other') !== false;
@@ -1296,7 +1295,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                 return $_returnResponse;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' - Error: '.$e->getMessage());
 
             return [

@@ -2,16 +2,20 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class UserService extends BaseService
 {
@@ -110,6 +114,29 @@ class UserService extends BaseService
         return User::where('id', $userId)->first();
     }
 
+    public function getSubordinates(int $userId): Collection
+    {
+        /**
+         * Subordinates are users whose `user_manager.manager_id` points to the manager user.
+         *
+         * Only active users should be considered subordinates for operational flows (e.g. deactivation
+         * notifications). Inactive users should not trigger those alerts.
+         *
+         * This is a self-referencing many-to-many (users <-> users via user_manager). Using
+         * relationship-based whereHas() queries can become fragile because Laravel aliases the
+         * related `users` table in self-joins; that can lead to empty results (seen on sqlite test cases).
+         *
+         * A direct join against the pivot avoids self-join aliasing entirely and is stable across
+         * DB engines.
+         */
+        return User::query()
+            ->join('user_manager', 'user_manager.user_id', '=', 'users.id')
+            ->where('user_manager.manager_id', $userId)
+            ->activeUser()
+            ->select(['users.id', 'users.name', 'users.email'])
+            ->get();
+    }
+
     public function isAllowedToShowLeadListReport()
     {
         if (auth()->user()->hasAnyRole([RolesEnum::Admin])) {
@@ -206,7 +233,7 @@ class UserService extends BaseService
             if (! empty($productCodes)) {
                 $query->whereHas('products', function ($q) use ($productCodes) {
                     $q->where('type', TeamTypeEnum::PRODUCT)
-                        ->whereIn('teams.name', $productCodes);
+                        ->whereIn('teams.code', $productCodes);
                 });
             }
         }
@@ -439,4 +466,133 @@ class UserService extends BaseService
             ->activeUser()
             ->get();
     }
+
+    /**
+     * Dispatch the manager deactivation attempt email job after the DB transaction commits.
+     *
+     * This should be triggered when a manager user is being deactivated. If the user has
+     * active subordinates, we queue a notification job; otherwise we log and skip dispatch.
+     */
+    public function sendManagerDeactivationEmail(User $managerUser, ?int $attemptedByUserId): void
+    {
+        $subordinates = $this->getSubordinates($managerUser->id);
+
+        $deactivationAttemptEmailPayload = [
+            'manager_user_id' => $managerUser->id,
+            'subordinate_ids' => $subordinates->pluck('id')->all(),
+            'attempted_by_user_id' => (int) $attemptedByUserId,
+            'subordinates_count' => $subordinates->count(),
+        ];
+
+        $logDetails = [
+            'manager_user_id' => $deactivationAttemptEmailPayload['manager_user_id'],
+            'subordinates_count' => $deactivationAttemptEmailPayload['subordinates_count'],
+            'attempted_by_user_id' => $deactivationAttemptEmailPayload['attempted_by_user_id'],
+        ];
+
+        if ($subordinates->isNotEmpty()) {
+            DB::afterCommit(function () use ($deactivationAttemptEmailPayload, $logDetails) {
+                LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', $logDetails);
+
+                SendManagerDeactivationAttemptEmailJob::dispatch(
+                    $deactivationAttemptEmailPayload['manager_user_id'],
+                    $deactivationAttemptEmailPayload['attempted_by_user_id']
+                );
+            });
+
+            return;
+        }
+
+        LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
+            'manager_user_id' => $managerUser->id,
+        ]);
+    }
+
+    /**
+     * Get claims managers (users with appropriate roles)
+     */
+    public function getClaimsManagers(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_MANAGERS_KEY, function () {
+            return User::withRole(RolesEnum::ClaimsManager)
+                ->activeUser()
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        });
+    }
+
+    /**
+     * Build a data URI for embedding advisor photos in PDFs. Remote URLs are fetched with the HTTP client so
+     * failures do not throw; local filesystem paths are read when the file exists.
+     *
+     * Security (SSRF): {@see FILTER_VALIDATE_URL} accepts many schemes/hosts; a malicious stored URL could in
+     * theory cause this server to request internal or metadata endpoints. In Blanka, {@see User::$profile_photo_path}
+     * is populated with Google profile photo URLs (e.g. lh3.googleusercontent.com) for advisors—not arbitrary
+     * user-supplied targets—so this risk is treated as mitigated at the data layer. No additional URL allowlist
+     * is applied here by product decision.
+     *
+     * @return string|null A data URI (e.g. data:image/jpeg;base64,...) or null when the image cannot be loaded.
+     */
+    public function profilePhotoDataUriForPdf(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $this->profilePhotoDataUriFromRemoteUrl($path);
+        }
+
+        return $this->profilePhotoDataUriFromLocalFile($path);
+    }
+
+    /**
+     * @return string|null Data URI or null when the remote image cannot be loaded.
+     */
+    private function profilePhotoDataUriFromRemoteUrl(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(8)
+                ->withOptions(['allow_redirects' => true])
+                ->get($url);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $binary = $response->successful() ? $response->body() : '';
+
+        if ($binary === '') {
+            return null;
+        }
+
+        $mime = $response->header('Content-Type') ?? 'image/jpeg';
+        $mime = trim(explode(';', $mime)[0]);
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
+    }
+
+    /**
+     * @return string|null Data URI or null when the path is not a readable file.
+     */
+    private function profilePhotoDataUriFromLocalFile(string $path): ?string
+    {
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $binary = @file_get_contents($path);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        $mime = @mime_content_type($path);
+        if ($mime === false || $mime === '') {
+            $mime = 'image/png';
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
+    }
+
 }

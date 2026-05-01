@@ -32,11 +32,11 @@ class EndingPoliciesReportService extends ManagementReport
                 (isset($request['policyExpiredDate'][1]) && isValidDate($request['policyExpiredDate'][1]) ? Carbon::parse($request['policyExpiredDate'][1])->toDateString() : today()->toDateString());
         }
 
-        $query = PersonalQuote::query()
-            ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+        $query = PersonalQuote::query();
+        $this->paymentJoin($query, null, 'p', 'leftJoin');
+        $query->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
-            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'personal_quotes.insurance_provider_id')
             ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'p.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
@@ -99,8 +99,10 @@ class EndingPoliciesReportService extends ManagementReport
                 'p.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             );
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

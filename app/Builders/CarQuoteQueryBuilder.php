@@ -8,8 +8,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -111,13 +109,6 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 
     public function applyFilters(Builder $query, $requestParams)
     {
-        if (! Auth::check()) {
-            $user = $requestParams['user'] ?? null;
-            unset($requestParams['user']);
-            Auth::login($user);
-            DB::setDefaultConnection('mysql_read');
-            request()->merge($requestParams);
-        }
 
         // Helper method to get filter value from requestParams or request object
         $getFilterValue = function ($filterName) use ($requestParams) {
@@ -150,7 +141,15 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->matchBy('last_name', requestParams: $requestParams)
             ->filterBy('email', requestParams: $requestParams)
             ->filterBy('mobile_no', requestParams: $requestParams)
-            ->filterBy('payment_status_id', requestParams: $requestParams)
+            ->when($hasFilterValue('payment_status_id'), function ($query) use ($getFilterValue) {
+                $paymentStatusIds = $getFilterValue('payment_status_id');
+                if (! empty($paymentStatusIds)) {
+                    $paymentStatusIds = is_array($paymentStatusIds) ? $paymentStatusIds : [$paymentStatusIds];
+                    $query->whereHas('payments', function ($paymentQuery) use ($paymentStatusIds) {
+                        $paymentQuery->whereIn('payment_status_id', $paymentStatusIds);
+                    });
+                }
+            })
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('quote_status_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)

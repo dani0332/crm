@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Traits\SpatieActivityLog;
+use App\Traits\UsesTestConnection;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProduct extends Model
 {
-    use SpatieActivityLog;
+    use HasFactory, SpatieActivityLog, UsesTestConnection;
 
     protected $fillable = [
         'insurance_provider_id',
@@ -51,7 +54,7 @@ class EmbeddedProduct extends Model
     /**
      * Scope the query to only include active reward details.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      */
     public function ScopeActive($query)
     {

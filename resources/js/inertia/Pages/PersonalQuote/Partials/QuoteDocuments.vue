@@ -1,9 +1,10 @@
 <script setup>
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+
 const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  storageUrl: String,
   inslyId: String,
   expanded: {
     type: Boolean,
@@ -31,6 +32,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const page = usePage();
@@ -48,7 +53,6 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
-const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -329,27 +333,16 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
-const getS3TempUrl = async docURL => {
-  try {
-    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-      docURL,
-    });
-    // Check if the request was successful and the response contains the URL
-    if (response.status === 200 && response.data.url) {
-      // Open the URL in a new tab
-      window.open(response.data.url, '_blank');
-    } else {
-      notification.error({
-        title: response.data.error,
-        position: 'top',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      title: error,
-      position: 'top',
-    });
-    console.error('An error occurred:', error);
+const { openTempUrl } = useDocumentTempUrl();
+
+const sortedQuoteDocuments = computed(() =>
+  [...(props.quoteDocuments || [])].sort((a, b) => b.id - a.id),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
   }
 };
 </script>
@@ -412,7 +405,7 @@ const getS3TempUrl = async docURL => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
+          :items="sortedQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -420,17 +413,8 @@ const getS3TempUrl = async docURL => {
         >
           <template #item-original_name="item">
             <a
-              v-if="hasAnyRole([rolesEnum.BetaUser])"
-              @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
-            >
-              {{ item.original_name }}
-            </a>
-            <a
-              v-else
-              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
-              target="_blank"
-              class="text-primary-600"
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
@@ -563,55 +547,23 @@ const getS3TempUrl = async docURL => {
               />
               <div v-if="isSendUpdatePage">
                 <a
-                  v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_text == documentType.text,
                   )"
                   :key="quoteDocument.id"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-                <a
-                  v-else
-                  v-for="quoteDocument in quoteDocuments.filter(
-                    d => d.document_type_text == documentType.text,
-                  )"
-                  :key="quoteDocument.id"
-                  :href="
-                    storageUrl +
-                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
-                  "
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
               </div>
               <div v-else>
                 <a
-                  v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-                <a
-                  v-else
-                  v-for="quoteDocument in quoteDocuments.filter(
-                    d => d.document_type_code == documentType.code,
-                  )"
-                  :key="quoteDocument.id"
-                  :href="
-                    storageUrl +
-                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
-                  "
-                  target="_blank"
+                  @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}

@@ -2,6 +2,8 @@
 
 namespace App\Services\OCR\Validators;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
@@ -11,6 +13,9 @@ use App\Models\VehicleDriverDetail;
 
 class OCRDocumentValidator
 {
+    protected $quoteId;
+    protected $quoteableType;
+
     private const FIELDS_TO_VERIFY = [
         'DRIVING_LICENSE_FIELDS' => [
             'driver_license_number',
@@ -21,6 +26,12 @@ class OCRDocumentValidator
             'driver_first_name',
             'driver_last_name',
             'driver_dob',
+            'nationality_id',
+        ],
+        'DRIVER_EMIRATES_ID_FIELDS' => [
+            'driver_eid_number',
+            'driver_name',
+            'dob',
             'nationality_id',
         ],
         'INSURED_FIELDS' => [
@@ -60,11 +71,17 @@ class OCRDocumentValidator
         ],
     ];
 
-    public function validateDLFields(int $quoteId): bool
+    public function __construct(int $quoteId, string $quoteableType)
+    {
+        $this->quoteId = $quoteId;
+        $this->quoteableType = $quoteableType;
+    }
+
+    public function validateDLFields(string $documentTypeCode): bool
     {
         $fieldsToVerify = self::FIELDS_TO_VERIFY['DRIVING_LICENSE_FIELDS'];
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
-            ->where('quoteable_type', CarQuote::class)
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select($fieldsToVerify)
             ->first();
 
@@ -74,19 +91,21 @@ class OCRDocumentValidator
         ));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::DRIVING_LICENSE, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }
 
-    public function validateEIDFields(int $quoteId): bool
+    public function validateEIDFields(string $documentTypeCode): bool
     {
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
-            ->where('quoteable_type', CarQuote::class)
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select('driver_gender')
             ->first();
 
-        $customerInsured = CustomerInsured::where('quote_request_id', $quoteId)
+        // Reminder:: Quote type id missing here - used forQuote
+        $customerInsured = CustomerInsured::active()
+            ->where('quote_request_id', $this->quoteId)
             ->first();
 
         if (! $customerInsured) {
@@ -113,20 +132,44 @@ class OCRDocumentValidator
         ));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::EMIRATES_ID, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }
 
-    public function validateMulkiyaFields(int $quoteId): bool
+    public function validateDriverEidFields(CarQuote $quote): bool
     {
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
+        // Verify driver_eid_number in vehicle_driver_details
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quote->id)
             ->where('quoteable_type', CarQuote::class)
+            ->select('driver_eid_number')
+            ->first();
+
+        // Verify driver details in car_quote_request
+        $carQuoteFields = ['driver_name', 'dob', 'nationality_id'];
+
+        // Check if driver_eid_number exists in vehicle_driver_details
+        $result = $vehicleDriverDetails && ! empty($vehicleDriverDetails->driver_eid_number);
+
+        // Check if all required fields in car_quote are not empty (filters empty fields, result should be empty array = all filled)
+        if ($quote->registration_type == CarRegistrationType::COMPANY && $quote->vehicle_use == CarVehicleUse::PRIVATE) {
+            $result = $result && empty(array_filter($carQuoteFields, fn ($field) => empty($quote->$field)));
+        }
+
+        $this->updateQuoteDocument($quote->id, DocumentTypeCode::DRIVER_EMIRATES_ID, $result);
+
+        return $result;
+    }
+
+    public function validateMulkiyaFields(string $documentTypeCode): bool
+    {
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select(self::FIELDS_TO_VERIFY['VEHICLE_DRIVER_DETAIL_FIELDS'])
             ->first();
 
-        $registrationCertificate = RegistrationCertificate::where('certificatable_id', $quoteId)
-            ->where('certificatable_type', CarQuote::class)
+        $registrationCertificate = RegistrationCertificate::where('certificatable_id', $this->quoteId)
+            ->where('certificatable_type', $this->quoteableType)
             ->select(self::FIELDS_TO_VERIFY['REGISTRATION_CERTIFICATE_FIELDS'])
             ->first();
 
@@ -138,7 +181,7 @@ class OCRDocumentValidator
             fn ($field) => empty($registrationCertificate->$field)));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }

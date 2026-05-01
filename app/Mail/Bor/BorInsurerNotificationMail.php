@@ -98,6 +98,10 @@ class BorInsurerNotificationMail extends Mailable
         $recipientEmail = $insurerEmails[0] ?? '';
         $ccEmails = array_slice($insurerEmails, 1);
 
+        // Add advisor email to CCs if available and not already present
+        $advisorEmail = $this->advisorData['advisorEmail'] ?? null;
+        ($advisorEmail != null && $advisorEmail != '') && $ccEmails[] = $advisorEmail;
+
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
@@ -107,7 +111,7 @@ class BorInsurerNotificationMail extends Mailable
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
                 'insurance_representative' => $recipientEmail,
-                'cc_emails' => count($ccEmails) > 0 ? $ccEmails : [],
+                'cc_emails' => ! empty($ccEmails) ? $ccEmails : [],
             ],
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? '',

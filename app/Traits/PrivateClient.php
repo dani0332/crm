@@ -11,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -117,8 +118,8 @@ trait PrivateClient
     /**
      * Apply quote type specific conditions to the query
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     private function applyQuoteTypeSpecificConditions($query, int $quoteTypeId)
     {
@@ -153,6 +154,23 @@ trait PrivateClient
         return $conditions;
     }
 
+    private function applyAdditionalConditions($query)
+    {
+        $conditions[] = [
+            'column' => 'quote_status_id',
+            'operator' => '=',
+            'value' => QuoteStatusEnum::PolicyBooked,
+        ];
+
+        LoggerService::info('Additional conditions', ['Additional conditions' => $conditions]);
+
+        foreach ($conditions as $condition) {
+            $query->where($condition['column'], $condition['operator'], $condition['value']);
+        }
+
+        return $query;
+    }
+
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
@@ -176,7 +194,12 @@ trait PrivateClient
         $query = (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause);
 
-        $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+        // Disabled it since there is no quote type specific conditions for now
+        // Hoever keep it to enable later for any quote type when needed
+        // $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+
+        // Check for additional conditions
+        $query = $this->applyAdditionalConditions($query);
 
         LoggerService::sql('doesLeadMatchPcpCriteria', $query);
 
@@ -222,7 +245,7 @@ trait PrivateClient
                     $customer->update(['pcp_tag' => false]);
 
                     LoggerService::info('PCP tag removed successfully.', extra: $customerLogObject);
-                } catch (\Exception $ex) {
+                } catch (Exception $ex) {
                     LoggerService::error('Error removing PCP tag. Continuing with next customer.', extra: $customerLogObject, exception: $ex);
                     // Do not throw — continue with next customer
                 }
@@ -328,7 +351,7 @@ trait PrivateClient
     {
         $wasLeadUpdated = false;
 
-        if (is_null($model->pc_qualified)) {
+        if ($model->pc_qualified != true) {
             $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
             $model->update($updateData);
@@ -392,7 +415,7 @@ trait PrivateClient
         if (! isset($this->columnsCache[$modelClass])) {
             try {
                 $this->columnsCache[$modelClass] = Schema::getColumnListing($table);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->columnsCache[$modelClass] = [];
             }
         }

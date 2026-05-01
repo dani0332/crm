@@ -48,8 +48,8 @@ use App\Models\RenewalBatch;
 use App\Models\SageProcess;
 use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -73,12 +73,151 @@ class EmbeddedProductRepository extends BaseRepository
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
     public const SALAMA_POLICY_WORDINGS_URL = 'https://insurancemarket.blob.core.windows.net/imcrm/'.self::SALAMA_POLICY_WORDINGS_PATH;
+
+    /**
+     * Root segment for quote documents on Azure blob disks (prepended to document type folder_path).
+     */
+    public const DOCUMENTS_STORAGE_PREFIX = 'documents/';
+
+    public const ERROR_UPLOADING_DOCUMENT = 'Error uploading document';
     public const ALLOWED_LOBS = [
+        QuoteTypeId::Cyber,
         QuoteTypeId::Car,
         QuoteTypeId::Bike,
         QuoteTypeId::Home,
         QuoteTypeId::Travel,
     ];
+    public const ALLOWED_LOBS_FOR_EPS = [
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER],
+    ];
+
+    /**
+     * @return list<string>|null
+     */
+    public static function allowedLobCodesForEmbeddedProduct(string $epShortCode): ?array
+    {
+        foreach (self::ALLOWED_LOBS_FOR_EPS as $key => $codes) {
+            if (strcasecmp($key, $epShortCode) === 0) {
+                return $codes;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve quote type IDs for embedded product report LOB filtering.
+     *
+     * @param  array<int, string>  $selectedLobCodes
+     * @return list<int>|null null = do not apply LOB filter; empty list = no rows should match
+     */
+    public static function resolveLobFilterQuoteTypeIds(string $epShortCode, array $selectedLobCodes): ?array
+    {
+        $allowed = self::allowedLobCodesForEmbeddedProduct($epShortCode);
+        $selected = array_values(array_filter($selectedLobCodes));
+
+        $result = null;
+        if ($allowed !== null && $selected !== []) {
+            $codes = array_values(array_intersect($selected, $allowed));
+            if ($codes === []) {
+                $result = [];
+            } else {
+                $ids = [];
+                foreach ($codes as $code) {
+                    $id = match ($code) {
+                        quoteTypeCode::Car => QuoteTypeId::Car,
+                        quoteTypeCode::Home => QuoteTypeId::Home,
+                        quoteTypeCode::Travel => QuoteTypeId::Travel,
+                        quoteTypeCode::CYBER => QuoteTypeId::Cyber,
+                        default => null,
+                    };
+                    if ($id !== null) {
+                        $ids[] = $id;
+                    }
+                }
+                $result = array_values(array_unique($ids));
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Three-letter segment in Courier EP refs (`COU-{SEG}-…`) aligned with {@see lineOfBusinessLabelFromCourierEpCode}.
+     * Used when {@see EmbeddedTransaction::$quote_type_id} is null but the ref still encodes the LOB.
+     *
+     * @return non-empty-string|null
+     */
+    public static function courierEpRefSegmentForQuoteTypeFilter(int $quoteTypeId): ?string
+    {
+        return match ($quoteTypeId) {
+            QuoteTypeId::Car => 'CAR',
+            QuoteTypeId::Home => 'HOM',
+            QuoteTypeId::Travel => 'TRA',
+            QuoteTypeId::Cyber => 'CYB',
+            default => null,
+        };
+    }
+
+    /**
+     * @return array<int, array{label: string, value: string}>
+     */
+    public static function quoteTypeReportLobFilterOptions(string $epShortCode): array
+    {
+        $allowed = self::allowedLobCodesForEmbeddedProduct($epShortCode);
+        if ($allowed === null) {
+            return [];
+        }
+
+        $rows = QuoteType::query()
+            ->whereIn('code', $allowed)
+            ->orderBy('sort_order')
+            ->get(['code', 'text']);
+
+        if ($rows->isNotEmpty()) {
+            return $rows->map(fn ($row) => ['label' => $row->text, 'value' => $row->code])
+                ->values()
+                ->all();
+        }
+
+        return collect($allowed)->map(function (string $code) {
+            $id = match ($code) {
+                quoteTypeCode::Car => QuoteTypeId::Car,
+                quoteTypeCode::Home => QuoteTypeId::Home,
+                quoteTypeCode::Travel => QuoteTypeId::Travel,
+                quoteTypeCode::CYBER => QuoteTypeId::Cyber,
+                default => null,
+            };
+            $label = $id !== null ? (QuoteTypeId::getOptions()[$id] ?? $code) : $code;
+
+            return ['label' => $label, 'value' => $code];
+        })->values()->all();
+    }
+
+    /**
+     * Infer Line of Business label from Courier EP ref (e.g. COU-CAR-…, COU-TRA-…) when
+     * {@see EmbeddedTransaction::$quote_type_id} is missing or does not map in {@see QuoteTypeId::getOptions()}.
+     *
+     * HAM- is the short prefix for Home Appliances (distinct from HOM- / Home insurance in {@see QuoteTypes::shortCode()}).
+     *
+     * @return non-empty-string|null
+     */
+    public static function lineOfBusinessLabelFromCourierEpCode(string $code): ?string
+    {
+        $label = null;
+        if (
+            $code !== ''
+            && strcasecmp(substr($code, 0, 4), 'COU-') === 0
+            && preg_match('/^COU-([a-z]{3})-/i', $code, $matches) === 1
+        ) {
+            $segment = strtoupper($matches[1]);
+            $label = $segment === 'HAM'
+                ? 'Home Appliances'
+                : QuoteTypes::getNameShortCode($segment)?->value;
+        }
+
+        return $label;
+    }
 
     public function model()
     {
@@ -187,7 +326,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $type = 'embedded_product';
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
@@ -429,7 +568,7 @@ class EmbeddedProductRepository extends BaseRepository
         ];
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             LoggerService::info('fetchSendDocumentsByLead - Only car, bike, home & travel lob are allowed', extra: $extra);
 
             return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
@@ -472,7 +611,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $response = ['success' => true];
 
             } elseif ($epShortCode == EmbeddedProductEnum::COURIER
-            && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
+            && in_array(ucwords($modelType), self::ALLOWED_LOBS_FOR_EPS[$epShortCode])) {
 
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -497,7 +636,20 @@ class EmbeddedProductRepository extends BaseRepository
                 } else {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+
+                    // Load latestInsured with quote_type_id constraint for personal quotes
+                    $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
+                    if ($isPersonalQuote) {
+                        $quoteObject->load([
+                            'latestInsured' => function ($query) use ($quoteTypeId) {
+                                $query->where('customer_insured.quote_type_id', $quoteTypeId);
+                            },
+                            'embeddedTransactions.product.embeddedProduct',
+                            'customer',
+                        ]);
+                    } else {
+                        $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+                    }
 
                     if ($callPurchaseFlow) {
                         if (in_array($epShortCode, $sukoonMedexCodes)) {
@@ -512,13 +664,13 @@ class EmbeddedProductRepository extends BaseRepository
                         $response = ['success' => true];
 
                     } else {
-                        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($epShortCode);
+                        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
                         $watermarkedDocuments = $item->documents()
-                            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+                            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
                             ->where('is_watermarked', true);
 
                         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-                        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+                        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
                         // make sure email required watermarked documents is not missing
                         if (empty($missingReqWatermarkedDocTypes)) {
@@ -579,9 +731,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                $sukoonMedexService = app(SukoonMedexService::class);
-                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-                $sukoonMedexService->processPurchaseFlow();
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -660,12 +810,19 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         if ($isAlfredProtect) {
-            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
+            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData, $modelType);
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         } elseif ($isECB) {
-            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType, $short_code);
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
+
+        LoggerService::info('fetchSendDocument - Unsupported embedded product type for customer document send', extra: [
+            'ep_id' => $epId,
+            'short_code' => $short_code,
+        ], context: ['ref_id' => $quoteObject->code]);
+
+        return ['success' => false, 'message' => 'Unsupported embedded product for document send'];
     }
 
     private function fetchAttachments($ep, $isAlfredProtect, $isSalama)
@@ -683,23 +840,25 @@ class EmbeddedProductRepository extends BaseRepository
             ];
 
         } else {
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $quoteDocumentService = app(QuoteDocumentService::class);
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
                     $path = $item->path;
-                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                    if (! empty($path) && ! $isAlfredProtect) {
-                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-                        $file = file_get_contents($pwDoc);
-                        $mimeType = $fileInfo->buffer($file);
-                        $attachments[] = [
-                            'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $ep->display_name.' - Policy Wordings.pdf',
-                            'ContentType' => $mimeType,
-                        ];
-                    } else {
-                        $attachmentsUrls[] = $pwDoc;
+                    if (! empty($path)) {
+                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIM');
+                        if ($pwDoc && ! $isAlfredProtect) {
+                            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                            $file = file_get_contents($pwDoc);
+                            $mimeType = $fileInfo->buffer($file);
+                            $attachments[] = [
+                                'Content' => base64_encode($file),
+                                'Name' => $ep->display_name.' - Policy Wordings.pdf',
+                                'ContentType' => $mimeType,
+                            ];
+                        } elseif ($pwDoc) {
+                            $attachmentsUrls[] = $pwDoc;
+                        }
                     }
                 }
             }
@@ -743,7 +902,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $phoneNumber;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
+    public function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -766,14 +925,31 @@ class EmbeddedProductRepository extends BaseRepository
         return $transactions->get();
     }
 
-    private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData)
+    // Reminder:: it's not being in used on Production - discussed with Jawad
+    private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData, $modelType)
     {
         $strategy = $this->createStrategy($short_code, true);
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->latestInsured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->latestInsured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
+        if ($isPersonalQuote && ! $quoteObject->relationLoaded('latestInsured')) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $quoteObject->load(['latestInsured' => function ($query) use ($quoteTypeId) {
+                $query->where('customer_insured.quote_type_id', $quoteTypeId);
+            }]);
+        }
+
+        if ($quoteObject->quoteRequestEntityMapping) {
+            $firstName = $quoteObject->first_name ?? '';
+            $lastName = $quoteObject->last_name ?? '';
+        } elseif ($quoteObject->latestInsured) {
+            $firstName = $quoteObject->latestInsured->first_name ?? '';
+            $lastName = $quoteObject->latestInsured->last_name ?? '';
+        } else {
+            $firstName = $quoteObject->customer?->insured_first_name ?? '';
+            $lastName = $quoteObject->customer?->insured_last_name ?? '';
+        }
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
@@ -801,18 +977,18 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendECBEmail($transaction, $quoteId, $modelType, $short_code)
+    private function sendECBEmail($transaction, $quoteId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
 
-        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($short_code);
+        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
         $watermarkedDocuments = $transaction->documents()
-            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
             ->where('is_watermarked', true);
 
         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
         // make sure watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
@@ -830,43 +1006,57 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isSalama) {
             $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
             if ($pdf) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-                $url = $websiteURL.$pdf->doc_url;
-                $file = file_get_contents($url);
-                $attachments[] = [
-                    'Content' => base64_encode($file),
-                    'Name' => 'Salama_Certificate.pdf',
-                    'ContentType' => 'application/pdf',
-                ];
+                $quoteDocumentService = app(QuoteDocumentService::class);
+                $url = $quoteDocumentService->getDocumentUrl($pdf->doc_url, 'azureIMPrivate');
+                if ($url) {
+                    $file = file_get_contents($url);
+                    $attachments[] = [
+                        'Content' => base64_encode($file),
+                        'Name' => 'Salama_Certificate.pdf',
+                        'ContentType' => 'application/pdf',
+                    ];
+                }
             }
 
         } else {
+            $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
             $watermarkedDocuments = $transaction->documents()
-                ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
                 ->where('is_watermarked', true);
 
             $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-            $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
+            $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
             // make sure email required watermarked documents is not missing
             if (! empty($missingReqWatermarkedDocTypes)) {
                 return ['success' => false, 'message' => 'Required watermarked document is not found'];
             }
 
+            $quoteDocumentService = app(QuoteDocumentService::class);
             foreach ($watermarkedDocuments as $document) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-                $url = $websiteURL.$document->watermarked_doc_url;
-                $file = file_get_contents($url);
-                $attachments[] = [
-                    'Content' => base64_encode($file),
-                    'Name' => $document->original_name,
-                    'ContentType' => 'application/pdf',
-                ];
+                $url = $quoteDocumentService->getDocumentUrl($document->watermarked_doc_url, 'azureIMPrivate');
+                if ($url) {
+                    $file = file_get_contents($url);
+                    $attachments[] = [
+                        'Content' => base64_encode($file),
+                        'Name' => $document->original_name,
+                        'ContentType' => 'application/pdf',
+                    ];
+                }
             }
         }
 
         $certificatesConfig = config('embedded-products.certificates');
         $subject = "Thank you for your purchase of {$ep->product_name} with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}";
+
+        $resolvedQuoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $postmarkMetadata = [
+            'quote_id' => (string) $quoteObject->id,
+            'subject' => $subject,
+        ];
+        if ($resolvedQuoteTypeId !== false) {
+            $postmarkMetadata['quote_type_id'] = (string) $resolvedQuoteTypeId;
+        }
 
         $body = json_encode([
             'From' => config('constants.IM_FROM_EMAIL'),
@@ -886,6 +1076,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => $subject,
             ],
+            'Metadata' => $postmarkMetadata,
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
@@ -912,7 +1103,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  mixed  $modelType
      * @return mixed
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function getPDF(
         $short_code,
@@ -967,10 +1158,10 @@ class EmbeddedProductRepository extends BaseRepository
             $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
-            $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
-            Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
-            if (! Storage::disk('azureIM')->exists($filePathAzure)) {
-                throw new Exception('Error uploading document');
+            $filePathAzure = self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path.'/'.$title;
+            Storage::disk('azureIMPrivate')->put($filePathAzure, $pdfContent);
+            if (! Storage::disk('azureIMPrivate')->exists($filePathAzure)) {
+                throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
             }
 
             $documentData = [
@@ -1045,7 +1236,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             return false;
         }
 
@@ -1141,13 +1332,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     if (
                         $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])
+                        && in_array($type->code, self::ALLOWED_LOBS_FOR_EPS[EmbeddedProductEnum::COURIER])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
 
                     // Response is empty for success, non-empty for error
-                    if (! empty($response)) {
+                    if (! empty($processResponse)) {
                         return ['data' => $processResponse, 'code' => 403];
                     }
 
@@ -1224,7 +1415,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             return false;
         }
 
@@ -1334,17 +1525,25 @@ class EmbeddedProductRepository extends BaseRepository
         return true;
     }
 
+    /**
+     * Unique filename segment for blob storage: removes whitespace from uniqid + original basename.
+     */
+    public function uniqueBlobNameFromOriginalName(string $originalName): string
+    {
+        return (string) preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+    }
+
     private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
     {
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
         $fileNameAzure = $quoteObject->uuid.'_'.$docName;
         $docUuid = uniqid();
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+        $filePathAzure = $file->storeAs(self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
         if ($filePathAzure == false) {
-            throw new Exception('Error uploading document');
+            throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
         }
 
         return [

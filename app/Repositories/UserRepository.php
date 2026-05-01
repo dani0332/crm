@@ -83,6 +83,7 @@ class UserRepository extends BaseRepository
         }
 
         return $this->with(['roles'])
+            ->activeUser()
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);  // todo: add required roles here
             })->get();
@@ -96,7 +97,7 @@ class UserRepository extends BaseRepository
     {
         $teamName = (! is_array($teamName)) ? [$teamName] : $teamName;
 
-        $teams = Team::whereIn('name', $teamName)->get();
+        $teams = Team::whereIn('code', $teamName)->active()->get();
 
         return $this->where('id', $userId)->whereHas('teams', function ($q) use ($teams) {
             if ($teams) {

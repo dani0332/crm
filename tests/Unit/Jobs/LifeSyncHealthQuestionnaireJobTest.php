@@ -8,6 +8,11 @@ use App\Exceptions\MetLife\MetLifeException;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Mockery;
 use Tests\TestCase;
 
@@ -163,7 +168,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
 
     public function test_job_implements_should_queue()
     {
-        $this->assertInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class, $this->job);
+        $this->assertInstanceOf(ShouldQueue::class, $this->job);
     }
 
     public function test_job_uses_correct_traits()
@@ -171,10 +176,10 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $reflection = new \ReflectionClass($this->job);
         $traits = $reflection->getTraitNames();
 
-        $this->assertContains(\Illuminate\Bus\Queueable::class, $traits);
-        $this->assertContains(\Illuminate\Queue\InteractsWithQueue::class, $traits);
-        $this->assertContains(\Illuminate\Queue\SerializesModels::class, $traits);
-        $this->assertContains(\Illuminate\Foundation\Bus\Dispatchable::class, $traits);
+        $this->assertContains(Queueable::class, $traits);
+        $this->assertContains(InteractsWithQueue::class, $traits);
+        $this->assertContains(SerializesModels::class, $traits);
+        $this->assertContains(Dispatchable::class, $traits);
     }
 
     public function test_job_properties_are_correctly_typed()

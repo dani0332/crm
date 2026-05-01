@@ -8,6 +8,7 @@ use App\Services\TMUploadLeadsService;
 use Auth;
 use Config;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class TmUploadLeadController extends Controller
 {
@@ -25,7 +26,7 @@ class TmUploadLeadController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request, TmUploadLead $tmUploadLead)
     {
@@ -43,7 +44,7 @@ class TmUploadLeadController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -53,10 +54,11 @@ class TmUploadLeadController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
+        // Only storing the file in DB, no operation is performed
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
         ]);
@@ -65,7 +67,7 @@ class TmUploadLeadController extends Controller
             $tmLeadsImport = new TMLeadsImport;
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
-            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azureIM');
+            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azureIMPrivate');
 
             $tmLeadsImport->import(request()->file('file_name'));
             $countRows = $tmLeadsImport->getRowCount();
@@ -74,6 +76,7 @@ class TmUploadLeadController extends Controller
                 return redirect('telemarketing/tmuploadlead')->with('message', 'Data is not valid in csv file, kindly follow the import instructions, correct the data and import it again.');
             }
 
+            // Disucss with Shahji we are just storing this file in DB, no operation is performed
             $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
             $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
@@ -95,7 +98,7 @@ class TmUploadLeadController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(TmUploadLead $tmuploadlead)
     {
@@ -107,7 +110,7 @@ class TmUploadLeadController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(TmUploadLead $tmuploadlead)
     {
@@ -117,7 +120,7 @@ class TmUploadLeadController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, TmUploadLead $tmuploadlead)
     {
@@ -133,7 +136,7 @@ class TmUploadLeadController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(TmUploadLead $tmuploadlead)
     {

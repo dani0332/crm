@@ -23,6 +23,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -138,7 +139,7 @@ class RetentionReportService extends BaseService
     /**
      * Builds the query for retrieving retention report data based on the provided model and request parameters.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     private function buildQuery($request)
     {
@@ -420,7 +421,9 @@ class RetentionReportService extends BaseService
      */
     private function applyPermissionFilters($query, $request)
     {
-        if (auth()->user()->isAdmin()) {
+        // added lead pool check also because lead pool can view all reports across lob
+        // CU: https://app.clickup.com/t/86ewjv9a5
+        if (auth()->user()->isAdmin() || auth()->user()->isLeadPool()) {
             return true;
         }
         // Check if the user is a manager or deputy and has the permission to view the manager retention report

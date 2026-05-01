@@ -23,6 +23,7 @@ use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\ReEvaluatePecJob;
+use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -47,6 +48,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\BadResponseException;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,6 +93,7 @@ class HealthQuoteService extends BaseService
             'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',
+            'hqr.notional_team',
             'hqr.has_home',
             'hqr.premium',
             'hqr.policy_number',
@@ -161,6 +164,8 @@ class HealthQuoteService extends BaseService
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+            'insured.id_type as insured_id_type',
+            'insured.id_number as insured_id_number',
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -224,6 +229,8 @@ class HealthQuoteService extends BaseService
             'b.id as lead_branch_id',
             'is_quote_locked',
             'is_branch_applicable',
+            'hqr.api_issuance_status_id',
+            'hqr.insurer_api_status_id',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -256,7 +263,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Health]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
@@ -477,7 +484,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
-        $healthQuote->premium = $request->premium;
         // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
@@ -637,6 +643,7 @@ class HealthQuoteService extends BaseService
             'is_ecommerce' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_start_date' => 'input|date',
             'plan_type_id' => 'select|title',
+            'payment_status_id' => 'select|title',
         ];
     }
 
@@ -872,7 +879,7 @@ class HealthQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -939,7 +946,7 @@ class HealthQuoteService extends BaseService
 
                 return $getdecodeContents->quote;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1774,9 +1781,9 @@ class HealthQuoteService extends BaseService
         // Send a single email for all assigned leads
         if (! empty($updatedLeadIds) && $supportUserId) {
             try {
-                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
-                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
-                    \Illuminate\Support\Facades\Auth::id(),
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
@@ -1791,7 +1798,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::findOrFail($supportUserId)->name;
+            $supportUserName = User::findOrFail($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }

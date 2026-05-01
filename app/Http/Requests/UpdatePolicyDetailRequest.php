@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +29,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -44,7 +45,6 @@ class UpdatePolicyDetailRequest extends FormRequest
         } else {
 
             $rules = [
-
                 'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
                 'quote_policy_start_date' => 'required|date',
@@ -58,6 +58,7 @@ class UpdatePolicyDetailRequest extends FormRequest
                 'quote_policy_issuance_status_other' => 'nullable',
                 'modelType' => 'required',
                 'quote_id' => 'required',
+                'quote_code' => 'nullable',
             ];
 
             if (request()->modelType == strtolower(quoteTypeCode::Life)) {

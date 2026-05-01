@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class SaleDetailReportExport implements CsvExportableInterface
@@ -44,7 +45,7 @@ class SaleDetailReportExport implements CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing
      */
-    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    public function getQuery(array $requestParams = []): ?Builder
     {
         $request = request()->merge($requestParams);
 
@@ -102,6 +103,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Plan Name',
             'Payment Frequency',
             'Lead Created Date',
+            'Branch',
         ];
     }
 
@@ -156,6 +158,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             $quote->plan_name ?? 'N/A',
             $quote->payment_frequency ?? 'N/A',
             $quote->quote_created_at ?? 'N/A',
+            $quote->branch_name ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

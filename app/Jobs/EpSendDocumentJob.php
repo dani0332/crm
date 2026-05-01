@@ -14,6 +14,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -62,10 +63,10 @@ class EpSendDocumentJob implements ShouldQueue
         ]);
     }
 
-    private function getEpConfigurations()
+    private function getEpConfigurations(): void
     {
         $epEcbAppStorageKeys = [
-            ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL,
+            ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL,
             ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC,
             ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT,
             ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE,
@@ -76,6 +77,7 @@ class EpSendDocumentJob implements ShouldQueue
             ->whereIn('key_name', $epEcbAppStorageKeys)
             ->whereNotNull('value')
             ->get();
+
         $missingAppStorageKeys = array_diff($epEcbAppStorageKeys, $appStorageRecords->pluck('key_name')->toArray());
 
         $this->storageBaseUrl = storageUrl();
@@ -181,7 +183,12 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
-        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL] ?? '';
+        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL] ?? '';
+
+        if (empty($birdWorkflowUrl)) {
+            throw new \Exception('Bird EP workflow URL is not configured');
+        }
+
         LoggerService::info("{$this->logPrefix} triggerBirdWorkflow: ", extra: ['data' => $birdEmailData]);
 
         app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
@@ -196,13 +203,13 @@ class EpSendDocumentJob implements ShouldQueue
             throw new \Exception("Embedded product not found for transaction ID: {$this->context->etId}");
         }
 
-        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($this->context->epShortCode);
+        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
         $watermarkedDocuments = $transaction->documents()
-            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
             ->where('is_watermarked', true);
 
         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
         // make sure email required watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
@@ -212,10 +219,17 @@ class EpSendDocumentJob implements ShouldQueue
         $attachments = $this->fetchPolicyWordings($embeddedProduct);
 
         foreach ($watermarkedDocuments as $document) {
-            $attachments[] = [
-                'fileUrl' => $this->storageBaseUrl.$document->watermarked_doc_url,
-                'fileName' => $document->original_name,
-            ];
+            $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl(
+                $document->watermarked_doc_url,
+                'azureIMPrivate',
+            );
+
+            if ($documentUrl) {
+                $attachments[] = [
+                    'fileUrl' => $documentUrl,
+                    'fileName' => $document->original_name,
+                ];
+            }
         }
 
         return $attachments;
