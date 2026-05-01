@@ -55,6 +55,18 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const selectedMember = ref(0);
 
+/** Delete action: requires DOCUMENT_DELETE and row must not be internal-restricted. */
+const canShowQuoteDocumentDelete = item => {
+  if (!can(permissionEnum.DOCUMENT_DELETE)) {
+    return false;
+  }
+  const v = item?.is_restricted_internal_document;
+  if (v === true || v === 1 || v === '1') {
+    return false;
+  }
+  return true;
+};
+
 // Format members for dropdown
 const memberOptions = computed(() => {
   return page.props.membersDetail.map(m => ({
@@ -402,11 +414,8 @@ const signedMedicalApplicationDocs = computed(() => {
             {{ item.member_detail?.first_name }}
             {{ item.member_detail?.last_name }}
           </template>
-          <template
-            v-if="can(permissionEnum.DOCUMENT_DELETE)"
-            #item-action="{ id, doc_uuid }"
-          >
-            <div>
+          <template #item-action="item">
+            <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
                 v-if="bookPolicyDetails?.isEnableUploadDocument === false"
@@ -425,7 +434,7 @@ const signedMedicalApplicationDocs = computed(() => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(id, doc_uuid)"
+                @click.prevent="onDocDelete(item.id, item.doc_uuid)"
                 v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
