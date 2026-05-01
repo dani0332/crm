@@ -446,20 +446,20 @@ class TestDataSeeder
         ];
     }
 
-       /**
+    /**
      * Seed device-quotes permissions and assign to Admin role (for DeviceQuote tests).
      */
     public static function seedDeviceQuotePermissions(): void
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
         $guard = 'web';
         $names = [
-            \App\Enums\PermissionsEnum::DEVICE_QUOTES_LIST,
-            \App\Enums\PermissionsEnum::DEVICE_QUOTES_CREATE,
-            \App\Enums\PermissionsEnum::DEVICE_QUOTES_EDIT,
-            \App\Enums\PermissionsEnum::DEVICE_QUOTES_SHOW,
+            PermissionsEnum::DEVICE_QUOTES_LIST,
+            PermissionsEnum::DEVICE_QUOTES_CREATE,
+            PermissionsEnum::DEVICE_QUOTES_EDIT,
+            PermissionsEnum::DEVICE_QUOTES_SHOW,
         ];
-        $roleId = $db->table('roles')->where('name', \App\Enums\RolesEnum::Admin)->value('id');
+        $roleId = $db->table('roles')->where('name', RolesEnum::Admin)->value('id');
         if (! $roleId) {
             return;
         }
@@ -493,7 +493,7 @@ class TestDataSeeder
      */
     public static function seedDeviceQuoteLookups(): array
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $db = DB::connection('sqlite');
 
         // Device quote type (id=20) required for PersonalQuote->quoteType and redirects
         $db->table('quote_type')->insertOrIgnore([
@@ -556,6 +556,44 @@ class TestDataSeeder
 
         return [
             'nationality_id' => $nationalityId,
+        ];
+    }
+
+    /**
+     * Seed required lookup data for Group Medical (AMT) lead tests.
+     * Ensures emirates and business_type_of_insurance (Group Medical) exist.
+     *
+     * @return array{emirate_of_registration_id: int, business_type_of_insurance_id: int}
+     */
+    public static function seedAmtGroupMedicalLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        $emirateId = $db->table('emirates')->where('text', 'Dubai')->value('id');
+        if (! $emirateId) {
+            $emirateId = $db->table('emirates')->insertGetId([
+                'text' => 'Dubai',
+                'code' => 'DXB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $businessTypeId = $db->table('business_type_of_insurance')->where('text', 'Group Medical')->value('id');
+        if (! $businessTypeId) {
+            $businessTypeId = $db->table('business_type_of_insurance')->insertGetId([
+                'text' => 'Group Medical',
+                'code' => 'GM',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'emirate_of_registration_id' => (int) $emirateId,
+            'business_type_of_insurance_id' => (int) $businessTypeId,
         ];
     }
 }

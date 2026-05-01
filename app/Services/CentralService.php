@@ -29,6 +29,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\WatermarkDocTypesEnum;
@@ -785,6 +786,22 @@ class CentralService extends BaseService
         }
 
         return $lockFunctionalities;
+    }
+
+    public function isEmirateOfRegistrationLocked(object $quote, string $quoteTypeCode): bool
+    {
+        $user = auth()->user();
+        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
+
+        $isGroupMedicalBusinessContext =
+            ($quoteTypeCode === quoteTypeCode::Business)
+            && ($quote?->business_type_of_insurance_id ?? null) == $groupMedicalTypeId;
+
+        return $isGroupMedicalBusinessContext
+            && (
+                ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts]))
+                || (method_exists($quote, 'isPolicyBooked') && $quote->isPolicyBooked())
+            );
     }
 
     // This method is used to update payment allocation status when lead status is updated
