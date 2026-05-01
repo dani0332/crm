@@ -1690,14 +1690,19 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
-            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
-                return $member['first_name'];
-            }, $quote->activeMembers->toArray()));
+            $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
+            $activeMembers = $quote->activeMembers ?? collect();
+            $emailData->numberOfMembersCovered = (string) $activeMembers->count();
+            $emailData->policyHolderName = $activeMembers->isEmpty()
+                ? ''
+                : implode(', ', array_map(function ($member) {
+                    return $member['first_name'];
+                }, $activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
+
+        dd($emailData);
 
         if ($quoteTypeId == QuoteTypeId::Cyber) {
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
