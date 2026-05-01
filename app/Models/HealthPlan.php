@@ -22,6 +22,7 @@ class HealthPlan extends Model
         'plan_type_id',
         'health_rating_eligibility_id',
         'health_network_id',
+        'maf_link',
         'is_hidden',
         'is_active',
         'status',

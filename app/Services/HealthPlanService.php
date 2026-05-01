@@ -58,8 +58,9 @@ class HealthPlanService extends BaseService
         $currentPlan = HealthPlan::find($id);
 
         // Check if it's draft, update same version
-        if ($currentPlan->status == HealthPlanRateSheetStatusEnum::DRAFT) {
-            HealthPlan::where('id', $id)->update($data);
+        if ($currentPlan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+            $currentPlan->fill($data);
+            $currentPlan->save();
 
             return $currentPlan;
         }
@@ -74,12 +75,12 @@ class HealthPlanService extends BaseService
     private function deriveVersion(HealthPlan $plan): float
     {
         // When we edit active version, get next draft version
-        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE) {
+        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value) {
             return $plan->version + 0.1;
         }
 
         // When we publish draft version
-        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT) {
+        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
             $version = ceil($plan->version).'.0';
 
             return (float) $version;

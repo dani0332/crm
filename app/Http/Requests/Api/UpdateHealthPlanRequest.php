@@ -25,8 +25,10 @@ class UpdateHealthPlanRequest extends FormRequest
             'plan_type_id' => 'nullable|integer|exists:health_plan_type,id',
             'health_rating_eligibility_id' => 'nullable|integer|exists:health_rating_eligibilities,id',
             'health_network_id' => 'nullable|integer|exists:health_networks,id',
+            'provider_id' => 'nullable|integer|exists:insurance_provider,id',
             'is_active' => 'required|boolean',
             'is_hidden' => 'required|boolean',
+            'maf_link' => 'nullable|string',
         ];
     }
 
@@ -40,6 +42,7 @@ class UpdateHealthPlanRequest extends FormRequest
             'plan_type_id.exists' => 'Plan type does not exist',
             'health_rating_eligibility_id.exists' => 'Health rating eligibility does not exist',
             'health_network_id.exists' => 'Health network does not exist',
+            'provider_id.exists' => 'Provider does not exist',
         ];
     }
 
