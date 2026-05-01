@@ -84,12 +84,22 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                 ]);
             }
 
-            // Process CSV and send email
+            // Process CSV and send email (optional ccRecipients in requestParams; see EmailExportService).
+            // Only CC addresses that belong to active users in the User model (ignore arbitrary client-supplied emails).
+            $ccRecipients = $this->requestParams['ccRecipients'] ?? [];
+            if (! is_array($ccRecipients)) {
+                $ccRecipients = array_filter(array_map('trim', explode(',', (string) $ccRecipients)));
+            } else {
+                $ccRecipients = array_values(array_filter(array_map('trim', $ccRecipients)));
+            }
+
+            $ccRecipients = $this->filterCcRecipientsToActiveUserEmails($ccRecipients);
+
             $exportInstance->sendEmailWithCSVAttachment(
                 $this->requestParams['recipientEmail'],
                 $this->requestParams['subject'],
                 $this->requestParams,
-                [],
+                $ccRecipients,
                 $this->requestParams['fileName'],
             );
 
@@ -128,6 +138,62 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     }
 
     /**
+     * Keep only CC addresses that match an active {@see User} record (case-insensitive email match).
+     *
+     * @param  array<int, string>  $rawEmails
+     * @return array<int, string>
+     */
+    private function filterCcRecipientsToActiveUserEmails(array $rawEmails): array
+    {
+        $trimmed = [];
+        foreach ($rawEmails as $email) {
+            $normalized = trim((string) $email);
+            if ($normalized !== '') {
+                $trimmed[] = $normalized;
+            }
+        }
+
+        $trimmed = array_values(array_unique($trimmed));
+
+        if ($trimmed === []) {
+            return [];
+        }
+
+        $activeUsers = User::query()
+            ->activeUser()
+            ->whereIn('email', $trimmed)
+            ->get(['email']);
+
+        $canonicalByLower = [];
+        foreach ($activeUsers as $user) {
+            $canonicalByLower[strtolower($user->email)] = $user->email;
+        }
+
+        $resolved = [];
+        foreach ($trimmed as $email) {
+            $lower = strtolower($email);
+            if (isset($canonicalByLower[$lower])) {
+                $resolved[$lower] = $canonicalByLower[$lower];
+            }
+        }
+
+        $resolvedList = array_values($resolved);
+
+        $requestedLower = array_map(strtolower(...), $trimmed);
+        $resolvedLower = array_map(strtolower(...), $resolvedList);
+        $ignoredLower = array_values(array_diff($requestedLower, $resolvedLower));
+
+        if ($ignoredLower !== []) {
+            LoggerService::warning('CSV export CC recipients ignored: no matching active user', [
+                'feature' => LoggerFeatureEnum::CSV_EXPORT->value,
+                'ignored_emails' => $ignoredLower,
+            ]);
+        }
+
+        return $resolvedList;
+    }
+
+    /**
      * Instantiate the export class with appropriate constructor parameters
      */
     private function instantiateExportClass()
@@ -150,6 +216,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             'App\\Exports\\Reports\\EndorsementReportExport',
             'App\\Exports\\Reports\\InstallmentReportExport',
             'App\\Exports\\Reports\\ConversionAsAtReportExport',
+            'App\\Exports\\Reports\\ConversionOptimizationReportExport',
             'App\\Exports\\ClaimsExport',
         ];
 

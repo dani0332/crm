@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -70,6 +71,7 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Services\Reports\ConversionOptimizationScheduledExportService;
 use App\Services\RewatermarkQuoteDocumentsService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
@@ -562,6 +564,54 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    /**
+     * Manually run the same flow as {@see ReportsConversionOptimizationScheduledExportCommand}
+     * (reads recipient JSON from {@see ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS}
+     * or an optional `application_storage_key`).
+     */
+    public function triggerConversionOptimizationScheduledExport(
+        Request $request,
+        ConversionOptimizationScheduledExportService $scheduledExportService
+    ): JsonResponse {
+        try {
+            $validated = $request->validate([
+                'application_storage_key' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $storageKey = isset($validated['application_storage_key']) && trim($validated['application_storage_key']) !== ''
+                ? trim($validated['application_storage_key'])
+                : ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS;
+
+            LoggerService::info(self::class.': Manual conversion optimization scheduled export trigger', [
+                'application_storage_key' => $storageKey,
+            ]);
+
+            if ($scheduledExportService->dispatchScheduledExport($storageKey)) {
+                return apiResponse(
+                    ['application_storage_key' => $storageKey],
+                    Response::HTTP_OK,
+                    'Conversion optimization scheduled export dispatched.'
+                );
+            }
+
+            return apiResponse(
+                ['application_storage_key' => $storageKey],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Conversion optimization scheduled export was not dispatched; see logs.'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            LoggerService::error(self::class.': Conversion optimization scheduled export trigger failed', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to trigger conversion optimization scheduled export.'
+            );
+        }
     }
 
     public function getGenericDocuments(Request $request)
