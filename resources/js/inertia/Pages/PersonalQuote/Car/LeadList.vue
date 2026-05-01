@@ -492,6 +492,13 @@ function setQueryStringFilters() {
   for (const [key, value] of Object.entries(params)) {
     // Check for indexed array format like quote_status_id[0], quote_status_id[1]
     const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+    /**
+     * Matches strings like "teams[0]" and return full match and your captured groups.
+     * [0]: Full match ("teams[0]")
+     * [1]: Base name ("teams")
+     * [2]: Numeric index ("0")
+     * Returns null if the index is missing, e.g., "teams[]".
+     */
 
     if (arrayMatch) {
       const [, fieldName, index] = arrayMatch;

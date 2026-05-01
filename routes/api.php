@@ -39,6 +39,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
     Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
+    Route::post('/imcrm/trigger-conversion-optimization-scheduled-export', [ApiController::class, 'triggerConversionOptimizationScheduledExport'])
+        ->name('triggerConversionOptimizationScheduledExport');
 
     // FTC email
     Route::post('ftc-email/{quoteType}/{uuid}/dispatch', [FtcEmailController::class, 'send'])->name('api.ftc-email.dispatch');
