@@ -55,6 +55,18 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 
+/** Delete action: requires DOCUMENT_DELETE and row must not be internal-restricted. */
+const canShowQuoteDocumentDelete = item => {
+  if (!can(permissionEnum.DOCUMENT_DELETE)) {
+    return false;
+  }
+  const v = item?.is_restricted_internal_document;
+  if (v === true || v === 1 || v === '1') {
+    return false;
+  }
+  return true;
+};
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -400,11 +412,8 @@ const openDocumentInNewTab = async item => {
               {{ item.original_name }}
             </a>
           </template>
-          <template
-            v-if="can(permissionEnum.DOCUMENT_DELETE)"
-            #item-action="{ id, doc_uuid }"
-          >
-            <div>
+          <template #item-action="item">
+            <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
                 v-if="bookPolicyDetails?.isEnableUploadDocument === false"
@@ -423,7 +432,7 @@ const openDocumentInNewTab = async item => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(id, doc_uuid)"
+                @click.prevent="onDocDelete(item.id, item.doc_uuid)"
                 v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
