@@ -72,6 +72,31 @@ class HealthPlanService extends BaseService
         return HealthPlan::create($data);
     }
 
+    public function publish(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            $plan = HealthPlan::find($id);
+
+            // Update related versions to become child version
+            HealthPlan::where(function ($query) use ($plan) {
+                $query->where('id', $plan->parent_id)
+                    ->orWhere('parent_id', $plan->parent_id);
+            })
+                ->where('id', '!=', $id)
+                ->update([
+                    'status' => HealthPlanRateSheetStatusEnum::ARCHIVED,
+                    'parent_id' => $id,
+                ]);
+
+            // Update plan version and status as publish
+            $version = $this->deriveVersion($plan);
+            $plan->version = $version;
+            $plan->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
+            $plan->parent_id = null;
+            $plan->save();
+        });
+    }
+
     private function deriveVersion(HealthPlan $plan): float
     {
         // When we edit active version, get next draft version

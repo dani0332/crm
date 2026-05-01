@@ -81,6 +81,8 @@ class HealthPlanController extends Controller
 
     public function publish(PublishHealthPlanRequest $request): JsonResponse
     {
+        $this->healthPlanService->publish($request->id);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Health plan publishing processed. It will be published as per rates effective from date',
