@@ -38,6 +38,13 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 // Restricted internal types require compliance-document-upload; others are always listed.
 const canViewDocumentTypeInUploadModal = documentType => {
@@ -47,23 +54,16 @@ const canViewDocumentTypeInUploadModal = documentType => {
 
   return can(permissionEnum.COMPLIANCE_DOCUMENT_UPLOAD);
 };
-const rolesEnum = page.props.rolesEnum;
-const permissionEnum = page.props.permissionsEnum;
-const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
-const paymentStatusEnum = page.props.paymentStatusEnum;
-const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-const documentTypeEnum = page.props.documentTypeEnum;
-const quoteStatusEnum = page.props.quoteStatusEnum;
 
 /** Delete action: requires DOCUMENT_DELETE and row must not be internal-restricted. */
 const canShowQuoteDocumentDelete = item => {
   if (!can(permissionEnum.DOCUMENT_DELETE)) {
     return false;
   }
-  const v = item?.is_restricted_internal_document;
-  if (v === true || v === 1 || v === '1') {
+  if (item?.is_restricted_internal_document) {
     return false;
   }
+
   return true;
 };
 
@@ -78,6 +78,14 @@ const quoteDocumentsTable = reactive({
       text: 'Document Name',
       value: 'original_name',
     },
+    ...(page.props.quoteType === quoteTypeCodeEnum.Health
+      ? [
+          {
+            text: 'Member',
+            value: 'member',
+          },
+        ]
+      : []),
     {
       text: 'Created At',
       value: 'created_at',
@@ -411,6 +419,10 @@ const openDocumentInNewTab = async item => {
             >
               {{ item.original_name }}
             </a>
+          </template>
+          <template #item-member="item">
+            {{ item.member_detail?.first_name }}
+            {{ item.member_detail?.last_name }}
           </template>
           <template #item-action="item">
             <div v-if="canShowQuoteDocumentDelete(item)">
