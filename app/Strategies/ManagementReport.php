@@ -735,25 +735,6 @@ class ManagementReport
         });
     }
 
-    protected function getLatestCustomerInsuredCTE(): string
-    {
-        $businessQuoteType = QuoteTypeId::Business;
-
-        return "
-            SELECT
-                ci.quote_request_id,
-                ci.quote_type_id,
-                ci.customer_id,
-                ci.insured_id,
-                ROW_NUMBER() OVER (
-                    PARTITION BY ci.quote_request_id, ci.quote_type_id, ci.customer_id
-                    ORDER BY ci.updated_at DESC
-                ) AS rn
-            FROM customer_insured ci
-            WHERE ci.quote_type_id = {$businessQuoteType}
-        ";
-    }
-
     protected function getBranchMappingCTE(): string
     {
         $now = now()->format('Y-m-d H:i:s');
@@ -771,7 +752,7 @@ class ManagementReport
                     CASE
                         WHEN pq.advisor_id IS NOT NULL AND pq.quote_type_id = {$healthQuoteType} AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
                             THEN {$abuDhabiBranch}
-                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND i.emirate_of_registration_id = {$abuDhabiEmirate}
+                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND pq.emirate_of_registration_id = {$abuDhabiEmirate}
                             THEN {$abuDhabiBranch}
                         ELSE ub.branch_id
                     END
@@ -790,21 +771,11 @@ class ManagementReport
             LEFT JOIN health_quote_request hqr ON hqr.id = pq.quote_id
                 AND pq.quote_type_id = {$healthQuoteType}
                 AND pq.branch_id IS NULL
-            LEFT JOIN latest_customer_insured lci ON lci.quote_request_id = pq.quote_id
-                AND lci.quote_type_id = pq.quote_type_id
-                AND lci.customer_id = pq.customer_id
-                AND lci.rn = 1
-                AND pq.branch_id IS NULL
-                AND pq.business_type_of_insurance_id = {$groupMedicalId}
-            LEFT JOIN insured i ON i.id = lci.insured_id
         ";
     }
 
     protected function branchJoin($query): void
     {
-        $latestCustomerInsuredCte = $this->getLatestCustomerInsuredCTE();
-        $query->withExpression('latest_customer_insured', $latestCustomerInsuredCte);
-
         $branchMappingCte = $this->getBranchMappingCTE();
         $query->withExpression('branch_mapped', $branchMappingCte);
 

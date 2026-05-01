@@ -63,7 +63,8 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.buy_lead_reset_capacity as blResetCap',
                 );
             $managerDepartmentIds = null;
-            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
                 $managerDepartmentIds = auth()->user()->department()->pluck('id')->toArray();
                 $users = $users->whereIn('users.department_id', $managerDepartmentIds);
             } else {

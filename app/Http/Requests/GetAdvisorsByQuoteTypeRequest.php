@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Models\Department;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,8 @@ class GetAdvisorsByQuoteTypeRequest extends FormRequest
     {
         return [
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
+            'department_ids' => ['sometimes', 'array'],
+            'department_ids.*' => ['integer', Rule::exists(Department::class, 'id')],
         ];
     }
 
@@ -34,6 +37,10 @@ class GetAdvisorsByQuoteTypeRequest extends FormRequest
         return QuoteTypes::from($this->input('quote_type'));
     }
 
+    public function getDepartmentIds(): array
+    {
+        return $this->input('department_ids', []);
+    }
     /**
      * Get the error messages for the defined validation rules.
      *

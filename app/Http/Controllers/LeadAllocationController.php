@@ -252,7 +252,7 @@ class LeadAllocationController extends Controller
 
     public function updateResetCapSwitch(Request $request)
     {
-        LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
 
         $requester = auth()->user();
         info(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
@@ -273,7 +273,7 @@ class LeadAllocationController extends Controller
 
     public function updateBlStatus(Request $request)
     {
-        LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
 
         $requester = auth()->user();
         info(self::class."::updateBlStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
@@ -292,7 +292,7 @@ class LeadAllocationController extends Controller
 
     public function updateNormalLeadAllocationStatus(Request $request)
     {
-        LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
 
         $requester = auth()->user();
         info(self::class."::updateNormalLeadAllocationStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
@@ -311,7 +311,7 @@ class LeadAllocationController extends Controller
 
     public function updateBLResetCap(Request $request)
     {
-        LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
 
         $requester = auth()->user();
         info(self::class."::updateBLResetCap - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
