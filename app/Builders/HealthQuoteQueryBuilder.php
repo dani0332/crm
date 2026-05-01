@@ -79,6 +79,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'health_plan_type_id',
             'policy_holder_category_code',
             'visa_category_id',
+            'cover_for_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',

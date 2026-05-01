@@ -969,7 +969,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 />
 
                 <x-select
-                  v-if='isCustomerTypeIndividual'
+                  v-if='isCustomerTypeIndividual && !isDomesticHelper'
                   v-model="quoteForm.salary_band_id"
                   :options="salaryBandsOptions"
                   class="w-full"

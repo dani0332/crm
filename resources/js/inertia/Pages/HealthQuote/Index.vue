@@ -33,6 +33,7 @@ defineProps({
 const page = usePage();
 const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useToast();
+const healthCoverForEnum = page.props.healthCoverForEnum;
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
@@ -1459,7 +1460,7 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-salary_band.text="item">
         <p>
-          <span v-if="item.is_entity">N/A</span>
+          <span v-if="item.is_entity || item.cover_for_id == healthCoverForEnum.DOMESTIC_HELPER">N/A</span>
           <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
       </template>

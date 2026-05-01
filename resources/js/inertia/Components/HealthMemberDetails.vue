@@ -389,6 +389,8 @@ function syncPrincipalToQuoteForm(member) {
     props.quoteForm.nationality_id = member.nationality_id;
     props.quoteForm.emirate_of_your_visa_id = member.emirate_of_your_visa_id;
     props.quoteForm.pec = member.pec;
+  } else if (member.is_principal === 1 && isDomesticHelper.value) {
+    props.quoteForm.salary_band_id = member.salary_band_id;
   }
 }
 

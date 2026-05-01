@@ -446,6 +446,15 @@ final class HealthQuoteRevampMigrationMutator
                     return;
                 }
 
+                if ($hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
+                    $cm->relation_code = RelationCodeEnum::DOMESTIC_WORKER->value;
+                    $cm->salary_band_id = $hqr->salary_band_id;
+                    $cm->visa_category_id = VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value;
+                    $cm->save();
+
+                    return;
+                }
+
                 $relation = match (true) {
                     $mc === MemberCategoryEnum::DOMESTIC_WORKER->value => RelationCodeEnum::DOMESTIC_WORKER->value,
                     in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value, MemberCategoryEnum::INVESTOR_PARTNER->value, MemberCategoryEnum::GOLDEN_VISA->value], true) => null,

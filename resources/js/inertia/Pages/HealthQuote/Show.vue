@@ -2424,7 +2424,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote.marital_status_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div v-if="!isMigrated || (isMigrated && !isDomesticHelper)" class="grid sm:grid-cols-2">
                   <dt class="font-medium">SALARY BAND</dt>
                   <dd>{{ quote.salary_band_id_text }}</dd>
                 </div>
