@@ -9,6 +9,8 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class HealthPlanStatusValidRule implements ValidationRule
 {
+    public function __construct(protected string $message) {}
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $healthPlan = HealthPlan::find($value);
@@ -20,7 +22,7 @@ class HealthPlanStatusValidRule implements ValidationRule
         }
 
         if ($healthPlan->status !== HealthPlanRateSheetStatusEnum::DRAFT) {
-            $fail('Only draft health plans can be deleted');
+            $fail($this->message);
         }
     }
 }

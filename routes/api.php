@@ -166,6 +166,7 @@ Route::prefix('cms')->group(function () {
         Route::put('/{id}', [HealthPlanController::class, 'update']);
         Route::get('/get-status-versions/{parentId}/{status}', [HealthPlanController::class, 'getStatusVersions']);
         Route::delete('/{id}', [HealthPlanController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
     });
 });
 

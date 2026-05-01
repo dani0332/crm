@@ -7,6 +7,7 @@ use App\Http\Requests\Api\CreateHealthPlanRequest;
 use App\Http\Requests\Api\DeleteHealthPlanRequest;
 use App\Http\Requests\Api\GetStatusVersionHealthPlanRequest;
 use App\Http\Requests\Api\HealthPlanDetailRequest;
+use App\Http\Requests\Api\PublishHealthPlanRequest;
 use App\Http\Requests\Api\UpdateHealthPlanRequest;
 use App\Http\Resources\HealthPlanResource;
 use App\Services\HealthPlanService;
@@ -74,6 +75,15 @@ class HealthPlanController extends Controller
 
         return response()->json([
             'status' => 'success',
+            'message' => 'Health plan deleted successfully',
+        ]);
+    }
+
+    public function publish(PublishHealthPlanRequest $request): JsonResponse
+    {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Health plan publishing processed. It will be published as per rates effective from date',
         ]);
     }
 }

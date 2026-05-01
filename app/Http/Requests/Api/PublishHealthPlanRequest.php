@@ -7,19 +7,17 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class DeleteHealthPlanRequest extends FormRequest
+class PublishHealthPlanRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'id' => $this->route('id'),
-        ]);
+        $this->merge(['id' => $this->route('id')]);
     }
 
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft health plans can be deleted')],
+            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft health plans can be published')],
         ];
     }
 
@@ -27,6 +25,7 @@ class DeleteHealthPlanRequest extends FormRequest
     {
         return [
             'id.integer' => 'Id must be an integer',
+            'id.exists' => 'Health plan does not exist',
         ];
     }
 
