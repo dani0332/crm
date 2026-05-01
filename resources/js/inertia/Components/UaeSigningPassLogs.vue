@@ -56,12 +56,12 @@ const onLoadUaePassLogData = async () => {
       uaePassLogs.data = response.data.data;
     } else {
       console.error(
-        'Failed to load UAE Signing Pass logs:',
+        'Failed to load UAE PASS Signature Logs:',
         response.data.message,
       );    
     }
   } catch (error) {
-    console.error('Error loading UAE Signing Pass logs:', error);
+    console.error('Error loading UAE PASS Signature Logs:', error);
   } finally {
     uaePassLogs.loading = false;
   }
@@ -99,7 +99,7 @@ const formatJson = value => {
       <template #header>
         <div class="flex items-center gap-2">
           <h3 class="font-semibold text-primary-800 text-lg">
-            UAE Signing Pass Logs
+            UAE PASS Signature Logs
           </h3>
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
@@ -139,7 +139,7 @@ const formatJson = value => {
             @click.prevent="onLoadUaePassLogData"
             :loading="uaePassLogs.loading"
           >
-            Load UAE Signing Pass Logs
+            Load UAE PASS Signature Logs
           </x-button>
         </div>
 
