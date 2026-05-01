@@ -38,6 +38,7 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
@@ -388,8 +389,14 @@ const openDocumentInNewTab = async item => {
               class="text-primary-600 cursor-pointer"
               @click.prevent="openDocumentInNewTab(item)"
             >
-              {{ item.original_name }}
+              <span>{{ item.original_name }}</span>
             </a>
+            <span
+              v-if="hasRole(rolesEnum.Engineering) && item.document_type_code"
+              class="text-gray-600 text-xs font-mono block mt-0.5"
+            >
+              {{ item.document_type_code }}
+            </span>
           </template>
           <template
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
@@ -474,6 +481,12 @@ const openDocumentInNewTab = async item => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
+              <p
+                v-if="hasRole(rolesEnum.Engineering) && documentType.code"
+                class="text-xs"
+              >
+                Document type code: {{ documentType.code }}
+              </p>
 
               <x-alert
                 v-if="successStatus[documentType.id]"
@@ -519,7 +532,18 @@ const openDocumentInNewTab = async item => {
                   @click.prevent="openDocumentInNewTab(quoteDocument)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                  <span>{{
+                    quoteDocument.original_name || quoteDocument.doc_name
+                  }}</span>
+                  <span
+                    v-if="
+                      hasRole(rolesEnum.Engineering) &&
+                      quoteDocument.document_type_code
+                    "
+                    class="text-gray-600 font-mono block truncate"
+                  >
+                    {{ quoteDocument.document_type_code }}
+                  </span>
                 </a>
               </template>
             </div>
