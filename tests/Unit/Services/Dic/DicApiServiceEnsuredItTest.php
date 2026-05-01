@@ -10,6 +10,7 @@ use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicApiService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicHttpClient;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicResponseHandler;
+use Tests\Helpers\DicTestHelper;
 
 beforeEach(function () {
     config([
@@ -37,7 +38,7 @@ it('issuePolicy returns mapped EnsuredIT error for already sold policy', functio
         ->with('POST', 'https://unit-dic.test/products/buy/client', [
             'policy_id' => '00000000-0000-4000-8000-0000000000aa',
         ])
-        ->andReturn(dicTestClientResponse([
+        ->andReturn(DicTestHelper::clientResponse([
             'code' => 'VALIDATION_ERROR',
             'message' => 'Policy already sold',
             'policyStatus' => 'SOLD',
@@ -113,7 +114,7 @@ it('issuePolicy persists failed issuance log when HTTP succeeds but JSON body is
 
     $httpClient = Mockery::mock(DicHttpClient::class);
     $httpClient->shouldReceive('buildUrl')->andReturn('https://unit-dic.test/products/buy/client');
-    $httpClient->shouldReceive('authenticatedRequest')->andReturn(dicTestClientResponse('"not-an-array"', 200));
+    $httpClient->shouldReceive('authenticatedRequest')->andReturn(DicTestHelper::clientResponse('"not-an-array"', 200));
     app()->instance(DicHttpClient::class, $httpClient);
 
     $builder = Mockery::mock(DicRequestBuilder::class);
@@ -136,7 +137,7 @@ it('getPolicyDoc maps 401 AUTH_ERROR for certificate download path', function ()
 
     $httpClient = Mockery::mock(DicHttpClient::class);
     $httpClient->shouldReceive('buildUrl')->once()->with($expectedPath)->andReturn($expectedUrl);
-    $httpClient->shouldReceive('authenticatedRequest')->once()->with('GET', $expectedUrl)->andReturn(dicTestClientResponse([
+    $httpClient->shouldReceive('authenticatedRequest')->once()->with('GET', $expectedUrl)->andReturn(DicTestHelper::clientResponse([
         'code' => 'AUTH_ERROR',
         'message' => 'Token Expired',
     ], 401));
@@ -193,7 +194,7 @@ it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function (
 
     $httpClient = Mockery::mock(DicHttpClient::class);
     $httpClient->shouldReceive('buildUrl')->once()->with($expectedPath)->andReturn($expectedUrl);
-    $httpClient->shouldReceive('authenticatedRequest')->once()->with('GET', $expectedUrl)->andReturn(dicTestClientResponse([
+    $httpClient->shouldReceive('authenticatedRequest')->once()->with('GET', $expectedUrl)->andReturn(DicTestHelper::clientResponse([
         'code' => 'INTERNAL_ERROR',
         'message' => 'Unable to get valid price',
     ], 500));

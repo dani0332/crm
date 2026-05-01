@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicEnsuredItErrorHandler;
+use Tests\Helpers\DicTestHelper;
 
 it('maps AUTH_ERROR token expired to resolution message', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'code' => 'AUTH_ERROR',
         'message' => 'Token Expired',
     ], 401);
@@ -18,7 +19,7 @@ it('maps AUTH_ERROR token expired to resolution message', function () {
 });
 
 it('maps AUTH_ERROR invalid token to resolution message', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'code' => 'AUTH_ERROR',
         'message' => 'Invalid Auth Token Found',
     ], 401);
@@ -30,7 +31,7 @@ it('maps AUTH_ERROR invalid token to resolution message', function () {
 });
 
 it('maps VALIDATION_ERROR with field message', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'code' => 'VALIDATION_ERROR',
         'message' => "'travel_region' is not one of the acceptable values.",
     ], 400);
@@ -43,7 +44,7 @@ it('maps VALIDATION_ERROR with field message', function () {
 });
 
 it('maps INTERNAL_ERROR for policy stores style responses', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'code' => 'INTERNAL_ERROR',
         'message' => 'Price not found',
     ], 500);
@@ -56,7 +57,7 @@ it('maps INTERNAL_ERROR for policy stores style responses', function () {
 });
 
 it('maps issuance policy already sold (400 with policyStatus SOLD)', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'certificateNumber' => 'UNIT-CERT-1',
         'code' => 'VALIDATION_ERROR',
         'message' => 'Policy already sold',
@@ -70,7 +71,7 @@ it('maps issuance policy already sold (400 with policyStatus SOLD)', function ()
 });
 
 it('falls back to HTTP status when body is not JSON', function () {
-    $response = dicTestClientResponse('Gateway timeout upstream', 502);
+    $response = DicTestHelper::clientResponse('Gateway timeout upstream', 502);
 
     $mapped = DicEnsuredItErrorHandler::map($response);
 
@@ -79,7 +80,7 @@ it('falls back to HTTP status when body is not JSON', function () {
 });
 
 it('uses API message for unknown code with 403', function () {
-    $response = dicTestClientResponse([
+    $response = DicTestHelper::clientResponse([
         'code' => 'UNKNOWN',
         'message' => 'Forbidden scope',
     ], 403);
