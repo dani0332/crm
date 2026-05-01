@@ -1702,8 +1702,6 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
-        dd($emailData);
-
         if ($quoteTypeId == QuoteTypeId::Cyber) {
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
                 ? number_format($quote->cyberPlanDetail->coverage)
