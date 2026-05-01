@@ -187,8 +187,8 @@ class DeviceQuoteService extends BaseQuoteService
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
                     ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
+                        'personal_quotes.*',
+                    ])->selectRaw("
                 IF(
                     EXISTS (
                         SELECT *
@@ -342,8 +342,8 @@ class DeviceQuoteService extends BaseQuoteService
             'mobileNo' => $data['mobile_no'],
             'purchaseMonth' => $data['month_of_purchase'],
             'purchaseYear' => $data['year_of_purchase'],
-            'phoneMakeId' => $data['make_id'],
-            'phoneModelId' => $data['model_id'],
+            'makeId' => $data['make_id'],
+            'modelId' => $data['model_id'],
             'imei' => $data['imei'],
             'quoteTypeId' => (int) $this->quoteType->id(),
             'lang' => 'EN',
