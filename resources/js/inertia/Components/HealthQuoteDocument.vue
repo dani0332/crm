@@ -591,8 +591,7 @@ const signedMedicalApplicationDocs = computed(() => {
                     <span>{{ doc.original_name || doc.doc_name }}</span>
                     <span
                       v-if="
-                        hasRole(rolesEnum.Engineering) &&
-                        doc.document_type_code
+                        hasRole(rolesEnum.Engineering) && doc.document_type_code
                       "
                       class="text-gray-600 font-mono block truncate"
                     >
