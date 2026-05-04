@@ -192,6 +192,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
     Route::post('/advisors/by-quote-type', [AdvisorController::class, 'getAdvisorsByQuoteType'])->name('advisors.by-quote-type');
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
+    Route::get('/reports/conversion-optimization', [ReportsController::class, 'renderConversionOptimizationReport'])->name('conversion-optimization-report-view');
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
 
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
@@ -393,6 +394,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
         Route::get('/reports/conversion-as-at/export', [ReportsController::class, 'exportConversionAsAtReport'])->name('conversion-as-at-export');
+        Route::get('/reports/conversion-optimization/export', [ReportsController::class, 'exportConversionOptimizationReport'])->name('conversion-optimization-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
@@ -420,6 +422,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
     Route::post('embedded-products/get-documents', [EmbeddedProductController::class, 'getDocuments'])->name('embedded-products.get-documents');
     Route::post('embedded-products/upload-quote-document', [EmbeddedProductController::class, 'uploadQuoteDocument'])->name('embedded-products.upload-quote-document');
+    Route::post('embedded-products/update-ep-document', [EmbeddedProductController::class, 'updateEpDocument'])->name('embedded-products.update-ep-document');
 
     Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
 
@@ -993,6 +996,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.allocation-configuration.business-types');
     Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])
         ->name('admin.allocation-configuration.sub-areas');
+    Route::get('/api/departments', [AllocationConfigurationController::class, 'getDepartments'])
+        ->name('admin.allocation-configuration.departments');
 
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;

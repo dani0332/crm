@@ -867,21 +867,6 @@ onMounted(() => {
   showLackingPayment();
 });
 
-const isChildPaymentDeletable = computed(() => {
-  if (props.payments.length !== 2) return false;
-  const childPaymentNotAuthorised = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.DRAFT,
-    paymentStatusEnum.OVERDUE,
-  ].includes(props.payments[1].payment_status_id);
-  return (
-    props.quoteType == quoteTypeCodeEnum.Travel &&
-    page.props?.aboveAgeMembers &&
-    childPaymentNotAuthorised
-  );
-});
-
 const setPaymentInitialPrice = () => {
   if (paymentMethodsFormReplicated.value.status !== 'edit') {
     if (props.isPlanDetailEnabled) {
@@ -1206,7 +1191,6 @@ watch(
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
-                    :isChildPaymentDeletable="isChildPaymentDeletable"
                     :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmedReplicated"
                     :capturePaymentValidationInProcess="
@@ -1368,7 +1352,7 @@ watch(
         <AmlApprovalModal
           v-model="isAmlApprovalRequired"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :quote-request-id="props.quoteRequest.id"
           :is-processing="paymentMethodsFormReplicated.processing"
@@ -1414,7 +1398,7 @@ watch(
           :quote-id="props.quoteRequest.id"
           :quote-uuid="props.quoteRequest.uuid"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"

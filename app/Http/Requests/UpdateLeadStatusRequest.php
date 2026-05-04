@@ -33,6 +33,25 @@ class UpdateLeadStatusRequest extends FormRequest
     }
 
     /**
+     * Sanitize notes and lost_notes by removing emoji (Extended_Pictographic) before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        if ($this->has('notes') && is_string($this->notes)) {
+            $merge['notes'] = sanitizeNotesFromEmoji($this->notes);
+        }
+        if ($this->has('lost_notes') && is_string($this->lost_notes)) {
+            $merge['lost_notes'] = sanitizeNotesFromEmoji($this->lost_notes);
+        }
+
+        if ($merge !== []) {
+            $this->merge($merge);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array

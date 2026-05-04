@@ -6,6 +6,8 @@ const props = defineProps({
   gmTypes: Object,
   selectedGmType: Object,
   subSources: { type: Array, default: () => [] },
+  emirates: { type: Array, default: () => [] },
+  isEmirateDisabled: { type: Boolean, default: false },
   leadSourceParams: { type: Object, default: () => ({}) },
 });
 
@@ -44,6 +46,7 @@ const quoteForm = useForm({
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType ?? '',
+  emirate_of_registration_id: props.quote?.emirate_of_registration_id ?? null,
   brief_details: props.quote.brief_details,
   // Additional notes
   additional_notes: props.quote?.additional_notes || '',
@@ -123,6 +126,26 @@ watch(
     }
   },
 );
+
+const emirateOfRegistrationFieldError = computed(() => {
+  if (quoteForm.errors.emirate_of_registration_id) {
+    return quoteForm.errors.emirate_of_registration_id;
+  }
+  if (!isEdit.value) {
+    return null;
+  }
+  const value = quoteForm.emirate_of_registration_id;
+  const isEmpty =
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    value === false ||
+    value === 0;
+  if (isEmpty) {
+    return 'Please update Emirate of registration in Entity Profile';
+  }
+  return null;
+});
 
 const isEmptyField = ref(false);
 
@@ -287,6 +310,24 @@ function onSubmit(isValid) {
           label="Business Insurance Type"
           required
         />
+
+        <x-select
+          v-model="quoteForm.emirate_of_registration_id"
+          :options="
+            (props.emirates || []).map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          :rules="props.isEmirateDisabled ? [] : [isRequired]"
+          class="w-full"
+          :error="emirateOfRegistrationFieldError"
+          label="EMIRATE OF REGISTRATION"
+          :required="!props.isEmirateDisabled"
+          :disabled="props.isEmirateDisabled"
+          tooltip="Select the Emirate where the company is legally registered or primarily operates."
+        >
+        </x-select>
 
         <x-textarea
           v-model="quoteForm.brief_details"

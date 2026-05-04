@@ -50,6 +50,33 @@ class PermissionSeeder extends Seeder
 
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
+        $this->addEpDocumentManualOverridePermission();
+        $this->addConversionOptimizationEngineReportPermission();
+        $this->addComplianceDocumentUploadPermission();
+    }
+
+    private function addEpDocumentManualOverridePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+                } else {
+                    LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+                }
+            }
+        }
     }
 
     private function addBuyLeadsAdminPermission(): void
@@ -105,6 +132,57 @@ class PermissionSeeder extends Seeder
                     LoggerService::info("Role {$role->name} already has permission {$permission->name}");
                 }
             }
+        }
+    }
+
+    private function addConversionOptimizationEngineReportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+            } else {
+                LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+            }
+        }
+    }
+
+    private function addComplianceDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPLIANCE_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $role = Role::query()
+            ->where('guard_name', 'web')
+            ->where('name', RolesEnum::ComplianceSuperUser)
+            ->first();
+
+        if ($role === null) {
+            LoggerService::info('COMPLIANCE_SUPER_USER role not found; skipping compliance-document-upload assignment');
+
+            return;
+        }
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+            LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+        } else {
+            LoggerService::info("Role {$role->name} already has permission {$permission->name}");
         }
     }
 }

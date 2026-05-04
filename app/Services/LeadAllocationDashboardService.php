@@ -77,15 +77,21 @@ class LeadAllocationDashboardService extends BaseService
                     });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
+                $departmentIds = auth()->user()->department()->pluck('id')->toArray();
+                $users = $users->whereIn('users.department_id', $departmentIds);
+            } else {
 
-            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-                $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
-                $users = $users->whereIn('teams.id', $userTeamIds);
-            }
+                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                    $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                    $users = $users->whereIn('teams.id', $userTeamIds);
+                }
 
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
-                $users = $users->whereIn('users.id', $userIds);
+                if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                    $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                    $users = $users->whereIn('users.id', $userIds);
+                }
             }
 
             return $users->get();
@@ -95,7 +101,6 @@ class LeadAllocationDashboardService extends BaseService
             return [];
         }
     }
-
     private function getQuotesBaseQuery($quoteType)
     {
         $from = now()->startOfDay();
