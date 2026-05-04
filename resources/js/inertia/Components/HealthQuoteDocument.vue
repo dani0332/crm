@@ -46,6 +46,26 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const selectedMember = ref(0);
 
+// Restricted internal types require compliance-document-upload; others are always listed.
+const canViewDocumentTypeInUploadModal = documentType => {
+  if (!documentType.is_restricted_internal_document) {
+    return true;
+  }
+
+  return can(permissionEnum.COMPLIANCE_DOCUMENT_UPLOAD);
+};
+
+/** Delete action: requires DOCUMENT_DELETE and row must not be internal-restricted. */
+const canShowQuoteDocumentDelete = item => {
+  if (!can(permissionEnum.DOCUMENT_DELETE)) {
+    return false;
+  }
+  if (item?.is_restricted_internal_document) {
+    return false;
+  }
+  return true;
+};
+
 // Format members for dropdown
 const memberOptions = computed(() => {
   return page.props.membersDetail.map(m => ({
@@ -399,11 +419,8 @@ const signedMedicalApplicationDocs = computed(() => {
             {{ item.member_detail?.first_name }}
             {{ item.member_detail?.last_name }}
           </template>
-          <template
-            v-if="can(permissionEnum.DOCUMENT_DELETE)"
-            #item-action="{ id, doc_uuid }"
-          >
-            <div>
+          <template #item-action="item">
+            <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
                 v-if="bookPolicyDetails?.isEnableUploadDocument === false"
@@ -422,7 +439,7 @@ const signedMedicalApplicationDocs = computed(() => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(id, doc_uuid)"
+                @click.prevent="onDocDelete(item.id, item.doc_uuid)"
                 v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
@@ -469,119 +486,122 @@ const signedMedicalApplicationDocs = computed(() => {
           </div>
 
           <!-- Showing documents -->
-          <div
-            v-for="documentType in docType"
-            :key="documentType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ documentType.text }}
-                <span class="text-red-500">
-                  {{ documentType.is_required ? '*' : '' }}</span
-                >
-              </h5>
-              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-              <p class="text-xs">
-                Supported: {{ documentType.accepted_files }}
-              </p>
-              <p class="text-xs">
-                Max file size: {{ documentType.max_size }} MB
-              </p>
-              <p
-                v-if="hasRole(rolesEnum.Engineering) && documentType.code"
-                class="text-xs"
-              >
-                Document type code: {{ documentType.code }}
-              </p>
-
-              <x-alert
-                v-if="successStatus[documentType.id]"
-                type="success"
-                color="success"
-                light
-              >
-                <p class="text-sm">File uploaded successfully</p>
-              </x-alert>
-
-              <x-alert
-                v-if="errorMsg[documentType.id]"
-                type="error"
-                color="error"
-                light
-              >
-                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
-              </x-alert>
-            </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="documentType.id"
-                :accept="documentType.accepted_files"
-                :max-files="documentType.max_files"
-                :max-size="documentType.max_size"
-                :loading="uploadingStatus[documentType.id]"
-                :document-type-code="documentType.code"
-                :isDisabled="
-                  documentType.code == documentTypeCodeEnum.AUDIT &&
-                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
-                "
-                :multiple="true"
-                @change="uploadFile(documentType, $event)"
-              />
-
-              <template
-                v-for="quoteDocument in quoteDocuments.filter(
-                  d =>
-                    d.document_type_code == documentType.code && // Filter for quote and member tab
-                    (documentType.category !== 'MEMBER' ||
-                      d.member_detail_id == selectedMember),
-                )"
-                :key="quoteDocument.id"
-              >
-                <a
-                  @click.prevent="openDocumentInNewTab(quoteDocument)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                >
-                  <span>{{
-                    quoteDocument.original_name || quoteDocument.doc_name
-                  }}</span>
-                  <span
-                    v-if="
-                      hasRole(rolesEnum.Engineering) &&
-                      quoteDocument.document_type_code
-                    "
-                    class="text-gray-600 font-mono block truncate"
+          <template v-for="documentType in docType" :key="documentType.id">
+            <div
+              v-if="canViewDocumentTypeInUploadModal(documentType)"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
+            >
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                  <span class="text-red-500">
+                    {{ documentType.is_required ? '*' : '' }}</span
                   >
-                    {{ quoteDocument.document_type_code }}
-                  </span>
-                </a>
-              </template>
-
-              <!-- Show quote medical signed document here as per ADNIC requirement -->
-              <div
-                v-if="
-                  documentType.text?.includes('Signed medical application form')
-                "
-              >
-                <a
-                  v-for="doc in signedMedicalApplicationDocs"
-                  :key="doc.id"
-                  @click.prevent="openDocumentInNewTab(doc)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
+                <p
+                  v-if="hasRole(rolesEnum.Engineering) && documentType.code"
+                  class="text-xs"
                 >
-                  <span>{{ doc.original_name || doc.doc_name }}</span>
-                  <span
-                    v-if="
-                      hasRole(rolesEnum.Engineering) && doc.document_type_code
-                    "
-                    class="text-gray-600 font-mono block truncate"
+                  Document type code: {{ documentType.code }}
+                </p>
+
+                <x-alert
+                  v-if="successStatus[documentType.id]"
+                  type="success"
+                  color="success"
+                  light
+                >
+                  <p class="text-sm">File uploaded successfully</p>
+                </x-alert>
+
+                <x-alert
+                  v-if="errorMsg[documentType.id]"
+                  type="error"
+                  color="error"
+                  light
+                >
+                  <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+                </x-alert>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="uploadingStatus[documentType.id]"
+                  :document-type-code="documentType.code"
+                  :isDisabled="
+                    documentType.code == documentTypeCodeEnum.AUDIT &&
+                    !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                  "
+                  :multiple="true"
+                  @change="uploadFile(documentType, $event)"
+                />
+
+                <template
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d =>
+                      d.document_type_code == documentType.code && // Filter for quote and member tab
+                      (documentType.category !== 'MEMBER' ||
+                        d.member_detail_id == selectedMember),
+                  )"
+                  :key="quoteDocument.id"
+                >
+                  <a
+                    @click.prevent="openDocumentInNewTab(quoteDocument)"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                   >
-                    {{ doc.document_type_code }}
-                  </span>
-                </a>
+                    <span>{{
+                      quoteDocument.original_name || quoteDocument.doc_name
+                    }}</span>
+                    <span
+                      v-if="
+                        hasRole(rolesEnum.Engineering) &&
+                        quoteDocument.document_type_code
+                      "
+                      class="text-gray-600 font-mono block truncate"
+                    >
+                      {{ quoteDocument.document_type_code }}
+                    </span>
+                  </a>
+                </template>
+
+                <!-- Show quote medical signed document here as per ADNIC requirement -->
+                <div
+                  v-if="
+                    documentType.text?.includes(
+                      'Signed medical application form',
+                    )
+                  "
+                >
+                  <a
+                    v-for="doc in signedMedicalApplicationDocs"
+                    :key="doc.id"
+                    @click.prevent="openDocumentInNewTab(doc)"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  >
+                    <span>{{ doc.original_name || doc.doc_name }}</span>
+                    <span
+                      v-if="
+                        hasRole(rolesEnum.Engineering) && doc.document_type_code
+                      "
+                      class="text-gray-600 font-mono block truncate"
+                    >
+                      {{ doc.document_type_code }}
+                    </span>
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </x-tab>
       </x-tab-group>
     </x-modal>
