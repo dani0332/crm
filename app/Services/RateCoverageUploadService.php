@@ -218,6 +218,17 @@ class RateCoverageUploadService
                 $allCohorts = $this->cohortMappingService->getAllCohorts();
                 $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
+                // Get first plan code to validate from database
+                $rowAssoc = array_combine($headers, $rows[1]);
+                if (empty($rowAssoc['plan_code'])) {
+                    throw new \Exception('Plan code is required.');
+                }
+
+                $plan = $this->healthPlanService->getPlanByCode($rowAssoc['plan_code']);
+                if (! $plan) {
+                    throw new \Exception('Plan not found.');
+                }
+
                 // Iterate through rows to get values
                 for ($i = 1; $i < $rowCount; $i++) {
                     $rowAssoc = array_combine($headers, $rows[$i]);
@@ -250,11 +261,6 @@ class RateCoverageUploadService
                         if ($planCode !== $prevRowAssoc['plan_code']) {
                             throw new \Exception('All plan codes must be the same.');
                         }
-                    }
-
-                    $plan = $this->healthPlanService->getPlanByCode($planCode);
-                    if (! $plan) {
-                        throw new \Exception('Plan not found.');
                     }
 
                     // Validate min age as integers
@@ -351,7 +357,7 @@ class RateCoverageUploadService
                 }
 
                 // Upload file and rates in a transaction
-                DB::transaction(function () use ($uploadedFile, $plan, $rows) {
+                DB::transaction(function () use ($uploadedFile, $plan, $rows, $rowCount) {
                     // Upload file (health rate control)
                     $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $rows[0]['effective_from'], $rows[0]['effective_to'], $plan->id, $rowCount - 1);
 
