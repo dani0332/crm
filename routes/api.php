@@ -158,7 +158,7 @@ Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaym
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
 
 // Cms Api Routes
-Route::prefix('cms')->group(function () {
+Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
     Route::group(['prefix' => 'plans'], function () {
         Route::get('/', [HealthPlanController::class, 'getList']);
         Route::get('/{id}', [HealthPlanController::class, 'getPlan']);
