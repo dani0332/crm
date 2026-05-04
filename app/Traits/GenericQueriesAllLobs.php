@@ -342,6 +342,8 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
             $bookPolicyDetails['sendButton'] = true;
             $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['missingDocumentCodes'] = $areSendPolicyDocsUploaded['missingDocumentCodes'];
+            $bookPolicyDetails['missingDocuments'] = $areSendPolicyDocsUploaded['missingDocuments'];
             $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
             if ($bookPolicyDetails['sendButton']) {
