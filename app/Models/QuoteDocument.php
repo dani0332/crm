@@ -17,11 +17,10 @@ class QuoteDocument extends Model implements AuditableContract
     use Auditable, HasFactory, SoftDeletes, SpatieActivityLog;
 
     protected $table = 'quote_documents';
-    protected $guarded = [];
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
-    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url', 'document_category', 'insurer_document_link', 'is_manual_override', 'override_remarks'];
+    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url', 'document_category', 'insurer_document_link', 'is_manual_override', 'override_remarks', 'is_restricted_internal_document', 'document_type_id'];
     protected $hidden = [''];
 
     /**
