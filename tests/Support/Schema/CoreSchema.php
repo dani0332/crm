@@ -21,6 +21,7 @@ class CoreSchema
         $this->ensureCustomerTables();
         $this->ensureInsuranceProviderTables();
         $this->ensureQuoteTables();
+        $this->ensureCatARevivalBuyLeadSupport();
         $this->ensureBusinessQuoteTables();
         $this->ensureEmbeddedProductTables();
         $this->ensurePaymentTables();
@@ -1446,6 +1447,23 @@ class CoreSchema
                 $table->timestamps();
 
                 $table->index('embedded_transaction_id');
+            },
+        ]);
+    }
+
+    private function ensureCatARevivalBuyLeadSupport(): void
+    {
+        SchemaUtils::ensureColumns([
+            'car_quote_request' => [
+                'car_value_tier' => fn (Blueprint $table) => $table->decimal('car_value_tier', 15, 2)->nullable(),
+            ],
+        ]);
+        SchemaUtils::ensureTables([
+            'buy_lead_configuration_nationalities' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_type');
+                $table->unsignedBigInteger('nationality_id');
+                $table->timestamps();
             },
         ]);
     }
