@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
@@ -49,6 +48,14 @@ class QuoteStatusService
         $quoteType = QuoteType::findOrFail($quoteTypeId);
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
+        if (request('workflow_type') === QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label() && request()->filled('quote_status_id')) {
+            $statusId = (int) request('quote_status_id');
+            $updateQuote->quote_status_id = $statusId;
+            $updateQuote->save();
+
+            return $updateQuote;
+        }
+
         if (! empty($updateQuote->quote_status_id)) {
             switch ($updateQuote->quote_status_id) {
                 case QuoteStatusEnum::NewLead:
@@ -60,20 +67,14 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
-                    if (request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label() && $updateQuote->source == LeadSourceEnum::REVIVAL_REPLIED) {
-                        $updateQuote->quote_status_id = QuoteStatusEnum::Lost;
-                    } elseif (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
+                    if (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label()) {
                         $updateQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
                     } else {
                         $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
                     }
                     break;
                 case QuoteStatusEnum::FollowedUp:
-                    if (request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
-                        $updateQuote->quote_status_id = QuoteStatusEnum::Lost;
-                    } else {
-                        $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
-                    }
+                    $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
                     break;
                 default:
                     return $updateQuote;
