@@ -7,7 +7,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Customer;
 use App\Models\CyberQuote;
-use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -101,13 +100,11 @@ class PersonalQuoteFactory extends Factory
                 'planName' => 'Gold Plan',
             ]);
 
-            $documentType = DocumentType::where('code', DocumentTypeCode::CYB_EID)->first();
             $quote->documents()->create([
-                'document_type_code' => $documentType->code,
+                'document_type_code' => DocumentTypeCode::CYB_EID,
                 'doc_name' => 'EmiratesId.pdf',
                 'doc_url' => 'documents/eid.pdf',
                 'doc_mime_type' => 'application/pdf',
-                'document_type_id' => $documentType->id,
             ]);
         });
     }
