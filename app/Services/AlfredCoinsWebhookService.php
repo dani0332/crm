@@ -33,6 +33,11 @@ class AlfredCoinsWebhookService
             return;
         }
 
+        $this->attemptInsuranceMarketWebhook($quoteUID, $quoteTypeId);
+    }
+
+    private function attemptInsuranceMarketWebhook(string $quoteUID, int $quoteTypeId): void
+    {
         $config = config('services.alfred_coins.insurancemarket_webhook', []);
         $url = $config['url'] ?? null;
         $apiKey = $config['api_key'] ?? null;
