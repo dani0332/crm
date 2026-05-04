@@ -490,6 +490,7 @@ test('isTransitionableLeadForProcess returns status false with carPlan null when
         'provider_name' => 'GIG AXA',
         'plan_name' => 'NonExistent Plan',
         'plan_type' => 'COMP',
+        'is_gcc' => 'Yes',
     ], $transition->id);
 
     $service = createTransitionableFeatureService();

@@ -682,6 +682,155 @@ test('isTransitionableLeadWithCurrentData uses current-data fallback when caller
     expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: true))->toBeTrue();
 });
 
+test('isTransitionableLead returns true for Phoenix lead when is_gcc is Yes', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::TM,
+        'text' => 'TM',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $plan = CarPlan::create([
+        'text' => 'Phoenix GCC Plan',
+        'repair_type' => 'COMP',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+        'is_gcc' => 'Yes',
+    ]);
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    expect($status)->toBeTrue()
+        ->and($leadValidationErrors)->toBeEmpty()
+        ->and($lead->insurance_provider_transition_id)->not->toBeNull();
+});
+
+test('isTransitionableLead returns false for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::TM,
+        'text' => 'TM',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    CarPlan::create([
+        'text' => 'Phoenix Non-GCC Plan',
+        'repair_type' => 'COMP',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => 'Phoenix Non-GCC Plan',
+        'plan_type' => 'COMP',
+        'is_gcc' => 'No',
+    ]);
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    expect($status)->toBeFalse()
+        ->and($leadValidationErrors)->toBeEmpty()
+        ->and($lead->insurance_provider_transition_id)->toBeNull();
+});
+
+test('isTransitionableLeadForProcess returns non-transitionable config for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::TM,
+        'text' => 'TM',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    CarPlan::create([
+        'text' => 'Phoenix Non-GCC Plan',
+        'repair_type' => 'COMP',
+        'provider_id' => $targetProvider->id,
+    ]);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => 'Phoenix Non-GCC Plan',
+        'plan_type' => 'COMP',
+        'is_gcc' => 'No',
+    ]);
+
+    $service->isTransitionableLead($lead, $leadValidationErrors);
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['transitionId'])->toBeNull()
+        ->and($result['tags'])->toBe('');
+});
+
+test('isTransitionableLeadWithCurrentData returns false for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::TM,
+        'text' => 'TM',
+    ]);
+
+    $targetProvider = InsuranceProvider::create([
+        'code' => InsuranceProvidersEnum::AXA,
+        'text' => 'AXA',
+    ]);
+
+    $transition = InsuranceProviderTransition::create([
+        'source_insurance_provider_id' => $sourceProvider->id,
+        'target_insurance_provider_id' => $targetProvider->id,
+        'is_active' => true,
+    ]);
+
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'is_gcc' => 'No',
+    ], transitionId: $transition->id);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    expect($service->isTransitionableLeadWithCurrentData($lead))->toBeFalse();
+});
+
 test('isTransitionableLeadWithCurrentData fallback does not require plan when plan fields are empty', function () {
     $sourceProvider = InsuranceProvider::create([
         'code' => InsuranceProvidersEnum::RSA,
