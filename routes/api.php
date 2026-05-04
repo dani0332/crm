@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\HealthPlanController;
+use App\Http\Controllers\API\HealthRateController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -167,6 +168,11 @@ Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
         Route::get('/get-status-versions/{parentId}/{status}', [HealthPlanController::class, 'getStatusVersions']);
         Route::delete('/{id}', [HealthPlanController::class, 'delete']);
         Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
+    });
+
+    Route::prefix('rates')->group(function () {
+        Route::get('/listing/{healthPlanId}', [HealthRateController::class, 'getList']);
+        Route::get('/{id}', [HealthRateController::class, 'getRate']);
     });
 });
 

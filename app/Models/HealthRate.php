@@ -27,4 +27,24 @@ class HealthRate extends Model
     {
         return $this->belongsTo(HealthPlan::class, 'health_plan_id');
     }
+
+    public function insuranceProvider(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id');
+    }
+
+    public function healthRatingEligibility(): BelongsTo
+    {
+        return $this->belongsTo(HealthRatingEligibility::class, 'health_rating_eligibility_id');
+    }
+
+    public function healthPlanCoPayment(): BelongsTo
+    {
+        return $this->belongsTo(HealthPlanCoPayment::class, 'health_plan_co_payment_id');
+    }
+
+    public function healthRateControl(): BelongsTo
+    {
+        return $this->belongsTo(HealthRateControl::class, 'health_rate_control_id');
+    }
 }

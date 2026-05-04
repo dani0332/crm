@@ -6,32 +6,20 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class HealthPlanDetailRequest extends FormRequest
+class HealthRateDetailRequest extends FormRequest
 {
-    protected function prepareForValidation(): void
-    {
-        $id = collect([
-            'id',
-            'healthPlanId',
-        ])->map(fn ($key) => $this->route($key))
-            ->first(fn ($value) => ! is_null($value));
-
-        $this->merge(['id' => $id]);
-    }
-
     public function rules(): array
     {
         return [
-            'id' => ['required', 'integer', 'exists:health_plan,id'],
+            'id' => ['integer', 'exists:health_rates,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'id.required' => 'Id is required',
             'id.integer' => 'Id must be an integer',
-            'id.exists' => 'Invalid health plan id',
+            'id.exists' => 'Invalid health rate id',
         ];
     }
 
