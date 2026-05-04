@@ -21,6 +21,9 @@ class CreateHealthPlanRequest extends FormRequest
             'health_network_id' => 'nullable|integer|exists:health_networks,id',
             'provider_id' => 'nullable|integer|exists:insurance_provider,id',
             'maf_link' => 'nullable|string',
+            'cohort_enabled' => 'nullable|boolean',
+            'gender_enabled' => 'nullable|boolean',
+            'marital_status_enabled' => 'nullable|boolean',
             'is_active' => 'required|boolean',
             'is_hidden' => 'required|boolean',
         ];

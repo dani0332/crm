@@ -67,7 +67,8 @@ class HealthPlanService extends BaseService
 
         // Otherwise create new draft version
         $data['version'] = $this->deriveVersion($currentPlan);
-        $data['parent_id'] = $id;
+        $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
+        $data['code'] = $currentPlan->code; // Keep current code
 
         return HealthPlan::create($data);
     }
@@ -111,8 +112,16 @@ class HealthPlanService extends BaseService
             return (float) $version;
         }
 
-        // Else archive version
-        return $plan->version;
+        // Else editing archived version, Get active version and return next draft version
+        $activeVersion = HealthPlan::where('id', $plan->parent_id)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->first();
+
+        if ($activeVersion) {
+            return $activeVersion->version + 0.1;
+        }
+
+        return 1.0;
     }
 
     public function getStatusVersions(int $parentId, string $status): Collection

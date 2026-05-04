@@ -28,6 +28,9 @@ class HealthPlan extends Model
         'status',
         'version',
         'parent_id',
+        'cohort_enabled',
+        'gender_enabled',
+        'marital_status_enabled',
     ];
     protected $attributes = [
         'status' => HealthPlanRateSheetStatusEnum::DRAFT,
