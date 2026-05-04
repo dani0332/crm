@@ -1338,6 +1338,7 @@ class SukoonMedexService
                     'created_by_id' => null,
                     'watermarked_doc_name' => null,
                     'watermarked_doc_url' => null,
+                    'document_type_id' => $documentType->id,
                 ];
 
                 return $documentData;

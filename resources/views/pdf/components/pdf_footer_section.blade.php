@@ -260,7 +260,7 @@
 
                 <!-- Right Column -->
                     <td class="footer-td" style="width:27%;  @if(isset($quoteType) && $quoteType != 'Life') padding:10px; @endif text-align:left; margin-left:15px;">
-                        <div style="display:inline-block; background:#ffffff; color:#000; @if(isset($quoteType) && $quoteType != 'Life') padding:12px; @else padding:8px; @endif border-radius:12px; text-align:left; font-size:10px;  width:65%; @if(isset($quoteType) && $quoteType != 'Life') height:110px; @else height:124px; @endif margin-top:5px;">
+                        <div style="display:inline-block; background:#ffffff; color:#000; @if(isset($quoteType) && $quoteType != 'Life') padding:12px; @else padding:8px; @endif border-radius:12px; text-align:left; font-size:10px;  width:65%; @if(isset($quoteType) && $quoteType != 'Life') height:110px; @else height:124px; @endif margin-top:5px;  ">
 
                         <!-- Photo + Details wrapper -->
                         <div class="advisor-info" style="text-align:left;">
@@ -272,7 +272,7 @@
                                 style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
                             </div>
 
-                           <!-- Advisor Details -->
+                            <!-- Advisor Details -->
                             <div>
 
                             <p style="margin:0; font-weight:400; font-size:12px;">{{ $quote->advisor->name }}</p>
@@ -283,7 +283,7 @@
                              {{ $quote->advisor->email }}</a><br>
                                  <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
                                  style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
-                               <br>
+                                <br>
                                 <img src="{{ public_path('images/quote_plans_pages/icons/call.svg') }}"
                                 style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;">  <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none; ">{{ $quote->advisor->landline_no }}</a>
                             </p>

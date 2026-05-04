@@ -47,6 +47,26 @@ final class PaymentStatusEnum extends Enum
         ];
     }
 
+    public static function getCancelledDeclinedOrFailedStatuses(): array
+    {
+        return [
+            self::CANCELLED,
+            self::DECLINED,
+            self::FAILED,
+        ];
+    }
+
+    public static function getConfirmedOrSettledPaymentStatuses(): array
+    {
+        return [
+            self::AUTHORISED,
+            self::PAID,
+            self::CAPTURED,
+            self::PARTIAL_CAPTURED,
+            self::PARTIALLY_PAID,
+        ];
+    }
+
     /**
      * Build [{ value, label }] for dropdowns using asArray() as the source of truth.
      */
