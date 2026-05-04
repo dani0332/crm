@@ -72,7 +72,6 @@ class CoreSchema
                 $table->string('batch_uuid')->nullable();
                 $table->string('code')->nullable();
                 $table->string('user_agent')->nullable();
-                $table->json('attribute_changes')->nullable();
                 $table->timestamps();
             },
         ]);
