@@ -7,6 +7,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Http\Resources\ProformaPaymentRequestResource;
 use App\Interfaces\ExportDocumentInterface;
+use App\Models\DocumentType;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Storage;
@@ -73,7 +74,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         $azureDisk = Storage::disk('azureIMPrivate');
         $azureDisk->put($filePathAzure, $pdf->output());
 
-        $documentType = DocumentTypeCode::where('code', DocumentTypeCode::PPR)->first();
+        $documentType = DocumentType::where('code', DocumentTypeCode::PPR)->first();
 
         $document = $docmentableTypeEntry->documents()->create([
             'doc_name' => $docName,
