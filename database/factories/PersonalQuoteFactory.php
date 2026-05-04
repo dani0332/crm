@@ -100,11 +100,13 @@ class PersonalQuoteFactory extends Factory
                 'planName' => 'Gold Plan',
             ]);
 
+            $documentType = DocumentTypeCode::where('code', DocumentTypeCode::CYB_EID)->first();
             $quote->documents()->create([
-                'document_type_code' => DocumentTypeCode::CYB_EID,
+                'document_type_code' => $documentType->code,
                 'doc_name' => 'EmiratesId.pdf',
                 'doc_url' => 'documents/eid.pdf',
                 'doc_mime_type' => 'application/pdf',
+                'document_type_id' => $documentType->id,
             ]);
         });
     }
