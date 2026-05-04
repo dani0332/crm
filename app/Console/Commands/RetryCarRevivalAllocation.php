@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Services\Allocation\RetryAllocationService;
+use App\Services\BuyLeads\BuyLeadService;
+use App\Services\BuyLeads\CatARevivalAllocationPriorityService;
 use Illuminate\Console\Command;
 
 class RetryCarRevivalAllocation extends Command
@@ -47,6 +49,10 @@ class RetryCarRevivalAllocation extends Command
         }
 
         [$startTime, $endTime] = $retryAllocation;
+
+        if (BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A) !== []) {
+            $startTime = now()->subDays(CatARevivalAllocationPriorityService::lookbackDays())->startOfDay()->toDateTimeString();
+        }
 
         $retryAllocationService->executeCarRevivalAllocation(QuoteTypeId::Car, $endTime, 200, $startTime);
     }

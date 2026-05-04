@@ -471,4 +471,42 @@ class TestDataSeeder
             'nationality_id' => $nationalityId,
         ];
     }
+
+    /**
+     * Seed required lookup data for Group Medical (AMT) lead tests.
+     * Ensures emirates and business_type_of_insurance (Group Medical) exist.
+     *
+     * @return array{emirate_of_registration_id: int, business_type_of_insurance_id: int}
+     */
+    public static function seedAmtGroupMedicalLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        $emirateId = $db->table('emirates')->where('text', 'Dubai')->value('id');
+        if (! $emirateId) {
+            $emirateId = $db->table('emirates')->insertGetId([
+                'text' => 'Dubai',
+                'code' => 'DXB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $businessTypeId = $db->table('business_type_of_insurance')->where('text', 'Group Medical')->value('id');
+        if (! $businessTypeId) {
+            $businessTypeId = $db->table('business_type_of_insurance')->insertGetId([
+                'text' => 'Group Medical',
+                'code' => 'GM',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'emirate_of_registration_id' => (int) $emirateId,
+            'business_type_of_insurance_id' => (int) $businessTypeId,
+        ];
+    }
 }
