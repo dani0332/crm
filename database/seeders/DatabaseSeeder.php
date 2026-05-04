@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
             ManagerLeadAllocationRoleSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,

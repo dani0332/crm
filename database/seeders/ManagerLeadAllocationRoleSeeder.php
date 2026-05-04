@@ -42,6 +42,7 @@ class ManagerLeadAllocationRoleSeeder extends Seeder
             PermissionsEnum::YACHT_LEAD_ALLOCATION_VIEW_ONLY,
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_VIEW_ONLY,
             PermissionsEnum::HOME_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY,
         ];
 
         $this->assignPermissionsToRole($role, $permissionNames);
@@ -70,6 +71,7 @@ class ManagerLeadAllocationRoleSeeder extends Seeder
             PermissionsEnum::YACHT_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_EDIT,
             PermissionsEnum::HOME_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_EDIT,
         ]);
     }
 
