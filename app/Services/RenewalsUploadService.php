@@ -84,6 +84,7 @@ use App\Models\InsuranceProviderPlan;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -869,6 +870,10 @@ class RenewalsUploadService
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
+                'previous_quote_policy_commission' => $data['previous_commission'] ?? null,
+                'previous_quote_id' => ! empty($data['previous_ref_id'])
+                    ? PersonalQuote::where('code', $data['previous_ref_id'])->value('id')
+                    : null,
             ];
 
             if ($isQuotePersonal) {
@@ -2285,6 +2290,12 @@ class RenewalsUploadService
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
                     if ($quoteExist != null && isset($quoteExist)) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
+                    }
+                }
+
+                if (! empty($leadData->previous_ref_id)) {
+                    if (! PersonalQuote::where('code', $leadData->previous_ref_id)->exists()) {
+                        $leadValidationErrors->push("Previous Ref-ID '{$leadData->previous_ref_id}' does not exist in the system.");
                     }
                 }
 

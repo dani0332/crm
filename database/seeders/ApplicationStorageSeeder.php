@@ -1686,5 +1686,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWAL_BATCH_DAYS],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

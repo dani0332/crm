@@ -157,9 +157,11 @@ class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure
             ]],
             'object' => ['index' => 16, 'title' => 'Object', 'rules' => 'max:200'],
             'premium' => ['index' => 17, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
-            'source' => ['index' => 18, 'title' => 'Sales Channel', 'rules' => 'max:100'],
-            'notes' => ['index' => 19, 'title' => 'Notes', 'rules' => 'max:500'],
-            'plan_name' => ['index' => 20, 'title' => 'Plan Name', 'rules' => 'max:100'],
+            'previous_commission' => ['index' => 18, 'title' => 'Previous Commission', 'rules' => 'nullable|numeric|min:0'],
+            'previous_ref_id' => ['index' => 19, 'title' => 'Previous Ref-ID', 'rules' => 'nullable|max:50'],
+            'source' => ['index' => 20, 'title' => 'Sales Channel', 'rules' => 'max:100'],
+            'notes' => ['index' => 21, 'title' => 'Notes', 'rules' => 'max:500'],
+            'plan_name' => ['index' => 22, 'title' => 'Plan Name', 'rules' => 'max:100'],
         ];
     }
 

@@ -77,7 +77,8 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->previous_policy_expiry_date,
             $quote->previous_quote_policy_premium,
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
-            $payment != null ? $payment->commission : 'N/A',
+            $quote->previous_quote_policy_commission
+                ?? ($payment != null ? $payment->commission : 'N/A'),
             (isset($quote->pc_qualified) && $quote->pc_qualified == 1) ? 'Yes' : 'No',
             $quote->customer?->pcp_tag == 1 ? 'Yes' : 'No',
             $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : ($quote->businessTypeOfInsurance?->text ?? 'N/A')) : '',
