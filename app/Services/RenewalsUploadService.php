@@ -3617,7 +3617,9 @@ class RenewalsUploadService
     {
         $sourceProvider = $this->resolveSourceProviderByCode($leadData->insurer ?? null);
         $targetProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-        $transition = $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id);
+        $transition = $sourceProvider && $targetProvider
+            ? $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id)
+            : null;
 
         if (! $sourceProvider || ! $targetProvider || ! $transition) {
             return [
@@ -3629,7 +3631,7 @@ class RenewalsUploadService
             ];
         }
 
-        if (! $this->isPhoenixGccCompliant($sourceProvider->code, $targetProvider->code, $leadData)) {
+        if (! $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
             return [
                 'status' => false,
                 'transition' => null,
@@ -3688,9 +3690,9 @@ class RenewalsUploadService
      * Phoenix (TM-sourced) transitions are only valid for GCC vehicles.
      * Genesis and all other transition sources are not subject to this constraint.
      */
-    private function isPhoenixGccCompliant(string $sourceCode, string $targetProviderCode, object $leadData): bool
+    private function isPhoenixGccCompliant(string $sourceCode, object $leadData): bool
     {
-        if ($sourceCode !== InsuranceProvidersEnum::TM && $targetProviderCode !== InsuranceProvidersEnum::AXA) {
+        if ($sourceCode !== InsuranceProvidersEnum::TM) {
             return true;
         }
 
@@ -3731,7 +3733,7 @@ class RenewalsUploadService
             $transition = $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id);
 
             LoggerService::info('isTransitionableLead inside function - transition', ['transition_id' => $transition?->id]);
-            if ($transition && $this->isPhoenixGccCompliant($sourceProvider->code, $targetProvider->code, $leadData)) {
+            if ($transition && $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
                 $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
@@ -3869,7 +3871,7 @@ class RenewalsUploadService
             && $transition->sourceProvider;
 
         if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
-            if ($this->isPhoenixGccCompliant($transition->sourceProvider->code, $transition->targetProvider->code, $leadData)) {
+            if ($this->isPhoenixGccCompliant($transition->sourceProvider->code, $leadData)) {
                 $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
                 $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
 
@@ -3949,9 +3951,6 @@ class RenewalsUploadService
         }
 
         if ($transition && $target && $source) {
-            // if (! $this->isPhoenixGccCompliant($source->code, $target->code, $leadData)) {
-            //     return $this->getNonTransitionableLeadConfig($leadData);
-            // }
 
             $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $target->id);
 
