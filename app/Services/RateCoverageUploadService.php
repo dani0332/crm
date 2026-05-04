@@ -209,6 +209,8 @@ class RateCoverageUploadService
             // Assuming first sheet, and first row is header
             $rows = $excelRecords[0] ?? [];
             $rowCount = count($rows);
+            $plan = null;
+
             if ($rowCount > 1) {
                 // normalize header case
                 $headers = array_map('strtolower', $rows[0]);
@@ -232,8 +234,8 @@ class RateCoverageUploadService
                     // Throw error if any required value is empty
                     if (
                         empty($planCode) ||
-                        empty($minAge) ||
-                        empty($maxAge) ||
+                        ! isset($minAge) ||
+                        ! isset($maxAge) ||
                         empty($premium) ||
                         empty($copaymentCode) ||
                         empty($emirateType)
@@ -340,23 +342,27 @@ class RateCoverageUploadService
                             ($minAge >= $range['min'] && $minAge <= $range['max'])
                             || ($maxAge >= $range['min'] && $maxAge <= $range['max'])
                         ) {
-                            throw new \Exception("Age range ({$minAge} - {$maxAge}) overlaps with an existing row for this combination.");
+                            throw new \Exception("Age range ({$minAge} - {$maxAge}) overlaps with an existing row.");
                         }
                     }
 
                     $combinationAgeRanges[] = ['min' => $minAge, 'max' => $maxAge];
                     $seenCombinations[] = $combinationKey;
                 }
+
+                // Upload file and rates in a transaction
+                DB::transaction(function () use ($uploadedFile, $plan, $rows) {
+                    // Upload file (health rate control)
+                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $rows[0]['effective_from'], $rows[0]['effective_to'], $plan->id, $rowCount - 1);
+
+                    // Upload rates
+                    $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
+                });
+
             } else {
                 throw new \Exception('No data found in the file.');
             }
         }
-
-        // Upload file (health rate control)
-        $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
-
-        // Upload rates
-        $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
     }
 
     private function uploadHealthRateControl(
@@ -398,10 +404,24 @@ class RateCoverageUploadService
     private function uploadRates(int $planId, int $healthRateControlId, float $version, array $data)
     {
         $headers = array_map('strtolower', $data[0]);
+        $codes = [];
 
+        // Get all the payment codes first
+        // To save databse query everytime in loop
         for ($i = 1; $i < count($data); $i++) {
             $rowAssoc = array_combine($headers, $data[$i]);
-            $coPayment = $this->healthPlanCoPaymentService->getByAttribute('code', $rowAssoc['copayment_code']);
+
+            $rows[] = $rowAssoc;
+            $codes[] = $rowAssoc['copayment_code'];
+        }
+
+        $codes = array_unique($codes);
+        $coPayments = $this->healthPlanCoPaymentService->getByCodes($codes);
+
+        // Iterate again to create rates
+        for ($i = 1; $i < count($data); $i++) {
+            $rowAssoc = array_combine($headers, $data[$i]);
+            $coPayment = $coPayments[$rowAssoc['copayment_code']] ?? null;
             $emirateType = EmirateTypeEnum::fromText($rowAssoc['emirate_type']);
 
             HealthRate::create([
