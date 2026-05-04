@@ -59,9 +59,10 @@ it('issuePolicy returns invalid payload without HTTP when policy_id is empty str
             'payment_details' => ['Transaction_id' => null],
         ]);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-empty-policy-id';
-    $quote->insurer_quote_number = '';
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-empty-policy-id',
+        'insurer_quote_number' => '',
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
@@ -94,9 +95,10 @@ it('issuePolicy returns mapped EnsuredIT error for already sold policy', functio
         ->once()
         ->andReturn(['policy_id' => '00000000-0000-4000-8000-0000000000aa']);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-1';
-    $quote->insurer_quote_number = '00000000-0000-4000-8000-0000000000aa';
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-1',
+        'insurer_quote_number' => '00000000-0000-4000-8000-0000000000aa',
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
@@ -130,8 +132,9 @@ it('issuePolicy persists a failed log when HTTP client yields no response', func
     $builder = Mockery::mock(DicRequestBuilder::class);
     $builder->shouldReceive('buildIssuePolicyPayload')->andReturn(['policy_id' => '00000000-0000-4000-8000-0000000000aa']);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-2';
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-2',
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
@@ -164,9 +167,10 @@ it('issuePolicy persists failed issuance log when HTTP succeeds but JSON body is
     $builder = Mockery::mock(DicRequestBuilder::class);
     $builder->shouldReceive('buildIssuePolicyPayload')->andReturn(['policy_id' => '00000000-0000-4000-8000-0000000000aa']);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-non-array';
-    $quote->insurer_quote_number = '00000000-0000-4000-8000-0000000000aa';
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-non-array',
+        'insurer_quote_number' => '00000000-0000-4000-8000-0000000000aa',
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
     $result = $service->issuePolicy($quote, new PolicyIssuance);
@@ -187,9 +191,10 @@ it('getPolicyDoc maps 401 AUTH_ERROR for certificate download path', function ()
     ], 401));
     app()->instance(DicHttpClient::class, $httpClient);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-3';
-    $quote->insurer_quote_number = $policyId;
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-3',
+        'insurer_quote_number' => $policyId,
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
     $result = $service->getPolicyDoc($quote, new PolicyIssuance);
@@ -215,9 +220,10 @@ it('getPolicyDoc returns failure without HTTP when insurer_quote_number is missi
         );
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-no-policy-id';
-    $quote->insurer_quote_number = null;
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-no-policy-id',
+        'insurer_quote_number' => null,
+    ]);
 
     $service = new DicApiService(
         new DicResponseHandler,
@@ -244,9 +250,10 @@ it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function (
     ], 500));
     app()->instance(DicHttpClient::class, $httpClient);
 
-    $quote = new TravelQuote;
-    $quote->code = 'UNIT-TQ-4';
-    $quote->insurer_quote_number = $policyId;
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-4',
+        'insurer_quote_number' => $policyId,
+    ]);
 
     $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
     $result = $service->getBrokerInvoice($quote, new PolicyIssuance);

@@ -32,8 +32,9 @@ it('marks issuance failed when dic automation is disabled', function (): void {
 it('dispatches first async step when quote validates and a step is pending', function (): void {
     Bus::fake();
 
-    $travelQuote = new TravelQuote;
-    $travelQuote->code = 'TRV-UNIT';
+    $travelQuote = TravelQuote::factory()->make([
+        'code' => 'TRV-UNIT',
+    ]);
 
     $dic = Mockery::mock(DicInsuranceService::class);
     $dic->shouldReceive('isPolicyIssuanceAutomationEnabled')->once()->andReturn(true);
