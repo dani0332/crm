@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
@@ -59,7 +60,9 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
-                    if (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
+                    if (request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label() && $updateQuote->source == LeadSourceEnum::REVIVAL_REPLIED) {
+                        $updateQuote->quote_status_id = QuoteStatusEnum::Lost;
+                    } elseif (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
                         $updateQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
                     } else {
                         $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
