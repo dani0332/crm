@@ -364,6 +364,7 @@ class EmbeddedTransactionService extends BaseService
             'created_by_id' => Auth::id(),
             'is_manual_override' => true,
             'override_remarks' => $data['remarks'],
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($documentTypeCode === QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
