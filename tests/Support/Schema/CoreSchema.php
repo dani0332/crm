@@ -1239,6 +1239,7 @@ class CoreSchema
                 $table->string('doc_mime_type')->nullable();
                 $table->string('document_type_code')->nullable();
                 $table->string('document_type_text')->nullable();
+                $table->unsignedBigInteger('document_type_id')->nullable();
                 $table->string('doc_uuid')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->string('original_name')->nullable();
@@ -1254,6 +1255,7 @@ class CoreSchema
                 $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
                 $table->boolean('is_manual_override')->default(false);
                 $table->text('override_remarks')->nullable();
+                $table->boolean('is_restricted_internal_document')->default(false);
                 $table->timestamps();
                 $table->softDeletes();
             },
