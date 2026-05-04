@@ -62,13 +62,20 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.normal_allocation_enabled as normalAllocationEnabled',
                     'la.buy_lead_reset_capacity as blResetCap',
                 );
-            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-                $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
-                $users = $users->whereIn('teams.id', $userTeamIds);
-            }
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
-                $users = $users->whereIn('users.id', $userIds);
+            $managerDepartmentIds = null;
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
+                $managerDepartmentIds = auth()->user()->department()->pluck('id')->toArray();
+                $users = $users->whereIn('users.department_id', $managerDepartmentIds);
+            } else {
+                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                    $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+                    $users = $users->whereIn('teams.id', $userTeamIds);
+                }
+                if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                    $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                    $users = $users->whereIn('users.id', $userIds);
+                }
             }
 
             $aiUsers = User::join('lead_allocation as la', 'la.user_id', 'users.id')
@@ -97,6 +104,9 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.normal_allocation_enabled as normalAllocationEnabled',
                     'la.buy_lead_reset_capacity as blResetCap',
                 );
+            if ($managerDepartmentIds !== null) {
+                $aiUsers = $aiUsers->whereIn('users.department_id', $managerDepartmentIds);
+            }
 
             return $users->union($aiUsers)->get();
         } catch (\Exception $e) {

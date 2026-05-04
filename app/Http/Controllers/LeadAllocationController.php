@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -16,6 +17,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
+use App\Services\LeadAllocationPermissionService;
 use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
@@ -35,6 +37,7 @@ class LeadAllocationController extends Controller
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
         $this->crudService = $crudService;
+
     }
 
     /**
@@ -45,7 +48,11 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
 
-        if (Gate::allows('view-lead-allocation', auth()->user())) {
+        if (Gate::allows('view-lead-allocation', auth()->user()) || request()->user()->hasAnyPermission([
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::HEALTH_LEAD_ALLOCATION_VIEW_ONLY,
+        ])) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
@@ -73,6 +80,7 @@ class LeadAllocationController extends Controller
                 'quoteType' => QuoteTypes::HEALTH->value,
                 'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
                 'totalUnassignedLeadsCount' => $this->leadAllocationService->getHealthUnassignedLeadsCount(),
+                'canMutateLeadAllocation' => LeadAllocationPermissionService::userCanMutate(QuoteTypes::HEALTH),
             ]);
         } else {
             abort(403, 'Unauthorized action.');
@@ -145,6 +153,8 @@ class LeadAllocationController extends Controller
 
     public function updateAvailability(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
+
         $updateLogString = '----- Update done successfully to change the';
         $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
         $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
@@ -209,6 +219,8 @@ class LeadAllocationController extends Controller
 
     public function updateCaps(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
+
         if (isset($request->max_cap)) {
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
             $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
@@ -240,6 +252,8 @@ class LeadAllocationController extends Controller
 
     public function updateResetCapSwitch(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
+
         $requester = auth()->user();
         info(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
 
@@ -259,6 +273,8 @@ class LeadAllocationController extends Controller
 
     public function updateBlStatus(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
+
         $requester = auth()->user();
         info(self::class."::updateBlStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->buyLeadStatus)) {
@@ -276,6 +292,8 @@ class LeadAllocationController extends Controller
 
     public function updateNormalLeadAllocationStatus(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
+
         $requester = auth()->user();
         info(self::class."::updateNormalLeadAllocationStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->nlStatus)) {
@@ -293,6 +311,8 @@ class LeadAllocationController extends Controller
 
     public function updateBLResetCap(Request $request)
     {
+        LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
+
         $requester = auth()->user();
         info(self::class."::updateBLResetCap - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->blResetCap)) {
@@ -310,21 +330,29 @@ class LeadAllocationController extends Controller
 
     public function toggleLeadAllocationJobStatus()
     {
+        LeadAllocationPermissionService::authorizeMutateForQuoteType(QuoteTypes::HEALTH);
+
         $this->applicationStorageService->updateLeadAllocationJobStatus();
     }
 
     public function toggleCarLeadAllocationJobStatus()
     {
+        LeadAllocationPermissionService::authorizeMutateForQuoteType(QuoteTypes::CAR);
+
         $this->applicationStorageService->updateCarLeadAllocationJobStatus();
     }
 
     public function toggleRenewalCarLeadAllocationStatus()
     {
+        LeadAllocationPermissionService::authorizeMutateForQuoteType(QuoteTypes::CAR);
+
         $this->applicationStorageService->updateRenewalCarLeadAllocationStatus();
     }
 
     public function toggleCarLeadFetchSequence()
     {
+        LeadAllocationPermissionService::authorizeMutateForQuoteType(QuoteTypes::CAR);
+
         $this->applicationStorageService->updateCarLeadFetchSequence();
     }
 

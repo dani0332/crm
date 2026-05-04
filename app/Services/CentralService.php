@@ -29,6 +29,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\WorkflowTypeEnum;
@@ -771,6 +772,22 @@ class CentralService extends BaseService
         }
 
         return $lockFunctionalities;
+    }
+
+    public function isEmirateOfRegistrationLocked(object $quote, string $quoteTypeCode): bool
+    {
+        $user = auth()->user();
+        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
+
+        $isGroupMedicalBusinessContext =
+            ($quoteTypeCode === quoteTypeCode::Business)
+            && ($quote?->business_type_of_insurance_id ?? null) == $groupMedicalTypeId;
+
+        return $isGroupMedicalBusinessContext
+            && (
+                ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts]))
+                || (method_exists($quote, 'isPolicyBooked') && $quote->isPolicyBooked())
+            );
     }
 
     // This method is used to update payment allocation status when lead status is updated
@@ -2014,8 +2031,10 @@ class CentralService extends BaseService
         $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
 
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        $maskedEmail = null;
         if ($isTravel) {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+            $maskedEmail = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
         } else {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
         }
@@ -2028,11 +2047,8 @@ class CentralService extends BaseService
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
+            ...($isTravel ? ['maskedEmail' => $maskedEmail] : []),
         ];
-
-        if ($isTravel) {
-            $messageData['maskedEmail'] = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
-        }
         LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
         $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);

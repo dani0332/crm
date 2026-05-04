@@ -11,12 +11,28 @@ use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Services\BranchAssignmentService;
 use App\Traits\CentralTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
+    /**
+     * Normalize emirate filter input into positive integer IDs.
+     *
+     * @return array<int>
+     */
+    public static function normalizeEmirateOfRegistrationIds(mixed $rawInput): array
+    {
+        $values = is_array($rawInput) ? $rawInput : [$rawInput];
+
+        return array_values(array_filter(
+            array_map('intval', $values),
+            static fn (int $id): bool => $id > 0
+        ));
+    }
 
     public function model()
     {
@@ -43,7 +59,7 @@ class BusinessQuoteRepository extends BaseRepository
             request()->merge($requestParams);
         }
 
-        $query = $this->with([
+        $with = [
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
@@ -52,7 +68,11 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
-        ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
+        ];
+        if ($quoteType == quoteTypeCode::GroupMedical) {
+            $with[] = 'emirate';
+        }
+        $query = $this->with($with)->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
             });
@@ -82,6 +102,33 @@ class BusinessQuoteRepository extends BaseRepository
         if (! empty($requestParams['sub_source_id'])) {
             $values = (array) $requestParams['sub_source_id'];
             $query->whereIn('business_quote_request.sub_source_id', $values);
+        }
+        // apply assignment_type filter when present
+        if (! empty($requestParams['assignment_type'])) {
+            $values = (array) $requestParams['assignment_type'];
+            $query->whereIn('business_quote_request.assignment_type', $values);
+        }
+
+        if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
+            $ids = self::normalizeEmirateOfRegistrationIds($requestParams['emirate_of_registration_id']);
+            if ($ids !== []) {
+                $query->whereIn('business_quote_request.emirate_of_registration_id', $ids);
+            }
+        }
+
+        $filtersForAdvisorDate = ! empty($requestParams) ? $requestParams : request()->all();
+        if (! empty($filtersForAdvisorDate['advisor_assigned_date'])) {
+            $dateRange = $filtersForAdvisorDate['advisor_assigned_date'];
+            while (is_array($dateRange) && isset($dateRange[0]) && is_array($dateRange[0])) {
+                $dateRange = $dateRange[0];
+            }
+            if (is_array($dateRange) && count($dateRange) >= 2) {
+                $dateFrom = Carbon::parse($dateRange[0])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::parse($dateRange[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('businessQuoteRequestDetail', function ($q) use ($dateFrom, $dateTo) {
+                    $q->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            }
         }
 
         if ($forTotalLeadsCount) {
@@ -126,6 +173,7 @@ class BusinessQuoteRepository extends BaseRepository
                 },
                 'nationality',
                 'branch:id,name',
+                'emirate:id,text',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -138,7 +186,7 @@ class BusinessQuoteRepository extends BaseRepository
             $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
 
-        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
         return $quote;

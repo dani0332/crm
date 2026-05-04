@@ -176,6 +176,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
+        $this->seedMotorRevivalWorkflow();
     }
 
     private function livaCarAutomationSeed()
@@ -445,6 +446,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/310dbe00-d35a-49b2-8e8e-9dc0e7053016/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS],
+            [
+                'value' => '', /* It saves a configuration via JSON see sample at app/Services/Reports/ConversionOptimizationScheduledExportService.php:230 */
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1688,6 +1699,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
             [
                 'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMotorRevivalWorkflow()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c01d3d9c-e111-45ae-a40e-ff51ac6a7294/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
