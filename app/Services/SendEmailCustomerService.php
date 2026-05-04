@@ -1990,7 +1990,9 @@ class SendEmailCustomerService extends BaseService
         $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
         if (! empty($carIntroEmailWorkflowUrl)) {
             $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
-            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            $workflowType = ! empty($quote->car_make_id) ? WorkflowTypeEnum::CAR_INTRO_EMAIL : WorkflowTypeEnum::CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS;
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Workflow type: '.$workflowType.' with Car Make ID: '.$quote->car_make_id.' with Ref-ID: '.$quote->uuid);
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, $workflowType);
             app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
             LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
         } else {
@@ -2027,6 +2029,7 @@ class SendEmailCustomerService extends BaseService
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'carMakeId' => ! empty($lead->car_make_id) ? true : false,
             'advisorDetails' => $advisor ?? null,
             'documentUrl' => $documentUrl ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
@@ -2104,5 +2107,4 @@ class SendEmailCustomerService extends BaseService
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
-
 }

@@ -55,6 +55,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => $isProd ? 0 : 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         $this->seedBirdWorkflowUrls();
         $this->claimGoogleReviewEmail();
@@ -161,9 +170,13 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCyberConfigurations();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
+        $this->seedAdnicHealthAutomation();
         $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
+        $this->seedDisableClaimsModule();
+        $this->seedMotorRevivalWorkflow();
     }
 
     private function livaCarAutomationSeed()
@@ -192,6 +205,60 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAdnicHealthAutomation()
+    {
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES],
+            [
+                'value' => 5,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT],
+            [
+                'value' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -379,6 +446,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/310dbe00-d35a-49b2-8e8e-9dc0e7053016/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS],
+            [
+                'value' => '', /* It saves a configuration via JSON see sample at app/Services/Reports/ConversionOptimizationScheduledExportService.php:230 */
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -844,7 +921,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
+                'value' => $isProd ? 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/82c9e316-bd96-4cbd-9b78-0962478a2473/invoke-sync' : 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1562,6 +1639,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedDisableClaimsModule(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DISABLE_CLAIMS_MODULE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     // region Advisor Payment Notification
 
     private function seedAdvisorPaymentNotificationWorkflowUrl()
@@ -1601,5 +1691,31 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         // endregion
+    }
+
+    private function seedHealthTeamRoutingEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMotorRevivalWorkflow()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c01d3d9c-e111-45ae-a40e-ff51ac6a7294/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

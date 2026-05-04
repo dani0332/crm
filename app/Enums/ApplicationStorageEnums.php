@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
+use App\Services\Reports\ConversionOptimizationReportService;
 use BenSampo\Enum\Enum;
+use Database\Seeders\ApplicationStorageSeeder;
 
 /**
  * @method static static OptionOne()
@@ -395,12 +398,22 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW = 'BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW';
     public const IT_SUPPORT_EMAIL = 'IT_SUPPORT_EMAIL';
 
+    /* Adnic Health Policy Issuance Automation */
+    public const ADNIC_HEALTH_AUTOMATION_API_TIMEOUT = 'ADNIC_HEALTH_AUTOMATION_API_TIMEOUT';
+    public const ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES = 'ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES';
+    public const ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT = 'ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT';
+
     // Car OCB Email Templates Update
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
     public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
     public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
+
+    // Health Team Routing
+    public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
 
     // Chief Deputy Officer Mobile Number
@@ -408,4 +421,24 @@ final class ApplicationStorageEnums extends Enum
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
+    // Car CAT A Revival Allocation Lookback Days
+    public const CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS = 'CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS';
+
+    // Motor Revival OCB Workflow
+    public const MOTOR_REVIVAL_WORKFLOW = 'MOTOR_REVIVAL_WORKFLOW';
+
+    /**
+     * {@see application_storage.value} JSON shape:
+     * {"to_email":"","cc_emails":[],"batch":{"start":"Y-m-d","end":"Y-m-d"},"filters":{...optional...}}
+     * `filters` is merged (whitelist only) over {@see ConversionOptimizationReportService::getDefaultFilters()}.
+     * Required `batch`: {"start":"Y-m-d","end":"Y-m-d"} — quote_batches whose start_date/end_date overlap that range
+     * become the `batches` filter (ids passed to the export).
+     * Default key for {@see ReportsConversionOptimizationScheduledExportCommand}.
+     * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
+     */
+    public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
 }

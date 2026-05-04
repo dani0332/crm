@@ -16,6 +16,7 @@ const teamForm = useForm({
   id: props.team?.id ?? null,
   name: props.team?.name ?? null,
   type: props.team?.type ?? 1,
+  category: props.team?.category ?? null,
   slabs_count: props.team?.slabs_count ?? null,
   is_active:
     props.team?.is_active === 'True'
@@ -45,11 +46,24 @@ const computedParent = computed(() => {
   else return [];
 });
 
+const showCategorySelect = computed(() => {
+  const parent = computedParent.value.find(
+    option => option.value === teamForm.parent_team_id,
+  );
+
+  return teamForm.type === 2 && parent?.label === 'Health';
+});
+
 watch(
   () => teamForm.type,
   () => {
     if (teamForm.type == 1) {
       teamForm.parent_team_id = null;
+    }
+
+    // Make category null if type is not team
+    if (teamForm.type != 2) {
+      teamForm.category = null;
     }
   },
 );
@@ -142,7 +156,7 @@ onMounted(() => setInitialState());
         required
       />
     </div>
-    <div class="grid sm:grid-cols-1 gap-4">
+    <div class="grid sm:grid-cols-2 gap-4">
       <x-select
         v-model="teamForm.is_active"
         :options="[
@@ -158,6 +172,19 @@ onMounted(() => setInitialState());
         label="ACTIVE"
         class="w-full"
       ></x-select>
+      <x-select
+        v-if="showCategorySelect"
+        v-model="teamForm.category"
+        :rules="teamForm.type == 2 ? [isRequired] : []"
+        class="w-full"
+        :options="[
+          { value: 'AUH', label: 'AUH' },
+          { value: 'Non AUH', label: 'Non AUH' },
+        ]"
+        :error="$page.props.errors.category"
+        label="CATEGORY"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

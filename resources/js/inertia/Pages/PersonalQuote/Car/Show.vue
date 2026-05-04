@@ -121,6 +121,10 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
+  communicationEventLogs: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -4398,6 +4402,11 @@ const { openTempUrl } = useDocumentTempUrl();
         </template>
       </Collapsible>
     </div>
+
+    <CommunicationEventLog
+      :communication-event-logs="communicationEventLogs"
+      :expanded="sectionExpanded"
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">

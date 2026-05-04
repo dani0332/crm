@@ -58,6 +58,7 @@ final class PermissionsEnum extends Enum
     public const TransAppCreate = 'transapp-create';
     public const TransAppEdit = 'transapp-edit';
     public const TransAppDelete = 'transapp-delete';
+    public const TRANSAPP_SEARCH = 'transapp-search';
     public const ClaimList = 'claim-list';
     public const ClaimCreate = 'claim-create';
     public const ClaimEdit = 'claim-edit';
@@ -182,6 +183,8 @@ final class PermissionsEnum extends Enum
     public const CAR_LEAD_ALLOCATION_DASHBOARD = 'car-lead-allocation-dashboard';
     public const HEALTH_LEAD_ALLOCATION_DASHBOARD = 'health-lead-allocation-dashboard';
     public const RULE_CONFIG_LIST = 'rule-config-list';
+    public const RULE_CONFIG_CREATE = 'rule-config-create';
+    public const RULE_CONFIG_UPDATE = 'rule-config-update';
     public const QUAD_CONFIG_LIST = 'quad-config-list';
     public const TIER_CONFIG_LIST = 'tier-config-list';
     public const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
@@ -252,6 +255,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
+    public const EP_DOCUMENT_MANUAL_OVERRIDE = 'update-ep-document-manual-override';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -333,6 +337,7 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
     public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW = 'conversion-optimization-engine-report-view';
     public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
     public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
     public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
@@ -427,6 +432,7 @@ final class PermissionsEnum extends Enum
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
+    public const NATIONALITY_POOL_CONFIG = 'nationality-pool-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
@@ -462,6 +468,7 @@ final class PermissionsEnum extends Enum
     public const CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
     public const CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
     public const CLAIM_DOWNLOAD_ALL_DOCUMENTS = 'claim-download-all-documents';
+    public const CLAIMS_MANUAL_ASSIGN = 'claim-manual-assign';
     // End of Claims Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
@@ -491,8 +498,37 @@ final class PermissionsEnum extends Enum
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
 
+    // Lead allocation dashboards (view-only access for managers)
+    public const CAR_LEAD_ALLOCATION_VIEW_ONLY = 'car-lead-allocation-view-only';
+    public const HEALTH_LEAD_ALLOCATION_VIEW_ONLY = 'health-lead-allocation-view-only';
+    public const CORPLINE_LEAD_ALLOCATION_VIEW_ONLY = 'corpline-lead-allocation-view-only';
+    public const CYBER_LEAD_ALLOCATION_VIEW_ONLY = 'cyber-lead-allocation-view-only';
+    public const CYCLE_LEAD_ALLOCATION_VIEW_ONLY = 'cycle-lead-allocation-view-only';
+    public const DEVICE_LEAD_ALLOCATION_VIEW_ONLY = 'device-lead-allocation-view-only';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY = 'group-medical-lead-allocation-view-only';
+    public const TRAVEL_LEAD_ALLOCATION_VIEW_ONLY = 'travel-lead-allocation-view-only';
+    public const LIFE_LEAD_ALLOCATION_VIEW_ONLY = 'life-lead-allocation-view-only';
+    public const PET_LEAD_ALLOCATION_VIEW_ONLY = 'pet-lead-allocation-view-only';
+    public const YACHT_LEAD_ALLOCATION_VIEW_ONLY = 'yacht-lead-allocation-view-only';
+    public const SAVINGS_LEAD_ALLOCATION_VIEW_ONLY = 'savings-lead-allocation-view-only';
+    public const HOME_LEAD_ALLOCATION_VIEW_ONLY = 'home-lead-allocation-view-only';
+    public const CAR_LEAD_ALLOCATION_EDIT = 'car-lead-allocation-edit';
+    public const HEALTH_LEAD_ALLOCATION_EDIT = 'health-lead-allocation-edit';
+    public const CORPLINE_LEAD_ALLOCATION_EDIT = 'corpline-lead-allocation-edit';
+    public const CYBER_LEAD_ALLOCATION_EDIT = 'cyber-lead-allocation-edit';
+    public const CYCLE_LEAD_ALLOCATION_EDIT = 'cycle-lead-allocation-edit';
+    public const DEVICE_LEAD_ALLOCATION_EDIT = 'device-lead-allocation-edit';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_EDIT = 'group-medical-lead-allocation-edit';
+    public const TRAVEL_LEAD_ALLOCATION_EDIT = 'travel-lead-allocation-edit';
+    public const LIFE_LEAD_ALLOCATION_EDIT = 'life-lead-allocation-edit';
+    public const PET_LEAD_ALLOCATION_EDIT = 'pet-lead-allocation-edit';
+    public const YACHT_LEAD_ALLOCATION_EDIT = 'yacht-lead-allocation-edit';
+    public const SAVINGS_LEAD_ALLOCATION_EDIT = 'savings-lead-allocation-edit';
+    public const HOME_LEAD_ALLOCATION_EDIT = 'home-lead-allocation-edit';
+
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+    public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -572,6 +608,7 @@ final class PermissionsEnum extends Enum
                 self::CLAIMS_SUB_STATUS_UPDATE,
                 self::CLAIM_DOCUMENT_UPLOAD,
                 self::CLAIM_DOCUMENT_S3_URL,
+                self::CLAIMS_MANUAL_ASSIGN,
             ],
             'claimLead' => [
                 self::CLAIM_LIST,
@@ -581,6 +618,7 @@ final class PermissionsEnum extends Enum
                 self::CLAIMS_EXPORT_DATA,
                 self::CLAIMS_STATUS_UPDATE,
                 self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIMS_MANUAL_ASSIGN,
                 self::CLAIM_DOCUMENT_UPLOAD,
                 self::CLAIM_DOCUMENT_DELETE,
                 self::CLAIM_DOCUMENT_S3_URL,

@@ -29,6 +29,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\WorkflowTypeEnum;
@@ -63,6 +64,7 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -79,6 +81,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -428,6 +432,7 @@ class CentralService extends BaseService
         }
 
         $data->vat = $vatAmount;
+        $data->premium = $data->price_with_vat;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
@@ -767,6 +772,22 @@ class CentralService extends BaseService
         }
 
         return $lockFunctionalities;
+    }
+
+    public function isEmirateOfRegistrationLocked(object $quote, string $quoteTypeCode): bool
+    {
+        $user = auth()->user();
+        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
+
+        $isGroupMedicalBusinessContext =
+            ($quoteTypeCode === quoteTypeCode::Business)
+            && ($quote?->business_type_of_insurance_id ?? null) == $groupMedicalTypeId;
+
+        return $isGroupMedicalBusinessContext
+            && (
+                ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts]))
+                || (method_exists($quote, 'isPolicyBooked') && $quote->isPolicyBooked())
+            );
     }
 
     // This method is used to update payment allocation status when lead status is updated
@@ -1132,7 +1153,7 @@ class CentralService extends BaseService
             }
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -1157,7 +1178,7 @@ class CentralService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1854,7 +1875,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name ?? '';
-            $emailData->corplineDetails = $quote->brief_details;
+            $emailData->corplineDetails = $quote?->brief_details ?? '';
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = '-'; // need to confirm.
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
@@ -2006,7 +2027,17 @@ class CentralService extends BaseService
         if ($quote?->businessTypeOfInsurance) {
             $lobName = $quote?->businessTypeOfInsurance?->text;
         }
-        $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+
+        $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
+
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        $maskedEmail = null;
+        if ($isTravel) {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+            $maskedEmail = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
+        } else {
+            $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+        }
 
         $messageData = [
             'customerName' => "{$quote->first_name} {$quote->last_name}",
@@ -2016,11 +2047,13 @@ class CentralService extends BaseService
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
+            ...($isTravel ? ['maskedEmail' => $maskedEmail] : []),
         ];
+        LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
-        $workFlowEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL)->first();
+        $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
         if ($workFlowEvent) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent, $messageData);
             LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
 
             return $response->status_code;
@@ -2216,9 +2249,10 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $isHealthAndSTPCase = $quoteTypeId == QuoteTypeId::Health && $quote->isSTPCase();
 
-        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase)) {
             $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
             $statusAPIFailed = 'Quote Referred To Insurer UW';
 
@@ -2240,7 +2274,7 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
-        if ($premiumCheckEnabled) {
+        if ($premiumCheckEnabled && ! $isHealthAndSTPCase) {
             $captureAmount = $payment->total_amount;
             if (
                 $quoteType->code == QuoteTypes::CAR->value &&
@@ -2456,11 +2490,11 @@ class CentralService extends BaseService
     /**
      * Find renewal batch by expiry date for non-motor LOBs
      */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
     {
-        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+        $expiryDate = Carbon::parse($expiryDate);
 
-        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();

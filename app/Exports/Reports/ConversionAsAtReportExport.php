@@ -7,6 +7,7 @@ use App\Services\ConversionAsAtReportService;
 use App\Services\Logger\LoggerService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class ConversionAsAtReportExport implements CsvExportableInterface
@@ -87,7 +88,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing
      */
-    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    public function getQuery(array $requestParams = []): ?Builder
     {
         $request = request()->merge($requestParams);
 

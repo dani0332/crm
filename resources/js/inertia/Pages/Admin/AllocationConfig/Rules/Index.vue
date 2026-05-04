@@ -3,6 +3,10 @@ const props = defineProps({
   rules: Object,
 });
 
+const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const params = useUrlSearchParams('history');
 
 const loader = ref({
@@ -89,7 +93,7 @@ onMounted(() => {
   <Head title="Rules List" />
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Rules List</h2>
-    <div class="space-x-3">
+    <div v-if="can(permissionsEnum.RULE_CONFIG_CREATE)" class="space-x-3">
       <Link :href="route('rule.create')">
         <x-button size="sm" color="#ff5e00" tag="div"> Create Rule </x-button>
       </Link>
@@ -161,7 +165,10 @@ onMounted(() => {
         <Link :href="route('rule.show', id)">
           <x-button tag="div" size="xs" outlined> View </x-button>
         </Link>
-        <Link :href="route('rule.edit', id)">
+        <Link
+          v-if="can(permissionsEnum.RULE_CONFIG_UPDATE)"
+          :href="route('rule.edit', id)"
+        >
           <x-button color="primary" size="xs" outlined> Edit </x-button>
         </Link>
       </div>

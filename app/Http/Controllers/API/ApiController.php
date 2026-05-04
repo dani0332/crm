@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
@@ -22,10 +24,12 @@ use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
+use App\Http\Requests\EligibleForRevivalFollowupsRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
+use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -45,14 +49,17 @@ use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
+use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
@@ -64,6 +71,7 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Services\Reports\ConversionOptimizationScheduledExportService;
 use App\Services\RewatermarkQuoteDocumentsService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
@@ -72,6 +80,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -557,6 +566,54 @@ class ApiController extends Controller
 
     }
 
+    /**
+     * Manually run the same flow as {@see ReportsConversionOptimizationScheduledExportCommand}
+     * (reads recipient JSON from {@see ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS}
+     * or an optional `application_storage_key`).
+     */
+    public function triggerConversionOptimizationScheduledExport(
+        Request $request,
+        ConversionOptimizationScheduledExportService $scheduledExportService
+    ): JsonResponse {
+        try {
+            $validated = $request->validate([
+                'application_storage_key' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $storageKey = isset($validated['application_storage_key']) && trim($validated['application_storage_key']) !== ''
+                ? trim($validated['application_storage_key'])
+                : ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS;
+
+            LoggerService::info(self::class.': Manual conversion optimization scheduled export trigger', [
+                'application_storage_key' => $storageKey,
+            ]);
+
+            if ($scheduledExportService->dispatchScheduledExport($storageKey)) {
+                return apiResponse(
+                    ['application_storage_key' => $storageKey],
+                    Response::HTTP_OK,
+                    'Conversion optimization scheduled export dispatched.'
+                );
+            }
+
+            return apiResponse(
+                ['application_storage_key' => $storageKey],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Conversion optimization scheduled export was not dispatched; see logs.'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            LoggerService::error(self::class.': Conversion optimization scheduled export trigger failed', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to trigger conversion optimization scheduled export.'
+            );
+        }
+    }
+
     public function getGenericDocuments(Request $request)
     {
         return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
@@ -627,12 +684,29 @@ class ApiController extends Controller
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
         try {
-            $emailStatusService = app(EmailStatusService::class);
-            $result = $emailStatusService->updateCustomerRepliedStatus(
-                $request->quote_uuid,
-                $request->quote_type_id,
-                $request->email_subject
-            );
+            $result = DB::transaction(function () use ($request) {
+
+                $emailStatusService = app(EmailStatusService::class);
+
+                $result = $emailStatusService->updateCustomerRepliedStatus(
+                    $request->quote_uuid,
+                    $request->quote_type_id,
+                    $request->email_subject
+                );
+
+                if (! $result->success) {
+                    return $result;
+                }
+
+                $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+                match ($quoteType) {
+                    QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    default => null,
+                };
+
+                return $result;
+            });
 
             if ($result->success) {
                 return response()->json([
@@ -843,5 +917,51 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function logEpEmailStatuses(LogEpEmailStatusesRequest $request)
+    {
+        $this->emailStatusService->logEpEmailStatuses($request->validated());
+
+        return apiResponse(null, Response::HTTP_OK, 'Email statuses logged successfully');
+    }
+
+    public function eligibleForRevivalFollowups(EligibleForRevivalFollowupsRequest $request): JsonResponse
+    {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.': Dtt is not enabled from cms', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_OK, 'Dtt is not enabled from cms');
+        }
+
+        LoggerService::info(self::class.': Eligible for revival followups request received', extra: [
+            'quoteUID' => $request->quoteUID,
+        ]);
+
+        $carQuote = CarQuote::query()
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
+            ->where('uuid', $request->quoteUID)
+            ->first();
+
+        if (! $carQuote || ! $carQuote->carQuoteRequestDetail) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
+        }
+
+        $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
+
+        LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
+            'quoteUID' => $request->quoteUID,
+            'isEligible' => $isEligible,
+        ]);
+
+        return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
     }
 }

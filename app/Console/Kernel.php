@@ -9,10 +9,12 @@ use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Stringable;
@@ -28,7 +30,6 @@ class Kernel extends ConsoleKernel
         Commands\AddBatchNumber::class,
         Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
-        Commands\DttFollowUp::class,
         Commands\UpdateUserStatus::class,
         Commands\RetryCarAllocation::class,
         Commands\RetryCarRevivalAllocation::class,
@@ -160,7 +161,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
@@ -205,6 +205,19 @@ class Kernel extends ConsoleKernel
             default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
             environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
+
+        $schedule
+            ->command(
+                'reports:conversion-optimization-scheduled-export '.ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS
+            )
+            ->mondays()
+            ->at('10:00')
+            ->timezone('Asia/Dubai')
+            ->onOneServer()
+            ->withoutOverlapping();
+
+        // Alternate recipient set: add a new ApplicationStorageEnums constant + application_storage row, then e.g.:
+        // $schedule->command('reports:conversion-optimization-scheduled-export OTHER_KEY_NAME')->environments(['production'])->mondays()->at('10:00')->onOneServer()->withoutOverlapping();
     }
 
     /**
@@ -213,7 +226,7 @@ class Kernel extends ConsoleKernel
      * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
      * @param  \Closure  $default  Default schedule configuration callback
      * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
-     * @return \Illuminate\Console\Scheduling\Event
+     * @return Event
      */
     protected function scheduleWithEnvironment(
         Schedule $schedule,

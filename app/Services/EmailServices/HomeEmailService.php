@@ -22,6 +22,8 @@ use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -452,7 +454,7 @@ class HomeEmailService extends BaseService
 
             LoggerService::info('callCurrentPlanApi - Making request to: '.$apiUrl, $requestData);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $response = $client->post($apiUrl, [
                 'json' => $requestData,
                 'headers' => [
@@ -482,7 +484,7 @@ class HomeEmailService extends BaseService
                 return [];
             }
 
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $responseBody = $response ? $response->getBody()->getContents() : '';
             $statusCode = $response ? $response->getStatusCode() : 'unknown';

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             BuyLeadsRevivalPermissionSeeder::class,
             RolePermissionSeeder::class,
+            UpdateRuleNameSeederCompany::class,
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
@@ -43,6 +44,7 @@ class DatabaseSeeder extends Seeder
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            ManagerLeadAllocationRoleSeeder::class,
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
@@ -56,8 +58,15 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
+            /*HealthTeamSeeder::class,
+            NationalityPoolConfigSeeder::class,
+            HealthNationalityGroupSeeder::class,
+            CanonicalNationalitySeeder::class,
+            HealthGroupNationalitySeeder::class,*/
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
+            ConverILAGroupMedicalConfigurationBranchWise::class,
         ]);
     }
 }
