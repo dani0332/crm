@@ -85,7 +85,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
             'document_type_text' => $documentType->text,
             'doc_uuid' => $this->helperService->generateUUID(),
             'created_by_id' => auth()->id(),
-            'document_type_id' => $documentType->id,
+            'document_type_id' => $documentType?->id,
         ]);
 
         return new ProformaPaymentRequestResource($document);
