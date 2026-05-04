@@ -3696,7 +3696,7 @@ class RenewalsUploadService
             return true;
         }
 
-        return strtolower($leadData->is_gcc ?? null) === 'yes';
+        return strtolower($leadData->is_gcc ?? '') === 'yes';
     }
 
     /**
