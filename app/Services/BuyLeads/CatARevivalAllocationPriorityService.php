@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
+use Illuminate\Database\Eloquent\Builder;
 
 class CatARevivalAllocationPriorityService
 {
@@ -52,7 +53,7 @@ class CatARevivalAllocationPriorityService
      * Unassigned Revival leads eligible for CAT A buy allocation (nationality from configuration).
      * Only considers leads created within the last {@see self::lookbackDays()} days.
      */
-    public static function unassignedRevivalCatABaseQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function unassignedRevivalCatABaseQuery(): Builder
     {
         $nationalityIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
 
