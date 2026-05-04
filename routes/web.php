@@ -11,6 +11,7 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationConfigurationController;
 use App\Http\Controllers\Allocations\ClaimAllocationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
+use App\Http\Controllers\Allocations\PqaLeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
@@ -537,6 +538,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
         Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
     });
+
+    // Pre Qualification Advisor (PQA) lead allocation (ILA)
+    Route::get('pqa-lead-allocation-dashboard', [PqaLeadAllocationController::class, 'index'])->name('pqa-lead-allocation-dashboard');
+    Route::post('/pqa-allocation/update-availability', [PqaLeadAllocationController::class, 'updateAvailability'])->name('pqa-allocation.update-availability');
+    Route::post('/pqa-allocation/update-cap', [PqaLeadAllocationController::class, 'updateCaps'])->name('pqa-allocation.update-cap');
+    Route::post('/pqa-allocation/toggle-reset-cap', [PqaLeadAllocationController::class, 'updateResetCapSwitch'])->name('pqa-allocation.toggle-reset-cap');
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);

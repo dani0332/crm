@@ -549,6 +549,12 @@ final class PermissionsEnum extends Enum
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+
+    /** Pre Qualification Advisor (PQA) ILA dashboard */
+    public const PQA_LEAD_ALLOCATION_DASHBOARD = 'pqa-lead-allocation-dashboard';
+
+    public const PQA_LEAD_ALLOCATION_VIEW_ONLY = 'pqa-lead-allocation-view-only';
+    public const PQA_LEAD_ALLOCATION_EDIT = 'pqa-lead-allocation-edit';
     public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     public static function getAdvisorConversionReportPermissions()
