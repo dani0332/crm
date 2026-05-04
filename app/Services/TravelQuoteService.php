@@ -1406,7 +1406,7 @@ class TravelQuoteService extends BaseService
 
     public function memberHasAuthorizedPayment(CustomerMembers $member, TravelQuote $quote): bool
     {
-        $payments = $quote->payments()->get();
+        $payments = $quote->payments()->mainLeadPayment()->get();
 
         if ($payments->isEmpty()) {
             return false;
