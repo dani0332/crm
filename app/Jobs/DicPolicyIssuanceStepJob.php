@@ -144,6 +144,8 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         DicInsuranceService $dicInsuranceService,
         PolicyIssuanceService $policyIssuanceService,
     ): void {
+        $stepAttemptLogBaseline = $this->countAttemptLogsForStep($process->id, $this->step);
+
         try {
             $stepResponse = $dicInsuranceService->runSingleDicAsyncStep($quote, $process, $this->step, false);
         } catch (Throwable $e) {
@@ -164,19 +166,22 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
                 return;
             }
 
-            $policyIssuanceService->storePolicyIssuanceLog(
-                $quote,
-                [],
-                [
-                    'error' => $e->getMessage(),
-                    'exception_class' => $e::class,
-                    'handler' => 'dic_async_exception',
-                ],
-                'dic-async-step/unhandled-exception',
-                $this->step,
-                PolicyIssuanceEnum::FAILED_STATUS,
-                $process,
-            );
+            $logsAfterStepAttempt = $this->countAttemptLogsForStep($process->id, $this->step);
+            if ($logsAfterStepAttempt === $stepAttemptLogBaseline) {
+                $policyIssuanceService->storePolicyIssuanceLog(
+                    $quote,
+                    [],
+                    [
+                        'error' => $e->getMessage(),
+                        'exception_class' => $e::class,
+                        'handler' => 'dic_async_exception',
+                    ],
+                    'dic-async-step/unhandled-exception',
+                    $this->step,
+                    PolicyIssuanceEnum::FAILED_STATUS,
+                    $process,
+                );
+            }
 
             $stepResponse = [
                 'status' => false,
@@ -207,8 +212,8 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
-        // Application storage value is the max total attempts per step (including this one). Count DB rows so
-        // retries align with actual API attempts and with {@see DicApiService} logging (step outcome, not raw HTTP).
+        // Max attempts per step includes each persisted issuance-log row for this step ({@see DicApiService}). Retryable
+        // exceptions after the service already logged must not add a second row — handled via baseline in catch above.
         $attemptCountForStep = $this->countAttemptLogsForStep($process->id, $this->step);
 
         $maxAttemptsPerStep = (int) getAppStorageValueByKey(ApplicationStorageEnums::DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP, 3);

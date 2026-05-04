@@ -100,6 +100,62 @@ it('schedules delayed async step retry when runSingleDicAsyncStep throws', funct
     });
 });
 
+it('does not double-count attempt logs when step persisted issuance log then throws retryable exception', function (): void {
+    Bus::fake();
+
+    $provider = InsuranceProvider::factory()->create([
+        'code' => InsuranceProviderEnum::DIC->value,
+        'text' => 'DIC Test',
+    ]);
+
+    $travelQuote = TravelQuote::factory()->create([
+        'code' => 'TRV-DIC-NO-DUP-LOG',
+    ]);
+
+    $process = PolicyIssuance::factory()
+        ->forQuote($travelQuote)
+        ->processing()
+        ->create([
+            'insurance_provider_id' => $provider->id,
+            'quote_type' => QuoteTypes::TRAVEL->value,
+            'completed_step' => null,
+        ]);
+
+    $dic = Mockery::mock(DicInsuranceService::class);
+    $dic->shouldReceive('resolveAsyncStepToRun')->once()->andReturn(PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY);
+    $dic->shouldReceive('isPolicyIssuanceAutomationEnabled')->once()->andReturn(true);
+    $dic->shouldReceive('validateBeforeDicAsyncRun')->once()->andReturn(['status' => true]);
+    $dic->shouldReceive('runSingleDicAsyncStep')
+        ->once()
+        ->andReturnUsing(function () use ($process): never {
+            PolicyIssuanceLog::factory()->create([
+                'policy_issuance_id' => $process->id,
+                'step' => PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
+                'status' => PolicyIssuanceEnum::SUCCESS_STATUS,
+                'endPoint' => 'https://unit-dic.test/products/buy/client',
+            ]);
+
+            throw new IlluminateConnectionException('retryable after issuance log persisted');
+        });
+
+    app()->instance(DicInsuranceService::class, $dic);
+
+    (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
+        ->handle(app(DicInsuranceService::class), app(PolicyIssuanceService::class));
+
+    expect(
+        PolicyIssuanceLog::query()
+            ->where('policy_issuance_id', $process->id)
+            ->where('step', PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY)
+            ->count()
+    )->toBe(1);
+
+    Bus::assertDispatched(function (DicPolicyIssuanceStepJob $job) use ($process): bool {
+        return $job->policyIssuanceId === $process->id
+            && $job->step === PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY;
+    });
+});
+
 it('fails issuance immediately without retry when runSingleDicAsyncStep throws non-transport exception', function (): void {
     Bus::fake();
 
