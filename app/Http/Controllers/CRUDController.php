@@ -17,7 +17,6 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\EpEcbExcludeVehicleEnum;
-use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -39,9 +38,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
@@ -74,7 +70,6 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
-use App\Models\RenewalQuoteProcess;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -2447,22 +2442,12 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
-
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
-        }
-
-        $isRenewalHistorical = $carQuote->latestUpdateRenewalQuoteProcess
-            && RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
-                'quote_id' => $carQuote->id,
-                'quote_type' => QuoteTypeShortCode::CAR,
-                'status' => RenewalProcessStatuses::PLANS_FETCHED,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-                'email_sent' => true,
-                'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-            ])->exists() && $carQuote->isGenesisLead;
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
@@ -2484,8 +2469,7 @@ class CRUDController extends Controller
 
             return;
         }
-
-        if ($carQuote->isGenesisLead) {
+        if ($isTransitionableLead) {
             $emailData->currentInsurer = '';
         }
 
