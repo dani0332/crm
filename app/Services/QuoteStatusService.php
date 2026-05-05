@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
@@ -10,7 +9,6 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 
 class QuoteStatusService
 {
@@ -62,7 +60,7 @@ class QuoteStatusService
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
                     if (request('workflow_type') === QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
-                        $updateQuote->quote_status_id = $this->resolveLifeRevivalQuotedTargetStatusId($updateQuote);
+                        $updateQuote->quote_status_id = $this->resolveLifeRevivalQuotedTargetStatusId();
                         break;
                     }
                     if (in_array(request('workflow_type'), [
@@ -111,10 +109,7 @@ class QuoteStatusService
             ->exists();
     }
 
-    /**
-     * Life revival from Quoted: optional API flag chooses Lost vs FollowedUp when you cannot rely on lead.source alone.
-     */
-    private function resolveLifeRevivalQuotedTargetStatusId(Model $updateQuote): int
+    private function resolveLifeRevivalQuotedTargetStatusId(): int
     {
         $explicit = request('life_revival_transition');
         if ($explicit === 'lost') {
@@ -122,9 +117,6 @@ class QuoteStatusService
         }
         if ($explicit === 'followed_up') {
             return QuoteStatusEnum::FollowedUp;
-        }
-        if ($updateQuote->source == LeadSourceEnum::REVIVAL_REPLIED) {
-            return QuoteStatusEnum::Lost;
         }
 
         return QuoteStatusEnum::FollowedUp;
