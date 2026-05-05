@@ -352,6 +352,7 @@ class ConversionOptimizationReportService extends BaseService
             ->toArray();
 
         $departments = Department::query()
+            ->select(['id', 'name'])
             ->where('is_active', true)
             ->whereIn('id', Auth::user()->departments->pluck('id')->toArray())
             ->orderBy('name')
