@@ -187,19 +187,11 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Added.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
-        }
-
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
+
+        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+            return redirect()->back()->with('error', 'Request not processed.');
+        }
 
         return redirect()->back();
     }
@@ -213,19 +205,11 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Updated.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
-        }
-
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
+
+        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+            return redirect()->back()->with('error', 'Request not processed.');
+        }
 
         return redirect()->back();
     }
@@ -234,19 +218,11 @@ class HealthQuoteController extends Controller
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Updated.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
-        }
-
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
+
+        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+            return redirect()->back()->with('error', 'Request not processed.');
+        }
 
         return redirect()->back();
     }
