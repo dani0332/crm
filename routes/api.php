@@ -100,6 +100,10 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
+
+    // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
+    // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
+    Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');

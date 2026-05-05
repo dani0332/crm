@@ -131,7 +131,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
 
         $quote->load('advisor');
-        $advisor = $quote->advisor_id ? $quote->advisor : User::find($this->data?->advisorId) ?? null;
+
+        $dataAdvisor = isset($this->data?->advisorId) ? User::find($this->data?->advisorId) : null;
+        $advisor = $quote->advisor_id ? $quote->advisor : $dataAdvisor;
+
         LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - Advisor Object', extra: [
             'advisor' => $advisor,
             'quoteAdvisorId' => $quote->advisor_id,

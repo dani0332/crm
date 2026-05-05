@@ -581,6 +581,11 @@ foreach ($quotePlan->addons as &$addon) {
                 'title' => 'Travel Visa Rejection',
                 'type' => 'travelInconvenienceCover',
             ],
+            [
+                'code' => 'war_cover',
+                'title' => 'War cover',
+                'type' => 'exclusion',
+            ],
 
             ['code' => 'heading', 'title' => 'Emergency Medical Benefits'],
 
@@ -909,7 +914,8 @@ foreach ($quotePlan->addons as &$addon) {
                                 </p>
 
                             </td>
-                            <?php if (count($planIds) == $planIterate) {
+                            {{-- Hide rows only when every selected plan is "Excluded", but always keep War cover visible as per business requirement. --}}
+                            <?php if (count($planIds) == $planIterate && $feature['code'] !== 'war_cover') {
                                 ?>
                             <style>
                                 .row_<?php echo $featCount; ?> {

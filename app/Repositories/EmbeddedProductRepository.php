@@ -1555,6 +1555,7 @@ class EmbeddedProductRepository extends BaseRepository
             'document_type_text' => $type,
             'doc_uuid' => $docUuid,
             'created_by_id' => null,
+            'document_type_id' => $documentType->id,
         ];
     }
 
