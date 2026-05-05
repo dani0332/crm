@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthRate;
+use App\Models\HealthRateControl;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class HealthRateService extends BaseService
 {
@@ -57,5 +59,24 @@ class HealthRateService extends BaseService
                 'updated_at',
             )
             ->firstWhere('id', $id);
+    }
+
+    public function delete(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            // Fetch health rate control id
+            $rate = HealthRate::select('health_rate_control_id')->find($id);
+            $healthRateControlId = $rate->health_rate_control_id;
+
+            HealthRate::destroy($id);
+
+            // After deleteing check if there is any rate exists with the same health rate control id
+            $rates = HealthRate::where('health_rate_control_id', $healthRateControlId)->count();
+
+            // If not, delete the health rate control
+            if ($rates == 0) {
+                HealthRateControl::destroy($healthRateControlId);
+            }
+        });
     }
 }

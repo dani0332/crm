@@ -173,6 +173,9 @@ Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
     Route::prefix('rates')->group(function () {
         Route::get('/listing/{healthPlanId}', [HealthRateController::class, 'getList']);
         Route::get('/{id}', [HealthRateController::class, 'getRate']);
+        Route::post('/', [HealthRateController::class, 'create']);
+        Route::put('/{id}', [HealthRateController::class, 'update']);
+        Route::delete('/{id}', [HealthRateController::class, 'delete']);
     });
 });
 
