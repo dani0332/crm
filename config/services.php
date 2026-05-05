@@ -76,4 +76,5 @@ return [
             'timeout' => (int) env('ALFRED_COINS_INSURANCEMARKET_TIMEOUT', 15),
         ],
     ],
+
 ];

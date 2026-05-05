@@ -8,6 +8,8 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Events\AmlAutomationScreeningFailed;
+use App\Events\AmlAutomationScreeningSucceeded;
 use App\Models\AmlAutomation;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
@@ -15,7 +17,9 @@ use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\PersonalQuoteAmlAutomationCustomerService;
 use App\Services\TravelQuoteService;
+use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -99,13 +103,18 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $amlRequestData = $this->buildAmlRequestData($customer, $idType, $idNumber);
 
-            $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
+            $quoteTypeId = (int) (QuoteTypes::getId($this->quoteType) ?? 0);
+            $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $quoteTypeId, $this->quoteRequest->id);
 
             $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix);
 
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
             LoggerService::error($loggerPrefix.' Exception: '.$e->getMessage());
+            $this->dispatchOutcomeEventIfApplicable(
+                isSuccess: false,
+                failureReason: 'Exception: '.$e->getMessage()
+            );
         }
     }
 
@@ -155,15 +164,16 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     private function preconditionsMet(): bool
     {
-        $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+        $skipApiIssuanceYes = AmlAutomatableLobRegistry::skipsApiIssuanceStatusCheckForAutomatedAml($this->quoteType, $this->quoteRequest);
+        $isApiIssuanceStatusYes = $skipApiIssuanceYes
+            || $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
         $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
         $isAutomationInQueue = false;
         if ($this->quoteType === QuoteTypes::TRAVEL) {
             $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
-        } elseif ($this->quoteType === QuoteTypes::CYBER) {
-            $amlAutomation = AmlAutomation::where('code', $this->quoteRefId)->first();
-            $isAutomationInQueue = $amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
+        } elseif ($this->quoteRequest instanceof PersonalQuote && in_array($this->quoteType, [QuoteTypes::CYBER, QuoteTypes::SAVINGS], true)) {
+            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::QUEUE_STATUS;
         }
 
         return $isApiIssuanceStatusYes && $isAMLPending && $isAutomationInQueue;
@@ -188,14 +198,68 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     private function processAmlResult($quoteAmlProcessCall, $amlAutomation, string $loggerPrefix): void
     {
+        $this->quoteRequest->refresh();
+
         if (! $quoteAmlProcessCall->status) {
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Failed: '.$quoteAmlProcessCall->message]);
-            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$quoteAmlProcessCall->message);
-        } else {
-            $this->quoteRequest->refresh();
-            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - response: '.$quoteAmlProcessCall->message);
+            $message = 'Failed: '.($quoteAmlProcessCall->message ?? 'Unknown');
+            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $message]);
+            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$message);
+            $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $message);
+
+            return;
         }
+
+        $amlStatus = $this->quoteRequest->aml_status;
+        if ($amlStatus === AMLStatusCode::AMLScreeningCleared) {
+            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
+            LoggerService::info($loggerPrefix.' Completed - AML cleared');
+            $this->dispatchOutcomeEventIfApplicable(isSuccess: true, failureReason: null);
+
+            return;
+        }
+
+        if ($amlStatus === AMLStatusCode::AMLScreeningFailed) {
+            $msg = 'AML Screening Failed';
+            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $msg]);
+            LoggerService::info($loggerPrefix.' Completed - AML failed');
+            $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $msg);
+
+            return;
+        }
+
+        $pendingMsg = 'AML still pending after screening';
+        $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $pendingMsg]);
+        LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
+        $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $pendingMsg);
+    }
+
+    private function dispatchOutcomeEventIfApplicable(bool $isSuccess, ?string $failureReason): void
+    {
+        if (! AmlAutomatableLobRegistry::allows($this->quoteType)) {
+            return;
+        }
+
+        $uuid = $this->quoteRequest->uuid ?? '';
+        $id = (int) $this->quoteRequest->id;
+
+        if ($isSuccess) {
+            event(new AmlAutomationScreeningSucceeded(
+                $id,
+                $uuid,
+                $this->quoteRefId,
+                $this->quoteType,
+            ));
+
+            return;
+        }
+
+        event(new AmlAutomationScreeningFailed(
+            $id,
+            $uuid,
+            $this->quoteRefId,
+            $this->quoteType,
+            $failureReason ?? 'AML automation failed',
+        ));
     }
 
     /**
@@ -230,6 +294,14 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             if (! empty($customerCyberInfo['id'])) {
                 $customerInfo = $customerCyberInfo;
             }
+        } elseif ($this->quoteType === QuoteTypes::SAVINGS && $this->quoteRequest instanceof PersonalQuote) {
+            $row = app(PersonalQuoteAmlAutomationCustomerService::class)
+                ->getCustomerPersonalQuoteAmlInfo((int) $this->quoteRequest->id, (int) $this->quoteRequest->quote_type_id);
+            if ($row !== false && ! empty($row->id)) {
+                $customerInfo = array_merge((array) $row, [
+                    'id_type' => $row->id_type ?? 'passport',
+                ]);
+            }
         }
 
         return $customerInfo;
@@ -248,6 +320,8 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $cyberQuoteService = app(CyberQuoteService::class);
 
             return $cyberQuoteService->checkCustomerCyberInfoIsComplete($customerInfo);
+        } elseif ($this->quoteType === QuoteTypes::SAVINGS) {
+            return app(PersonalQuoteAmlAutomationCustomerService::class)->checkCustomerPersonalQuoteAmlInfoIsComplete($customerInfo);
         }
 
         return ['status' => false, 'message' => 'Unknown quote type'];

@@ -72,7 +72,11 @@ class AMLCheckRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if (! auth()->user()->can(PermissionsEnum::AMLList)) {
+            if ($this->boolean('is_automation')) {
+                return;
+            }
+
+            if (! auth()->user()?->can(PermissionsEnum::AMLList)) {
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
             }
         });

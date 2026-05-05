@@ -877,4 +877,22 @@ class AMLController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * IMCRM: trigger AML screening automation for an allowed personal LOB (e.g. Savings) by quote UUID.
+     */
+    public function automateQuoteAmlScreening(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'quoteUuid' => ['required', 'string'],
+        ]);
+
+        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid($validated['quoteUuid']);
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'data' => $result['data'] ?? null,
+        ], $result['http_status']);
+    }
 }

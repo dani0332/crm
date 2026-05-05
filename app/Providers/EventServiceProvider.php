@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\AmlAutomationScreeningFailed;
+use App\Events\AmlAutomationScreeningSucceeded;
 use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
@@ -25,6 +27,7 @@ use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
 use App\Listeners\SendAlfredCoinsInsurancePurchasedWebhook;
+use App\Listeners\SendAmlAutomationOutcomeNotifications;
 use App\Listeners\TriggerConversionApis;
 use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
@@ -119,6 +122,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         NationalityPoolCreated::class => [
             HandleNationalityPoolCreated::class,
+        ],
+        AmlAutomationScreeningSucceeded::class => [
+            [SendAmlAutomationOutcomeNotifications::class, 'handleSucceeded'],
+        ],
+        AmlAutomationScreeningFailed::class => [
+            [SendAmlAutomationOutcomeNotifications::class, 'handleFailed'],
         ],
 
     ];
