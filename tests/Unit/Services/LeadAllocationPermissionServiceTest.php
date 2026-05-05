@@ -149,7 +149,7 @@ test('authorize mutate for route aborts for invalid quote type', function () {
     LeadAllocationPermissionService::authorizeMutateForRouteQuoteType($request);
 })->throws(HttpException::class, 'Unauthorized action.');
 
-test('authorize shared toggle allows when user can mutate for resolved quote type', function () {
+test('authorize shared toggle lead or user allows when user can mutate for resolved quote type', function () {
     $user = TestDataSeeder::createUser();
     Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
     $user->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
@@ -167,12 +167,12 @@ test('authorize shared toggle allows when user can mutate for resolved quote typ
 
     $request = Request::create('/test', 'POST', ['leadId' => $leadId]);
 
-    LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
 
     expect(true)->toBeTrue();
 });
 
-test('authorize shared toggle aborts when user cannot mutate for resolved quote type', function () {
+test('authorize shared toggle lead or user aborts when user cannot mutate for resolved quote type', function () {
     $user = TestDataSeeder::createUser();
     $this->actingAs($user);
 
@@ -188,10 +188,10 @@ test('authorize shared toggle aborts when user cannot mutate for resolved quote 
 
     $request = Request::create('/test', 'POST', ['leadId' => $leadId]);
 
-    LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
 })->throws(HttpException::class, 'Unauthorized action.');
 
-test('authorize shared toggle aborts when lead id la id and user id are all absent', function () {
+test('authorize shared toggle lead or user aborts when lead id and user id are both absent', function () {
     $user = TestDataSeeder::createUser();
     Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
     $user->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
@@ -199,10 +199,10 @@ test('authorize shared toggle aborts when lead id la id and user id are all abse
 
     $request = Request::create('/test', 'POST', []);
 
-    LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
 })->throws(HttpException::class, 'Unauthorized action.');
 
-test('authorize shared toggle allows when only user id is present', function () {
+test('authorize shared toggle lead or user allows when only user id is present', function () {
     $actor = TestDataSeeder::createUser(['email' => 'manager@example.com']);
     Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
     $actor->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
@@ -222,7 +222,100 @@ test('authorize shared toggle allows when only user id is present', function () 
 
     $request = Request::create('/test', 'POST', ['userId' => $advisor->id]);
 
-    LeadAllocationPermissionService::authorizeMutateForSharedToggleRequest($request);
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
+
+    expect(true)->toBeTrue();
+});
+
+test('authorize shared toggle lead or user uses lead id when both la id and lead id are present', function () {
+    $actor = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $actor->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($actor);
+
+    $carLaId = (int) DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $actor->id,
+        'quote_type_id' => QuoteTypes::CAR->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $healthLeadId = (int) DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $actor->id,
+        'quote_type_id' => QuoteTypes::HEALTH->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $request = Request::create('/test', 'POST', [
+        'laId' => $carLaId,
+        'leadId' => $healthLeadId,
+    ]);
+
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLeadOrUser($request);
+})->throws(HttpException::class, 'Unauthorized action.');
+
+test('authorize shared toggle la or user allows when only la id is present', function () {
+    $user = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($user);
+
+    $laId = (int) DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $user->id,
+        'quote_type_id' => QuoteTypes::CAR->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $request = Request::create('/test', 'POST', ['laId' => $laId]);
+
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
+
+    expect(true)->toBeTrue();
+});
+
+test('authorize shared toggle la or user uses la id when both la id and lead id are present', function () {
+    $actor = TestDataSeeder::createUser();
+    Permission::findOrCreate(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT, AuthGuardEnum::Web->value);
+    $actor->givePermissionTo(PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT);
+    $this->actingAs($actor);
+
+    $carLaId = (int) DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $actor->id,
+        'quote_type_id' => QuoteTypes::CAR->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $healthLaId = (int) DB::connection('sqlite')->table('lead_allocation')->insertGetId([
+        'user_id' => $actor->id,
+        'quote_type_id' => QuoteTypes::HEALTH->id(),
+        'auto_assignment_count' => 0,
+        'manual_assignment_count' => 0,
+        'max_capacity' => 0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $request = Request::create('/test', 'POST', [
+        'laId' => $carLaId,
+        'leadId' => $healthLaId,
+    ]);
+
+    LeadAllocationPermissionService::authorizeMutateForSharedToggleLaOrUser($request);
 
     expect(true)->toBeTrue();
 });

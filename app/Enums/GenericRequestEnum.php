@@ -68,4 +68,5 @@ final class GenericRequestEnum extends Enum
     public const EMIRATES_ID_SHORT_CODE = 'EID';
     const UNKNOWN_ERROR = 'Unknown error';
     const SEND_UPDATE_AS_QUOTE_TYPE = 'sendupdate';
+    const TRAVEL_SENIOR_MEMBER_AGE = 65;
 }
