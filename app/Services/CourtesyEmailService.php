@@ -221,7 +221,7 @@ class CourtesyEmailService extends BaseService
                     'id' => $advisor->id,
                     'name' => $advisor->name,
                     'email' => $advisor->email,
-                    'Phone' => ! empty($advisor->landline_no)
+                    'phone' => ! empty($advisor->landline_no)
                         ? formatLandlineDisplay($advisor->landline_no)
                         : '',
                     'mobile' => ! empty($advisor->mobile_no)
