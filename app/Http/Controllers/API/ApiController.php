@@ -690,6 +690,9 @@ class ApiController extends Controller
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
+        LoggerService::info(self::class.' - update customer replied status request received',
+            ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject]);
+
         try {
             $result = DB::transaction(function () use ($request) {
 
@@ -702,10 +705,16 @@ class ApiController extends Controller
                 );
 
                 if (! $result->success) {
+                    LoggerService::warning(self::class.' - error updating customer replied status',
+                        ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'error' => $result->message]);
+
                     return $result;
                 }
 
                 $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+                LoggerService::info(self::class.' - updating source for revival leads after customer replied',
+                    ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'quote_type' => $quoteType]);
 
                 match ($quoteType) {
                     QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
