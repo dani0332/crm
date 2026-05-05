@@ -694,7 +694,9 @@ class ApiController extends Controller
             ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject]);
 
         try {
-            $result = DB::transaction(function () use ($request) {
+            $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+            $result = DB::transaction(function () use ($request, $quoteType) {
 
                 $emailStatusService = app(EmailStatusService::class);
 
@@ -711,8 +713,6 @@ class ApiController extends Controller
                     return $result;
                 }
 
-                $quoteType = QuoteTypes::getName($request->quote_type_id);
-
                 LoggerService::info(self::class.' - updating source for revival leads after customer replied',
                     ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'quote_type' => $quoteType]);
 
@@ -727,6 +727,21 @@ class ApiController extends Controller
             });
 
             if ($result->success) {
+                if ($quoteType === QuoteTypes::LIFE) {
+                    try {
+                        QuoteTypes::LIFE->allocate(uuid: $request->quote_uuid);
+
+                        LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
+                            ['quote_uuid' => $request->quote_uuid]);
+                    } catch (\Throwable $exception) {
+                        LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                            'quote_uuid' => $request->quote_uuid,
+                            'quote_type_id' => $request->quote_type_id,
+                            'error' => $exception->getMessage(),
+                        ], $exception);
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => $result->message,

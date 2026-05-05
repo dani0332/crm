@@ -264,11 +264,6 @@ class LifeRevivalService
 
         LoggerService::info(self::class.' - source updated to revival_replied - Quote UUID: ',
             ['quote_uuid' => $quoteUuid, 'source' => $source]);
-
-        QuoteTypes::LIFE->allocate(uuid: $quoteUuid);
-
-        LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
-            ['quote_uuid' => $quoteUuid, 'source' => $source]);
     }
 
     public function sendLifeRevialEmail(string $quoteUuid): void
