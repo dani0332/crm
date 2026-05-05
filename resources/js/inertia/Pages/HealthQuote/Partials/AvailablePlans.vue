@@ -28,7 +28,8 @@ const showModal = computed({
 });
 
 const memberRelationText = memberId => {
-  return props.members.find(member => member.id === memberId)?.relation?.text ?? '';
+  const member = props.members.find(member => member.id === memberId);
+  return member?.is_policy_holder == true ? 'Self' : member?.relation?.text ?? '';
 };
 
 const memberDobText = memberId => {
