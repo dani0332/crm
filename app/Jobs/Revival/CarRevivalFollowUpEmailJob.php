@@ -38,13 +38,22 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
      */
     public function __construct(
         public int $dttRevivalId,
-        public object $emailData,
+        public ?object $emailData = null,
     ) {
         $this->onQueue('renewals');
     }
 
     public function handle(): void
     {
+        // returning for legacy leads which were queued before the enhancement
+        if (! isset($this->emailData)) {
+            LoggerService::warning(self::class.': emailData missing (legacy queued payload); skipping follow-up send', [
+                'flow' => self::LOG_FLOW,
+            ]);
+
+            return;
+        }
+
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::warning(self::class.': DTT disabled in CMS (job was queued anyway)', [

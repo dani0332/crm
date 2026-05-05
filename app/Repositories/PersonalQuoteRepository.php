@@ -168,6 +168,8 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'created_by_id' => Auth::id(),
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
             ];
             // info('Document array prepared for creation', $document);
 

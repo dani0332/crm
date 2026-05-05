@@ -72,7 +72,20 @@ test('it redirects back with policy booked flash when business quote member deta
         ->and(session('error'))->toBe(MembersDetailController::FLASH_ERROR_MEMBER_DETAILS_LOCKED);
 });
 
-test('it returns json 403 when locked and request is from aml model', function () {
+test('it does not block when locked and from_aml_model is true', function () {
+    $this->mock(CentralService::class, function ($mock) {
+        $mock->shouldNotReceive('lockLeadSectionsDetails');
+    });
+
+    $request = Request::create('/', 'POST', ['from_aml_model' => true]);
+    $quote = Mockery::mock(BusinessQuote::class);
+
+    $result = $this->lockMethod->invoke($this->controller, $request, $quote);
+
+    expect($result)->toBeNull();
+});
+
+test('it returns json 403 when locked and client expects json without from_aml_model', function () {
     $this->mock(CentralService::class, function ($mock) {
         $mock->shouldReceive('lockLeadSectionsDetails')
             ->once()
@@ -86,7 +99,9 @@ test('it returns json 403 when locked and request is from aml model', function (
             ]);
     });
 
-    $request = Request::create('/', 'POST', ['from_aml_model' => true]);
+    $request = Request::create('/api/members', 'POST', [], [], [], [
+        'HTTP_ACCEPT' => 'application/json',
+    ]);
     $quote = Mockery::mock(BusinessQuote::class);
 
     $result = $this->lockMethod->invoke($this->controller, $request, $quote);
@@ -99,7 +114,7 @@ test('it returns json 403 when locked and request is from aml model', function (
         ]);
 });
 
-test('it redirects when locked and request has x-inertia even if from_aml_model is present', function () {
+test('it redirects when locked and request has x-inertia (not from_aml_model)', function () {
     $this->mock(CentralService::class, function ($mock) {
         $mock->shouldReceive('lockLeadSectionsDetails')
             ->once()
@@ -113,7 +128,7 @@ test('it redirects when locked and request has x-inertia even if from_aml_model 
             ]);
     });
 
-    $request = Request::create('/', 'POST', ['from_aml_model' => true], [], [], [
+    $request = Request::create('/', 'POST', [], [], [], [
         'HTTP_X_INERTIA' => 'true',
         'HTTP_ACCEPT' => 'application/json',
     ]);
