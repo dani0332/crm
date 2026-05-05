@@ -13,6 +13,8 @@ const EXPORT_TYPES = Object.freeze({
   EMAIL: 'email',
 });
 
+const NO_DEFAULT_FILTERS_PARAM = 'noDefaultFilters';
+
 const loaders = reactive({
   table: false,
   teamOptions: false,
@@ -95,6 +97,7 @@ const getFiltersObject = () => ({
   registration_type: '',
   vehicle_use: '',
   cap_percentage: '',
+  department: [],
 });
 
 let filters = reactive(getFiltersObject());
@@ -164,6 +167,15 @@ const travelCoverageOptions = computed(() => {
   return [];
 });
 
+const departmentFilterOptions = computed(() => {
+  const rows = props.filterOptions.departments ?? [];
+
+  return rows.map(row => ({
+    value: parseInt(String(row.value), 10),
+    label: row.label,
+  }));
+});
+
 const registrationTypeOptions = [
   { value: 'All', label: 'All' },
   ...Object.values(carRegistrationTypeEnum).map(item => ({
@@ -204,6 +216,7 @@ const showCommercialRule = computed(
 
 const cleanFilters = sourceFilters => {
   const payload = JSON.parse(JSON.stringify(sourceFilters));
+  delete payload[NO_DEFAULT_FILTERS_PARAM];
   const cleanedFilters = removeUnusedFilters(payload);
 
   Object.keys(cleanedFilters).forEach(key => {
@@ -220,6 +233,11 @@ const cleanFilters = sourceFilters => {
   return cleanedFilters;
 };
 
+/**
+ * Drops filter fields that are not valid for the selected LOB (per `filtersByLob` metadata).
+ * Each filter key may list `lobs`; if the current `localFilters.lob` is not in that list, the key is removed
+ * so report requests and exports do not send irrelevant parameters (e.g. car-only fields for Travel).
+ */
 const removeUnusedFilters = localFilters => {
   const filtersByLob = props.filtersByLob;
   Object.keys(filtersByLob).forEach(key => {
@@ -275,6 +293,7 @@ const INTEGER_ID_ARRAY_DEFAULT_FILTER_KEYS = new Set([
   'teams',
   'sub_teams',
   'advisors',
+  'department',
 ]);
 
 const parseDefaultFilterInt = raw => {
@@ -529,6 +548,12 @@ const onInsuranceTypeChange = () => {
   filters.travel_coverage = '';
 };
 
+const onDepartmentFilterChange = () => {
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+};
+
 function onSubmit(isValid, isOnMounted = false) {
   if (!filters.lob && isOnMounted === false) {
     toast.error({
@@ -577,6 +602,11 @@ function onSubmit(isValid, isOnMounted = false) {
           ? payload.sub_teams
           : [payload.sub_teams],
       }),
+      ...(payload.department && {
+        department: Array.isArray(payload.department)
+          ? payload.department
+          : [payload.department],
+      }),
     },
     preserveState: true,
     preserveScroll: true,
@@ -597,12 +627,16 @@ function onReset() {
   router.visit('/reports/conversion-optimization', {
     method: 'get',
     only: ['reportData'],
-    data: { page: 1 },
+    data: {
+      page: 1,
+      [NO_DEFAULT_FILTERS_PARAM]: true,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onFinish: () => {
       loaders.table = false;
       canExportReport.value = false;
+      delete filters[NO_DEFAULT_FILTERS_PARAM];
     },
   });
 }
@@ -683,7 +717,7 @@ const formatValue = value => {
 onMounted(async () => {
   setDefaultValues();
   setQueryStringFiltersUtil(params, filters, {
-    integerFields: ['page', 'teams', 'sub_teams'],
+    integerFields: ['page', 'teams', 'sub_teams', 'department'],
   });
   clearIsCommercialUnlessPersonal();
   await onLobChange(filters.lob, true);
@@ -856,6 +890,28 @@ onMounted(async () => {
                 ).map(leadSource => leadSource)
               "
               @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.department"
+          label="Department"
+          placeholder="Search by Department"
+          :options="departmentFilterOptions"
+          @update:model-value="onDepartmentFilterChange"
+          filterable
+          filterPlaceholder="Filter Department...."
+          truncate
+          multiple
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.department = departmentFilterOptions.map(d => d.value)
+              "
+              @clear="filters.department = []"
             />
           </template>
         </x-select>

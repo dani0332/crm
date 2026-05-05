@@ -21,6 +21,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Traits\VehicleTypeTrait;
 use App\Models\CarQuote;
+use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
@@ -48,6 +49,8 @@ class ConversionOptimizationReportService extends BaseService
     use Reportable;
     use VehicleTypeTrait;
 
+    public const NO_DEFAULT_FILTERS_QUERY_PARAM = 'noDefaultFilters';
+
     public function getReportData($request)
     {
         $builder = $this->getReportQueryBuilder($request);
@@ -68,8 +71,36 @@ class ConversionOptimizationReportService extends BaseService
 
     public function mergeDefaultsIntoRequest(Request $request, array $defaultFilters): Request
     {
-        $mergedQuery = array_merge($defaultFilters, $request->query->all());
-        $mergedRequest = array_merge($defaultFilters, $request->request->all());
+        $noDefaultFiltersParam = self::NO_DEFAULT_FILTERS_QUERY_PARAM;
+        $skipDefaultFilters = $request->boolean($noDefaultFiltersParam);
+
+        $clientSpecifiedAnyDefaultFilterKey = false;
+
+        foreach (array_keys($defaultFilters) as $key) {
+            if ($request->query->has($key) || $request->request->has($key)) {
+                $clientSpecifiedAnyDefaultFilterKey = true;
+
+                break;
+            }
+        }
+
+        if ($skipDefaultFilters || $clientSpecifiedAnyDefaultFilterKey) {
+            $mergedQuery = $request->query->all();
+            $mergedRequest = $request->request->all();
+        } else {
+            $mergedQuery = array_merge($defaultFilters, $request->query->all());
+            $mergedRequest = array_merge($defaultFilters, $request->request->all());
+        }
+
+        unset($mergedQuery[$noDefaultFiltersParam], $mergedRequest[$noDefaultFiltersParam]);
+
+        LoggerService::info('mergeDefaultsIntoRequest', [
+            '$defaultFilters' => $defaultFilters,
+            'query' => $request->query->all(),
+            'request' => $request->request->all(),
+            'clientSpecifiedAnyDefaultFilterKey' => $clientSpecifiedAnyDefaultFilterKey,
+            'skipDefaultFilters' => $skipDefaultFilters,
+        ]);
 
         if ($this->conversionOptimizationClientChoseTeamsWithoutSubTeams($request)) {
             unset($mergedQuery['sub_teams'], $mergedRequest['sub_teams']);
@@ -120,6 +151,7 @@ class ConversionOptimizationReportService extends BaseService
             'segment_filter' => $request->segment_filter,
             'registration_type' => $request->registration_type,
             'vehicle_use' => $request->vehicle_use,
+            'departmentIds' => $this->resolveDepartmentIdsForReport($request->department),
         ];
 
         if ($lob === quoteTypeCode::Car) {
@@ -319,6 +351,18 @@ class ConversionOptimizationReportService extends BaseService
             ->map(fn ($leadSource) => $leadSource->name)
             ->toArray();
 
+        $departments = Department::query()
+            ->where('is_active', true)
+            ->whereIn('id', Auth::user()->departments->pluck('id')->toArray())
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($department) => [
+                'value' => $department->id,
+                'label' => $department->name,
+            ])
+            ->values()
+            ->all();
+
         $lobs = $this->getLobByPermissions();
         $dropdownSourceService = new DropdownSourceService;
 
@@ -378,6 +422,7 @@ class ConversionOptimizationReportService extends BaseService
             'batches' => $batches,
             'tiers' => $tiers,
             'leadSources' => $leadSources,
+            'departments' => $departments,
             'advisors' => $advisors,
             'teams' => $teams,
             'insurance_for' => $insuranceFor,
@@ -397,6 +442,7 @@ class ConversionOptimizationReportService extends BaseService
             'lob' => quoteTypeCode::Car,
             'isCommercial' => 'All',
             'isEmbeddedProducts' => false,
+            'department' => [],
         ];
 
         $teamFilters = $this->getCachedDefaultConversionOptimizationTeamFilters();
@@ -491,7 +537,15 @@ class ConversionOptimizationReportService extends BaseService
                 function ($builder) use ($filters) {
                     $builder->where('car_quote_request.vehicle_use', $filters->vehicle_use);
                 }
-            );
+            )
+            ->when(! empty($filters->departmentIds), function ($builder) use ($filters) {
+                $builder->whereExists(function ($query) use ($filters) {
+                    $query->selectRaw('1')
+                        ->from('user_departments')
+                        ->whereColumn('user_departments.user_id', 'users.id')
+                        ->whereIn('user_departments.department_id', $filters->departmentIds);
+                });
+            });
 
         return $query;
     }
@@ -578,6 +632,15 @@ class ConversionOptimizationReportService extends BaseService
             });
 
         $this->applyTravelFilters($query, $filters, $lob);
+
+        $query->when(! empty($filters->departmentIds), function ($builder) use ($filters) {
+            $builder->whereExists(function ($query) use ($filters) {
+                $query->selectRaw('1')
+                    ->from('user_departments')
+                    ->whereColumn('user_departments.user_id', 'users.id')
+                    ->whereIn('user_departments.department_id', $filters->departmentIds);
+            });
+        });
 
         return $query;
     }
@@ -811,6 +874,43 @@ class ConversionOptimizationReportService extends BaseService
             ->where('department_id', auth()->user()->department_id)
             ->pluck('id')
             ->toArray();
+    }
+
+    /**
+     * Normalize multi-select department filter to allowed, active department ids (user_departments).
+     *
+     * @return list<int>
+     */
+    private function resolveDepartmentIdsForReport(mixed $raw): array
+    {
+        if ($raw === null || $raw === '' || $raw === []) {
+            return [];
+        }
+
+        $candidates = is_array($raw) ? $raw : [$raw];
+
+        $allowedIds = Department::query()
+            ->where('is_active', true)
+            ->whereIn('id', Auth::user()->departments->pluck('id')->toArray())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $normalized = [];
+
+        foreach ($candidates as $item) {
+            if ($item === null || $item === '') {
+                continue;
+            }
+
+            $id = (int) $item;
+
+            if ($id > 0 && in_array($id, $allowedIds, true)) {
+                $normalized[] = $id;
+            }
+        }
+
+        return array_values(array_unique($normalized));
     }
 
     private function getAdvisorConversionQuoteStatusDate(): Carbon
