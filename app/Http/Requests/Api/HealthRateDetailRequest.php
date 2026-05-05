@@ -8,6 +8,10 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class HealthRateDetailRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
     public function rules(): array
     {
         return [

@@ -357,9 +357,9 @@ class RateCoverageUploadService
                 }
 
                 // Upload file and rates in a transaction
-                DB::transaction(function () use ($uploadedFile, $plan, $rows, $rowCount) {
+                DB::transaction(function () use ($uploadedFile, $plan, $rows, $rowCount, $data) {
                     // Upload file (health rate control)
-                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $rows[0]['effective_from'], $rows[0]['effective_to'], $plan->id, $rowCount - 1);
+                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
 
                     // Upload rates
                     $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
@@ -427,9 +427,10 @@ class RateCoverageUploadService
         // Iterate again to create rates
         for ($i = 1; $i < count($data); $i++) {
             $rowAssoc = array_combine($headers, $data[$i]);
-            $coPayment = $coPayments[$rowAssoc['copayment_code']] ?? null;
+            $coPayment = $coPayments[$rowAssoc['copayment_code']];
             $emirateType = EmirateTypeEnum::fromText($rowAssoc['emirate_type']);
 
+            // Check if we can add bulk insert outside loop
             HealthRate::create([
                 'health_plan_id' => $planId,
                 'health_rate_control_id' => $healthRateControlId,
