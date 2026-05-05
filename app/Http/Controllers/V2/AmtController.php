@@ -431,12 +431,17 @@ class AmtController extends Controller
      */
     public function show($id)
     {
+
         $crudService = app(CRUDService::class);
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
         abort_if(! $record, 404);
+
+        if (! $this->checkUserHasGroupMedicalAccess('show')) {
+            abort(403, 'Unauthorized access');
+        }
 
         /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
@@ -585,7 +590,32 @@ class AmtController extends Controller
             'advisors' => $advisors,
         ]);
     }
+    public function checkUserHasGroupMedicalAccess($method)
+    {
 
+        $permissions = [
+            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
+            'edit' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
+            'create' => [PermissionsEnum::GMQuotesCreate],
+            'list' => [PermissionsEnum::GMQuotesList],
+        ];
+        $roles = [
+            'show' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
+            'edit' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
+            'create' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
+            'list' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
+        ];
+        if (
+            auth()->user()->canAny($permissions[$method])
+            || auth()->user()->hasAnyRole(...$roles[$method])
+            || auth()->user()->hasAnyRole(RolesEnum::Engineering, RolesEnum::Admin)
+            || auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
     /**
      * Show the form for editing the specified resource.
      *
