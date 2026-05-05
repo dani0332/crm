@@ -204,13 +204,11 @@ class CourtesyEmailService extends BaseService
 
             $payload = [
                 'quoteUID' => $quote->uuid,
-                'uuid' => $quote->uuid,
                 'refId' => $refId,
                 'quoteTypeId' => $quoteTypeId,
                 'workflowType' => WorkflowTypeEnum::COURTESY_EMAIL_WORKFLOW,
                 'flowType' => QuoteFlowType::COURTESY_EMAIL->value,
                 'line_of_business' => $quoteType ? strtolower($quoteType->value) : '',
-                'advisorName' => $advisor->name,
                 'customerName' => $customerName,
                 'whatsAppconsent' => $quoteType ? getWhatsappConsent($quoteType, $quote->uuid) : false,
                 'customer' => [
@@ -223,6 +221,12 @@ class CourtesyEmailService extends BaseService
                     'id' => $advisor->id,
                     'name' => $advisor->name,
                     'email' => $advisor->email,
+                    'Phone' => ! empty($advisor->landline_no)
+                        ? formatLandlineDisplay($advisor->landline_no)
+                        : '',
+                    'mobile' => ! empty($advisor->mobile_no)
+                        ? formatMobileNo($advisor->mobile_no)
+                        : '',
                 ],
             ];
 
