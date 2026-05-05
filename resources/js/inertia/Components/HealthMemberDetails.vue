@@ -119,6 +119,7 @@ const emit = defineEmits(['memberUpdated', 'loadAvailablePlans']);
 const page = usePage();
 const notification = useToast();
 const relationCodeEnum = page.props.relationCodeEnum;
+const salaryBandEnum = page.props.salaryBandEnum;
 
 const {
   isDomesticHelper,
@@ -372,6 +373,10 @@ const onAddMemberModal = () => {
   memberForm.is_insured = 1;
   memberForm.emirate_of_your_visa_id = getPrincipalEmirateOfYourVisaId();
   memberForm.relation_code = relationCodeEnum.SELF;
+
+  if(isDomesticHelper.value) {
+    memberForm.salary_band_id = salaryBandEnum.BELOW_OR_EQ_4000;
+  }
 };
 
 function onEditMember(data) {

@@ -45,6 +45,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RelationCodeEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SalaryBandEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
@@ -180,6 +181,7 @@ class HandleInertiaRequests extends Middleware
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
             'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
+            'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
         ];
     }
 
