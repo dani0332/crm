@@ -92,6 +92,67 @@ const dateFormat = date =>
 const dateFormatYMD = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
+const { copy, copied } = useClipboard();
+
+const onCopyQuotePageLink = () => {
+  copy(window.location.href);
+  if (copied) {
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+  }
+};
+
+const gmMembersForCategoryBreakdown = computed(() =>
+  (props.membersDetails ?? []).filter(m => !m.is_third_party_payer),
+);
+
+const peopleInsuredPerCategoryRows = computed(() => {
+  const members = gmMembersForCategoryBreakdown.value;
+  const groups = new Map();
+  for (const m of members) {
+    const key = m.member_category_id ?? 'uncategorized';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        categoryLabel: m.member_category?.text ?? 'Uncategorized',
+        count: 0,
+      });
+    }
+    groups.get(key).count += 1;
+  }
+  let serial = 0;
+  return Array.from(groups.values()).map(row => ({
+    serial: ++serial,
+    ...row,
+  }));
+});
+
+const numberOfCategoriesDisplay = computed(() =>
+  peopleInsuredPerCategoryRows.value.length
+    ? String(peopleInsuredPerCategoryRows.value.length)
+    : '0',
+);
+
+const hasExistingGroupHealthInsuranceDisplay = computed(() => {
+  if (
+    props.quote.previous_quote_policy_number ||
+    props.quote.renewal_import_code
+  ) {
+    return 'Yes';
+  }
+
+  return 'No';
+});
+
+const natureOfCompanyActivityDisplay = computed(
+  () => props.quote.brief_details?.trim() || '—',
+);
+
+const planTypeSummaryDisplay = computed(
+  () => props.quote.group_medical_type?.text ?? '—',
+);
+
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -744,9 +805,14 @@ function handleOcrNotification(event) {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2"></div>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Lead Details
+            </h3>
+          </div>
         </template>
         <template #body>
+          <x-divider class="my-4" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -1016,6 +1082,163 @@ function handleOcrNotification(event) {
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
+
+            <x-divider class="my-6" />
+
+            <div class="space-y-8">
+              <section aria-labelledby="gm-quote-details-heading">
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
+                >
+                  <h4
+                    id="gm-quote-details-heading"
+                    class="text-lg font-semibold text-primary-700"
+                  >
+                    Quote Details
+                  </h4>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="shrink-0 rounded-lg"
+                    @click.prevent="onCopyQuotePageLink"
+                  >
+                    Copy Link
+                  </x-button>
+                </div>
+                <div class="grid gap-x-16 gap-y-2 sm:grid-cols-2 text-xs text-gray-900">
+                  <div class="grid grid-cols-2">
+                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1 flex items-center gap-1">
+                     
+                      <x-tooltip placement="bottom">
+                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                          NATURE OF COMPANY'S ACTIVITY
+                        </span>
+                        <template #tooltip>
+                          Select the main business activity of the company. This helps assess the risk profile for the group health insurance.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{natureOfCompanyActivityText }}</dd>
+                  </div>
+   
+                  <div class="grid grid-cols-2">
+                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
+
+                      <x-tooltip placement="bottom">
+                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                          WITH EXISTING GROUP HEALTH INSURANCE POLICY
+                        </span>
+                        <template #tooltip>
+                          Indicate if the company currently has a group health insurance policy in place with any provider 
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd> {{ hasExistingGroupHealthInsurancePolicyText }}
+                    </dd>
+                  </div>
+                  <div class="grid grid-cols-2">
+                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
+
+                      <x-tooltip placement="bottom">
+                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                          NUMBER OF CATEGORIES
+                        </span>
+                        <template #tooltip>Enter how many employee categories the group has. Categories usually differ by Benefitss or salary band. 
+                          Indicate if the company currently has a group health insurance policy in place with any provider 
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ numberOfCategoriesDisplay }}
+                    </dd>
+                  </div>
+                  <div class="grid grid-cols-2">
+                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
+                      <x-tooltip placement="bottom">
+                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                          PLAN TYPE
+                        </span>
+                        <template #tooltip>
+                          Select the type of health insurance plan as defined for this group or category.
+                        </template>
+                      </x-tooltip>
+                     </dt>
+                    <dd>{{ quotePlanTypeDisplay }}
+                    </dd>
+                  </div>
+              
+                
+                </div>
+              </section>
+
+              <section aria-labelledby="gm-people-per-category-heading">
+                <h4
+                  id="gm-people-per-category-heading"
+                  class="text-base font-semibold text-gray-900 mb-3"
+                >
+                  People to be insured per category
+                </h4>
+                <div
+                  class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm"
+                >
+                  <table class="min-w-full border-collapse text-sm">
+                    <thead>
+                      <tr
+                        class="bg-primary-600 text-left text-xs font-semibold uppercase tracking-wide text-white"
+                      >
+                        <th class="whitespace-nowrap px-3 py-3">S/No</th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          Category
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          Existing insurance provider
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          Existing third party administrator
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          Existing network
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          Existing policy renewal date
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3 text-right">
+                          Number of people
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white text-gray-900">
+                      <tr
+                        v-for="row in peopleInsuredPerCategoryRows"
+                        :key="row.serial"
+                        class="border-b border-gray-100 last:border-0"
+                      >
+                        <td class="px-3 py-3 align-top">{{ row.serial }}</td>
+                        <td class="px-3 py-3 align-top font-medium">
+                          {{ row.categoryLabel }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
+                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
+                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
+                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
+                        <td
+                          class="px-3 py-3 align-top text-right tabular-nums"
+                        >
+                          {{ row.count }}
+                        </td>
+                      </tr>
+                      <tr v-if="peopleInsuredPerCategoryRows.length === 0">
+                        <td
+                          colspan="7"
+                          class="px-3 py-6 text-center text-gray-500"
+                        >
+                          No members are recorded per category yet.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
           </div>
         </template>
       </Collapsible>
