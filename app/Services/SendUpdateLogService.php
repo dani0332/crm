@@ -687,7 +687,7 @@ class SendUpdateLogService
         if (checkPersonalQuotes($quoteType)) {
             if ($quoteType == quoteTypeCode::Device) {
                 $quote = app(DeviceQuoteService::class)->getOne($quoteUuid);
-            } elseif ($quoteType == quoteTypeCode::Cyber) {
+            } elseif ($quoteType == quoteTypeCode::CYBER) {
                 $quote = app(CyberQuoteService::class)->getOne($quoteUuid);
             } else {
                 $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
