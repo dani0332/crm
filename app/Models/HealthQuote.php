@@ -578,6 +578,24 @@ class HealthQuote extends Model implements AuditableContract
 
         return false;
     }
+    public function hasAnyMemberAgeSixtyOrAbove(): bool
+    {
+        if (! empty($this->dob) && Carbon::parse($this->dob)->age >= 60) {
+            return true;
+        }
+
+        foreach ($this->activeMembers as $member) {
+            if (empty($member->dob)) {
+                continue;
+            }
+
+            if (Carbon::parse($member->dob)->age >= 60) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function isSourceApplicable(): bool
     {

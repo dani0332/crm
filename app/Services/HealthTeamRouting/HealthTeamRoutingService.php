@@ -172,6 +172,10 @@ class HealthTeamRoutingService
     }
     public function isGBPQualified(HealthQuote $lead): bool
     {
+        if ((int) $lead->health_plan_type_id !== HealthPlanTypeEnum::BEST->value) {
+            return false;
+        }
+
         $gbpMinPrice = $this->getGbpTeamMinPrice();
         LoggerService::info('GBP team min price', ['gbp_min_price' => $gbpMinPrice]);
 
@@ -299,7 +303,7 @@ class HealthTeamRoutingService
         }
 
         // Check if PEC lead identified
-        if ($lead->isPECLead()) {
+        if ($lead->isPECLead() || $lead->hasAnyMemberAgeSixtyOrAbove()) {
             // Assign Non AUH PEC Team
             $lead->health_team_type = TeamNameEnum::PEC;
             $lead->save();
@@ -312,7 +316,7 @@ class HealthTeamRoutingService
             $this->healthTeamRoutingLogService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
-                    'message' => 'PEC lead identified, assigned Non AUH PEC team',
+                    'message' => 'PEC lead identified or any member age 60+ identified, assigned Non AUH PEC team',
                     'step' => 'PEC lead check',
                     'is_pec' => true,
                     'pec_marked_at' => $lead->pec_marked_at,
