@@ -202,7 +202,8 @@ class CRUDService extends BaseService
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes"),
+                DB::raw("(SELECT NAME FROM users WHERE id = NULLIF(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), IF(JSON_EXTRACT(a.new_values, '$.advisor_id') IS NULL, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), NULL))) AS OldAdvisor"),
             )
             ->where(function ($query) {
                 $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))

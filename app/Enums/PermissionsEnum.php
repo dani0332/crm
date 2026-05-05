@@ -340,6 +340,7 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
     public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW = 'conversion-optimization-engine-report-view';
     public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
     public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
     public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
@@ -442,6 +443,7 @@ final class PermissionsEnum extends Enum
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
     public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
+    public const COMPLIANCE_DOCUMENT_UPLOAD = 'compliance-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 

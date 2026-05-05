@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
@@ -45,10 +47,12 @@ use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
 use App\Models\CarQuote;
+use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -60,6 +64,7 @@ use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CarRevivalService;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
@@ -71,13 +76,16 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Services\Reports\ConversionOptimizationScheduledExportService;
 use App\Services\RewatermarkQuoteDocumentsService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -565,6 +573,54 @@ class ApiController extends Controller
 
     }
 
+    /**
+     * Manually run the same flow as {@see ReportsConversionOptimizationScheduledExportCommand}
+     * (reads recipient JSON from {@see ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS}
+     * or an optional `application_storage_key`).
+     */
+    public function triggerConversionOptimizationScheduledExport(
+        Request $request,
+        ConversionOptimizationScheduledExportService $scheduledExportService
+    ): JsonResponse {
+        try {
+            $validated = $request->validate([
+                'application_storage_key' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $storageKey = isset($validated['application_storage_key']) && trim($validated['application_storage_key']) !== ''
+                ? trim($validated['application_storage_key'])
+                : ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS;
+
+            LoggerService::info(self::class.': Manual conversion optimization scheduled export trigger', [
+                'application_storage_key' => $storageKey,
+            ]);
+
+            if ($scheduledExportService->dispatchScheduledExport($storageKey)) {
+                return apiResponse(
+                    ['application_storage_key' => $storageKey],
+                    Response::HTTP_OK,
+                    'Conversion optimization scheduled export dispatched.'
+                );
+            }
+
+            return apiResponse(
+                ['application_storage_key' => $storageKey],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Conversion optimization scheduled export was not dispatched; see logs.'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            LoggerService::error(self::class.': Conversion optimization scheduled export trigger failed', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to trigger conversion optimization scheduled export.'
+            );
+        }
+    }
+
     public function getGenericDocuments(Request $request)
     {
         return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
@@ -895,7 +951,7 @@ class ApiController extends Controller
         ]);
 
         $carQuote = CarQuote::query()
-            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id'])
+            ->select(['id', 'uuid', 'source', 'advisor_id', 'quote_status_id', 'payment_status_id', 'created_at'])
             ->with(['carQuoteRequestDetail:id,car_quote_request_id,engagement_level'])
             ->where('uuid', $request->quoteUID)
             ->first();
@@ -908,6 +964,16 @@ class ApiController extends Controller
             return apiResponse(false, Response::HTTP_NOT_FOUND, 'Car quote not found');
         }
 
+        // if car create date lies in between 29APril 00:00:00 and 29APril 23:59:59 then return true
+        if (Carbon::parse($carQuote->created_at)->between(Carbon::parse('2026-04-29 00:00:00'), Carbon::parse('2026-04-29 23:59:59'))) {
+            LoggerService::info(self::class.': Car create date lies in between 29APril 00:00:00 and 29APril 23:59:59', extra: [
+                'quoteUID' => $request->quoteUID,
+                'created_at' => $carQuote->created_at,
+            ]);
+
+            return apiResponse(true, Response::HTTP_OK, 'Revival followups already triggered today');
+        }
+
         $isEligible = $this->apiService->isEligibleForRevivalFollowups($carQuote);
 
         LoggerService::info(self::class.': Eligible for revival followups request processed', extra: [
@@ -916,5 +982,155 @@ class ApiController extends Controller
         ]);
 
         return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
+    }
+
+    public function reTriggerRevivalFollowups(Request $request)
+    {
+        Log::withContext(['feature' => 're-trigger-revival-followups-request-received']);
+
+        $request->validate([
+            'dttRevivalIds' => 'sometimes|array',
+            'all' => 'required|boolean',
+            'debug' => 'required|boolean',
+            'getData' => 'required|boolean',
+            'checkCount' => 'required|boolean',
+            'checkCountValue' => 'required|integer',
+        ]);
+
+        if ($request->filled('debug') && $request->debug) {
+            $dttRevivalRecords = DttRevival::query()
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
+                ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
+                ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
+                ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->where('reply_received', 0)
+                ->when($request->filled('getData') && $request->getData, function ($query) {
+                    return $query->get();
+                }, function ($query) {
+                    return $query->count();
+                });
+
+            return apiResponse($dttRevivalRecords, Response::HTTP_OK, 'Dtt revival records');
+        }
+
+        if ($request->filled('all') && $request->all) {
+            DttRevival::query()
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
+                ->where('created_at', '>=', Carbon::parse('2026-04-29 00:00:00'))
+                ->where('created_at', '<=', Carbon::parse('2026-04-29 23:59:59'))
+                ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->where('reply_received', 0)
+                ->chunk(100, function ($dttRevivalRecords) {
+                    foreach ($dttRevivalRecords as $dttRevivalRecord) {
+                        $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
+                    }
+                });
+        } elseif ($request->filled('dttRevivalIds') && $request->dttRevivalIds) {
+            $dttRevivalRecords = DttRevival::query()
+                ->when($request->filled('checkCount') && $request->checkCount, function ($query) use ($request) {
+                    return $query->where('follow_up_email_count', $request->checkCountValue);
+                })
+                ->where('reply_received', 0)
+                ->whereIn('id', $request->dttRevivalIds)
+                ->get();
+            foreach ($dttRevivalRecords as $dttRevivalRecord) {
+                $this->reTriggerRevivalFollowupsForQuote($dttRevivalRecord);
+            }
+        } else {
+            return apiResponse(false, Response::HTTP_BAD_REQUEST, 'Invalid request');
+        }
+
+        return apiResponse(true, Response::HTTP_OK, 'Revival followups re-triggered successfully');
+    }
+
+    private function reTriggerRevivalFollowupsForQuote($dttRevivalRecord)
+    {
+        $carQuote = CarQuote::query()->where('uuid', $dttRevivalRecord->uuid)->first();
+
+        if (! $carQuote) {
+            LoggerService::info(self::class.': Car quote not found', extra: [
+                'id' => $dttRevivalRecord->id,
+                'uuid' => $dttRevivalRecord->uuid,
+            ]);
+
+            return;
+        }
+
+        $previousAdvisor = null;
+        if (! empty($carQuote->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
+        }
+
+        $emailData = app(CarEmailService::class)->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
+        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
+
+        CarRevivalFollowUpEmailJob::dispatch($dttRevivalRecord->id, $emailData);
+
+        LoggerService::info(self::class.': CarRevivalFollowUpEmailJob dispatched for revival re-trigger', extra: [
+            'id' => $dttRevivalRecord->id,
+            'uuid' => $dttRevivalRecord->uuid,
+        ]);
+    }
+
+    public function reTriggerRevivalFollowupsWithDate(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|string|date_format:Y-m-d',
+            'debug' => 'required|boolean',
+        ]);
+
+        if ($request->filled('debug') && $request->debug) {
+            $records = $this->getDttRevivalRecords($validated['date']);
+
+            return apiResponse($records, Response::HTTP_OK, 'Dtt revival records');
+        }
+
+        Artisan::call('Dtt:followup', [
+            '--date' => $validated['date'],
+        ]);
+
+        return apiResponse(true, Response::HTTP_OK, 'Dtt follow-up command executed');
+    }
+
+    private function getDttRevivalRecords($dateOption)
+    {
+
+        $carbon = filled($dateOption)
+            ? Carbon::parse((string) $dateOption)->startOfDay()
+            : Carbon::now();
+
+        $followUpAnchorDate = filled($dateOption)
+            ? Carbon::parse((string) $dateOption)->toDateString()
+            : null;
+
+        $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
+        $sevenDaysBefore = $carbon->copy()->subDays(7)->toDateString();
+        $thirteenDaysBefore = $carbon->copy()->subDays(13)->toDateString();
+        $twentyDaysBefore = $carbon->copy()->subDays(20)->toDateString();
+        $twentyEightDaysBefore = $carbon->copy()->subDays(28)->toDateString();
+
+        $logPrefix = 'carRevivalFollowUpEmailJob -';
+
+        $jobs = [];
+        $delayCounter = 0;
+
+        // Use chunking to avoid memory issues with large datasets
+        $records = DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
+            $q->whereDate('created_at', '=', $twoDaysBefore);
+            $q->orWhereDate('created_at', '=', $sevenDaysBefore);
+            $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
+        })
+            ->whereDate('created_at', '<=', Carbon::parse('2026-04-29 23:59:59')->toDateString())
+            ->where('reply_received', 0)
+            ->select('id', 'uuid') // Only select needed fields to reduce memory usage
+            ->count();
+        dd($records);
+
     }
 }

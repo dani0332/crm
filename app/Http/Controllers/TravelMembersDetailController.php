@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Http\Requests\TravelMemberDeleteRequest;
 use App\Http\Requests\TravelMemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\TravelMemberDetail;
@@ -13,6 +14,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class TravelMembersDetailController extends Controller
 {
@@ -155,17 +157,18 @@ class TravelMembersDetailController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return Response
      */
-    public function destroy($id)
+    public function destroy(TravelMemberDeleteRequest $request): RedirectResponse
     {
-        $data = CustomerMembers::find($id);
-        if ($data) {
-            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null, 'quote_updated_at' => Carbon::now()]);
-            $data->delete();
-        }
+        $travelCustomerMember = CustomerMembers::find($request->validated('travel_member_id'));
+
+        DB::transaction(function () use ($travelCustomerMember): void {
+            TravelQuote::find($travelCustomerMember->quote_id)?->update([
+                'primary_member_id' => null,
+                'quote_updated_at' => Carbon::now(),
+            ]);
+            $travelCustomerMember->delete();
+        });
 
         return redirect()->back();
     }

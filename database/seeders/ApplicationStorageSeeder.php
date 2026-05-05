@@ -55,6 +55,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => $isProd ? 0 : 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         $this->seedBirdWorkflowUrls();
         $this->claimGoogleReviewEmail();
@@ -438,6 +447,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/310dbe00-d35a-49b2-8e8e-9dc0e7053016/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS],
+            [
+                'value' => '', /* It saves a configuration via JSON see sample at app/Services/Reports/ConversionOptimizationScheduledExportService.php:230 */
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
