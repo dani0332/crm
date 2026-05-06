@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Jobs\NotifyHighRiskScoreBirdJob;
+use App\Models\QuoteDocument;
 
 /**
  * Dispatches Bird compliance notifications when a quote's AML risk score first enters the High Risk band.
@@ -12,25 +13,30 @@ use App\Jobs\NotifyHighRiskScoreBirdJob;
  */
 class HighRiskScoreBirdNotificationService
 {
+    private const RISK_SCORE_DOC_STORAGE_DISK = 'azureIMPrivate';
+    private const RISK_SCORE_DOC_URL_EXPIRY_MINUTES = 180;
+
+    /** Minimum AML total score for the High Risk band (see risk score PDF template). */
+    public const HIGH_RISK_MIN_SCORE = 35;
+
+    public function __construct(
+        private readonly QuoteDocumentService $quoteDocumentService,
+    ) {}
+
     /**
+     * Queues the Bird workflow when the score newly enters the High Risk band and attaches a signed PDF URL when available.
+     *
      * @param  mixed  $quote  Lead/quote model used in calculateScore
      * @param  array{total?: int, score_list?: mixed}  $results
-     * @param  string|null  $riskScorePdfUrl  HTTPS URL of the uploaded risk-score PDF (Azure temporary URL)
+     * @param  mixed  $latestPersistedRiskScore  Latest `risk_score` stored on the quote row before this run (null if unset).
+     * @param  mixed  $uploadResult  Return value from {@see QuoteDocumentService::uploadQuoteDocument()}
      */
-    public function dispatchIfEligible(
+    public function queueHighRiskBirdNotification(
         mixed $quote,
         string $type,
-        array $results,
-        mixed $previousRiskScore,
-        ?string $riskScorePdfUrl = null,
+        mixed $uploadResult,
     ): void {
-        $total = (int) ($results['total'] ?? 0);
-        if ($total < NotifyHighRiskScoreBirdJob::HIGH_RISK_MIN_SCORE) {
-            return;
-        }
-        if ($previousRiskScore !== null && (int) $previousRiskScore >= NotifyHighRiskScoreBirdJob::HIGH_RISK_MIN_SCORE) {
-            return;
-        }
+        $riskScorePdfUrl = $this->resolveRiskScoreDocumentTemporaryUrl($uploadResult);
 
         $customerName = trim((string) (($quote->first_name ?? '').' '.($quote->last_name ?? '')));
 
@@ -41,5 +47,18 @@ class HighRiskScoreBirdNotificationService
             'customerName' => $customerName !== '' ? $customerName : null,
             'riskScoreDoc' => $riskScorePdfUrl,
         ]);
+    }
+
+    private function resolveRiskScoreDocumentTemporaryUrl(mixed $uploadResult): ?string
+    {
+        if (! $uploadResult instanceof QuoteDocument || ! $uploadResult->doc_url) {
+            return null;
+        }
+
+        return $this->quoteDocumentService->getDocumentUrl(
+            $uploadResult->doc_url,
+            self::RISK_SCORE_DOC_STORAGE_DISK,
+            self::RISK_SCORE_DOC_URL_EXPIRY_MINUTES
+        );
     }
 }

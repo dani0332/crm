@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Jobs\NotifyHighRiskScoreBirdJob;
+use App\Models\QuoteDocument;
 use App\Services\HighRiskScoreBirdNotificationService;
+use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Queue;
 
-test('dispatches job when score crosses into high risk', function () {
+test('queues job with customer payload and null riskScoreDoc when upload result is not a quote document', function () {
     Queue::fake();
 
     $quote = (object) [
@@ -17,49 +19,47 @@ test('dispatches job when score crosses into high risk', function () {
         'email' => 'a@b.com',
     ];
 
-    app(HighRiskScoreBirdNotificationService::class)->dispatchIfEligible(
-        $quote,
-        'health',
-        ['total' => 40],
-        20
-    );
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', null);
 
-    Queue::assertPushed(NotifyHighRiskScoreBirdJob::class);
+    Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
+        $reflection = new ReflectionClass($job);
+        $property = $reflection->getProperty('payload');
+        $property->setAccessible(true);
+        /** @var array<string, mixed> $payload */
+        $payload = $property->getValue($job);
+
+        return ($payload['refId'] ?? null) === 'C1'
+            && ($payload['scoreProfile'] ?? null) === 'individual'
+            && ($payload['customerEmail'] ?? null) === 'a@b.com'
+            && ($payload['customerName'] ?? null) === 'A B'
+            && ($payload['riskScoreDoc'] ?? null) === null;
+    });
 });
 
-test('does not dispatch when score below threshold', function () {
+test('queues job with entity score profile for business type', function () {
     Queue::fake();
 
     $quote = (object) [
-        'uuid' => 'u1',
-        'code' => 'C1',
-        'first_name' => 'A',
-        'last_name' => 'B',
+        'code' => 'B1',
+        'first_name' => 'X',
+        'last_name' => 'Y',
         'email' => null,
     ];
 
-    app(HighRiskScoreBirdNotificationService::class)->dispatchIfEligible($quote, 'health', ['total' => 20], null);
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'business', null);
 
-    Queue::assertNothingPushed();
+    Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
+        $reflection = new ReflectionClass($job);
+        $property = $reflection->getProperty('payload');
+        $property->setAccessible(true);
+        /** @var array<string, mixed> $payload */
+        $payload = $property->getValue($job);
+
+        return ($payload['scoreProfile'] ?? null) === 'entity';
+    });
 });
 
-test('does not dispatch when already high risk', function () {
-    Queue::fake();
-
-    $quote = (object) [
-        'uuid' => 'u1',
-        'code' => 'C1',
-        'first_name' => 'A',
-        'last_name' => 'B',
-        'email' => null,
-    ];
-
-    app(HighRiskScoreBirdNotificationService::class)->dispatchIfEligible($quote, 'health', ['total' => 40], 36);
-
-    Queue::assertNothingPushed();
-});
-
-test('includes risk score PDF temporary URL when provided', function () {
+test('queues job with signed risk score document URL when upload returns QuoteDocument', function () {
     Queue::fake();
 
     $quote = (object) [
@@ -72,13 +72,20 @@ test('includes risk score PDF temporary URL when provided', function () {
 
     $pdfUrl = 'https://storage.example.com/container/doc.pdf?sig=abc';
 
-    app(HighRiskScoreBirdNotificationService::class)->dispatchIfEligible(
+    $this->mock(QuoteDocumentService::class, function ($mock) use ($pdfUrl) {
+        $mock->shouldReceive('getDocumentUrl')
+            ->once()
+            ->with('quotes/risk-doc.pdf', 'azureIMPrivate', 180)
+            ->andReturn($pdfUrl);
+    });
+
+    $quoteDocument = new QuoteDocument;
+    $quoteDocument->doc_url = 'quotes/risk-doc.pdf';
+
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification(
         $quote,
         'health',
-        ['total' => 40],
-        20,
-        $pdfUrl,
-        'Riskscore_Individual.pdf'
+        $quoteDocument,
     );
 
     Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) use ($pdfUrl) {
@@ -88,7 +95,30 @@ test('includes risk score PDF temporary URL when provided', function () {
         /** @var array<string, mixed> $payload */
         $payload = $property->getValue($job);
 
-        return ($payload['risk_score_pdf_url'] ?? null) === $pdfUrl
-            && ($payload['risk_score_pdf_filename'] ?? null) === 'Riskscore_Individual.pdf';
+        return ($payload['riskScoreDoc'] ?? null) === $pdfUrl;
+    });
+});
+
+test('does not call getDocumentUrl when QuoteDocument has no doc_url', function () {
+    Queue::fake();
+
+    $this->mock(QuoteDocumentService::class, function ($mock) {
+        $mock->shouldNotReceive('getDocumentUrl');
+    });
+
+    $quote = (object) ['code' => 'C1', 'first_name' => null, 'last_name' => null, 'email' => null];
+    $quoteDocument = new QuoteDocument;
+    $quoteDocument->doc_url = null;
+
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', $quoteDocument);
+
+    Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
+        $reflection = new ReflectionClass($job);
+        $property = $reflection->getProperty('payload');
+        $property->setAccessible(true);
+        /** @var array<string, mixed> $payload */
+        $payload = $property->getValue($job);
+
+        return ($payload['riskScoreDoc'] ?? null) === null;
     });
 });

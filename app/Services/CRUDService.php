@@ -28,7 +28,6 @@ use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\Lookup;
 use App\Models\PaymentAction;
-use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
@@ -1202,23 +1201,20 @@ class CRUDService extends BaseService
             $pdfFile = $pdf->output();
 
             $uploadResult = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $quoteModel->refresh();
 
-            $riskScorePdfUrl = null;
-            if ($uploadResult instanceof QuoteDocument && $uploadResult->doc_url) {
-                $riskScorePdfUrl = app(QuoteDocumentService::class)->getDocumentUrl(
-                    $uploadResult->doc_url,
-                    'azureIMPrivate',
-                    180
+            if ($quoteModel->risk_score >= GenericRequestEnum::HIGH_RISK_SCORE) {
+                LoggerService::info('fn:calculateScore - High risk score detected', context: [
+                    'quote_uuid' => $quoteModel->uuid,
+                    'risk_score' => $quoteModel->risk_score,
+                ]);
+
+                app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification(
+                    $quoteModel,
+                    $type,
+                    $uploadResult,
                 );
             }
-
-            app(HighRiskScoreBirdNotificationService::class)->dispatchIfEligible(
-                $quote,
-                $type,
-                $results,
-                $results['total'],
-                $riskScorePdfUrl,
-            );
         }
         LoggerService::info('fn:calculateScore - End');
     }
