@@ -16,10 +16,6 @@ class HealthRateGenderValidRule implements ValidationRule
         $healthPlan = HealthPlan::find($this->healthPlanId);
 
         if ($healthPlan && $healthPlan->gender_enabled) {
-            if (empty($value)) {
-                $fail('The gender is required.');
-            }
-
             $genders = array_map('strtolower', array_column(GenderEnum::cases(), 'value'));
 
             if (! in_array(strtolower($value), $genders, true)) {

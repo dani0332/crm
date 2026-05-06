@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Api;
 
 use App\Enums\EmirateTypeEnum;
+use App\Enums\GenderEnum;
+use App\Models\HealthPlan;
 use App\Rules\HealthRateCohortValidRule;
 use App\Rules\HealthRateGenderValidRule;
 use App\Rules\HealthRateMaritalStatusValidRule;
@@ -13,6 +15,7 @@ use Illuminate\Validation\Rules\Enum;
 
 class CreateHealthRateRequest extends FormRequest
 {
+    protected HealthPlan $plan;
     public function rules(): array
     {
         return [
@@ -41,6 +44,20 @@ class CreateHealthRateRequest extends FormRequest
             'emirate_type.enum' => 'Emirate type must be a valid emirate type',
             'boolean' => ':attribute must be a boolean',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $this->plan = HealthPlan::find($this->health_plan_id);
+
+        $validator->sometimes('gender', 'required', $this->requires('gender_enabled'));
+        $validator->sometimes('cohort', 'required', $this->requires('cohort_enabled'));
+        $validator->sometimes('marital_status', 'required', fn () => $this->plan?->marital_status_enabled && strtolower($this->gender) == GenderEnum::FEMALE->value);
+    }
+
+    private function requires(string $flag)
+    {
+        return fn () => $this->plan?->{$flag};
     }
 
     protected function failedValidation(Validator $validator)

@@ -17,10 +17,6 @@ class HealthRateCohortValidRule implements ValidationRule
         $healthPlan = HealthPlan::find($this->healthPlanId);
 
         if ($healthPlan && $healthPlan->cohort_enabled) {
-            if (empty($value)) {
-                $fail('The cohort is required.');
-            }
-
             $cohorts = $cohortMappingService->getAllCohorts();
 
             if (! in_array(strtoupper($value), $cohorts, true)) {

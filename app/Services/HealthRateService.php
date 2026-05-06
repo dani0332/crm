@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class HealthRateService extends BaseService
 {
+    public function __construct(private HealthPlanService $healthPlanService) {}
     public function getList(Request $request): LengthAwarePaginator
     {
         $query = HealthRate::with('healthPlan', 'healthPlanCoPayment')
@@ -63,7 +64,32 @@ class HealthRateService extends BaseService
 
     public function create(array $data)
     {
-        // return HealthRate::create($data);
+        $ids = [$data['health_plan_id']];
+        // Fetch parent active plan (if exists)
+        // We have to check against active and draft plan rates only
+        $parentPlan = $this->healthPlanService->getPlanByParentIdStatus($data['health_plan_id'], HealthPlanRateSheetStatusEnum::ACTIVE->value);
+
+        // If found, get id
+        if ($parentPlan) {
+            $ids[] = $parentPlan->id;
+        }
+
+        // Get draft rate against plan ids
+        $draftRates = HealthRate::whereIn('health_plan_id', $ids)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->get();
+
+        // If not found, add
+        if ($draftRates->isEmpty()) {
+            DB::transaction(function () {
+                // Add health rates control (rate sheet)
+                HealthRateControl::create([]);
+
+                // Add health rate
+                HealthRate::create([]);
+            });
+        }
+
     }
 
     public function delete(int $id): void
