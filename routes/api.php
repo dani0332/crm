@@ -160,7 +160,7 @@ Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
 
 // Cms Api Routes
 Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
-    Route::group(['prefix' => 'plans'], function () {
+    Route::group(['prefix' => 'health-plans'], function () {
         Route::get('/', [HealthPlanController::class, 'getList']);
         Route::get('/{id}', [HealthPlanController::class, 'getPlan']);
         Route::post('/', [HealthPlanController::class, 'create']);
@@ -170,7 +170,7 @@ Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
         Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
     });
 
-    Route::prefix('rates')->group(function () {
+    Route::prefix('health-rates')->group(function () {
         Route::get('/listing/{healthPlanId}', [HealthRateController::class, 'getList']);
         Route::get('/{id}', [HealthRateController::class, 'getRate']);
         Route::post('/', [HealthRateController::class, 'create']);

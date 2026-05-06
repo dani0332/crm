@@ -43,7 +43,7 @@ class HealthPlanService extends BaseService
             })
             ->orderByDesc('id');
 
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->get('per_page', 25);
 
         return $query->paginate($perPage);
     }

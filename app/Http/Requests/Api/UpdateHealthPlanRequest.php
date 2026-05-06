@@ -21,6 +21,7 @@ class UpdateHealthPlanRequest extends FormRequest
             'id' => 'integer|exists:health_plan,id',
             // 'code' => 'required|unique:health_plan,code,'.$this->route('id'),
             'text' => 'required',
+            'text_ar' => 'nullable',
             'health_business_type' => ['required', new Enum(HealthBusinessTypeEnum::class)],
             'plan_type_id' => 'nullable|integer|exists:health_plan_type,id',
             'health_rating_eligibility_id' => 'nullable|integer|exists:health_rating_eligibilities,id',

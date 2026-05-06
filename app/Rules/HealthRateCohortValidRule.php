@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Rules;
+
+use App\Models\HealthPlan;
+use App\Services\CohortMappingService;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+
+class HealthRateCohortValidRule implements ValidationRule
+{
+    public function __construct(protected int $healthPlanId) {}
+
+    public function validate(string $attribute, mixed $value, Closure $fail): void
+    {
+        $cohortMappingService = app(CohortMappingService::class);
+        $healthPlan = HealthPlan::find($this->healthPlanId);
+
+        if ($healthPlan && $healthPlan->cohort_enabled) {
+            if (empty($value)) {
+                $fail('The cohort is required.');
+            }
+
+            $cohorts = $cohortMappingService->getAllCohorts();
+
+            if (! in_array(strtoupper($value), $cohorts, true)) {
+                $fail('The cohort is invalid.');
+            }
+        }
+    }
+}

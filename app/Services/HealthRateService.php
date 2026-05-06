@@ -61,6 +61,11 @@ class HealthRateService extends BaseService
             ->firstWhere('id', $id);
     }
 
+    public function create(array $data)
+    {
+        // return HealthRate::create($data);
+    }
+
     public function delete(int $id): void
     {
         DB::transaction(function () use ($id) {
