@@ -8,7 +8,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Events\AmlAutomationScreeningFailed;
 use App\Events\AmlAutomationScreeningSucceeded;
 use App\Models\AmlAutomation;
 use App\Models\PersonalQuote;
@@ -111,10 +110,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
             LoggerService::error($loggerPrefix.' Exception: '.$e->getMessage());
-            // $this->dispatchOutcomeEventIfApplicable(
-            //     isSuccess: false,
-            //     failureReason: 'Exception: '.$e->getMessage()
-            // );
         }
     }
 
@@ -204,7 +199,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $message = 'Failed: '.($quoteAmlProcessCall->message ?? 'Unknown');
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $message]);
             LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$message);
-            // $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $message);
 
             return;
         }
@@ -222,7 +216,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $msg = 'AML Screening Failed';
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $msg]);
             LoggerService::info($loggerPrefix.' Completed - AML failed');
-            // $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $msg);
 
             return;
         }
@@ -230,7 +223,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $pendingMsg = 'AML still pending after screening';
         $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $pendingMsg]);
         LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
-        // $this->dispatchOutcomeEventIfApplicable(isSuccess: false, failureReason: $pendingMsg);
     }
 
     private function dispatchOutcomeEventIfApplicable(bool $isSuccess, ?string $failureReason): void
@@ -250,15 +242,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
                 $this->quoteType, // quote type
             ));
         }
-
-        // NOTE:: AMLfail email is already sent to the compliance team no need to send again
-        // event(new AmlAutomationScreeningFailed(
-        //     $id, // quote id, quote request id
-        //     $uuid, // quote uuid
-        //     $this->quoteRefId, // quote code
-        //     $this->quoteType, // quote type
-        //     $failureReason ?? 'AML automation failed', // failure reason
-        // ));
     }
 
     /**

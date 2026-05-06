@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Events\AmlAutomationScreeningFailed;
 use App\Events\AmlAutomationScreeningSucceeded;
 use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
@@ -126,10 +125,6 @@ class EventServiceProvider extends ServiceProvider
         AmlAutomationScreeningSucceeded::class => [
             [SendAmlAutomationOutcomeNotifications::class, 'handleSucceeded'],
         ],
-        AmlAutomationScreeningFailed::class => [
-            [SendAmlAutomationOutcomeNotifications::class, 'handleFailed'],
-        ],
-
     ];
 
     /**

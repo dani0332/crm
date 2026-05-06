@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Enums\QuoteTypes;
-use App\Events\AmlAutomationScreeningFailed;
 use App\Events\AmlAutomationScreeningSucceeded;
 use App\Mail\Aml\AmlAutomationOutcomeMail;
 use App\Services\KenService;
@@ -53,33 +52,6 @@ class SendAmlAutomationOutcomeNotifications
             paymentLink: $paymentLink,
             failureReason: null,
             kenResponseSummary: $this->summarizeKenResponse($kenResult),
-        );
-
-        $mail->sendViaBird();
-    }
-
-    public function handleFailed(AmlAutomationScreeningFailed $event): void
-    {
-        if (! AmlAutomatableLobRegistry::allows($event->quoteType)) {
-            return;
-        }
-
-        $quote = $this->resolveQuoteForAutomationOutcome($event->quoteType, $event->quoteRequestId);
-        if ($quote === null) {
-            LoggerService::info('AML automation failure email skipped: quote not found', [
-                'quote_request_id' => $event->quoteRequestId,
-                'quote_type' => $event->quoteType->value,
-            ]);
-
-            return;
-        }
-
-        $mail = new AmlAutomationOutcomeMail(
-            isSuccess: false,
-            quote: $quote,
-            paymentLink: null,
-            failureReason: $event->failureReason,
-            kenResponseSummary: null,
         );
 
         $mail->sendViaBird();
