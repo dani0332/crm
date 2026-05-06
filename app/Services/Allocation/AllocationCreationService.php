@@ -3,6 +3,7 @@
 namespace App\Services\Allocation;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
@@ -17,6 +18,8 @@ class AllocationCreationService
             ->where('quote_type_id', QuoteTypeId::Life)->whereNot('source', LeadSourceEnum::REVIVAL)
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->where('is_revived', false)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
             ->get();
 
         // Step 2: Filter duplicate insured
