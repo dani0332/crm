@@ -66,3 +66,41 @@ it('filters unassigned leads and excludes sic1 leads when unassigned filter is y
     expect($advisorNullFilter)->not->toBeNull()
         ->and($healthPlanNotNullFilter)->not->toBeNull();
 });
+
+it('filters leads with customer members age sixty and above when filter is yes', function () {
+    Auth::shouldReceive('check')->andReturn(true);
+
+    $authUser = Mockery::mock(User::class);
+    $authUser->shouldReceive('isSpecificTeamAdvisor')->andReturn(false);
+    $authUser->shouldReceive('can')->andReturn(false);
+    Auth::shouldReceive('user')->andReturn($authUser);
+
+    $queryBuilder = new HealthQuoteQueryBuilder;
+    $query = $queryBuilder->buildGrid();
+    $queryBuilder->applyFilters($query, ['age_sixty_and_above' => 'yes']);
+
+    $existsFilter = collect($query->getQuery()->wheres)->first(
+        fn ($where) => $where['type'] === 'Exists'
+    );
+
+    expect($existsFilter)->not->toBeNull();
+});
+
+it('filters leads without customer members age sixty and above when filter is no', function () {
+    Auth::shouldReceive('check')->andReturn(true);
+
+    $authUser = Mockery::mock(User::class);
+    $authUser->shouldReceive('isSpecificTeamAdvisor')->andReturn(false);
+    $authUser->shouldReceive('can')->andReturn(false);
+    Auth::shouldReceive('user')->andReturn($authUser);
+
+    $queryBuilder = new HealthQuoteQueryBuilder;
+    $query = $queryBuilder->buildGrid();
+    $queryBuilder->applyFilters($query, ['age_sixty_and_above' => 'no']);
+
+    $notExistsFilter = collect($query->getQuery()->wheres)->first(
+        fn ($where) => $where['type'] === 'NotExists'
+    );
+
+    expect($notExistsFilter)->not->toBeNull();
+});

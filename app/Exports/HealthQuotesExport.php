@@ -48,6 +48,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'LAST NAME',
             'EMIRATE OF VISA',
             'POLICY PEC FLAG',
+            'IS AGE 60 AND ABOVE',
             'LEAD STATUS',
             'ADVISOR',
             'UNASSIGNED',
@@ -101,6 +102,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->last_name,
             $quote->emirate?->text,
             $quote->has_pec_tag ? 'Yes' : 'No',
+            $this->hasMemberAgeSixtyOrAbove($quote) ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
             $quote->advisor_id ? 'No' : 'Yes',
@@ -142,6 +144,25 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
         ];
+    }
+
+    private function hasMemberAgeSixtyOrAbove($quote): bool
+    {
+        if (! $quote->relationLoaded('activeMembers')) {
+            return false;
+        }
+
+        $cutoffDate = now()->subYears(60)->startOfDay();
+
+        return $quote->activeMembers->contains(function ($member) use ($cutoffDate) {
+            if (empty($member->dob)) {
+                return false;
+            }
+
+            $memberDob = Carbon::parse($member->dob)->startOfDay();
+
+            return $memberDob->lessThanOrEqualTo($cutoffDate);
+        });
     }
 
     /**

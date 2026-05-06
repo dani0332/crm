@@ -5,8 +5,9 @@ use App\Models\HealthQuote;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
-it('includes unassigned column and maps unassigned as yes when advisor is missing', function () {
+it('includes unassigned and age sixty columns in export and maps values correctly', function () {
     $healthQuoteService = Mockery::mock(HealthQuoteService::class);
     $crudService = Mockery::mock(CRUDService::class);
     $crudService->shouldReceive('getGenderOptions')->andReturn([]);
@@ -14,7 +15,8 @@ it('includes unassigned column and maps unassigned as yes when advisor is missin
     $export = new HealthQuotesExport($healthQuoteService, $crudService);
     $headings = $export->headings();
 
-    expect($headings)->toContain('UNASSIGNED');
+    expect($headings)->toContain('UNASSIGNED')
+        ->and($headings)->toContain('IS AGE 60 AND ABOVE');
 
     $quote = new HealthQuote;
     $quote->setRawAttributes([
@@ -31,8 +33,14 @@ it('includes unassigned column and maps unassigned as yes when advisor is missin
         'health_plan_type_id' => 3,
     ], true);
     $quote->setRelation('quoteStatus', (object) ['text' => 'Quoted']);
+    $quote->setRelation('activeMembers', new Collection([
+        (object) ['dob' => Carbon::now()->subYears(61)->toDateString()],
+    ]));
 
     $row = $export->map($quote);
+    $unassignedIndex = array_search('UNASSIGNED', $headings, true);
+    $ageSixtyIndex = array_search('IS AGE 60 AND ABOVE', $headings, true);
 
-    expect($row[7])->toBe('Yes');
+    expect($row[$unassignedIndex])->toBe('Yes')
+        ->and($row[$ageSixtyIndex])->toBe('Yes');
 });
