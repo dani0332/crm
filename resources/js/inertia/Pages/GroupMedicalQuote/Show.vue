@@ -806,9 +806,7 @@ function handleOcrNotification(event) {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Details
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Details</h3>
           </div>
         </template>
         <template #body>
@@ -1105,68 +1103,85 @@ function handleOcrNotification(event) {
                     Copy Link
                   </x-button>
                 </div>
-                <div class="grid gap-x-16 gap-y-2 sm:grid-cols-2 text-xs text-gray-900">
+                <div
+                  class="grid gap-x-16 gap-y-2 sm:grid-cols-2 text-xs text-gray-900"
+                >
                   <div class="grid grid-cols-2">
-                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1 flex items-center gap-1">
-                     
+                    <dt
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1 flex items-center gap-1"
+                    >
                       <x-tooltip placement="bottom">
-                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                        <span
+                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                        >
                           NATURE OF COMPANY'S ACTIVITY
                         </span>
                         <template #tooltip>
-                          Select the main business activity of the company. This helps assess the risk profile for the group health insurance.
+                          Select the main business activity of the company. This
+                          helps assess the risk profile for the group health
+                          insurance.
                         </template>
                       </x-tooltip>
                     </dt>
-                    <dd>{{natureOfCompanyActivityText }}</dd>
+                    <dd>{{ natureOfCompanyActivityText }}</dd>
                   </div>
-   
-                  <div class="grid grid-cols-2">
-                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
 
+                  <div class="grid grid-cols-2">
+                    <dt
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1"
+                    >
                       <x-tooltip placement="bottom">
-                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                        <span
+                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                        >
                           WITH EXISTING GROUP HEALTH INSURANCE POLICY
                         </span>
                         <template #tooltip>
-                          Indicate if the company currently has a group health insurance policy in place with any provider 
+                          Indicate if the company currently has a group health
+                          insurance policy in place with any provider
                         </template>
                       </x-tooltip>
                     </dt>
-                    <dd> {{ hasExistingGroupHealthInsurancePolicyText }}
-                    </dd>
+                    <dd>{{ hasExistingGroupHealthInsurancePolicyText }}</dd>
                   </div>
                   <div class="grid grid-cols-2">
-                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
-
+                    <dt
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1"
+                    >
                       <x-tooltip placement="bottom">
-                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                        <span
+                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                        >
                           NUMBER OF CATEGORIES
                         </span>
-                        <template #tooltip>Enter how many employee categories the group has. Categories usually differ by Benefitss or salary band. 
-                          Indicate if the company currently has a group health insurance policy in place with any provider 
+                        <template #tooltip
+                          >Enter how many employee categories the group has.
+                          Categories usually differ by Benefitss or salary band.
+                          Indicate if the company currently has a group health
+                          insurance policy in place with any provider
                         </template>
                       </x-tooltip>
                     </dt>
-                    <dd>{{ numberOfCategoriesDisplay }}
-                    </dd>
+                    <dd>{{ numberOfCategoriesDisplay }}</dd>
                   </div>
                   <div class="grid grid-cols-2">
-                    <dt class="font-medium uppercase tracking-wide text-gray-600 pb-1">
+                    <dt
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1"
+                    >
                       <x-tooltip placement="bottom">
-                        <span class="cursor-pointer border-b-2   text-sm underline decoration-primary-700">
+                        <span
+                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                        >
                           PLAN TYPE
                         </span>
                         <template #tooltip>
-                          Select the type of health insurance plan as defined for this group or category.
+                          Select the type of health insurance plan as defined
+                          for this group or category.
                         </template>
                       </x-tooltip>
-                     </dt>
-                    <dd>{{ quotePlanTypeDisplay }}
-                    </dd>
+                    </dt>
+                    <dd>{{ quotePlanTypeDisplay }}</dd>
                   </div>
-              
-                
                 </div>
               </section>
 
@@ -1186,9 +1201,7 @@ function handleOcrNotification(event) {
                         class="bg-primary-600 text-left text-xs font-semibold uppercase tracking-wide text-white"
                       >
                         <th class="whitespace-nowrap px-3 py-3">S/No</th>
-                        <th class="whitespace-nowrap px-3 py-3">
-                          Category
-                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">Category</th>
                         <th class="whitespace-nowrap px-3 py-3">
                           Existing insurance provider
                         </th>
@@ -1220,9 +1233,7 @@ function handleOcrNotification(event) {
                         <td class="px-3 py-3 align-top text-gray-700">N/A</td>
                         <td class="px-3 py-3 align-top text-gray-700">N/A</td>
                         <td class="px-3 py-3 align-top text-gray-700">N/A</td>
-                        <td
-                          class="px-3 py-3 align-top text-right tabular-nums"
-                        >
+                        <td class="px-3 py-3 align-top text-right tabular-nums">
                           {{ row.count }}
                         </td>
                       </tr>
