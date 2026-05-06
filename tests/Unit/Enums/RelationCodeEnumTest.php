@@ -12,11 +12,11 @@ describe('RelationCodeEnum cases', function () {
             ->and(RelationCodeEnum::SIBLING->value)->toBe('relSibling')
             ->and(RelationCodeEnum::RELATIVES->value)->toBe('relOtherRelatives')
             ->and(RelationCodeEnum::DOMESTIC_WORKER->value)->toBe('relDomesticWorker')
-            ->and(RelationCodeEnum::SELF->value)->toBe('self');
+            ->and(RelationCodeEnum::SELF->value)->toBe('Self');
     });
 
     test('can be instantiated from string value', function () {
-        expect(RelationCodeEnum::from('self'))->toBe(RelationCodeEnum::SELF)
+        expect(RelationCodeEnum::from('Self'))->toBe(RelationCodeEnum::SELF)
             ->and(RelationCodeEnum::from('relSpouse'))->toBe(RelationCodeEnum::SPOUSE)
             ->and(RelationCodeEnum::from('relChild'))->toBe(RelationCodeEnum::CHILD)
             ->and(RelationCodeEnum::from('relParent'))->toBe(RelationCodeEnum::PARENT)

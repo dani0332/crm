@@ -10,7 +10,7 @@ enum RelationCodeEnum: string
     case SIBLING = 'relSibling';
     case RELATIVES = 'relOtherRelatives';
     case DOMESTIC_WORKER = 'relDomesticWorker';
-    case SELF = 'self';
+    case SELF = 'Self';
 
     /**
      * When a new policyholder is designated, every other insured member's relation_code
