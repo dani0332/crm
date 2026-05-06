@@ -37,7 +37,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
         $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL, false, true);
         if ($birdUrl === false || $birdUrl === null || $birdUrl === '') {
             LoggerService::warning('NotifyHighRiskScoreBirdJob: Bird workflow URL not configured — skipping', context: [
-                'quote_uuid' => $this->payload['refId'] ?? null,
+                'quote_code' => $this->payload['refId'] ?? null,
             ]);
 
             return;
@@ -49,7 +49,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
             $statusCode = $response?->status_code ?? 0;
 
             LoggerService::error('NotifyHighRiskScoreBirdJob: Bird request did not return 200', context: [
-                'quote_uuid' => $this->payload['refId'] ?? null,
+                'quote_code' => $this->payload['refId'] ?? null,
                 'status_code' => $statusCode,
                 'body' => isset($response->body) ? (string) $response->body : null,
             ]);
@@ -63,7 +63,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
         }
 
         LoggerService::info('NotifyHighRiskScoreBirdJob: Bird workflow triggered', context: [
-            'quote_uuid' => $this->payload['refId'] ?? null,
+            'quote_code' => $this->payload['refId'] ?? null,
         ]);
     }
 
@@ -73,7 +73,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
             'NotifyHighRiskScoreBirdJob: job failed after retries',
             exception: $exception,
             context: [
-                'quote_uuid' => $this->payload['refId'] ?? null,
+                'quote_code' => $this->payload['refId'] ?? null,
             ]
         );
     }
