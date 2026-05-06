@@ -96,6 +96,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
   { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -203,6 +204,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  unassigned: '',
   support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -1041,6 +1043,17 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
         />
         <x-select
+          v-model="filters.unassigned"
+          label="Unassigned"
+          placeholder="Search by Unassigned"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
+        />
+        <x-select
           v-model="filters.is_renewal"
           label="Renewal"
           placeholder="Search by Renewal"
@@ -1373,6 +1386,13 @@ const paymentStatusOptions = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="has_pec_tag ? 'error' : 'success'">
             {{ has_pec_tag ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-unassigned="{ advisor_id }">
+        <div class="text-center">
+          <x-tag size="sm" :color="advisor_id ? 'error' : 'success'">
+            {{ advisor_id ? 'No' : 'Yes' }}
           </x-tag>
         </div>
       </template>

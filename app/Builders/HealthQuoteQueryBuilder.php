@@ -139,6 +139,13 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('next_followup_date_end', 'next_followup_date', false, requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams) ?? $this->getFilterValue('advisors', $requestParams))
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'yes', function ($query) {
+                $query->whereNull('advisor_id')
+                    ->whereNotNull('health_plan_type_id');
+            })
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'no', function ($query) {
+                $query->whereNotNull('advisor_id');
+            })
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
