@@ -49,46 +49,28 @@ class PermissionSeeder extends Seeder
                 ]
             );
         }
+
         $this->seedEditPlanAfterTransactionApprovalPermission();
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
+        $this->addEpDocumentManualOverridePermission();
+        $this->addConversionOptimizationEngineReportPermission();
+        $this->addComplianceDocumentUploadPermission();
     }
 
-    /**
-     * Idempotent {@see Permission} row. Do not set created_at/updated_at here — Eloquent
-     * applies timestamps on insert when the model uses timestamps (Spatie Permission does).
-     */
-    private function seedEditPlanAfterTransactionApprovalPermission(): void
-    {
-        Permission::firstOrCreate(
-            [
-                'name' => PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL,
-                'guard_name' => self::WEB_GUARD,
-            ],
-        );
-    }
-
-    private function addTransAppSearchPermission(): void
+    private function addEpDocumentManualOverridePermission(): void
     {
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::TRANSAPP_SEARCH,
+            'name' => PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $roles = Role::query()
-            ->where('guard_name', 'web')
-            ->where(function ($query) {
-                $query->whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])
-                    ->orWhereHas('permissions', function ($permissionQuery) {
-                        $permissionQuery->whereIn('name', [PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TransAppDelete]);
-                    });
-            })
-            ->get();
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
 
-        if ($roles->isNotEmpty()) {
+        if ($roles) {
             foreach ($roles as $role) {
                 if (! $role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
@@ -124,4 +106,96 @@ class PermissionSeeder extends Seeder
         }
     }
 
+    private function addTransAppSearchPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::TRANSAPP_SEARCH,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->where(function ($query) {
+                $query->whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])
+                    ->orWhereHas('permissions', function ($permissionQuery) {
+                        $permissionQuery->whereIn('name', [PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit, PermissionsEnum::TransAppDelete]);
+                    });
+            })
+            ->get();
+
+        if ($roles->isNotEmpty()) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+                } else {
+                    LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+                }
+            }
+        }
+    }
+
+    private function addConversionOptimizationEngineReportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+            } else {
+                LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+            }
+        }
+    }
+
+    private function addComplianceDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPLIANCE_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $role = Role::query()
+            ->where('guard_name', 'web')
+            ->where('name', RolesEnum::ComplianceSuperUser)
+            ->first();
+
+        if ($role === null) {
+            LoggerService::info('COMPLIANCE_SUPER_USER role not found; skipping compliance-document-upload assignment');
+
+            return;
+        }
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+            LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+        } else {
+            LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+        }
+    }
+
+    private function seedEditPlanAfterTransactionApprovalPermission(): void
+    {
+        Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL,
+                'guard_name' => self::WEB_GUARD,
+            ],
+        );
+    }
 }
