@@ -219,7 +219,7 @@ const getScreeningDob = () =>
 const getScreeningGender = () => {
   const genderMap = {
     [genericRequestEnum.MALE_SINGLE_VALUE]: genericRequestEnum.MALE_SINGLE,
-    [genericRequestEnum.FEMALE_SHORT_VALUE]: genericRequestEnum.FEMALE_SINGLE,
+    [genericRequestEnum.FEMALE_SHORT_VALUE]: genericRequestEnum.FEMALE,
   };
 
   const isHealthQuote = page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value;
