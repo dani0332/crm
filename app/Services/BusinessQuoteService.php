@@ -320,6 +320,12 @@ class BusinessQuoteService extends BaseService
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
 
             $this->selfAssign(QuoteTypes::BUSINESS, $response->quoteUID);
+
+            $createdQuote = BusinessQuote::query()->where('uuid', $response->quoteUID)->first();
+            if ($createdQuote instanceof BusinessQuote) {
+                $this->syncGroupMedicalLeadIntakeFields($createdQuote, $request);
+                $createdQuote->save();
+            }
         }
 
         return $response;
@@ -565,6 +571,28 @@ class BusinessQuoteService extends BaseService
         }
     }
 
+    /**
+     * Persist Group Medical lead intake (plan type, categories, per-category rows).
+     */
+    protected function syncGroupMedicalLeadIntakeFields(BusinessQuote $businessQuote, Request $request): void
+    {
+        if ($request->has('nature_of_company_activity_id')) {
+            $businessQuote->nature_of_company_activity_id = $request->input('nature_of_company_activity_id');
+        }
+        if ($request->has('has_existing_group_health_insurance')) {
+            $businessQuote->has_existing_group_health_insurance = $request->boolean('has_existing_group_health_insurance');
+        }
+        if ($request->has('health_plan_type_id')) {
+            $businessQuote->health_plan_type_id = $request->input('health_plan_type_id');
+        }
+        if ($request->has('number_of_categories')) {
+            $businessQuote->number_of_categories = $request->input('number_of_categories');
+        }
+        if ($request->has('gm_category_intake')) {
+            $businessQuote->gm_category_intake = $request->input('gm_category_intake');
+        }
+    }
+
     public function updateBusinessQuote(Request $request, $id)
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
@@ -598,6 +626,7 @@ class BusinessQuoteService extends BaseService
             if (isset($request->group_medical_type_id)) {
                 $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             }
+            $this->syncGroupMedicalLeadIntakeFields($businessQuote, $request);
             $businessQuote->save();
 
             if (isset($request->return_to_view)) {

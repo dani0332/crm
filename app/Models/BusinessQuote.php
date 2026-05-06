@@ -13,6 +13,7 @@ use Config;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -26,6 +27,15 @@ class BusinessQuote extends Model implements AuditableContract
 
     protected $table = 'business_quote_request';
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'gm_category_intake' => 'array',
+            'has_existing_group_health_insurance' => 'boolean',
+        ];
+    }
+
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -126,6 +136,16 @@ class BusinessQuote extends Model implements AuditableContract
     public function groupMedicalType()
     {
         return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
+    }
+
+    public function healthPlanType(): BelongsTo
+    {
+        return $this->belongsTo(HealthPlanType::class, 'health_plan_type_id');
+    }
+
+    public function natureOfCompanyActivity(): BelongsTo
+    {
+        return $this->belongsTo(Lookup::class, 'nature_of_company_activity_id');
     }
 
     public function insuranceProvider()

@@ -9,6 +9,10 @@ const props = defineProps({
   emirates: { type: Array, default: () => [] },
   isEmirateDisabled: { type: Boolean, default: false },
   leadSourceParams: { type: Object, default: () => ({}) },
+  companyTypes: { type: Array, default: () => [] },
+  healthPlanTypes: { type: Array, default: () => [] },
+  insuranceProviders: { type: Array, default: () => [] },
+  memberCategories: { type: Array, default: () => [] },
 });
 
 const notification = useToast();
@@ -33,6 +37,66 @@ const maxValidation = maxValue => {
     return isValid || `Value must be less than or equal to ${maxValue}.`;
   };
 };
+
+const yesNoOptions = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const emptyCategoryRow = () => ({
+  member_category_id: null,
+  existing_insurance_provider_id: null,
+  existing_tpa_id: null,
+  existing_network_id: null,
+  existing_policy_renewal_date: null,
+  number_of_people: null,
+});
+
+/**
+ * Builds initial intake rows: prefers saved JSON; otherwise one empty row (appender).
+ */
+function buildInitialCategoryRows(quote) {
+  const intake = quote?.gm_category_intake;
+  if (Array.isArray(intake) && intake.length > 0) {
+    return intake.map(row => ({ ...emptyCategoryRow(), ...row }));
+  }
+  const savedN = parseInt(quote?.number_of_categories, 10);
+  const n = Math.min(26, Math.max(1, savedN || 1));
+
+  return Array.from({ length: n }, () => emptyCategoryRow());
+}
+
+const initialGmRows = buildInitialCategoryRows(props.quote);
+
+const GM_CATEGORY_ROW_MAX = 26;
+
+const companyTypeSelectOptions = computed(() =>
+  (props.companyTypes || []).map(item => ({
+    value: item.id,
+    label: item.text,
+  })),
+);
+
+const healthPlanTypeSelectOptions = computed(() =>
+  (props.healthPlanTypes || []).map(item => ({
+    value: item.id,
+    label: item.text,
+  })),
+);
+
+const insuranceProviderSelectOptions = computed(() =>
+  (props.insuranceProviders || []).map(item => ({
+    value: item.id,
+    label: item.text,
+  })),
+);
+
+const memberCategorySelectOptions = computed(() =>
+  (props.memberCategories || []).map(item => ({
+    value: item.id,
+    label: item.text,
+  })),
+);
 
 const quoteForm = useForm({
   modelType: '"Business"',
@@ -60,7 +124,43 @@ const quoteForm = useForm({
         props.leadSourceParams?.subSourceOption ||
         0,
     ) || null,
+  nature_of_company_activity_id:
+    props.quote?.nature_of_company_activity_id ?? null,
+  has_existing_group_health_insurance:
+    props.quote?.has_existing_group_health_insurance === undefined ||
+    props.quote?.has_existing_group_health_insurance === null
+      ? null
+      : props.quote.has_existing_group_health_insurance
+        ? 1
+        : 0,
+  health_plan_type_id: props.quote?.health_plan_type_id ?? null,
+  number_of_categories: initialGmRows.length,
+  gm_category_intake: initialGmRows,
 });
+
+function syncNumberOfCategoriesFromIntake() {
+  quoteForm.number_of_categories = quoteForm.gm_category_intake.length;
+}
+
+function addCategoryRow() {
+  if (quoteForm.gm_category_intake.length >= GM_CATEGORY_ROW_MAX) {
+    notification.warning({
+      title: `You can add at most ${GM_CATEGORY_ROW_MAX} category rows.`,
+      position: 'top',
+    });
+    return;
+  }
+  quoteForm.gm_category_intake.push(emptyCategoryRow());
+  syncNumberOfCategoriesFromIntake();
+}
+
+function removeCategoryRow(idx) {
+  if (quoteForm.gm_category_intake.length <= 1) {
+    return;
+  }
+  quoteForm.gm_category_intake.splice(idx, 1);
+  syncNumberOfCategoriesFromIntake();
+}
 
 const {
   isRequired,
@@ -151,6 +251,7 @@ const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
   if (!isValid) return;
+  syncNumberOfCategoriesFromIntake();
   const method = isEdit.value ? 'put' : 'post';
   const url = isEdit.value
     ? route('amt.update', props.quote.uuid)
@@ -346,6 +447,286 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.premium"
           label="PRICE"
         />
+
+        <x-select
+          v-model="quoteForm.nature_of_company_activity_id"
+          :options="companyTypeSelectOptions"
+          class="w-full"
+          label="NATURE OF COMPANY'S ACTIVITY"
+          placeholder="Select activity"
+          filterable
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.nature_of_company_activity_id"
+        />
+
+        <x-select
+          v-model="quoteForm.has_existing_group_health_insurance"
+          :options="yesNoOptions"
+          class="w-full"
+          label="WITH EXISTING GROUP HEALTH INSURANCE POLICY"
+          placeholder="Select"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.has_existing_group_health_insurance"
+        />
+
+        <x-select
+          v-model="quoteForm.health_plan_type_id"
+          :options="healthPlanTypeSelectOptions"
+          class="w-full"
+          label="PLAN TYPE"
+          placeholder="Select plan type"
+          filterable
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.health_plan_type_id"
+        />
+
+        <div
+          class="sm:col-span-2 rounded-xl border border-gray-200 bg-gradient-to-b from-slate-50/90 to-white p-4 shadow-sm ring-1 ring-gray-100"
+        >
+          <div
+            class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+          >
+            <div class="min-w-0 flex-1">
+              <h3 class="text-base font-semibold text-gray-900">
+                People to be insured per category
+              </h3>
+              <p
+                id="gm-category-intake-help"
+                class="mt-1 max-w-2xl text-xs leading-relaxed text-gray-500"
+              >
+                Add one row per insured band. Pick the
+                <span class="font-medium text-gray-700">member category</span>,
+                optional existing insurer / TPA / network, renewal date, and
+                headcount. Use
+                <span class="font-medium text-gray-700">Add row</span>
+                to append lines (max {{ GM_CATEGORY_ROW_MAX }}).
+              </p>
+            </div>
+            <div
+              class="flex shrink-0 flex-col items-stretch gap-2 sm:items-end"
+            >
+              <span
+                class="inline-flex items-center justify-center rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-800"
+              >
+                {{ quoteForm.gm_category_intake.length }}
+                {{
+                  quoteForm.gm_category_intake.length === 1
+                    ? 'category row'
+                    : 'category rows'
+                }}
+              </span>
+              <x-tooltip placement="left">
+                <x-button
+                  type="button"
+                  size="sm"
+                  color="primary"
+                  class="whitespace-nowrap"
+                  :disabled="
+                    quoteForm.gm_category_intake.length >= GM_CATEGORY_ROW_MAX
+                  "
+                  @click.prevent="addCategoryRow"
+                >
+                  + Add row
+                </x-button>
+                <template #tooltip>
+                  <span>Add another category row (up to {{ GM_CATEGORY_ROW_MAX }}).</span>
+                </template>
+              </x-tooltip>
+            </div>
+          </div>
+
+          <div
+            class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-inner ring-1 ring-gray-100"
+          >
+            <table
+              class="min-w-[1040px] w-full border-collapse text-sm"
+              aria-describedby="gm-category-intake-help"
+            >
+              <thead class="sticky top-0 z-10 shadow-sm">
+                <tr
+                  class="bg-primary-600 text-left text-xs font-semibold uppercase tracking-wide text-white"
+                >
+                  <th
+                    scope="col"
+                    class="w-14 whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5 text-center"
+                  >
+                    S/NO
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[12rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    CATEGORY
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    EXISTING INSURANCE PROVIDER
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    EXISTING THIRD PARTY ADMINISTRATOR
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    EXISTING NETWORK
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[10.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    EXISTING POLICY RENEWAL DATE
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5 text-right"
+                  >
+                    NUMBER OF PEOPLE
+                  </th>
+                  <th
+                    scope="col"
+                    class="w-[4.5rem] whitespace-nowrap px-2 py-3.5 text-center"
+                  >
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 bg-white text-gray-900">
+                <tr
+                  v-for="(row, idx) in quoteForm.gm_category_intake"
+                  :key="`gm-cat-${idx}-${row.member_category_id ?? 'row'}`"
+                  class="align-top transition-colors even:bg-slate-50/70 hover:bg-primary-50/40"
+                >
+                  <td
+                    class="border-r border-gray-100 px-3 py-3 text-center tabular-nums text-gray-500"
+                  >
+                    {{ idx + 1 }}
+                  </td>
+                  <td class="border-r border-gray-100 px-3 py-3">
+                    <x-select
+                      v-model="row.member_category_id"
+                      :options="memberCategorySelectOptions"
+                      class="w-full min-w-[11rem]"
+                      placeholder="Select category"
+                      filterable
+                      :rules="[isRequired]"
+                      required
+                      :error="
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.member_category_id`
+                        ]
+                      "
+                    />
+                  </td>
+                  <td class="border-r border-gray-100 px-3 py-3">
+                    <x-select
+                      v-model="row.existing_insurance_provider_id"
+                      :options="insuranceProviderSelectOptions"
+                      class="w-full min-w-[10rem]"
+                      placeholder="Select provider"
+                      filterable
+                      :error="
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.existing_insurance_provider_id`
+                        ]
+                      "
+                    />
+                  </td>
+                  <td class="border-r border-gray-100 px-3 py-3">
+                    <x-select
+                      v-model="row.existing_tpa_id"
+                      :options="insuranceProviderSelectOptions"
+                      class="w-full min-w-[10rem]"
+                      placeholder="Select TPA"
+                      filterable
+                      :error="
+                        quoteForm.errors[`gm_category_intake.${idx}.existing_tpa_id`]
+                      "
+                    />
+                  </td>
+                  <td class="border-r border-gray-100 px-3 py-3">
+                    <x-select
+                      v-model="row.existing_network_id"
+                      :options="insuranceProviderSelectOptions"
+                      class="w-full min-w-[10rem]"
+                      placeholder="Select network"
+                      filterable
+                      :error="
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.existing_network_id`
+                        ]
+                      "
+                    />
+                  </td>
+                  <td class="border-r border-gray-100 px-3 py-3">
+                    <x-input
+                      v-model="row.existing_policy_renewal_date"
+                      type="date"
+                      class="w-full min-w-[9.5rem]"
+                      size="sm"
+                      :error="
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.existing_policy_renewal_date`
+                        ]
+                      "
+                    />
+                  </td>
+                  <td
+                    class="border-r border-gray-100 px-3 py-3 text-right align-middle"
+                  >
+                    <x-input
+                      v-model="row.number_of_people"
+                      type="number"
+                      class="w-full min-w-[7.5rem]"
+                      size="sm"
+                      :rules="[isRequired, isNumber, maxValidation(2147483645)]"
+                      :error="
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.number_of_people`
+                        ]
+                      "
+                      :min="1"
+                    />
+                  </td>
+                  <td class="px-2 py-3 text-center align-middle">
+                    <x-tooltip placement="left">
+                      <x-button
+                        type="button"
+                        size="sm"
+                        color="error"
+                        class="!min-h-[2.25rem] !min-w-[2.25rem] !px-2"
+                        :disabled="
+                          quoteForm.gm_category_intake.length <= 1
+                        "
+                        :aria-label="`Remove category row ${idx + 1}`"
+                        @click.prevent="removeCategoryRow(idx)"
+                      >
+                        <x-icon icon="xmark" class="h-4 w-4" />
+                      </x-button>
+                      <template #tooltip>
+                        <span>Remove this row</span>
+                      </template>
+                    </x-tooltip>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p
+            v-if="quoteForm.errors.gm_category_intake"
+            class="mt-3 text-sm text-error"
+          >
+            {{ quoteForm.errors.gm_category_intake }}
+          </p>
+        </div>
 
         <x-select
           v-if="isEdit"

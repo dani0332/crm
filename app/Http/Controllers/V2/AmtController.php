@@ -29,6 +29,7 @@ use App\Models\HealthPlanType;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
+use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
@@ -387,6 +388,10 @@ class AmtController extends Controller
             'quote' => new BusinessQuote,
             'subSources' => $subSources,
             'emirates' => $emirates,
+            'companyTypes' => Lookup::getCompanyTypes(),
+            'healthPlanTypes' => HealthPlanType::query()->select('id', 'text')->orderBy('text')->get(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id()),
+            'memberCategories' => MemberCategory::active()->sortOrderAsc()->get(['id', 'text']),
             'leadSourceParams' => [
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
@@ -402,7 +407,7 @@ class AmtController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
+        $this->validate($request, array_merge([
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
@@ -412,7 +417,7 @@ class AmtController extends Controller
             'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
             'emirate_of_registration_id' => 'required|exists:emirates,id',
-        ]);
+        ], $this->groupMedicalAmtIntakeValidationRules()));
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
@@ -629,6 +634,10 @@ class AmtController extends Controller
             'emirates' => $emirates,
             'isEmirateDisabled' => true,
             'leadSourceParams' => [],
+            'companyTypes' => Lookup::getCompanyTypes(),
+            'healthPlanTypes' => HealthPlanType::query()->select('id', 'text')->orderBy('text')->get(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id()),
+            'memberCategories' => MemberCategory::active()->sortOrderAsc()->get(['id', 'text']),
         ]);
     }
 
@@ -640,7 +649,7 @@ class AmtController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->validate($request, [
+        $this->validate($request, array_merge([
             'first_name' => 'required|max:150',
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
@@ -649,7 +658,7 @@ class AmtController extends Controller
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',
-        ]);
+        ], $this->groupMedicalAmtIntakeValidationRules()));
         app(CRUDService::class)->updateModelByType('business', $request, $id);
 
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
@@ -684,5 +693,34 @@ class AmtController extends Controller
             'is_renewal' => null,
             'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function groupMedicalAmtIntakeValidationRules(): array
+    {
+        return [
+            'nature_of_company_activity_id' => ['required', 'exists:lookups,id'],
+            'has_existing_group_health_insurance' => ['required', 'boolean'],
+            'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
+            'number_of_categories' => ['required', 'integer', 'min:1', 'max:26'],
+            'gm_category_intake' => [
+                'required',
+                'array',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $expected = (int) request()->input('number_of_categories', 0);
+                    if (! is_array($value) || count($value) !== $expected) {
+                        $fail('People per category rows must match the number of categories.');
+                    }
+                },
+            ],
+            'gm_category_intake.*.member_category_id' => ['required', 'exists:member_category,id'],
+            'gm_category_intake.*.existing_insurance_provider_id' => ['nullable', 'exists:insurance_provider,id'],
+            'gm_category_intake.*.existing_tpa_id' => ['nullable', 'exists:insurance_provider,id'],
+            'gm_category_intake.*.existing_network_id' => ['nullable', 'exists:insurance_provider,id'],
+            'gm_category_intake.*.existing_policy_renewal_date' => ['nullable', 'date'],
+            'gm_category_intake.*.number_of_people' => ['required', 'integer', 'min:1', 'max:2147483645'],
+        ];
     }
 }
