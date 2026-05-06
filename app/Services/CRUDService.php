@@ -1185,9 +1185,6 @@ class CRUDService extends BaseService
             $pdfName = 'Individual';
         }
         if (isset($results['total'])) {
-            $quote->refresh();
-            $previousRiskScore = $quote->risk_score;
-
             $quote->risk_score = $results['total'];
             $quote->save();
             $quoteType = strtolower($type);
@@ -1219,7 +1216,7 @@ class CRUDService extends BaseService
                 $quote,
                 $type,
                 $results,
-                $previousRiskScore,
+                $results['total'],
                 $riskScorePdfUrl,
             );
         }
