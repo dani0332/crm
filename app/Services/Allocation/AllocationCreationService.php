@@ -19,7 +19,10 @@ class AllocationCreationService
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->where('is_revived', false)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
+            ->where(function ($query) {
+                $query->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
+                    ->orWhereNull('payment_status_id');
+            })
             ->get();
 
         // Step 2: Filter duplicate insured
