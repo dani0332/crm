@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\ExportTypeEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -13,6 +14,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\Reports\ConversionAsAtReportExport;
+use App\Exports\Reports\ConversionOptimizationReportExport;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -27,6 +29,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
+use App\Services\Reports\ConversionOptimizationReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
@@ -51,7 +54,14 @@ class ReportsController extends Controller
     public function __construct()
     {
         $advisorConverionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
+
+        $conversionOptimizationReportPermissions = implode('|', [
+            PermissionsEnum::CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW,
+            PermissionsEnum::VIEW_ALL_REPORTS,
+        ]);
+
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+        $this->middleware(['permission:'.$conversionOptimizationReportPermissions], ['only' => ['renderConversionOptimizationReport', 'exportConversionOptimizationReport']]);
 
         $advisorDistributionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
@@ -67,6 +77,21 @@ class ReportsController extends Controller
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
+        ]);
+    }
+
+    public function renderConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
+    {
+        $requestForReport = $conversionOptimizationReportService->mergeDefaultsIntoRequest(
+            $request,
+            $conversionOptimizationReportService->getDefaultFilters()
+        );
+
+        return inertia('Reports/ConversionOptimization', [
+            'reportData' => fn () => $conversionOptimizationReportService->getReportData($requestForReport),
+            'filtersByLob' => fn () => $conversionOptimizationReportService->getFiltersByLob(),
+            'filterOptions' => fn () => $conversionOptimizationReportService->getFilterOptions(),
+            'defaultFilters' => fn () => $conversionOptimizationReportService->getDefaultFilters(),
         ]);
     }
 
@@ -595,6 +620,20 @@ class ReportsController extends Controller
 
         // Default to CSV download using the trait's download method
         return $exportClass->download('Conversion As At Report');
+    }
+
+    public function exportConversionOptimizationReport(Request $request, ConversionOptimizationReportService $conversionOptimizationReportService)
+    {
+        $exportClass = new ConversionOptimizationReportExport($conversionOptimizationReportService, $request->all());
+
+        if ($request->exportType === ExportTypeEnum::Email->value) {
+            LoggerService::info('Email CSV');
+            $request['exportTitle'] = 'Conversion Optimization Engine';
+
+            return $exportClass->emailCSV('Conversion Optimization Engine', $request->all());
+        }
+
+        return $exportClass->download('Conversion Optimization Engine');
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)

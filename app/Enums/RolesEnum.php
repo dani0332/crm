@@ -59,6 +59,8 @@ final class RolesEnum extends Enum
     public const BusinessDeputyManager = 'BUSINESS_DEPUTY_MANAGER';
     public const CorplineRenewalManager = 'CORPLINE_RENEWAL_MANAGER';
     public const SuperManagerLeadAllocation = 'SUPER_MANAGER_LEAD_ALLOCATION';
+    public const ManagerLeadAllocation = 'MANAGER_LEAD_ALLOCATION';
+    public const ManagerLeadAllocationEdit = 'MANAGER_LEAD_ALLOCATION_EDIT';
     public const BetaUser = 'BETA_USER';
     public const MarketingOperations = 'MARKETING_OPERATIONS';
     public const Renewals = 'RENEWALS_MANAGEMENT';

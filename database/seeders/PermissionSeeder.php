@@ -12,7 +12,6 @@ use Illuminate\Database\Seeder;
 class PermissionSeeder extends Seeder
 {
     private const WEB_GUARD = 'web';
-
     /**
      * Run the database seeds.
      */
@@ -50,12 +49,12 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $this->seedEditPlanAfterTransactionApprovalPermission();
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
         $this->addEpDocumentManualOverridePermission();
         $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
+        $this->seedEditPlanAfterTransactionApprovalPermission();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -188,7 +187,6 @@ class PermissionSeeder extends Seeder
             LoggerService::info("Role {$role->name} already has permission {$permission->name}");
         }
     }
-
     private function seedEditPlanAfterTransactionApprovalPermission(): void
     {
         Permission::firstOrCreate(

@@ -7,18 +7,33 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
+use App\Exceptions\EmbeddedProductDocumentSendFailedException;
+use App\Exceptions\EmbeddedProductDocumentUploadFailedException;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuote;
+use App\Models\DocumentType;
+use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class EmbeddedTransactionService extends BaseService
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Create a new class instance.
      */
@@ -182,5 +197,240 @@ class EmbeddedTransactionService extends BaseService
         ];
 
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder data');
+    }
+
+    /**
+     * Replaces an embedded-product quote document (manual override), including storage upload and optional watermark dispatch.
+     *
+     * Coerces `epId`, `quoteId`, and `documentId` to int: multipart and form-encoded bodies often keep validated numeric fields as strings, which would otherwise violate strict typing when passed to int-hinted helpers (including queued closures).
+     */
+    public function updateEpDocument(array $data): bool
+    {
+        $data['epId'] = (int) $data['epId'];
+        $data['quoteId'] = (int) $data['quoteId'];
+        $data['documentId'] = (int) $data['documentId'];
+
+        $ctx = $this->resolveUpdateEpDocumentContext($data);
+        if ($ctx === null) {
+            return false;
+        }
+
+        $embeddedTransaction = $ctx['embeddedTransaction'];
+        $oldDocument = $ctx['oldDocument'];
+        $documentType = $ctx['documentType'];
+        $quoteObject = $ctx['quoteObject'];
+        $storedDocName = $ctx['storedDocName'];
+
+        $uploadedFile = $data['file'];
+        $originalName = $uploadedFile->getClientOriginalName();
+        $uniqueBlobName = $this->embeddedProductRepo->uniqueBlobNameFromOriginalName($originalName);
+        $azureObjectName = $quoteObject->uuid.'_'.$uniqueBlobName;
+        $docUuid = uniqid();
+
+        $filePathAzure = $uploadedFile->storeAs(
+            EmbeddedProductRepository::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path,
+            $azureObjectName,
+            'azureIMPrivate'
+        );
+
+        if ($filePathAzure === false) {
+            throw new EmbeddedProductDocumentUploadFailedException(EmbeddedProductRepository::ERROR_UPLOADING_DOCUMENT);
+        }
+
+        DB::transaction(function () use (
+            $embeddedTransaction,
+            $oldDocument,
+            $storedDocName,
+            $originalName,
+            $filePathAzure,
+            $documentType,
+            $docUuid,
+            $data,
+            $quoteObject
+        ): void {
+            $embeddedTransaction->save();
+            $oldDocument->delete();
+
+            $this->persistManualOverrideEpDocument([
+                'embeddedTransaction' => $embeddedTransaction,
+                'storedDocName' => $storedDocName,
+                'originalName' => $originalName,
+                'filePathAzure' => $filePathAzure,
+                'documentType' => $documentType,
+                'docUuid' => $docUuid,
+                'remarks' => $data['remarks'],
+                'quoteObject' => $quoteObject,
+                'epId' => $data['epId'],
+                'modelType' => $data['modelType'],
+            ]);
+        });
+
+        return true;
+    }
+
+    /**
+     * Resolves models and derived names for EP document replacement, or null when prerequisites fail.
+     *
+     * @return array{
+     *     embeddedTransaction: EmbeddedTransaction,
+     *     oldDocument: QuoteDocument,
+     *     documentType: DocumentType,
+     *     quoteObject: object,
+     *     storedDocName: string,
+     * }|null
+     */
+    private function resolveUpdateEpDocumentContext(array $data): ?array
+    {
+        $ep = EmbeddedProduct::query()->with('prices')->where('id', $data['epId'])->first();
+        $transaction = $ep !== null
+            ? $this->embeddedProductRepo->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false)
+            : null;
+
+        $embeddedTransaction = ($transaction !== null && $transaction->isNotEmpty())
+            ? $transaction->first()
+            : null;
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
+
+        $oldDocument = $embeddedTransaction !== null
+            ? $embeddedTransaction->documents()
+                ->withoutTrashed()
+                ->with([
+                    'documentType' => function ($query) use ($quoteTypeId): void {
+                        $query->where('quote_type_id', $quoteTypeId);
+                    },
+                ])
+                ->find($data['documentId'])
+            : null;
+
+        $documentType = $oldDocument?->documentType;
+
+        $quoteObject = $documentType !== null
+            ? $this->getQuoteObject($data['modelType'], $data['quoteId'])
+            : false;
+
+        if ($ep === null
+            || $transaction === null
+            || $transaction->isEmpty()
+            || $oldDocument === null
+            || $documentType === null
+            || $quoteObject === false
+        ) {
+            return null;
+        }
+
+        match ($oldDocument->document_type_code) {
+            QuoteDocumentsEnum::POLICY_SCHEDULE => $embeddedTransaction->certificate_number = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $embeddedTransaction->tax_invoice_buyer_no = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_TAX_INVOICE => $embeddedTransaction->tax_invoice_no = $data['documentNumber'],
+            QuoteDocumentsEnum::CAR_EP_TAX_INVOICE => $embeddedTransaction->tax_invoice_no = $data['documentNumber'],
+            default => null,
+        };
+
+        $docNameSuffix = Str::after($oldDocument->doc_name, '_');
+
+        /**
+         * Keep insurer-document download naming aligned with existing behavior:
+         * doc_name is always prefixed by certificate_number for all EP insurer document types.
+         */
+        $storedDocName = "{$embeddedTransaction->certificate_number}_{$docNameSuffix}";
+
+        return [
+            'embeddedTransaction' => $embeddedTransaction,
+            'oldDocument' => $oldDocument,
+            'documentType' => $documentType,
+            'quoteObject' => $quoteObject,
+            'storedDocName' => $storedDocName,
+        ];
+    }
+
+    /**
+     * Stores the manual-override document row and queues watermark processing and sending document when applicable.
+     */
+    private function persistManualOverrideEpDocument(array $data): void
+    {
+        $embeddedTransaction = $data['embeddedTransaction'];
+        $documentType = $data['documentType'];
+        $documentTypeCode = $documentType->code;
+
+        $newDocument = $embeddedTransaction->documents()->create([
+            'doc_name' => $data['storedDocName'],
+            'original_name' => $data['originalName'],
+            'doc_url' => $data['filePathAzure'],
+            'doc_mime_type' => 'application/pdf',
+            'document_type_code' => $documentTypeCode,
+            'document_type_text' => $documentType->text,
+            'doc_uuid' => $data['docUuid'],
+            'created_by_id' => Auth::id(),
+            'is_manual_override' => true,
+            'override_remarks' => $data['remarks'],
+            'document_type_id' => $documentType->id,
+        ]);
+
+        if ($documentTypeCode === QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER) {
+            return;
+        }
+
+        $quoteObject = $data['quoteObject'];
+        $watermarkJob = new WatermarkDocumentsJob($newDocument->id, $quoteObject->uuid, $documentType->id);
+        $watermarkJob->afterCommit();
+
+        $quoteId = (int) $quoteObject->id;
+        $epId = (int) $data['epId'];
+        $modelType = $data['modelType'];
+        $epSentToCustomerDocTypes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
+
+        Bus::chain([
+            $watermarkJob,
+            static function () use ($documentTypeCode, $quoteId, $epId, $modelType, $epSentToCustomerDocTypes): void {
+                if (! in_array($documentTypeCode, $epSentToCustomerDocTypes, true)) {
+                    return;
+                }
+
+                $sendResult = EmbeddedProductRepository::sendDocument([
+                    'epId' => $epId,
+                    'modelType' => $modelType,
+                    'quoteId' => $quoteId,
+                ]);
+                self::ensureQueueEmbeddedProductSendSucceeded(
+                    $sendResult,
+                    $quoteId,
+                    $epId,
+                    $modelType,
+                    $documentTypeCode
+                );
+            },
+        ])->delay(now()->addSeconds(10))->dispatch();
+    }
+
+    /**
+     * Fails the queued chain job when auto-send returns a non-success payload so the job can retry and the failure is visible.
+     *
+     * @param  array<string, mixed>|null  $sendResult
+     */
+    private static function ensureQueueEmbeddedProductSendSucceeded(
+        ?array $sendResult,
+        int $quoteId,
+        int $epId,
+        string $modelType,
+        string $documentTypeCode,
+    ): void {
+        if (is_array($sendResult) && ($sendResult['success'] ?? false) === true) {
+            return;
+        }
+
+        $message = is_array($sendResult)
+            ? (string) ($sendResult['message'] ?? 'Embedded product document send failed')
+            : 'Embedded product document send failed';
+
+        LoggerService::error('EP auto-send after manual document override failed', extra: [
+            'quote_id' => $quoteId,
+            'ep_id' => $epId,
+            'model_type' => $modelType,
+            'document_type_code' => $documentTypeCode,
+            'message' => $message,
+        ]);
+
+        throw new EmbeddedProductDocumentSendFailedException($message);
     }
 }
