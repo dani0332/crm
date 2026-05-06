@@ -40,7 +40,6 @@ class CreateHealthRateRequest extends FormRequest
             'health_plan_co_payment_id.exists' => 'Health plan co payment does not exist',
             'emirate_type.enum' => 'Emirate type must be a valid emirate type',
             'boolean' => ':attribute must be a boolean',
-            'string' => ':attribute must be a string',
         ];
     }
 
