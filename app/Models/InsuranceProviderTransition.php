@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InsuranceProviderTransition extends Model
 {
+    use HasFactory;
+
     protected $table = 'renewal_insurance_provider_transitions';
     protected $fillable = ['source_insurance_provider_id', 'target_insurance_provider_id', 'description', 'is_active', 'created_by', 'updated_by'];
     protected $casts = [
