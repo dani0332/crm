@@ -13,11 +13,28 @@ const EXPORT_TYPES = Object.freeze({
   EMAIL: 'email',
 });
 
+const CONVERSION_OPTIMIZATION_UI = Object.freeze({
+  LEAD_SOURCE_OPTION_LABEL_DISPLAY_MAX_LENGTH: 45,
+});
+
+const truncateLeadSourceOptionLabel = label => {
+  if (typeof label !== 'string') {
+    return label;
+  }
+
+  const max = CONVERSION_OPTIMIZATION_UI.LEAD_SOURCE_OPTION_LABEL_DISPLAY_MAX_LENGTH;
+
+  if (label.length <= max) {
+    return label;
+  }
+
+  return `${label.slice(0, max)}...`;
+};
+
 const NO_DEFAULT_FILTERS_PARAM = 'noDefaultFilters';
 
 const loaders = reactive({
   table: false,
-  teamOptions: false,
   subteamOptions: false,
   advisorOptions: false,
 });
@@ -27,7 +44,6 @@ import { setQueryStringFilters as setQueryStringFiltersUtil } from '../../Compos
 const toast = useToast();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
-const teamOptions = ref([]);
 const subteamOptions = ref([]);
 const advisorOptions = ref([]);
 const isDirty = ref(false);
@@ -173,6 +189,16 @@ const departmentFilterOptions = computed(() => {
   return rows.map(row => ({
     value: parseInt(String(row.value), 10),
     label: row.label,
+  }));
+});
+
+/** Teams for team multi-select (server-built in {@link ConversionOptimizationReportService.getFilterOptions}); LOB-independent. */
+const teamOptions = computed(() => {
+  const rows = props.filterOptions?.teams ?? [];
+
+  return rows.map(team => ({
+    value: parseInt(String(team.value), 10),
+    label: team.label,
   }));
 });
 
@@ -330,31 +356,31 @@ const setDefaultValues = () => {
 
 // Use shared utility to populate filters from URL params
 
-const loadTeams = async selectedLob => {
-  if (!selectedLob || selectedLob.length === 0) {
-    teamOptions.value = [];
-    return;
-  }
-
-  if (isMounted.value) {
-    isDirty.value = true;
-  }
-
-  loaders.teamOptions = true;
-
-  try {
-    const response = await axios.post('/reports/fetch-teams-by-lob', {
-      lob: selectedLob,
-    });
-
-    teamOptions.value = (response.data ?? []).map(team => ({
-      value: parseInt(String(team.id), 10),
-      label: team.name,
-    }));
-  } finally {
-    loaders.teamOptions = false;
-  }
-};
+// const loadTeams = async selectedLob => {
+//   if (!selectedLob || selectedLob.length === 0) {
+//     teamOptions.value = [];
+//     return;
+//   }
+//
+//   if (isMounted.value) {
+//     isDirty.value = true;
+//   }
+//
+//   loaders.teamOptions = true;
+//
+//   try {
+//     const response = await axios.post('/reports/fetch-teams-by-lob', {
+//       lob: selectedLob,
+//     });
+//
+//     teamOptions.value = (response.data ?? []).map(team => ({
+//       value: parseInt(String(team.id), 10),
+//       label: team.name,
+//     }));
+//   } finally {
+//     loaders.teamOptions = false;
+//   }
+// };
 
 const loadSubTeams = async selectedTeams => {
   if (!selectedTeams || selectedTeams.length === 0) {
@@ -477,7 +503,6 @@ const onLobChange = async (_, isOnMounted = false) => {
     filters.vehicle_type = 'All';
     filters.is_ecommerce = '';
     filters.tiers = [];
-    teamOptions.value = [];
     subteamOptions.value = [];
     advisorOptions.value = [];
   }
@@ -502,8 +527,6 @@ const onLobChange = async (_, isOnMounted = false) => {
         ? allowedSegments.includes(segment.value)
         : !excludedSegments.includes(segment.value);
     });
-
-    await loadTeams(filters.lob);
   } else {
     await loadAdvisorsByLob(filters.lob);
   }
@@ -526,6 +549,11 @@ const onTeamChange = async selectedTeams => {
   await loadAdvisors(selectedTeams);
 };
 
+const applyTeamsFilter = async teams => {
+  filters.teams = teams;
+  await onTeamChange(teams);
+};
+
 const onSubTeamChange = async selectedSubTeams => {
   filters.advisors = [];
   advisorOptions.value = [];
@@ -542,6 +570,11 @@ const onSubTeamChange = async selectedSubTeams => {
   }
 
   await loadAdvisorsBySubteams(selectedSubTeams);
+};
+
+const applySubTeamsFilter = async subTeams => {
+  filters.sub_teams = subTeams;
+  await onSubTeamChange(subTeams);
 };
 
 const onInsuranceTypeChange = () => {
@@ -629,14 +662,26 @@ function onReset() {
     only: ['reportData'],
     data: {
       page: 1,
+      lob: quoteTypeCodeEnum.Car,
       [NO_DEFAULT_FILTERS_PARAM]: true,
     },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onFinish: () => {
-      loaders.table = false;
       canExportReport.value = false;
       delete filters[NO_DEFAULT_FILTERS_PARAM];
+
+      const url = new URL(globalThis.location.href);
+      if (url.searchParams.has(NO_DEFAULT_FILTERS_PARAM)) {
+        url.searchParams.delete(NO_DEFAULT_FILTERS_PARAM);
+        router.replace({
+          url: `${url.pathname}${url.search}${url.hash}`,
+          preserveState: true,
+          preserveScroll: true,
+        });
+      }
+
+      loaders.table = false;
     },
   });
 }
@@ -882,6 +927,11 @@ onMounted(async () => {
           helper="You can select up to 3 lead sources"
           class="w-full"
         >
+          <template #label="{ item }">
+            <span :title="item.label">{{
+              truncateLeadSourceOptionLabel(item.label)
+            }}</span>
+          </template>
           <template #content-footer>
             <ui-select-actions
               @select-all="
@@ -925,7 +975,6 @@ onMounted(async () => {
           placeholder="Search by Teams"
           :options="teamOptions"
           @update:model-value="onTeamChange"
-          :loading="loaders.teamOptions"
           filterable
           filterPlaceholder="Filter Teams...."
           truncate
@@ -933,8 +982,10 @@ onMounted(async () => {
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.teams = teamOptions.map(team => team.value)"
-              @clear="filters.teams = []"
+              @select-all="
+                applyTeamsFilter(teamOptions.map(team => team.value))
+              "
+              @clear="applyTeamsFilter([])"
             />
           </template>
         </x-select>
@@ -957,9 +1008,11 @@ onMounted(async () => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.sub_teams = subteamOptions.map(subteam => subteam.value)
+                applySubTeamsFilter(
+                  subteamOptions.map(subteam => subteam.value),
+                )
               "
-              @clear="filters.sub_teams = []"
+              @clear="applySubTeamsFilter([])"
             />
           </template>
         </x-select>

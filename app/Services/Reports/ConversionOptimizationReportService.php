@@ -36,6 +36,7 @@ use App\Services\Cache\CacheManager;
 use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class ConversionOptimizationReportService extends BaseService
 {
     use GetUserTreeTrait;
     use Reportable;
+    use TeamHierarchyTrait;
     use VehicleTypeTrait;
 
     public const NO_DEFAULT_FILTERS_QUERY_PARAM = 'noDefaultFilters';
@@ -312,11 +314,57 @@ class ConversionOptimizationReportService extends BaseService
         return $lobs;
     }
 
+    /**
+     * Teams shown in the Conversion Optimization team multi-select.
+     * Same team id resolution and query as {@see ManagementReport::getFilterOptions()}.
+     *
+     * @return list<array{value: int, label: string}>
+     */
+    private function getConversionOptimizationTeamFilterOptions(): array
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return [];
+        }
+
+        if ($user->isDepartmentManager()) {
+            $user->load('departments.teams');
+            $teamIds = $user->departments->reduce(function ($carry, $department) {
+                return $carry->merge(
+                    $department->teams->pluck('team_id')
+                );
+            }, collect());
+
+            $teamIds = $teamIds->all();
+        } else {
+            $teamIds = $this->getUserTeams($user->id)->pluck('id')->all();
+        }
+
+        if ($teamIds === []) {
+            return [];
+        }
+
+        return Team::query()
+            ->whereIn('id', $teamIds)
+            ->where('type', 2)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->active()
+            ->get()
+            ->map(fn (Team $team): array => [
+                'value' => (int) $team->id,
+                'label' => (string) $team->name,
+            ])
+            ->values()
+            ->all();
+    }
+
     public function getFilterOptions()
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $advisors = [];
-        $teams = [];
+        $teams = $this->getConversionOptimizationTeamFilterOptions();
 
         $batches = QuoteBatches::query()
             ->select('name', 'start_date', 'end_date', 'id')
@@ -446,15 +494,15 @@ class ConversionOptimizationReportService extends BaseService
             'department' => [],
         ];
 
-        $teamFilters = $this->getCachedDefaultConversionOptimizationTeamFilters();
+        // $teamFilters = $this->getCachedDefaultConversionOptimizationTeamFilters();
 
         return array_merge($defaultFilters, [
             'advisorAssignedDates' => [
                 now()->subWeeks(8)->startOfDay()->format($dateFormat),
                 now()->endOfDay()->format($dateFormat),
             ],
-            'teams' => $teamFilters['organic_team_id'] ? [(string) $teamFilters['organic_team_id']] : [],
-            'sub_teams' => $teamFilters['sub_team_ids'],
+            'teams' => [],
+            'sub_teams' => [],
             'cap_percentage' => '',
         ]);
     }
@@ -467,26 +515,27 @@ class ConversionOptimizationReportService extends BaseService
      */
     private function getCachedDefaultConversionOptimizationTeamFilters(): array
     {
-        return CacheManager::remember(CacheKeyEnum::CONVERSION_OPTIMIZATION_DEFAULT_TEAM_FILTERS, function (): array {
-            $organicTeamId = Team::query()
-                ->where('name', TeamNameEnum::ORGANIC)
-                ->where('is_active', 1)
-                ->value('id');
+        /* keeping it commented, for possibility of needing it in future */
+        /* return CacheManager::remember(CacheKeyEnum::CONVERSION_OPTIMIZATION_DEFAULT_TEAM_FILTERS, function (): array {
+             $organicTeamId = Team::query()
+                 ->where('name', TeamNameEnum::ORGANIC)
+                 ->where('is_active', 1)
+                 ->value('id');
 
-            $defaultSubTeamIds = Team::query()
-                ->whereIn('name', [TeamNameEnum::VALUE, TeamNameEnum::VOLUME])
-                ->whereIn('parent_team_id', [$organicTeamId])
-                ->where('is_active', 1)
-                ->pluck('id')
-                ->map(fn ($id) => (string) $id)
-                ->values()
-                ->all();
+             $defaultSubTeamIds = Team::query()
+                 ->whereIn('name', [TeamNameEnum::VALUE, TeamNameEnum::VOLUME])
+                 ->whereIn('parent_team_id', [$organicTeamId])
+                 ->where('is_active', 1)
+                 ->pluck('id')
+                 ->map(fn ($id) => (string) $id)
+                 ->values()
+                 ->all();
 
-            return [
-                'organic_team_id' => $organicTeamId !== null ? (int) $organicTeamId : null,
-                'sub_team_ids' => $defaultSubTeamIds,
-            ];
-        });
+             return [
+                 'organic_team_id' => $organicTeamId !== null ? (int) $organicTeamId : null,
+                 'sub_team_ids' => $defaultSubTeamIds,
+             ];
+         });*/
     }
 
     public function applyFiltersForCar(Builder $query, object $filters): Builder
@@ -524,8 +573,9 @@ class ConversionOptimizationReportService extends BaseService
             }, function ($builder) {
                 $builder->whereNotIn('car_quote_request.source', [
                     LeadSourceEnum::RENEWAL_UPLOAD,
-                    LeadSourceEnum::SAPGO,
-                    LeadSourceEnum::SAPJO,
+                    LeadSourceEnum::INSLY,
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::IMCRM,
                 ]);
             })
             ->when(! empty($filters->registration_type) && $filters->registration_type !== 'All', function ($builder) use ($filters) {
@@ -586,8 +636,9 @@ class ConversionOptimizationReportService extends BaseService
             }, function ($builder) {
                 $builder->whereNotIn('personal_quotes.source', [
                     LeadSourceEnum::RENEWAL_UPLOAD,
-                    LeadSourceEnum::SAPGO,
-                    LeadSourceEnum::SAPJO,
+                    LeadSourceEnum::INSLY,
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::IMCRM,
                 ]);
             })
             ->when($lob === quoteTypeCode::Health, function ($builder) use ($filters) {
