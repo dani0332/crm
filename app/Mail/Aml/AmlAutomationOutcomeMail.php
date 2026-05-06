@@ -81,11 +81,10 @@ class AmlAutomationOutcomeMail extends Mailable
         return [
             'refId' => $this->quote->code,
             'quoteUID' => $this->quote->uuid,
-            'isSuccess' => (int) $this->isSuccess,
             'customerName' => $customerName ?? '',
             'insurerName' => $this->quote?->insuranceProvider?->text ?? '',
             'planName' => $this->quote?->insuranceProviderPlan?->text ?? '',
-            'totalPremium' => $this->quote?->total_premium ?? '',
+            'totalPremium' => $this->quote?->premium ?? '',
             'advisorPhone' => $this->quote?->advisor?->mobile_no ?? '',
             'advisorEmail' => $advisorEmail,
             'advisorName' => $advisorName,

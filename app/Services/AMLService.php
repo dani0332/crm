@@ -2843,7 +2843,7 @@ class AMLService
                     'step' => 'dispatch_sync',
                 ]));
 
-                AmlScreeningAutomationJob::dispatchSync($quoteType, $quote);
+                AmlScreeningAutomationJob::dispatch($quoteType, $quote);
 
                 LoggerService::info('AML automate-by-uuid: successfully — dispatched', extra: array_merge($quoteContext, [
                     'outcome' => 'success',

@@ -207,7 +207,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         if ($amlStatus === AMLStatusCode::AMLScreeningCleared) {
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
             LoggerService::info($loggerPrefix.' Completed - AML cleared');
-            $this->dispatchOutcomeEventIfApplicable(isSuccess: true, failureReason: null);
+            $this->dispatchScreeningSucceededEventIfApplicable();
 
             return;
         }
@@ -225,7 +225,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
     }
 
-    private function dispatchOutcomeEventIfApplicable(bool $isSuccess, ?string $failureReason): void
+    private function dispatchScreeningSucceededEventIfApplicable(): void
     {
         if (! AmlAutomatableLobRegistry::allows($this->quoteType)) {
             return;
@@ -234,14 +234,12 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $uuid = $this->quoteRequest->uuid ?? '';
         $id = (int) $this->quoteRequest->id;
 
-        if ($isSuccess) {
-            event(new AmlAutomationScreeningSucceeded(
-                $id, // quote id, quote request id
-                $uuid, // quote uuid
-                $this->quoteRefId, // quote code
-                $this->quoteType, // quote type
-            ));
-        }
+        event(new AmlAutomationScreeningSucceeded(
+            $id,
+            $uuid,
+            $this->quoteRefId,
+            $this->quoteType,
+        ));
     }
 
     /**

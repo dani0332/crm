@@ -67,13 +67,14 @@ afterEach(function () {
 test('returns 404 when quote uuid is unknown', function () {
     $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
         'quoteUuid' => '01900000-0000-7000-8000-000000000001',
+        'quoteType' => QuoteTypes::SAVINGS->value,
     ]);
 
     $response->assertStatus(404)
         ->assertJson(['success' => false]);
 });
 
-test('returns 422 when LOB is not allowed for automated AML', function () {
+test('returns 422 when quoteType is not in the automatable LOB registry', function () {
     $uuid = '01900000-0000-7000-8000-000000000002';
     DB::connection('sqlite')->table('personal_quotes')->insert([
         'uuid' => $uuid,
@@ -93,10 +94,11 @@ test('returns 422 when LOB is not allowed for automated AML', function () {
 
     $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
         'quoteUuid' => $uuid,
+        'quoteType' => QuoteTypes::CAR->value,
     ]);
 
-    $response->assertStatus(422)
-        ->assertJsonFragment(['success' => false]);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['quoteType']);
 });
 
 test('returns 422 when customer insured data is missing', function () {
@@ -120,6 +122,7 @@ test('returns 422 when customer insured data is missing', function () {
 
     $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
         'quoteUuid' => $uuid,
+        'quoteType' => QuoteTypes::SAVINGS->value,
     ]);
 
     $response->assertStatus(422)
@@ -177,6 +180,7 @@ test('dispatches aml screening job for valid savings quote', function () {
 
     $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
         'quoteUuid' => $uuid,
+        'quoteType' => QuoteTypes::SAVINGS->value,
     ]);
 
     $response->assertSuccessful()
