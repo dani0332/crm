@@ -225,6 +225,13 @@ class CarQuoteObserver
             }
         }
 
+        // For debugging
+        LoggerService::info('CarQuoteObserver - reached inside policy booked check', [
+            'uuid' => $lead->uuid,
+            'dirty' => isset($dirty['quote_status_id']),
+            'is_policy_booked' => $lead->quote_status_id === QuoteStatusEnum::PolicyBooked,
+        ]);
+
         if (
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyBooked

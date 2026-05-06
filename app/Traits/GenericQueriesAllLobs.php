@@ -334,6 +334,8 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
             $bookPolicyDetails['sendButton'] = true;
             $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['missingDocumentCodes'] = $areSendPolicyDocsUploaded['missingDocumentCodes'];
+            $bookPolicyDetails['missingDocuments'] = $areSendPolicyDocsUploaded['missingDocuments'];
             $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
             if ($bookPolicyDetails['sendButton']) {
@@ -876,7 +878,7 @@ trait GenericQueriesAllLobs
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $record?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
