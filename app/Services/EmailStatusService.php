@@ -309,7 +309,7 @@ class EmailStatusService extends BaseService
 
         $row->email_status = $statusForDb;
         $row->save();
-        Cache::forget("email_statuses_{$row->quote_type_id}_{$row->quote_id}");
+        $this->forgetEmailStatusListCache((int) $row->quote_type_id, (int) $row->quote_id);
 
         LoggerService::info(self::class.' - logEpEmailStatuses: updated', [
             'record_type' => $recordType,
