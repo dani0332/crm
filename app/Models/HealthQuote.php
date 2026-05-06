@@ -580,10 +580,6 @@ class HealthQuote extends Model implements AuditableContract
     }
     public function hasAnyMemberAgeSixtyOrAbove(): bool
     {
-        if (! empty($this->dob) && Carbon::parse($this->dob)->age >= 60) {
-            return true;
-        }
-
         foreach ($this->activeMembers as $member) {
             if (empty($member->dob)) {
                 continue;

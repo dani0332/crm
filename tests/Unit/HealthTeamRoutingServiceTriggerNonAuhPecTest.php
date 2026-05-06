@@ -32,7 +32,7 @@ it('assigns non auh pec team when lead is a pec lead', function () {
                 'id' => 1,
                 'uuid' => 'lead-uuid-pec',
                 'pec_marked_at' => null,
-                'health_plan_type_id' => HealthPlanTypeEnum::BEST->value,
+                'health_plan_type_id' => HealthPlanTypeEnum::GOOD->value,
             ], true);
             $this->syncOriginal();
         }
@@ -44,7 +44,7 @@ it('assigns non auh pec team when lead is a pec lead', function () {
 
         public function isSIC2(): bool
         {
-            return false;
+            return true;
         }
 
         public function isPECLead(): bool
@@ -89,7 +89,7 @@ it('assigns non auh pec team when any member is age sixty or above', function ()
                 'id' => 2,
                 'uuid' => 'lead-uuid-age',
                 'pec_marked_at' => null,
-                'health_plan_type_id' => HealthPlanTypeEnum::BEST->value,
+                'health_plan_type_id' => HealthPlanTypeEnum::GOOD->value,
             ], true);
             $this->syncOriginal();
         }
@@ -101,7 +101,7 @@ it('assigns non auh pec team when any member is age sixty or above', function ()
 
         public function isSIC2(): bool
         {
-            return false;
+            return true;
         }
 
         public function isPECLead(): bool
