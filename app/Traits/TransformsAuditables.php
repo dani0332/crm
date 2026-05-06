@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\RolesEnum;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 
@@ -56,6 +57,18 @@ trait TransformsAuditables
                 $relatedNew = AuditTransformLookupCache::rememberRelated($relatedModelClass, $transformedNew[$foreignKey]);
                 $transformedNew[$relationName] = $relatedNew?->$fieldName ?? null;
             }
+        }
+
+        if (! auth()->user()?->hasRole(RolesEnum::Engineering)) {
+            // Remove raw FK keys (e.g. insurance_class_id) now that they've been resolved to
+            // human-readable relation names; keeps the audit diff clean and avoids exposing IDs.
+            $foreignKeys = array_keys($relationMap);
+            foreach ($foreignKeys as $foreignKey) {
+                unset($transformedOld[$foreignKey], $transformedNew[$foreignKey]);
+            }
+
+            // Strip null/empty-string entries so the audit diff only surfaces meaningful changes.
+            $transformedOld = array_filter($transformedOld, fn ($value) => $value !== null && $value !== '');
         }
 
         return [
