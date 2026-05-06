@@ -28,6 +28,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Events\AmlAutomationScreeningSucceeded;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
@@ -2192,7 +2193,15 @@ class AMLService
 
         $kycLog = $fetchKycLog->first();
         $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
-
+        if ($amlStatus == AMLStatusCode::AMLScreeningCleared) {
+            // Dispatch AmlAutomationScreeningSucceeded event
+            event(new AmlAutomationScreeningSucceeded(
+                $quoteObject->id, // quote id, quote request id
+                $quoteObject->uuid, // quote uuid
+                $quoteObject->code, // quote code
+                QuoteTypes::getName($quoteObject->quote_type_id) // quote type, get the quote type name from the quote type id
+            ));
+        }
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
 
@@ -2611,15 +2620,18 @@ class AMLService
     }
 
     /**
-     * API entry-point: validate and queue AML screening automation for a personal quote UUID.
+     * API entry-point: validate and queue AML screening automation for a quote UUID and LOB.
+     * Caller must pass a {@see QuoteTypes} string that is {@see AmlAutomatableLobRegistry::allows() allowed};
+     * the quote row is then loaded with {@see GenericQueriesAllLobs::getQuoteObject}.
      *
      * @return array{success: bool, http_status: int, message: string, data?: array<string, mixed>}
      */
-    public function initiateAutomatedAmlByQuoteUuid(string $quoteUuid): array
+    public function initiateAutomatedAmlByQuoteUuid(string $quoteUuid, string $quoteTypeInput): array
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
         LoggerService::info('AML automate-by-uuid: request received', extra: [
             'quoteUuid' => $quoteUuid,
+            'quoteType' => $quoteTypeInput,
         ]);
 
         $respond = function (bool $success, int $httpStatus, string $message, ?array $data = null): array {
@@ -2636,10 +2648,36 @@ class AMLService
         };
 
         try {
-            $quote = PersonalQuote::query()->where('uuid', $quoteUuid)->first();
-            if (! $quote) {
+            $quoteType = QuoteTypes::tryFrom($quoteTypeInput);
+            if (empty($quoteType)) {
+                LoggerService::info('AML automate-by-uuid: blocked — invalid quote type string', extra: [
+                    'quoteUuid' => $quoteUuid,
+                    'quoteType' => $quoteTypeInput,
+                    'outcome' => 'blocked',
+                    'reason' => 'invalid_quote_type',
+                    'http_status' => 422,
+                ]);
+
+                return $respond(false, 422, 'Invalid, quote type');
+            }
+
+            if (! AmlAutomatableLobRegistry::allows($quoteType)) {
+                LoggerService::info('AML automate-by-uuid: blocked — LOB not allowed for automated AML', extra: [
+                    'quoteUuid' => $quoteUuid,
+                    'quoteType' => $quoteType->value,
+                    'outcome' => 'blocked',
+                    'reason' => 'lob_not_automatable',
+                    'http_status' => 422,
+                ]);
+
+                return $respond(false, 422, 'LOB not enabled for automated AML');
+            }
+
+            $quote = $this->getQuoteObject($quoteType->value, $quoteUuid);
+            if ($quote === false) {
                 LoggerService::info('AML automate-by-uuid: blocked — quote not found', extra: [
                     'quoteUuid' => $quoteUuid,
+                    'quoteType' => $quoteType->value,
                     'outcome' => 'blocked',
                     'reason' => 'quote_not_found',
                     'http_status' => 404,
@@ -2668,17 +2706,17 @@ class AMLService
                 'step' => 'quote_loaded',
             ]));
 
-            $quoteType = QuoteTypes::getName($quote->quote_type_id);
-            if (! $quoteType instanceof QuoteTypes || ! AmlAutomatableLobRegistry::allows($quoteType)) {
-                LoggerService::info('AML automate-by-uuid: blocked — LOB not allowed for automated AML', extra: array_merge($quoteContext, [
+            $quoteTypeFromQuote = QuoteTypes::getName((int) $quote->quote_type_id);
+            if (! $quoteTypeFromQuote instanceof QuoteTypes || $quoteTypeFromQuote !== $quoteType) {
+                LoggerService::info('AML automate-by-uuid: blocked — quote LOB does not match requested quoteType', extra: array_merge($quoteContext, [
                     'outcome' => 'blocked',
-                    'reason' => 'lob_not_automatable',
-                    'resolvedQuoteType' => $quoteType instanceof QuoteTypes ? $quoteType->value : null,
-                    'registryAllows' => $quoteType instanceof QuoteTypes ? AmlAutomatableLobRegistry::allows($quoteType) : null,
+                    'reason' => 'quote_lob_mismatch',
+                    'requestedQuoteType' => $quoteType->value,
+                    'resolvedQuoteType' => $quoteTypeFromQuote instanceof QuoteTypes ? $quoteTypeFromQuote->value : null,
                     'http_status' => 422,
                 ]));
 
-                return $respond(false, 422, 'LOB not enabled for automated AML');
+                return $respond(false, 422, 'Quote does not match the requested line of business');
             }
 
             $quoteContext['quoteType'] = $quoteType->value;

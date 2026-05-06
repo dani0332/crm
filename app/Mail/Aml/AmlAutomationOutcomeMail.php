@@ -6,10 +6,10 @@ namespace App\Mail\Aml;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
-use App\Models\PersonalQuote;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -19,7 +19,7 @@ class AmlAutomationOutcomeMail extends Mailable
 
     public function __construct(
         private bool $isSuccess,
-        private PersonalQuote $quote,
+        private Model $quote,
         private ?string $paymentLink,
         private ?string $failureReason,
         private ?string $kenResponseSummary,
@@ -73,34 +73,26 @@ class AmlAutomationOutcomeMail extends Mailable
     {
         $this->quote->loadMissing(['advisor', 'insuranceProvider', 'insuranceProviderPlan']);
 
-        $advisorEmail = $this->quote?->advisor?->email;
-        $advisorName = $this->quote?->advisor?->name;
-        $customerEmail = $this->quote?->email;
+        $advisorEmail = $this->quote?->advisor?->email ?? '';
+        $advisorName = $this->quote?->advisor?->name ?? '';
+        $customerEmail = $this->quote?->email ?? '';
         $customerName = trim((string) $this->quote?->first_name.' '.(string) $this->quote?->last_name);
-
-        $toEmail = $customerEmail ?: $advisorEmail;
-        $ccEmails = [];
-        if ($advisorEmail && $toEmail && strcasecmp((string) $advisorEmail, (string) $toEmail) !== 0) {
-            $ccEmails[] = $advisorEmail;
-        }
 
         return [
             'refId' => $this->quote->code,
             'quoteUID' => $this->quote->uuid,
             'isSuccess' => (int) $this->isSuccess,
-            'customerName' => $customerName,
-            'insurerName' => $this->quote->insuranceProvider?->text ?? '',
-            'planName' => $this->quote->insuranceProviderPlan?->text ?? '',
-            'totalPremium' => $this->quote->total_premium ?? '',
-            'advisorPhone' => $this->quote->advisor?->mobile_no ?? '',
+            'customerName' => $customerName ?? '',
+            'insurerName' => $this->quote?->insuranceProvider?->text ?? '',
+            'planName' => $this->quote?->insuranceProviderPlan?->text ?? '',
+            'totalPremium' => $this->quote?->total_premium ?? '',
+            'advisorPhone' => $this->quote?->advisor?->mobile_no ?? '',
             'advisorEmail' => $advisorEmail,
             'advisorName' => $advisorName,
-            'workflowBranchType' => 'aml_automation_outcome',
-            'paymentLink' => $this->paymentLink,
-            'customerEmail' => $customerEmail,
-            'toEmail' => $toEmail,
-            'ccEmails' => array_values(array_filter($ccEmails)),
-            'replyToEmail' => $advisorEmail ?? '',
+            'workflowType' => 'aml_automation_outcome',
+            'paymentLink' => $this->paymentLink ?? '',
+            'customerEmail' => $customerEmail ?? '',
+            'currency' => $this->quote?->savingsQuote?->currency?->code ?? '',
         ];
     }
 }
