@@ -16,9 +16,6 @@ class HighRiskScoreBirdNotificationService
     private const RISK_SCORE_DOC_STORAGE_DISK = 'azureIMPrivate';
     private const RISK_SCORE_DOC_URL_EXPIRY_MINUTES = 180;
 
-    /** Minimum AML total score for the High Risk band (see risk score PDF template). */
-    public const HIGH_RISK_MIN_SCORE = 35;
-
     public function __construct(
         private readonly QuoteDocumentService $quoteDocumentService,
     ) {}
