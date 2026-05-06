@@ -24,7 +24,9 @@ class WhatsAppHookService
             static function (array $payload): array {
                 return [
                     'messageId' => $payload['messageId'] ?? null,
-                    'status' => $payload['type'] ?? $payload['status'] ?? 'inbound',
+                    'status' => self::nonBlankStringOrNull($payload['type'] ?? null)
+                        ?? self::nonBlankStringOrNull($payload['status'] ?? null)
+                        ?? 'inbound',
                 ];
             },
             requireExplicitStatus: false,
@@ -41,7 +43,7 @@ class WhatsAppHookService
             static function (array $payload): array {
                 return [
                     'messageId' => $payload['id'] ?? null,
-                    'status' => $payload['status'] ?? null,
+                    'status' => self::nonBlankStringOrNull($payload['status'] ?? null),
                 ];
             },
             requireExplicitStatus: true,
@@ -58,7 +60,8 @@ class WhatsAppHookService
             static function (array $payload): array {
                 return [
                     'messageId' => $payload['messageId'] ?? null,
-                    'status' => $payload['type'] ?? $payload['status'] ?? null,
+                    'status' => self::nonBlankStringOrNull($payload['type'] ?? null)
+                        ?? self::nonBlankStringOrNull($payload['status'] ?? null),
                 ];
             },
             requireExplicitStatus: true,
@@ -128,6 +131,20 @@ class WhatsAppHookService
     /**
      * @param  array<string, mixed>  $payload
      */
+    /**
+     * Treat null, non-strings, and blank (whitespace-only) strings as absent so ?? / validation behave correctly.
+     */
+    private static function nonBlankStringOrNull(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
     private function extractMobile(array $payload): ?string
     {
         $contacts = $payload['receiver']['contacts'] ?? [];

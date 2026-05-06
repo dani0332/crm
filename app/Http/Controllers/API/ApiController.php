@@ -210,7 +210,10 @@ class ApiController extends Controller
     {
         $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
 
-        return apiResponse([], Response::HTTP_OK, $response->message);
+        $success = ($response->status ?? false) === true;
+        $statusCode = $success ? Response::HTTP_OK : Response::HTTP_NOT_FOUND;
+
+        return apiResponse([], $statusCode, $response->message);
     }
 
     public function stopFollowUpEvent(BirdStopWorkFlowRequest $request)
