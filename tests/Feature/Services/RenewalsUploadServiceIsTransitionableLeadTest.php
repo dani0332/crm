@@ -113,11 +113,11 @@ if (! function_exists('createTransitionableFeatureMockLead')) {
 // ---- isTransitionableLead() ----
 
 test('isTransitionableLead returns false when source provider does not exist', function () {
-    InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $provider = InsuranceProvider::factory()->axa()->create();
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $provider->text,
         'plan_name' => 'Plan A',
         'plan_type' => 'AGENCY',
     ]);
@@ -131,18 +131,14 @@ test('isTransitionableLead returns false when source provider does not exist', f
 });
 
 test('isTransitionableLead returns false when no transition or transition is inactive', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => false,
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create(['is_active' => false]);
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ]);
@@ -156,18 +152,14 @@ test('isTransitionableLead returns false when no transition or transition is ina
 });
 
 test('isTransitionableLead adds validation error and returns false when transition active but plan not found', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'Gulf Insurance Group (Gulf) B.S.C. (C)']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'Gulf Insurance Group (Gulf) B.S.C. (C)',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'Unknown Plan',
         'plan_type' => 'TPL',
     ]);
@@ -181,26 +173,18 @@ test('isTransitionableLead adds validation error and returns false when transiti
 });
 
 test('isTransitionableLead returns true and sets transition_id when transition and plan exist', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    CarPlan::create([
-        'text' => 'GIG Gulf (AXA) Motor Prestige',
-        'repair_type' => 'AGENCY',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'AGENCY']);
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
-        'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
-        'plan_type' => 'AGENCY',
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ]);
 
     $leadValidationErrors = new Collection;
@@ -214,26 +198,18 @@ test('isTransitionableLead returns true and sets transition_id when transition a
 // ---- isTransitionableLeadForProcess() ----
 
 test('isTransitionableLeadForProcess returns transitionable config when active transition and matching plan', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    $plan = CarPlan::create([
-        'text' => 'GIG Gulf (AXA) Motor Prestige',
-        'repair_type' => 'AGENCY',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'AGENCY']);
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
-        'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
-        'plan_type' => 'AGENCY',
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ], $transition->id);
 
     $service = createTransitionableFeatureService();
@@ -246,21 +222,17 @@ test('isTransitionableLeadForProcess returns transitionable config when active t
 });
 
 test('isTransitionableLeadForProcess handles scenario where source provider record is missing (deleted)', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     // Delete the source provider record but keep the transition referencing it
     $sourceProvider->delete();
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], $transition->id);
@@ -275,19 +247,14 @@ test('isTransitionableLeadForProcess handles scenario where source provider reco
 });
 
 test('isTransitionableLeadForProcess returns non-transitionable when no transition_id', function () {
-    $providerText = 'AXA Direct '.uniqid();
-    $provider = InsuranceProvider::create(['code' => 'AXA', 'text' => $providerText]);
-    CarPlan::create([
-        'text' => 'GIG Gulf (AXA) Motor Prestige',
-        'repair_type' => 'AGENCY',
-        'provider_id' => $provider->id,
-    ]);
+    $provider = InsuranceProvider::factory()->axa()->create();
+    $plan = CarPlan::factory()->forInsuranceProvider($provider->id)->create(['repair_type' => 'AGENCY']);
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'AXA',
-        'provider_name' => $providerText,
-        'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
-        'plan_type' => 'AGENCY',
+        'provider_name' => $provider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ], null);
 
     $service = createTransitionableFeatureService();
@@ -300,27 +267,19 @@ test('isTransitionableLeadForProcess returns non-transitionable when no transiti
 });
 
 test('isTransitionableLeadForProcess correctly identifies transitionable lead even when transition_id is missing (fallback)', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    $plan = CarPlan::create([
-        'text' => 'Gulf Gulf (AXA) Motor Prestige',
-        'repair_type' => 'AGENCY',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'AGENCY']);
 
     // Lead has RSA insurer and AXA provider name, but NO transition_id
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
-        'plan_name' => 'Gulf Gulf (AXA) Motor Prestige',
-        'plan_type' => 'AGENCY',
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ], null);
 
     $service = createTransitionableFeatureService();
@@ -335,18 +294,14 @@ test('isTransitionableLeadForProcess correctly identifies transitionable lead ev
 });
 
 test('isTransitionableLeadForProcess returns non-transitionable when stored transition is inactive', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'TM', 'text' => 'Tokio Marine']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => false,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create(['is_active' => false]);
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'GIG Gulf (AXA) Motor Prestige',
         'plan_type' => 'AGENCY',
     ], $transition->id);
@@ -359,18 +314,14 @@ test('isTransitionableLeadForProcess returns non-transitionable when stored tran
 });
 
 test('isTransitionableLead persists transition_id when plan invalid so downstream provider combo is not misreported', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'RSA',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'Unknown Plan',
         'plan_type' => 'TPL',
     ]);
@@ -402,27 +353,19 @@ test('isTransitionableLead does not re-save when stored transition_id matches an
     // auto-cast. The strict !== comparison would then trigger a save() on
     // every validation pass for already-transitionable leads. The model cast
     // normalises the value so the comparison is true.
-    $sourceProvider = InsuranceProvider::create(['code' => 'RSA', 'text' => 'RSA']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    CarPlan::create([
-        'text' => 'GIG Gulf (AXA) Motor Prestige',
-        'repair_type' => 'AGENCY',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'AGENCY']);
 
     $state = (object) [
         'insurance_provider_transition_id' => (string) $transition->id,
         'save_count' => 0,
     ];
 
-    $lead = new class(['insurer' => 'RSA', 'provider_name' => 'GIG AXA', 'plan_name' => 'GIG Gulf (AXA) Motor Prestige', 'plan_type' => 'AGENCY'], $state) extends RenewalQuoteProcess
+    $lead = new class(['insurer' => 'RSA', 'provider_name' => $targetProvider->text, 'plan_name' => $plan->text, 'plan_type' => $plan->repair_type], $state) extends RenewalQuoteProcess
     {
         private array $dataStorage;
         private object $state;
@@ -476,20 +419,17 @@ test('isTransitionableLead does not re-save when stored transition_id matches an
 });
 
 test('isTransitionableLeadForProcess returns status false with carPlan null when plan name or type do not match but keeps transitionId set', function () {
-    $sourceProvider = InsuranceProvider::create(['code' => 'TM', 'text' => 'Tokio Marine']);
-    $targetProvider = InsuranceProvider::create(['code' => 'AXA', 'text' => 'GIG AXA']);
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $lead = createTransitionableFeatureMockLead([
         'insurer' => 'TM',
-        'provider_name' => 'GIG AXA',
+        'provider_name' => $targetProvider->text,
         'plan_name' => 'NonExistent Plan',
         'plan_type' => 'COMP',
+        'is_gcc' => 'Yes',
     ], $transition->id);
 
     $service = createTransitionableFeatureService();
