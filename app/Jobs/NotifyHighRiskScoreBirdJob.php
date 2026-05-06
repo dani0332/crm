@@ -28,7 +28,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
     public $timeout = 60;
 
     /**
-     * @param  array<string, mixed>  $payload
+     * @param  array{refId?: string, scoreProfile?: string, customerEmail?: string|null, customerName?: string|null, riskScoreDoc?: string|null, riskScore?: int}  $payload
      */
     public function __construct(private readonly array $payload) {}
 
@@ -38,6 +38,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
         if ($birdUrl === false || $birdUrl === null || $birdUrl === '') {
             LoggerService::warning('NotifyHighRiskScoreBirdJob: Bird workflow URL not configured — skipping', context: [
                 'quote_code' => $this->payload['refId'] ?? null,
+                'risk_score' => $this->payload['riskScore'] ?? null,
             ]);
 
             return;
@@ -50,6 +51,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
 
             LoggerService::error('NotifyHighRiskScoreBirdJob: Bird request did not return 200', context: [
                 'quote_code' => $this->payload['refId'] ?? null,
+                'risk_score' => $this->payload['riskScore'] ?? null,
                 'status_code' => $statusCode,
                 'body' => isset($response->body) ? (string) $response->body : null,
             ]);
@@ -64,6 +66,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
 
         LoggerService::info('NotifyHighRiskScoreBirdJob: Bird workflow triggered', context: [
             'quote_code' => $this->payload['refId'] ?? null,
+            'risk_score' => $this->payload['riskScore'] ?? null,
         ]);
     }
 
@@ -74,6 +77,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
             exception: $exception,
             context: [
                 'quote_code' => $this->payload['refId'] ?? null,
+                'risk_score' => $this->payload['riskScore'] ?? null,
             ]
         );
     }

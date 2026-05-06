@@ -23,15 +23,15 @@ class HighRiskScoreBirdNotificationService
     /**
      * Queues the Bird workflow when the score newly enters the High Risk band and attaches a signed PDF URL when available.
      *
-     * @param  mixed  $quote  Lead/quote model used in calculateScore
-     * @param  array{total?: int, score_list?: mixed}  $results
-     * @param  mixed  $latestPersistedRiskScore  Latest `risk_score` stored on the quote row before this run (null if unset).
+     * @param  mixed  $quote  Quote model with code, names, email.
      * @param  mixed  $uploadResult  Return value from {@see QuoteDocumentService::uploadQuoteDocument()}
+     * @param  int  $riskScore  Current AML total score sent to Bird (same band as the risk score PDF).
      */
     public function queueHighRiskBirdNotification(
         mixed $quote,
         string $type,
         mixed $uploadResult,
+        int $riskScore,
     ): void {
         $riskScorePdfUrl = $this->resolveRiskScoreDocumentTemporaryUrl($uploadResult);
 
@@ -43,6 +43,7 @@ class HighRiskScoreBirdNotificationService
             'customerEmail' => $quote->email ?? null,
             'customerName' => $customerName !== '' ? $customerName : null,
             'riskScoreDoc' => $riskScorePdfUrl,
+            'riskScore' => $riskScore,
         ]);
     }
 

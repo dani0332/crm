@@ -19,7 +19,7 @@ test('queues job with customer payload and null riskScoreDoc when upload result 
         'email' => 'a@b.com',
     ];
 
-    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', null);
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', null, 40);
 
     Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
         $reflection = new ReflectionClass($job);
@@ -32,6 +32,7 @@ test('queues job with customer payload and null riskScoreDoc when upload result 
             && ($payload['scoreProfile'] ?? null) === 'individual'
             && ($payload['customerEmail'] ?? null) === 'a@b.com'
             && ($payload['customerName'] ?? null) === 'A B'
+            && ($payload['riskScore'] ?? null) === 40
             && ($payload['riskScoreDoc'] ?? null) === null;
     });
 });
@@ -46,7 +47,7 @@ test('queues job with entity score profile for business type', function () {
         'email' => null,
     ];
 
-    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'business', null);
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'business', null, 35);
 
     Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
         $reflection = new ReflectionClass($job);
@@ -55,7 +56,8 @@ test('queues job with entity score profile for business type', function () {
         /** @var array<string, mixed> $payload */
         $payload = $property->getValue($job);
 
-        return ($payload['scoreProfile'] ?? null) === 'entity';
+        return ($payload['scoreProfile'] ?? null) === 'entity'
+            && ($payload['riskScore'] ?? null) === 35;
     });
 });
 
@@ -86,6 +88,7 @@ test('queues job with signed risk score document URL when upload returns QuoteDo
         $quote,
         'health',
         $quoteDocument,
+        41,
     );
 
     Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) use ($pdfUrl) {
@@ -95,7 +98,8 @@ test('queues job with signed risk score document URL when upload returns QuoteDo
         /** @var array<string, mixed> $payload */
         $payload = $property->getValue($job);
 
-        return ($payload['riskScoreDoc'] ?? null) === $pdfUrl;
+        return ($payload['riskScoreDoc'] ?? null) === $pdfUrl
+            && ($payload['riskScore'] ?? null) === 41;
     });
 });
 
@@ -110,7 +114,7 @@ test('does not call getDocumentUrl when QuoteDocument has no doc_url', function 
     $quoteDocument = new QuoteDocument;
     $quoteDocument->doc_url = null;
 
-    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', $quoteDocument);
+    app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification($quote, 'health', $quoteDocument, 35);
 
     Queue::assertPushed(NotifyHighRiskScoreBirdJob::class, function (NotifyHighRiskScoreBirdJob $job) {
         $reflection = new ReflectionClass($job);
@@ -119,6 +123,7 @@ test('does not call getDocumentUrl when QuoteDocument has no doc_url', function 
         /** @var array<string, mixed> $payload */
         $payload = $property->getValue($job);
 
-        return ($payload['riskScoreDoc'] ?? null) === null;
+        return ($payload['riskScoreDoc'] ?? null) === null
+            && ($payload['riskScore'] ?? null) === 35;
     });
 });

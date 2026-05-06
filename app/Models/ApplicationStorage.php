@@ -13,6 +13,15 @@ class ApplicationStorage extends BaseModel implements AuditableContract
 
     protected $table = 'application_storage';
 
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'key_name',
+        'value',
+        'is_active',
+    ];
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

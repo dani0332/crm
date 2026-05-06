@@ -2,26 +2,25 @@
 
 declare(strict_types=1);
 
-use App\Enums\ApplicationStorageEnums;
 use App\Exceptions\HighRiskBirdNotificationFailedException;
 use App\Jobs\NotifyHighRiskScoreBirdJob;
+use App\Models\ApplicationStorage;
 use App\Services\BirdService;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    DB::table('application_storage')->delete();
+    ApplicationStorage::withTrashed()->chunkById(100, function ($rows): void {
+        foreach ($rows as $row) {
+            $row->forceDelete();
+        }
+    });
 });
 
 test('invokes bird webhook when workflow url is stored', function () {
-    DB::table('application_storage')->insert([
-        'key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL,
-        'value' => 'https://bird.example/flow',
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ApplicationStorage::factory()
+        ->birdHighRiskAmlScoreNotificationWorkflow()
+        ->createOne();
 
     $payload = [
         'refId' => 'HEA-1',
@@ -29,6 +28,7 @@ test('invokes bird webhook when workflow url is stored', function () {
         'customerEmail' => null,
         'customerName' => null,
         'riskScoreDoc' => null,
+        'riskScore' => 40,
     ];
 
     $bird = $this->mock(BirdService::class, function ($mock) use ($payload) {
@@ -43,13 +43,9 @@ test('invokes bird webhook when workflow url is stored', function () {
 });
 
 test('throws when bird returns non-200 so the queue can retry', function () {
-    DB::table('application_storage')->insert([
-        'key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL,
-        'value' => 'https://bird.example/flow',
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ApplicationStorage::factory()
+        ->birdHighRiskAmlScoreNotificationWorkflow()
+        ->createOne();
 
     $payload = [
         'refId' => 'C1',
@@ -57,6 +53,7 @@ test('throws when bird returns non-200 so the queue can retry', function () {
         'customerEmail' => null,
         'customerName' => null,
         'riskScoreDoc' => null,
+        'riskScore' => 40,
     ];
 
     $bird = $this->mock(BirdService::class, function ($mock) use ($payload) {
@@ -82,6 +79,7 @@ test('skips bird when workflow url missing', function () {
         'customerEmail' => null,
         'customerName' => null,
         'riskScoreDoc' => null,
+        'riskScore' => 40,
     ]);
     $job->handle($bird);
 });

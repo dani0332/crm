@@ -1213,6 +1213,7 @@ class CRUDService extends BaseService
                     $quoteModel,
                     $type,
                     $uploadResult,
+                    (int) $results['total'],
                 );
             }
         }
