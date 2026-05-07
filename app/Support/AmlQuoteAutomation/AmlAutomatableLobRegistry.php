@@ -43,12 +43,13 @@ final class AmlAutomatableLobRegistry
     {
         if ($quoteType === QuoteTypes::SAVINGS && $quoteRequest instanceof PersonalQuote) {
             // NOTE:: we cannot check provider here because the provider is attached to the quote after doc signing.
-            return true;
+            // NOTE:: we need to initiate AML automation for OIC after the documents sign step only then we have provider and plan details but it is not as per FRD.
+            // NOTE:: api_issuance_status_id is updated after policy automation is completed (pass or failed) and in savings we need to check this before initiating AML automation which starts before policy automation is completed.
+            $quoteRequest->loadMissing('insuranceProvider');
+
+            return $quoteRequest->insuranceProvider?->code === InsuranceProvidersEnum::OIC;
         }
 
         return false;
-        // NOTE:: need to discuss this we need to initiate AML automation for OIC after the documents sign step only then we have provider and plan details but it is not as per FRD.
-        // $quoteRequest->loadMissing('insuranceProvider');
-        // return $quoteRequest->insuranceProvider?->code === InsuranceProvidersEnum::OIC;
     }
 }

@@ -177,7 +177,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     private function buildAmlRequestData($customer, $idType, $idNumber): array
     {
         return [
-            'is_automation' => true,
             'customer_id' => $customer['customer_id'],
             'customer_type' => CustomerTypeEnum::Individual,
             'quote_type' => $this->quoteType->value,

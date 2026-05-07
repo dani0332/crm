@@ -470,10 +470,9 @@ class AMLService
      */
     public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
     {
-        // Create AML check request object
         $amlCheckRequest = new AMLCheckRequest($amlRequestData);
+        $amlCheckRequest->attributes->set(AMLCheckRequest::INTERNAL_AUTOMATION_ATTRIBUTE, true);
 
-        // Call the AML quote update method
         return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
     }
 
@@ -2766,10 +2765,12 @@ class AMLService
             }
 
             $automation = AmlAutomation::query()->where('code', $quote->code)->first();
-            if ($automation !== null && in_array($automation->status, [
+            $automationEnum = $automation === null ? null : AmlAutomationStatus::coerce($automation->status);
+
+            if ($automationEnum !== null && $automationEnum->in([
                 AmlAutomationStatus::COMPLETE_STATUS,
                 AmlAutomationStatus::PROCESSING_STATUS,
-            ], true)) {
+            ])) {
                 LoggerService::info('AML automate-by-uuid: blocked — automation already complete or processing', extra: array_merge($quoteContext, [
                     'outcome' => 'blocked',
                     'reason' => 'automation_complete_or_processing',
@@ -2781,7 +2782,7 @@ class AMLService
                 return $respond(false, 422, 'AML automation already completed or in progress');
             }
 
-            if ($automation !== null && $automation->status === AmlAutomationStatus::QUEUE_STATUS) {
+            if ($automationEnum?->is(AmlAutomationStatus::QUEUE_STATUS)) {
                 LoggerService::info('AML automate-by-uuid: blocked — automation already queued', extra: array_merge($quoteContext, [
                     'outcome' => 'blocked',
                     'reason' => 'automation_already_queued',
@@ -2843,7 +2844,7 @@ class AMLService
                     'step' => 'dispatch_sync',
                 ]));
 
-                AmlScreeningAutomationJob::dispatch($quoteType, $quote);
+                AmlScreeningAutomationJob::dispatchSync($quoteType, $quote);
 
                 LoggerService::info('AML automate-by-uuid: successfully — dispatched', extra: array_merge($quoteContext, [
                     'outcome' => 'success',

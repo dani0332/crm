@@ -218,7 +218,7 @@ class AMLController extends Controller
         LoggerService::info('IM AML Screening Process Started');
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
-        $isAutomation = $AMLCheckRequest->is_automation ?? false;
+        $isAutomation = $AMLCheckRequest->isTrustedInternalAutomation();
         $processbyUser = $isAutomation ? $systemUser : FacadesAuth::user();
 
         if ($updateQuote) {

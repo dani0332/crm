@@ -11,9 +11,24 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 
 class AMLCheckRequest extends FormRequest
 {
+    /**
+     * Request attribute set only by trusted server-side callers (e.g. {@see AMLService::quoteAmlProcessCall}).
+     * Must not be derived from user-controlled input; clients cannot set {@see Request::attributes}.
+     */
+    public const INTERNAL_AUTOMATION_ATTRIBUTE = 'blanka.aml_internal_automation';
+
+    /**
+     * Whether this AML check is running from the queue/automation pipeline (not a browser user forging flags).
+     */
+    public function isTrustedInternalAutomation(): bool
+    {
+        return (bool) $this->attributes->get(self::INTERNAL_AUTOMATION_ATTRIBUTE, false);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -72,7 +87,7 @@ class AMLCheckRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if ($this->boolean('is_automation')) {
+            if ($this->isTrustedInternalAutomation()) {
                 return;
             }
 

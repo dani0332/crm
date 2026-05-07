@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
@@ -188,6 +189,81 @@ test('dispatches aml screening job for valid savings quote', function () {
 
     Bus::assertDispatched(AmlScreeningAutomationJob::class);
 });
+
+test('returns 422 when aml automation row blocks re-dispatch', function (string $status, string $expectedMessage) {
+    Bus::fake();
+
+    $advisor = TestDataSeeder::createUser(['email' => 'block@example.com']);
+    $uuid = '01900000-0000-7000-8000-000000000005';
+
+    DB::connection('sqlite')->table('personal_quotes')->insert([
+        'uuid' => $uuid,
+        'code' => 'SAV-BLOCK',
+        'quote_type_id' => QuoteTypeId::Savings,
+        'customer_id' => 1,
+        'advisor_id' => $advisor->id,
+        'first_name' => 'A',
+        'last_name' => 'B',
+        'email' => 'customer@example.com',
+        'dob' => '1990-01-01',
+        'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
+        'aml_status' => AMLStatusCode::AMLPending,
+        'nationality_id' => 1,
+        'gender' => 'male',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $pqId = (int) DB::connection('sqlite')->table('personal_quotes')->where('uuid', $uuid)->value('id');
+
+    $insuredId = DB::connection('sqlite')->table('insured')->insertGetId([
+        'customer_type' => 'Individual',
+        'first_name' => 'A',
+        'last_name' => 'B',
+        'dob' => '1990-01-01',
+        'nationality_id' => 1,
+        'gender' => 'male',
+        'id_type' => 'passport',
+        'id_number' => 'AB1234567',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::connection('sqlite')->table('customer_insured')->insert([
+        'quote_type_id' => QuoteTypeId::Savings,
+        'quote_request_id' => $pqId,
+        'insured_id' => $insuredId,
+        'customer_id' => 1,
+        'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::connection('sqlite')->table('aml_automation')->insert([
+        'code' => 'SAV-BLOCK',
+        'status' => $status,
+        'result' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
+        'quoteUuid' => $uuid,
+        'quoteType' => QuoteTypes::SAVINGS->value,
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJson([
+            'success' => false,
+            'message' => $expectedMessage,
+        ]);
+
+    Bus::assertNothingDispatched();
+})->with([
+    [AmlAutomationStatus::COMPLETE_STATUS, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::PROCESSING_STATUS, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::QUEUE_STATUS, 'AML automation already queued'],
+]);
 
 test('aml automatable lob registry allows savings only', function () {
     expect(AmlAutomatableLobRegistry::allows(QuoteTypes::SAVINGS))->toBeTrue();
