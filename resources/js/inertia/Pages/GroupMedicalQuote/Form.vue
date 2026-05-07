@@ -532,7 +532,10 @@ function onSubmit(isValid) {
                   + Add row
                 </x-button>
                 <template #tooltip>
-                  <span>Add another category row (up to {{ GM_CATEGORY_ROW_MAX }}).</span>
+                  <span
+                    >Add another category row (up to
+                    {{ GM_CATEGORY_ROW_MAX }}).</span
+                  >
                 </template>
               </x-tooltip>
             </div>
@@ -648,7 +651,9 @@ function onSubmit(isValid) {
                       placeholder="Select TPA"
                       filterable
                       :error="
-                        quoteForm.errors[`gm_category_intake.${idx}.existing_tpa_id`]
+                        quoteForm.errors[
+                          `gm_category_intake.${idx}.existing_tpa_id`
+                        ]
                       "
                     />
                   </td>
@@ -703,9 +708,7 @@ function onSubmit(isValid) {
                         size="sm"
                         color="error"
                         class="!min-h-[2.25rem] !min-w-[2.25rem] !px-2"
-                        :disabled="
-                          quoteForm.gm_category_intake.length <= 1
-                        "
+                        :disabled="quoteForm.gm_category_intake.length <= 1"
                         :aria-label="`Remove category row ${idx + 1}`"
                         @click.prevent="removeCategoryRow(idx)"
                       >
