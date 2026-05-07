@@ -790,9 +790,7 @@ class HealthQuote extends Model implements AuditableContract
             return false;
         }
 
-        $insured = $this->latestInsured()
-            ->where('customer_insured.customer_id', $this->customer_id)
-            ->first();
+        $insured = $this->latestInsured;
 
         return $insured !== null && $insured->customer_type === CustomerTypeEnum::Entity;
     }
