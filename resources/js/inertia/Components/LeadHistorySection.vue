@@ -16,7 +16,12 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  recordId: {
+  sendUpdateId: {
+    type: [Number, String, null],
+    required: false,
+    default: null,
+  },
+  quoteId: {
     type: [Number, String],
     required: true,
   },
@@ -55,9 +60,9 @@ const headers = computed(() => {
 
 const endpoint = computed(() => {
   const query = new URLSearchParams({
-    modelType: String(props.modelType),
-    recordId: String(props.recordId),
-    quoteTypeId: String(props.quoteTypeId),
+    recordId: props.quoteId,
+    quoteTypeId: props.quoteTypeId,
+    sendUpdateId: props.sendUpdateId,
   });
 
   return `/quotes/lead-history?${query.toString()}`;

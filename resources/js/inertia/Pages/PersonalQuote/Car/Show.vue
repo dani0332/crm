@@ -4643,8 +4643,7 @@ const { openTempUrl } = useDocumentTempUrl();
 
     <LeadHistorySection
       :expanded="sectionExpanded"
-      modelType="car"
-      :recordId="page.props.paymentEntityModel.id"
+      :quoteId="page.props.paymentEntityModel.id"
       :quoteTypeId="page.props.quoteTypeId"
     />
 
