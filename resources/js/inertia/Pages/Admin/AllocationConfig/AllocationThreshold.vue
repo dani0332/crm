@@ -1,20 +1,17 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
   teams: Object,
-  roles: Array,
-  permissions: Array,
-  /** BenSampo PermissionsEnum: PHP const name → permission string */
-  PermissionsEnum: {
-    type: Object,
-    default: () => ({}),
-  },
 });
 
+const page = usePage();
+
+/** Role- and direct-permissions via shared auth; enum map via HandleInertiaRequests `permissionsEnum`. */
 const canEditTeamAllocationThreshold = computed(() =>
-  props.permissions.includes(props.PermissionsEnum.TEAM_ALLOCATION_THRESHOLD_EDIT),
+  useCan(page.props.permissionsEnum?.TEAM_ALLOCATION_THRESHOLD_EDIT ?? ''),
 );
 
 const notification = useToast();
