@@ -66,26 +66,4 @@ class SendAmlAutomationOutcomeNotifications
         return $resolved;
     }
 
-    /**
-     * @param  array<string, mixed>  $kenResult
-     */
-    private function summarizeKenResponse(array $kenResult): ?string
-    {
-        if (($kenResult['success'] ?? false) !== true) {
-            return isset($kenResult['error']) ? (string) $kenResult['error'] : 'KEN request failed';
-        }
-
-        $body = $kenResult['body'] ?? null;
-        if (! is_array($body)) {
-            return null;
-        }
-
-        $encoded = json_encode($body);
-
-        if ($encoded === false) {
-            return null;
-        }
-
-        return mb_substr($encoded, 0, 2000);
-    }
 }
