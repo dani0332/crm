@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Contracts\CsvExportableInterface;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\HealthQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
@@ -146,23 +147,13 @@ class HealthQuotesExport implements CsvExportableInterface
         ];
     }
 
-    private function hasMemberAgeSixtyOrAbove($quote): bool
+    private function hasMemberAgeSixtyOrAbove(HealthQuote $quote): bool
     {
         if (! $quote->relationLoaded('activeMembers')) {
             return false;
         }
 
-        $cutoffDate = now()->subYears(60)->startOfDay();
-
-        return $quote->activeMembers->contains(function ($member) use ($cutoffDate) {
-            if (empty($member->dob)) {
-                return false;
-            }
-
-            $memberDob = Carbon::parse($member->dob)->startOfDay();
-
-            return $memberDob->lessThanOrEqualTo($cutoffDate);
-        });
+        return $quote->hasAnyMemberAgeSixtyOrAbove();
     }
 
     /**
