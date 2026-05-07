@@ -60,10 +60,14 @@ const headers = computed(() => {
 
 const endpoint = computed(() => {
   const query = new URLSearchParams({
+    quoteId: props.quoteId,
     recordId: props.quoteId,
     quoteTypeId: props.quoteTypeId,
-    sendUpdateId: props.sendUpdateId,
   });
+
+  if (props.sendUpdateId !== null && props.sendUpdateId !== '') {
+    query.append('sendUpdateId', props.sendUpdateId);
+  }
 
   return `/quotes/lead-history?${query.toString()}`;
 });
