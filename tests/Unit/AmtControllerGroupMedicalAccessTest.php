@@ -48,6 +48,17 @@ it('allows group medical show access when user has gm quotes edit on an existing
     expect(app(AmtController::class)->checkUserHasGroupMedicalAccess('show'))->toBeTrue();
 });
 
+it('allows group medical show access when user has only gm quotes list permission', function () {
+    TestDataSeeder::seedRolePermissions(RolesEnum::CarAdvisor, [PermissionsEnum::GMQuotesList]);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
+
+    $this->actingAs($user);
+
+    expect(app(AmtController::class)->checkUserHasGroupMedicalAccess('show'))->toBeTrue();
+});
+
 it('allows group medical show access when user has view all leads permission', function () {
     TestDataSeeder::seedRolePermissions(RolesEnum::CarAdvisor, [PermissionsEnum::VIEW_ALL_LEADS]);
     app(PermissionRegistrar::class)->forgetCachedPermissions();

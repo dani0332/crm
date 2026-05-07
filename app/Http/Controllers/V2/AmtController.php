@@ -594,7 +594,7 @@ class AmtController extends Controller
     {
 
         $permissions = [
-            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
+            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate, PermissionsEnum::GMQuotesList],
             'edit' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
             'create' => [PermissionsEnum::GMQuotesCreate],
             'list' => [PermissionsEnum::GMQuotesList],

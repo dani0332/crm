@@ -219,6 +219,10 @@ class BusinessQuoteController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
+        if (! $this->checkUserHasBusinessQuoteAccess('show')) {
+            abort(403, 'Unauthorized access');
+        }
+
         /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
         /* End - Temporarily adding for correcting historic data */
@@ -385,6 +389,32 @@ class BusinessQuoteController extends Controller
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
+    }
+    public function checkUserHasBusinessQuoteAccess($method)
+    {
+
+        $permissions = [
+            'show' => [PermissionsEnum::BusinessQuotesEdit, PermissionsEnum::CorpLineQuotesCreate, PermissionsEnum::CorpLineQuotesEdit, PermissionsEnum::BusinessQuotesCreate, PermissionsEnum::BusinessQuotesList],
+            'edit' => [PermissionsEnum::BusinessQuotesEdit, PermissionsEnum::CorpLineQuotesCreate, PermissionsEnum::CorpLineQuotesEdit, PermissionsEnum::BusinessQuotesCreate],
+            'create' => [PermissionsEnum::BusinessQuotesCreate, PermissionsEnum::CorpLineQuotesCreate],
+            'list' => [PermissionsEnum::BusinessQuotesList, PermissionsEnum::CorpLineQuotesList],
+        ];
+        $roles = [
+            'show' => [RolesEnum::BusinessManager, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager, RolesEnum::CorplineRenewalManager, RolesEnum::BusinessAdvisor],
+            'edit' => [RolesEnum::BusinessManager, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager, RolesEnum::CorplineRenewalManager, RolesEnum::BusinessAdvisor],
+            'create' => [RolesEnum::BusinessManager, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager, RolesEnum::CorplineRenewalManager, RolesEnum::BusinessAdvisor],
+            'list' => [RolesEnum::BusinessManager, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager, RolesEnum::CorplineRenewalManager, RolesEnum::BusinessAdvisor],
+        ];
+        if (
+            auth()->user()->canAny($permissions[$method])
+            || auth()->user()->hasAnyRole(...$roles[$method])
+            || auth()->user()->hasAnyRole(RolesEnum::Engineering, RolesEnum::Admin)
+            || auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
