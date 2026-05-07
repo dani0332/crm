@@ -2117,7 +2117,7 @@ class CRUDController extends Controller
      */
     public function getLeadHistoryLogs(Request $request)
     {
-        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->recordId);
+        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->quoteId);
     }
 
     public function searchLead(Request $request)

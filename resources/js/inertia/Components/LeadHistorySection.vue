@@ -61,7 +61,6 @@ const headers = computed(() => {
 const endpoint = computed(() => {
   const query = new URLSearchParams({
     quoteId: props.quoteId,
-    recordId: props.quoteId,
     quoteTypeId: props.quoteTypeId,
   });
 
