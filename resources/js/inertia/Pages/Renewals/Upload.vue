@@ -279,34 +279,27 @@ const can = permission => useCan(permission);
               </tr>
               <tr>
                 <td>17</td>
-                <td>Object</td>
-                <td>Information against the quotation</td>
-                <td>No</td>
-                <td>200</td>
-              </tr>
-              <tr>
-                <td>18</td>
                 <td>Gross Premium</td>
                 <td>Gross Premium amount</td>
                 <td>No</td>
                 <td>25</td>
               </tr>
               <tr>
-                <td>19</td>
+                <td>18</td>
                 <td>Sales Channel</td>
                 <td>Source of the quotation</td>
                 <td>No</td>
                 <td>100</td>
               </tr>
               <tr>
-                <td>20</td>
+                <td>19</td>
                 <td>Notes</td>
                 <td>Any other Information</td>
                 <td>No</td>
                 <td>200</td>
               </tr>
               <tr>
-                <td>21</td>
+                <td>20</td>
                 <td>Plan Name</td>
                 <td>Plan Name - Effective for Health Only</td>
                 <td>No</td>
