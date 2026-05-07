@@ -4576,8 +4576,7 @@ const validateEmirateOfVisa = () => {
 
     <LeadHistorySection
       :expanded="sectionExpanded"
-      modelType="health"
-      :recordId="page.props.quote.id"
+      :quoteId="page.props.quote.id"
       :quoteTypeId="page.props.quoteTypeId"
     />
 
