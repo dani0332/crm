@@ -31,6 +31,7 @@ class CoreSchema
         $this->ensureSageTables();
         $this->ensureCustomerAdditionalContactTables();
         $this->ensureEPLogsTables();
+        $this->ensureEmailStatusTables();
     }
 
     private function ensureAuditTables(): void
@@ -445,6 +446,8 @@ class CoreSchema
                 $table->integer('flow_type')->nullable();
                 $table->string('flow_id');
                 $table->timestamp('started_at')->nullable();
+                $table->timestamp('ended_at')->nullable();
+                $table->string('stopped_source', 64)->nullable();
                 $table->timestamps();
             },
             'device_quote' => function (Blueprint $table) {
@@ -1473,5 +1476,26 @@ class CoreSchema
                 $table->timestamps();
             },
         ]);
+    }
+
+    private function ensureEmailStatusTables(): void
+    {
+        SchemaUtils::ensureTable('email_status', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('quote_type_id')->nullable();
+            $table->unsignedBigInteger('quote_id')->nullable();
+            $table->string('email_address')->nullable();
+            $table->string('msg_id')->nullable();
+            $table->text('reason')->nullable();
+            $table->string('email_status')->nullable();
+            $table->string('email_subject')->nullable();
+            $table->string('template_id')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->boolean('customer_replied')->default(false);
+            $table->string('type')->nullable();
+            $table->string('mobile_no')->nullable();
+            $table->unsignedSmallInteger('flow_type')->nullable();
+            $table->timestamps();
+        });
     }
 }
