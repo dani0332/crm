@@ -433,15 +433,16 @@ class AmtController extends Controller
     {
 
         $crudService = app(CRUDService::class);
+
+        if (! $this->checkUserHasGroupMedicalAccess('show')) {
+            abort(403, 'Unauthorized access');
+        }
+
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
         abort_if(! $record, 404);
-
-        if (! $this->checkUserHasGroupMedicalAccess('show')) {
-            abort(403, 'Unauthorized access');
-        }
 
         /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
@@ -600,10 +601,10 @@ class AmtController extends Controller
             'list' => [PermissionsEnum::GMQuotesList],
         ];
         $roles = [
-            'show' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
-            'edit' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
-            'create' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
-            'list' => [RolesEnum::GMManager, RolesEnum::GMAdvisor],
+            'show' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'edit' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'create' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'list' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
         ];
         if (
             auth()->user()->canAny($permissions[$method])

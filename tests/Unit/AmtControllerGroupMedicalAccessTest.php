@@ -37,6 +37,14 @@ it('allows group medical show access for gm manager role', function () {
     expect(app(AmtController::class)->checkUserHasGroupMedicalAccess('show'))->toBeTrue();
 });
 
+it('allows group medical show access for gm deputy manager role', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::GMDeputyManager);
+
+    $this->actingAs($user);
+
+    expect(app(AmtController::class)->checkUserHasGroupMedicalAccess('show'))->toBeTrue();
+});
+
 it('allows group medical show access when user has gm quotes edit on an existing advisor role', function () {
     TestDataSeeder::seedRolePermissions(RolesEnum::CarAdvisor, [PermissionsEnum::GMQuotesEdit]);
     app(PermissionRegistrar::class)->forgetCachedPermissions();
