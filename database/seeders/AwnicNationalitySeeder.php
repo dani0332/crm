@@ -257,7 +257,7 @@ class AwnicNationalitySeeder extends Seeder
             }
         }
 
-        LoggerService::info('AwnicNationalitySeeder: AWNIC nationality mapping run', [
+        LoggerService::info('AwnicNationalitySeeder: AWNIC nationality mapping run', [], [
             'summary' => [
                 'total_entries' => count($nationalities),
                 'updated_count' => count($updated),
