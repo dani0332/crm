@@ -53,13 +53,16 @@ use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusHistory;
+use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\PolicyWording;
 use App\Models\QuoteBatches;
+use App\Models\QuoteDocument;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
@@ -85,11 +88,15 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
+
+    private const MESSAGE_PAYMENT_NOT_FOUND = 'Payment not found';
+    private const MESSAGE_PAYMENT_DELETION_FAILED = 'Payment deletion failed';
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -1514,9 +1521,9 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process started for payment code: '.$paymentCode);
         $payment = Payment::where('code', $paymentCode)->first();
         if (! $payment) {
-            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$paymentCode);
+            LoggerService::info('fn:voidPayment - '.self::MESSAGE_PAYMENT_NOT_FOUND.'. - Payment Code:'.$paymentCode);
 
-            return ['status' => false, 'message' => 'Payment not found'];
+            return ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
@@ -1795,11 +1802,14 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
-            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
-                return $member['first_name'];
-            }, $quote->activeMembers->toArray()));
+            $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
+            $activeMembers = $quote->activeMembers ?? collect();
+            $emailData->numberOfMembersCovered = (string) $activeMembers->count();
+            $emailData->policyHolderName = $activeMembers->isEmpty()
+                ? ''
+                : implode(', ', array_map(function ($member) {
+                    return $member['first_name'];
+                }, $activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
@@ -2286,55 +2296,145 @@ class CentralService extends BaseService
     public function deletePayment($request): array
     {
         $paymentCode = $request->payment_code;
-        LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
+        LoggerService::info('Delete payment process started', extra: ['paymentCode' => $paymentCode]);
 
-        $payment = Payment::where(
-            [
-                'id' => $request->payment_id,
-                'code' => $request->payment_code,
-                'paymentable_type' => TravelQuote::class,
-            ])
-            ->whereIn('payment_status_id', [
-                PaymentStatusEnum::PENDING,
-                PaymentStatusEnum::NEW,
-                PaymentStatusEnum::DRAFT,
-                PaymentStatusEnum::OVERDUE,
-            ])
+        $allowedPaymentStatuses = array_merge([
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::OVERDUE,
+        ], PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses());
+
+        $payment = Payment::where([
+            'id' => $request->payment_id,
+            'code' => $request->payment_code,
+            'paymentable_type' => TravelQuote::class,
+        ])
+            ->whereIn('payment_status_id', $allowedPaymentStatuses)
             ->first();
-        if (! $payment) {
-            LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
 
-            return ['status' => false, 'message' => 'Payment not found'];
-        }
+        if ($payment) {
+            $quote = $payment->paymentable;
 
-        $quote = $payment->paymentable;
-        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
-        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
-            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
+            if ($quote->payments()->count() < 2) {
+                LoggerService::info('Payment cannot be deleted its the only associated payment with this quote', extra: ['paymentCode' => $paymentCode]);
+                $result = ['status' => false, 'message' => 'Payment cannot be deleted'];
 
-            return ['status' => false, 'message' => 'Payment cannot be deleted'];
-        }
+            } else {
+                try {
+                    LoggerService::info('Deleting travel payment with related updates in a single transaction', extra: ['paymentCode' => $paymentCode]);
 
-        // Delete Payment and Payment Splits
-        try {
-            $maxAttempts = 2;
-            $this->handleWithDeadlockRetries(function () use ($request) {
-                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
-                foreach ($paymentSplits as $paymentSplit) {
-                    $paymentSplit->documents()->forceDelete();
+                    $maxAttempts = 2;
+                    $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote) {
+
+                        $this->performDeletePaymentAndSyncDependencies($request);
+                        $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
+                        $this->updateQuoteStatusAfterPaymentDeletion($quote);
+
+                    }, $maxAttempts);
+
+                    if (is_array($retryResult)) {
+                        throw new \RuntimeException((string) ($retryResult['message'] ?? self::MESSAGE_PAYMENT_DELETION_FAILED));
+                    }
+
+                    $result = ['status' => true, 'message' => 'Delete payment processed'];
+                } catch (\Throwable $th) {
+                    LoggerService::warning(self::MESSAGE_PAYMENT_DELETION_FAILED, extra: ['paymentCode' => $paymentCode], exception: $th);
+                    $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_DELETION_FAILED];
                 }
-                PaymentSplits::where('code', $request->payment_code)->delete();
-                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
-                Payment::where('id', $request->payment_id)->delete();
-            }, $maxAttempts);
-            info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
-        } catch (\Throwable $th) {
-            info('fn:deletePayment - Payment deletion failed: '.$paymentCode);
-
-            return ['status' => false, 'message' => 'Payment deletion failed'];
+            }
+        } else {
+            LoggerService::warning(self::MESSAGE_PAYMENT_NOT_FOUND, extra: ['paymentCode' => $paymentCode]);
+            $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
-        return ['status' => true, 'message' => 'Delete payment processed'];
+        return $result;
+    }
+
+    /**
+     * Remove payment rows and related splits/history for the given request.
+     * Must run inside an active transaction (see {@see deletePayment}).
+     */
+    private function performDeletePaymentAndSyncDependencies($request): void
+    {
+        QuoteDocument::query()
+            ->whereIn(
+                'payment_split_id',
+                PaymentSplits::query()
+                    ->select('id')
+                    ->where('code', $request->payment_code)
+            )
+            ->get()
+            ->each(fn (QuoteDocument $document) => $document->forceDelete());
+
+        PaymentSplits::query()
+            ->where('code', $request->payment_code)
+            ->orderBy('id')
+            ->get()
+            ->each(fn (PaymentSplits $split) => $split->delete());
+
+        PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
+
+        Payment::query()
+            ->where('id', $request->payment_id)
+            ->get()
+            ->each(fn (Payment $paymentRow) => $paymentRow->delete());
+    }
+
+    private function updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion(TravelQuote $quote): void
+    {
+        $quote->refresh();
+
+        $mainLeadPaymentsQuery = $quote->payments()->mainLeadPayment();
+        if ($mainLeadPaymentsQuery->count() !== 1) {
+            return;
+        }
+
+        $payment = $mainLeadPaymentsQuery->first();
+        $oldCode = (string) ($payment->code ?? '');
+        $newCode = $quote->code;
+        $expectedChildCode = $newCode.'-1';
+
+        if ($oldCode === '' || $oldCode !== $expectedChildCode) {
+            return;
+        }
+
+        Schema::withoutForeignKeyConstraints(function () use ($oldCode, $newCode, $payment): void {
+            PaymentSplits::query()
+                ->where('code', $oldCode)
+                ->update(['code' => $newCode]);
+
+            PaymentAction::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            PaymentStatusHistory::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            PaymentStatusLog::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            $payment->code = $newCode;
+            $payment->save();
+        });
+
+        LoggerService::info('fn:updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion - Updated travel payment code from '.$oldCode.' to '.$newCode.' for quote '.$quote->code);
+    }
+
+    /**
+     * Align travel quote status with the main-lead payment after a payment row was removed.
+     */
+    private function updateQuoteStatusAfterPaymentDeletion(TravelQuote $quote): void
+    {
+        $payment = $quote?->payments()->mainLeadPayment()->first();
+        $paymentStatus = $payment?->payment_status_id;
+
+        if (in_array($paymentStatus, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+            $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
+            $quote->save();
+        }
     }
 
     public function getPlansPaymentGateway($request, $quoteType)

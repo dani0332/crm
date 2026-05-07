@@ -77,6 +77,7 @@ class DocumentTypeCode extends Enum
     const SPD_RECEIPT = 'SPDR';
     const QD = 'QD';
     const AML = 'AML';
+    const COMPLIANCE_APPROVAL = 'compliance_approval';
     const E_TICKETS = 'E_TICKETS';
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';

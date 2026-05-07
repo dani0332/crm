@@ -74,8 +74,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $quote->refresh();
         LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - check advisor id', extra: [
-            'quoteAdvisorId' => $quote->advisor_id,
-            'dataAdvisorId' => $this->resolvePayloadAdvisorId($quote),
+            'quoteAdvisorId' => data_get($quote, 'advisor_id'),
         ]);
 
         $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
@@ -130,13 +129,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
 
         $quote->load('advisor');
-        $advisor = $quote->advisor_id ? $quote->advisor : User::find($this->resolvePayloadAdvisorId($quote)) ?? null;
+
+        $dataAdvisor = isset($this->data?->advisorId) ? User::find($this->data?->advisorId) : null;
+        $advisor = $quote->advisor_id ? $quote->advisor : $dataAdvisor;
+
         LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - Advisor Object', extra: [
             'advisor' => $advisor,
-            'quoteAdvisorId' => $quote->advisor_id,
+            'quoteAdvisorId' => data_get($quote, 'advisor_id'),
             'dataAdvisorId' => data_get($this->data, 'advisorId') ?? null,
             'dataAdvisor_Id' => data_get($this->data, 'advisor_id') ?? null,
-            'resolvedAdvisorId' => $this->resolvePayloadAdvisorId($quote),
         ]);
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
@@ -234,16 +235,4 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         return [(new WithoutOverlapping($this->code))->dontRelease()];
     }
 
-    /**
-     * Advisor id from the job payload when present (e.g. automation), then the quote row’s
-     * advisor_id. Some callers use quoteAdvisorId / quote_advisor_id on the payload (same meaning
-     * as the quote’s advisor_id). Payloads from SendBookPolicyRequest / bulk commands only include
-     * model_type and quote_id, so nullsafe property access on stdClass must not be used (it still reads missing keys).
-     */
-    private function resolvePayloadAdvisorId(object $quote): mixed
-    {
-        return data_get($this->data, 'advisorId')
-            ?? data_get($this->data, 'advisor_id')
-            ?? data_get($quote, 'advisor_id');
-    }
 }

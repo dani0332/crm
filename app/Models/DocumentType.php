@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -48,6 +49,11 @@ class DocumentType extends Model implements AuditableContract
     public function scopeActive($query)
     {
         $query->where('is_active', 1);
+    }
+
+    public function scopeNotRestrictedInternalDocument(Builder $query): Builder
+    {
+        return $query->where('is_restricted_internal_document', 0);
     }
 
     public function scopeSortDocumentType($query)

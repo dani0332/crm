@@ -68,10 +68,26 @@ class ConversionOptimizationReportService extends BaseService
 
     public function mergeDefaultsIntoRequest(Request $request, array $defaultFilters): Request
     {
-        return $request->duplicate(
-            array_merge($defaultFilters, $request->query->all()),
-            array_merge($defaultFilters, $request->request->all())
-        );
+        $mergedQuery = array_merge($defaultFilters, $request->query->all());
+        $mergedRequest = array_merge($defaultFilters, $request->request->all());
+
+        if ($this->conversionOptimizationClientChoseTeamsWithoutSubTeams($request)) {
+            unset($mergedQuery['sub_teams'], $mergedRequest['sub_teams']);
+        }
+
+        return $request->duplicate($mergedQuery, $mergedRequest);
+    }
+
+    /**
+     * When the UI sends teams but omits sub_teams (empty sub_teams are stripped client-side),
+     * defaults must not inject organic VALUE/VOLUME sub-teams — those only match the default team.
+     */
+    private function conversionOptimizationClientChoseTeamsWithoutSubTeams(Request $request): bool
+    {
+        $teamsKeyProvided = $request->query->has('teams') || $request->request->has('teams');
+        $subTeamsKeyProvided = $request->query->has('sub_teams') || $request->request->has('sub_teams');
+
+        return $teamsKeyProvided && ! $subTeamsKeyProvided;
     }
 
     public function getReportQueryBuilder($request): ?Builder
