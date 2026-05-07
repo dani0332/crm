@@ -69,7 +69,7 @@ abstract class BaseAllocationPipe extends AllocationService
                 $this->allocationRequest->getQuoteType() === QuoteTypes::CAR
                     && ! $this->allocationRequest->getQuoteType()->isPersonalQuote(),
                 fn ($query) => $query->with([
-                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at',
+                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at,utm_campaign',
                 ])
             );
 
