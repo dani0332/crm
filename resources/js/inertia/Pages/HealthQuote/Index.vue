@@ -1078,7 +1078,7 @@ const paymentStatusOptions = computed(() => {
           ]"
           class="w-full"
         />
-      
+
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"

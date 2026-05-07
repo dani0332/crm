@@ -53,6 +53,7 @@ class PermissionSeeder extends Seeder
         $this->addEpDocumentManualOverridePermission();
         $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
+        $this->addTeamAllocationThresholdEditPermission();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -184,5 +185,19 @@ class PermissionSeeder extends Seeder
         } else {
             LoggerService::info("Role {$role->name} already has permission {$permission->name}");
         }
+    }
+
+    /**
+     * Creates team-allocation-threshold-edit. Not granted to any role by default.
+     */
+    private function addTeamAllocationThresholdEditPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

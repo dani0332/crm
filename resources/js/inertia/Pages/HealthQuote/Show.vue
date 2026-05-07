@@ -2107,7 +2107,12 @@ const validateEmirateOfVisa = () => {
         <x-button v-if="hasPecTag" size="sm" color="#DC2626" tag="div">
           PEC
         </x-button>
-        <x-button v-if="hasAgeSixtyAndAbove" size="sm" color="#DC2626" tag="div">
+        <x-button
+          v-if="hasAgeSixtyAndAbove"
+          size="sm"
+          color="#DC2626"
+          tag="div"
+        >
           Age 60 and Above
         </x-button>
       </template>
