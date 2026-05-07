@@ -29,7 +29,6 @@ class WhatsAppHookService
                         ?? 'inbound',
                 ];
             },
-            requireExplicitStatus: false,
             invalidFieldsMessage: 'Invalid payload: messageId and mobile are required.',
         );
     }
@@ -46,7 +45,6 @@ class WhatsAppHookService
                     'status' => self::nonBlankStringOrNull($payload['status'] ?? null),
                 ];
             },
-            requireExplicitStatus: true,
             invalidFieldsMessage: 'Invalid payload: id, status and mobile are required.',
         );
     }
@@ -64,7 +62,6 @@ class WhatsAppHookService
                         ?? self::nonBlankStringOrNull($payload['status'] ?? null),
                 ];
             },
-            requireExplicitStatus: true,
             invalidFieldsMessage: 'Invalid payload: messageId, status, and mobile are required.',
         );
     }
@@ -77,7 +74,6 @@ class WhatsAppHookService
         string $handlerLabel,
         string $channelDescriptor,
         callable $extractMessageFields,
-        bool $requireExplicitStatus,
         string $invalidFieldsMessage,
     ): JsonResponse {
         try {
@@ -97,8 +93,8 @@ class WhatsAppHookService
             $status = $extracted['status'] ?? null;
             $mobile = $this->extractMobile($payload);
 
-            $statusInvalid = $requireExplicitStatus && ($status === null || $status === '');
-            $missingCore = ! $messageId || ! $mobile || $statusInvalid;
+            $statusMissingOrEmpty = ! is_string($status) || $status === '';
+            $missingCore = ! $messageId || ! $mobile || $statusMissingOrEmpty;
 
             if ($missingCore) {
                 LoggerService::warning(self::class." - {$handlerLabel}: Required fields missing", [
@@ -128,9 +124,6 @@ class WhatsAppHookService
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     /**
      * Treat null, non-strings, and blank (whitespace-only) strings as absent so ?? / validation behave correctly.
      */
