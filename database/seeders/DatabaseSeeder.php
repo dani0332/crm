@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
+            GroupMedicalLeadDocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
