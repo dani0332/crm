@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\EmirateTypeEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +18,7 @@ class HealthRateResource extends JsonResource
             'id' => $this->id,
             'text' => $this->text,
             'text_ar' => $this->text_ar,
-            'emirate_type' => EmirateTypeEnum::from($this->emirate_type)->label(),
+            'emirate_type' => $this->emirate_type,
             'cohort' => $this->cohort,
             'gender' => $this->gender,
             'marital_status' => $this->marital_status,
@@ -31,9 +30,11 @@ class HealthRateResource extends JsonResource
             'is_active' => $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'health_plan_id' => $this->health_plan_id,
             'health_plan' => $this->whenLoaded('healthPlan', function () {
                 return $this->healthPlan->code;
             }),
+            'health_plan_co_payment_id' => $this->health_plan_co_payment_id,
             'health_plan_co_payment' => $this->whenLoaded('healthPlanCoPayment', function () {
                 return $this->healthPlanCoPayment->code;
             }),

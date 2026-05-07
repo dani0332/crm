@@ -80,23 +80,36 @@ class HealthRateService extends BaseService
         }
 
         // Else add rate to existing draft rate sheet
+        return $this->addRate($data, $planIds, $draftRatesSheet);
     }
 
-    private function addRate(array $data, array $planIds): HealthRate
+    private function addRate(array $data, array $planIds, ?HealthRateControl $healthRateControl = null): HealthRate
     {
-        $data['version'] = $this->deriveVersion($data['health_plan_id'], $planIds);
         $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
 
-        $healthRate = DB::transaction(function () use ($data, $plan) {
-            // Add health rates control (rate sheet)
-            $healthRateControl = HealthRateControl::create([
-                'health_plan_id' => $data['health_plan_id'],
-                'version' => $data['version'],
-                'effective_from' => $data['effective_from'],
-                'effective_to' => $data['effective_to'],
-                'total_records' => 1,
-                'created_by' => $data['user_id'],
-            ]);
+        $healthRate = DB::transaction(function () use ($data, $plan, $planIds, $healthRateControl) {
+            // Add health rates control (rate sheet) if not exists
+            if (! $healthRateControl) {
+                $data['version'] = $this->deriveVersion($planIds);
+
+                $healthRateControl = HealthRateControl::create([
+                    'health_plan_id' => $data['health_plan_id'],
+                    'version' => $data['version'],
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $data['effective_to'],
+                    'total_records' => 1,
+                    'created_by' => $data['user_id'],
+                ]);
+            } else {
+                // Update existing health rate control
+                $healthRateControl->total_records++;
+                $healthRateControl->effective_from = $data['effective_from'];
+                $healthRateControl->effective_to = $data['effective_to'];
+                $healthRateControl->save();
+
+                // Get version of existing health rate control
+                $data['version'] = $healthRateControl->version;
+            }
 
             // Add health rate
             $healthRate = HealthRate::create([
@@ -123,10 +136,10 @@ class HealthRateService extends BaseService
         return $healthRate;
     }
 
-    private function deriveVersion(int $planId, array $planIds): float
+    private function deriveVersion(array $planIds): float
     {
         // Get active rate sheet version
-        $activeRateSheet = HealthRateControl::where('health_plan_id', $planId)
+        $activeRateSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->first();
 
