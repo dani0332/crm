@@ -20,6 +20,7 @@ function travelMemberDelete_quoteWithPayments(array $payments): TravelQuote
     $quote = Mockery::mock(TravelQuote::class);
     $relation = Mockery::mock();
     $quote->shouldReceive('payments')->andReturn($relation);
+    $relation->shouldReceive('mainLeadPayment')->andReturnSelf();
     $relation->shouldReceive('get')->andReturn(collect($payments));
 
     return $quote;

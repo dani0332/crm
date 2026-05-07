@@ -10,11 +10,12 @@ class RenewalQuoteProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id', 'step', 'retry_count', 'last_step_attempted', 'step_errors'];
+    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id', 'insurance_provider_transition_id', 'step', 'retry_count', 'last_step_attempted', 'step_errors'];
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',
         'step_errors' => 'array',
+        'insurance_provider_transition_id' => 'integer',
     ];
 
     /**
@@ -46,6 +47,35 @@ class RenewalQuoteProcess extends Model
     public function renewalBatch()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    /**
+     * Transition used for this lead (source insurer → target provider), if any.
+     *
+     * @return BelongsTo
+     */
+    public function insuranceProviderTransition()
+    {
+        return $this->belongsTo(InsuranceProviderTransition::class, 'insurance_provider_transition_id');
+    }
+
+    /**
+     * Whether this process is a transitionable lead (has a resolved and active provider transition).
+     */
+    public function checkIsTransitionableLead(): bool
+    {
+        if ($this->insurance_provider_transition_id === null) {
+            return false;
+        }
+
+        // Ensure transition exists, is active, and both providers exist
+        // to maintain consistency with RenewalsUploadService::isTransitionableLeadForProcess
+        $transition = $this->insuranceProviderTransition;
+
+        return (bool) ($transition &&
+            $transition->is_active &&
+            $transition->targetProvider &&
+            $transition->sourceProvider);
     }
 
     /**
