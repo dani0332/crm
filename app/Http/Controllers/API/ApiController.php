@@ -22,15 +22,16 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\BirdWhatsappWebhookRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EligibleForRevivalFollowupsRequest;
-use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\LogEpEmailStatusesRequest;
+use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -78,6 +79,7 @@ use App\Services\QuoteStatusService;
 use App\Services\Reports\ConversionOptimizationScheduledExportService;
 use App\Services\RewatermarkQuoteDocumentsService;
 use App\Services\UserService;
+use App\Services\WhatsAppHookService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -105,14 +107,16 @@ class ApiController extends Controller
     protected $emailStatusService;
     protected $quoteDocumentService;
     protected $ocrReponseStructure;
+    protected WhatsAppHookService $whatsAppHookService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService, WhatsAppHookService $whatsAppHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->whatsAppHookService = $whatsAppHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -202,11 +206,14 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook($request);
     }
 
-    public function logFollowUpEvent(EmailEventsRequest $request)
+    public function logFollowUpEvent(LogFollowUpEventRequest $request)
     {
         $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
 
-        return apiResponse([], Response::HTTP_OK, $response->message);
+        $success = ($response->status ?? false) === true;
+        $statusCode = $success ? Response::HTTP_OK : Response::HTTP_NOT_FOUND;
+
+        return apiResponse([], $statusCode, $response->message);
     }
 
     public function stopFollowUpEvent(BirdStopWorkFlowRequest $request)
@@ -217,15 +224,67 @@ class ApiController extends Controller
         LoggerService::info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
+            ->whereNull('ended_at')
+            ->latest('id')
             ->first();
+
         if (! $workflow) {
+            $alreadyEnded = QuoteFlowDetails::where('quote_uuid', $quoteUID)
+                ->where('flow_type', $flowType)
+                ->whereNotNull('ended_at')
+                ->exists();
+
+            if ($alreadyEnded) {
+                return apiResponse([], Response::HTTP_OK, 'Workflow already stopped');
+            }
+
             LoggerService::info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
+        $birdResponse = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
+        if ($birdResponse === false || (int) data_get($birdResponse, 'status_code', 200) >= 300) {
+            return apiResponse([], Response::HTTP_SERVICE_UNAVAILABLE, 'Unable to stop workflow');
+        }
 
-        return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
+        $bodyString = (string) data_get($birdResponse, 'body', '');
+
+        $decoded = json_decode($bodyString, true) ?? [];
+        $result = $decoded['result'] ?? [];
+        if (is_array($result) && array_is_list($result)) {
+            $result = collect($result)->mapWithKeys(static function (mixed $row): array {
+                if (! is_array($row)) {
+                    return [];
+                }
+                $id = (string) ($row['id'] ?? $row['run_id'] ?? $row['runId'] ?? '');
+
+                return $id !== '' ? [$id => $row['status'] ?? $row['state'] ?? ''] : [];
+            })->all();
+        }
+        $c = collect($result);
+        $confirmed = $c->contains(fn ($s, $id) => (string) $id === (string) $workflow->flow_id && strtolower((string) $s) === 'cancelled');
+        $data = ['action' => $decoded['action'] ?? 'cancel', 'runs' => $c->map(fn ($s, $id) => ['run_id' => $id, 'status' => $s])->values()->all()];
+
+        if (! $confirmed) {
+            LoggerService::warning('stopFollowUpEvent: Bird did not confirm workflow run as cancelled; skipping DB update', [
+                'quote_uuid' => $quoteUID,
+                'flow_type' => $flowType,
+                'flow_id' => $workflow->flow_id,
+                'parsed_response' => $data,
+            ]);
+
+            return apiResponse(
+                $data,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Cancellation was not confirmed for this workflow run'
+            );
+        }
+
+        $workflow->ended_at = now();
+        $workflow->stopped_source = $request->input('stop_source') ?? 'api';
+        $workflow->save();
+
+        return apiResponse($data, Response::HTTP_OK, 'Email event stopped successfully');
     }
 
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
@@ -325,6 +384,21 @@ class ApiController extends Controller
     public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
     {
         return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
+    }
+
+    public function birdWhatsappInboundHook(BirdWhatsappWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleInbound($request);
+    }
+
+    public function birdWhatsappOutboundHook(BirdWhatsappWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleOutbound($request);
+    }
+
+    public function birdWhatsappInteractionHook(BirdWhatsappWebhookRequest $request)
+    {
+        return $this->whatsAppHookService->handleInteraction($request);
     }
     public function duplicateEntries()
     {
