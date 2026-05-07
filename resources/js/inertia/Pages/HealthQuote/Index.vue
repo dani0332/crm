@@ -1078,17 +1078,7 @@ const paymentStatusOptions = computed(() => {
           ]"
           class="w-full"
         />
-        <x-select
-          v-model="filters.age_sixty_and_above"
-          label="Is Age 60 and above"
-          placeholder="Search by Age 60 and above"
-          :options="[
-            { value: 'all', label: 'All' },
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
-          ]"
-          class="w-full"
-        />
+      
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
@@ -1284,6 +1274,17 @@ const paymentStatusOptions = computed(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <x-select
+          v-model="filters.age_sixty_and_above"
+          label="Is Age 60 and above"
+          placeholder="Search by Age 60 and above"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
         />
         <ComboBox
           v-model="filters.emirate_of_your_visa_id"

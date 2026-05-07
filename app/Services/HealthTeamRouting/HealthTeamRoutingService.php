@@ -205,10 +205,6 @@ class HealthTeamRoutingService
     }
     public function isGBPQualified(HealthQuote $lead): bool
     {
-        if ((int) $lead->health_plan_type_id !== HealthPlanTypeEnum::BEST->value) {
-            return false;
-        }
-
         $gbpMinPrice = $this->getGbpTeamMinPrice();
         LoggerService::info('GBP team min price', ['gbp_min_price' => $gbpMinPrice]);
 
@@ -258,6 +254,7 @@ class HealthTeamRoutingService
 
         // Check if SIC2
         if ($lead->isSIC2()) {
+
             // Do not terminate just add logs
             LoggerService::info('Lead is SIC2', ['source' => $this->source]);
             $this->healthTeamRoutingLogService->log(
@@ -273,141 +270,44 @@ class HealthTeamRoutingService
                 null,
                 $this->source
             );
+        }
 
-            if ($lead->hasAnyMemberAgeSixtyOrAbove() || $lead->isPECLead()) {
+        if ($lead->hasAnyMemberAgeSixtyOrAbove() || $lead->isPECLead()) {
 
-                LoggerService::info('PEC lead identified, assigned Non AUH PEC team', [
-                    'source' => $this->source,
+            LoggerService::info('PEC lead identified, assigned Non AUH PEC team', [
+                'source' => $this->source,
+                'pec_marked_at' => $lead->pec_marked_at,
+                'team_name' => TeamNameEnum::PEC,
+            ]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'PEC lead identified or any member age 60+ identified, assigned Non AUH PEC team',
+                    'step' => 'PEC lead check',
+                    'is_pec' => true,
                     'pec_marked_at' => $lead->pec_marked_at,
+                    'any_member_age_60_plus' => $lead->hasAnyMemberAgeSixtyOrAbove(),
+                    'source' => $this->source,
                     'team_name' => TeamNameEnum::PEC,
-                ]);
-                $this->healthTeamRoutingLogService->log(
-                    HealthRoutingLogTypeEnum::ROUTING,
-                    [
-                        'message' => 'PEC lead identified or any member age 60+ identified, assigned Non AUH PEC team',
-                        'step' => 'PEC lead check',
-                        'is_pec' => true,
-                        'pec_marked_at' => $lead->pec_marked_at,
-                        'any_member_age_60_plus' => $lead->hasAnyMemberAgeSixtyOrAbove(),
-                        'source' => $this->source,
-                        'team_name' => TeamNameEnum::PEC,
-                    ],
-                    $lead->id,
-                    $lead->uuid,
-                    null,
-                    $this->source
-                );
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $this->source
+            );
 
-                if ($lead->health_plan_type_id == HealthPlanTypeEnum::ENTRY_LEVEL->value || $lead->health_plan_type_id == HealthPlanTypeEnum::GOOD->value) {
-                    // Assign Non AUH PEC Team
-                    $lead->health_team_type = TeamNameEnum::PEC;
-                    $lead->save();
-                    LoggerService::info('Entry Level or Good team assigned, assigned Non AUH PEC team', ['source' => $this->source]);
-                    $this->healthTeamRoutingLogService->log(
-                        HealthRoutingLogTypeEnum::ROUTING,
-                        [
-                            'message' => 'Entry Level or Good team assigned, assigned Non AUH PEC team',
-                            'step' => 'Health Plan type check',
-                            'health_plan_type_id' => $lead->health_plan_type_id,
-                            'source' => $this->source,
-                        ],
-                        $lead->id,
-                        $lead->uuid,
-                        null,
-                        $this->source
-                    );
+            if ($lead->health_plan_type_id == HealthPlanTypeEnum::ENTRY_LEVEL->value || $lead->health_plan_type_id == HealthPlanTypeEnum::GOOD->value) {
+                // Assign Non AUH PEC Team
 
-                    return;
-                } elseif ($lead->health_plan_type_id == HealthPlanTypeEnum::BEST->value) {
-                    LoggerService::info('Now checking for GBP qualification If Health Plan type is Best', ['source' => $this->source]);
-                    $this->healthTeamRoutingLogService->log(
-                        HealthRoutingLogTypeEnum::ROUTING,
-                        [
-                            'message' => 'Now checking for GBP qualification If Health Plan type is Best',
-                            'step' => 'GBP qualification check',
-                            'health_plan_type_id' => $lead->health_plan_type_id,
-                            'source' => $this->source,
-                        ],
-                        $lead->id,
-                        $lead->uuid,
-                        null,
-                        $this->source
-                    );
-
-                    // Check if GBP qualified
-                    if ($this->isGBPQualified($lead)) {
-                        $lead->health_team_type = HealthTeamType::GBP;
-                        $lead->save();
-
-                        LoggerService::info('GBP team qualified, assigned GBP team', [
-                            'source' => $this->source,
-                            'premium' => $lead->price_starting_from,
-                            'nationality' => $lead->nationality_id,
-                            'team_name' => HealthTeamType::GBP,
-                        ]);
-                        $this->healthTeamRoutingLogService->log(
-                            HealthRoutingLogTypeEnum::ROUTING,
-                            [
-                                'message' => 'GBP team qualified, assigned GBP team',
-                                'step' => 'GBP team check',
-                                'is_gbp' => true,
-                                'premium' => $lead->price_starting_from,
-                                'nationality' => $lead->nationality_id,
-                                'team_name' => HealthTeamType::GBP,
-                                'source' => $this->source,
-                            ],
-                            $lead->id,
-                            $lead->uuid,
-                            null,
-                            $this->source
-                        );
-
-                        return;
-                    } else {
-                        LoggerService::info('GBP team not qualified, assigned Non AUH Best team', [
-                            'source' => $this->source,
-                            'premium' => $lead->price_starting_from,
-                            'nationality' => $lead->nationality_id,
-                            'team_name' => HealthTeamType::RM_NB,
-                        ]);
-
-                        $this->healthTeamRoutingLogService->log(
-                            HealthRoutingLogTypeEnum::ROUTING,
-                            [
-                                'message' => 'GBP team not qualified, assigned Non AUH Best team',
-                                'step' => 'GBP team check',
-                                'is_gbp' => false,
-                                'premium' => $lead->price_starting_from,
-                                'nationality' => $lead->nationality_id,
-                                'team_name' => HealthTeamType::RM_NB,
-                                'source' => $this->source,
-                            ],
-                            $lead->id,
-                            $lead->uuid,
-                            null,
-                            $this->source
-                        );
-
-                    }
-
-                }
-            } else {
-                // Get notional team
-                $notionalTeam = $this->getNotionalTeam($lead);
-                $lead->notional_team = $notionalTeam;
+                $lead->health_team_type = TeamNameEnum::PEC;
                 $lead->save();
-
-                // Terminate with logs about storing notional team
-                LoggerService::info("Non PEC lead identified, Notional team: {$notionalTeam}",
-                    ['source' => $this->source, 'pec_marked_at' => $lead->pec_marked_at]);
+                LoggerService::info('Entry Level or Good team assigned, assigned Non AUH PEC team', ['source' => $this->source]);
                 $this->healthTeamRoutingLogService->log(
                     HealthRoutingLogTypeEnum::ROUTING,
                     [
-                        'message' => "Non PEC lead identified, Team: {$notionalTeam}",
-                        'step' => 'Non PEC lead check',
-                        'is_non_pec' => true,
-                        'pec_marked_at' => $lead->pec_marked_at,
-                        'team_name' => $notionalTeam,
+                        'message' => 'Entry Level or Good team assigned, assigned Non AUH PEC team',
+                        'step' => 'Health Plan type check',
+                        'health_plan_type_id' => $lead->health_plan_type_id,
                         'source' => $this->source,
                     ],
                     $lead->id,
@@ -417,7 +317,105 @@ class HealthTeamRoutingService
                 );
 
                 return;
+            } elseif ($lead->health_plan_type_id == HealthPlanTypeEnum::BEST->value) {
+                LoggerService::info('Now checking for GBP qualification If Health Plan type is Best', ['source' => $this->source]);
+                $this->healthTeamRoutingLogService->log(
+                    HealthRoutingLogTypeEnum::ROUTING,
+                    [
+                        'message' => 'Now checking for GBP qualification If Health Plan type is Best',
+                        'step' => 'GBP qualification check',
+                        'health_plan_type_id' => $lead->health_plan_type_id,
+                        'source' => $this->source,
+                    ],
+                    $lead->id,
+                    $lead->uuid,
+                    null,
+                    $this->source
+                );
+
+                // Check if GBP qualified
+                if ($this->isGBPQualified($lead)) {
+                    $lead->health_team_type = HealthTeamType::GBP;
+                    $lead->save();
+
+                    LoggerService::info('GBP team qualified, assigned GBP team', [
+                        'source' => $this->source,
+                        'premium' => $lead->price_starting_from,
+                        'nationality' => $lead->nationality_id,
+                        'team_name' => HealthTeamType::GBP,
+                    ]);
+                    $this->healthTeamRoutingLogService->log(
+                        HealthRoutingLogTypeEnum::ROUTING,
+                        [
+                            'message' => 'GBP team qualified, assigned GBP team',
+                            'step' => 'GBP team check',
+                            'is_gbp' => true,
+                            'premium' => $lead->price_starting_from,
+                            'nationality' => $lead->nationality_id,
+                            'team_name' => HealthTeamType::GBP,
+                            'source' => $this->source,
+                        ],
+                        $lead->id,
+                        $lead->uuid,
+                        null,
+                        $this->source
+                    );
+
+                    return;
+                } else {
+                    LoggerService::info('GBP team not qualified, assigned Non AUH Best team', [
+                        'source' => $this->source,
+                        'premium' => $lead->price_starting_from,
+                        'nationality' => $lead->nationality_id,
+                        'team_name' => HealthTeamType::RM_NB,
+                    ]);
+
+                    $this->healthTeamRoutingLogService->log(
+                        HealthRoutingLogTypeEnum::ROUTING,
+                        [
+                            'message' => 'GBP team not qualified, assigned Non AUH Best team',
+                            'step' => 'GBP team check',
+                            'is_gbp' => false,
+                            'premium' => $lead->price_starting_from,
+                            'nationality' => $lead->nationality_id,
+                            'team_name' => HealthTeamType::RM_NB,
+                            'source' => $this->source,
+                        ],
+                        $lead->id,
+                        $lead->uuid,
+                        null,
+                        $this->source
+                    );
+
+                }
+
             }
+        } else {
+            // Get notional team
+            $notionalTeam = $this->getNotionalTeam($lead);
+            $lead->notional_team = $notionalTeam;
+            $lead->save();
+
+            // Terminate with logs about storing notional team
+            LoggerService::info("Non PEC lead identified, Notional team: {$notionalTeam}",
+                ['source' => $this->source, 'pec_marked_at' => $lead->pec_marked_at]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => "Non PEC lead identified, Team: {$notionalTeam}",
+                    'step' => 'Non PEC lead check',
+                    'is_non_pec' => true,
+                    'pec_marked_at' => $lead->pec_marked_at,
+                    'team_name' => $notionalTeam,
+                    'source' => $this->source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $this->source
+            );
+
+            return;
         }
 
         // Assign based on intent (health plan type) non auh best team
