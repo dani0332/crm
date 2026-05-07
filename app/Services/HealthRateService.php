@@ -201,6 +201,23 @@ class HealthRateService extends BaseService
                 );
             }
         }
+
+        // Check age overlap
+        $overlapExists = $existingRates->contains(function ($rate) use ($data) {
+            return $rate->min_age <= $data['max_age'] &&
+                   $rate->max_age >= $data['min_age'];
+        });
+
+        if ($overlapExists) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'Age range overlaps with an existing rate sheet.',
+                    ],
+                ], 422)
+            );
+        }
     }
 
     public function update(int $id, array $data): HealthRate
