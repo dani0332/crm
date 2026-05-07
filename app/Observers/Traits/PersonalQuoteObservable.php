@@ -199,6 +199,7 @@ trait PersonalQuoteObservable
     private function handleTransactionApproved(PersonalQuote $personalQuote): void
     {
         $this->updatePersonalQuote($personalQuote, ['transaction_approved_at' => now()]);
+        $this->handleRevivalQuote($personalQuote);
     }
 
     private function handlePolicyIssued(PersonalQuote $personalQuote): void
@@ -304,6 +305,13 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
             LoggerService::info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+        }
+    }
+
+    private function handleRevivalQuote(PersonalQuote $personalQuote): void
+    {
+        if ($personalQuote->quote_type_id == (int) QuoteTypes::LIFE->id() && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])) {
+            $this->updatePersonalQuote($personalQuote, ['source' => LeadSourceEnum::REVIVAL_PAID]);
         }
     }
 
