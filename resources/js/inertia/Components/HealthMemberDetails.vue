@@ -657,6 +657,17 @@ const makeActionName = computed(() => {
     (props.includePolicyHolder == 1 && (isFamily_Other.value || isSelfAndFamily_Other.value)) ? 'policyholder' : 'principal';
 });
 
+/**
+ * Whether the "Make Policyholder / Principal" button should be visible for a given member.
+ */
+function canMakePrincipal(item) {
+  if (item.is_principal) { return false; }
+  if (calculateAge(item.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION) { return false; }
+  if (makeActionName.value === 'policyholder' && [relationCodeEnum.SIBLING, relationCodeEnum.RELATIVES].includes(item.relation_code)) { return false; }
+
+  return true;
+}
+
 const localMembersFiltered = computed(() => {
   return localMembers.value.filter(m => !((m.is_policy_holder == 1 && m.is_insured == 0) || (m.is_third_party_payer == 1)));
 });
@@ -942,7 +953,7 @@ defineExpose({
             color="primary"
             outlined
             @click.prevent="memberPrincipal(item)"
-            v-if="! (item.is_principal || calculateAge(item.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION)"
+            v-if="canMakePrincipal(item)"
             :disabled="isLocked"
           >
             Make {{ makeActionName === 'policyholder' ? 'Policyholder' : 'Principal' }}
@@ -978,7 +989,7 @@ defineExpose({
           </template>
 
           <template #item-relation="{ is_policy_holder, relation_code }">
-            {{ is_policy_holder === 1 ? 'Self' : relationText(relation_code).value }}
+            {{ is_policy_holder === 1 ? relationCodeEnum.SELF : relationText(relation_code).value }}
           </template>
 
           <template #item-nationality="{ nationality_id }">
