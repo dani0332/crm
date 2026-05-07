@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-final class AmlAutomationStatus extends Enum
+enum AmlAutomationStatus: string
 {
-    const QUEUE_STATUS = 'queue';
-    const PROCESSING_STATUS = 'processing';
-    const COMPLETE_STATUS = 'complete';
-    const FAILED_STATUS = 'failed';
+    case Queue = 'queue';
+    case Processing = 'processing';
+    case Complete = 'complete';
+    case Failed = 'failed';
 }

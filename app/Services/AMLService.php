@@ -2193,13 +2193,15 @@ class AMLService
         $kycLog = $fetchKycLog->first();
         $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
         if ($amlStatus == AMLStatusCode::AMLScreeningCleared) {
-            // Dispatch AmlAutomationScreeningSucceeded event
-            event(new AmlAutomationScreeningSucceeded(
-                $quoteObject->id, // quote id, quote request id
-                $quoteObject->uuid, // quote uuid
-                $quoteObject->code, // quote code
-                QuoteTypes::getName($quoteObject->quote_type_id) // quote type, get the quote type name from the quote type id
-            ));
+            $quoteType = QuoteTypes::getName($quoteObject->quote_type_id);
+            if ($quoteType !== null && AmlAutomatableLobRegistry::allows($quoteType)) {
+                event(new AmlAutomationScreeningSucceeded(
+                    (int) $quoteObject->id,
+                    (string) $quoteObject->uuid,
+                    (string) $quoteObject->code,
+                    $quoteType,
+                ));
+            }
         }
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
@@ -2765,12 +2767,14 @@ class AMLService
             }
 
             $automation = AmlAutomation::query()->where('code', $quote->code)->first();
-            $automationEnum = $automation === null ? null : AmlAutomationStatus::coerce($automation->status);
+            $automationEnum = $automation === null
+                ? null
+                : AmlAutomationStatus::tryFrom((string) $automation->status);
 
-            if ($automationEnum !== null && $automationEnum->in([
-                AmlAutomationStatus::COMPLETE_STATUS,
-                AmlAutomationStatus::PROCESSING_STATUS,
-            ])) {
+            if ($automationEnum !== null && in_array($automationEnum, [
+                AmlAutomationStatus::Complete,
+                AmlAutomationStatus::Processing,
+            ], true)) {
                 LoggerService::info('AML automate-by-uuid: blocked — automation already complete or processing', extra: array_merge($quoteContext, [
                     'outcome' => 'blocked',
                     'reason' => 'automation_complete_or_processing',
@@ -2782,7 +2786,7 @@ class AMLService
                 return $respond(false, 422, 'AML automation already completed or in progress');
             }
 
-            if ($automationEnum?->is(AmlAutomationStatus::QUEUE_STATUS)) {
+            if ($automationEnum === AmlAutomationStatus::Queue) {
                 LoggerService::info('AML automate-by-uuid: blocked — automation already queued', extra: array_merge($quoteContext, [
                     'outcome' => 'blocked',
                     'reason' => 'automation_already_queued',
@@ -2836,7 +2840,7 @@ class AMLService
             try {
                 AmlAutomation::updateOrCreate(
                     ['code' => $quote->code],
-                    ['status' => AmlAutomationStatus::QUEUE_STATUS]
+                    ['status' => AmlAutomationStatus::Queue->value]
                 );
 
                 LoggerService::info('AML automate-by-uuid: running job via dispatchSync', extra: array_merge($quoteContext, [

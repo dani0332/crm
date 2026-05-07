@@ -24,6 +24,7 @@ use App\Exports\AmlCftReportExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\AutomateQuoteAmlScreeningRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
@@ -57,7 +58,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -66,7 +66,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Context;
-use Illuminate\Validation\Rule;
 
 class AMLController extends Controller
 {
@@ -883,15 +882,9 @@ class AMLController extends Controller
     /**
      * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
      */
-    public function automateQuoteAmlScreening(Request $request): JsonResponse
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'quoteUuid' => ['required', 'string'],
-            'quoteType' => ['required', 'string', Rule::in(array_map(
-                static fn (QuoteTypes $type): string => $type->value,
-                AmlAutomatableLobRegistry::allowed()
-            ))],
-        ]);
+        $validated = $request->validated();
 
         $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],

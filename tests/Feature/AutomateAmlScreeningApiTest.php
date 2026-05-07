@@ -260,9 +260,9 @@ test('returns 422 when aml automation row blocks re-dispatch', function (string 
 
     Bus::assertNothingDispatched();
 })->with([
-    [AmlAutomationStatus::COMPLETE_STATUS, 'AML automation already completed or in progress'],
-    [AmlAutomationStatus::PROCESSING_STATUS, 'AML automation already completed or in progress'],
-    [AmlAutomationStatus::QUEUE_STATUS, 'AML automation already queued'],
+    [AmlAutomationStatus::Complete->value, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::Processing->value, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::Queue->value, 'AML automation already queued'],
 ]);
 
 test('aml automatable lob registry allows savings only', function () {

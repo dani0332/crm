@@ -89,7 +89,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         $amlAutomation = AmlAutomation::updateOrCreate(
             ['code' => $this->quoteRefId],
-            ['status' => AmlAutomationStatus::PROCESSING_STATUS]
+            ['status' => AmlAutomationStatus::Processing->value]
         );
 
         try {
@@ -108,7 +108,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix);
 
         } catch (\Exception $e) {
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => 'Exception: '.$e->getMessage()]);
             LoggerService::error($loggerPrefix.' Exception: '.$e->getMessage());
         }
     }
@@ -166,9 +166,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         $isAutomationInQueue = false;
         if ($this->quoteType === QuoteTypes::TRAVEL) {
-            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
+            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::Queue->value;
         } elseif ($this->quoteRequest instanceof PersonalQuote && in_array($this->quoteType, [QuoteTypes::CYBER, QuoteTypes::SAVINGS], true)) {
-            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::QUEUE_STATUS;
+            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::Queue->value;
         }
 
         return $isApiIssuanceStatusYes && $isAMLPending && $isAutomationInQueue;
@@ -196,7 +196,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         if (! $quoteAmlProcessCall->status) {
             $message = 'Failed: '.($quoteAmlProcessCall->message ?? 'Unknown');
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $message]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $message]);
             LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$message);
 
             return;
@@ -204,7 +204,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         $amlStatus = $this->quoteRequest->aml_status;
         if ($amlStatus === AMLStatusCode::AMLScreeningCleared) {
-            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::Complete->value, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
             LoggerService::info($loggerPrefix.' Completed - AML cleared');
             $this->dispatchScreeningSucceededEventIfApplicable();
 
@@ -213,14 +213,14 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         if ($amlStatus === AMLStatusCode::AMLScreeningFailed) {
             $msg = 'AML Screening Failed';
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $msg]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $msg]);
             LoggerService::info($loggerPrefix.' Completed - AML failed');
 
             return;
         }
 
         $pendingMsg = 'AML still pending after screening';
-        $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $pendingMsg]);
+        $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $pendingMsg]);
         LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
     }
 
