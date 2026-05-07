@@ -199,7 +199,9 @@ onMounted(() => {
                 class="w-full"
                 v-model="team.min_price"
                 label="Min Price"
-                :disabled="team.name != 'GBP' && !canEditTeamAllocationThreshold"
+                :disabled="
+                  team.name != 'GBP' && !canEditTeamAllocationThreshold
+                "
               />
               <p class="text-xs -mt-4">
                 Minimum annual premium (AED) required for this
