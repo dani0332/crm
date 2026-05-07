@@ -2373,11 +2373,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
+                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.nationality_id_text : '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
-                  <dd>{{ quote.dob }}</dd>
+                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.dob : '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
@@ -2418,11 +2418,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
-                  <dd>{{ genderText(quote.gender).value }}</dd>
+                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? genderText(quote.gender).value : '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
-                  <dd>{{ quote.marital_status_id_text }}</dd>
+                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.marital_status_id_text : '-' }}</dd>
                 </div>
                 <div v-if="!isMigrated || (isMigrated && !isDomesticHelper)" class="grid sm:grid-cols-2">
                   <dt class="font-medium">SALARY BAND</dt>

@@ -1436,25 +1436,25 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-policy_holder_category.text="item">
         <p>
-          <span v-if="item.is_entity">N/A</span>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
           <span v-else>{{ item.policy_holder_category?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-visa_category.text="item">
         <p>
-          <span v-if="item.is_entity">N/A</span>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
           <span v-else>{{ item.visa_category?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-gender_lookup.text="item">
         <p>
-          <span v-if="item.is_entity">N/A</span>
+          <span v-if="item.is_entity || !item.is_migrated || (item.is_migrated && !item.is_policyholder_included)">N/A</span>
           <span v-else>{{ item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-marital_status.text="item">
         <p>
-          <span v-if="item.is_entity">N/A</span>
+          <span v-if="item.is_entity || !item.is_migrated || (item.is_migrated && !item.is_policyholder_included)">N/A</span>
           <span v-else>{{ item.marital_status?.text ?? 'N/A' }}</span>
         </p>
       </template>

@@ -418,6 +418,21 @@ watch(
   },
 );
 
+// When include_policyholder is toggled to 1, clear policyholder personal details
+watch(
+  () => quoteForm.include_policyholder,
+  (newVal, oldVal) => {
+    if (newVal == 1 && oldVal == 0) {
+      quoteForm.dob = null;
+      quoteForm.gender = null;
+      quoteForm.marital_status_id = null;
+      quoteForm.nationality_id = null;
+      quoteForm.emirate_of_your_visa_id = null;
+      quoteForm.pec = null;
+    }
+  },
+);
+
 function validateMembers() {
 
   if (!isCustomerTypeIndividual.value) {

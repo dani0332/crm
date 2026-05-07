@@ -443,6 +443,8 @@ class HealthQuoteService extends BaseService
         return $quotes->map(function ($quote) {
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
             $quote->is_entity = $quote->isEntity();
+            $quote->is_migrated = $quote->isMigrated();
+            $quote->is_policyholder_included = $quote->isPolicyholderIncluded();
 
             return $quote;
         });

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
@@ -120,11 +121,11 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->source,
             $quote->healthLeadType?->text,
             $quote->is_entity ? 'N/A' : $quote->memberCategory?->text ?? 'N/A',
-            $quote->is_entity ? 'N/A' : $quote->policyHolderCategory?->text ?? 'N/A',
-            $quote->is_entity ? 'N/A' : $quote->visaCategory?->text ?? 'N/A',
-            $quote->is_entity ? 'N/A' : $this->genderDisplayMap[$quote->gender] ?? 'N/A',
-            $quote->is_entity ? 'N/A' : $quote->maritalStatus?->text ?? 'N/A',
-            $quote->is_entity ? 'N/A' : $quote->salaryBand?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated) ? 'N/A' : $quote->policyHolderCategory?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated) ? 'N/A' : $quote->visaCategory?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated || ! $quote->is_policyholder_included) ? 'N/A' : $this->genderDisplayMap[$quote->gender] ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated || ! $quote->is_policyholder_included) ? 'N/A' : $quote->maritalStatus?->text ?? 'N/A',
+            ($quote->is_entity || $quote->cover_for_id === HealthCoverForEnum::DOMESTIC_HELPER->value) ? 'N/A' : $quote->salaryBand?->text ?? 'N/A',
             $quote->currentProvider?->text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->device,

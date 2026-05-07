@@ -113,6 +113,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'policyHolderCategory:id,code,text',
             'genderLookup:id,code,text',
             'latestInsured',
+            'activeMembers',
         ]);
     }
 

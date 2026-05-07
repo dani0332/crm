@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
@@ -818,5 +819,18 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         return $data;
+    }
+
+    public function isMigrated(): bool
+    {
+        return in_array($this->cover_for_id, [HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value, HealthCoverForEnum::DOMESTIC_HELPER->value]);
+    }
+
+    public function isPolicyholderIncluded(): bool
+    {
+        return $this->activeMembers
+            ->where('is_policy_holder', true)
+            ->where('is_insured', true)
+            ->isNotEmpty();
     }
 }
