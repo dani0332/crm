@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\GenderEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
+use App\Models\HealthPlan;
 use App\Models\HealthRate;
 use App\Models\HealthRateControl;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -101,6 +103,9 @@ class HealthRateService extends BaseService
                     'created_by' => $data['user_id'],
                 ]);
             } else {
+                // Check duplicate rates under same sheet
+                $this->checkDuplicateRates($healthRateControl->id, $data, $plan);
+
                 // Update existing health rate control
                 $healthRateControl->total_records++;
                 $healthRateControl->effective_from = $data['effective_from'];
@@ -149,6 +154,73 @@ class HealthRateService extends BaseService
         }
 
         return 1.0;
+    }
+
+    private function checkDuplicateRates(int $healthRateControlId, array $data, HealthPlan $plan): void
+    {
+        // Get all rates of sheet
+        $existingRates = HealthRate::where('health_rate_control_id', $healthRateControlId)->get();
+
+        // Prepare fields for duplicate check
+        $matchingFields = [
+            'health_plan_co_payment_id',
+            'emirate_type',
+        ];
+
+        if ($plan->gender_enabled) {
+            $matchingFields[] = 'gender';
+        }
+
+        if ($plan->marital_status_enabled) {
+            $matchingFields[] = 'marital_status';
+        }
+
+        if ($plan->cohort_enabled) {
+            $matchingFields[] = 'cohort';
+        }
+
+        // Iterate through existing rates to check duplicate
+        foreach ($existingRates as $rate) {
+            $duplicate = true;
+            foreach ($matchingFields as $field) {
+                if ($rate->{$field} && $rate->{$field} != $data[$field]) {
+                    $duplicate = false;
+                    break;
+                }
+            }
+
+            if ($duplicate) {
+                // Same format as api response
+                throw new HttpResponseException(
+                    response()->json([
+                        'status' => false,
+                        'errors' => [
+                            'Duplicate rate detected in same rate sheet.',
+                        ],
+                    ], 422)
+                );
+            }
+        }
+    }
+
+    public function update(int $id, array $data): HealthRate
+    {
+        $rate = HealthRate::find($id);
+
+        // If draft, update same version
+        if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+            // Check duplicate rates under same sheet
+            // $this->checkDuplicateRates($rate->health_rate_control_id, $data);
+
+            $rate->fill($data);
+            $rate->save();
+
+            return $rate;
+        }
+
+        // Else (active)
+
+        return $rate;
     }
 
     public function delete(int $id): void
