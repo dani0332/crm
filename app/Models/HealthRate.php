@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\HealthPlanRateSheetStatusEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,6 +14,8 @@ class HealthRate extends Model
         'health_rate_control_id',
         'version',
         'health_plan_co_payment_id',
+        'text',
+        'text_ar',
         'emirate_type',
         'min_age',
         'max_age',
@@ -22,6 +26,17 @@ class HealthRate extends Model
         'status',
         'is_active',
     ];
+    protected $attributes = [
+        'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+        'version' => 1.0,
+    ];
+
+    protected function cohort(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => strtoupper($value),
+        );
+    }
 
     public function healthPlan(): BelongsTo
     {

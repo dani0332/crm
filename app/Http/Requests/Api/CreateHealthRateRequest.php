@@ -19,6 +19,10 @@ class CreateHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'effective_from' => ['required', 'date'],
+            'effective_to' => ['required', 'date', 'after:effective_from'],
+            'text' => ['required'],
+            'text_ar' => ['required'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
             'emirate_type' => ['bail', 'required', new Enum(EmirateTypeEnum::class)],
@@ -29,6 +33,7 @@ class CreateHealthRateRequest extends FormRequest
             'marital_status' => new HealthRateMaritalStatusValidRule($this->health_plan_id, $this->gender),
             'premium' => ['bail', 'required', 'integer', 'min:1'],
             'is_active' => ['bail', 'required', 'boolean'],
+            'user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
         ];
     }
 
@@ -43,6 +48,8 @@ class CreateHealthRateRequest extends FormRequest
             'health_plan_co_payment_id.exists' => 'Health plan co payment does not exist',
             'emirate_type.enum' => 'Emirate type must be a valid emirate type',
             'boolean' => ':attribute must be a boolean',
+            'effective_to.after' => 'Effective to must be greater than effective from',
+            'user_id.exists' => 'User does not exist',
         ];
     }
 

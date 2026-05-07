@@ -17,12 +17,30 @@ class HealthPlanService extends BaseService
             ->firstWhere('code', $code);
     }
 
-    public function getPlanByParentIdStatus(int $parentId, string $status): ?HealthPlan
+    public function getRelatedPlanIds(int $planId): array
     {
-        return HealthPlan::select('id')
-            ->where('parent_id', $parentId)
-            ->where('status', $status)
-            ->first();
+        $ids = [$planId];
+        $plan = HealthPlan::find($planId);
+
+        // If draft, add parent id
+        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+            $plan->parent_id && $ids[] = $plan->parent_id;
+
+            return $ids;
+        }
+
+        // If active, add child plan id (only draft)
+        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value) {
+            $childPlan = HealthPlan::where('parent_id', $planId)
+                ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+                ->first();
+
+            $childPlan && $ids[] = $childPlan->id;
+
+            return $ids;
+        }
+
+        return $ids;
     }
 
     public function getPlanById(int $id): ?HealthPlan

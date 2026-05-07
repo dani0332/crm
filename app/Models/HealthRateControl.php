@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\HealthPlanRateSheetStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,6 +18,10 @@ class HealthRateControl extends Model
         'total_records',
         'file_name',
         'created_by',
+    ];
+    protected $attributes = [
+        'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+        'version' => 1.0,
     ];
 
     public function user(): BelongsTo

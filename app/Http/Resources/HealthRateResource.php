@@ -17,6 +17,8 @@ class HealthRateResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'text' => $this->text,
+            'text_ar' => $this->text_ar,
             'emirate_type' => EmirateTypeEnum::from($this->emirate_type)->label(),
             'cohort' => $this->cohort,
             'gender' => $this->gender,
