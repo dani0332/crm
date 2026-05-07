@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -12,6 +13,8 @@ use App\Jobs\EpSendDocumentJob;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
@@ -20,6 +23,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Error;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -35,6 +39,9 @@ class EpBookingService extends BaseService
     public ?EmbeddedTransaction $embeddedTransaction = null;
     public array $reqDocTypeCodes = [];
     public array $watermarkableDocTypeCodes = [];
+
+    public const STEP_GET_POLICY_DOCUMENTS = 'GetPolicyDocuments';
+    public const CALL_TYPE_EP_ECB = 'EpEcb';
 
     /**
      * Create a new class instance.
@@ -420,5 +427,121 @@ class EpBookingService extends BaseService
                 'error' => 'UploadDocument: '.$e->getMessage(),
             ];
         }
+    }
+
+    public function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote): void
+    {
+        $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
+        if (! $insuranceProvider) {
+            LoggerService::warning("{$this->className} - Insurance provider not found: {$quote->code}");
+
+            return;
+        }
+
+        $epCode = Str::afterLast($quote->code, '-');
+
+        $insurerRequestResponse = InsurerRequestResponse::where([
+            'quote_uuid' => $quote->quote_uuid,
+            'provider_id' => $insuranceProvider->id,
+            'execution_method' => self::STEP_GET_POLICY_DOCUMENTS,
+            'call_type' => self::CALL_TYPE_EP_ECB,
+        ])->latest()->first();
+
+        if (! $insurerRequestResponse) {
+            LoggerService::warning("{$this->className} - Insurer request response not found for Sage document update", extra: [
+                'ep_code' => $epCode,
+                'quote_code' => $quote->code,
+                'quote_uuid' => $quote->quote_uuid,
+                'provider_id' => $insuranceProvider->id,
+            ]);
+
+            return;
+        }
+
+        $response = json_decode((string) $insurerRequestResponse->response, true);
+        if (! is_array($response)) {
+            LoggerService::warning("{$this->className} - Unable to decode insurer request response for Sage document update", extra: [
+                'ep_code' => $epCode,
+                'quote_code' => $quote->code,
+                'insurer_request_response_id' => $insurerRequestResponse->id,
+            ]);
+
+            return;
+        }
+
+        $isResponseUpdated = false;
+
+        if (array_key_exists('premium_inv_no', $response)) {
+            $previousPremiumInvoiceNo = $response['premium_inv_no'];
+            $updatedPremiumInvoiceNo = $this->withSageDocumentNumberPostfix($previousPremiumInvoiceNo);
+
+            if ($updatedPremiumInvoiceNo !== $previousPremiumInvoiceNo) {
+                $isResponseUpdated = true;
+                $response['premium_inv_no'] = $updatedPremiumInvoiceNo;
+
+                LoggerService::info("{$this->className} - Updated Tax Invoice number in insurer request response for EP Sage booking", extra: [
+                    'ep_code' => $epCode,
+                    'quote_code' => $quote->code,
+                    'quote_uuid' => $quote->quote_uuid,
+                    'provider_id' => $insuranceProvider->id,
+                    'previous_premium_inv_no' => $previousPremiumInvoiceNo,
+                    'updated_premium_inv_no' => $updatedPremiumInvoiceNo,
+                ]);
+            }
+        }
+
+        if (array_key_exists('commision_inv_no', $response)) {
+            $previousCommissionInvoiceNo = $response['commision_inv_no'];
+            $updatedCommissionInvoiceNo = $this->withSageDocumentNumberPostfix($previousCommissionInvoiceNo);
+
+            if ($updatedCommissionInvoiceNo !== $previousCommissionInvoiceNo) {
+                $isResponseUpdated = true;
+                $response['commision_inv_no'] = $updatedCommissionInvoiceNo;
+
+                LoggerService::info("{$this->className} - Updated Commission Invoice number in insurer request response for EP Sage booking", extra: [
+                    'ep_code' => $epCode,
+                    'quote_code' => $quote->code,
+                    'quote_uuid' => $quote->quote_uuid,
+                    'provider_id' => $insuranceProvider->id,
+                    'previous_commission_inv_no' => $previousCommissionInvoiceNo,
+                    'updated_commission_inv_no' => $updatedCommissionInvoiceNo,
+                ]);
+            }
+        }
+
+        if (! $isResponseUpdated) {
+            LoggerService::info("{$this->className} - Insurer request response invoice numbers already include Sage postfix", extra: [
+                'ep_code' => $epCode,
+                'quote_code' => $quote->code,
+                'quote_uuid' => $quote->quote_uuid,
+                'provider_id' => $insuranceProvider->id,
+            ]);
+
+            return;
+        }
+
+        $insurerRequestResponse->update([
+            'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
+        ]);
+
+        LoggerService::info("{$this->className} - Updated insurer request response for EP Sage booking", extra: [
+            'ep_code' => $epCode,
+            'quote_code' => $quote->code,
+            'quote_uuid' => $quote->quote_uuid,
+            'provider_id' => $insuranceProvider->id,
+        ]);
+    }
+
+    private function withSageDocumentNumberPostfix(mixed $documentNumber): mixed
+    {
+        if (! is_string($documentNumber) || $documentNumber === '') {
+            return $documentNumber;
+        }
+
+        if (preg_match('/\/\d+$/', $documentNumber)) {
+            return $documentNumber;
+        }
+
+        return $documentNumber.'/1';
     }
 }

@@ -79,6 +79,10 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
                     LoggerService::info('Sage conflict detected while booking embedded product on Sage - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
+                } elseif ($message == SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE) {
+                    LoggerService::info('EP document already exists error detected while booking embedded product on Sage');
+                    LoggerService::info('Updating Sage process status to pending for EP Sage booking');
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
                 } else {
                     LoggerService::info('Booking embedded product on Sage failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);

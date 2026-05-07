@@ -29,6 +29,7 @@ use App\Jobs\PostPrepaymentToSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
+use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
@@ -48,6 +49,7 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SageApiService
 {
@@ -3223,6 +3225,14 @@ class SageApiService
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
         }
 
+        if ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
+
+            LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
+            app(EpBookingService::class)->updateInsurerRequestResponseDocumentNumberForSageBooking($quote);
+
+            $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
+        }
+
         if ($storeSageApiLog) {
             $this->logSageApiCall($payload, $response, $quote, $quote, $currentStep, $totalSteps, $status, $userId);
         }
@@ -3374,6 +3384,17 @@ class SageApiService
         $sageErrorMessage = strtolower($sageErrorMessage);
 
         return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists');
+    }
+
+    public function isEPDocumentNumberAlreadyExistsMessage(?string $message): bool
+    {
+        if (! $message) {
+            return false;
+        }
+
+        $normalizedMessage = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
+
+        return Str::is(SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR.'*', $normalizedMessage);
     }
 
     public function scheduleSageProcesses($insurerId = null): void

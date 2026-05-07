@@ -61,6 +61,9 @@ class BookPolicyOnSageJob implements ShouldQueue
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
                     LoggerService::info('Sage conflict detected while booking policy on Sage - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
+                } elseif ($message == SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE) {
+                    LoggerService::info('EP document already exists on Sage - updating status to pending');
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
                 } else {
                     LoggerService::info('Booking policy on Sage failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
