@@ -8,7 +8,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Events\AmlAutomationScreeningSucceeded;
 use App\Models\AmlAutomation;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
@@ -207,7 +206,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $amlAutomation->update(['status' => AmlAutomationStatus::Complete->value, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
             LoggerService::info($loggerPrefix.' Completed - AML cleared');
 
-            // $this->dispatchScreeningSucceededEventIfApplicable();
             return;
         }
 
@@ -223,21 +221,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $pendingMsg]);
         LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
     }
-
-    // private function dispatchScreeningSucceededEventIfApplicable(): void
-    // {
-    //     if (! AmlAutomatableLobRegistry::allows($this->quoteType)) {
-    //         return;
-    //     }
-    //     $uuid = $this->quoteRequest->uuid ?? '';
-    //     $id = (int) $this->quoteRequest->id;
-    //     event(new AmlAutomationScreeningSucceeded(
-    //         $id,
-    //         $uuid,
-    //         $this->quoteRefId,
-    //         $this->quoteType,
-    //     ));
-    // }
 
     /**
      * Get customer information based on quote type.
