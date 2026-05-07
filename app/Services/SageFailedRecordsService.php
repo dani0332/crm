@@ -173,6 +173,15 @@ class SageFailedRecordsService extends BaseService
         $morphWith = [];
 
         foreach ($this->validMorphClasses($morphModelClasses) as $modelClass) {
+            if ($modelClass === EmbeddedTransaction::class) {
+                $morphWith[$modelClass] = [
+                    'quoteRequest',
+                    'payments' => $paymentsConstraint,
+                ];
+
+                continue;
+            }
+
             if ($modelClass === SendUpdateLog::class) {
                 $morphWith[$modelClass] = [
                     'personalQuote:id,uuid,code,policy_number,quote_type_id',

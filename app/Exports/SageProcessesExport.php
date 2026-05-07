@@ -76,15 +76,24 @@ class SageProcessesExport implements CsvExportableInterface
         }
 
         $isSendUpdate = $row->model_type === SendUpdateLog::class;
-        $refId = $isSendUpdate
-            ? ($row->model?->personalQuote?->code ?? $this->notAvailable)
-            : ($row->model?->code ?? $this->notAvailable);
+        $isEmbeddedTransaction = $row->model_type === EmbeddedTransaction::class;
+        $mainLead = match (true) {
+            $isSendUpdate => $row->model?->personalQuote,
+            $isEmbeddedTransaction => $row->model?->quoteRequest,
+            default => $row->model,
+        };
+        $sectionType = $row->section_type ?? null;
+        $refId = $mainLead?->code ?? $this->notAvailable;
         $suRefId = $isSendUpdate ? ($row->model?->code ?? $this->notAvailable) : $this->notAvailable;
-        $epRefId = $row->section_type === EmbeddedTransaction::class ? ($row->section?->code ?? $this->notAvailable) : $this->notAvailable;
+        $epRefId = match (true) {
+            $sectionType === EmbeddedTransaction::class => $row->section?->code ?? $this->notAvailable,
+            $isEmbeddedTransaction => $row->model?->code ?? $this->notAvailable,
+            default => $this->notAvailable,
+        };
 
         return [
             $row->id ?? $this->notAvailable,
-            $row->model?->uuid ?? $this->notAvailable,
+            $mainLead?->uuid ?? $row->model?->uuid ?? $this->notAvailable,
             $refId,
             $suRefId,
             $epRefId,
