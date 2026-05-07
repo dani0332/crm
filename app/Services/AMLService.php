@@ -2192,6 +2192,9 @@ class AMLService
 
         $kycLog = $fetchKycLog->first();
         $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
+        $quoteObject->aml_status = $amlStatus;
+        $quoteObject->save();
+
         if ($amlStatus == AMLStatusCode::AMLScreeningCleared) {
             $quoteType = QuoteTypes::getName($quoteObject->quote_type_id);
             if ($quoteType !== null && AmlAutomatableLobRegistry::allows($quoteType)) {
@@ -2203,8 +2206,6 @@ class AMLService
                 ));
             }
         }
-        $quoteObject->aml_status = $amlStatus;
-        $quoteObject->save();
 
         return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
                             AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
