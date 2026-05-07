@@ -2340,24 +2340,24 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER FIRST NAME (AML)' : 'INSURED FIRST NAME' }}</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED FIRST NAME"
+                      :placeholder="isMigrated ? 'POLICYHOLDER FIRST NAME' : 'INSURED FIRST NAME'"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER LAST NAME (AML)' : 'INSURED LAST NAME' }}</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED LAST NAME"
+                      :placeholder="isMigrated ? 'POLICYHOLDER LAST NAME' : 'INSURED LAST NAME'"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

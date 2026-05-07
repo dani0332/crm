@@ -43,7 +43,7 @@ class HealthQuote extends Model implements AuditableContract
 
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
-        'pc_qualified_formatted', 'has_pec_tag',
+        'pc_qualified_formatted', 'has_pec_tag', 'is_migrated',
     ];
     protected $table = 'health_quote_request';
     protected $fillable = [];
@@ -822,6 +822,11 @@ class HealthQuote extends Model implements AuditableContract
     public function isMigrated(): bool
     {
         return in_array($this->cover_for_id, [HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value, HealthCoverForEnum::DOMESTIC_HELPER->value]);
+    }
+
+    public function getIsMigratedAttribute(): bool
+    {
+        return $this->isMigrated();
     }
 
     public function isPolicyholderIncluded(): bool
