@@ -18,11 +18,8 @@ class AmlAutomationOutcomeMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        private bool $isSuccess,
         private Model $quote,
         private ?string $paymentLink,
-        private ?string $failureReason,
-        private ?string $kenResponseSummary,
     ) {}
 
     public function build(): self
@@ -71,7 +68,7 @@ class AmlAutomationOutcomeMail extends Mailable
      */
     private function buildBirdEmailData(): array
     {
-        $this->quote->loadMissing(['advisor', 'insuranceProvider', 'insuranceProviderPlan']);
+        $this->quote->loadMissing(['advisor', 'insuranceProvider', 'insuranceProviderPlan', 'savingsQuote', 'savingsQuote.currency']);
 
         $advisorEmail = $this->quote?->advisor?->email ?? '';
         $advisorName = $this->quote?->advisor?->name ?? '';

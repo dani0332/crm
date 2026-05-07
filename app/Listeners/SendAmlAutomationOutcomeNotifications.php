@@ -47,11 +47,8 @@ class SendAmlAutomationOutcomeNotifications
         }
 
         $mail = new AmlAutomationOutcomeMail(
-            isSuccess: true,
             quote: $quote,
-            paymentLink: $paymentLink,
-            failureReason: null,
-            kenResponseSummary: $this->summarizeKenResponse($kenResult),
+            paymentLink: $paymentLink
         );
 
         $mail->sendViaBird();
