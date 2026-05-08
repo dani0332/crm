@@ -101,7 +101,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->code,
             $quote->first_name,
             $quote->last_name,
-            $quote->emirate?->text,
+            $quote->is_migrated && ! $quote->is_policyholder_included ? 'N/A' : $quote->emirate?->text,
             $quote->has_pec_tag ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,

@@ -2340,7 +2340,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER FIRST NAME (AML)' : 'INSURED FIRST NAME' }}</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER FIRST NAME (As per Emirates Id)' : 'INSURED FIRST NAME' }}</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
@@ -2352,7 +2352,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER LAST NAME (AML)' : 'INSURED LAST NAME' }}</dt>
+                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER LAST NAME (As per Emirates Id)' : 'INSURED LAST NAME' }}</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
@@ -2414,7 +2414,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATE OF VISA</dt>
-                  <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
+                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.emirate_of_your_visa_id_text : '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
@@ -4007,13 +4007,6 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
-    />
-
-    <ApiLogs
-      v-if="can(permissionEnum.API_LOG_VIEW)"
-      :type="modelClass"
-      :id="$page.props.quote.id"
-      :expanded="sectionExpanded"
     />
 
     <PolicyIssuanceApiLogs

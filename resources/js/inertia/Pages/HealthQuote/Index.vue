@@ -83,7 +83,7 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirates', is_active: true },
   { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
@@ -1424,6 +1424,10 @@ const paymentStatusOptions = computed(() => {
         <p>
           {{ item.renewal_batch_text }}
         </p>
+      </template>
+      <template #item-emirates="item">
+          <span v-if="item.is_migrated && !item.is_policyholder_included"> - </span>
+          <span v-else>{{ item.emirate.text ?? 'N/A' }}</span>
       </template>
       <template #item-health_team_type="item">
         {{ item.health_team_type ?? item.notional_team }}
