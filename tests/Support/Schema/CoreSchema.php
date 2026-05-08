@@ -770,6 +770,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('support_user_id')->nullable();
+                $table->unsignedBigInteger('pq_advisor_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->unsignedBigInteger('customer_id')->nullable();
