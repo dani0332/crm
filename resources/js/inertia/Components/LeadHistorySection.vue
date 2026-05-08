@@ -14,7 +14,8 @@ const props = defineProps({
   },
   modelType: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
   },
   sendUpdateId: {
     type: [Number, String, null],

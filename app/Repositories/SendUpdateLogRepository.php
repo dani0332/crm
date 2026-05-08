@@ -16,8 +16,8 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -523,7 +523,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $modelClass::where('uuid', $sendUpdate->quote_uuid)->firstOrFail();
                 $previousStatusId = $quote->quote_status_id;
 
-                $leadHistoryLogs = app(CRUDService::class)->getLeadHistoryLogs($sendUpdate->quote_type_id, $quote->id);
+                $leadHistoryLogs = app(QuoteStatusLogService::class)->getLeadHistoryLogs(sendUpdateId: $sendUpdate->id);
                 $beforeEndorsementStatus = $leadHistoryLogs->skip(1)->first();
 
                 if (! $beforeEndorsementStatus) {
