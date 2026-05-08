@@ -59,12 +59,12 @@ class LifeRevivalCommand extends Command
     private function executeJobs(array $leads)
     {
         $logPrefix = $this->logPrefix;
+        $delayInSeconds = 0;
 
         foreach ($leads as $lead) {
             LoggerService::info("{$logPrefix} Dispatching Life Revival Lead Job for lead {$lead->uuid}");
-            LifeRevivalLeadsCreationJob::dispatch($lead->id);
-            // Give some time before dispatching the next job (like car dtt revival job)
-            sleep(10);
+            LifeRevivalLeadsCreationJob::dispatch($lead->id)->delay(now()->addSeconds($delayInSeconds));
+            $delayInSeconds += 10;
         }
         LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
