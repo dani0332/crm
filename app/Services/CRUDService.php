@@ -226,15 +226,6 @@ class CRUDService extends BaseService
         return $audits;
     }
 
-    public function getLeadHistoryLogs($quoteTypeId, $quoteId)
-    {
-        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-            ->where('quote_request_id', $quoteId)
-            ->orderBy('created_at', 'DESC')
-            ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
-            ->get();
-    }
-
     public function updateQuoteStatus(Request $request)
     {
         return DB::transaction(function () use ($request) {
