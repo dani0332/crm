@@ -46,8 +46,6 @@ class AwnicNationalitySeeder extends Seeder
             ['code' => 'Burkinabe', 'awni_country_code_number' => 1030],
             ['code' => 'Burkinan', 'awni_country_code_number' => 1030],
             ['code' => 'Burmese', 'awni_country_code_number' => 2005],
-            ['code' => 'Burmese', 'awni_country_code_number' => 2005],
-            ['code' => 'Burmese', 'awni_country_code_number' => 2005],
             ['code' => 'Cambodian', 'awni_country_code_number' => 1033],
             ['code' => 'Cameroonian', 'awni_country_code_number' => 1034],
             ['code' => 'Canadian', 'awni_country_code_number' => 1035],
