@@ -2,20 +2,44 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class QuoteStatusLogService extends BaseService
 {
-    // todo: will move this to event listener
-    public function createQuoteStatusLog($quoteTypeId, $quote, $oldQuoteStatus)
-    {
-        QuoteStatusLog::create([
+    /**
+     * @param  array{
+     *     status_change_source?: string|null,
+     *     notes?: string|null,
+     *     send_update_log_id?: int|null,
+     *     created_by?: int|null,
+     *     personal_quote_id?: int|null
+     * }  $context
+     */
+    public function createQuoteStatusLogWithContext(
+        int $quoteTypeId,
+        Model $quote,
+        int $oldQuoteStatus,
+        ?string $statusChangeAction = null,
+        array $context = []
+    ): QuoteStatusLog {
+        $notes = $this->resolveStatusChangeNotes($context['notes'] ?? null);
+
+        return QuoteStatusLog::create([
             'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
+            'quote_request_id' => $quote->getKey(),
             'current_quote_status_id' => $quote->quote_status_id,
             'previous_quote_status_id' => $oldQuoteStatus,
+            'status_change_source' => LeadSourceEnum::IMCRM,
+            'status_change_action' => $statusChangeAction,
+            'notes' => $notes,
+            'send_update_log_id' => $context['send_update_log_id'] ?? null,
+            'created_by' => $context['created_by'] ?? Auth::id(),
+            'personal_quote_id' => $context['personal_quote_id'] ?? null,
         ]);
     }
 
@@ -51,6 +75,19 @@ class QuoteStatusLogService extends BaseService
         }
 
         return $query->get();
+    }
+
+    private function resolveStatusChangeNotes(?string $notes): ?string
+    {
+        if ($notes !== null && $notes !== '') {
+            return $notes;
+        }
+
+        if (app()->runningInConsole()) {
+            return null;
+        }
+
+        return request()->method().' '.request()->path();
     }
 
 }
