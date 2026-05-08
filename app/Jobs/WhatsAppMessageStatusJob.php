@@ -19,9 +19,9 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public int $tries = 3;
+    public int $tries = 2;
     public int $timeout = 15;
-    public int $backoff = 300;
+    public int $backoff = 15;
     protected array $messageData;
 
     public function __construct(array $messageData)
@@ -117,7 +117,7 @@ class WhatsAppMessageStatusJob implements ShouldQueue
             });
         } catch (\Exception $exception) {
             LoggerService::warning(
-                'WhatsAppMessageStatusJob failed',
+                'WhatsAppMessageStatusJob failed - Retrying...',
                 [
                     'message_id' => $this->messageData['message_id'] ?? null,
                     'status' => $this->messageData['status'] ?? null,
@@ -127,7 +127,6 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     'exception_code' => $exception->getCode(),
                     'exception_file' => $exception->getFile(),
                     'exception_line' => $exception->getLine(),
-
                 ],
             );
         }
