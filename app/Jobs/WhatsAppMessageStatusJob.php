@@ -95,9 +95,25 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     return;
                 }
 
-                throw new \RuntimeException(
-                    "WhatsAppMessageStatusJob: No base EmailStatus for msg_id={$messageId} mobile={$mobile}. Will retry."
-                );
+                if ($this->attempts() < $this->tries) {
+                    LoggerService::info('WhatsAppMessageStatusJob - Base EmailStatus not found, retrying', [
+                        'msg_id' => $messageId,
+                        'mobile' => $mobile,
+                        'status' => $status,
+                        'attempt' => $this->attempts(),
+                    ]);
+
+                    $this->release($this->backoff);
+
+                    return;
+                }
+
+                LoggerService::warning('WhatsAppMessageStatusJob - Base EmailStatus missing after max retries, skipping', [
+                    'msg_id' => $messageId,
+                    'mobile' => $mobile,
+                    'status' => $status,
+                    'attempts' => $this->attempts(),
+                ]);
             });
         } catch (\Throwable $th) {
             LoggerService::error(
