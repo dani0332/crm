@@ -65,7 +65,7 @@ test('service allows car manager when not assigned as advisor on quote', functio
 });
 
 test('service allows device manager for device personal quote without being assigned advisor', function () {
-    $manager = TestDataSeeder::createUserWithRole(RolesEnum::DeviceManager);
+    $manager = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneManager);
     $otherAdvisor = TestDataSeeder::createUser(['email' => 'device-assigned@example.com']);
     $quote = PersonalQuote::query()->create([
         'uuid' => Str::upper(Str::random(6)),
@@ -97,7 +97,7 @@ test('service allows smartphone manager for device personal quote without being 
 });
 
 test('service allows device advisor when assigned to device personal quote', function () {
-    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::DeviceAdvisor);
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor);
     $quote = PersonalQuote::query()->create([
         'uuid' => Str::upper(Str::random(6)),
         'code' => 'DEV-'.Str::upper(Str::random(4)),
@@ -112,7 +112,7 @@ test('service allows device advisor when assigned to device personal quote', fun
 });
 
 test('service denies device advisor when not assigned to device personal quote', function () {
-    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::DeviceAdvisor, ['email' => 'device-a@example.com']);
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'device-a@example.com']);
     $otherAdvisor = TestDataSeeder::createUser(['email' => 'device-b@example.com']);
     $quote = PersonalQuote::query()->create([
         'uuid' => Str::upper(Str::random(6)),

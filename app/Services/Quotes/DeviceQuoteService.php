@@ -219,7 +219,7 @@ class DeviceQuoteService extends BaseQuoteService
         }
 
         return [
-            'canAddBatchNumber' => $this->hasAnyRole(Auth::user(), [RolesEnum::DeviceManager, RolesEnum::SmartPhoneManager]),
+            'canAddBatchNumber' => $this->hasAnyRole(Auth::user(), [RolesEnum::SmartPhoneManager]),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];

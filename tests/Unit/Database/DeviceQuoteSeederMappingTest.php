@@ -17,8 +17,7 @@ final class DeviceQuoteSeederMappingTest extends TestCase
 
         $expectedRoles = [
             RolesEnum::Admin,
-            RolesEnum::DeviceAdvisor,
-            RolesEnum::DeviceManager,
+
             RolesEnum::SmartPhoneAdvisor,
             RolesEnum::SmartPhoneManager,
             RolesEnum::Engineering,
