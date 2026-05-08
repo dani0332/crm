@@ -115,17 +115,21 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     'attempts' => $this->attempts(),
                 ]);
             });
-        } catch (\Throwable $th) {
-            LoggerService::error(
+        } catch (\Exception $exception) {
+            LoggerService::warning(
                 'WhatsAppMessageStatusJob failed',
                 [
                     'message_id' => $this->messageData['message_id'] ?? null,
                     'status' => $this->messageData['status'] ?? null,
                     'mobile' => $this->messageData['mobile'] ?? null,
+                    'exception' => $exception->getMessage(),
+                    'exception_trace' => $exception->getTraceAsString(),
+                    'exception_code' => $exception->getCode(),
+                    'exception_file' => $exception->getFile(),
+                    'exception_line' => $exception->getLine(),
+
                 ],
-                $th
             );
-            throw $th;
         }
     }
 }
