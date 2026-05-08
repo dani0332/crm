@@ -350,6 +350,7 @@ class DropdownSourceService extends BaseService
                 break;
             case 'insurance_provider_active_list':
                 $data = InsuranceProvider::select('id', 'text')->withActive()->orderBy('text')->get();
+                break;
             case 'gender':
                 $data = $lookUpService->getGender();
                 break;
