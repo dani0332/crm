@@ -69,7 +69,7 @@ const endpoint = computed(() => {
     query.append('quoteId', props.quoteId);
     query.append('quoteTypeId', props.quoteTypeId);
   }
-  return `/quotes/lead-history?${query.toString()}`;
+  return `/quotes/status-logs?${query.toString()}`;
 });
 
 const onLoadHistoryData = async () => {

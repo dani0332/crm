@@ -32,7 +32,7 @@ class QuoteStatusLogService extends BaseService
             })->exists();
     }
 
-    public function getLeadHistoryLogs(?int $quoteTypeId = null, ?int $quoteId = null, ?int $sendUpdateId = null): EloquentCollection
+    public function getQuoteStatusLogs(?int $quoteTypeId = null, ?int $quoteId = null, ?int $sendUpdateId = null): EloquentCollection
     {
         $query = QuoteStatusLog::query()
             ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
@@ -52,4 +52,5 @@ class QuoteStatusLogService extends BaseService
 
         return $query->get();
     }
+
 }
