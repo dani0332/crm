@@ -15,7 +15,7 @@ use Illuminate\Validation\Rules\Enum;
 
 class UpdateHealthRateRequest extends FormRequest
 {
-    protected HealthPlan $plan;
+    protected ?HealthPlan $plan = null;
 
     protected function prepareForValidation(): void
     {

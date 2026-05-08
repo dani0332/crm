@@ -187,7 +187,7 @@ class HealthRateService extends BaseService
         foreach ($existingRates as $rate) {
             $duplicate = true;
             foreach ($matchingFields as $field) {
-                if ($rate->{$field} && isset($data[$field]) && $rate->{$field} != $data[$field]) {
+                if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
                     $duplicate = false;
                     break;
                 }
