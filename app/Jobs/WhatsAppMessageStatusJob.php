@@ -123,10 +123,6 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     'status' => $this->messageData['status'] ?? null,
                     'mobile' => $this->messageData['mobile'] ?? null,
                     'exception' => $exception->getMessage(),
-                    'exception_trace' => $exception->getTraceAsString(),
-                    'exception_code' => $exception->getCode(),
-                    'exception_file' => $exception->getFile(),
-                    'exception_line' => $exception->getLine(),
                 ],
             );
         }
