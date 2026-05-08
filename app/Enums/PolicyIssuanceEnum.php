@@ -100,6 +100,7 @@ final class PolicyIssuanceEnum extends Enum
     const DIC_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
     const DIC_TRAVEL_GET_POLICY_DOC = 'GetPolicyDoc';
     const DIC_TRAVEL_GET_BROKER_INVOICE = 'GetBrokerInvoice';
+    const DIC_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
     /* DIC Travel Steps */
 
@@ -141,6 +142,7 @@ final class PolicyIssuanceEnum extends Enum
             self::DIC_TRAVEL_ISSUE_POLICY,
             self::DIC_TRAVEL_GET_POLICY_DOC,
             self::DIC_TRAVEL_GET_BROKER_INVOICE,
+            self::DIC_TRAVEL_BOOK_POLICY,
         ];
     }
 

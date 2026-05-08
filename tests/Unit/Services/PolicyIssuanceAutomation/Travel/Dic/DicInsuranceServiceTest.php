@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PolicyIssuanceEnum;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicResponseHandler;
@@ -59,4 +60,13 @@ test('timeout retry toggle reflects application storage', function () {
 
     mockDicTravelAutomationSettings(true, '0');
     expect($this->service->isPolicyIssuanceAutomationRetryEnabledForTimeout())->toBeFalse();
+});
+
+test('getNextStep proceeds from broker invoice to book policy', function () {
+    expect($this->service->getNextStep(PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE))
+        ->toBe(PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY);
+});
+
+test('getNextStep returns null when book policy is the last completed step', function () {
+    expect($this->service->getNextStep(PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY))->toBeNull();
 });

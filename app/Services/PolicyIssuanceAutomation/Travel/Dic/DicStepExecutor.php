@@ -6,7 +6,6 @@ namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteDocumentsEnum;
-use App\Jobs\DicPolicyIssuanceStepJob;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
@@ -18,6 +17,7 @@ class DicStepExecutor
         private DicApiService $apiService,
         private DicResponseHandler $responseHandler,
         private DicDocumentService $documentService,
+        private DicBookPolicyService $bookPolicyService,
     ) {}
 
     /**
@@ -262,6 +262,38 @@ class DicStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             );
         }
+    }
+
+    /**
+     * @param  bool  $applyQuoteFailure  When false (async Bus steps), quote / Bird failed-allocation email are handled by {@see DicPolicyIssuanceStepJob}.
+     * @return array<string, mixed>
+     */
+    public function executeBookPolicyStep(TravelQuote $quote, PolicyIssuance $process, bool $applyQuoteFailure = true): array
+    {
+        LoggerService::info('DIC Travel: BookPolicy step', [
+            'process_id' => $process->id,
+            'quote_code' => $quote->code,
+        ]);
+
+        $result = $this->bookPolicyService->bookPolicy($quote, $process);
+
+        if (! $result['status']) {
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+                );
+            }
+
+            return $this->withTravelDicFailureMeta(
+                $result,
+                PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+            );
+        }
+
+        return $result;
     }
 
     /**

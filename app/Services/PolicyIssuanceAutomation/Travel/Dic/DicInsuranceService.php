@@ -31,6 +31,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
         PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY => 'executeIssuePolicyStep',
         PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC => 'executeGetPolicyDocStep',
         PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE => 'executeGetBrokerInvoiceStep',
+        PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY => 'executeBookPolicyStep',
     ];
 
     public function __construct(
@@ -48,6 +49,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
             PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
             PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
             PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
+            PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY,
         ];
     }
 
@@ -279,6 +281,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
             PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
             PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
             PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
             default => null,
         };
     }
@@ -346,6 +349,10 @@ class DicInsuranceService implements PolicyIssuanceInterface
                 'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
             ],
             PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE => [
+                'insurer_api_status_id' => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+                'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
+            ],
+            PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY => [
                 'insurer_api_status_id' => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
                 'process_involved' => PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY,
             ],
