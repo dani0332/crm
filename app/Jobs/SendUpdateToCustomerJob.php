@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\BirdFlowStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
@@ -19,6 +18,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class SendUpdateToCustomerJob implements ShouldQueue
@@ -135,10 +135,10 @@ class SendUpdateToCustomerJob implements ShouldQueue
     private function isEmailResponseSuccessful($quoteTypeId, $response)
     {
         if ($quoteTypeId === QuoteTypeId::Device) {
-            return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE || $response == BirdFlowStatusEnum::BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE;
+            return $response === Response::HTTP_OK || $response === Response::HTTP_CREATED;
         }
 
-        return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE;
+        return $response === Response::HTTP_CREATED;
     }
 
     private function updateEmailStatusToSent($sendUpdateLog, $response)
