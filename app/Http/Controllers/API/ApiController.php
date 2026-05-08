@@ -820,13 +820,13 @@ class ApiController extends Controller
                     'success' => true,
                     'message' => $result->message,
                     'data' => $result->data ?? null,
-                ], 200);
+                ], Response::HTTP_OK);
             }
 
             return response()->json([
                 'success' => false,
                 'message' => $result->message,
-            ], 400);
+            ], Response::HTTP_BAD_REQUEST);
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Error updating customer replied status', [
