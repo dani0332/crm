@@ -8,39 +8,41 @@ use App\Models\QuoteStatusLog;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 
 class QuoteStatusLogService extends BaseService
 {
-    /**
-     * @param  array{
-     *     status_change_source?: string|null,
-     *     notes?: string|null,
-     *     send_update_log_id?: int|null,
-     *     created_by?: int|null,
-     *     personal_quote_id?: int|null
-     * }  $context
-     */
-    public function createQuoteStatusLogWithContext(
+    public function createQuoteStatusLog(
         int $quoteTypeId,
         Model $quote,
         int $oldQuoteStatus,
-        ?string $statusChangeAction = null,
-        array $context = []
     ): QuoteStatusLog {
-        $notes = $this->resolveStatusChangeNotes($context['notes'] ?? null);
-
         return QuoteStatusLog::create([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->getKey(),
             'current_quote_status_id' => $quote->quote_status_id,
             'previous_quote_status_id' => $oldQuoteStatus,
             'status_change_source' => LeadSourceEnum::IMCRM,
-            'status_change_action' => $statusChangeAction,
-            'notes' => $notes,
-            'send_update_log_id' => $context['send_update_log_id'] ?? null,
-            'created_by' => $context['created_by'] ?? Auth::id(),
-            'personal_quote_id' => $context['personal_quote_id'] ?? null,
+            'status_change_action' => Context::get('status_change_action'),
+            'send_update_log_id' => Context::get('send_update_log_id'),
+            'notes' => $this->buildStatusChangeNotes(),
+            'created_by' => Auth::id(),
         ]);
+    }
+
+    /**
+     * Build a JSON payload of request metadata persisted in the `notes` text column.
+     */
+    protected function buildStatusChangeNotes(): string
+    {
+        $request = request();
+
+        return json_encode([
+            'method' => $request?->method(),
+            'path' => $request?->path(),
+            'ip' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+        ], JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -76,18 +78,4 @@ class QuoteStatusLogService extends BaseService
 
         return $query->get();
     }
-
-    private function resolveStatusChangeNotes(?string $notes): ?string
-    {
-        if ($notes !== null && $notes !== '') {
-            return $notes;
-        }
-
-        if (app()->runningInConsole()) {
-            return null;
-        }
-
-        return request()->method().' '.request()->path();
-    }
-
 }
