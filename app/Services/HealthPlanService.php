@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -89,6 +90,22 @@ class HealthPlanService extends BaseService
             $currentPlan->save();
 
             return $currentPlan;
+        }
+
+        // Check already has a draft version
+        $existingDraft = HealthPlan::where('parent_id', $id)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if ($existingDraft) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'Draft version already exists for this plan.',
+                    ],
+                ], 422)
+            );
         }
 
         // Otherwise create new draft version

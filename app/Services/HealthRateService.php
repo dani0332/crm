@@ -10,6 +10,7 @@ use App\Models\HealthRateControl;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class HealthRateService extends BaseService
@@ -71,29 +72,43 @@ class HealthRateService extends BaseService
 
     public function create(array $data)
     {
-        // Fetch parent active plan (if exists)
-        // We have to check against active and draft plan rates only
+        $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
+
+        // Fetch related plan ids (if exists)
+        // We have to check against active and draft plans only
         $planIds = $this->healthPlanService->getRelatedPlanIds($data['health_plan_id']);
 
-        // Get draft rate against plan ids
-        $draftRatesSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
-            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
-            ->first();
+        // If plan is draft, add or upadte draft rate sheet
+        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+            // Get draft rate sheet against plan ids
+            $draftRatesSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
+                ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+                ->first();
 
-        // If not found, add new draft rate sheet
-        if (! $draftRatesSheet) {
-            return $this->addRate($data, $planIds);
+            // If not found, add new draft rate sheet
+            if (! $draftRatesSheet) {
+                return $this->addRate($data, $planIds);
+            }
+
+            // Else add rate to existing draft rate sheet
+            return $this->addRate($data, $planIds, $draftRatesSheet);
         }
 
-        // Else add rate to existing draft rate sheet
-        return $this->addRate($data, $planIds, $draftRatesSheet);
+        // Else Active plan
+        // Get active rate sheet against plan id
+        $activeRates = HealthRate::where('health_plan_id', $data['health_plan_id'])
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->get();
+
+        return $this->addRate($data, $planIds, null, $activeRates);
+
     }
 
-    private function addRate(array $data, array $planIds, ?HealthRateControl $healthRateControl = null): HealthRate
+    private function addRate(array $data, array $planIds, ?HealthRateControl $healthRateControl = null, ?Collection $existingRates = null): HealthRate
     {
         $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
 
-        $healthRate = DB::transaction(function () use ($data, $plan, $planIds, $healthRateControl) {
+        $healthRate = DB::transaction(function () use ($data, $plan, $planIds, $healthRateControl, $existingRates) {
             // Add health rates control (rate sheet) if not exists
             if (! $healthRateControl) {
                 $data['version'] = $this->deriveVersion($planIds);
@@ -108,19 +123,54 @@ class HealthRateService extends BaseService
                 ]);
             } else {
                 // Check duplicate rates under same sheet
-                $this->checkDuplicateRates($healthRateControl->id, $data, $plan);
+                // $this->checkDuplicateRates($healthRateControl->id, $data, $plan);
 
                 // Update existing health rate control
                 $healthRateControl->total_records++;
                 $healthRateControl->effective_from = $data['effective_from'];
                 $healthRateControl->effective_to = $data['effective_to'];
+                $healthRateControl->health_plan_id = $data['health_plan_id'];
                 $healthRateControl->save();
 
                 // Get version of existing health rate control
                 $data['version'] = $healthRateControl->version;
             }
 
-            // Add health rate
+            // Add existing active rates if exist (in case active plan)
+            if ($existingRates) {
+                $bulkRates = [];
+
+                foreach ($existingRates as $existingRate) {
+                    $bulkRates[] = [
+                        'health_plan_id' => $data['health_plan_id'],
+                        'health_rate_control_id' => $healthRateControl->id,
+                        'version' => $data['version'],
+                        'health_plan_co_payment_id' => $existingRate->health_plan_co_payment_id,
+                        'text' => $existingRate->text,
+                        'text_ar' => $existingRate->text_ar,
+                        'premium' => $existingRate->premium,
+                        'is_active' => $existingRate->is_active,
+                        'emirate_type' => $existingRate->emirate_type,
+                        'min_age' => $existingRate->min_age,
+                        'max_age' => $existingRate->max_age,
+                        'gender' => $existingRate->gender,
+                        'cohort' => $existingRate->cohort,
+                        'marital_status' => $existingRate->marital_status,
+                        'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                if (! empty($bulkRates)) {
+                    HealthRate::insert($bulkRates);
+                }
+            }
+
+            // Check duplicate rates under same sheet
+            $this->checkDuplicateRates($healthRateControl->id, $data, $plan);
+
+            // Add given health rate
             $healthRate = HealthRate::create([
                 'health_plan_id' => $data['health_plan_id'],
                 'health_rate_control_id' => $healthRateControl->id,
@@ -184,43 +234,45 @@ class HealthRateService extends BaseService
         }
 
         // Iterate through existing rates to check duplicate
-        foreach ($existingRates as $rate) {
-            $duplicate = true;
-            foreach ($matchingFields as $field) {
-                if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
-                    $duplicate = false;
-                    break;
+        if ($existingRates) {
+            foreach ($existingRates as $rate) {
+                $duplicate = true;
+                foreach ($matchingFields as $field) {
+                    if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
+                        $duplicate = false;
+                        break;
+                    }
+                }
+
+                if ($duplicate) {
+                    // Same format as api response
+                    throw new HttpResponseException(
+                        response()->json([
+                            'status' => false,
+                            'errors' => [
+                                'Duplicate rate detected in same rate sheet.',
+                            ],
+                        ], 422)
+                    );
                 }
             }
 
-            if ($duplicate) {
-                // Same format as api response
+            // Check age overlap
+            $overlapExists = $existingRates->contains(function ($rate) use ($data) {
+                return $rate->min_age <= $data['max_age'] &&
+                       $rate->max_age >= $data['min_age'];
+            });
+
+            if ($overlapExists) {
                 throw new HttpResponseException(
                     response()->json([
                         'status' => false,
                         'errors' => [
-                            'Duplicate rate detected in same rate sheet.',
+                            'Age range overlaps with an existing rate sheet.',
                         ],
                     ], 422)
                 );
             }
-        }
-
-        // Check age overlap
-        $overlapExists = $existingRates->contains(function ($rate) use ($data) {
-            return $rate->min_age <= $data['max_age'] &&
-                   $rate->max_age >= $data['min_age'];
-        });
-
-        if ($overlapExists) {
-            throw new HttpResponseException(
-                response()->json([
-                    'status' => false,
-                    'errors' => [
-                        'Age range overlaps with an existing rate sheet.',
-                    ],
-                ], 422)
-            );
         }
     }
 
@@ -240,8 +292,13 @@ class HealthRateService extends BaseService
         }
 
         // Else (active)
+        // Get active rate sheet against plan id and exclude current rate id
+        $activeRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
+            ->where('id', '!=', $id)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->get();
 
-        return $rate;
+        return $this->addRate($data, [$rate->health_plan_id], null, $activeRates);
     }
 
     public function delete(int $id): void
