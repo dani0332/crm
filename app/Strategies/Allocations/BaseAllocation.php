@@ -128,7 +128,10 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->when($this->quoteType === QuoteTypes::LIFE, function ($q) {
-                $q->where('source', '!=', LeadSourceEnum::REVIVAL);
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
             })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }

@@ -414,7 +414,10 @@ class RetryAllocationService
                 $q->whereBetween('created_at', [$allocationStartDate, $to]);
             })
             ->when($quoteType === QuoteTypes::LIFE, function ($q) {
-                $q->where('source', '!=', LeadSourceEnum::REVIVAL);
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
             })
             ->take($chunkSize);
 
