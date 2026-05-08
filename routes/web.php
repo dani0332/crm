@@ -36,6 +36,7 @@ use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LeadHistoryController;
 use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
@@ -732,7 +733,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
-        Route::get('lead-history', [CRUDController::class, 'getLeadHistoryLogs'])->name('list-lead-history');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
@@ -759,6 +759,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+        Route::get('lead-history', [LeadHistoryController::class, 'index'])->name('list-lead-history');
     });
 
     Route::group(['prefix' => 'ftc'], function () {
