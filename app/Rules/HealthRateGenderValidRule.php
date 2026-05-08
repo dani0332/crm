@@ -9,11 +9,11 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class HealthRateGenderValidRule implements ValidationRule
 {
-    public function __construct(protected int $healthPlanId) {}
+    public function __construct(protected ?int $healthPlanId) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $healthPlan = HealthPlan::find($this->healthPlanId);
+        $healthPlan = $this->healthPlanId ? HealthPlan::find($this->healthPlanId) : null;
 
         if ($healthPlan && $healthPlan->gender_enabled) {
             $genders = array_map('strtolower', array_column(GenderEnum::cases(), 'value'));

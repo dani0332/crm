@@ -9,12 +9,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class HealthRateCohortValidRule implements ValidationRule
 {
-    public function __construct(protected int $healthPlanId) {}
+    public function __construct(protected ?int $healthPlanId) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $cohortMappingService = app(CohortMappingService::class);
-        $healthPlan = HealthPlan::find($this->healthPlanId);
+        $healthPlan = $this->healthPlanId ? HealthPlan::find($this->healthPlanId) : null;
 
         if ($healthPlan && $healthPlan->cohort_enabled) {
             $cohorts = $cohortMappingService->getAllCohorts();

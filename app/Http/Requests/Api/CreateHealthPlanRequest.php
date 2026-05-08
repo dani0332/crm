@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api;
 
 use App\Enums\HealthBusinessTypeEnum;
+use App\Rules\HealthPlanGenderValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,8 +23,12 @@ class CreateHealthPlanRequest extends FormRequest
             'provider_id' => 'nullable|integer|exists:insurance_provider,id',
             'maf_link' => 'nullable|string',
             'cohort_enabled' => 'nullable|boolean',
-            'gender_enabled' => 'nullable|boolean',
             'marital_status_enabled' => 'nullable|boolean',
+            'gender_enabled' => [
+                'nullable',
+                'boolean',
+                new HealthPlanGenderValidRule($this->input('marital_status_enabled')),
+            ],
             'is_active' => 'required|boolean',
             'is_hidden' => 'required|boolean',
         ];
