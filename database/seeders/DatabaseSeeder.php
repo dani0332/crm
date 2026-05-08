@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            ManagerLeadAllocationRoleSeeder::class,
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
@@ -64,6 +65,9 @@ class DatabaseSeeder extends Seeder
             HealthGroupNationalitySeeder::class,*/
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            InsuranceProviderTransitionsSeeder::class,
+            BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
+            ConverILAGroupMedicalConfigurationBranchWise::class,
             HealthCoverForSeeder::class,
             MemberCategorySeeder::class,
             VisaCategorySeeder::class,

@@ -215,6 +215,12 @@ class TravelQuoteObserver
             }
         }
 
+        // For debugging
+        LoggerService::info('TravelQuoteObserver - reached inside policy booked check', [
+            'uuid' => $travelQuote->uuid,
+            'hasPolicyBookedStatusChange' => $hasPolicyBookedStatusChange,
+        ]);
+
         if ($hasPolicyBookedStatusChange) {
             try {
                 QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);

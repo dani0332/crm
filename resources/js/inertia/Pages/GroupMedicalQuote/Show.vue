@@ -5,6 +5,10 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import {
+  notifyGmQuoteEmirateUpdated,
+  useGmQuoteEmirateCrossTabListen,
+} from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 
 const props = defineProps({
   quote: Object,
@@ -37,6 +41,7 @@ const props = defineProps({
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  isEmirateOfRegistrationLocked: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
@@ -47,6 +52,10 @@ const props = defineProps({
 });
 
 const page = usePage();
+useGmQuoteEmirateCrossTabListen({
+  quoteUuid: computed(() => page.props.quote?.uuid),
+  quoteId: computed(() => page.props.quote?.id),
+});
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
@@ -195,7 +204,30 @@ const onLoadHistoryData = async () => {
     }),
   );
   const finalRes = await res.json();
-  historyData.value = finalRes;
+  historyData.value = (Array.isArray(finalRes) ? finalRes : []).map(row => {
+    const hasNewAdvisor =
+      row.NewAdvisor != null && String(row.NewAdvisor).trim() !== '';
+
+    const hasOldAdvisor =
+      row.OldAdvisor != null && String(row.OldAdvisor).trim() !== '';
+
+    const prefix = hasOldAdvisor ? 'Advisor Re-assigned' : 'Advisor Assigned';
+
+    const advisorText = hasNewAdvisor
+      ? hasOldAdvisor
+        ? `${prefix}: ${row.OldAdvisor} → ${row.NewAdvisor}`
+        : `${prefix}: ${row.NewAdvisor}`
+      : '';
+
+    return {
+      ...row,
+      NewNotes: advisorText
+        ? row.NewNotes && String(row.NewNotes).trim() !== ''
+          ? `${row.NewNotes} | ${advisorText}`
+          : advisorText
+        : (row.NewNotes ?? ''),
+    };
+  });
   historyLoading.value = false;
 };
 
@@ -230,6 +262,23 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.OE,
     page.props.rolesEnum.NRA,
   ]);
+});
+
+const emirateOfRegistrationError = computed(() => {
+  if (customerProfileForm.errors.emirate_of_registration_id) {
+    return customerProfileForm.errors.emirate_of_registration_id;
+  }
+  const value = customerProfileForm.emirate_of_registration_id;
+  const isEmpty =
+    value === null || value === undefined || value === '' || value === false;
+  if (
+    enabledCustomerType === page.props.customerTypeEnum.Entity &&
+    isEmpty &&
+    !page.props.isEmirateOfRegistrationLocked
+  ) {
+    return 'Emirate of registration is required.';
+  }
+  return null;
 });
 
 const enabledCustomerType =
@@ -276,8 +325,24 @@ const customerProfileForm = useForm({
     page.props.quote?.quote_request_entity_mapping?.entity
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
+    page.props.quote?.emirate_of_registration_id ??
     page.props.quote?.quote_request_entity_mapping?.entity
-      ?.emirate_of_registration_id ?? null,
+      ?.emirate_of_registration_id ??
+    null,
+});
+
+const resolvedEmirateOfRegistrationId = computed(
+  () =>
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ??
+    page.props.quote?.emirate_of_registration_id ??
+    null,
+);
+
+watch(resolvedEmirateOfRegistrationId, newVal => {
+  if (newVal !== customerProfileForm.emirate_of_registration_id) {
+    customerProfileForm.emirate_of_registration_id = newVal;
+  }
 });
 
 const updateProfileDetails = isValid => {
@@ -286,6 +351,11 @@ const updateProfileDetails = isValid => {
   customerProfileForm.post(route('update-customer-profile'), {
     preserveScroll: true,
     onSuccess: () => {
+      notifyGmQuoteEmirateUpdated({
+        quoteUuid: page.props.quote?.uuid,
+        quoteId: page.props.quote?.id,
+        source: 'gm-lead-profile',
+      });
       notification.success({
         title: 'Customer profile details update Successfully',
         position: 'top',
@@ -378,6 +448,11 @@ const linkEntity = () => {
         customerProfileForm.emirate_of_registration_id =
           response.emirate_of_registration_id;
 
+        notifyGmQuoteEmirateUpdated({
+          quoteUuid: page.props.quote?.uuid,
+          quoteId: page.props.quote?.id,
+          source: 'gm-link-entity',
+        });
         notification.success({
           title: res.data.message,
           position: 'top',
@@ -809,7 +884,32 @@ function handleOcrNotification(event) {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
-                <dd>{{ quote.number_of_employees }}</dd>
+                <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ quote?.group_medical_type?.text ?? 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ quote.health_plan_type_text ?? '—' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      EMIRATE OF REGISTRATION
+                    </label>
+                    <template #tooltip>
+                      This value is sourced from the Entity Profile.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.emirate?.text ?? 'Not Assigned' }}</div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -1099,14 +1199,51 @@ function handleOcrNotification(event) {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dt class="font-medium">
+                    <x-tooltip placement="bottom">
+                      <span
+                        class="cursor-help underline decoration-dotted decoration-gray-400"
+                      >
+                        EMIRATES OF REGISTRATION
+                      </span>
+                      <template #tooltip>
+                        Defines the legal Emirate of registration of the entity
+                        and is required.
+                      </template>
+                    </x-tooltip>
+                  </dt>
                   <dd>
+                    <x-tooltip
+                      v-if="props.isEmirateOfRegistrationLocked"
+                      placement="top"
+                      class="block w-full"
+                    >
+                      <x-select
+                        v-model="customerProfileForm.emirate_of_registration_id"
+                        :options="emiratesOptions"
+                        class="w-full"
+                        placeholder="SELECT EMIRATES OF REGISTRATION"
+                        filterable
+                        disabled
+                        :rules="[isRequired]"
+                        :error="emirateOfRegistrationError"
+                        required
+                      />
+                      <template #tooltip>
+                        Emirate of registration cannot be changed after the
+                        policy is booked.
+                      </template>
+                    </x-tooltip>
                     <x-select
+                      v-else
                       v-model="customerProfileForm.emirate_of_registration_id"
                       :options="emiratesOptions"
                       class="w-full"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       filterable
+                      :rules="[isRequired]"
+                      :error="emirateOfRegistrationError"
+                      required
                     />
                   </dd>
                 </div>
@@ -1565,6 +1702,7 @@ function handleOcrNotification(event) {
       :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
+      :showSourceColumn="true"
     />
 
     <AuditLogs
