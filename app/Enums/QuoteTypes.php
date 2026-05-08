@@ -358,11 +358,6 @@ enum QuoteTypes: string
         };
     }
 
-    /**
-     * Get the primary LOB types used for role-based filtering and reporting.
-     *
-     * @return array<self>
-     */
     public static function primaryTypes(): array
     {
         return [
@@ -378,7 +373,29 @@ enum QuoteTypes: string
             self::CYCLE,
             self::JETSKI,
             self::SAVINGS,
+            self::CYBER,
         ];
+    }
+
+    public static function primaryTypesWithIds(): array
+    {
+        $options = [];
+
+        foreach (self::primaryTypes() as $quoteType) {
+            $id = self::getId($quoteType);
+            if ($id === null) {
+                continue;
+            }
+
+            $options[] = [
+                'id' => $id,
+                'text' => $quoteType->value,
+            ];
+        }
+
+        usort($options, static fn (array $a, array $b): int => strcasecmp($a['text'], $b['text']));
+
+        return $options;
     }
 
     /**
