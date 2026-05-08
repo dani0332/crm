@@ -46,6 +46,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\GroupMedicalEcommerceJourneyLinkService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -57,6 +58,7 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -588,7 +590,41 @@ class AmtController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'activities' => $activities,
             'advisors' => $advisors,
+            'gmEcommerceCopyLink' => [
+                'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
+            ],
         ]);
+    }
+
+    public function copyEcommerceJourneyLink(
+        string $uuid,
+        GroupMedicalEcommerceJourneyLinkService $groupMedicalEcommerceJourneyLinkService,
+    ): JsonResponse {
+        $quote = BusinessQuote::query()
+            ->where('uuid', $uuid)
+            ->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+            ->first();
+
+        if (! $quote) {
+            abort(404);
+        }
+
+        if (! $groupMedicalEcommerceJourneyLinkService->isAdvisorCopyEnabled($quote)) {
+            return response()->json([
+                'message' => 'Copy Link is unavailable after the lead is Transaction Approved.',
+            ], 422);
+        }
+
+        $url = $groupMedicalEcommerceJourneyLinkService->buildCustomerJourneyUrl($quote);
+        if ($url === null) {
+            return response()->json([
+                'message' => 'Group Medical ecommerce URL is not configured.',
+            ], 503);
+        }
+
+        $groupMedicalEcommerceJourneyLinkService->recordAdvisorCopyLinkAudit($quote, Auth::user());
+
+        return response()->json(['url' => $url]);
     }
 
     /**

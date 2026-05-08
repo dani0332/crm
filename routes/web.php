@@ -862,6 +862,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
 
     Route::group(['prefix' => 'medical'], function () {
+        Route::post('amt/{uuid}/ecommerce-copy-link', [V2AmtController::class, 'copyEcommerceJourneyLink'])
+            ->name('amt.ecommerce-copy-link')
+            ->middleware('permission:'.PermissionsEnum::GMQuoteCopyLink);
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
         Route::resource('amt', V2AmtController::class);
     });

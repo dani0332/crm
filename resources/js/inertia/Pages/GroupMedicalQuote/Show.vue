@@ -92,16 +92,43 @@ const dateFormat = date =>
 const dateFormatYMD = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
-const { copy, copied } = useClipboard();
+const { copy } = useClipboard();
 
-const onCopyQuotePageLink = () => {
-  copy(window.location.href);
-  if (copied) {
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
+const gmEcommerceCopyLink = computed(
+  () => page.props.gmEcommerceCopyLink ?? { enabled: false },
+);
+const isGmEcommerceCopyLinkDisabled = computed(
+  () => !gmEcommerceCopyLink.value.enabled,
+);
+const gmEcommerceCopyLinkLoading = ref(false);
+
+const onCopyGmEcommerceJourneyLink = () => {
+  if (isGmEcommerceCopyLinkDisabled.value) {
+    return;
   }
+  gmEcommerceCopyLinkLoading.value = true;
+  axios
+    .post(route('amt.ecommerce-copy-link', page.props.quote.uuid))
+    .then(res => {
+      copy(res.data.url);
+      notification.success({
+        title:
+          'Link copied to clipboard. Share it with the customer so they can continue their journey.',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      const message =
+        err.response?.data?.message ??
+        'Could not copy the ecommerce link. Please try again.';
+      notification.error({
+        title: message,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      gmEcommerceCopyLinkLoading.value = false;
+    });
 };
 
 const gmMembersForCategoryBreakdown = computed(() =>
@@ -247,7 +274,7 @@ const onLeadStatus = () => {
         countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
         // Optimized partial reload: only reload quote data, preserve state and scroll
         router.reload({
-          only: ['quote'],
+          only: ['quote', 'gmEcommerceCopyLink'],
           preserveState: true,
           preserveScroll: true,
         });
@@ -1094,14 +1121,56 @@ function handleOcrNotification(event) {
                   >
                     Quote Details
                   </h4>
-                  <x-button
-                    size="sm"
-                    color="orange"
-                    class="shrink-0 rounded-lg"
-                    @click.prevent="onCopyQuotePageLink"
+                  <div
+                    v-if="can(permissionsEnum.GMQuoteCopyLink)"
+                    class="flex flex-wrap items-center gap-2"
                   >
-                    Copy Link
-                  </x-button>
+                    <template v-if="!isGmEcommerceCopyLinkDisabled">
+                      <x-button
+                        size="sm"
+                        color="orange"
+                        class="shrink-0 rounded-lg"
+                        :loading="gmEcommerceCopyLinkLoading"
+                        @click.prevent="onCopyGmEcommerceJourneyLink"
+                      >
+                        Copy Link
+                      </x-button>
+                      <x-tooltip placement="top">
+                        <span
+                          class="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-dotted border-primary-600 text-xs font-semibold leading-none text-primary-700 underline decoration-dotted decoration-primary-700"
+                          aria-label="Help"
+                        >
+                          ?
+                        </span>
+                        <template #tooltip>
+                          Copy this link and send it to the customer so they
+                          can resume and complete their application.
+                        </template>
+                      </x-tooltip>
+                    </template>
+                    <x-tooltip v-else placement="top">
+                      <div class="inline-flex items-center gap-2">
+                        <x-button
+                          size="sm"
+                          color="orange"
+                          class="shrink-0 rounded-lg"
+                          disabled
+                        >
+                          Copy Link
+                        </x-button>
+                        <span
+                          class="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-dotted border-gray-400 text-xs font-semibold leading-none text-gray-500 underline decoration-dotted decoration-gray-400"
+                          aria-label="Help"
+                        >
+                          ?
+                        </span>
+                      </div>
+                      <template #tooltip>
+                        Copy Link is unavailable after the lead is Transaction
+                        Approved.
+                      </template>
+                    </x-tooltip>
+                  </div>
                 </div>
                 <div
                   class="grid gap-x-16 gap-y-2 sm:grid-cols-2 text-xs text-gray-900"
