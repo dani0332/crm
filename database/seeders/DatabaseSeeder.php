@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
             GroupMedicalQuoteCopyLinkPermissionSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
             // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
@@ -47,7 +48,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
             ManagerLeadAllocationRoleSeeder::class,
-            PqaLeadAllocationPermissionSeeder::class,
+
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,

@@ -7,11 +7,19 @@ defineProps({
   leadStatuses: Array,
   advisors: Array,
   supportUsers: Array,
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
@@ -153,6 +161,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'PRE‑QUALIFICATION ADVISOR', value: 'pre_qualification_advisor_name' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -937,8 +946,10 @@ const insurerAMLStatusOption = computed(() => {
             :selected="quotesSelected.map(e => e.id)"
             :advisors="advisorOptions"
             :supportUsers="assignableSupportUserOptions"
+            :pqaAdvisors="preQualificationAdvisors"
             :canAssignClientSupport="canAssignClientSupport"
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            :canAssignPqa="canAssignPreQualificationAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
           />

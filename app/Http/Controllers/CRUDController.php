@@ -44,6 +44,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Http\Requests\AssignPreQualificationAdvisorRequest;
 use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
@@ -2578,5 +2579,24 @@ class CRUDController extends Controller
         }
 
         return Redirect::back()->with('error', 'Failed to assign support user to leads. Please try again.');
+    }
+
+    public function assignPreQualificationAdvisor(AssignPreQualificationAdvisorRequest $request): \Illuminate\Http\RedirectResponse
+    {
+        $leadIds = array_filter(explode(',', $request->assigned_lead_id));
+        $preQualificationAdvisorUserId = (int) $request->pq_advisor_id;
+        $modelType = $request->modelType;
+
+        $successMessage = $this->businessQuoteService->assignPreQualificationAdvisor(
+            $leadIds,
+            $preQualificationAdvisorUserId,
+            $modelType
+        );
+
+        if ($successMessage !== null) {
+            return Redirect::back()->with('success', $successMessage);
+        }
+
+        return Redirect::back()->with('error', 'Could not assign Pre‑Qualification Advisor. Ensure all selected rows are Group Medical leads and the advisor is enabled for PQA allocation.');
     }
 }

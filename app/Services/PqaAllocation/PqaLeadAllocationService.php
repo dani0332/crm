@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\PqaAllocation;
 
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\PqaLeadAllocationConfig;
 use App\Models\User;
@@ -17,7 +19,7 @@ class PqaLeadAllocationService
      */
     public function syncPqaAllocationConfig(int $userId, object $data): bool
     {
-        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId)) {
+        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId === QuoteTypes::BUSINESS->id()) {
             $existing = PqaLeadAllocationConfig::query()
                 ->where('user_id', $userId)
                 ->where('quote_type_id', $data->quoteTypeId)
@@ -64,6 +66,77 @@ class PqaLeadAllocationService
             ]);
 
         return $updated > 0;
+    }
+
+    /**
+     * Update ILA counters when a Team Lead manually assigns or reassigns PQA on a lead.
+     */
+    public function recordManualPqaAssignment(int $newUserId, int $quoteTypeId, ?int $previousUserId): void
+    {
+        if ($previousUserId !== null && $previousUserId === $newUserId) {
+            return;
+        }
+
+        DB::transaction(function () use ($newUserId, $quoteTypeId, $previousUserId) {
+            if ($previousUserId !== null) {
+                $this->adjustCountsAfterPqaReassignment($previousUserId, $quoteTypeId);
+            }
+
+            $this->incrementManualPqaAssignmentCount($newUserId, $quoteTypeId);
+        });
+    }
+
+    public function incrementManualPqaAssignmentCount(int $userId, int $quoteTypeId): void
+    {
+        $updated = PqaLeadAllocationConfig::query()
+            ->where('user_id', $userId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->update([
+                'allocation_count' => DB::raw('allocation_count + 1'),
+                'manual_assignment_count' => DB::raw('manual_assignment_count + 1'),
+                'last_allocated' => now()->timestamp,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated === 0) {
+            LoggerService::warning('PQA manual assignment: no allocation config row for user '.$userId.' quote_type_id '.$quoteTypeId);
+        }
+    }
+
+    public function adjustCountsAfterPqaReassignment(int $previousUserId, int $quoteTypeId): void
+    {
+        $config = PqaLeadAllocationConfig::query()
+            ->where('user_id', $previousUserId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first();
+
+        if ($config === null || $config->allocation_count <= 0) {
+            return;
+        }
+
+        $config->allocation_count = max(0, $config->allocation_count - 1);
+
+        if ($config->manual_assignment_count > 0) {
+            $config->manual_assignment_count--;
+        } elseif ($config->auto_assignment_count > 0) {
+            $config->auto_assignment_count--;
+        }
+
+        $config->save();
+    }
+
+    public function userIsEligiblePreQualificationAdvisor(int $userId, int $quoteTypeId): bool
+    {
+        $user = User::query()->find($userId);
+
+        if ($user === null || ! $user->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            return false;
+        }
+
+        return PqaLeadAllocationConfig::query()
+            ->where('user_id', $userId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->exists();
     }
 
     /**
