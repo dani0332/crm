@@ -16,7 +16,7 @@ class AllocationCreationService
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])
-            ->whereDate('created_at', '<=', now()->subDays(90))
+            ->where('created_at', '<=', now()->subMinutes(20))
             ->where('is_revived', false)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where(function ($query) {
