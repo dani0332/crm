@@ -7,15 +7,15 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class HealthPlanGenderValidRule implements ValidationRule
 {
-    public function __construct(protected ?bool $maritalStatusEnabled) {}
+    public function __construct(protected ?bool $genderEnabled) {}
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (! $this->maritalStatusEnabled) {
+        if (! $value) {
             return;
         }
 
-        if ($this->maritalStatusEnabled && (int) $value !== 1) {
-            $fail('The gender is required when marital status is enabled.');
+        if ($value && (int) $this->genderEnabled !== 1) {
+            $fail('The gender enabled is required when marital status is enabled.');
         }
     }
 }

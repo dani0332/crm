@@ -10,7 +10,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class HealthRateMaritalStatusValidRule implements ValidationRule
 {
-    public function __construct(protected int $healthPlanId, protected ?string $gender = null) {}
+    public function __construct(protected ?int $healthPlanId = null, protected ?string $gender = null) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -18,7 +18,7 @@ class HealthRateMaritalStatusValidRule implements ValidationRule
             return;
         }
 
-        $healthPlan = HealthPlan::find($this->healthPlanId);
+        $healthPlan = $this->healthPlanId ? HealthPlan::find($this->healthPlanId) : null;
 
         // Only required for female if plan level is enabled
         if ($healthPlan && $healthPlan->marital_status_enabled && strtolower($this->gender) == strtolower(GenderEnum::FEMALE->value)) {

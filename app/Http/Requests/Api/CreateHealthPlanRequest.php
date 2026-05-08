@@ -23,12 +23,8 @@ class CreateHealthPlanRequest extends FormRequest
             'provider_id' => 'nullable|integer|exists:insurance_provider,id',
             'maf_link' => 'nullable|string',
             'cohort_enabled' => 'nullable|boolean',
-            'marital_status_enabled' => 'nullable|boolean',
-            'gender_enabled' => [
-                'nullable',
-                'boolean',
-                new HealthPlanGenderValidRule($this->input('marital_status_enabled')),
-            ],
+            'marital_status_enabled' => ['nullable', 'boolean', new HealthPlanGenderValidRule($this->input('gender_enabled'))],
+            'gender_enabled' => 'nullable|boolean',
             'is_active' => 'required|boolean',
             'is_hidden' => 'required|boolean',
         ];
