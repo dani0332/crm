@@ -34,8 +34,9 @@ class HealthRate extends Model
     protected function cohort(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => strtoupper($value),
+            set: fn ($value) => $value === null ? null : strtoupper($value),
         );
+
     }
 
     public function healthPlan(): BelongsTo

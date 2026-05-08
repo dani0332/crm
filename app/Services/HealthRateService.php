@@ -22,6 +22,8 @@ class HealthRateService extends BaseService
                 'id',
                 'health_plan_id',
                 'health_plan_co_payment_id',
+                'text',
+                'text_ar',
                 'emirate_type',
                 'cohort', 'gender',
                 'marital_status',
@@ -50,6 +52,8 @@ class HealthRateService extends BaseService
                 'id',
                 'health_plan_id',
                 'health_plan_co_payment_id',
+                'text',
+                'text_ar',
                 'emirate_type',
                 'cohort', 'gender',
                 'marital_status',
@@ -222,12 +226,12 @@ class HealthRateService extends BaseService
 
     public function update(int $id, array $data): HealthRate
     {
-        $rate = HealthRate::find($id);
+        $rate = HealthRate::with('healthPlan')->find($id);
 
         // If draft, update same version
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
             // Check duplicate rates under same sheet
-            // $this->checkDuplicateRates($rate->health_rate_control_id, $data);
+            $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
 
             $rate->fill($data);
             $rate->save();
@@ -255,6 +259,11 @@ class HealthRateService extends BaseService
             // If not, delete the health rate control
             if ($rates == 0) {
                 HealthRateControl::destroy($healthRateControlId);
+            }
+
+            // If rate exists, reduce total count
+            if ($rates > 0) {
+                HealthRateControl::where('id', $healthRateControlId)->decrement('total_records');
             }
         });
     }
