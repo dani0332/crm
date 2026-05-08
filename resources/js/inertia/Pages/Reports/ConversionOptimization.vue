@@ -671,6 +671,7 @@ function onReset() {
       [NO_DEFAULT_FILTERS_PARAM]: true,
     },
     preserveScroll: true,
+    preserveState: true,
     onBefore: () => (loaders.table = true),
     onFinish: () => {
       canExportReport.value = false;
