@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class QuoteStatusLogService extends BaseService
 {
@@ -29,5 +30,26 @@ class QuoteStatusLogService extends BaseService
                 $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
                     ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
             })->exists();
+    }
+
+    public function getLeadHistoryLogs(?int $quoteTypeId = null, ?int $quoteId = null, ?int $sendUpdateId = null): EloquentCollection
+    {
+        $query = QuoteStatusLog::query()
+            ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
+            ->orderBy('created_at', 'DESC');
+
+        if ($sendUpdateId !== null) {
+            $query->where('send_update_log_id', $sendUpdateId);
+        } else {
+            if ($quoteTypeId === null || $quoteId === null) {
+                return new EloquentCollection;
+            }
+
+            $query
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_request_id', $quoteId);
+        }
+
+        return $query->get();
     }
 }
