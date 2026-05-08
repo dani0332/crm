@@ -657,12 +657,17 @@ function onSubmit(isValid, isOnMounted = false) {
 function onReset() {
   isDirty.value = false;
 
+  const defaultAdvisorDates = Array.isArray(props.defaultFilters?.advisorAssignedDates)
+    ? [...props.defaultFilters.advisorAssignedDates]
+    : [];
+
   router.visit('/reports/conversion-optimization', {
     method: 'get',
     only: ['reportData'],
     data: {
       page: 1,
       lob: quoteTypeCodeEnum.Car,
+      advisorAssignedDates: defaultAdvisorDates,
       [NO_DEFAULT_FILTERS_PARAM]: true,
     },
     preserveScroll: true,
@@ -670,6 +675,10 @@ function onReset() {
     onFinish: () => {
       canExportReport.value = false;
       delete filters[NO_DEFAULT_FILTERS_PARAM];
+
+      Object.assign(filters, getFiltersObject());
+      filters.advisorAssignedDates = [...defaultAdvisorDates];
+      void onLobChange(filters.lob, true);
 
       const url = new URL(globalThis.location.href);
       if (url.searchParams.has(NO_DEFAULT_FILTERS_PARAM)) {
