@@ -79,7 +79,6 @@ class AwnicNationalitySeeder extends Seeder
             ['code' => 'Filipino', 'awni_country_code_number' => 2001],
             ['code' => 'Finnish', 'awni_country_code_number' => 1067],
             ['code' => 'French', 'awni_country_code_number' => 1068],
-            ['code' => 'French', 'awni_country_code_number' => 1068],
             ['code' => 'Gabonese', 'awni_country_code_number' => 1069],
             ['code' => 'Gambian', 'awni_country_code_number' => 1070],
             ['code' => 'Georgian', 'awni_country_code_number' => 1071],
