@@ -52,6 +52,8 @@ class PermissionSeeder extends Seeder
         $this->addTransAppSearchPermission();
         $this->addEpDocumentManualOverridePermission();
         $this->addConversionOptimizationEngineReportPermission();
+        $this->addComplianceDocumentUploadPermission();
+        $this->addLifeRevivalPermissions();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -153,6 +155,66 @@ class PermissionSeeder extends Seeder
             } else {
                 LoggerService::info("Role {$role->name} already has permission {$permission->name}");
             }
+        }
+    }
+
+    private function addComplianceDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPLIANCE_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $role = Role::query()
+            ->where('guard_name', 'web')
+            ->where('name', RolesEnum::ComplianceSuperUser)
+            ->first();
+
+        if ($role === null) {
+            LoggerService::info('COMPLIANCE_SUPER_USER role not found; skipping compliance-document-upload assignment');
+
+            return;
+        }
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+            LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+        } else {
+            LoggerService::info("Role {$role->name} already has permission {$permission->name}");
+        }
+    }
+
+    private function addLifeRevivalPermissions(): void
+    {
+        $permissions = [
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_SHOW,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+                'guard_name' => 'web',
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            Permission::firstOrCreate(
+                [
+                    'name' => $permissionData['name'],
+                    'guard_name' => $permissionData['guard_name'],
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 }

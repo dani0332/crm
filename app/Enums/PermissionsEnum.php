@@ -228,6 +228,9 @@ final class PermissionsEnum extends Enum
     public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
     public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
     public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
+    public const LIFE_REVIVAL_QUOTES_LIST = 'life-revival-quotes-list';
+    public const LIFE_REVIVAL_QUOTES_EDIT = 'life-revival-quotes-edit';
+    public const LIFE_REVIVAL_QUOTES_SHOW = 'life-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -440,6 +443,7 @@ final class PermissionsEnum extends Enum
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
     public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
+    public const COMPLIANCE_DOCUMENT_UPLOAD = 'compliance-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 

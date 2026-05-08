@@ -55,6 +55,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => $isProd ? 0 : 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         $this->seedBirdWorkflowUrls();
         $this->claimGoogleReviewEmail();
@@ -169,6 +178,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
         $this->seedMotorRevivalWorkflow();
+        $this->seedDttLifeEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -1750,6 +1760,19 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttLifeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_LIFE_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
     }

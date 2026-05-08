@@ -98,4 +98,7 @@ final class WorkflowTypeEnum extends Enum
     // Motor Revival workflow
     public const MOTOR_REVIVAL_OCB = 'motor_revival_ocb';
     public const MOTOR_REVIVAL_FOLLOWUP = 'motor_revival_followup';
+
+    // Life Revival OCB
+    public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
 }

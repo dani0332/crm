@@ -1423,11 +1423,14 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote?->company_name ?? '-';
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
-                return $member['first_name'];
-            }, $quote->activeMembers->toArray()));
-            $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
+            $activeMembers = $quote->activeMembers ?? collect();
+            $emailData->policyHolderName = $activeMembers->isEmpty()
+                ? ''
+                : implode(', ', array_map(function ($member) {
+                    return $member['first_name'];
+                }, $activeMembers->toArray()));
+            $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
+            $emailData->numberOfMembersCovered = (string) $activeMembers->count();
 
             $emailData->isHealthAUH = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
             $emailData->emirateOfYourVisaId = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';

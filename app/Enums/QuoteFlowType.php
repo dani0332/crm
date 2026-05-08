@@ -46,6 +46,7 @@ enum QuoteFlowType: int
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
     case MOTOR_REVIVAL_OCB = 70;
     case MOTOR_REVIVAL_FOLLOWUP = 71;
+    case LIFE_REVIVAL_FOLLOWUPS = 50;
 
     public function label(): string
     {
@@ -91,6 +92,7 @@ enum QuoteFlowType: int
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
             QuoteFlowType::MOTOR_REVIVAL_OCB => 'motor_revival_ocb',
             QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP => 'motor_revival_followup',
+            QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS => 'life_revival_followups',
         };
     }
 
@@ -139,6 +141,7 @@ enum QuoteFlowType: int
             44 => QuoteFlowType::CYBER_AUTOMATION_FAILED,
             70 => QuoteFlowType::MOTOR_REVIVAL_OCB,
             71 => QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP,
+            50 => QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS,
             default => null,  // Return null if the value doesn't match any case
         };
     }

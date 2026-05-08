@@ -22,9 +22,7 @@ class AdvisorController extends Controller
             $query->whereIn('name', $advisorRoles);
         })
             ->when($departmentIds, function ($query) use ($departmentIds) {
-                $query->whereHas('departments', function ($q) use ($departmentIds) {
-                    $q->whereIn('departments.id', $departmentIds);
-                });
+                $query->whereIn('department_id', $departmentIds);
             })
             ->activeUser()
             ->select('id', 'name', 'email')
