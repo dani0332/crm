@@ -546,11 +546,26 @@ class HandleInertiaRequests extends Middleware
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::LifeQuotesList)
+                    (auth()->user()->hasAnyPermission(
+                        PermissionsEnum::LifeQuotesList,
+                        PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST)
                         || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
-                    fn ($s) => $s->attributes(['icon' => 'life'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'life'])
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                            'Life Quotes',
+                            route('life-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST),
+                            'Life Revival Quotes',
+                            route('life-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        ),
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(

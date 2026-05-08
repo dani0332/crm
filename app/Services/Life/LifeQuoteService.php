@@ -210,7 +210,10 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
-
+            ->where(function ($query) {
+                $query->where('personal_quotes.source', '!=', LeadSourceEnum::REVIVAL)
+                    ->orWhereNull('personal_quotes.source');
+            }) // Exclude revival leads from the regular leads list while keeping legacy NULL-source records
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
