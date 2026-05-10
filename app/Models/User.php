@@ -46,24 +46,16 @@ class User extends Authenticatable implements AuditableContract
     ];
 
     /**
-     * Attribute names that must not be serialized or audited (single source of truth).
-     * Used by $hidden and AuditRepository::fetchGetQuoteAudits when building audit API payloads.
+     * The attributes that should be hidden for arrays.
      *
-     * @var array<int, string>
+     * @var array
      */
-    public const SENSITIVE_ATTRIBUTES = [
+    protected $hidden = [
         'password',
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
     ];
-
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = self::SENSITIVE_ATTRIBUTES;
 
     /**
      * The attributes that should be cast to native types.

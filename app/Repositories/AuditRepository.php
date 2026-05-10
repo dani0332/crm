@@ -45,29 +45,10 @@ class AuditRepository extends BaseRepository
     public static function resolveQuoteObjectForAuditRequest(string $quoteType): object
     {
         $lobs = self::quoteAuditLobTypeTokens();
-        $normalizedQuoteType = self::normalizeQuoteTypeToken($quoteType, $lobs);
 
-        return (in_array($normalizedQuoteType, $lobs, true))
-            ? app('\\App\\Models\\'.$normalizedQuoteType.'Quote')
+        return (in_array(ucfirst(strtolower($quoteType)), $lobs, true))
+            ? app('\\App\\Models\\'.ucfirst(strtolower($quoteType)).'Quote')
             : app('\\App\\Models\\'.$quoteType);
-    }
-
-    /**
-     * Preserve the canonical LOB token casing from quoteAuditLobTypeTokens.
-     *
-     * @param  array<int, string>  $lobs
-     */
-    private static function normalizeQuoteTypeToken(string $quoteType, array $lobs): string
-    {
-        $quoteTypeNormalized = strtolower(trim($quoteType));
-
-        foreach ($lobs as $lob) {
-            if (strtolower($lob) === $quoteTypeNormalized) {
-                return $lob;
-            }
-        }
-
-        return $quoteType;
     }
 
     /**
@@ -236,7 +217,7 @@ class AuditRepository extends BaseRepository
             $transformedOld = $extractProfiles($transformedOld);
 
             // Do not return sensitive fields in the API payload (omit keys entirely).
-            foreach (User::SENSITIVE_ATTRIBUTES as $key) {
+            foreach ((new User)->getHidden() as $key) {
                 unset($transformedNew[$key], $transformedOld[$key]);
             }
 
