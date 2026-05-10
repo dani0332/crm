@@ -1999,10 +1999,12 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [
+                $scheduleDocumentTypeCodes = [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE, DocumentTypeCode::CYB_PS,
-                ]);
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
+                ];
+
+                return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
             })->first() ?? null;
 
             $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
