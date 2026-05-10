@@ -60,6 +60,8 @@ final class QuoteTypeShortCode extends Enum
             QuoteTypeShortCode::PET => 9,
             QuoteTypeShortCode::CYC => 10,
             QuoteTypeShortCode::JSK => 11,
+            QuoteTypeShortCode::SAV => 18,
+            QuoteTypeShortCode::DEV => 20,
         ];
 
         return $types[$value] ?? 'Unknown';
