@@ -416,6 +416,12 @@ class RetryAllocationService
             ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
                 $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
             })
+            ->when($quoteType === QuoteTypes::LIFE, function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();

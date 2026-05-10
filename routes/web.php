@@ -100,6 +100,7 @@ use App\Http\Controllers\V2\HomeQuoteController;
 use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
+use App\Http\Controllers\V2\LifeRevivalQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
@@ -308,6 +309,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('health-revival-quotes-show');
             Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
             Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
+
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
@@ -342,6 +344,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
+
+        Route::get('personal-quotes/life-revival', [LifeRevivalQuoteController::class, 'index'])->name('life-revival-quotes-list');
+        Route::get('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'show'])->name('life-revival-quotes-show');
+        Route::get('personal-quotes/life-revival/{uuid}/edit', [LifeRevivalQuoteController::class, 'edit'])->name('life-revival-quotes-edit');
+        Route::put('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'update'])->name('life-revival-quotes-update');
     });
 
     // Claims Management Routes
