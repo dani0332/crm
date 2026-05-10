@@ -66,7 +66,9 @@ class SendUpdateToCustomerJob implements ShouldQueue
         $quote = $this->getQuoteForEmail($sendUpdateLog);
         [$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $quote);
 
-        if (empty($templateId)) {
+        if (empty($templateId) && (int) $this->sendUpdate?->quote_type_id !== QuoteTypeId::Device) {
+            LoggerService::warning('job:SendUpdateToCustomerJob - Template ID not found - skipping sendUpdateToCustomerEmailData email', extra: ['emailData' => json_encode($emailData), 'quoteTypeId' => $quoteTypeId]);
+
             return;
         }
 
