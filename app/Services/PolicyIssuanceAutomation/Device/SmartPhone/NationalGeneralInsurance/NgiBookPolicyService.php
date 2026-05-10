@@ -239,14 +239,14 @@ class NgiBookPolicyService
         );
 
         if ($shouldHandlePolicyIssuanceLogic) {
-            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if (
+                ! $policyIssuance?->completed_step ||
+                $policyIssuance?->completed_step === NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM ||
+                $policyIssuance?->completed_step === NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE
+            ) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = NgiEnum::ALL_STEPS_ARE_EDITABLE;
-            } elseif ($policyIssuance?->completed_step === NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE) {
-                $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isEditBookingDetailsDisabled'] = false;
-                $response['message'] = 'Get Policy Documents and Update Booking Details are editable';
             }
 
             return $response;
