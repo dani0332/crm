@@ -102,41 +102,6 @@ class NgiDocumentHandler
     }
 
     /**
-     * Fetch document content from Azure storage
-     */
-    public function fetchDocumentContent(string $relativePath): array
-    {
-        $filePath = $this->buildAzureDocumentPath($relativePath);
-        $fileContent = @file_get_contents($filePath);
-
-        if ($fileContent === false || $fileContent === '') {
-            $message = 'Invalid or empty document content';
-            LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
-                'file_path' => $filePath,
-                'relative_path' => $relativePath,
-                'error' => $message,
-            ]);
-
-            return ['status' => false, 'message' => $message];
-        }
-
-        $mimeType = $this->detectMimeType($fileContent);
-        if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
-            $message = 'Unsupported document type: '.($mimeType ?? 'unknown');
-            LoggerService::error('Invalid document mime type', extra: [
-                'file_path' => $filePath,
-                'mime_type' => $mimeType,
-                'allowed_types' => self::ALLOWED_DOCUMENT_MIME_TYPES,
-                'error' => $message,
-            ]);
-
-            return ['status' => false, 'message' => $message];
-        }
-
-        return ['status' => true, 'content' => $fileContent];
-    }
-
-    /**
      * Build Azure document path from relative path
      */
     private function buildAzureDocumentPath(string $relativePath): string
@@ -198,18 +163,6 @@ class NgiDocumentHandler
         $quoteDocumentService = new QuoteDocumentService;
 
         return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
-    }
-
-    /**
-     * Get document URLs mapping from GetPolicyDocuments response
-     */
-    public function getDocumentUrlsFromResponse(object $policyDocumentsResponse): array
-    {
-        return [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $policyDocumentsResponse->policy_certificate_url ?? null,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $policyDocumentsResponse->premium_inv_doc_url ?? null,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $policyDocumentsResponse->commision_inv_doc_url ?? null,
-        ];
     }
 
     /**
