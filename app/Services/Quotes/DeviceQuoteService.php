@@ -412,7 +412,9 @@ class DeviceQuoteService extends BaseQuoteService
      *
      * @return array{email: string, name: string}|null
      */
-    public function determineDeviceNgiRecipient($quote, string $processInvolved): ?array
+    public function determineDeviceNgiRecipient($quote, array $cc, string $processInvolved,
+        ?string $recipientEmail,
+        ?string $recipientName): ?array
     {
         $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
         $payload = [];
@@ -423,11 +425,21 @@ class DeviceQuoteService extends BaseQuoteService
         } else {
             $payload = $this->getDeviceNgiFallbackRecipient();
         }
-        $ccEmails = $this->parseCommaSeparatedEmails(
+        $distribution = $this->parseCommaSeparatedEmails(
             getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
         );
 
-        return array_merge($payload, ['cc' => $ccEmails, 'processInvolved' => $processInvolved]);
+        // adding advisor email to cc if it is not in recipient email this happened on capture failure situation
+        if ($quote?->advisor?->email && $quote->advisor->email !== $recipientEmail) {
+            $distribution[] = $quote->advisor->email;
+        }
+
+        $distribution = array_values(array_unique(array_filter($distribution)));
+        if (! empty($distribution)) {
+            $cc = $distribution;
+        }
+
+        return array_merge(['cc' => $cc, 'processInvolved' => $processInvolved, 'recipientEmail' => $recipientEmail, 'recipientName' => $recipientName], $payload);
     }
 
     /**
