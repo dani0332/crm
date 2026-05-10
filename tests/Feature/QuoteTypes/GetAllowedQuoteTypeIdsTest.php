@@ -139,8 +139,8 @@ it('correctly checks access using advisorRoles method instead of string concaten
     $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor, ['email' => 'jetski@test.com']);
     expect(QuoteTypes::JETSKI->userHasAccess($jetskiAdvisor))->toBeTrue();
 
-    $deviceAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::DeviceAdvisor, ['email' => 'device@test.com']);
-    expect(QuoteTypes::DEVICE->userHasAccess($deviceAdvisor))->toBeTrue();
+    $smartPhoneAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'device@test.com']);
+    expect(QuoteTypes::DEVICE->userHasAccess($smartPhoneAdvisor))->toBeTrue();
 
     $smartPhoneAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'smartphone-advisor@test.com']);
     expect(QuoteTypes::DEVICE->userHasAccess($smartPhoneAdvisor))->toBeTrue();

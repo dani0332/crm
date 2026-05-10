@@ -11,7 +11,7 @@ enum TeamsEnum: string
     case CYCLE = 'Cycle';
     case HEALTH = 'Health';
     case LIFE = 'Life';
-    case CORPLINE = 'Corpline';
+    case CORPLINE = 'CorpLine';
     case GROUP_MEDICAL = 'Group Medical';
     case PET = 'Pet';
     case YACHT = 'Yacht';
@@ -79,4 +79,3 @@ enum TeamsEnum: string
         };
     }
 }
-

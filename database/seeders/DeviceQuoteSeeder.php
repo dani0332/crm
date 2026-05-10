@@ -29,7 +29,7 @@ class DeviceQuoteSeeder extends Seeder
         $this->mapQuoteStatuses();
         LoggerService::info(self::class.' - Device Quote statuses mapped');
         LoggerService::info(self::class.' - Device Roles seeded');
-        $this->seedRoles([RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
+        $this->seedRoles([RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
         $this->seedDevicePermissions();
         LoggerService::info(self::class.' - Device Permissions seeded');
         $this->product();
@@ -112,7 +112,7 @@ class DeviceQuoteSeeder extends Seeder
 
         $this->seedPermissions($adminAndEngineeringPermissions, [RolesEnum::Admin, RolesEnum::Engineering]);
 
-        $deviceManagerPermissions = [
+        $smartPhoneManagerPermissions = [
             PermissionsEnum::SEARCH_ALL_LEAD_LOB,
             PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
             PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
@@ -125,15 +125,15 @@ class DeviceQuoteSeeder extends Seeder
             // PermissionsEnum::DEVICE_CONVERSION_REPORT,
         ];
 
-        $deviceAdvisorPermissions = [
+        $smartPhoneAdvisorPermissions = [
             PermissionsEnum::SEARCH_ALL_LEAD_LOB,
             PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
         ];
 
-        $this->seedPermissions($deviceManagerPermissions, [RolesEnum::SmartPhoneManager]);
+        $this->seedPermissions($smartPhoneManagerPermissions, [RolesEnum::SmartPhoneManager]);
 
-        $this->seedPermissions($deviceAdvisorPermissions, [RolesEnum::SmartPhoneAdvisor]);
+        $this->seedPermissions($smartPhoneAdvisorPermissions, [RolesEnum::SmartPhoneAdvisor]);
 
         return self::deviceQuotePermissionRoleAssignmentMap();
     }
@@ -147,8 +147,6 @@ class DeviceQuoteSeeder extends Seeder
     {
         $rolesWithFullDeviceQuoteAccess = [
             RolesEnum::Admin,
-            RolesEnum::DeviceAdvisor,
-            RolesEnum::DeviceManager,
             RolesEnum::SmartPhoneAdvisor,
             RolesEnum::SmartPhoneManager,
             RolesEnum::Engineering,

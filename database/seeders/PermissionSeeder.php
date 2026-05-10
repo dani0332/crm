@@ -155,10 +155,10 @@ class PermissionSeeder extends Seeder
             ->whereIn('name', [
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
-                RolesEnum::DeviceManager,
+
                 RolesEnum::SmartPhoneAdvisor,
                 RolesEnum::SmartPhoneManager,
-                RolesEnum::DeviceAdvisor,
+
             ])
             ->get();
 
