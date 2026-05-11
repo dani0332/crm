@@ -334,6 +334,18 @@ class HealthRateService extends BaseService
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->get();
 
+        // As per bot comment
+        if ($data['health_plan_id'] != $rate->health_plan_id) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'Health plan for given rate and request does not match.',
+                    ],
+                ], 422)
+            );
+        }
+
         return $this->addRate($data, [$rate->health_plan_id], null, $activeRates);
     }
 
