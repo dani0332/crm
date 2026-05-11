@@ -510,25 +510,23 @@ class EpBookingService extends BaseService
             }
         }
 
-        if (! $isResponseUpdated) {
+        if ($isResponseUpdated) {
+            $insurerRequestResponse->update([
+                'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
+            ]);
+
+            LoggerService::info(self::CLASS_NAME.' - Updated insurer request response for EP Sage booking', extra: [
+                'quote_uuid' => $quoteUuid,
+                'ep_code' => $quote->code,
+                'provider_id' => $insuranceProvider->id,
+            ]);
+        } else {
             LoggerService::info(self::CLASS_NAME.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
                 'quote_uuid' => $quoteUuid,
                 'ep_code' => $quote->code,
                 'provider_id' => $insuranceProvider->id,
             ]);
-
-            return;
         }
-
-        $insurerRequestResponse->update([
-            'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
-        ]);
-
-        LoggerService::info(self::CLASS_NAME.' - Updated insurer request response for EP Sage booking', extra: [
-            'quote_uuid' => $quoteUuid,
-            'ep_code' => $quote->code,
-            'provider_id' => $insuranceProvider->id,
-        ]);
     }
 
     protected static function withSageDocumentNumberPostfix(mixed $documentNumber): mixed
