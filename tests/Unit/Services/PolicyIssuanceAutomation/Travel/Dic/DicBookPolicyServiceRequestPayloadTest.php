@@ -36,3 +36,12 @@ test('updateBookingDetails request payload includes through_automation for BookP
 
     expect($foundThroughAutomation)->toBeTrue();
 });
+
+test('updateBookingDetails and validateBookPolicy snapshot and restore request input around validation', function (): void {
+    $filename = (new ReflectionClass(DicBookPolicyService::class))->getFileName();
+    $contents = file_get_contents($filename);
+    expect($contents)->toBeString();
+
+    expect(substr_count($contents, '$incomingRequestPayload = request()->all();'))->toBe(2);
+    expect(substr_count($contents, 'request()->replace($incomingRequestPayload);'))->toBe(2);
+});

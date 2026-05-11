@@ -192,26 +192,32 @@ final class DicBookPolicyService
                 'through_automation' => true,
             ];
 
-            request()->merge($updateBookingRequest);
+            $incomingRequestPayload = request()->all();
 
-            $bookPolicyRequest = new BookPolicyRequest;
-            $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
-            $bookPolicyRequest->withValidator($validator);
+            try {
+                request()->replace($updateBookingRequest);
 
-            if ($validator->fails()) {
-                $response['status'] = false;
-                $response['error'] = $validator->errors()->first() ?? 'BookPolicyRequest validation failed';
-                $response['message'] = $validator->errors()->first();
+                $bookPolicyRequest = new BookPolicyRequest;
+                $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
+                $bookPolicyRequest->withValidator($validator);
 
-                return $response;
-            }
+                if ($validator->fails()) {
+                    $response['status'] = false;
+                    $response['error'] = $validator->errors()->first() ?? 'BookPolicyRequest validation failed';
+                    $response['message'] = $validator->errors()->first();
 
-            $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($updateBookingRequest, $bookPolicyRequest);
+                    return $response;
+                }
 
-            if (! $updateBookingDetailsResponse['status']) {
-                $response['status'] = false;
-                $response['error'] = $updateBookingDetailsResponse['message'];
-                $response['message'] = $updateBookingDetailsResponse['message'];
+                $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($updateBookingRequest, $bookPolicyRequest);
+
+                if (! $updateBookingDetailsResponse['status']) {
+                    $response['status'] = false;
+                    $response['error'] = $updateBookingDetailsResponse['message'];
+                    $response['message'] = $updateBookingDetailsResponse['message'];
+                }
+            } finally {
+                request()->replace($incomingRequestPayload);
             }
         } catch (Exception $e) {
             $response['status'] = false;
@@ -242,18 +248,25 @@ final class DicBookPolicyService
                 'transaction_payment_status' => null,
                 'through_automation' => true,
             ];
-            request()->merge($requestData);
 
-            $sendBookPolicyRequest = new SendBookPolicyRequest;
-            $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
-            $sendBookPolicyRequest->withValidator($validator);
+            $incomingRequestPayload = request()->all();
 
-            if ($validator->fails()) {
-                $response['status'] = false;
-                $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
-                $response['message'] = $validator->errors()->first();
+            try {
+                request()->replace($requestData);
 
-                return $response;
+                $sendBookPolicyRequest = new SendBookPolicyRequest;
+                $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
+                $sendBookPolicyRequest->withValidator($validator);
+
+                if ($validator->fails()) {
+                    $response['status'] = false;
+                    $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
+                    $response['message'] = $validator->errors()->first();
+
+                    return $response;
+                }
+            } finally {
+                request()->replace($incomingRequestPayload);
             }
 
             $response['message'] = 'All book policy prerequisites validated successfully';
