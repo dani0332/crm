@@ -5,9 +5,9 @@ namespace App\Enums;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CyberQuote;
 use App\Models\CycleQuote;
 use App\Models\DeviceQuote;
-use App\Models\CyberQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -64,7 +64,6 @@ class quoteTypeCode extends Enum
     const CYBER = 'Cyber';
 
     /** Please stop using this class instead use App\Enums\QuoteTypes (native PHP Enums) */
-
     public static function getName($value)
     {
         return match ($value) {

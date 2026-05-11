@@ -43,14 +43,14 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         if ($deviceQuote && isset($deviceQuote->sic_advisor_requested)) {
             $sicAdvisorRequested = (bool) $deviceQuote->sic_advisor_requested;
         }
-    
+
         LoggerService::info(self::class.' - Device lead conditions evaluation', extra: [
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,
             'sicAdvisorRequested' => $sicAdvisorRequested,
             'deviceQuoteExists' => $deviceQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
-        
+
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
         if ($sicAdvisorRequested || $hasRetryFlag || $lead->isPaymentAuthorized() || $isPaymentAuthorizedOrDeclined || $lead->hasRemainedUnauthorizedFor12Hours()) {
             $reason = '';
@@ -72,10 +72,10 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 'sicAdvisorRequested' => $sicAdvisorRequested,
                 'hasRetryFlag' => $hasRetryFlag,
             ]);
-         
+
             return $defaultTeamId;
         }
-      
+
         // Lead doesn't meet allocation criteria - stop allocation (expected, not an error)
         LoggerService::info(self::class.' - Device lead does not require SIC advisor allocation - stopping', extra: [
             'reason' => 'Unpaid lead without SIC advisor request or retry flag or remained unauthorized for 12 hours',

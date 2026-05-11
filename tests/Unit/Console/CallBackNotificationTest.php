@@ -9,7 +9,7 @@ use App\Enums\QuoteTypeId;
 describe('CallBackNotification (Instant Alfred reminders)', function () {
     test('allows Device quote type id for scheduled reminders', function () {
         $command = new CallBackNotification;
-        $ref = new \ReflectionClass($command);
+        $ref = new ReflectionClass($command);
         $prop = $ref->getProperty('allowedQuoteTypeIds');
         $prop->setAccessible(true);
 
@@ -18,7 +18,7 @@ describe('CallBackNotification (Instant Alfred reminders)', function () {
 
     test('isAllowedQuoteType accepts Device', function () {
         $command = new CallBackNotification;
-        $method = (new \ReflectionClass($command))->getMethod('isAllowedQuoteType');
+        $method = (new ReflectionClass($command))->getMethod('isAllowedQuoteType');
         $method->setAccessible(true);
 
         expect($method->invoke($command, quoteTypeCode::Device))->toBeTrue();

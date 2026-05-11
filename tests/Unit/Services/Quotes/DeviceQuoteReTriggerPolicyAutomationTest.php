@@ -7,10 +7,10 @@ use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\ApplicationStorage;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
-use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
@@ -148,7 +148,7 @@ describe('DeviceQuoteService re-trigger GetAndUpload policy documents', function
         ]);
 
         expect(fn () => app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($process->fresh()))
-            ->toThrow(\InvalidArgumentException::class, 'Policy issuance is not eligible for document sync re-trigger.');
+            ->toThrow(InvalidArgumentException::class, 'Policy issuance is not eligible for document sync re-trigger.');
     });
 
     it('identifyAutomationStepToReTrigger dispatches PolicyIssuanceJob when status is timeout at create-policy step', function () {

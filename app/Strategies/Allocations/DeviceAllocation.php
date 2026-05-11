@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Exceptions\Allocation\AllocationException;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
@@ -10,7 +11,6 @@ use App\Pipes\Allocation\Device\AssignLeadPipe;
 use App\Pipes\Allocation\Device\EvaluateTeamPipe;
 use App\Pipes\Allocation\Device\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Device\VerifyLeadPreChecksPipe;
-use App\Exceptions\Allocation\AllocationException;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;

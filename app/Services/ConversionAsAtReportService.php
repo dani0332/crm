@@ -116,7 +116,7 @@ class ConversionAsAtReportService extends BaseService
             return null;
         }
 
-        LoggerService::sql(__CLASS__ . " " . __FUNCTION__ . ": ", $query);
+        LoggerService::sql(__CLASS__.' '.__FUNCTION__.': ', $query);
 
         // map operation to calculate gross and net conversions of records
         return $this->mapConversionData($query->get(), $request);
@@ -204,7 +204,7 @@ class ConversionAsAtReportService extends BaseService
             ->toArray();
 
         if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::SmartPhoneManager])) {
-            /*Manually mapping because of quote_type & user_products names mismatch */
+            /* Manually mapping because of quote_type & user_products names mismatch */
             $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::Device)] = TeamsEnum::DEVICE_INSURANCE->value;
         }
 

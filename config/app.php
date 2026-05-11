@@ -6,11 +6,16 @@ use App\Facades\InstantWriterAIFacade;
 use App\Facades\PostMark;
 use App\helpers\LookUpModelHelper;
 use App\Providers\AppServiceProvider;
+use App\Providers\AwnicServiceProvider;
 use App\Providers\CacheManagerServiceProvider;
 use App\Providers\CustomerPortalApiProvider;
+use App\Providers\EventServiceProvider;
+use App\Providers\HorizonServiceProvider;
 use App\Providers\InstantWriterAIAPIServiceProvider;
+use App\Providers\NgiServiceProvider;
 use App\Providers\PostMarkServiceProvider;
 use App\Providers\RepositoryServiceProvider;
+use App\Providers\RouteServiceProvider;
 use App\Services\CapiService;
 use App\Services\KenService;
 use App\Services\KyoService;
@@ -72,8 +77,13 @@ use Illuminate\Support\Str;
 use Illuminate\Translation\TranslationServiceProvider;
 use Illuminate\Validation\ValidationServiceProvider;
 use Illuminate\View\ViewServiceProvider;
+use Lab404\Impersonate\ImpersonateServiceProvider;
 use Laravel\Socialite\SocialiteServiceProvider;
+use Maatwebsite\Excel\ExcelServiceProvider;
 use Maatwebsite\Excel\Facades\Excel;
+use MongoDB\Laravel\MongoDBServiceProvider;
+use OwenIt\Auditing\AuditingServiceProvider;
+use Spatie\Permission\PermissionServiceProvider;
 
 return [
 
@@ -253,16 +263,16 @@ return [
         AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\HorizonServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
-        App\Providers\NgiServiceProvider::class,
-        App\Providers\AwnicServiceProvider::class,
-        Spatie\Permission\PermissionServiceProvider::class,
-        OwenIt\Auditing\AuditingServiceProvider::class,
-        Maatwebsite\Excel\ExcelServiceProvider::class,
-        MongoDB\Laravel\MongoDBServiceProvider::class,
-        Lab404\Impersonate\ImpersonateServiceProvider::class,
+        EventServiceProvider::class,
+        HorizonServiceProvider::class,
+        RouteServiceProvider::class,
+        NgiServiceProvider::class,
+        AwnicServiceProvider::class,
+        PermissionServiceProvider::class,
+        AuditingServiceProvider::class,
+        ExcelServiceProvider::class,
+        MongoDBServiceProvider::class,
+        ImpersonateServiceProvider::class,
     ],
 
     /*

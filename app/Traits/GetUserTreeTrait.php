@@ -37,7 +37,7 @@ trait GetUserTreeTrait
             $user = auth()->user();
         }
 
-        if($productType == QuoteTypes::DEVICE->value){
+        if ($productType == QuoteTypes::DEVICE->value) {
             $productType = QuoteTypes::DEVICE->getTeams()[0]->value;
             /** Below getProductNameFromQuoteTypeCode is essentially redundant if we're doing ->getTeams() here */
         }
