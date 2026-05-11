@@ -1399,6 +1399,14 @@ class CoreSchema
                 $table->unsignedBigInteger('option_id')->nullable();
                 $table->timestamps();
             },
+            'send_update_status_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('send_update_log_id');
+                $table->string('previous_status');
+                $table->string('current_status');
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
