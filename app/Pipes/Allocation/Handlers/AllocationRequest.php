@@ -22,6 +22,7 @@ class AllocationRequest
         protected $evaluateTierOnly = false,
         protected $reAssigFromAdvisorId = null,
         protected $source = null,
+        protected bool $assignToHappinessUser = false,
     ) {
         $this->collection = new Collection;
 
@@ -114,4 +115,5 @@ class AllocationRequest
             $this->getBuyLeadRequest()->completeProcessing();
         }
     }
+
 }

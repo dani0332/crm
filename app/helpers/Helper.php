@@ -550,6 +550,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::DEVICE->value,
             QuoteTypes::CYBER->value,
         ]);
     }
@@ -565,6 +566,7 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
             QuoteTypeId::Pet,
             QuoteTypeId::Yacht,
             QuoteTypeId::Savings,
+            QuoteTypeId::Device,
             QuoteTypeId::Home,
             QuoteTypeId::Life,
             QuoteTypeId::Cyber,

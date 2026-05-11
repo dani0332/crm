@@ -2,6 +2,9 @@
 
 namespace App\Observers;
 
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Events\Device\DevicePaymentAuthorised;
 use App\Jobs\Audit\LogAllocation;
 use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
@@ -47,6 +50,26 @@ class PersonalQuoteObserver
 
         if ($personalQuote->isDirty('quote_status_id')) {
             $this->handleQuoteStatusChange($personalQuote);
+        }
+
+        $this->sendFTCEmailOnPaymentAuthorised($personalQuote);
+    }
+
+    /**
+     * Handle the FTC email dispatch on payment authorised.
+     */
+    public function sendFTCEmailOnPaymentAuthorised(PersonalQuote $quote): void
+    {
+        // Only handle Device quotes
+        if ($quote->quote_type_id !== QuoteTypeId::Device) {
+            return;
+        }
+
+        // Check if payment status changed to AUTHORISED
+        if ($quote->wasChanged('payment_status_id') &&
+            $quote->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+
+            DevicePaymentAuthorised::dispatch($quote);
         }
     }
 }

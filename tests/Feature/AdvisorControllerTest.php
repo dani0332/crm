@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 });
 
 it('returns advisors as a serialized collection and count matches data length', function () {

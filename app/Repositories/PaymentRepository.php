@@ -801,6 +801,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             DocumentTypeCode::GMQPD => DocumentTypeCode::GMQPD_RECEIPT,
             DocumentTypeCode::PPD => DocumentTypeCode::PPD_RECEIPT,
             DocumentTypeCode::YPD => DocumentTypeCode::YPD_RECEIPT,
+            DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF => DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT,
         ];
 
         return $map[$documentTypeCode] ?? $documentTypeCode;

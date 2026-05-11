@@ -38,7 +38,8 @@ test('update quote from issue policy response updates policy fields', function (
                 && Carbon::parse($data['policy_start_date'])->toDateString() === '2024-01-01'
                 && Carbon::parse($data['policy_expiry_date'])->toDateString() === '2024-12-31'
                 && $data['quote_status_id'] === QuoteStatusEnum::PolicyIssued
-                && $data['policy_issuance_status_id'] === PolicyIssuanceStatusEnum::PolicyIssued;
+                && $data['policy_issuance_status_id'] === PolicyIssuanceStatusEnum::PolicyIssued
+                && $data['quote_status_date'] instanceof Carbon;
         }))
         ->andReturn(true);
 
