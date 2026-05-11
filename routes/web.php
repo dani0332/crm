@@ -55,6 +55,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
+use App\Http\Controllers\SendUpdateStatusLogController;
 use App\Http\Controllers\SICConfigurableController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\TeamController;
@@ -759,7 +760,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
-        Route::get('status-logs', [QuoteStatusLogController::class, 'index'])->name('quotes.status-logs.index');
+        Route::get('status-logs', [QuoteStatusLogController::class, 'index']);
+        Route::get('send-update-status-logs', [SendUpdateStatusLogController::class, 'index']);
     });
 
     Route::group(['prefix' => 'ftc'], function () {

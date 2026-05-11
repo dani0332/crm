@@ -1202,7 +1202,6 @@ class SendUpdateLogService
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelledReissued;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
@@ -1211,7 +1210,6 @@ class SendUpdateLogService
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
