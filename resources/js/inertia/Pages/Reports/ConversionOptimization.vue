@@ -22,7 +22,8 @@ const truncateLeadSourceOptionLabel = label => {
     return label;
   }
 
-  const max = CONVERSION_OPTIMIZATION_UI.LEAD_SOURCE_OPTION_LABEL_DISPLAY_MAX_LENGTH;
+  const max =
+    CONVERSION_OPTIMIZATION_UI.LEAD_SOURCE_OPTION_LABEL_DISPLAY_MAX_LENGTH;
 
   if (label.length <= max) {
     return label;
@@ -657,7 +658,9 @@ function onSubmit(isValid, isOnMounted = false) {
 function onReset() {
   isDirty.value = false;
 
-  const defaultAdvisorDates = Array.isArray(props.defaultFilters?.advisorAssignedDates)
+  const defaultAdvisorDates = Array.isArray(
+    props.defaultFilters?.advisorAssignedDates,
+  )
     ? [...props.defaultFilters.advisorAssignedDates]
     : [];
 
