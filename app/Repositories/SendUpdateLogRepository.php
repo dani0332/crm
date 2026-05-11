@@ -518,7 +518,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $modelClass::where('uuid', $sendUpdate->quote_uuid)->firstOrFail();
                 $previousStatusId = $quote->quote_status_id;
 
-                $leadHistoryLogs = app(QuoteStatusLogService::class)->getQuoteStatusLogs(sendUpdateId: $sendUpdate->id);
+                $leadHistoryLogs = app(QuoteStatusLogService::class)->getQuoteStatusLogs($sendUpdate->quote_type_id, $quote->id);
                 $beforeEndorsementStatus = $leadHistoryLogs->skip(1)->first();
 
                 if (! $beforeEndorsementStatus) {
