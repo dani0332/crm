@@ -31,7 +31,7 @@ class CreateHealthRateRequest extends FormRequest
             'gender' => new HealthRateGenderValidRule($this->health_plan_id),
             'cohort' => new HealthRateCohortValidRule($this->health_plan_id),
             'marital_status' => new HealthRateMaritalStatusValidRule($this->health_plan_id, $this->gender),
-            'premium' => ['bail', 'required', 'integer', 'min:1'],
+            'premium' => ['bail', 'required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
             'is_active' => ['bail', 'required', 'boolean'],
             'user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
         ];
@@ -50,6 +50,7 @@ class CreateHealthRateRequest extends FormRequest
             'boolean' => ':attribute must be a boolean',
             'effective_to.after' => 'Effective to must be greater than effective from',
             'user_id.exists' => 'User does not exist',
+            'premium.regex' => 'Premium can be a decimal upto 2 digits',
         ];
     }
 

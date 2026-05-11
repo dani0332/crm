@@ -213,7 +213,14 @@ class HealthRateService extends BaseService
     private function checkDuplicateRates(int $healthRateControlId, array $data, HealthPlan $plan): void
     {
         // Get all rates of sheet
-        $existingRates = HealthRate::where('health_rate_control_id', $healthRateControlId)->get();
+        $existingRates = HealthRate::where('health_rate_control_id', $healthRateControlId);
+
+        // Exclude current rate id if update request
+        if (isset($data['id'])) {
+            $existingRates->where('id', '!=', $data['id']);
+        }
+
+        $existingRates = $existingRates->get();
 
         // Prepare fields for duplicate check
         $matchingFields = [
