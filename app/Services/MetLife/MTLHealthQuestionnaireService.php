@@ -8,14 +8,15 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\StatusChangeActionEnum;
 use App\Events\DocumentNotificationEvent;
 use App\Exceptions\MetLife\MetLifeException;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Facades\Context;
 
 class MTLHealthQuestionnaireService
 {
@@ -229,18 +230,11 @@ class MTLHealthQuestionnaireService
 
         $previousStatusId = $quote->quote_status_id;
 
+        Context::add('status_change_action', StatusChangeActionEnum::MetLifeHealthQuestionnaireApplicationPending->value);
+
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::ApplicationPending,
             'quote_status_date' => now(),
-        ]);
-
-        QuoteStatusLog::create([
-            'quote_type_id' => $quote->quote_type_id,
-            'quote_request_id' => $quote->id,
-            'current_quote_status_id' => QuoteStatusEnum::ApplicationPending,
-            'previous_quote_status_id' => $previousStatusId,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         LoggerService::info('Quote status updated to Application Pending after health questionnaire upload', [

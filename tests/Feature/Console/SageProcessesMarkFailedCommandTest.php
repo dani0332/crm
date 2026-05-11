@@ -100,8 +100,11 @@ test('status change action enum has stable values and labels', function (): void
     expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value)->toBe('personal_quote_lead_status_update');
     expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->label())->toBe('Lead status updated (personal quote API)');
 
-    expect(StatusChangeActionEnum::SendUpdateCancelledRestoreQuoteStatus->value)->toBe('send_update_cancelled_restore_quote_status');
-    expect(StatusChangeActionEnum::SendUpdateCancelledRestoreQuoteStatus->label())->toBe('Send update cancelled: quote status restored');
+    expect(StatusChangeActionEnum::SendUpdateCancelled->value)->toBe('send_update_cancelled');
+    expect(StatusChangeActionEnum::SendUpdateCancelled->label())->toBe('Send update cancelled');
+
+    expect(StatusChangeActionEnum::MetLifeHealthQuestionnaireApplicationPending->value)->toBe('metlife_health_questionnaire_application_pending');
+    expect(StatusChangeActionEnum::MetLifeHealthQuestionnaireApplicationPending->label())->toBe('MetLife health questionnaire synced (application pending)');
 
     expect(StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->value)->toBe('send_update_booking_sync_quote_status');
     expect(StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->label())->toBe('Send update booking: quote status synced');
