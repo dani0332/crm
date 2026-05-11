@@ -327,13 +327,6 @@ class HealthRateService extends BaseService
             );
         }
 
-        // Else (active)
-        // Get active rate sheet against plan id and exclude current rate id
-        $activeRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
-            ->where('id', '!=', $id)
-            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
-            ->get();
-
         // As per bot comment
         if ($data['health_plan_id'] != $rate->health_plan_id) {
             throw new HttpResponseException(
@@ -345,6 +338,13 @@ class HealthRateService extends BaseService
                 ], 422)
             );
         }
+
+        // Else (active)
+        // Get active rate sheet against plan id and exclude current rate id
+        $activeRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
+            ->where('id', '!=', $id)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->get();
 
         return $this->addRate($data, [$rate->health_plan_id], null, $activeRates);
     }
