@@ -34,7 +34,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
@@ -1002,16 +1001,6 @@ class SplitPaymentService
                 }
                 $quoteModel->save();
                 LoggerService::info("Master payment code: {$quoteModel->code} - Old Quote Status: {$oldQuoteStatus} New Quote Status: {$quoteModel->quote_status_id}");
-                if (! $sendUpdateId && $oldQuoteStatus != null && $quoteModel->quote_status_id != $oldQuoteStatus) {
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteModel->id,
-                        'current_quote_status_id' => $quoteModel->quote_status_id,
-                        'previous_quote_status_id' => $oldQuoteStatus,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                    ]);
-                }
 
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {

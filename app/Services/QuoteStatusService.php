@@ -8,7 +8,6 @@ use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 
 class QuoteStatusService
 {
@@ -20,27 +19,11 @@ class QuoteStatusService
         $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
-        $updateQuote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'uuid');
 
         if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
             $AMLService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
         }
-
-        $previousStatusId = $updateQuote->quote_status_id;
-        $currentStatusId = $quoteStatus->id;
-
-        $quoteStatusLog = QuoteStatusLog::create([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'current_quote_status_id' => $currentStatusId,
-            'previous_quote_status_id' => $previousStatusId,
-            'notes' => $notes ?? null,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        return $quoteStatusLog;
     }
 
     public function markQuoteAsStale($quoteTypeId, $quoteRequestId)

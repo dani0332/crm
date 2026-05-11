@@ -3330,8 +3330,6 @@ class SageApiService
         // check if the last quote log status is same as new status then update the same log
         if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
             $latestQuoteStatusLog->update($quoteLogData);
-        } else {
-            QuoteStatusLog::create($quoteLogData);
         }
 
         if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {

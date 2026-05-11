@@ -37,10 +37,8 @@ use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -387,17 +385,6 @@ class CRUDService extends BaseService
             ) {
                 $this->updatePaymentStatus($entity);
             }
-
-            QuoteStatusLog::create([
-                'quote_type_id' => collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType)),
-                'quote_request_id' => $entity->id,
-                'current_quote_status_id' => $request->leadStatus,
-                'previous_quote_status_id' => $previousQuoteStatus,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-                'notes' => $request->notes,
-                'created_by' => Auth::user()->id,
-            ]);
 
             return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
