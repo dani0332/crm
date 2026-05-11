@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Repositories\PersonalQuoteRepository;
+
 /**
  * Describes why a lead's quote status changed, for lead history and customer-facing messaging.
  * Values are stable API keys (snake_case). {@see self::label()} formats the backing value for display
@@ -30,6 +32,11 @@ enum StatusChangeActionEnum: string
     case SagePolicyBookingProcessTimeout = 'sage_policy_booking_process_timeout';
 
     /**
+     * Lead status updated through the personal quote API ({@see PersonalQuoteRepository}).
+     */
+    case PersonalQuoteLeadStatusUpdate = 'personal_quote_lead_status_update';
+
+    /**
      * Human-readable title for UI / notifications.
      */
     public function label(): string
@@ -37,7 +44,8 @@ enum StatusChangeActionEnum: string
         return match ($this) {
             self::BridgerAmlMemberScreeningCleared => 'AML screening cleared (Bridger, all members)',
             self::BridgerAmlMemberScreeningFailed => 'AML screening failed (Bridger, potential matches or failed checks)',
-            self::SagePolicyBookingProcessTimeout => 'Sage policy booking process timeout',
+            self::SagePolicyBookingProcessTimeout => 'Sage Policy Booking Process Timeout',
+            self::PersonalQuoteLeadStatusUpdate => 'Lead status updated (personal quote API)',
         };
     }
 }

@@ -10,12 +10,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\StatusChangeActionEnum;
 use App\Facades\Capi;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -25,10 +25,10 @@ use App\Services\OCR\OcrUtils;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
@@ -65,7 +65,7 @@ class PersonalQuoteRepository extends BaseRepository
                 app(CRUDService::class)->calculateScore($quote, $quoteType);
             }
 
-            $quote->update($quoteData);
+            Context::add('status_change_action', StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value);
 
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;
@@ -76,15 +76,6 @@ class PersonalQuoteRepository extends BaseRepository
             }
 
             $activityCreated = (new CentralService)->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
-
-            QuoteStatusLog::create([
-                'quote_type_id' => $quote->quote_type_id,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => $quote->quote_status_id,
-                'previous_quote_status_id' => $previousStatusId,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
 
             return ['quote' => $quote, 'activity_created' => $activityCreated];
         });
