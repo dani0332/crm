@@ -7,10 +7,23 @@ namespace App\Services;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use BackedEnum;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 
 class SendUpdateStatusLogService extends BaseService
 {
+    /**
+     * @return EloquentCollection<int, SendUpdateStatusLog>
+     */
+    public function getSendUpdateStatusLogs(int $sendUpdateLogId): EloquentCollection
+    {
+        return SendUpdateStatusLog::query()
+            ->where('send_update_log_id', $sendUpdateLogId)
+            ->with(['createdBy'])
+            ->orderByDesc('id')
+            ->get();
+    }
+
     /**
      * Persist a single send-update status transition (append-only audit row).
      */
