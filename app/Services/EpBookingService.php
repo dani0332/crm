@@ -523,6 +523,12 @@ class EpBookingService extends BaseService
             return true;
         }
 
+        LoggerService::info(self::class.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
+            'quote_uuid' => $quoteUuid,
+            'ep_code' => $quote->code,
+            'provider_id' => $insuranceProvider->id,
+        ]);
+
         return false;
     }
 
