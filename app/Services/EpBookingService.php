@@ -432,13 +432,13 @@ class EpBookingService extends BaseService
         }
     }
 
-    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote): void
+    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote): bool
     {
         $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
         if (! $insuranceProvider) {
             LoggerService::warning(self::CLASS_NAME." - Insurance provider not found: {$quote->code}");
 
-            return;
+            return false;
         }
 
         $quoteUuid = Str::afterLast($quote->code, '-');
@@ -458,7 +458,7 @@ class EpBookingService extends BaseService
                 'provider_id' => $insuranceProvider->id,
             ]);
 
-            return;
+            return false;
         }
 
         $response = json_decode((string) $insurerRequestResponse->response, true);
@@ -469,7 +469,7 @@ class EpBookingService extends BaseService
                 'insurer_request_response_id' => $insurerRequestResponse->id,
             ]);
 
-            return;
+            return false;
         }
 
         $isResponseUpdated = false;
@@ -520,6 +520,8 @@ class EpBookingService extends BaseService
                 'ep_code' => $quote->code,
                 'provider_id' => $insuranceProvider->id,
             ]);
+
+            return true;
         } else {
             LoggerService::info(self::CLASS_NAME.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
                 'quote_uuid' => $quoteUuid,
@@ -527,6 +529,8 @@ class EpBookingService extends BaseService
                 'provider_id' => $insuranceProvider->id,
             ]);
         }
+
+        return false;
     }
 
     protected static function withSageDocumentNumberPostfix(mixed $documentNumber): mixed

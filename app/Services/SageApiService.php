@@ -3228,9 +3228,16 @@ class SageApiService
         if ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
 
             LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
-            EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($quote);
+            $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($quote);
 
-            $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
+            if ($isDocumentNumberUpdated) {
+                $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
+            } else {
+                LoggerService::warning('EP Sage booking duplicate document number detected, but insurer request response document numbers were not updated', extra: [
+                    'ep_code' => $quote->code,
+                    'sage_error_message' => $sageErrorMessage,
+                ]);
+            }
         }
 
         if ($storeSageApiLog) {
