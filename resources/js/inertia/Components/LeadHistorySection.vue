@@ -7,30 +7,13 @@ const props = defineProps({
     required: false,
     default: true,
   },
-  title: {
-    type: String,
-    required: false,
-    default: 'Lead History',
-  },
-  modelType: {
-    type: String,
-    required: false,
-    default: '',
-  },
-  sendUpdateId: {
-    type: [Number, String, null],
-    required: false,
-    default: null,
-  },
   quoteId: {
     type: [Number, String],
-    required: false,
-    default: null,
+    required: true,
   },
   quoteTypeId: {
     type: [Number, String],
-    required: false,
-    default: null,
+    required: true,
   },
 });
 const page = usePage();
@@ -62,12 +45,8 @@ const headers = computed(() => {
 
 const endpoint = computed(() => {
   const query = new URLSearchParams();
-  if (props.sendUpdateId !== null && props.sendUpdateId !== '') {
-    query.append('sendUpdateId', props.sendUpdateId);
-  } else {
-    query.append('quoteId', props.quoteId);
-    query.append('quoteTypeId', props.quoteTypeId);
-  }
+  query.append('quoteId', props.quoteId);
+  query.append('quoteTypeId', props.quoteTypeId);
   return `/quotes/status-logs?${query.toString()}`;
 });
 
@@ -92,7 +71,7 @@ const onLoadHistoryData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">{{ title }}</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
 
           <button
             v-if="historyData !== null"
