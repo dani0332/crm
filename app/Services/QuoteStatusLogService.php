@@ -25,9 +25,6 @@ class QuoteStatusLogService extends BaseService
             'current_quote_status_id' => $quote->quote_status_id,
             'previous_quote_status_id' => $oldQuoteStatus,
             'status_change_source' => LeadSourceEnum::IMCRM,
-            // TODO: Uncomment this when we have a way to get the status change action from the context
-            // 'status_change_action' => 'Will use status change action from context',
-            'send_update_log_id' => Context::get('send_update_log_id'),
             'notes' => $this->buildStatusChangeNotes(),
             'created_by' => Auth::id(),
         ]);
