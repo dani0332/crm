@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use App\Models\PersonalQuote;
-use App\Services\Logger\LoggerService;
 use App\Services\EmailServices\DeviceEmailService;
+use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Bus\Dispatchable;
 
 class SendDeviceAutomatedFollowupJob implements ShouldQueue
 {
@@ -33,13 +33,13 @@ class SendDeviceAutomatedFollowupJob implements ShouldQueue
     public function handle(): void
     {
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
-        LoggerService::startQuoteLogging($lead);
+
         if (! $lead) {
             LoggerService::info('SendDeviceAutomatedFollowupJob - Lead not found ');
 
             return;
         }
-
+        LoggerService::startQuoteLogging($lead);
         app(DeviceEmailService::class)->sendDeviceAutomatedFollowups($lead);
     }
 }
