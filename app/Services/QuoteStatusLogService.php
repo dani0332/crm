@@ -57,23 +57,13 @@ class QuoteStatusLogService extends BaseService
             })->exists();
     }
 
-    public function getQuoteStatusLogs(?int $quoteTypeId = null, ?int $quoteId = null, ?int $sendUpdateId = null): EloquentCollection
+    public function getQuoteStatusLogs(int $quoteTypeId, int $quoteId): EloquentCollection
     {
         $query = QuoteStatusLog::query()
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
             ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
             ->orderBy('created_at', 'DESC');
-
-        if ($sendUpdateId !== null) {
-            $query->where('send_update_log_id', $sendUpdateId);
-        } else {
-            if ($quoteTypeId === null || $quoteId === null) {
-                return new EloquentCollection;
-            }
-
-            $query
-                ->where('quote_type_id', $quoteTypeId)
-                ->where('quote_request_id', $quoteId);
-        }
 
         return $query->get();
     }

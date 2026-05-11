@@ -11,15 +11,13 @@ class QuoteStatusLogController extends Controller
     public function index(Request $request, QuoteStatusLogService $quoteStatusLogService): JsonResponse
     {
         $validatedData = $request->validate([
-            'sendUpdateId' => ['nullable', 'integer', 'min:1'],
-            'quoteId' => ['required_without:sendUpdateId', 'integer', 'min:1'],
-            'quoteTypeId' => ['required_without:sendUpdateId', 'integer', 'min:1'],
+            'quoteId' => ['required', 'integer', 'min:1'],
+            'quoteTypeId' => ['required', 'integer', 'min:1'],
         ]);
 
         $logs = $quoteStatusLogService->getQuoteStatusLogs(
-            quoteTypeId: isset($validatedData['quoteTypeId']) ? (int) $validatedData['quoteTypeId'] : null,
-            quoteId: isset($validatedData['quoteId']) ? (int) $validatedData['quoteId'] : null,
-            sendUpdateId: isset($validatedData['sendUpdateId']) ? (int) $validatedData['sendUpdateId'] : null
+            $validatedData['quoteTypeId'],
+            $validatedData['quoteId']
         );
 
         return response()->json($logs);
