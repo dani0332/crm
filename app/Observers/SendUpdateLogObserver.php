@@ -27,12 +27,12 @@ class SendUpdateLogObserver
     public function updated(SendUpdateLog $sendUpdateLog): void
     {
         if ($sendUpdateLog->wasChanged('status')) {
-            $previous = $sendUpdateLog->getPrevious()['status'] ?? '';
+            $previous = $sendUpdateLog->getOriginal('status') ?? '';
 
             app(SendUpdateStatusLogService::class)->createSendUpdateStatusLog(
                 $sendUpdateLog,
                 $previous,
-                $sendUpdateLog->getChanges()['status'] ?? $sendUpdateLog->status,
+                $sendUpdateLog->status,
             );
 
             if ($sendUpdateLog->status === SendUpdateLogStatusEnum::UPDATE_ISSUED) {
