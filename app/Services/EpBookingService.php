@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -440,20 +441,20 @@ class EpBookingService extends BaseService
             return;
         }
 
-        $epCode = Str::afterLast($quote->code, '-');
-
+        $quoteUuid = Str::afterLast($quote->code, '-');
         $insurerRequestResponse = InsurerRequestResponse::where([
-            'quote_uuid' => $quote->quote_uuid,
+            'quote_uuid' => $quoteUuid,
             'provider_id' => $insuranceProvider->id,
             'execution_method' => self::STEP_GET_POLICY_DOCUMENTS,
             'call_type' => self::CALL_TYPE_EP_ECB,
+            'status' => GenericRequestEnum::PASSED,
         ])->latest()->first();
 
         if (! $insurerRequestResponse) {
             LoggerService::warning(self::CLASS_NAME.' - Insurer request response not found for Sage document update', extra: [
-                'ep_code' => $epCode,
+                'quote_uuid' => $quoteUuid,
                 'quote_code' => $quote->code,
-                'quote_uuid' => $quote->quote_uuid,
+                'ep_code' => $quote->code,
                 'provider_id' => $insuranceProvider->id,
             ]);
 
@@ -463,8 +464,8 @@ class EpBookingService extends BaseService
         $response = json_decode((string) $insurerRequestResponse->response, true);
         if (! is_array($response)) {
             LoggerService::warning(self::CLASS_NAME.' - Unable to decode insurer request response for Sage document update', extra: [
-                'ep_code' => $epCode,
-                'quote_code' => $quote->code,
+                'ep_code' => $quote->code,
+                'quote_uuid' => $quoteUuid,
                 'insurer_request_response_id' => $insurerRequestResponse->id,
             ]);
 
@@ -473,7 +474,7 @@ class EpBookingService extends BaseService
 
         $isResponseUpdated = false;
 
-        if (array_key_exists('premium_inv_no', $response)) {
+        if (array_key_exists('premium_inv_no', $response) && $response['premium_inv_no'] !== null) {
             $previousPremiumInvoiceNo = $response['premium_inv_no'];
             $updatedPremiumInvoiceNo = self::withSageDocumentNumberPostfix($previousPremiumInvoiceNo);
 
@@ -482,9 +483,8 @@ class EpBookingService extends BaseService
                 $response['premium_inv_no'] = $updatedPremiumInvoiceNo;
 
                 LoggerService::info(self::CLASS_NAME.' - Updated Tax Invoice number in insurer request response for EP Sage booking', extra: [
-                    'ep_code' => $epCode,
-                    'quote_code' => $quote->code,
-                    'quote_uuid' => $quote->quote_uuid,
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
                     'previous_premium_inv_no' => $previousPremiumInvoiceNo,
                     'updated_premium_inv_no' => $updatedPremiumInvoiceNo,
@@ -492,7 +492,7 @@ class EpBookingService extends BaseService
             }
         }
 
-        if (array_key_exists('commision_inv_no', $response)) {
+        if (array_key_exists('commision_inv_no', $response) && $response['commision_inv_no'] !== null) {
             $previousCommissionInvoiceNo = $response['commision_inv_no'];
             $updatedCommissionInvoiceNo = self::withSageDocumentNumberPostfix($previousCommissionInvoiceNo);
 
@@ -501,9 +501,8 @@ class EpBookingService extends BaseService
                 $response['commision_inv_no'] = $updatedCommissionInvoiceNo;
 
                 LoggerService::info(self::CLASS_NAME.' - Updated Commission Invoice number in insurer request response for EP Sage booking', extra: [
-                    'ep_code' => $epCode,
-                    'quote_code' => $quote->code,
-                    'quote_uuid' => $quote->quote_uuid,
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
                     'previous_commission_inv_no' => $previousCommissionInvoiceNo,
                     'updated_commission_inv_no' => $updatedCommissionInvoiceNo,
@@ -512,10 +511,9 @@ class EpBookingService extends BaseService
         }
 
         if (! $isResponseUpdated) {
-            LoggerService::info(self::CLASS_NAME.' - Insurer request response invoice numbers already include Sage postfix', extra: [
-                'ep_code' => $epCode,
-                'quote_code' => $quote->code,
-                'quote_uuid' => $quote->quote_uuid,
+            LoggerService::info(self::CLASS_NAME.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
+                'quote_uuid' => $quoteUuid,
+                'ep_code' => $quote->code,
                 'provider_id' => $insuranceProvider->id,
             ]);
 
@@ -527,9 +525,8 @@ class EpBookingService extends BaseService
         ]);
 
         LoggerService::info(self::CLASS_NAME.' - Updated insurer request response for EP Sage booking', extra: [
-            'ep_code' => $epCode,
-            'quote_code' => $quote->code,
-            'quote_uuid' => $quote->quote_uuid,
+            'quote_uuid' => $quoteUuid,
+            'ep_code' => $quote->code,
             'provider_id' => $insuranceProvider->id,
         ]);
     }
