@@ -32,8 +32,10 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ClaimAllocation\ClaimAllocationService;
+use App\Services\EmailServices\DeviceEmailService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
@@ -669,6 +671,47 @@ class ApiService
                 'success' => false,
                 'message' => 'STP Advisor notification failed: '.$e->getMessage(),
             ];
+        }
+    }
+    public function sendZeroPlansEmail($request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        LoggerService::info(self::class.': Sending zero plans email for quote uuid: '.$request->quoteUuid);
+        if (! $quoteType) {
+            LoggerService::info(self::class.': Invalid quote type');
+
+            return [
+                'success' => false,
+                'message' => 'Invalid quote type',
+            ];
+        }
+        switch ($quoteType->value) {
+            case QuoteTypes::DEVICE->value:
+                $lead = PersonalQuote::where('uuid', $request->quoteUuid)->first();
+                if (! $lead) {
+                    return [
+                        'success' => false,
+                        'message' => 'Lead not found',
+                    ];
+                }
+                $response = app(DeviceEmailService::class)->sendZeroPlansEmail($lead);
+                if ($response['success']) {
+                    return [
+                        'success' => true,
+                        'message' => $response['message'],
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => $response['message'],
+                    ];
+                }
+                break;
+            default:
+                return [
+                    'success' => false,
+                    'message' => 'Invalid quote type',
+                ];
         }
     }
 

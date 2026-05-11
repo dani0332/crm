@@ -190,6 +190,11 @@ return [
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
     'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
+    // NGI (National General Insurance) Policy Issuance API Credentials for Device/Smartphone
+    'NGI_API_BASE_URL' => env('NGI_API_BASE_URL'),
+    'NGI_API_CLIENT_CODE' => env('NGI_API_CLIENT_CODE', 'IM'),
+    'NGI_API_CLIENT_ID' => env('NGI_API_CLIENT_ID'),
+    'NGI_API_CLIENT_SECRET' => env('NGI_API_CLIENT_SECRET'),
     // Adnic Policy Issuance API Credentials
     'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL'),
     'ADNIC_PARTNER_ID' => env('ADNIC_PARTNER_ID'),

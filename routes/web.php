@@ -92,6 +92,7 @@ use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CyberQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\DeviceQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
@@ -288,6 +289,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
+
+            Route::resource('/smartphone', DeviceQuoteController::class)->names(generateRouteNames('device-quotes'));
         });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 
@@ -1133,4 +1136,5 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
+    Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE, 'check_route_access')->name('re-trigger-policy-automation');
 });
