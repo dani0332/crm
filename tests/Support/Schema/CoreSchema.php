@@ -1405,8 +1405,15 @@ class CoreSchema
                 $table->string('previous_status');
                 $table->string('current_status');
                 $table->unsignedBigInteger('created_by')->nullable();
+                $table->text('notes')->nullable();
                 $table->timestamps();
             },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'send_update_status_logs' => [
+                'notes' => fn (Blueprint $table) => $table->text('notes')->nullable(),
+            ],
         ]);
     }
 
