@@ -48,10 +48,11 @@ enum QuoteFlowType: int
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
     case MOTOR_REVIVAL_OCB = 70;
     case MOTOR_REVIVAL_FOLLOWUP = 71;
-    case LIFE_REVIVAL_FOLLOWUPS = 50;
-
     case DEVICE_AUTOMATED_FOLLOWUPS = 50;
     case DEVICE_OCB_INTRO_EMAIL = 51;
+
+    case LIFE_REVIVAL_FOLLOWUPS = 72;
+
     public function label(): string
     {
         return match ($this) {
