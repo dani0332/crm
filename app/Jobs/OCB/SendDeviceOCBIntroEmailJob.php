@@ -2,7 +2,8 @@
 
 namespace App\Jobs\OCB;
 
-use App\Services\EmailServices\TravelEmailService;
+use App\Models\PersonalQuote;
+use App\Services\EmailServices\DeviceEmailService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -11,9 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Str;
-use App\Models\PersonalQuote;
-use App\Services\EmailServices\DeviceEmailService;
 
 class SendDeviceOCBIntroEmailJob implements ShouldQueue
 {
@@ -52,7 +50,6 @@ class SendDeviceOCBIntroEmailJob implements ShouldQueue
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }
-           
 
             $responseCode = $deviceEmailService->sendDeviceOCBIntroEmail($lead);
             if (in_array($responseCode, [200, 201])) {
@@ -73,6 +70,7 @@ class SendDeviceOCBIntroEmailJob implements ShouldQueue
         }
 
         info(self::class." - Lead found for uuid: {$this->quoteUuid}");
+
         return true;
     }
     public function middleware()
