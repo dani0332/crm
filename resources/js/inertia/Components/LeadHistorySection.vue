@@ -31,9 +31,7 @@ const defaultHeaders = [
   { text: 'Source of Action', value: 'status_change_source' },
 ];
 
-const engineeringHeaders = [
-  { text: 'Notes', value: 'notes' },
-];
+const engineeringHeaders = [{ text: 'Notes', value: 'notes' }];
 
 const headers = computed(() => {
   if (!hasRole(rolesEnum.Engineering)) {
