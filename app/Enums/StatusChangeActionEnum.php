@@ -37,6 +37,16 @@ enum StatusChangeActionEnum: string
     case PersonalQuoteLeadStatusUpdate = 'personal_quote_lead_status_update';
 
     /**
+     * Send update was cancelled; main lead quote status was restored from pre-endorsement lead history.
+     */
+    case SendUpdateCancelled = 'send_update_cancelled';
+
+    /**
+     * Main lead quote status was aligned with send update booking workflow (e.g. cancellation pending, policy cancelled/booked).
+     */
+    case SendUpdateBookingSyncQuoteStatus = 'send_update_booking_sync_quote_status';
+
+    /**
      * Human-readable title for UI / notifications.
      */
     public function label(): string
@@ -46,6 +56,8 @@ enum StatusChangeActionEnum: string
             self::BridgerAmlMemberScreeningFailed => 'AML screening failed (Bridger, potential matches or failed checks)',
             self::SagePolicyBookingProcessTimeout => 'Sage Policy Booking Process Timeout',
             self::PersonalQuoteLeadStatusUpdate => 'Lead status updated (personal quote API)',
+            self::SendUpdateCancelled => 'Send update cancelled',
+            self::SendUpdateBookingSyncQuoteStatus => 'Send update booking: quote status synced',
         };
     }
 }

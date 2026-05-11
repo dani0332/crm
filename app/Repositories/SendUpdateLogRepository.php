@@ -9,11 +9,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\StatusChangeActionEnum;
 use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -23,6 +23,7 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
@@ -533,16 +534,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $beforeEndorsementStatusId = $beforeEndorsementStatus->currentQuoteStatus->id;
 
                 $quote->update(['quote_status_id' => $beforeEndorsementStatusId]);
-
-                QuoteStatusLog::create([
-                    'quote_type_id' => $sendUpdate->quote_type_id,
-                    'quote_request_id' => $quote->id,
-                    'current_quote_status_id' => $beforeEndorsementStatusId,
-                    'previous_quote_status_id' => $previousStatusId,
-                    'created_by' => auth()->user()->id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
+                Context::add('status_change_action', StatusChangeActionEnum::SendUpdateCancelled->value);
 
                 LoggerService::info('Quote status updated successfully', extra: [
                     'quoteUUID' => $quote->uuid,
@@ -570,25 +562,12 @@ class SendUpdateLogRepository extends BaseRepository
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
             if ($quote && $quote?->policy_booking_date) {
-                $previousStatusId = $quote->quote_status_id;
-
+                Context::add('status_change_action', StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->value);
                 $quote->update([
                     'quote_status_id' => $quoteStatusId,
                     'quote_status_date' => now(),
                 ]);
 
-                QuoteStatusLog::create([
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quote->id,
-                    'current_quote_status_id' => $quoteStatusId,
-                    'previous_quote_status_id' => $previousStatusId,
-                    'created_by' => auth()->user()->id,
-                ]);
-
-                LoggerService::info('Quote status updated successfully', extra: [
-                    'previousStatusId' => $previousStatusId,
-                    'newStatusId' => $quoteStatusId,
-                ]);
             }
         } catch (\Exception $ex) {
             LoggerService::error('Error while updating Quote status', exception: $ex);
