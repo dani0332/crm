@@ -10,11 +10,24 @@ class QuoteTypeFactory extends Factory
 {
     protected $model = QuoteType::class;
 
-    public function definition()
+    public function definition(): array
     {
         return [
             'text' => 'Cyber', // simple type for testing
         ];
+    }
+
+    public function createForSqlite(array $attributes = []): QuoteType
+    {
+        return QuoteType::unguarded(function () use ($attributes): QuoteType {
+            return QuoteType::query()->create(array_merge([
+                'code' => 'cyber',
+                'text' => 'Cyber',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], $attributes));
+        });
     }
 
     public function createHealthForSqlite(): QuoteType
