@@ -15,6 +15,7 @@ class SendUpdateStatusLog extends Model
         'previous_status',
         'current_status',
         'created_by',
+        'notes',
     ];
 
     public function sendUpdateLog(): BelongsTo

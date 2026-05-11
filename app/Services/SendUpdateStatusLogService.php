@@ -24,6 +24,7 @@ class SendUpdateStatusLogService extends BaseService
             'previous_status' => $this->normalizeStatusSegment($previousStatus),
             'current_status' => $this->normalizeStatusSegment($currentStatus),
             'created_by' => Auth::id(),
+            'notes' => $this->buildStatusChangeNotes(),
         ]);
     }
 
@@ -34,5 +35,20 @@ class SendUpdateStatusLogService extends BaseService
         }
 
         return (string) ($value ?? '');
+    }
+
+    /**
+     * Build a JSON payload of request metadata persisted in the `notes` text column.
+     */
+    protected function buildStatusChangeNotes(): string
+    {
+        $request = request();
+
+        return json_encode([
+            'method' => $request?->method(),
+            'path' => $request?->path(),
+            'ip' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+        ], JSON_UNESCAPED_SLASHES);
     }
 }
