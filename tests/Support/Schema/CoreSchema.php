@@ -463,6 +463,10 @@ class CoreSchema
                 $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('imei')->nullable();
                 $table->string('purchase_date')->nullable();
+                $table->string('device_type')->nullable();
+                $table->boolean('sic_advisor_requested')->nullable();
+                $table->integer('insurer_api_status_id')->nullable();
+                $table->integer('api_issuance_status_id')->nullable();
                 $table->timestamps();
             },
             'quote_sync' => function (Blueprint $table) {
