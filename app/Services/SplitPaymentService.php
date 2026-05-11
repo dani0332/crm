@@ -844,7 +844,6 @@ class SplitPaymentService
                     if (in_array($sendUpdateLog->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
                     } else {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                         $sendUpdateLog->update([
                             'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                         ]);
@@ -985,7 +984,6 @@ class SplitPaymentService
                     if (in_array($quoteModel->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
                     } else {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                         $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
                     }
