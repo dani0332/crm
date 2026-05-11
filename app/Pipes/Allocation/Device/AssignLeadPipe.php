@@ -41,7 +41,7 @@ class AssignLeadPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - About to update device quote detail record');
 
         $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $this->lead->id)->first();
-        $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
+        $oldAdvisorAssignedDate = $quoteDetail?->advisor_assigned_date ?? '';
         $this->upsertQuoteDetail($this->lead->id, PersonalQuoteDetail::class, 'personal_quote_id');
 
         return $oldAdvisorAssignedDate;
