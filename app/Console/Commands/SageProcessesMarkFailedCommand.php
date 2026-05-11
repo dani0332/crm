@@ -7,14 +7,12 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\StatusChangeActionEnum;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Context;
 
 class SageProcessesMarkFailedCommand extends Command
 {
@@ -54,7 +52,6 @@ class SageProcessesMarkFailedCommand extends Command
 
             if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                 $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
-                Context::add('status_change_action', StatusChangeActionEnum::SagePolicyBookingProcessTimeout->value);
                 $quote->update([
                     'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
                     'quote_status_date' => now(),

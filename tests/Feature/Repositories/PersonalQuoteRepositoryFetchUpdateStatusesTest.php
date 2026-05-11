@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\StatusChangeActionEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
@@ -96,5 +95,4 @@ test('fetchUpdateStatuses persists lead history via observer and status change a
         ->first();
 
     expect($log)->not->toBeNull();
-    expect($log->status_change_action)->toBe(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value);
 });

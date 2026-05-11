@@ -10,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\StatusChangeActionEnum;
 use App\Facades\Capi;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
@@ -28,7 +27,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
@@ -64,9 +62,6 @@ class PersonalQuoteRepository extends BaseRepository
             if ($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
                 app(CRUDService::class)->calculateScore($quote, $quoteType);
             }
-
-            Context::add('status_change_action', StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value);
-
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;
             }

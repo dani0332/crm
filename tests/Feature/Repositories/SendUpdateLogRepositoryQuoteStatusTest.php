@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\StatusChangeActionEnum;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\QuoteStatusLog;
@@ -65,6 +64,5 @@ test('updateQuoteStatusLog records send update booking sync via observer and con
         ->first();
 
     expect($log)->not->toBeNull();
-    expect($log->status_change_action)->toBe(StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->value);
     expect((int) $log->send_update_log_id)->toBe($sendUpdateLogId);
 });

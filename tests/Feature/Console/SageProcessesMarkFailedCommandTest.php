@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
-use App\Enums\StatusChangeActionEnum;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\QuoteStatusLog;
@@ -84,28 +83,4 @@ test('mark-failed command records sage policy booking timeout action on quote st
         ->first();
 
     expect($log)->not->toBeNull();
-    expect($log->status_change_action)->toBe(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->value);
-});
-
-test('status change action enum has stable values and labels', function (): void {
-    expect(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->value)->toBe('sage_policy_booking_process_timeout');
-    expect(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->label())->toBe('Sage Policy Booking Process Timeout');
-
-    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningCleared->value)->toBe('bridger_aml_member_screening_cleared');
-    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningCleared->label())->toBe('AML screening cleared (Bridger, all members)');
-
-    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->value)->toBe('bridger_aml_member_screening_failed');
-    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->label())->toBe('AML screening failed (Bridger, potential matches or failed checks)');
-
-    expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value)->toBe('personal_quote_lead_status_update');
-    expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->label())->toBe('Lead status updated (personal quote API)');
-
-    expect(StatusChangeActionEnum::SendUpdateCancelled->value)->toBe('send_update_cancelled');
-    expect(StatusChangeActionEnum::SendUpdateCancelled->label())->toBe('Send update cancelled');
-
-    expect(StatusChangeActionEnum::MetLifeHealthQuestionnaireApplicationPending->value)->toBe('metlife_health_questionnaire_application_pending');
-    expect(StatusChangeActionEnum::MetLifeHealthQuestionnaireApplicationPending->label())->toBe('MetLife health questionnaire synced (application pending)');
-
-    expect(StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->value)->toBe('send_update_booking_sync_quote_status');
-    expect(StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->label())->toBe('Send update booking: quote status synced');
 });

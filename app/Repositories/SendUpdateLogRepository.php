@@ -9,7 +9,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\StatusChangeActionEnum;
 use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
@@ -23,7 +22,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
@@ -534,7 +532,6 @@ class SendUpdateLogRepository extends BaseRepository
                 $beforeEndorsementStatusId = $beforeEndorsementStatus->currentQuoteStatus->id;
 
                 $quote->update(['quote_status_id' => $beforeEndorsementStatusId]);
-                Context::add('status_change_action', StatusChangeActionEnum::SendUpdateCancelled->value);
 
                 LoggerService::info('Quote status updated successfully', extra: [
                     'quoteUUID' => $quote->uuid,
@@ -562,7 +559,6 @@ class SendUpdateLogRepository extends BaseRepository
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
             if ($quote && $quote?->policy_booking_date) {
-                Context::add('status_change_action', StatusChangeActionEnum::SendUpdateBookingSyncQuoteStatus->value);
                 $quote->update([
                     'quote_status_id' => $quoteStatusId,
                     'quote_status_date' => now(),

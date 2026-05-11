@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\StatusChangeActionEnum;
 use App\Models\QuoteStatusLog;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +25,8 @@ class QuoteStatusLogService extends BaseService
             'current_quote_status_id' => $quote->quote_status_id,
             'previous_quote_status_id' => $oldQuoteStatus,
             'status_change_source' => LeadSourceEnum::IMCRM,
-            'status_change_action' => $this->normalizeStatusChangeAction(Context::get('status_change_action')),
+            // TODO: Uncomment this when we have a way to get the status change action from the context
+            // 'status_change_action' => 'Will use status change action from context',
             'send_update_log_id' => Context::get('send_update_log_id'),
             'notes' => $this->buildStatusChangeNotes(),
             'created_by' => Auth::id(),
@@ -46,22 +46,6 @@ class QuoteStatusLogService extends BaseService
     {
         Context::forget('status_change_action');
         Context::forget('send_update_log_id');
-    }
-
-    /**
-     * @return string|null Stored enum value, or null when no action was set in context.
-     */
-    protected function normalizeStatusChangeAction(mixed $action): ?string
-    {
-        if ($action instanceof StatusChangeActionEnum) {
-            return $action->value;
-        }
-
-        if (is_string($action) && $action !== '') {
-            return StatusChangeActionEnum::tryFrom($action)?->value ?? $action;
-        }
-
-        return null;
     }
 
     /**
