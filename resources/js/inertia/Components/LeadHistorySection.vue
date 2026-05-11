@@ -45,12 +45,12 @@ const defaultHeaders = [
   { text: 'Modified By', value: 'created_by.email' },
   { text: 'Lead Status From', value: 'previous_quote_status.text' },
   { text: 'Lead Status To', value: 'current_quote_status.text' },
-  { text: 'Notes', value: 'notes' },
+  { text: 'Action Performed', value: 'status_change_action' },
+  { text: 'Source of Action', value: 'status_change_source' },
 ];
 
 const engineeringHeaders = [
-  { text: 'Status Change Source', value: 'status_change_source' },
-  { text: 'Status Change Action', value: 'status_change_action' },
+  { text: 'Notes', value: 'notes' },
 ];
 
 const headers = computed(() => {
