@@ -87,9 +87,13 @@ test('mark-failed command records sage policy booking timeout action on quote st
     expect($log->status_change_action)->toBe(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->value);
 });
 
-test('status change action enum has stable value and human-readable label', function (): void {
-    $action = StatusChangeActionEnum::SagePolicyBookingProcessTimeout;
+test('status change action enum has stable values and labels', function (): void {
+    expect(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->value)->toBe('sage_policy_booking_process_timeout');
+    expect(StatusChangeActionEnum::SagePolicyBookingProcessTimeout->label())->toBe('Sage Policy Booking Process Timeout');
 
-    expect($action->value)->toBe('sage_policy_booking_process_timeout');
-    expect($action->label())->toBe('Sage Policy Booking Process Timeout');
+    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningCleared->value)->toBe('bridger_aml_member_screening_cleared');
+    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningCleared->label())->toBe('AML screening cleared (Bridger, all members)');
+
+    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->value)->toBe('bridger_aml_member_screening_failed');
+    expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->label())->toBe('AML screening failed (Bridger, potential matches or failed checks)');
 });

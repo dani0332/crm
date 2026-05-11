@@ -10,6 +10,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateUpdateSourceEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -17,6 +18,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\StatusChangeActionEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
@@ -421,6 +423,9 @@ class AMLController extends Controller
                 'quote_request_id' => $quoteRequestId,
                 'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
                 'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'status_change_source' => LeadSourceEnum::IMCRM,
+                'status_change_action' => StatusChangeActionEnum::BridgerAmlMemberScreeningCleared->value,
+                'created_by' => $processByUser?->id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
@@ -443,6 +448,9 @@ class AMLController extends Controller
                 'quote_request_id' => $quoteRequestId,
                 'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
                 'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'status_change_source' => LeadSourceEnum::IMCRM,
+                'status_change_action' => StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->value,
+                'created_by' => $processByUser?->id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
