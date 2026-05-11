@@ -78,6 +78,8 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
         $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', QuoteTypes::BIKE->shortCode());
 
+        $quote->loadMissing('payments');
+
         $quoteData = [
             'customer_id' => $quote->getAttribute('customer_id'),
             'first_name' => $quote->first_name,
@@ -98,6 +100,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'previous_policy_start_date' => $quote->policy_start_date ?? null,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium ?? null,
+            'previous_quote_policy_commission' => $quote->payments->first()?->commission ?? null,
             'previous_advisor_id' => $quote->advisor_id ?? null,
             'previous_quote_id' => $quote->id,
             'quote_type_id' => QuoteTypeId::Bike,

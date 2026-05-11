@@ -113,6 +113,7 @@ class HomeQuoteService extends BaseService
             'rb.name as renewal_batch_text',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
+            'hqr.previous_quote_policy_commission',
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',

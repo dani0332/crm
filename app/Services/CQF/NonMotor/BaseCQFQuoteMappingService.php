@@ -133,6 +133,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->price_with_vat,
+            'previous_quote_policy_commission' => $quote->payments->first()?->commission,
             'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'quote_type_id' => $this->getQuoteTypeId(),
@@ -159,6 +160,8 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
      */
     protected function buildBaseFailedQuoteDataFromPersonalQuote(PersonalQuote $quote): array
     {
+        $quote->loadMissing('payments');
+
         $base = [
             'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
             'email' => $quote->email ?? null,
@@ -174,6 +177,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'batch' => null,
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->price_with_vat ?? null,
+            'previous_quote_policy_commission' => $quote->payments->first()?->commission ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->notes ?? null,
             'plan_name' => null,

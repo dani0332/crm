@@ -28,6 +28,7 @@ it('returns empty array when quote is not PersonalQuote', function () {
 
 it('maps personal quote to renewal data with required fields', function () {
     $quote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
+    $quote->shouldReceive('loadMissing')->with('payments')->andReturnSelf();
     $quote->shouldReceive('getAttribute')->andReturnUsing(function ($key) {
         $data = [
             'customer_id' => 1,
@@ -44,6 +45,7 @@ it('maps personal quote to renewal data with required fields', function () {
             'nationality_id' => 1,
             'currently_insured_with_id' => 1,
             'insurance_provider_id' => 1,
+            'payments' => collect(),
         ];
 
         return $data[$key] ?? null;
@@ -66,6 +68,7 @@ it('maps personal quote to renewal data with required fields', function () {
 
 it('maps failed quote data with customer and policy info', function () {
     $quote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
+    $quote->shouldReceive('loadMissing')->with('payments')->andReturnSelf();
     $quote->shouldReceive('getAttribute')->andReturnUsing(function ($key) {
         $data = [
             'first_name' => 'Jane',
@@ -78,6 +81,7 @@ it('maps failed quote data with customer and policy info', function () {
             'premium' => 500.00,
             'source' => 'WEB',
             'notes' => null,
+            'payments' => collect(),
         ];
 
         return $data[$key] ?? null;

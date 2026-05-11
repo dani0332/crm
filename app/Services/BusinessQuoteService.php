@@ -82,6 +82,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
+                'bqr.previous_quote_policy_commission',
                 'bqr.gender',
                 'bqr.device',
                 'bqr.customer_id',

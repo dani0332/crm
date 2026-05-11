@@ -2434,6 +2434,7 @@ class CentralService extends BaseService
             'previous_policy_start_date' => 'previous_policy_start_date',
             'previous_quote_policy_number' => 'previous_quote_policy_number',
             'previous_quote_policy_premium' => 'previous_quote_policy_premium',
+            'previous_quote_policy_commission' => 'previous_quote_policy_commission',
             'previous_advisor_id' => 'previous_advisor_id',
         ];
 

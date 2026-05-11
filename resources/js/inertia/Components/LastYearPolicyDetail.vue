@@ -233,6 +233,8 @@ const initializeFormData = () => ({
     props?.quote?.previous_quote_policy_number || null,
   previous_quote_policy_premium:
     props?.quote?.previous_quote_policy_premium || null,
+  previous_quote_policy_commission:
+    props?.quote?.previous_quote_policy_commission || null,
   previous_advisor_id: props?.quote?.previous_advisor_id || null, // Keep original type - NO CONVERSION
 });
 
@@ -245,6 +247,8 @@ const debugFormValues = computed(() => ({
   form_start: policyForm.previous_policy_start_date,
   prop_expiry: props?.quote?.previous_policy_expiry_date,
   prop_start: props?.quote?.previous_policy_start_date,
+  commission_form: policyForm.previous_quote_policy_commission,
+  commission_prop: props?.quote?.previous_quote_policy_commission,
   advisor_id_form: policyForm.previous_advisor_id,
   advisor_id_prop: props?.quote?.previous_advisor_id,
   advisor_options_count: advisorOptions.value.length,
@@ -468,6 +472,13 @@ onMounted(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <div class="font-medium">Previous Policy Commission</div>
+                <div>
+                  {{ props?.quote?.previous_quote_policy_commission || 'N/A' }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <div class="font-medium">Previous Policy Start Date</div>
                 <div>
                   {{ dateFormat(props?.quote?.previous_policy_start_date) }}
@@ -557,6 +568,18 @@ onMounted(() => {
                 :rules="[validatePremium]"
                 :error="policyForm.errors.previous_quote_policy_premium"
                 placeholder="Enter premium amount"
+              />
+
+              <!-- Previous Policy Commission -->
+              <x-input
+                label="Previous Policy Commission"
+                v-model="policyForm.previous_quote_policy_commission"
+                type="number"
+                step="0.01"
+                min="0"
+                :rules="[validatePremium]"
+                :error="policyForm.errors.previous_quote_policy_commission"
+                placeholder="Enter commission amount"
               />
 
               <!-- Previous Policy Start Date -->
