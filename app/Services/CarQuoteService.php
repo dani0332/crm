@@ -9,7 +9,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -19,9 +18,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
@@ -35,7 +31,6 @@ use App\Models\Entity;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\RenewalQuoteProcess;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
@@ -1231,21 +1226,12 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
-        }
-
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
-            'quote_id' => $carQuote->id,
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
@@ -1268,6 +1254,10 @@ class CarQuoteService extends BaseService
                     'file_name' => $pdf['name'],
                 ];
             }
+        }
+
+        if ($latestUpdateRenewalQuoteProcess && $latestUpdateRenewalQuoteProcess->data) {
+            $carQuote->isTransitionableLead = $isTransitionableLead;
         }
 
         $carQuote->plans = $plans;
@@ -1345,8 +1335,8 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if (strpos($contents, 'Genesis') !== false) {
-                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false || strpos($contents, 'Phoenix') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Transition Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             } else {
                 LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             }

@@ -136,6 +136,7 @@ export const useGetShowPageRoute = (
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
     18: route('savings-quotes-show', uuid),
+    20: route('device-quotes-show', uuid),
     19: route('cyber-quotes-show', uuid),
   };
 
@@ -279,15 +280,26 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   return useDateFormat(previousDate, format).value;
 };
 
-export const setQueryStringFilters = (params, filters) => {
+export const setQueryStringFilters = (params, filters, options = {}) => {
+  const { integerFields } = options;
+
   for (const [key] of Object.entries(params)) {
     const val = params[key];
+    let baseKey = key;
+    if (key.includes('[') && key.includes(']')) {
+      baseKey = key.substring(0, key.indexOf('['));
+    }
+
     // Only convert to integer if it's a valid number, not an empty string,
-    // and converting it back to string matches original (preserves leading zeros, floats, etc)
-    params[key] =
-      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val)
-        ? parseInt(val, 10)
-        : val;
+    // and converting it back to string matches original (preserves leading zeros, floats, etc).
+    // If integerFields is set, only coerce keys whose base name is listed (e.g. teams[0] → teams).
+    const looksLikeInt =
+      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val);
+    const mayCoerceInt =
+      looksLikeInt &&
+      (integerFields === undefined ||
+        (Array.isArray(integerFields) && integerFields.includes(baseKey)));
+    params[key] = mayCoerceInt ? parseInt(val, 10) : val;
 
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];

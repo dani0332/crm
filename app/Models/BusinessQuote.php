@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Context;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -70,6 +71,21 @@ class BusinessQuote extends Model implements AuditableContract
         ];
     }
 
+    /**
+     * Tag audit entry with source when emirate of registration is updated from Entity profile or AML screen.
+     * Stored as JSON in the audits.tags column so structure is preserved.
+     */
+    public function generateTags(): array
+    {
+        $source = Context::get('emirate_update_source');
+
+        if ($source === null) {
+            return [];
+        }
+
+        return [json_encode(['source' => $source])];
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
@@ -107,6 +123,11 @@ class BusinessQuote extends Model implements AuditableContract
     public function businessTypeOfInsurance()
     {
         return $this->belongsTo(BusinessInsuranceType::class);
+    }
+
+    public function groupMedicalType()
+    {
+        return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
     }
 
     public function insuranceProvider()
@@ -353,5 +374,14 @@ class BusinessQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+    public function isPolicyBooked(): bool
+    {
+        return in_array($this->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelledReissued, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled]);
+    }
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
 }
