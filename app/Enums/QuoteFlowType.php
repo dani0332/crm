@@ -154,7 +154,7 @@ enum QuoteFlowType: int
             44 => QuoteFlowType::CYBER_AUTOMATION_FAILED,
             70 => QuoteFlowType::MOTOR_REVIVAL_OCB,
             71 => QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP,
-            50 => QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS,
+            72 => QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS,
             default => null,  // Return null if the value doesn't match any case
         };
     }
