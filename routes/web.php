@@ -1124,6 +1124,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 
-    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
-    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER);
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER)->name('trigger-policy-issuance');
 });
