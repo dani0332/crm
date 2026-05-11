@@ -62,6 +62,7 @@ class DatabaseSeeder extends Seeder
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
             HealthGroupNationalitySeeder::class,*/
+            HealthPlanRatesStatusVersionSeeder::class,
             InputCanonicalEnumMappingSeeder::class,
             CohortMappingSeeder::class,
             ClaimFormsGenericDocumentSeeder::class,
