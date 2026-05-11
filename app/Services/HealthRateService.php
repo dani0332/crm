@@ -94,6 +94,22 @@ class HealthRateService extends BaseService
             return $this->addRate($data, $planIds, $draftRatesSheet);
         }
 
+        // Get draft rate sheet against active plan
+        $draftRatesSheet = HealthRateControl::where('health_plan_id', $data['health_plan_id'])
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if ($draftRatesSheet) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'Draft version already exists for this plan.',
+                    ],
+                ], 422)
+            );
+        }
+
         // Else Active plan
         // Get active rate sheet against plan id
         $activeRates = HealthRate::where('health_plan_id', $data['health_plan_id'])
@@ -118,13 +134,10 @@ class HealthRateService extends BaseService
                     'version' => $data['version'],
                     'effective_from' => $data['effective_from'],
                     'effective_to' => $data['effective_to'],
-                    'total_records' => count($existingRates) + 1,
+                    'total_records' => count($existingRates ?? []) + 1,
                     'created_by' => $data['user_id'],
                 ]);
             } else {
-                // Check duplicate rates under same sheet
-                // $this->checkDuplicateRates($healthRateControl->id, $data, $plan);
-
                 // Update existing health rate control
                 $healthRateControl->total_records++;
                 $healthRateControl->effective_from = $data['effective_from'];
@@ -296,6 +309,22 @@ class HealthRateService extends BaseService
             $rate->save();
 
             return $rate;
+        }
+
+        // Check if draft version exists for this active plan
+        $draftRatesSheet = HealthRateControl::where('health_plan_id', $rate->health_plan_id)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if ($draftRatesSheet) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'Draft version already exists for this plan.',
+                    ],
+                ], 422)
+            );
         }
 
         // Else (active)
