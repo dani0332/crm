@@ -189,6 +189,7 @@ final class DicBookPolicyService
                 'payment_code' => $payment?->code,
                 'model_type' => quoteTypeCode::Travel,
                 'quote_id' => $quote->id,
+                'through_automation' => true,
             ];
 
             request()->merge($updateBookingRequest);
