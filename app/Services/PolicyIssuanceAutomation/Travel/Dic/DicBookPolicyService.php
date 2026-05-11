@@ -35,7 +35,7 @@ final class DicBookPolicyService
     {
         $response = [
             'status' => false,
-            'completed_step' => PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY,
+            'completed_step' => null,
             'error' => null,
             'message' => null,
         ];
@@ -119,6 +119,7 @@ final class DicBookPolicyService
                             'message' => $createSageProcessResponse['message'] ?? null,
                         ]);
                         $response['status'] = true;
+                        $response['completed_step'] = PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY;
                         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
                     }
                 } catch (Exception $e) {
