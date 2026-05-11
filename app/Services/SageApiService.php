@@ -3223,9 +3223,7 @@ class SageApiService
         $returnMessage['error'] = $sageErrorMessage;
         if ($this->sageHasProcessingConflict($sageErrorMessage)) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
-        }
-
-        if ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
+        } elseif ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
 
             LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
             $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($quote);
