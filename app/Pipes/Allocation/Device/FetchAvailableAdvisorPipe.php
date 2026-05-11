@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use Closure;
 use App\Strategies\Allocations\DeviceAllocation;
+use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {

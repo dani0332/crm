@@ -1584,7 +1584,7 @@ class SplitPaymentService
         $isDeviceQuote = $modelType == QuoteTypes::DEVICE->value;
         $isNgi = $insuranceProvider == InsuranceProvidersEnum::NGI;
 
-        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false') . " isAwni: ".($isAwni ? 'true' : 'false') . " isDeviceQuote: ".($isDeviceQuote ? 'true' : 'false') . " isNgi: ".($isNgi ? 'true' : 'false'));
+        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false').' isAwni: '.($isAwni ? 'true' : 'false').' isDeviceQuote: '.($isDeviceQuote ? 'true' : 'false').' isNgi: '.($isNgi ? 'true' : 'false'));
 
         // Only process if payment is not approved and:
         // - not from job, or

@@ -2,16 +2,16 @@
 
 namespace App\Services\EmailServices;
 
-use App\Services\BaseService;
 use App\Enums\ApplicationStorageEnums;
-use App\Models\ApplicationStorage;
-use App\Services\Logger\LoggerService;
-use App\Models\User;
-use App\Services\BirdService;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SendDeviceAutomatedFollowupJob;
+use App\Models\ApplicationStorage;
+use App\Models\User;
+use App\Services\BaseService;
+use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 
 class DeviceEmailService extends BaseService
 {
@@ -113,38 +113,39 @@ class DeviceEmailService extends BaseService
     public function sendZeroPlansEmail($lead)
     {
         try {
-       
-        $advisor = User::find($lead->advisor_id);
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
-        if (! $workflowUrl) {
-            return [
-                'success' => false,
-                'message' => 'Workflow URL not found',
-            ];
-        }
-        $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_ZERO_PLANS_EMAIL);
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
 
-        if ($response ) {
-            return [
-                'success' => true,
-                'message' => 'Zero plans email sent successfully',
-            ];
-        } else {
+            $advisor = User::find($lead->advisor_id);
+            $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
+            if (! $workflowUrl) {
+                return [
+                    'success' => false,
+                    'message' => 'Workflow URL not found',
+                ];
+            }
+            $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_ZERO_PLANS_EMAIL);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+
+            if ($response) {
+                return [
+                    'success' => true,
+                    'message' => 'Zero plans email sent successfully',
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Error sending zero plans email',
+                ];
+            }
+        } catch (\Throwable $th) {
+            LoggerService::error(self::class.': Error sending zero plans email', [
+                'error' => $th->getMessage(),
+                'quote_uuid' => $lead->uuid,
+            ]);
+
             return [
                 'success' => false,
-                'message' => 'Error sending zero plans email',
+                'message' => 'Something went wrong while sending zero plans email for quote ',
             ];
         }
-    } catch (\Throwable $th) {
-        LoggerService::error(self::class.': Error sending zero plans email',  [
-            'error' => $th->getMessage(),
-            'quote_uuid' => $lead->uuid,
-        ]);
-        return [
-            'success' => false,
-            'message' => 'Something went wrong while sending zero plans email for quote ',
-        ];
-    }
     }
 }

@@ -5,6 +5,7 @@
  */
 
 use App\Services\Quotes\DeviceQuoteService;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Mockery;
 use Tests\Helpers\DeviceQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
@@ -14,7 +15,7 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
     TestDataSeeder::seedDeviceQuotePermissions();
-    $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    $this->withoutMiddleware(VerifyCsrfToken::class);
     $this->actingAs($this->user);
 });
 
@@ -180,5 +181,3 @@ test('validates imei must be exactly 15 digits when creating device quote', func
     $response->assertSessionHasErrors(['imei']);
     $response->assertStatus(302);
 });
-
-
