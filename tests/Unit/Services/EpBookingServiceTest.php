@@ -11,11 +11,6 @@ use Tests\Helpers\TestSchemaCreator;
 
 class EpBookingServiceTestDouble extends EpBookingService
 {
-    public function __construct()
-    {
-        // Tests do not need the booking context loaded by the production constructor.
-    }
-
     public function withSagePostfix(mixed $documentNumber): mixed
     {
         return self::withSageDocumentNumberPostfix($documentNumber);

@@ -32,9 +32,6 @@ class EpBookingService extends BaseService
 {
     use ChecksAzureFileExistence, GenericQueriesAllLobs;
 
-    private const CLASS_NAME = 'EpBookingService:';
-
-    protected string $className = self::CLASS_NAME;
     protected string $logPrefix = '';
     protected array $logExtra = [];
     public int $providerId = 0;
@@ -86,7 +83,7 @@ class EpBookingService extends BaseService
         $documentTypes = DocumentType::whereIn('code', $watermarkableDocTypeCodes)
             ->where(['quote_type_id' => $this->context->quoteTypeId, 'is_active' => 1])->get();
 
-        LoggerService::info("{$this->className} Starting processWatermarkDocuments", extra: [
+        LoggerService::info(self::class.' Starting processWatermarkDocuments', extra: [
             'documentTypeCodes' => $documentTypes->pluck('code')->toArray(),
             'documentItems' => $documents->select('is_watermarked', 'document_type_code')->toArray(),
         ]);
@@ -137,7 +134,7 @@ class EpBookingService extends BaseService
             }
         }
 
-        LoggerService::info("{$this->className} Completed processWatermarkDocuments: ", extra: [...$extraLog, 'watermarked_status' => $watermarkedStatus]);
+        LoggerService::info(self::class.' Completed processWatermarkDocuments: ', extra: [...$extraLog, 'watermarked_status' => $watermarkedStatus]);
 
         return $watermarkedDocuments;
     }
@@ -194,7 +191,7 @@ class EpBookingService extends BaseService
 
         } catch (\Exception $e) {
             if ($this->isTransientFileExistenceFailure($e)) {
-                LoggerService::warning("{$this->className} Transient file existence failure: {$e->getMessage()}", extra: [
+                LoggerService::warning(self::class." Transient file existence failure: {$e->getMessage()}", extra: [
                     'exception_class' => $e::class,
                     'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
                     'previous_exception_message' => $e->getPrevious()?->getMessage(),
@@ -388,7 +385,7 @@ class EpBookingService extends BaseService
         try {
             return $this->checkAzureFileExistsWithRetry($path);
         } catch (Throwable $e) {
-            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage(), extra: [
+            LoggerService::error(self::class." Error checking file existence: {$path}. Error: ".$e->getMessage(), extra: [
                 'exception_class' => $e::class,
                 'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
                 'previous_exception_message' => $e->getPrevious()?->getMessage(),
@@ -436,7 +433,7 @@ class EpBookingService extends BaseService
     {
         $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
         if (! $insuranceProvider) {
-            LoggerService::warning(self::CLASS_NAME." - Insurance provider not found: {$quote->code}");
+            LoggerService::warning(self::class." - Insurance provider not found: {$quote->code}");
 
             return false;
         }
@@ -451,7 +448,7 @@ class EpBookingService extends BaseService
         ])->latest()->first();
 
         if (! $insurerRequestResponse) {
-            LoggerService::warning(self::CLASS_NAME.' - Insurer request response not found for Sage document update', extra: [
+            LoggerService::warning(self::class.' - Insurer request response not found for Sage document update', extra: [
                 'quote_uuid' => $quoteUuid,
                 'quote_code' => $quote->code,
                 'ep_code' => $quote->code,
@@ -463,10 +460,12 @@ class EpBookingService extends BaseService
 
         $response = json_decode((string) $insurerRequestResponse->response, true);
         if (! is_array($response)) {
-            LoggerService::warning(self::CLASS_NAME.' - Unable to decode insurer request response for Sage document update', extra: [
+            LoggerService::warning(self::class.' - Unable to decode insurer request response for Sage document update', extra: [
                 'ep_code' => $quote->code,
                 'quote_uuid' => $quoteUuid,
                 'insurer_request_response_id' => $insurerRequestResponse->id,
+                'json_error_code' => json_last_error(),
+                'json_error_message' => json_last_error_msg(),
             ]);
 
             return false;
@@ -482,7 +481,7 @@ class EpBookingService extends BaseService
                 $isResponseUpdated = true;
                 $response['premium_inv_no'] = $updatedPremiumInvoiceNo;
 
-                LoggerService::info(self::CLASS_NAME.' - Updated Tax Invoice number in insurer request response for EP Sage booking', extra: [
+                LoggerService::info(self::class.' - Updated Tax Invoice number in insurer request response for EP Sage booking', extra: [
                     'quote_uuid' => $quoteUuid,
                     'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
@@ -500,7 +499,7 @@ class EpBookingService extends BaseService
                 $isResponseUpdated = true;
                 $response['commision_inv_no'] = $updatedCommissionInvoiceNo;
 
-                LoggerService::info(self::CLASS_NAME.' - Updated Commission Invoice number in insurer request response for EP Sage booking', extra: [
+                LoggerService::info(self::class.' - Updated Commission Invoice number in insurer request response for EP Sage booking', extra: [
                     'quote_uuid' => $quoteUuid,
                     'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
@@ -515,19 +514,13 @@ class EpBookingService extends BaseService
                 'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
             ]);
 
-            LoggerService::info(self::CLASS_NAME.' - Updated insurer request response for EP Sage booking', extra: [
+            LoggerService::info(self::class.' - Updated insurer request response for EP Sage booking', extra: [
                 'quote_uuid' => $quoteUuid,
                 'ep_code' => $quote->code,
                 'provider_id' => $insuranceProvider->id,
             ]);
 
             return true;
-        } else {
-            LoggerService::info(self::CLASS_NAME.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
-                'quote_uuid' => $quoteUuid,
-                'ep_code' => $quote->code,
-                'provider_id' => $insuranceProvider->id,
-            ]);
         }
 
         return false;
