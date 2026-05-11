@@ -75,7 +75,7 @@ enum TeamsEnum: string
             self::CYBER_INSURANCE => [
                 QuoteTypes::CYBER,
             ],
-            default => [$this],
+            default => throw new \InvalidArgumentException(\sprintf('Unknown or unmapped LOB / team: %s', $this->value)),
         };
     }
 }

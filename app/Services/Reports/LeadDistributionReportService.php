@@ -19,7 +19,6 @@ use App\Enums\TeamsEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
-use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -223,9 +222,11 @@ class LeadDistributionReportService extends BaseService
         /** We're doing this because $lob has ProductName which can directly be plugged-in as QuoteType but in some cases like DEVICE,
          *  we need to find its quoteType through "Product & QuoteType" mapping (TeamsEnum::tryFrom($lob)->getQuoteTypes)
          */
-        if($quoteType !== null){
+        if ($quoteType !== null) {
             return $quoteType;
-        }else{
+        } else {
+            /** It is expected to map product name to quote types if product names can't be directly plug into the quoteType.
+             * So in case of missing mapping getQuoteTypes would throw an exception */
             return TeamsEnum::tryFrom($lob)->getQuoteTypes()[0];
         }
     }
