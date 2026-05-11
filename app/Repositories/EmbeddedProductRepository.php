@@ -1172,6 +1172,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'doc_mime_type' => 'application/pdf',
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_type_id' => $documentType->id,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => null,
             ];
