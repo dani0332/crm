@@ -175,7 +175,6 @@ class SendUpdateLogRepository extends BaseRepository
             if (! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER])) {
                 $status = SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS;
                 info('Send Update uuid -> '.$sendUpdate->uuid.' - Status changing to -> '.$status);
-                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS);
             }
 
             $result = $sendUpdate->update([
@@ -505,13 +504,10 @@ class SendUpdateLogRepository extends BaseRepository
         LoggerService::info('fn:fetchCancelSendUpdate - SendUpdateLogRepository');
 
         try {
-            $oldStatus = $sendUpdate->status;
-
             $sendUpdate->update([
                 'cancel_reason' => $cancelReason,
                 'status' => SendUpdateLogStatusEnum::REQUEST_CANCELLED,
             ]);
-            app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $oldStatus, SendUpdateLogStatusEnum::REQUEST_CANCELLED);
 
             LoggerService::info('SendUpdateLog cancelled successfully');
 

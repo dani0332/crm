@@ -103,4 +103,9 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->morphMany(EpLog::class, 'loggable');
     }
+
+    public function sendUpdateStatusLogs(): HasMany
+    {
+        return $this->hasMany(SendUpdateStatusLog::class, 'send_update_log_id');
+    }
 }

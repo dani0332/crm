@@ -175,7 +175,6 @@ class PersonalQuoteRepository extends BaseRepository
                             if ($checkTransactionApprovedInSUStatusLogs) {
                                 app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
                             } else {
-                                app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                                 $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
                                 LoggerService::info('Send Update status updated to UPDATE_ISSUED');
                             }
