@@ -263,7 +263,6 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
-            'SP' => self::DEVICE,
             'DEV' => self::DEVICE,
             'CYB' => self::CYBER,
         ];
