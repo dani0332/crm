@@ -21,7 +21,13 @@ class HealthPlanStatusValidRule implements ValidationRule
             return;
         }
 
-        if ($healthPlan->status !== HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if (! in_array(
+            strtolower($healthPlan->status),
+            [
+                strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value),
+                strtolower(HealthPlanRateSheetStatusEnum::SCHEDULED->value),
+            ]
+        )) {
             $fail($this->message);
         }
     }

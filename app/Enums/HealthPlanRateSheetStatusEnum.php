@@ -8,4 +8,5 @@ enum HealthPlanRateSheetStatusEnum: string
     case PUBLISHED = 'published';
     case ARCHIVED = 'archived';
     case ACTIVE = 'active';
+    case SCHEDULED = 'scheduled';
 }

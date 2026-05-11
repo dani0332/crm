@@ -16,7 +16,7 @@ class DeleteHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthRateStatusValidRule('Only draft rates can be deleted')],
+            'id' => ['bail', 'integer', new HealthRateStatusValidRule('Only draft or scheduled rates can be deleted')],
         ];
     }
 
