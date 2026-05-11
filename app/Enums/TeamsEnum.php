@@ -11,7 +11,7 @@ enum TeamsEnum: string
     case CYCLE = 'Cycle';
     case HEALTH = 'Health';
     case LIFE = 'Life';
-    case CORPLINE = 'Corpline';
+    case CORPLINE = 'CorpLine';
     case GROUP_MEDICAL = 'Group Medical';
     case PET = 'Pet';
     case YACHT = 'Yacht';
@@ -75,8 +75,7 @@ enum TeamsEnum: string
             self::CYBER_INSURANCE => [
                 QuoteTypes::CYBER,
             ],
-            default => [$this],
+            default => throw new \InvalidArgumentException(\sprintf('Unknown or unmapped LOB / team: %s', $this->value)),
         };
     }
 }
-

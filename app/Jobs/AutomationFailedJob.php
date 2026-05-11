@@ -9,8 +9,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -174,7 +174,6 @@ class AutomationFailedJob implements ShouldQueue
         }
     }
 
-
     private function addLobViseDataForMail($quoteType, $quote, $cc)
     {
         switch ($quoteType) {
@@ -182,7 +181,10 @@ class AutomationFailedJob implements ShouldQueue
                 return app(DeviceQuoteService::class)
                     ->determineDeviceNgiRecipient(
                         $quote,
-                        $this->processInvolved
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
                     );
             case QuoteTypes::CYBER->value:
                 return app(CyberQuoteService::class)

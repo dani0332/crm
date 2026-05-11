@@ -17,7 +17,6 @@ use Illuminate\Http\Client\Response;
 
 class NgiDocumentHandler
 {
-    private const ALLOWED_DOCUMENT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
     private const ERROR_MESSAGE_DOCUMENT_FETCH_FAILED = 'Document fetch failed';
 
     public function __construct(
@@ -102,41 +101,6 @@ class NgiDocumentHandler
     }
 
     /**
-     * Fetch document content from Azure storage
-     */
-    public function fetchDocumentContent(string $relativePath): array
-    {
-        $filePath = $this->buildAzureDocumentPath($relativePath);
-        $fileContent = @file_get_contents($filePath);
-
-        if ($fileContent === false || $fileContent === '') {
-            $message = 'Invalid or empty document content';
-            LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
-                'file_path' => $filePath,
-                'relative_path' => $relativePath,
-                'error' => $message,
-            ]);
-
-            return ['status' => false, 'message' => $message];
-        }
-
-        $mimeType = $this->detectMimeType($fileContent);
-        if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
-            $message = 'Unsupported document type: '.($mimeType ?? 'unknown');
-            LoggerService::error('Invalid document mime type', extra: [
-                'file_path' => $filePath,
-                'mime_type' => $mimeType,
-                'allowed_types' => self::ALLOWED_DOCUMENT_MIME_TYPES,
-                'error' => $message,
-            ]);
-
-            return ['status' => false, 'message' => $message];
-        }
-
-        return ['status' => true, 'content' => $fileContent];
-    }
-
-    /**
      * Build Azure document path from relative path
      */
     private function buildAzureDocumentPath(string $relativePath): string
@@ -195,21 +159,7 @@ class NgiDocumentHandler
         $data['file_name'] = $originalName;
         $data['document_type_code'] = $documentCode;
 
-        $quoteDocumentService = new QuoteDocumentService;
-
-        return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
-    }
-
-    /**
-     * Get document URLs mapping from GetPolicyDocuments response
-     */
-    public function getDocumentUrlsFromResponse(object $policyDocumentsResponse): array
-    {
-        return [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $policyDocumentsResponse->policy_certificate_url ?? null,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $policyDocumentsResponse->premium_inv_doc_url ?? null,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $policyDocumentsResponse->commision_inv_doc_url ?? null,
-        ];
+        return app(QuoteDocumentService::class)->uploadQuoteDocument($documentContent, $data, $quote);
     }
 
     /**
@@ -221,12 +171,8 @@ class NgiDocumentHandler
 
         $documentsApiResponseData = $documentsApiResponse['data'] ?? null;
 
-        // Document URLs stored by NgiQuoteUpdaterService during GetPolicyDocuments API call
-        $documentUrls = [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $documentsApiResponseData?->policy_certificate_url,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $documentsApiResponseData?->premium_inv_doc_url,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $documentsApiResponseData?->commision_inv_doc_url,
-        ];
+        // NGI exposes policy_certificate_url only (no separate policy schedule document).
+        $documentUrls = $this->buildNgiPolicyDocumentUrlMap($documentsApiResponseData);
 
         // Validate document URLs exist
         $validationService = app(NgiValidationService::class);
@@ -307,15 +253,17 @@ class NgiDocumentHandler
                 $process
             );
 
-            if ($quoteDocument?->id) {
-                $downloadedDocuments->push([
-                    'code' => $docCode,
-                    'document_id' => $quoteDocument->id,
-                    'file_name' => $fileName,
-                ]);
-            } else {
+            if (! $quoteDocument?->id) {
                 $failedDocuments[] = $docCode;
+
+                continue;
             }
+
+            $downloadedDocuments->push([
+                'code' => $docCode,
+                'document_id' => $quoteDocument->id,
+                'file_name' => $fileName,
+            ]);
         }
 
         // Check if all 3 required documents were downloaded
@@ -345,10 +293,25 @@ class NgiDocumentHandler
         $prefix = $policyNumber ?? 'policy';
 
         return match ($docCode) {
+            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE => $prefix.'_policy_certificate.pdf',
             DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $prefix.'_policy_schedule.pdf',
             DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $prefix.'_tax_invoice.pdf',
             DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $prefix.'_commission_invoice.pdf',
             default => $prefix.'_document.pdf',
         };
+    }
+
+    /**
+     * Map NGI GetPolicyDocuments fields to our issuing document type codes (one provider URL per logical doc).
+     *
+     * @return array<string, string|null>
+     */
+    private function buildNgiPolicyDocumentUrlMap(?object $policyDocumentsResult): array
+    {
+        return [
+            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE => $policyDocumentsResult?->policy_certificate_url,
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $policyDocumentsResult?->premium_inv_doc_url,
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $policyDocumentsResult?->commision_inv_doc_url,
+        ];
     }
 }

@@ -39,7 +39,7 @@ final class QuoteTypeId extends Enum
      */
     public static function quoteTypesUsingWatermarkedPolicySchedule(): array
     {
-        return [self::Cyber, self::Device];
+        return [self::Cyber];
     }
 
     /**
@@ -48,7 +48,7 @@ final class QuoteTypeId extends Enum
      */
     public static function quoteTypesUsingWatermarkedPolicyCertificate(): array
     {
-        return []; // no LOBs using watermarked policy certificate water marked doc url yet
+        return [self::Device]; // no LOBs using watermarked policy certificate water marked doc url yet
     }
 
     public static function getOptions()
