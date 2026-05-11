@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Config;
 
 class SendUpdateStatusLog extends Model
 {
@@ -39,6 +40,20 @@ class SendUpdateStatusLog extends Model
         }
 
         return ucwords(str_replace('_', ' ', strtolower($value)));
+    }
+
+    public function getCreatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+
+    public function getUpdatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function sendUpdateLog(): BelongsTo
