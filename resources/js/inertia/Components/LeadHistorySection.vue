@@ -45,7 +45,7 @@ const defaultHeaders = [
   { text: 'Modified By', value: 'created_by.email' },
   { text: 'Lead Status From', value: 'previous_quote_status.text' },
   { text: 'Lead Status To', value: 'current_quote_status.text' },
-  { text: 'Action Performed', value: 'status_change_action' },
+  { text: 'Source of Action', value: 'status_change_source' },
 ];
 
 const engineeringHeaders = [

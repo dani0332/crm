@@ -10,7 +10,6 @@ use App\Models\QuoteStatusLog;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 
 class QuoteStatusLogService extends BaseService
 {
@@ -19,7 +18,7 @@ class QuoteStatusLogService extends BaseService
         Model $quote,
         ?int $oldQuoteStatus = null,
     ): QuoteStatusLog {
-        $log = QuoteStatusLog::create([
+        return QuoteStatusLog::create([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->getKey(),
             'current_quote_status_id' => $quote->quote_status_id,
@@ -28,21 +27,6 @@ class QuoteStatusLogService extends BaseService
             'notes' => $this->buildStatusChangeNotes(),
             'created_by' => Auth::id(),
         ]);
-
-        $this->forgetStatusChangeContext();
-
-        return $log;
-    }
-
-    /**
-     * One-shot semantics: status_change_action and send_update_log_id are consumed
-     * by the log entry and must not leak into subsequent status changes within the
-     * same request lifecycle.
-     */
-    protected function forgetStatusChangeContext(): void
-    {
-        Context::forget('status_change_action');
-        Context::forget('send_update_log_id');
     }
 
     /**

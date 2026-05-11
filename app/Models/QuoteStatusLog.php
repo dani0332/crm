@@ -26,7 +26,6 @@ class QuoteStatusLog extends Model
         'created_by',
         'personal_quote_id',
         'status_change_source',
-        'status_change_action',
         'send_update_log_id',
     ];
 
