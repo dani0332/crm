@@ -11,6 +11,11 @@ use Tests\Helpers\TestSchemaCreator;
 
 class EpBookingServiceTestDouble extends EpBookingService
 {
+    public function __construct()
+    {
+        // Tests set only the service state they need and intentionally bypass the protected parent constructor.
+    }
+
     public function withSagePostfix(mixed $documentNumber): mixed
     {
         return self::withSageDocumentNumberPostfix($documentNumber);
