@@ -93,7 +93,13 @@ class HealthPlanService extends BaseService
         }
 
         // Check already has a draft version
-        $existingDraft = HealthPlan::where('parent_id', $id)
+        // If active plan, check against parent id
+        // If archived plan, check against parent id
+        $existingDraft = HealthPlan::where(
+            'parent_id',
+            $currentPlan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $id : $currentPlan->parent_id
+        )
+
             ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
             ->first();
 

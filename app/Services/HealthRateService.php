@@ -118,7 +118,7 @@ class HealthRateService extends BaseService
                     'version' => $data['version'],
                     'effective_from' => $data['effective_from'],
                     'effective_to' => $data['effective_to'],
-                    'total_records' => 1,
+                    'total_records' => count($existingRates) + 1,
                     'created_by' => $data['user_id'],
                 ]);
             } else {
