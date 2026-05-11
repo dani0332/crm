@@ -96,4 +96,7 @@ test('status change action enum has stable values and labels', function (): void
 
     expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->value)->toBe('bridger_aml_member_screening_failed');
     expect(StatusChangeActionEnum::BridgerAmlMemberScreeningFailed->label())->toBe('AML screening failed (Bridger, potential matches or failed checks)');
+
+    expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->value)->toBe('personal_quote_lead_status_update');
+    expect(StatusChangeActionEnum::PersonalQuoteLeadStatusUpdate->label())->toBe('Lead status updated (personal quote API)');
 });
