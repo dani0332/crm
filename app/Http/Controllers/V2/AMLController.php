@@ -80,7 +80,7 @@ class AMLController extends Controller
 
     public function index(AMLRequest $request, AMLQueryService $amlQueryService)
     {
-        $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
+        $quoteTypes = QuoteTypeRepository::getQuoteTypesByLob();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = $amlQueryService->getAMLQuotes($request);
 

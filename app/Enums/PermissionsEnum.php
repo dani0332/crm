@@ -228,6 +228,9 @@ final class PermissionsEnum extends Enum
     public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
     public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
     public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
+    public const LIFE_REVIVAL_QUOTES_LIST = 'life-revival-quotes-list';
+    public const LIFE_REVIVAL_QUOTES_EDIT = 'life-revival-quotes-edit';
+    public const LIFE_REVIVAL_QUOTES_SHOW = 'life-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
