@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Console;
 
+use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -237,6 +239,44 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
                 $event->mutex ?? null,
                 'Task should have overlap prevention configured'
             );
+        }
+    }
+
+    /**
+     * Ensures policy-issuance-automation:run is skipped on UAT: Kernel uses scheduleWithEnvironment()
+     * and for 'uat' calls $event->skip(fn () => true). We use a mock Event and assert skip() is called.
+     */
+    public function test_policy_issuance_command_skips_on_uat(): void
+    {
+        $originalEnv = app()['env'];
+        $originalConfigEnv = Config::get('app.env');
+
+        app()['env'] = 'uat';
+        Config::set('app.env', 'uat');
+
+        try {
+            $mockEvent = Mockery::mock(Event::class)->makePartial();
+            $mockEvent->shouldReceive('skip')
+                ->once()
+                ->with(Mockery::on(static fn ($arg): bool => $arg instanceof \Closure))
+                ->andReturnSelf();
+
+            $schedule = Mockery::mock(app(Schedule::class))->makePartial();
+            $schedule->shouldReceive('command')
+                ->with('policy-issuance-automation:run')
+                ->andReturn($mockEvent);
+
+            $kernel = new class(app(), app('events')) extends Kernel
+            {
+                public function schedule($schedule): void
+                {
+                    parent::schedule($schedule);
+                }
+            };
+            $kernel->schedule($schedule);
+        } finally {
+            app()['env'] = $originalEnv;
+            Config::set('app.env', $originalConfigEnv);
         }
     }
 }

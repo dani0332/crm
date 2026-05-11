@@ -34,7 +34,12 @@ class CallBackNotification extends Command
      */
     protected $description = 'InstantAlfred CallBack and Whatsapp Notification';
 
-    protected $allowedQuoteTypeIds = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike];
+    protected $allowedQuoteTypeIds = [
+        QuoteTypeId::Car,
+        QuoteTypeId::Travel,
+        QuoteTypeId::Bike,
+        QuoteTypeId::Device,
+    ];
 
     /**
      * Create a new command instance.
@@ -117,6 +122,7 @@ class CallBackNotification extends Command
             quoteTypeCode::Car,
             quoteTypeCode::Travel,
             quoteTypeCode::Bike,
+            quoteTypeCode::Device,
         ]);
     }
 
