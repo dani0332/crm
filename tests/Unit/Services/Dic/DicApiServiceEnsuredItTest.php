@@ -258,32 +258,14 @@ it('extractTaxInvoiceUrlFromGetPolicyDocResponse returns URL from additionalDeta
         ->and($service->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload))->toBe('28925');
 });
 
-it('extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse reads document_number snake_case', function () {
-    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
-
-    $payload = [
-        'additionalDetails' => [
-            'documents' => [
-                [
-                    'url' => 'https://example.test/tax.pdf',
-                    'documentName' => 'TAX_INVOICE',
-                    'document_number' => '28910',
-                ],
-            ],
-        ],
-    ];
-
-    expect($service->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload))->toBe('28910');
-});
-
-it('extractTaxInvoiceUrlFromGetPolicyDocResponse matches document_name and case-insensitive name', function () {
+it('extractTaxInvoiceUrlFromGetPolicyDocResponse matches camelCase payload and case-insensitive document name', function () {
     $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
 
     $taxUrl = 'https://example.test/tax.pdf';
     $payload = [
-        'additional_details' => [
+        'additionalDetails' => [
             'documents' => [
-                ['document_name' => 'tax_invoice', 'Url' => $taxUrl],
+                ['documentName' => 'tax_invoice', 'url' => $taxUrl],
             ],
         ],
     ];
@@ -309,12 +291,6 @@ it('extractBrokerInvoiceNumberFromResponse returns invoiceNumber from GetBrokerI
     ];
 
     expect($service->extractBrokerInvoiceNumberFromResponse($payload))->toBe('INV-AE-2026-05-0001289');
-});
-
-it('extractBrokerInvoiceNumberFromResponse reads InvoiceNumber PascalCase', function () {
-    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
-
-    expect($service->extractBrokerInvoiceNumberFromResponse(['InvoiceNumber' => '  INV-1  ']))->toBe('INV-1');
 });
 
 it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function () {

@@ -281,22 +281,20 @@ class DicApiService
      */
     public function extractBrokerInvoiceNumberFromResponse(mixed $responseData): ?string
     {
-        if (! is_array($responseData)) {
-            return null;
+        $normalized = null;
+        if (is_array($responseData)) {
+            $raw = $responseData['invoiceNumber'] ?? null;
+            if (is_string($raw)) {
+                $trimmed = trim($raw);
+                if ($trimmed !== '') {
+                    $normalized = $trimmed;
+                }
+            } elseif (is_int($raw)) {
+                $normalized = (string) $raw;
+            }
         }
 
-        $raw = $responseData['invoiceNumber'] ?? $responseData['InvoiceNumber'] ?? null;
-        if (is_string($raw)) {
-            $trimmed = trim($raw);
-
-            return $trimmed !== '' ? $trimmed : null;
-        }
-
-        if (is_int($raw)) {
-            return (string) $raw;
-        }
-
-        return null;
+        return $normalized;
     }
 
     /**
@@ -330,7 +328,7 @@ class DicApiService
             return null;
         }
 
-        $num = $document['documentNumber'] ?? $document['document_number'] ?? null;
+        $num = $document['documentNumber'] ?? null;
         if (is_string($num)) {
             $trimmed = trim($num);
 
@@ -353,7 +351,7 @@ class DicApiService
             return null;
         }
 
-        $additionalDetails = $responseData['additionalDetails'] ?? $responseData['additional_details'] ?? null;
+        $additionalDetails = $responseData['additionalDetails'] ?? null;
         if (! is_array($additionalDetails)) {
             return null;
         }
@@ -368,7 +366,7 @@ class DicApiService
                 continue;
             }
 
-            $documentName = $document['documentName'] ?? $document['document_name'] ?? null;
+            $documentName = $document['documentName'] ?? null;
             if (! is_string($documentName) || strtoupper(trim($documentName)) !== 'TAX_INVOICE') {
                 continue;
             }

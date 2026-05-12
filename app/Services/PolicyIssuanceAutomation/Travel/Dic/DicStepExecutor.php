@@ -93,6 +93,33 @@ class DicStepExecutor
     }
 
     /**
+     * Validation failure before document download (missing schedule or tax invoice URL in API payload).
+     *
+     * @return array<string, mixed>
+     */
+    private function buildGetPolicyDocStepValidationFailureResponse(
+        TravelQuote $quote,
+        bool $applyQuoteFailure,
+        string $message,
+    ): array {
+        if ($applyQuoteFailure) {
+            app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                $quote,
+                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            );
+        }
+
+        $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
+
+        return $this->withTravelDicFailureMeta(
+            $built,
+            PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+        );
+    }
+
+    /**
      * @param  array<string, mixed>  $result
      * @return array<string, mixed>
      */
@@ -101,51 +128,37 @@ class DicStepExecutor
         bool $applyQuoteFailure,
         array $result,
     ): array {
-        $documentUrl = $this->apiService->extractDocumentUrlFromResponse($result['data'] ?? null);
+        $payload = $result['data'] ?? null;
+        $documentUrl = $this->apiService->extractDocumentUrlFromResponse($payload);
+        $taxInvoiceUrl = null;
+        $validationFailure = null;
+
         if (! $documentUrl) {
-            $message = 'Document URL missing in GetPolicyDoc response (configure extractDocumentUrlFromResponse)';
-            if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+            $validationFailure = $this->buildGetPolicyDocStepValidationFailureResponse(
+                $quote,
+                $applyQuoteFailure,
+                'Document URL missing in GetPolicyDoc response (configure extractDocumentUrlFromResponse)',
+            );
+        } else {
+            $taxInvoiceUrl = $this->apiService->extractTaxInvoiceUrlFromGetPolicyDocResponse($payload);
+            if (! $taxInvoiceUrl) {
+                $validationFailure = $this->buildGetPolicyDocStepValidationFailureResponse(
                     $quote,
-                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                    $applyQuoteFailure,
+                    'Tax Invoice URL missing in GetPolicyDoc response (expected additionalDetails.documents with documentName TAX_INVOICE)',
                 );
             }
-
-            $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
-
-            return $this->withTravelDicFailureMeta(
-                $built,
-                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-            );
         }
 
-        $taxInvoiceUrl = $this->apiService->extractTaxInvoiceUrlFromGetPolicyDocResponse($result['data'] ?? null);
-        if (! $taxInvoiceUrl) {
-            $message = 'Tax Invoice URL missing in GetPolicyDoc response (expected additionalDetails.documents with documentName TAX_INVOICE)';
-            if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
-                    $quote,
-                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-                );
-            }
-
-            $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
-
-            return $this->withTravelDicFailureMeta(
-                $built,
-                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-            );
+        if ($validationFailure !== null) {
+            return $validationFailure;
         }
 
         try {
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule DIC');
             $this->documentService->attachFromUrl($quote, $taxInvoiceUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Tax Invoice DIC');
 
-            $taxInvoiceDocumentNumber = $this->apiService->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($result['data'] ?? null);
+            $taxInvoiceDocumentNumber = $this->apiService->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload);
             if (is_string($taxInvoiceDocumentNumber) && $taxInvoiceDocumentNumber !== '') {
                 $payment = $quote->payments()->mainLeadPayment()->first();
                 if ($payment !== null) {
