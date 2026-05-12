@@ -19,8 +19,6 @@ class CreateHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'effective_from' => ['required', 'date'],
-            'effective_to' => ['required', 'date', 'after:effective_from'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
             'emirate_type' => ['bail', 'required', new Enum(EmirateTypeEnum::class)],
