@@ -144,7 +144,9 @@ class AuditRepository extends BaseRepository
         }
         $results = $query->orderBy('created_at', 'desc')->get();
 
-        $results->transform(function ($audit) use ($quoteObject, $quoteType) {
+        $userHiddenAttributeKeys = (new User)->getHidden();
+
+        $results->transform(function ($audit) use ($quoteObject, $quoteType, $userHiddenAttributeKeys) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -217,7 +219,7 @@ class AuditRepository extends BaseRepository
             $transformedOld = $extractProfiles($transformedOld);
 
             // Do not return sensitive fields in the API payload (omit keys entirely).
-            foreach ((new User)->getHidden() as $key) {
+            foreach ($userHiddenAttributeKeys as $key) {
                 unset($transformedNew[$key], $transformedOld[$key]);
             }
 
