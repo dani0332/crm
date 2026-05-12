@@ -138,8 +138,8 @@ class HealthRateService extends BaseService
             } else {
                 // Update existing health rate control
                 $healthRateControl->total_records++;
-                $healthRateControl->effective_from = $data['effective_from'];
-                $healthRateControl->effective_to = $data['effective_to'];
+                // $healthRateControl->effective_from = $data['effective_from'];
+                // $healthRateControl->effective_to = $data['effective_to'];
                 $healthRateControl->health_plan_id = $data['health_plan_id'];
                 $healthRateControl->save();
 
@@ -359,6 +359,7 @@ class HealthRateService extends BaseService
             $rate = HealthRate::select('health_rate_control_id')->find($id);
             $healthRateControlId = $rate->health_rate_control_id;
 
+            // Delete health rate
             HealthRate::destroy($id);
 
             // After deleteing check if there is any rate exists with the same health rate control id
