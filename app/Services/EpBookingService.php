@@ -482,7 +482,7 @@ class EpBookingService extends BaseService
                 $isResponseUpdated = true;
                 $response['premium_inv_no'] = $updatedPremiumInvoiceNo;
 
-                LoggerService::info(self::class.' - Updated Tax Invoice number in insurer request response for EP Sage booking', extra: [
+                LoggerService::info(self::class.' - Prepared Tax Invoice number update in insurer request response for EP Sage booking', extra: [
                     'quote_uuid' => $quoteUuid,
                     'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
@@ -500,7 +500,7 @@ class EpBookingService extends BaseService
                 $isResponseUpdated = true;
                 $response['commision_inv_no'] = $updatedCommissionInvoiceNo;
 
-                LoggerService::info(self::class.' - Updated Commission Invoice number in insurer request response for EP Sage booking', extra: [
+                LoggerService::info(self::class.' - Prepared Commission Invoice number update in insurer request response for EP Sage booking', extra: [
                     'quote_uuid' => $quoteUuid,
                     'ep_code' => $quote->code,
                     'provider_id' => $insuranceProvider->id,
@@ -511,13 +511,30 @@ class EpBookingService extends BaseService
         }
 
         if ($isResponseUpdated) {
-            DB::transaction(function () use ($insurerRequestResponse, $quote, $response) {
-                $insurerRequestResponse->update([
-                    'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
-                ]);
+            try {
+                $encodedResponse = json_encode($response, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-                $quote->update(['sage_invoice_no_update_at' => now()]);
-            });
+                DB::transaction(function () use ($insurerRequestResponse, $quote, $encodedResponse) {
+                    $insurerRequestResponseUpdated = $insurerRequestResponse->update([
+                        'response' => $encodedResponse,
+                    ]);
+
+                    $quoteUpdated = $quote->update(['sage_invoice_no_update_at' => now()]);
+
+                    if (! $insurerRequestResponseUpdated || ! $quoteUpdated) {
+                        throw new RuntimeException('Failed to save updated EP Sage booking invoice number.');
+                    }
+                });
+            } catch (Throwable $exception) {
+                LoggerService::warning(self::class.' - Failed to update insurer request response for EP Sage booking', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $insuranceProvider->id,
+                    'error' => $exception->getMessage(),
+                ], exception: $exception);
+
+                return false;
+            }
 
             LoggerService::info(self::class.' - Updated insurer request response for EP Sage booking', extra: [
                 'quote_uuid' => $quoteUuid,
