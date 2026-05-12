@@ -100,7 +100,7 @@ class SendUpdateLogController extends Controller
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
                     $quoteTypeSlug = strtolower($quoteType->code);
                     if ($quoteType->code == quoteTypeCode::Device) {
-                        $quoteTypeSlug = quoteTypeCode::Smartphone;
+                        $quoteTypeSlug = strtolower(quoteTypeCode::Smartphone);
                     }
 
                     return redirect('/personal-quotes/'.$quoteTypeSlug.'/'.$childLeadResponse['uuid'])
