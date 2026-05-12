@@ -124,7 +124,7 @@ class SaveBookingDetailsRequest extends FormRequest
                 $quote = $this->getQuoteObjectBy($quoteType, $this->sendUpdate->quote_uuid, 'uuid');
             }
 
-            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote)) {
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
                 $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
             }
 

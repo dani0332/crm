@@ -68,7 +68,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Customer email is required');
             }
 
-            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote)) {
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
                 $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
             }
 

@@ -954,7 +954,7 @@ class SplitPaymentService
             }
         }
 
-        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($primaryEmailQuote)) {
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($primaryEmailQuote ?: null)) {
             $errorMessage = PlaceholderPrimaryEmail::message();
             LoggerService::warning('Master payment approval blocked due to placeholder primary email', [
                 'quote_code' => $quoteModel->code,
