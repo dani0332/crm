@@ -134,6 +134,8 @@ RUN \
       -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+      -e 's|^;\?newrelic\.daemon\.logfile = .*|newrelic.daemon.logfile = "/var/www/storage/logs/newrelic-daemon.log"|' \
+      -e 's|^;\?newrelic\.logfile = .*|newrelic.logfile = "/var/www/storage/logs/newrelic-php_agent.log"|' \
       /usr/local/etc/php/conf.d/newrelic.ini
 
 RUN mkdir -p /var/www/storage/logs \
@@ -141,10 +143,11 @@ RUN mkdir -p /var/www/storage/logs \
     && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/www/storage/logs/supervisord.log|' /etc/supervisord.conf \
     && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
-    && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown' > /etc/sudoers.d/www \
+    && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown, /bin/chmod, /bin/mkdir' > /etc/sudoers.d/www \
     && chmod 0440 /etc/sudoers.d/www \
     && visudo -cf /etc/sudoers.d/www \
-    && chown -R www:www /var/www /var/log/nginx /home/www/.doppler
+    && mkdir -p /var/log/newrelic \
+    && chown -R www:www /var/www /var/log/nginx /var/log/newrelic /home/www/.doppler
 
 ENV HOME=/home/www
 
