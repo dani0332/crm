@@ -47,7 +47,7 @@ class HealthQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'customer']
+            ['advisor', 'nationality', 'insuranceProvider', 'customer', 'previousAdvisor']
         )->orderBy('created_at', 'desc');
     }
 

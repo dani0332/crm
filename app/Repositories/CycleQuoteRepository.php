@@ -220,7 +220,7 @@ class CycleQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'previousAdvisor', 'nationality', 'customer'])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where(function ($query) {
                     $query->where('advisor_id', \auth()->user()->id);

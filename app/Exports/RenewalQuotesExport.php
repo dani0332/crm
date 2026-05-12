@@ -36,11 +36,12 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             'Previous Policy number',
             'Previous Policy start date',
             'Previous Policy expiry date',
-            'Previous Gross premium',
-            'Previous advisor',
+            'Previous Total Price with VAT',
             'Previous Commission',
+            'Previous advisor',
             'Lead Level PC Tag',
             'Customer Level PC Tag',
+            'Nationality',
             $this->exportType == 'BUSINESS' ? 'Business Type' : '',
         ];
     }
@@ -76,11 +77,11 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->previous_policy_start_date,
             $quote->previous_policy_expiry_date,
             $quote->previous_quote_policy_premium,
+            $quote->previous_quote_policy_commission ?? ($payment != null ? $payment->commission : 'N/A'),
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
-            $quote->previous_quote_policy_commission
-                ?? ($payment != null ? $payment->commission : 'N/A'),
             (isset($quote->pc_qualified) && $quote->pc_qualified == 1) ? 'Yes' : 'No',
             $quote->customer?->pcp_tag == 1 ? 'Yes' : 'No',
+            $quote->nationality?->text ?? 'N/A',
             $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : ($quote->businessTypeOfInsurance?->text ?? 'N/A')) : '',
         ];
     }
