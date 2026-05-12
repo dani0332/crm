@@ -75,18 +75,20 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
             $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction], $this->sageRequest->epShortCode);
 
             if (! $response['status']) {
-                $message = $response['message'];
-                if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info('Sage conflict detected while booking embedded product on Sage - updating status to pending');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
-                } elseif ($message == SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE) {
-                    LoggerService::info('EP document already exists error detected while booking embedded product on Sage');
-                    LoggerService::info('Updating Sage process status to pending for EP Sage booking');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
+                $sageErrorLogs = [
+                    SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE => 'Sage conflict detected while booking embedded product on Sage - updating status to pending',
+                    SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE => 'EP document already exists error detected while booking embedded product on Sage',
+                ];
+
+                if (isset($sageErrorLogs[$response['message']])) {
+                    LoggerService::info($sageErrorLogs[$response['message']]);
+                    $sageProcessStatus = SageEnum::SAGE_PROCESS_PENDING_STATUS;
                 } else {
                     LoggerService::info('Booking embedded product on Sage failed - updating status to failed');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
+                    $sageProcessStatus = SageEnum::SAGE_PROCESS_FAILED_STATUS;
                 }
+
+                $sageApiService->updateSageProcessStatus($this->sageProcess, $sageProcessStatus, $response['message'], $this->logFor);
             } else {
                 LoggerService::info('Embedded product booked on Sage - updating status to completed');
                 $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, $this->logFor);

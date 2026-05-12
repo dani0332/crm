@@ -57,20 +57,22 @@ class BookPolicyOnSageJob implements ShouldQueue
             $response = $sageApiService->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
 
             if (! $response['status']) {
-                $message = $response['message'];
-                if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info('Sage conflict detected while booking policy on Sage - updating status to pending');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, self::class.' : '.$this->quote->code);
-                } elseif ($message == SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE) {
-                    LoggerService::info('EP document already exists on Sage - updating status to pending');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, self::class.' : '.$this->quote->code);
+
+                $sageErrorLogs = [
+                    SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE => 'Sage conflict detected while booking policy on Sage - updating status to pending',
+                    SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE => 'EP document already exists on Sage - updating status to pending',
+                ];
+
+                if (isset($sageErrorLogs[$response['message']])) {
+                    LoggerService::info($sageErrorLogs[$response['message']]);
+                    $sageProcessStatus = SageEnum::SAGE_PROCESS_PENDING_STATUS;
                 } else {
                     LoggerService::info('Booking policy on Sage failed - updating status to failed');
-                    $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, self::class.' : '.$this->quote->code);
-
+                    $sageProcessStatus = SageEnum::SAGE_PROCESS_FAILED_STATUS;
                     $sageApiService->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
                 }
 
+                $sageApiService->updateSageProcessStatus($this->sageProcess, $sageProcessStatus, $response['message'], self::class.' : '.$this->quote->code);
             } else {
                 LoggerService::info('Policy booked on Sage - updating status to completed');
                 $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, self::class.' : '.$this->quote->code);
