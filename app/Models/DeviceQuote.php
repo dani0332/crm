@@ -17,25 +17,8 @@ class DeviceQuote extends Model implements AuditableContract
     use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'device_quote_request';
-    protected $fillable = [
-        'personal_quote_id',
-        'first_name',
-        'last_name',
-        'email',
-        'mobile_no',
-        'month_of_purchase',
-        'year_of_purchase',
-        'make_id',
-        'model_id',
-        'imei',
-        'purchase_date',
-        'device_type',
-        'sic_advisor_requested',
-        'insurer_api_status_id',
-        'api_issuance_status_id',
-        'diagnostic_result_description',
-        'diagnostic_status',
-
+    protected $guarded = [
+        // empty because there is no risky fields
     ];
     protected $appends = [
         'insurer_api_status',
