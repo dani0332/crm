@@ -137,10 +137,10 @@ class SendUpdateToCustomerJob implements ShouldQueue
     private function isEmailResponseSuccessful($quoteTypeId, $response)
     {
         if ($quoteTypeId === QuoteTypeId::Device) {
-            return $response === Response::HTTP_OK || $response === Response::HTTP_CREATED;
+            return intval($response) === Response::HTTP_OK || intval($response) === Response::HTTP_CREATED;
         }
 
-        return $response === Response::HTTP_CREATED;
+        return intval($response) === Response::HTTP_CREATED;
     }
 
     private function updateEmailStatusToSent($sendUpdateLog, $response)

@@ -267,7 +267,12 @@ const onLoadAuditLogData = async () => {
             </x-button>
           </div>
           <div
-            v-if="policyIssuanceId && apiLogs.reTriggerPolicyAutomationEligible"
+            v-if="
+              policyIssuanceId &&
+              apiLogs.reTriggerPolicyAutomationEligible &&
+              (can(permissionsEnum.RE_TRIGGER_POLICY_ISSUANCE) ||
+                can(permissionsEnum.RE_TRIGGER_POLICY_AUTOMATION_DEVICE))
+            "
             class="flex gap-2"
             @click.stop
           >
