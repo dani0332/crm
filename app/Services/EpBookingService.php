@@ -23,6 +23,7 @@ use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -510,9 +511,13 @@ class EpBookingService extends BaseService
         }
 
         if ($isResponseUpdated) {
-            $insurerRequestResponse->update([
-                'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
-            ]);
+            DB::transaction(function () use ($insurerRequestResponse, $quote, $response) {
+                $insurerRequestResponse->update([
+                    'response' => json_encode($response, JSON_UNESCAPED_SLASHES),
+                ]);
+
+                $quote->update(['sage_invoice_no_update_at' => now()]);
+            });
 
             LoggerService::info(self::class.' - Updated insurer request response for EP Sage booking', extra: [
                 'quote_uuid' => $quoteUuid,
