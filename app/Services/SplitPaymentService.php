@@ -528,6 +528,8 @@ class SplitPaymentService
                 return DocumentTypeCode::GMQPD_RECEIPT;
             case QuoteTypes::SAVINGS->value:
                 return DocumentTypeCode::SPD_RECEIPT;
+            case QuoteTypes::DEVICE->value:
+                return DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT;
             default:
                 return DocumentTypeCode::CPD_RECEIPT;
         }
@@ -591,7 +593,8 @@ class SplitPaymentService
                 LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
                 $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
                 $lob = strtolower($modelType);
-                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+                $urlIdentifier = $this->getPaymentLinkURLIdentifier($modelType);
+                $paymentLink = "{$paymentLink}/{$urlIdentifier}-insurance/quote/{$request->quoteUuid}/payment";
 
                 $insuranceProvider = getInsuranceProvider($payment, $lob);
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -626,6 +629,16 @@ class SplitPaymentService
         $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+    }
+
+    private function getPaymentLinkURLIdentifier($modelType)
+    {
+        $urlIdentifier = strtolower(string: $modelType);
+        if (ucfirst($modelType) === QuoteTypes::DEVICE->value) {
+            $urlIdentifier = 'smartphone';
+        }
+
+        return $urlIdentifier;
     }
 
     public function generateInsurerPaymentLink($request)
@@ -1240,7 +1253,8 @@ class SplitPaymentService
         }
 
         $computedPrice = 0;
-        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER];
+
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER, quoteTypeCode::Device];
         $noVatLobs = [quoteTypeCode::Life, quoteTypeCode::SAVINGS];
 
         if ($send_update_id > 0) {
@@ -1490,8 +1504,10 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
-            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
+            $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+            if ($quoteType === QuoteTypes::DEVICE->value && $shouldUpdateAPIIssuanceAndInsurerStatus) {
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE);
+            } elseif (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -1499,7 +1515,6 @@ class SplitPaymentService
             }
         }
     }
-
     /**
      * Check if the commission fields in booking details section is disabled
      *
@@ -1566,7 +1581,11 @@ class SplitPaymentService
         // check if cyber quote
         $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
         $isAwni = $insuranceProvider == InsuranceProvidersEnum::AWNI;
-        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false'));
+
+        $isDeviceQuote = $modelType == QuoteTypes::DEVICE->value;
+        $isNgi = $insuranceProvider == InsuranceProvidersEnum::NGI;
+
+        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false').' isAwni: '.($isAwni ? 'true' : 'false').' isDeviceQuote: '.($isDeviceQuote ? 'true' : 'false').' isNgi: '.($isNgi ? 'true' : 'false'));
 
         // Only process if payment is not approved and:
         // - not from job, or
@@ -1575,6 +1594,7 @@ class SplitPaymentService
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
             ($isTchQuote && $isAllowedProvider) ||
+            ($isDeviceQuote && $isNgi) ||
             ($isCyberQuote && $isAwni)
         );
 

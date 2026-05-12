@@ -413,6 +413,9 @@ class RetryAllocationService
             }, function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to]);
             })
+            ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
+                $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
+            })
             ->when($quoteType === QuoteTypes::LIFE, function ($q) {
                 $q->where(function ($lifeQuery) {
                     $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
