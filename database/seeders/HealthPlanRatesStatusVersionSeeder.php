@@ -19,9 +19,9 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
         $healthPlans = HealthPlan::where('version', null)->get();
 
         foreach ($healthPlans as $healthPlan) {
-            // If no rates, skip iteration
+            // If no rates
             if ($healthPlan->rates->count() == 0) {
-                // Just update plan
+                // Just update plan and skip iteration
                 $healthPlan->version = 1.0;
                 $healthPlan->status = HealthPlanRateSheetStatusEnum::DRAFT->value;
                 $healthPlan->save();
