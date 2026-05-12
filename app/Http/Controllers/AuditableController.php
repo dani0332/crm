@@ -162,8 +162,10 @@ class AuditableController extends Controller
 
             $query = $this->getQueryBuilderForAuditableType($auditableType);
 
+            // Use string direction so MongoDB\Laravel\Query\Builder maps to -1/1; orderByDesc() passes
+            // SortDirection enum which cannot be BSON-serialized for Mongo find sort options.
             $query->where('quote_uuid', $quoteUID)
-                ->orderByDesc('created_at');
+                ->orderBy('created_at', 'desc');
 
             if ($insuranceProvider) {
                 $query->where('provider_id', $insuranceProvider);
