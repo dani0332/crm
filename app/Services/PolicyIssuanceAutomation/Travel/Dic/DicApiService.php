@@ -10,6 +10,7 @@ use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use Carbon\Carbon;
 
 class DicApiService
 {
@@ -103,6 +104,8 @@ class DicApiService
         }
 
         $quote->policy_number = $body['certificateNumber'];
+        $quote->price_vat_applicable = $body['amount'];
+        $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
         $quote->save();
     }
 
