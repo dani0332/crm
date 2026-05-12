@@ -281,6 +281,51 @@ class DicApiService
      */
     public function extractTaxInvoiceUrlFromGetPolicyDocResponse(mixed $responseData): ?string
     {
+        $document = $this->findTaxInvoiceDocumentInGetPolicyDocResponse($responseData);
+        if ($document === null) {
+            return null;
+        }
+
+        $raw = $document['url'] ?? $document['Url'] ?? null;
+        if (is_string($raw)) {
+            $trimmed = trim($raw);
+            if ($trimmed !== '' && (str_starts_with($trimmed, 'http://') || str_starts_with($trimmed, 'https://'))) {
+                return $trimmed;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Tax invoice `documentNumber` from GetPolicyDoc (same document entry as {@see extractTaxInvoiceUrlFromGetPolicyDocResponse}).
+     */
+    public function extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse(mixed $responseData): ?string
+    {
+        $document = $this->findTaxInvoiceDocumentInGetPolicyDocResponse($responseData);
+        if ($document === null) {
+            return null;
+        }
+
+        $num = $document['documentNumber'] ?? $document['document_number'] ?? null;
+        if (is_string($num)) {
+            $trimmed = trim($num);
+
+            return $trimmed !== '' ? $trimmed : null;
+        }
+
+        if (is_int($num)) {
+            return (string) $num;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findTaxInvoiceDocumentInGetPolicyDocResponse(mixed $responseData): ?array
+    {
         if (! is_array($responseData)) {
             return null;
         }
@@ -305,13 +350,7 @@ class DicApiService
                 continue;
             }
 
-            $raw = $document['url'] ?? $document['Url'] ?? null;
-            if (is_string($raw)) {
-                $trimmed = trim($raw);
-                if ($trimmed !== '' && (str_starts_with($trimmed, 'http://') || str_starts_with($trimmed, 'https://'))) {
-                    return $trimmed;
-                }
-            }
+            return $document;
         }
 
         return null;

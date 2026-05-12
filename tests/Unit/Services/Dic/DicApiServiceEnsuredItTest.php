@@ -254,7 +254,26 @@ it('extractTaxInvoiceUrlFromGetPolicyDocResponse returns URL from additionalDeta
         ],
     ];
 
-    expect($service->extractTaxInvoiceUrlFromGetPolicyDocResponse($payload))->toBe($taxUrl);
+    expect($service->extractTaxInvoiceUrlFromGetPolicyDocResponse($payload))->toBe($taxUrl)
+        ->and($service->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload))->toBe('28925');
+});
+
+it('extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse reads document_number snake_case', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    $payload = [
+        'additionalDetails' => [
+            'documents' => [
+                [
+                    'url' => 'https://example.test/tax.pdf',
+                    'documentName' => 'TAX_INVOICE',
+                    'document_number' => '28910',
+                ],
+            ],
+        ],
+    ];
+
+    expect($service->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload))->toBe('28910');
 });
 
 it('extractTaxInvoiceUrlFromGetPolicyDocResponse matches document_name and case-insensitive name', function () {

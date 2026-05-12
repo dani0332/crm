@@ -145,6 +145,22 @@ class DicStepExecutor
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule DIC');
             $this->documentService->attachFromUrl($quote, $taxInvoiceUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Tax Invoice DIC');
 
+            $taxInvoiceDocumentNumber = $this->apiService->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($result['data'] ?? null);
+            if (is_string($taxInvoiceDocumentNumber) && $taxInvoiceDocumentNumber !== '') {
+                $payment = $quote->payments()->mainLeadPayment()->first();
+                if ($payment !== null) {
+                    $payment->update(['insurer_tax_number' => $taxInvoiceDocumentNumber]);
+                    LoggerService::info('DIC Travel: GetPolicyDoc stored insurer_tax_number on main payment', [
+                        'quote_code' => $quote->code,
+                        'payment_code' => $payment->code,
+                    ]);
+                } else {
+                    LoggerService::warning('DIC Travel: GetPolicyDoc could not update insurer_tax_number — main lead payment not found', [
+                        'quote_code' => $quote->code,
+                    ]);
+                }
+            }
+
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
                 true,
