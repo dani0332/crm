@@ -439,6 +439,16 @@ const onMemberSubmit = isValid => {
     if (memberActionEdit.value) {
       const index = localMembers.value.findIndex(m => m.id === memberForm.id);
       if (index !== -1) {
+        const allOthersUnder18 = localMembersFiltered.value.every(
+          m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+        );
+        const editedMemberIsAdult = member.dob && calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+
+        if (localMembersFiltered.value.length > 0 && allOthersUnder18 && editedMemberIsAdult) {
+          member.is_principal = 1;
+          localMembers.value = localMembers.value.map(m => ({ ...m, is_principal: 0 }));
+        }
+
         localMembers.value[index] = member;
         
         syncPolicyHolderToQuoteForm(member);
@@ -449,6 +459,16 @@ const onMemberSubmit = isValid => {
         position: 'top',
       });
     } else {
+      const allExistingUnder18 = localMembersFiltered.value.every(
+        m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+      );
+      const newMemberIsAdult = member.dob && calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+
+      if (localMembersFiltered.value.length > 0 && allExistingUnder18 && newMemberIsAdult) {
+        member.is_principal = 1;
+        localMembers.value = localMembers.value.map(m => ({ ...m, is_principal: 0 }));
+      }
+
       localMembers.value.push(member);
       
       syncPrincipalToQuoteForm(member);
@@ -461,6 +481,17 @@ const onMemberSubmit = isValid => {
     memberForm.reset();
     modals.member = false;
     return;
+  }
+
+  
+
+  const allExistingUnder18 = localMembersFiltered.value.length > 0 && localMembersFiltered.value.every(
+    m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+  );
+  const memberIsAdult = memberForm.dob && calculateAge(memberForm.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+
+  if (allExistingUnder18 && memberIsAdult) {
+    memberForm.is_principal = 1;
   }
 
   const [method, url, successTitle] = memberActionEdit.value
@@ -754,16 +785,17 @@ function syncMembersWhenFamilyOtherWithoutInsuredPh() {
     m => !(m.is_policy_holder == 1 && m.is_insured == 1),
   );
 
-  let principalAssigned = false;
+  const insuredMembers = localMembers.value.filter(m => m.is_insured == 1);
+  const firstAdult = insuredMembers.find(
+    m => m.dob && calculateAge(m.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+  );
+  const principalId = (firstAdult ?? insuredMembers[0])?.id;
+
   localMembers.value = localMembers.value.map(m => {
     if (m.is_insured != 1) {
       return { ...m, is_principal: 0 };
     }
-    if (!principalAssigned) {
-      principalAssigned = true;
-      return { ...m, is_principal: 1 };
-    }
-    return { ...m, is_principal: 0 };
+    return { ...m, is_principal: m.id === principalId ? 1 : 0 };
   });
 
   const newPrincipal = localMembers.value.find(m => m.is_principal === 1);
