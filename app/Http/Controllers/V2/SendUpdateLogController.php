@@ -98,10 +98,7 @@ class SendUpdateLogController extends Controller
         if (! empty($childLeadResponse)) {
             if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
-                    $quoteTypeSlug = strtolower($quoteType->code);
-                    if ($quoteType->code == quoteTypeCode::Device) {
-                        $quoteTypeSlug = strtolower(quoteTypeCode::Smartphone);
-                    }
+                    $quoteTypeSlug = strtolower(resolveQuoteType($quoteType->code));
 
                     return redirect('/personal-quotes/'.$quoteTypeSlug.'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
