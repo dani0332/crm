@@ -15,13 +15,26 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
 {
     public function run(): void
     {
+        // Fetch all existing plans (without version)
         $healthPlans = HealthPlan::where('version', null)->get();
 
         foreach ($healthPlans as $healthPlan) {
+            // If no rates, skip iteration
+            if ($healthPlan->rates->count() == 0) {
+                // Just update plan
+                $healthPlan->version = 1.0;
+                $healthPlan->status = HealthPlanRateSheetStatusEnum::DRAFT->value;
+                $healthPlan->save();
+
+                continue;
+            }
+
             DB::transaction(function () use ($healthPlan) {
                 // Update plan
                 $healthPlan->version = 1.0;
                 $healthPlan->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
+                $healthPlan->gender_enabled = true;
+                $healthPlan->marital_status_enabled = true;
                 $healthPlan->save();
 
                 // Create health rate control (sheet)
@@ -34,9 +47,6 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
                     'status' => HealthPlanRateSheetStatusEnum::ACTIVE->value,
                 ]);
             });
-
-            echo $healthPlan->id;
-            exit;
         }
     }
 
@@ -50,7 +60,7 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
             'health_plan_id' => $healthPlanId,
             'version' => 1.0,
             'status' => HealthPlanRateSheetStatusEnum::ACTIVE->value,
-            'effective_from' => '2026-06-01',
+            'effective_from' => '2026-06-04',
             'effective_to' => '2999-12-31',
             'total_records' => 1,
             'created_by' => $adminUser->id,
