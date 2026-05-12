@@ -28,8 +28,6 @@ class UpdateHealthRateRequest extends FormRequest
             'id' => ['bail', 'integer', 'exists:health_rates,id'],
             'effective_from' => ['required', 'date'],
             'effective_to' => ['required', 'date', 'after:effective_from'],
-            'text' => ['required'],
-            'text_ar' => ['required'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
             'emirate_type' => ['bail', 'required', new Enum(EmirateTypeEnum::class)],
