@@ -9,12 +9,16 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\CentralService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateCustomerValidationRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
+
     protected $sendUpdate;
     protected $sendUpdateDocuemnts;
 
@@ -49,6 +53,12 @@ class SendUpdateCustomerValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email')->first();
+            $quoteType = $this->sendUpdate->quoteType?->code;
+            $quote = null;
+            if ($quoteType) {
+                $quote = $this->getQuoteObjectBy($quoteType, $this->sendUpdate->quote_uuid, 'uuid');
+            }
+
             if (! $personalQuote?->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
             }
@@ -56,6 +66,10 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
             if (! $personalQuote?->email || str_contains($personalQuote?->email, ',')) {
                 $validator->errors()->add('error', 'Customer email is required');
+            }
+
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
+                $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
             }
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Savings) {

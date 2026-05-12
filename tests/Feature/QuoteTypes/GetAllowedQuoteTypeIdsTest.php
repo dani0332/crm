@@ -154,7 +154,7 @@ it('correctly checks manager roles for quote type access', function () {
 it('returns correct primary types from the enum', function () {
     $primaryTypes = QuoteTypes::primaryTypes();
 
-    expect($primaryTypes)->toHaveCount(12)
+    expect($primaryTypes)->toHaveCount(13)
         ->and($primaryTypes)->toContain(QuoteTypes::CAR)
         ->and($primaryTypes)->toContain(QuoteTypes::HOME)
         ->and($primaryTypes)->toContain(QuoteTypes::HEALTH)
