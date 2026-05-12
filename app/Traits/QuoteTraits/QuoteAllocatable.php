@@ -352,7 +352,7 @@ trait QuoteAllocatable
 
     public function isAllocationFailed(): bool
     {
-        return filled($this->lead_allocation_failed_at);
+        return ! empty($this->lead_allocation_failed_at);
     }
 
     public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder

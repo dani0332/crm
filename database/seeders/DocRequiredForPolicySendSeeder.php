@@ -80,6 +80,11 @@ class DocRequiredForPolicySendSeeder extends Seeder
                 DocumentTypeCode::CPS,
                 DocumentTypeCode::PHB,
             ],
+            QuoteTypeId::Device => [
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK,
+            ],
         ];
 
         foreach ($documentTypes as $quoteTypeId => $documentTypeCodes) {

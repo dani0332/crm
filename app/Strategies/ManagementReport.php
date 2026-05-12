@@ -674,6 +674,7 @@ class ManagementReport
             11 => 'jetski-quotes-show',
             18 => 'savings-quotes-show',
             19 => 'cyber-quotes-show',
+            20 => 'device-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];
@@ -739,9 +740,12 @@ class ManagementReport
     {
         $now = now()->format('Y-m-d H:i:s');
         $healthQuoteType = QuoteTypeId::Health;
+        $businessQuoteType = QuoteTypeId::Business;
+        $deviceQuoteType = QuoteTypeId::Device;
         $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
         $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
+        $dubaiBranch = BranchEnum::DUBAI->value;
 
         return "
             SELECT
@@ -752,8 +756,10 @@ class ManagementReport
                     CASE
                         WHEN pq.advisor_id IS NOT NULL AND pq.quote_type_id = {$healthQuoteType} AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
                             THEN {$abuDhabiBranch}
-                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND pq.emirate_of_registration_id = {$abuDhabiEmirate}
+                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND bqr.emirate_of_registration_id = {$abuDhabiEmirate}
                             THEN {$abuDhabiBranch}
+                        WHEN pq.quote_type_id = {$deviceQuoteType}
+                            THEN {$dubaiBranch}
                         ELSE ub.branch_id
                     END
                 ) AS resolved_branch_id
@@ -770,6 +776,9 @@ class ManagementReport
                 AND (pq.business_type_of_insurance_id IS NULL OR pq.business_type_of_insurance_id != {$groupMedicalId})
             LEFT JOIN health_quote_request hqr ON hqr.id = pq.quote_id
                 AND pq.quote_type_id = {$healthQuoteType}
+                AND pq.branch_id IS NULL
+            LEFT JOIN business_quote_request bqr ON bqr.id = pq.quote_id
+                AND pq.quote_type_id = {$businessQuoteType}
                 AND pq.branch_id IS NULL
         ";
     }

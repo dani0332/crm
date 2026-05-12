@@ -98,6 +98,10 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
+
+    // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
+    // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
+    Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
@@ -108,6 +112,9 @@ Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuote
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutboundEmailsHook']);
+Route::post('/bird-whatsapp-inbound-hook', [ApiController::class, 'birdWhatsappInboundHook']);
+Route::post('/bird-whatsapp-outbound-hook', [ApiController::class, 'birdWhatsappOutboundHook']);
+Route::post('/bird-whatsapp-interaction-hook', [ApiController::class, 'birdWhatsappInteractionHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
@@ -153,6 +160,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
+    Route::post('quotes/send-zero-plans-email', [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 

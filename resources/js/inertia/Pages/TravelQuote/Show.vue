@@ -82,10 +82,13 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
-const { hasAuthorizedSplit } = usePayment();
+const { hasAuthorizedSplit, isMemberPaymentCancelled } = usePayment();
+
+const memberPaymentCancelled = member => isMemberPaymentCancelled(member);
 const checkCheckedPlans = computed(() => {
   return true;
 });
+
 const checkedCount = computed(() => {
   return checkedItems.value.length;
 });
@@ -603,6 +606,15 @@ const deleteTraveler = id => {
         position: 'top',
       });
       onLoadAvailablePlansData();
+    },
+    onError: errors => {
+      const raw =
+        errors?.travel_member_delete ?? Object.values(errors ?? {})[0];
+      const message = Array.isArray(raw) ? raw[0] : raw;
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -2733,9 +2745,12 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when payment is authorized -->
+            <!-- Show button with tooltip when payment is authorized and not cancelled -->
             <x-tooltip
-              v-if="isAuthorizedPayment.hasAuthorized"
+              v-if="
+                isAuthorizedPayment.hasAuthorized &&
+                !memberPaymentCancelled(item)
+              "
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">

@@ -30,7 +30,7 @@ class AMLQueryService
             return [];
         }
 
-        $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
+        $quoteTypes = QuoteTypeRepository::getQuoteTypesByLob();
         $quoteType = $quoteTypes->where('code', $request->quoteType)->first();
 
         if (! $quoteType) {
@@ -157,7 +157,7 @@ class AMLQueryService
     {
         // Filter by quote type for personal_quotes table
         if ($quoteRequestTable === 'personal_quotes') {
-            $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
+            $quoteTypes = QuoteTypeRepository::getQuoteTypesByLob();
             $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
             $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
         }
