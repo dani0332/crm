@@ -3397,8 +3397,15 @@ class SageApiService
             return false;
         }
 
+        // Normalize the message string by replacing escaped double quotes, newlines, and carriage returns
         $normalizedMessage = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
 
+        // Check if the normalized message starts with the pre-defined Sage error message constant,
+        // using a wildcard to match any additional text after the main error phrase.
+        // Str::is() performs this pattern match, e.g., checking if the message begins with
+        // SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR and has any suffix after.
+        // Example error message that this function should detect:
+        // "Document number cannot be blank. Document number \"I452030" already exists.\n\nEnter a unique number. If the duplicate number was assigned by Accounts Receivable, correct the prefix and sequence numbers for the document type in A/R Options."
         return Str::is(SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR.'*', $normalizedMessage);
     }
 

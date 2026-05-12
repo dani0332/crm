@@ -538,6 +538,11 @@ class EpBookingService extends BaseService
             return $documentNumber;
         }
 
+        // The regex below checks if the document number ends with a slash followed by digits (e.g., "INV123/4").
+        // If so, it increments the trailing number and returns, e.g., "INV123/4" becomes "INV123/5".
+        // If the document number does NOT have a trailing slash and number (e.g., "TIVCMDP" or "4927529"),
+        // then it appends "/1" to the document number (so "TIVCMDP" becomes "TIVCMDP/1", "4927529" becomes "4927529/1").
+
         if (preg_match('/^(.*)\/(\d+)$/', $documentNumber, $matches)) {
             return $matches[1].'/'.((int) $matches[2] + 1);
         }
