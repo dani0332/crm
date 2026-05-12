@@ -228,7 +228,7 @@ class DicStepExecutor
         }
 
         try {
-            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Broker Invoice DIC');
+            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE_RAISE_BY_BUYER, 'Broker Invoice DIC');
 
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
