@@ -6,8 +6,10 @@ ARG IMCRM_TOKEN
 #RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list 
 RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg
-RUN apt-get update && apt-get install doppler -y
-RUN doppler configure set token ${IMCRM_TOKEN}
+RUN apt-get update && apt-get install doppler -y \
+    && rm -rf /var/lib/apt/lists/*
+RUN groupadd -g 1000 www && useradd -u 1000 -g www -m -s /bin/bash www
+RUN runuser -u www -- doppler configure set token "${IMCRM_TOKEN}"
 
 FROM node:22.12.0 AS frontend
 WORKDIR /var/www
@@ -58,7 +60,7 @@ COPY composer.lock composer.lock
 RUN composer install --optimize-autoloader --no-dev
 
 FROM php:8.4-fpm
-COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
+COPY --from=dependencies --chown=1000:1000 /home/www/.doppler/ /home/www/.doppler/
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
 COPY --from=build /app/vendor/ /var/www/vendor
 COPY --from=frontend /var/www/ /var/www
@@ -73,6 +75,8 @@ COPY --from=build /app /var/www/
 RUN apt-get update && apt-get install -y \
 nginx \
 supervisor \
+sudo \
+libcap2-bin \
 curl \
 wget \
 libfreetype6 \
@@ -117,8 +121,6 @@ cp -r docker/*.pem /etc/nginx/conf.d/ && \
 cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /var/www/docker/run.sh
-RUN usermod -aG root www-data
-RUN usermod -aG root www
 
 RUN \
   wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
@@ -133,5 +135,19 @@ RUN \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
+
+RUN mkdir -p /var/www/storage/logs \
+    && sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
+    && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/www/storage/logs/supervisord.log|' /etc/supervisord.conf \
+    && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown' > /etc/sudoers.d/www \
+    && chmod 0440 /etc/sudoers.d/www \
+    && visudo -cf /etc/sudoers.d/www \
+    && chown -R www:www /var/www /var/log/nginx /home/www/.doppler
+
+ENV HOME=/home/www
+
+USER www
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
