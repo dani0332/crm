@@ -253,6 +253,7 @@ class SukoonDemocranceService
                         'document_type_text' => $documentType->text,
                         'doc_uuid' => $docUuid,
                         'created_by_id' => null,
+                        'document_type_id' => $documentType->id,
                     ]);
                 } else {
                     $documentData = [
@@ -264,6 +265,7 @@ class SukoonDemocranceService
                         'document_type_text' => $documentType->text,
                         'doc_uuid' => $docUuid,
                         'created_by_id' => null,
+                        'document_type_id' => $documentType->id,
                     ];
                     $embeddedTransaction->documents()->create($documentData);
                 }

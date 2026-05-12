@@ -12,6 +12,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamsEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -19,6 +20,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteType;
 use App\Models\Team;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -114,6 +116,8 @@ class ConversionAsAtReportService extends BaseService
             return null;
         }
 
+        LoggerService::sql(__CLASS__.' '.__FUNCTION__.': ', $query);
+
         // map operation to calculate gross and net conversions of records
         return $this->mapConversionData($query->get(), $request);
     }
@@ -198,6 +202,11 @@ class ConversionAsAtReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($lob) => $lob->text)
             ->toArray();
+
+        if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::SmartPhoneManager])) {
+            /* Manually mapping because of quote_type & user_products names mismatch */
+            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::Device)] = TeamsEnum::DEVICE_INSURANCE->value;
+        }
 
         if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::CorplineManager])) {
             $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)] = quoteTypeCode::CORPLINE.' Insurance';

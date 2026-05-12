@@ -234,6 +234,12 @@ final class WatermarkDocTypesEnum extends Enum
     const GL_PET = 'GL_PET';
     const GL_TRVL = 'GL_TRVL';
     const GL_YTCH = 'GL_YTCH';
+    const DEV_SP_PS = 'DEV_SP_PS';        // Policy Schedule
+    const DEV_SP_PC = 'DEV_SP_PC';        // Policy Certificate
+    const DEV_SP_TI = 'DEV_SP_TI';        // Tax Invoice
+    const DEV_SP_TIRBB = 'DEV_SP_TIRBB';  // Tax Invoice Raised By Buyer
+    const DEV_SP_PDR = 'DEV_SP_PDR';      // Payment Receipt
+    const DEV_SP_PHB = 'DEV_SP_PHB';      // Policy Handbook
     const CYB_TIRBB = 'CYB_TIRBB';
     const CYB_TI = 'CYB_TI';
     const CYB_PS = 'CYB_PS';
