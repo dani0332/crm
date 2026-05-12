@@ -25,7 +25,6 @@ class HealthRateResource extends JsonResource
             'premium' => $this->premium,
             'status' => $this->status,
             'version' => $this->version,
-            'is_active' => $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'health_plan_id' => $this->health_plan_id,

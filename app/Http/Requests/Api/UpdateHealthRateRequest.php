@@ -37,7 +37,6 @@ class UpdateHealthRateRequest extends FormRequest
             'cohort' => new HealthRateCohortValidRule($this->health_plan_id),
             'marital_status' => new HealthRateMaritalStatusValidRule($this->health_plan_id, $this->gender),
             'premium' => ['bail', 'required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
-            'is_active' => ['bail', 'required', 'boolean'],
             'user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
         ];
     }
@@ -53,7 +52,6 @@ class UpdateHealthRateRequest extends FormRequest
             'health_plan_id.exists' => 'Health plan does not exist',
             'health_plan_co_payment_id.exists' => 'Health plan co payment does not exist',
             'emirate_type.enum' => 'Emirate type must be a valid emirate type',
-            'boolean' => ':attribute must be a boolean',
             'effective_to.after' => 'Effective to must be greater than effective from',
             'user_id.exists' => 'User does not exist',
             'premium.regex' => 'Premium can be a decimal upto 2 digits',

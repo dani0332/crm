@@ -33,7 +33,6 @@ class HealthRateService extends BaseService
                 'premium',
                 'status',
                 'version',
-                'is_active',
                 'created_at',
                 'updated_at',
             )
@@ -63,7 +62,6 @@ class HealthRateService extends BaseService
                 'premium',
                 'status',
                 'version',
-                'is_active',
                 'created_at',
                 'updated_at',
             )
@@ -190,7 +188,6 @@ class HealthRateService extends BaseService
                 'version' => $data['version'],
                 'health_plan_co_payment_id' => $data['health_plan_co_payment_id'],
                 'premium' => $data['premium'],
-                'is_active' => $data['is_active'],
                 'emirate_type' => $data['emirate_type'],
                 'min_age' => $data['min_age'],
                 'max_age' => $data['max_age'],
