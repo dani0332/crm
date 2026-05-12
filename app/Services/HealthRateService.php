@@ -297,13 +297,21 @@ class HealthRateService extends BaseService
 
         // If draft, update same version
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
-            // Check duplicate rates under same sheet
-            $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
+            return DB::transaction(function () use ($data, $rate) {
+                // Check duplicate rates under same sheet
+                $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
 
-            $rate->fill($data);
-            $rate->save();
+                $rate->fill($data);
+                $rate->save();
 
-            return $rate;
+                // Update Health Rate Control effective dates
+                HealthRateControl::where('id', $rate->health_rate_control_id)->update([
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $data['effective_to'],
+                ]);
+
+                return $rate;
+            });
         }
 
         // Check if draft version exists for this active plan
