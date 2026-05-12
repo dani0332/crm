@@ -61,6 +61,9 @@ class PersonalQuoteRepository extends BaseRepository
             if ($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
                 app(CRUDService::class)->calculateScore($quote, $quoteType);
             }
+
+            $quote->update($quoteData);
+
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;
             }
