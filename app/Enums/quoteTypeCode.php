@@ -62,6 +62,7 @@ class quoteTypeCode extends Enum
     const CompanyCar = 'CompanyCar';
     const Device = 'Device';
     const CYBER = 'Cyber';
+    const Smartphone = 'Smartphone';
 
     /** Please stop using this class instead use App\Enums\QuoteTypes (native PHP Enums) */
     public static function getName($value)
