@@ -8,6 +8,7 @@ use App\Models\HealthPlan;
 use App\Rules\HealthRateCohortValidRule;
 use App\Rules\HealthRateGenderValidRule;
 use App\Rules\HealthRateMaritalStatusValidRule;
+use App\Rules\HealthRateUpdateStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,7 +26,7 @@ class UpdateHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', 'exists:health_rates,id'],
+            'id' => ['bail', 'integer', 'exists:health_rates,id', new HealthRateUpdateStatusValidRule('Scheduled rates cannot be updated')],
             'effective_from' => ['required', 'date'],
             'effective_to' => ['required', 'date', 'after:effective_from'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
