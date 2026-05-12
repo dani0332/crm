@@ -189,8 +189,6 @@ class HealthRateService extends BaseService
                 'health_rate_control_id' => $healthRateControl->id,
                 'version' => $data['version'],
                 'health_plan_co_payment_id' => $data['health_plan_co_payment_id'],
-                'text' => $data['text'],
-                'text_ar' => $data['text_ar'],
                 'premium' => $data['premium'],
                 'is_active' => $data['is_active'],
                 'emirate_type' => $data['emirate_type'],

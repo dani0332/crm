@@ -16,8 +16,6 @@ class HealthRateResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'text' => $this->text,
-            'text_ar' => $this->text_ar,
             'emirate_type' => $this->emirate_type,
             'cohort' => $this->cohort,
             'gender' => $this->gender,
