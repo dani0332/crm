@@ -633,7 +633,7 @@ class SplitPaymentService
 
     private function getPaymentLinkURLIdentifier($modelType)
     {
-        return strtolower(resolveQuoteType($modelType));
+        return strtolower(quoteTypeCode::resolveQuoteType($modelType));
     }
 
     public function generateInsurerPaymentLink($request)

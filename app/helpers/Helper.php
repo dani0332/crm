@@ -1958,15 +1958,3 @@ if (! function_exists('getManagerRoles')) {
         ];
     }
 }
-
-if (! function_exists('resolveQuoteType')) {
-    function resolveQuoteType($quoteTypeCode)
-    {
-        $quoteTypeCode = ucfirst($quoteTypeCode);
-
-        return match ($quoteTypeCode) {
-            quoteTypeCode::Device => quoteTypeCode::Smartphone,
-            default => $quoteTypeCode,
-        };
-    }
-}

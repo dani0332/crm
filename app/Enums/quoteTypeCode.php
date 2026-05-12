@@ -102,4 +102,11 @@ class quoteTypeCode extends Enum
             default => $productName,
         };
     }
+
+    public static function resolveQuoteType(string $quoteTypeCode): string
+    {
+        return ucfirst($quoteTypeCode) === self::Device
+            ? self::Smartphone
+            : $quoteTypeCode;
+    }
 }
