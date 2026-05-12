@@ -277,6 +277,29 @@ class DicApiService
     }
 
     /**
+     * Broker / buyer invoice number from GetBrokerInvoice JSON, e.g. `{ "url": "...", "invoiceNumber": "INV-AE-..." }`.
+     */
+    public function extractBrokerInvoiceNumberFromResponse(mixed $responseData): ?string
+    {
+        if (! is_array($responseData)) {
+            return null;
+        }
+
+        $raw = $responseData['invoiceNumber'] ?? $responseData['InvoiceNumber'] ?? null;
+        if (is_string($raw)) {
+            $trimmed = trim($raw);
+
+            return $trimmed !== '' ? $trimmed : null;
+        }
+
+        if (is_int($raw)) {
+            return (string) $raw;
+        }
+
+        return null;
+    }
+
+    /**
      * Tax invoice URL from GetPolicyDoc: `additionalDetails.documents[]` where `documentName` is `TAX_INVOICE`.
      */
     public function extractTaxInvoiceUrlFromGetPolicyDocResponse(mixed $responseData): ?string

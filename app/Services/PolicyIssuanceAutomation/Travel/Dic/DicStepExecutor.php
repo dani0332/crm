@@ -267,6 +267,22 @@ class DicStepExecutor
         try {
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE_RAISE_BY_BUYER, 'Broker Invoice DIC');
 
+            $invoiceNumber = $this->apiService->extractBrokerInvoiceNumberFromResponse($result['data'] ?? null);
+            if (is_string($invoiceNumber) && $invoiceNumber !== '') {
+                $payment = $quote->payments()->mainLeadPayment()->first();
+                if ($payment !== null) {
+                    $payment->update(['insurer_commmission_invoice_number' => $invoiceNumber]);
+                    LoggerService::info('DIC Travel: GetBrokerInvoice stored insurer_commmission_invoice_number on main payment', [
+                        'quote_code' => $quote->code,
+                        'payment_code' => $payment->code,
+                    ]);
+                } else {
+                    LoggerService::warning('DIC Travel: GetBrokerInvoice could not update insurer_commmission_invoice_number — main lead payment not found', [
+                        'quote_code' => $quote->code,
+                    ]);
+                }
+            }
+
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE,
                 true,

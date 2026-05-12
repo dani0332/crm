@@ -300,6 +300,23 @@ it('extractTaxInvoiceUrlFromGetPolicyDocResponse returns null when TAX_INVOICE d
     ]))->toBeNull();
 });
 
+it('extractBrokerInvoiceNumberFromResponse returns invoiceNumber from GetBrokerInvoice-style payload', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    $payload = [
+        'url' => 'https://invoice-generator-predev.s3.ap-south-1.amazonaws.com/INVOICES/x/INV-AE-2026-05-0001289.pdf',
+        'invoiceNumber' => 'INV-AE-2026-05-0001289',
+    ];
+
+    expect($service->extractBrokerInvoiceNumberFromResponse($payload))->toBe('INV-AE-2026-05-0001289');
+});
+
+it('extractBrokerInvoiceNumberFromResponse reads InvoiceNumber PascalCase', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    expect($service->extractBrokerInvoiceNumberFromResponse(['InvoiceNumber' => '  INV-1  ']))->toBe('INV-1');
+});
+
 it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function () {
     $policyId = '00000000-0000-4000-8000-0000000000cc';
     $expectedPath = 'policy-stores/invoice/'.$policyId.':download';
