@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\HealthBusinessTypeEnum;
 use App\Rules\HealthPlanGenderValidRule;
+use App\Rules\HealthPlanUpdateStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -19,8 +20,7 @@ class UpdateHealthPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'integer|exists:health_plan,id',
-            // 'code' => 'required|unique:health_plan,code,'.$this->route('id'),
+            'id' => ['integer', 'exists:health_plan,id', new HealthPlanUpdateStatusValidRule('Scheduled plans cannot be updated')],
             'text' => 'required',
             'text_ar' => 'nullable',
             'health_business_type' => ['required', new Enum(HealthBusinessTypeEnum::class)],
