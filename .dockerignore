@@ -1,0 +1,47 @@
+# Build context (speed + smaller uploads to the daemon)
+.git
+.github
+.idea
+.vscode
+
+**/node_modules
+**/vendor
+
+.phpunit.cache
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Local env (runtime uses Doppler)
+.env
+.env.*
+!.env.example
+
+# Logs and caches (not needed to install dependencies)
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Tests (composer --no-dev does not autoload Tests)
+tests
+
+# Docs and tooling not needed in the image
+*.md
+docs
+resources/docs
+
+# Pipelines / local compose (not used inside Dockerfile_MS)
+*pipeline.yml
+docker-compose*.yml
+Dockerfile
+Dockerfile_DEV
+Dockerfile_Local
+
+# Vite dev server marker (not needed in image)
+public/hot

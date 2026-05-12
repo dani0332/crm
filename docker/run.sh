@@ -21,10 +21,6 @@ run_as_root mkdir -p \
 
 run_as_root chown -R "${USER}:www-data" storage/framework storage/app
 
-if ! run_as_root chown -R "${USER}:www-data" storage/logs 2>/dev/null; then
-    echo "run.sh: could not chown storage/logs (common on PVCs or without CAP_CHOWN); ensure volume is writable for ${USER} / www-data"
-fi
-
 shopt -s nullglob
 for path in storage/*; do
     case "$(basename "${path}")" in
@@ -36,7 +32,8 @@ for path in storage/*; do
 done
 shopt -u nullglob
 
-run_as_root chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+run_as_root chmod -R 775 storage/framework storage/app bootstrap/cache 2>/dev/null || true
+run_as_root chmod -R g+rwX storage/logs 2>/dev/null || true
 
 yes | doppler run -- php artisan horizon:terminate #terminates so its restarted by supervisor
 #php artisan migrate:fresh --seed
