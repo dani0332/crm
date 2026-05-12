@@ -254,7 +254,7 @@ class DicApiService
     }
 
     /**
-     * Extract a downloadable document URL from EnsuredIT JSON, e.g. `{ "url": "https://...s3.../file.pdf?...sig..." }`.
+     * Extract the certificate / policy schedule URL from EnsuredIT JSON (top-level `url`).
      */
     public function extractDocumentUrlFromResponse(mixed $responseData): ?string
     {
@@ -271,5 +271,46 @@ class DicApiService
         }
 
         return $url;
+    }
+
+    /**
+     * Tax invoice URL from GetPolicyDoc: `additionalDetails.documents[]` where `documentName` is `TAX_INVOICE`.
+     */
+    public function extractTaxInvoiceUrlFromGetPolicyDocResponse(mixed $responseData): ?string
+    {
+        if (! is_array($responseData)) {
+            return null;
+        }
+
+        $additionalDetails = $responseData['additionalDetails'] ?? $responseData['additional_details'] ?? null;
+        if (! is_array($additionalDetails)) {
+            return null;
+        }
+
+        $documents = $additionalDetails['documents'] ?? null;
+        if (! is_array($documents)) {
+            return null;
+        }
+
+        foreach ($documents as $document) {
+            if (! is_array($document)) {
+                continue;
+            }
+
+            $documentName = $document['documentName'] ?? $document['document_name'] ?? null;
+            if (! is_string($documentName) || strtoupper(trim($documentName)) !== 'TAX_INVOICE') {
+                continue;
+            }
+
+            $raw = $document['url'] ?? $document['Url'] ?? null;
+            if (is_string($raw)) {
+                $trimmed = trim($raw);
+                if ($trimmed !== '' && (str_starts_with($trimmed, 'http://') || str_starts_with($trimmed, 'https://'))) {
+                    return $trimmed;
+                }
+            }
+        }
+
+        return null;
     }
 }

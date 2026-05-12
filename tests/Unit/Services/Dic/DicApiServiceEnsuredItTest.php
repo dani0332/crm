@@ -237,6 +237,50 @@ it('getPolicyDoc returns failure without HTTP when insurer_quote_number is missi
         ->and($result['error'])->toContain('insurer_quote_number');
 });
 
+it('extractTaxInvoiceUrlFromGetPolicyDocResponse returns URL from additionalDetails.documents TAX_INVOICE', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    $taxUrl = 'https://eit-enbed-data-uat.s3.ap-south-1.amazonaws.com/CERTIFICATES/TAX_INVOICES/28925.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256';
+    $payload = [
+        'url' => 'https://example.test/certificate.pdf',
+        'additionalDetails' => [
+            'documents' => [
+                [
+                    'url' => $taxUrl,
+                    'documentName' => 'TAX_INVOICE',
+                    'documentNumber' => '28925',
+                ],
+            ],
+        ],
+    ];
+
+    expect($service->extractTaxInvoiceUrlFromGetPolicyDocResponse($payload))->toBe($taxUrl);
+});
+
+it('extractTaxInvoiceUrlFromGetPolicyDocResponse matches document_name and case-insensitive name', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    $taxUrl = 'https://example.test/tax.pdf';
+    $payload = [
+        'additional_details' => [
+            'documents' => [
+                ['document_name' => 'tax_invoice', 'Url' => $taxUrl],
+            ],
+        ],
+    ];
+
+    expect($service->extractTaxInvoiceUrlFromGetPolicyDocResponse($payload))->toBe($taxUrl);
+});
+
+it('extractTaxInvoiceUrlFromGetPolicyDocResponse returns null when TAX_INVOICE document missing', function () {
+    $service = new DicApiService(new DicResponseHandler, Mockery::mock(DicRequestBuilder::class), app(PolicyIssuanceService::class));
+
+    expect($service->extractTaxInvoiceUrlFromGetPolicyDocResponse([
+        'url' => 'https://example.test/certificate.pdf',
+        'additionalDetails' => ['documents' => [['documentName' => 'OTHER', 'url' => 'https://example.test/other.pdf']]],
+    ]))->toBeNull();
+});
+
 it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function () {
     $policyId = '00000000-0000-4000-8000-0000000000cc';
     $expectedPath = 'policy-stores/invoice/'.$policyId.':download';

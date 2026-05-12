@@ -121,13 +121,34 @@ class DicStepExecutor
             );
         }
 
+        $taxInvoiceUrl = $this->apiService->extractTaxInvoiceUrlFromGetPolicyDocResponse($result['data'] ?? null);
+        if (! $taxInvoiceUrl) {
+            $message = 'Tax Invoice URL missing in GetPolicyDoc response (expected additionalDetails.documents with documentName TAX_INVOICE)';
+            if ($applyQuoteFailure) {
+                app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+                    $quote,
+                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                );
+            }
+
+            $built = $this->responseHandler->buildStepResponse(PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC, false, $message, $message);
+
+            return $this->withTravelDicFailureMeta(
+                $built,
+                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            );
+        }
+
         try {
             $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule DIC');
+            $this->documentService->attachFromUrl($quote, $taxInvoiceUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Tax Invoice DIC');
 
             return $this->responseHandler->buildStepResponse(
                 PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
                 true,
-                'Policy document stored in IMCRM',
+                'Policy schedule and tax invoice stored in IMCRM',
                 null,
             );
         } catch (\Throwable $e) {
