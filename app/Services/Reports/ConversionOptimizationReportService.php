@@ -590,12 +590,7 @@ class ConversionOptimizationReportService extends BaseService
                 }
             )
             ->when(! empty($filters->departmentIds), function ($builder) use ($filters) {
-                $builder->whereExists(function ($query) use ($filters) {
-                    $query->selectRaw('1')
-                        ->from('user_departments')
-                        ->whereColumn('user_departments.user_id', 'users.id')
-                        ->whereIn('user_departments.department_id', $filters->departmentIds);
-                });
+                $builder->whereIn('users.department_id', $filters->departmentIds);
             });
 
         return $query;
@@ -686,12 +681,7 @@ class ConversionOptimizationReportService extends BaseService
         $this->applyTravelFilters($query, $filters, $lob);
 
         $query->when(! empty($filters->departmentIds), function ($builder) use ($filters) {
-            $builder->whereExists(function ($query) use ($filters) {
-                $query->selectRaw('1')
-                    ->from('user_departments')
-                    ->whereColumn('user_departments.user_id', 'users.id')
-                    ->whereIn('user_departments.department_id', $filters->departmentIds);
-            });
+            $builder->whereIn('users.department_id', $filters->departmentIds);
         });
 
         return $query;
