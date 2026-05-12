@@ -1,19 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\QuoteStatusLogIndexRequest;
 use App\Services\QuoteStatusLogService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class QuoteStatusLogController extends Controller
 {
-    public function index(Request $request, QuoteStatusLogService $quoteStatusLogService): JsonResponse
+    public function index(QuoteStatusLogIndexRequest $request, QuoteStatusLogService $quoteStatusLogService): JsonResponse
     {
-        $validatedData = $request->validate([
-            'quoteId' => ['required', 'integer', 'min:1'],
-            'quoteTypeId' => ['required', 'integer', 'min:1'],
-        ]);
+        $validatedData = $request->validated();
 
         $logs = $quoteStatusLogService->getQuoteStatusLogs(
             $validatedData['quoteTypeId'],

@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SendUpdateStatusLogIndexRequest;
 use App\Services\SendUpdateStatusLogService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SendUpdateStatusLogController extends Controller
 {
-    public function index(Request $request, SendUpdateStatusLogService $sendUpdateStatusLogService): JsonResponse
+    public function index(SendUpdateStatusLogIndexRequest $request, SendUpdateStatusLogService $sendUpdateStatusLogService): JsonResponse
     {
-        $validatedData = $request->validate([
-            'sendUpdateLogId' => ['required', 'integer', 'min:1'],
-        ]);
+        $validatedData = $request->validated();
 
         $logs = $sendUpdateStatusLogService->getSendUpdateStatusLogs(
             (int) $validatedData['sendUpdateLogId'],
