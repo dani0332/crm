@@ -66,12 +66,4 @@ class HealthPlan extends Model
     {
         return $this->hasMany(HealthRateControl::class, 'health_plan_id');
     }
-
-    /*protected static function booted(): void
-    {
-        static::deleting(function (HealthPlan $healthPlan) {
-            $healthPlan->healthRateControls()->delete();
-            $healthPlan->rates()->delete();
-        });
-    }*/
 }

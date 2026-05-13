@@ -286,7 +286,7 @@ class HealthRateService extends BaseService
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return DB::transaction(function () use ($data, $rate) {
                 // Get plan to validate cohort, gender
-                $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
+                $plan = $this->healthPlanService->getPlanById($rate->health_plan_id);
 
                 // Check duplicate rates under same sheet
                 $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
@@ -294,7 +294,7 @@ class HealthRateService extends BaseService
                 // Update gender, cohort, marital status if plan has enabled
                 $data['cohort'] = $plan->cohort_enabled ? $data['cohort'] : null;
                 $data['gender'] = $plan->gender_enabled ? $data['gender'] : null;
-                $data['marital_status'] = $plan->marital_status_enabled
+                $data['marital_status'] = $plan->marital_status_enabled && $plan->gender_enabled
                     && strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value) ? $data['marital_status'] : null;
 
                 $rate->fill($data);
