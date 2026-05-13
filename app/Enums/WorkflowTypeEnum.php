@@ -38,6 +38,9 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const OTHER_BUSINESS_NEW_POLICY = 'other_business_new_policy';
+    public const DEVICE_NEW_POLICY = 'device_new_policy';
+    public const DEVICE_AUTOMATION_FAILED = 'device_automation_failed';
+    public const DEVICE_UPDATE_POLICY = 'device_update_policy';
     public const CYBER_NEW_POLICY = 'cyber_new_policy';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
@@ -88,6 +91,12 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';
     public const HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 'health_stp_advisor_notification_api_failed';
 
+    // Device Workflow Types
+    public const DEVICE_AUTOMATED_FOLLOWUPS = 'device_automated_followups';
+    public const DEVICE_OCB_INTRO_EMAIL = 'device_ocb_intro_email';
+    public const DEVICE_OCB_INTRO_WHATSAPP = 'device_ocb_intro_whatsapp';
+    public const DEVICE_ZERO_PLANS_EMAIL = 'device_zero_plans_email';
+
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
@@ -97,4 +106,7 @@ final class WorkflowTypeEnum extends Enum
     // Motor Revival workflow
     public const MOTOR_REVIVAL_OCB = 'motor_revival_ocb';
     public const MOTOR_REVIVAL_FOLLOWUP = 'motor_revival_followup';
+
+    // Life Revival OCB
+    public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
 }

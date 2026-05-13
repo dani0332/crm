@@ -26,15 +26,14 @@ class LeadAllocationDashboardService extends BaseService
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
-
-            $teamName = $this->getTeamName($quoteType);
+            // get the team name for the quote type
+            $teamName = TeamNameEnum::getTeamName($quoteType);
             $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
-            $advisorRoles = $quoteType->advisorRoles();
 
+            $advisorRoles = $quoteType->advisorRoles();
             if ($quoteType == QuoteTypes::SAVINGS) {
                 $advisorRoles[] = RolesEnum::SavingsManager;
             }
-
             $users = User::activeUser()
                 ->select(
                     'users.id as userId',
@@ -77,6 +76,7 @@ class LeadAllocationDashboardService extends BaseService
                     });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
+
             if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
                 && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
                 $departmentIds = auth()->user()->department()->pluck('id')->toArray();
@@ -140,14 +140,6 @@ class LeadAllocationDashboardService extends BaseService
                 $query->where('code', $frequency->value);
             })
             ->count();
-    }
-
-    private function getTeamName(QuoteTypes $quoteType): string
-    {
-        return match ($quoteType) {
-            QuoteTypes::CYBER => TeamNameEnum::CYBER,
-            default => $quoteType->value,
-        };
     }
 
 }

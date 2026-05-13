@@ -5,6 +5,7 @@ namespace Tests;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Facade;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\Helpers\TestSchemaCreator;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -15,7 +16,9 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         // Force SQLite for tests regardless of environment variables
-        // This ensures tests use in-memory database even when Doppler is active
+        // This ensures tests use in-memory database even when Doppler is active.
+        // Must run BEFORE TestSchemaCreator: purge() clears :memory:, so schema
+        // must be created on the connection that tests actually use.
         if (app()->environment('testing')) {
             config(['database.default' => 'sqlite']);
             config(['database.connections.sqlite' => [
@@ -25,13 +28,12 @@ abstract class TestCase extends BaseTestCase
                 'foreign_key_constraints' => true,
             ]]);
 
-            // Clear any existing connections to force reconnection with new config
             app('db')->purge('mysql');
             app('db')->purge('sqlite');
-
-            // Reconnect to ensure clean state
             app('db')->reconnect('sqlite');
         }
+
+        TestSchemaCreator::createMinimalSchema();
     }
 
     protected function tearDown(): void

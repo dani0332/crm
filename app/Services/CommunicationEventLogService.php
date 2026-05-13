@@ -11,7 +11,7 @@ class CommunicationEventLogService
     {
         return CommunicationEventLog::query()
             ->where('quoteUuid', $quoteUuid)
-            ->orderByDesc('created_at')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 }

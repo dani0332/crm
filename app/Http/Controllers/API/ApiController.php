@@ -35,6 +35,7 @@ use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SendZeroPlanEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
@@ -70,6 +71,7 @@ use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\OutboundEmailsHookService;
@@ -441,10 +443,10 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
-            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
+            $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                 // reason for adding this check on process involved is because we not triggering the payment capture failure for car AXA
-                $processInvolved = $isCyberLob ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
+                $processInvolved = $shouldUpdateAPIIssuanceAndInsurerStatus ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, $processInvolved);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -763,8 +765,13 @@ class ApiController extends Controller
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
+        LoggerService::info(self::class.' - update customer replied status request received',
+            ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject]);
+
         try {
-            $result = DB::transaction(function () use ($request) {
+            $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+            $result = DB::transaction(function () use ($request, $quoteType) {
 
                 $emailStatusService = app(EmailStatusService::class);
 
@@ -775,13 +782,19 @@ class ApiController extends Controller
                 );
 
                 if (! $result->success) {
+                    LoggerService::warning(self::class.' - error updating customer replied status',
+                        ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'error' => $result->message]);
+
                     return $result;
                 }
 
-                $quoteType = QuoteTypes::getName($request->quote_type_id);
+                LoggerService::info(self::class.' - updating source for revival leads after customer replied',
+                    ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'quote_type' => $quoteType]);
 
                 match ($quoteType) {
                     QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    QuoteTypes::LIFE => app(LifeRevivalService::class)
+                        ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     default => null,
                 };
 
@@ -789,6 +802,21 @@ class ApiController extends Controller
             });
 
             if ($result->success) {
+                if ($quoteType === QuoteTypes::LIFE) {
+                    try {
+                        QuoteTypes::LIFE->allocate(uuid: $request->quote_uuid);
+
+                        LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
+                            ['quote_uuid' => $request->quote_uuid]);
+                    } catch (\Throwable $exception) {
+                        LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                            'quote_uuid' => $request->quote_uuid,
+                            'quote_type_id' => $request->quote_type_id,
+                            'error' => $exception->getMessage(),
+                        ], $exception);
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => $result->message,
@@ -939,6 +967,21 @@ class ApiController extends Controller
         return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
     }
 
+    public function sendZeroPlansEmail(SendZeroPlanEmailRequest $request)
+    {
+        $response = app(ApiService::class)->sendZeroPlansEmail($request);
+        if ($response['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $response['message'],
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => $response['message'],
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(
