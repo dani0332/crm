@@ -38,7 +38,7 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
                 $healthPlan->save();
 
                 // Create health rate control (sheet)
-                $healthRateControl = $this->createHealthRateControl($healthPlan->id);
+                $healthRateControl = $this->createHealthRateControl($healthPlan->id, $healthPlan->rates->count());
 
                 // Update rate
                 HealthRate::where('health_plan_id', $healthPlan->id)->update([
@@ -50,7 +50,7 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
         }
     }
 
-    private function createHealthRateControl(int $healthPlanId): HealthRateControl
+    private function createHealthRateControl(int $healthPlanId, int $totalRecords): HealthRateControl
     {
         // Get Admin user
         $adminRole = Role::where('name', 'Admin')->first();
@@ -62,7 +62,7 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
             'status' => HealthPlanRateSheetStatusEnum::ACTIVE->value,
             'effective_from' => '2026-06-04',
             'effective_to' => '2999-12-31',
-            'total_records' => 1,
+            'total_records' => $totalRecords,
             'created_by' => $adminUser->id,
         ]);
     }

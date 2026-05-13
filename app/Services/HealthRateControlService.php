@@ -18,7 +18,7 @@ class HealthRateControlService extends BaseService
     public function delete(int $id): void
     {
         DB::transaction(function () use ($id) {
-            $rateSheet = HealthRateControl::find($id);
+            $rateSheet = HealthRateControl::findOrFail($id);
             $plan = $rateSheet->healthPlan;
 
             $rateSheet->rates()->delete();
