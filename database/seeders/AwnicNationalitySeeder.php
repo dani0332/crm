@@ -215,7 +215,6 @@ class AwnicNationalitySeeder extends Seeder
             ['code' => 'Surinamese', 'awni_country_code_number' => 1175],
             ['code' => 'TONGAN', 'awni_country_code_number' => 1185],
             ['code' => 'Uzbek', 'awni_country_code_number' => 1193],
-            ['code' => 'Burundian', 'awni_country_code_number' => 1030],
             ['code' => 'Ivorian', 'awni_country_code_number' => null],
             ['code' => 'Jamaican', 'awni_country_code_number' => null],
             ['code' => 'Japanese', 'awni_country_code_number' => null],
