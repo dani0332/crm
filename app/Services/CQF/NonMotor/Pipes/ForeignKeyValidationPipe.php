@@ -17,7 +17,7 @@ use Closure;
 /**
  * Validates that all foreign key references required for the renewal PersonalQuote
  * row exist in the database before the storage step. Prevents integrity constraint
- * violations (e.g. missing insurance_provider_id, customer_id, nationality_id).
+ * violations (e.g. missing customer_id, nationality_id).
  */
 class ForeignKeyValidationPipe
 {
@@ -58,16 +58,6 @@ class ForeignKeyValidationPipe
             Customer::class,
             'Customer id is required for renewal quote.',
             fn ($id) => "Customer with id {$id} does not exist.",
-            $errors,
-            $checkExists
-        );
-
-        $this->validateRequiredFk(
-            $quote,
-            'insurance_provider_id',
-            InsuranceProvider::class,
-            'Insurance provider id is required for renewal quote.',
-            fn ($id) => "Insurance provider with id {$id} does not exist.",
             $errors,
             $checkExists
         );
