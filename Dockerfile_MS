@@ -1,17 +1,20 @@
 # syntax=docker/dockerfile:1
 
 # -----------------------------------------------------------------------------
-# Doppler CLI + token (www) — keep IMCRM_TOKEN only on the last layer here.
+# Doppler CLI + token (www)
 # -----------------------------------------------------------------------------
 FROM ubuntu:22.04 AS dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl wget gpg apt-transport-https ca-certificates gnupg \
-    && rm -rf /var/lib/apt/lists/*
-RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" > /etc/apt/sources.list.d/doppler-cli.list \
-    && curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg \
-    && apt-get update && apt-get install -y --no-install-recommends doppler \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd -g 1000 www && useradd -u 1000 -g www -m -s /bin/bash www
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends curl wget gpg apt-transport-https ca-certificates gnupg; \
+    echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" > /etc/apt/sources.list.d/doppler-cli.list; \
+    curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends doppler; \
+    rm -rf /var/lib/apt/lists/*; \
+    groupadd -g 1000 www && useradd -u 1000 -g www -m -s /bin/bash www
 ARG IMCRM_TOKEN
 RUN runuser -u www -- doppler configure set token "${IMCRM_TOKEN}"
 
@@ -25,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/yarn \
     yarn install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
-# PHP extensions + Composer vendor (cached layers independent of app PHP edits)
+# PHP extensions + Composer vendor
 # -----------------------------------------------------------------------------
 FROM php:8.4-fpm AS build
 WORKDIR /app
@@ -33,7 +36,9 @@ WORKDIR /app
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
 RUN chmod +x /usr/local/bin/install-php-extensions
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     zip \
@@ -101,9 +106,8 @@ WORKDIR /var/www
 RUN groupadd -g 1000 www && \
     useradd -u 1000 -ms /bin/bash -g www www && \
     usermod -aG www-data www && \
-    usermod -aG www www-data
-
-RUN mkdir /var/log/php && \
+    usermod -aG www www-data && \
+    mkdir /var/log/php && \
     touch /var/log/php/errors.log && \
     touch /var/log/php/www-access.log && \
     touch /var/log/php/www-error.log && \
@@ -125,17 +129,27 @@ RUN cp docker/supervisor.conf /etc/supervisord.conf && \
     cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
     cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
     cp -r docker/*.pem /etc/nginx/conf.d/ && \
-    cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+    cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf && \
+    chmod +x /var/www/docker/run.sh
 
-RUN chmod +x /var/www/docker/run.sh
-
-RUN \
-    wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
-    cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
-    export NR_INSTALL_USE_CP_NOT_LN=1 && \
-    export NR_INSTALL_SILENT=1 && \
-    /tmp/newrelic-php5-*/newrelic-install install && \
-    rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+# One index fetch + tarball (same newest glibc agent as wget -A; cache skips re-download)
+RUN --mount=type=cache,target=/var/cache/newrelic-agent,sharing=locked \
+    set -eu; \
+    NR_TGZ=$$(curl -fsSL https://download.newrelic.com/php_agent/release/ \
+        | grep -oE 'newrelic-php5-[0-9A-Za-z._+-]+-linux\.tar\.gz' \
+        | grep -vF -- '-linux-musl' \
+        | sort -uV | tail -n1); \
+    test -n "$$NR_TGZ"; \
+    echo "New Relic tarball: $${NR_TGZ}"; \
+    if [ ! -s "/var/cache/newrelic-agent/$${NR_TGZ}" ]; then \
+        curl -fsSL "https://download.newrelic.com/php_agent/release/$${NR_TGZ}" -o "/var/cache/newrelic-agent/$${NR_TGZ}.part" \
+        && mv "/var/cache/newrelic-agent/$${NR_TGZ}.part" "/var/cache/newrelic-agent/$${NR_TGZ}"; \
+    fi; \
+    cp "/var/cache/newrelic-agent/$${NR_TGZ}" /tmp/nr.tgz; \
+    tar -xzf /tmp/nr.tgz -C /tmp; \
+    export NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=1; \
+    /tmp/newrelic-php5-*/newrelic-install install; \
+    rm -rf /tmp/nr.tgz /tmp/newrelic-php5-* /tmp/nrinstall*; \
     sed -i \
         -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
         -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
@@ -143,8 +157,8 @@ RUN \
         -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
         -e 's|^;\?newrelic\.daemon\.logfile = .*|newrelic.daemon.logfile = "/var/log/php/newrelic-daemon.log"|' \
         -e 's|^;\?newrelic\.logfile = .*|newrelic.logfile = "/var/log/php/newrelic-php_agent.log"|' \
-        /usr/local/etc/php/conf.d/newrelic.ini && \
-    touch /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log && \
+        /usr/local/etc/php/conf.d/newrelic.ini; \
+    touch /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log; \
     chmod 666 /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log
 
 RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
