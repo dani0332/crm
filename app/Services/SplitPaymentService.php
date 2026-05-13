@@ -39,6 +39,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Life\EmbeddedProductService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -948,6 +949,32 @@ class SplitPaymentService
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
                 LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
+            }
+
+            return $errorMessage;
+        }
+
+        $primaryEmailQuote = $quoteModel;
+        if ($sendUpdateId > 0) {
+            $quoteType = QuoteTypes::getName($quoteModel->quote_type_id)?->value;
+            if ($quoteType) {
+                $primaryEmailQuote = $this->getQuoteObjectBy($quoteType, $quoteModel->quote_uuid, 'uuid');
+            }
+        }
+
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($primaryEmailQuote ?: null)) {
+            $errorMessage = PlaceholderPrimaryEmail::message();
+            LoggerService::warning('Master payment approval blocked due to placeholder primary email', [
+                'quote_code' => $quoteModel->code,
+                'send_update_id' => $sendUpdateId,
+                'quote_uuid' => $primaryEmailQuote->uuid ?? null,
+            ]);
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update([
+                    'status' => PaymentProcessJobEnum::FAILED,
+                    'message' => $errorMessage,
+                ]);
             }
 
             return $errorMessage;

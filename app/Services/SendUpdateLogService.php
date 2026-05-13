@@ -53,6 +53,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\DeviceQuoteService;
@@ -1030,6 +1031,11 @@ class SendUpdateLogService
 
         $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteDetails)) {
+            return ['status' => false, 'message' => PlaceholderPrimaryEmail::message()];
+        }
+
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
         if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
