@@ -130,8 +130,8 @@ class HealthRateService extends BaseService
                 $healthRateControl = HealthRateControl::create([
                     'health_plan_id' => $data['health_plan_id'],
                     'version' => $data['version'],
-                    'effective_from' => $data['effective_from'],
-                    'effective_to' => $data['effective_to'],
+                    // 'effective_from' => $data['effective_from'],
+                    // 'effective_to' => $data['effective_to'],
                     'total_records' => count($existingRates ?? []) + 1,
                     'created_by' => $data['user_id'],
                 ]);
@@ -298,17 +298,20 @@ class HealthRateService extends BaseService
         // If draft, update same version
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return DB::transaction(function () use ($data, $rate) {
+                // Get plan to validate cohort, gender
+                $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
+
                 // Check duplicate rates under same sheet
                 $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
 
+                // Update gender, cohort, marital status if plan has enabled
+                $data['cohort'] = $plan->cohort_enabled ? $data['cohort'] : null;
+                $data['gender'] = $plan->gender_enabled ? $data['gender'] : null;
+                $data['marital_status'] = $plan->marital_status_enabled
+                    && strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value) ? $data['marital_status'] : null;
+
                 $rate->fill($data);
                 $rate->save();
-
-                // Update Health Rate Control effective dates
-                HealthRateControl::where('id', $rate->health_rate_control_id)->update([
-                    'effective_from' => $data['effective_from'],
-                    'effective_to' => $data['effective_to'],
-                ]);
 
                 return $rate;
             });
