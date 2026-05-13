@@ -69,7 +69,9 @@ RUN --mount=type=cache,target=/root/.composer/cache \
 # -----------------------------------------------------------------------------
 FROM php:8.4-fpm
 
-ARG NEWRELIC_PHP_TGZ=newrelic-php5-12.6.0.34-linux.tar.gz
+# Optional: pin for reproducible builds, e.g. --build-arg NEWRELIC_PHP_TGZ=newrelic-php5-12.7.0.36-linux.tar.gz
+# If empty, picks latest glibc tarball from the release index (same idea as wget -A 'newrelic-php5-*-linux.tar.gz').
+ARG NEWRELIC_PHP_TGZ=
 
 COPY --from=dependencies --chown=1000:1000 /home/www/.doppler/ /home/www/.doppler/
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
@@ -128,7 +130,17 @@ RUN cp docker/supervisor.conf /etc/supervisord.conf && \
 
 RUN chmod +x /var/www/docker/run.sh
 
-RUN curl -fsSL "https://download.newrelic.com/php_agent/release/${NEWRELIC_PHP_TGZ}" -o /tmp/nr.tgz \
+RUN set -eu; \
+    NR_TGZ="${NEWRELIC_PHP_TGZ}"; \
+    if [ -z "$$NR_TGZ" ]; then \
+        NR_TGZ=$$(curl -fsSL https://download.newrelic.com/php_agent/release/ \
+            | grep -oE 'newrelic-php5-[0-9A-Za-z._+-]+-linux\.tar\.gz' \
+            | grep -vF -- '-linux-musl' \
+            | sort -uV | tail -n1); \
+    fi; \
+    test -n "$$NR_TGZ"; \
+    echo "New Relic PHP tarball: $${NR_TGZ}"; \
+    curl -fsSL "https://download.newrelic.com/php_agent/release/$${NR_TGZ}" -o /tmp/nr.tgz \
     && tar -xzf /tmp/nr.tgz -C /tmp \
     && export NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=1 \
     && /tmp/newrelic-php5-*/newrelic-install install \
