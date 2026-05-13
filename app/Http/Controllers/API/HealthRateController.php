@@ -15,7 +15,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class HealthRateController extends Controller
 {
-    public function __construct(private HealthRateService $healthRateService) {}
+    public function __construct(
+        private HealthRateService $healthRateService,
+    ) {}
 
     public function getList(HealthPlanDetailRequest $request): AnonymousResourceCollection
     {

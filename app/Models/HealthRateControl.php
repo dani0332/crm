@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HealthRateControl extends Model
 {
@@ -32,5 +33,10 @@ class HealthRateControl extends Model
     public function healthPlan(): BelongsTo
     {
         return $this->belongsTo(HealthPlan::class, 'health_plan_id', 'id');
+    }
+
+    public function rates(): HasMany
+    {
+        return $this->hasMany(HealthRate::class, 'health_rate_control_id', 'id');
     }
 }
