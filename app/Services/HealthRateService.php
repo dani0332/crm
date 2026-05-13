@@ -252,14 +252,18 @@ class HealthRateService extends BaseService
         if ($existingRates) {
             foreach ($existingRates as $rate) {
                 $duplicate = true;
+
+                // Loop through composite key fields to check duplicate
                 foreach ($matchingFields as $field) {
+                    // Check duplicate by composite key
                     if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
                         $duplicate = false;
                         break;
                     }
                 }
 
-                if ($duplicate) {
+                // If composite combination match, throw an error
+                if ($duplicate && $rate->min_age <= $data['max_age'] && $rate->max_age >= $data['min_age']) {
                     // Same format as api response
                     throw new HttpResponseException(
                         response()->json([
@@ -270,23 +274,6 @@ class HealthRateService extends BaseService
                         ], 422)
                     );
                 }
-            }
-
-            // Check age overlap
-            $overlapExists = $existingRates->contains(function ($rate) use ($data) {
-                return $rate->min_age <= $data['max_age'] &&
-                       $rate->max_age >= $data['min_age'];
-            });
-
-            if ($overlapExists) {
-                throw new HttpResponseException(
-                    response()->json([
-                        'status' => false,
-                        'errors' => [
-                            'Age range overlaps with an existing rate sheet.',
-                        ],
-                    ], 422)
-                );
             }
         }
     }
