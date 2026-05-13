@@ -148,11 +148,16 @@ RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /e
     && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/log/php/supervisord.log|' /etc/supervisord.conf \
     && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi \
+    && sed -i \
+        -e 's|pid /run/nginx.pid;|pid /tmp/nginx.pid;|' \
+        -e 's|pid /var/run/nginx.pid;|pid /tmp/nginx.pid;|' \
+        /etc/nginx/nginx.conf \
     && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown, /bin/chmod, /bin/mkdir' > /etc/sudoers.d/www \
     && chmod 0440 /etc/sudoers.d/www \
     && visudo -cf /etc/sudoers.d/www \
     && mkdir -p /var/log/newrelic \
-    && chown -R www:www /var/www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler
+    && chown -R www:www /var/www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler /var/lib/nginx
 
 ENV HOME=/home/www
 
