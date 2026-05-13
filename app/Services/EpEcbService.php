@@ -929,6 +929,7 @@ class EpEcbService extends EpBookingService
             'doc_uuid' => $docUuid,
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
+            'document_type_id' => $documentType->id,
             'doc_mime_type' => 'application/pdf',
             'created_by_id' => null,
             'watermarked_doc_name' => null,

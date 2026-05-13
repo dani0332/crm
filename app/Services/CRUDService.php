@@ -202,7 +202,8 @@ class CRUDService extends BaseService
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes"),
+                DB::raw("(SELECT NAME FROM users WHERE id = NULLIF(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), IF(JSON_EXTRACT(a.new_values, '$.advisor_id') IS NULL, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), NULL))) AS OldAdvisor"),
             )
             ->where(function ($query) {
                 $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
@@ -413,10 +414,17 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
+        // For unit test since concact does not work in sqllite
+        $driver = DB::connection()->getDriverName();
+
+        $nameExpression = $driver === 'sqlite'
+            ? "users.name || ' - ' || r.name"
+            : "CONCAT(users.name,' - ',r.name)";
+
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->select('users.id', DB::raw("$nameExpression AS name"))
             ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);

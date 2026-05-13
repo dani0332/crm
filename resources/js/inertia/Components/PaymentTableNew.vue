@@ -166,6 +166,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.Device,
   quoteTypeCodeEnum.CYBER,
 ]; //Ecommerce LOBs
 
@@ -291,6 +292,8 @@ if (
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Device) {
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
@@ -301,7 +304,7 @@ if (
 ) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
-  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -545,6 +548,7 @@ const addPaymentModal = async () => {
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
     quoteTypeCodeEnum.SAVINGS,
+    quoteTypeCodeEnum.Device,
   ];
 
   if (
@@ -867,21 +871,6 @@ onMounted(() => {
   showLackingPayment();
 });
 
-const isChildPaymentDeletable = computed(() => {
-  if (props.payments.length !== 2) return false;
-  const childPaymentNotAuthorised = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.DRAFT,
-    paymentStatusEnum.OVERDUE,
-  ].includes(props.payments[1].payment_status_id);
-  return (
-    props.quoteType == quoteTypeCodeEnum.Travel &&
-    page.props?.aboveAgeMembers &&
-    childPaymentNotAuthorised
-  );
-});
-
 const setPaymentInitialPrice = () => {
   if (paymentMethodsFormReplicated.value.status !== 'edit') {
     if (props.isPlanDetailEnabled) {
@@ -916,6 +905,8 @@ const setPaymentInitialPrice = () => {
 const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == quoteTypeCodeEnum.Device) {
+    initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
@@ -1206,7 +1197,6 @@ watch(
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
-                    :isChildPaymentDeletable="isChildPaymentDeletable"
                     :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmedReplicated"
                     :capturePaymentValidationInProcess="
@@ -1368,7 +1358,7 @@ watch(
         <AmlApprovalModal
           v-model="isAmlApprovalRequired"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :quote-request-id="props.quoteRequest.id"
           :is-processing="paymentMethodsFormReplicated.processing"
@@ -1414,7 +1404,7 @@ watch(
           :quote-id="props.quoteRequest.id"
           :quote-uuid="props.quoteRequest.uuid"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"

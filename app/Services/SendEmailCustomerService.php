@@ -26,7 +26,6 @@ use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -313,8 +312,8 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $value = trim($additionalContact->value ?? '');
-                    if (! empty($value)) {
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
+                    if ($value !== null) {
                         $ccAdditional[] = [
                             'email' => $value,
                             'name' => $emailData->customerName,
@@ -430,8 +429,8 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $value = trim($additionalContact->value ?? '');
-                    if (! empty($value)) {
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
+                    if ($value !== null) {
                         $ccAdditional[] = [
                             'email' => $value,
                             'name' => $emailData->customerName,
@@ -2107,5 +2106,4 @@ class SendEmailCustomerService extends BaseService
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
-
 }

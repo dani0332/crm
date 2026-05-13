@@ -74,6 +74,7 @@ class QuoteDocumentService extends BaseService
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->notRestrictedInternalDocument()
             ->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
                 $query->where('category', $documentTypeCategory);
             })
@@ -186,11 +187,11 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
+
             // LoggerService::info('Document deleted', [
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']
             // ]);
-
             return response()->json(['message' => 'document deleted successfully']);
         }
 
@@ -329,8 +330,9 @@ class QuoteDocumentService extends BaseService
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
-                'document_category' => $data['document_category'] ?? null,
                 'created_by_id' => auth()->id() ?? null,
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
             ]);
 
             // update the Bor log reference with uploaded document time and status
@@ -566,6 +568,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
+            QuoteTypeId::Device => [DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF],
             QuoteTypeId::Cyber => ['CYDPDR', 'CYPD', 'CYPDR'],
         ];
 

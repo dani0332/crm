@@ -97,7 +97,11 @@ useradd -u 1000 -ms /bin/bash -g www www
 
 # PHP Error Log Files
 RUN mkdir /var/log/php && \
-touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
+touch /var/log/php/errors.log && \
+touch /var/log/php/www-access.log && \
+touch /var/log/php/www-error.log && \
+touch /var/log/php/www-slow.log && \
+chmod -R 777 /var/log/php
 
 EXPOSE 80
 EXPOSE 443
@@ -109,7 +113,8 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf && \
 cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
 cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
-cp -r docker/*.pem /etc/nginx/conf.d/
+cp -r docker/*.pem /etc/nginx/conf.d/ && \
+cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /var/www/docker/run.sh
 RUN usermod -aG root www-data
