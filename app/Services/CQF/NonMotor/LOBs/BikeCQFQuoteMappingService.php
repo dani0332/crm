@@ -106,7 +106,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'quote_type_id' => QuoteTypeId::Bike,
             'nationality_id' => $quote->nationality_id ?? null,
             'currently_insured_with_id' => is_numeric($quote->currently_insured_with ?? null) ? (int) $quote->currently_insured_with : null,
-            'insurance_provider_id' => $quote->insurance_provider_id ?? null,
+            'insurance_provider_id' => null,
         ];
 
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
