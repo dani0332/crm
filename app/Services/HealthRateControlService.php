@@ -19,8 +19,16 @@ class HealthRateControlService extends BaseService
     {
         DB::transaction(function () use ($id) {
             $rateSheet = HealthRateControl::find($id);
+            $plan = $rateSheet->healthPlan;
+
             $rateSheet->rates()->delete();
             $rateSheet->delete();
+
+            // If plan is scheduled, make it draft
+            if ($plan->status == HealthPlanRateSheetStatusEnum::SCHEDULED->value) {
+                $plan->status = HealthPlanRateSheetStatusEnum::DRAFT->value;
+                $plan->save();
+            }
         });
     }
 }

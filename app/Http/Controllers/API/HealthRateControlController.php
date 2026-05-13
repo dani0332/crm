@@ -11,7 +11,7 @@ class HealthRateControlController extends Controller
 {
     public function __construct(private HealthRateControlService $healthRateControlService) {}
 
-    public function deleteSheet(DeleteHealthRateSheetRequest $request): JsonResponse
+    public function delete(DeleteHealthRateSheetRequest $request): JsonResponse
     {
         $this->healthRateControlService->delete($request->id);
 
