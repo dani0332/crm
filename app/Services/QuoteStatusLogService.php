@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
-use App\Support\StatusChangeRequestNotes;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -25,9 +24,24 @@ class QuoteStatusLogService extends BaseService
             'current_quote_status_id' => $quote->quote_status_id,
             'previous_quote_status_id' => $oldQuoteStatus,
             'status_change_source' => LeadSourceEnum::IMCRM,
-            'notes' => StatusChangeRequestNotes::toJson(request()),
+            'notes' => $this->buildStatusChangeNotes(),
             'created_by' => Auth::id(),
         ]);
+    }
+
+    /**
+     * Build a JSON payload of request metadata persisted in the `notes` text column.
+     */
+    protected function buildStatusChangeNotes(): string
+    {
+        $request = request();
+
+        return json_encode([
+            'method' => $request?->method(),
+            'path' => $request?->path(),
+            'ip' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+        ], JSON_UNESCAPED_SLASHES);
     }
 
     /**
