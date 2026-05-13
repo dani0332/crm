@@ -633,12 +633,7 @@ class SplitPaymentService
 
     private function getPaymentLinkURLIdentifier($modelType)
     {
-        $urlIdentifier = strtolower(string: $modelType);
-        if (ucfirst($modelType) === QuoteTypes::DEVICE->value) {
-            $urlIdentifier = 'smartphone';
-        }
-
-        return $urlIdentifier;
+        return strtolower(quoteTypeCode::resolveQuoteType($modelType));
     }
 
     public function generateInsurerPaymentLink($request)

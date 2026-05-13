@@ -31,6 +31,7 @@ use App\Models\CarAddOn;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -305,6 +306,13 @@ class SendUpdateLogService
                         $personalQuoteRelation = [
                             'savingsQuote' => [
                                 'parentClass' => SavingsQuote::class,
+                            ],
+                        ];
+                        break;
+                    case quoteTypeCode::Device:
+                        $personalQuoteRelation = [
+                            'deviceQuote' => [
+                                'parentClass' => DeviceQuote::class,
                             ],
                         ];
                         break;
