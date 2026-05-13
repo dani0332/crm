@@ -14,6 +14,8 @@ afterEach(function (): void {
 });
 
 it('updates matching nationality rows and leaves unmatched seed codes untouched in the database', function (): void {
+    Schema::dropIfExists('nationality');
+
     Schema::create('nationality', function (Blueprint $table): void {
         $table->id();
         $table->string('code');
