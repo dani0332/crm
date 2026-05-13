@@ -140,7 +140,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'quote_type_id' => $this->getQuoteTypeId(),
             'nationality_id' => $quote->nationality_id,
             'currently_insured_with_id' => $quote->currently_insured_with_id,
-            'insurance_provider_id' => $quote->insurance_provider_id,
+            'insurance_provider_id' => null,
         ];
 
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)

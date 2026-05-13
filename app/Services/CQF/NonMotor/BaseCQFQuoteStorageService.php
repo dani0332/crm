@@ -154,6 +154,10 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             $data['renewal_batch_id'] = $newQuote->renewal_batch_id;
         }
 
+        if (array_key_exists('insurance_provider_id', $data)) {
+            $data['insurance_provider_id'] = null;
+        }
+
         return $data;
     }
 }
