@@ -19,9 +19,9 @@ class WhatsAppMessageStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public int $tries = 3;
+    public int $tries = 2;
     public int $timeout = 15;
-    public int $backoff = 300;
+    public int $backoff = 15;
     protected array $messageData;
 
     public function __construct(array $messageData)
@@ -95,21 +95,36 @@ class WhatsAppMessageStatusJob implements ShouldQueue
                     return;
                 }
 
-                throw new \RuntimeException(
-                    "WhatsAppMessageStatusJob: No base EmailStatus for msg_id={$messageId} mobile={$mobile}. Will retry."
-                );
+                if ($this->attempts() < $this->tries) {
+                    LoggerService::info('WhatsAppMessageStatusJob - Base EmailStatus not found, retrying', [
+                        'msg_id' => $messageId,
+                        'mobile' => $mobile,
+                        'status' => $status,
+                        'attempt' => $this->attempts(),
+                    ]);
+
+                    $this->release($this->backoff);
+
+                    return;
+                }
+
+                LoggerService::warning('WhatsAppMessageStatusJob - Base EmailStatus missing after max retries, skipping', [
+                    'msg_id' => $messageId,
+                    'mobile' => $mobile,
+                    'status' => $status,
+                    'attempts' => $this->attempts(),
+                ]);
             });
-        } catch (\Throwable $th) {
-            LoggerService::error(
-                'WhatsAppMessageStatusJob failed',
+        } catch (\Exception $exception) {
+            LoggerService::warning(
+                'WhatsAppMessageStatusJob failed - Retrying...',
                 [
                     'message_id' => $this->messageData['message_id'] ?? null,
                     'status' => $this->messageData['status'] ?? null,
                     'mobile' => $this->messageData['mobile'] ?? null,
+                    'exception' => $exception->getMessage(),
                 ],
-                $th
             );
-            throw $th;
         }
     }
 }

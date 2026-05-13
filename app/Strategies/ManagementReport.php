@@ -674,6 +674,7 @@ class ManagementReport
             11 => 'jetski-quotes-show',
             18 => 'savings-quotes-show',
             19 => 'cyber-quotes-show',
+            20 => 'device-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];
@@ -740,9 +741,11 @@ class ManagementReport
         $now = now()->format('Y-m-d H:i:s');
         $healthQuoteType = QuoteTypeId::Health;
         $businessQuoteType = QuoteTypeId::Business;
+        $deviceQuoteType = QuoteTypeId::Device;
         $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
         $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
+        $dubaiBranch = BranchEnum::DUBAI->value;
 
         return "
             SELECT
@@ -755,6 +758,8 @@ class ManagementReport
                             THEN {$abuDhabiBranch}
                         WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND bqr.emirate_of_registration_id = {$abuDhabiEmirate}
                             THEN {$abuDhabiBranch}
+                        WHEN pq.quote_type_id = {$deviceQuoteType}
+                            THEN {$dubaiBranch}
                         ELSE ub.branch_id
                     END
                 ) AS resolved_branch_id

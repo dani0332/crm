@@ -35,6 +35,7 @@ class AuditRepository extends BaseRepository
             quoteTypeCode::Yacht,
             quoteTypeCode::Jetski,
             quoteTypeCode::SAVINGS,
+            quoteTypeCode::Device,
             quoteTypeCode::CYBER,
         ];
     }

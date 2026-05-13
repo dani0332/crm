@@ -236,7 +236,6 @@ abstract class BaseAllocationPipe extends AllocationService
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
-
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 

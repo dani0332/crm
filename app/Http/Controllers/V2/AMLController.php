@@ -65,6 +65,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Context;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class AMLController extends Controller
 {
@@ -100,6 +102,11 @@ class AMLController extends Controller
         return inertia('Aml/DetailPage', $data);
     }
 
+    /**
+     * Display the specified resource.
+     *
+     * @return Response|ResponseFactory
+     */
     public function show(AML $aml, AMLDisplayService $amlDisplayService, $insuredId = null, $customerId = null)
     {
         $data = $amlDisplayService->prepareShowData(

@@ -101,7 +101,7 @@ const renewalBatches = computed(() => {
 
 // Determine if the current quote type is non-motor
 const isNonMotor = computed(() => {
-  const nonMotorTypes = ['Bike', 'Home', 'Health', 'Travel'];
+  const nonMotorTypes = ['Bike', 'Home', 'Health', 'Travel', 'Device'];
   return nonMotorTypes.includes(filters.quoteType);
 });
 
@@ -392,6 +392,7 @@ const exportViaBird = async () => {
           { label: 'Travel', value: 'Travel' },
           { label: 'Bike', value: 'Bike' },
           { label: 'Home', value: 'Home' },
+          { label: 'Smartphone', value: 'Device' },
         ]"
         placeholder="Select a Quote Type"
         class="w-full"
