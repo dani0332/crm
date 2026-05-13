@@ -4,7 +4,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
-import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import SendUpdateHistorySection from '@/inertia/Components/SendUpdateHistorySection.vue';
