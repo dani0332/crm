@@ -98,7 +98,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 WORKDIR /var/www
 
 RUN groupadd -g 1000 www && \
-    useradd -u 1000 -ms /bin/bash -g www www
+    useradd -u 1000 -ms /bin/bash -g www www && \
+    usermod -aG www-data www && \
+    usermod -aG www www-data
 
 RUN mkdir /var/log/php && \
     touch /var/log/php/errors.log && \
@@ -157,7 +159,11 @@ RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /e
     && chmod 0440 /etc/sudoers.d/www \
     && visudo -cf /etc/sudoers.d/www \
     && mkdir -p /var/log/newrelic \
-    && chown -R www:www /var/www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler /var/lib/nginx
+    && chown -R www:www /var/www \
+    && chown -R www:www-data /var/www/storage /var/www/bootstrap/cache \
+    && find /var/www/storage /var/www/bootstrap/cache -type d -exec chmod 2775 {} + \
+    && find /var/www/storage /var/www/bootstrap/cache -type f -exec chmod 664 {} + \
+    && chown -R www:www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler /var/lib/nginx
 
 ENV HOME=/home/www
 

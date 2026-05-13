@@ -21,6 +21,16 @@ run_as_root mkdir -p \
 
 run_as_root chown -R "${USER}:www-data" storage/framework storage/app
 
+run_as_root chown "${USER}:www-data" storage/logs 2>/dev/null || true
+run_as_root chmod 2775 storage/logs 2>/dev/null || true
+shopt -s nullglob
+for f in storage/logs/*.log storage/logs/*.log.*; do
+    [ -e "$f" ] || continue
+    run_as_root chown "${USER}:www-data" "$f" 2>/dev/null || true
+    run_as_root chmod 664 "$f" 2>/dev/null || true
+done
+shopt -u nullglob
+
 shopt -s nullglob
 for path in storage/*; do
     case "$(basename "${path}")" in
@@ -33,7 +43,8 @@ done
 shopt -u nullglob
 
 run_as_root chmod -R 775 storage/framework storage/app bootstrap/cache 2>/dev/null || true
-run_as_root chmod -R g+rwX storage/logs 2>/dev/null || true
+run_as_root find storage/framework storage/app bootstrap/cache -type d -exec chmod g+s {} + 2>/dev/null || true
+run_as_root chmod 2775 storage/logs 2>/dev/null || true
 
 yes | doppler run -- php artisan horizon:terminate #terminates so its restarted by supervisor
 #php artisan migrate:fresh --seed
