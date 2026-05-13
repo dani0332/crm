@@ -1871,7 +1871,7 @@ class CentralService extends BaseService
                     ? $policyHandBook->watermarked_doc_url
                     : ($policyHandBook?->doc_url ?? '');
 
-                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Device])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
