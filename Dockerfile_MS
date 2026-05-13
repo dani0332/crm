@@ -92,6 +92,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libicu-dev \
     libmemcached11 \
     libwebp-dev \
+    libavif16 \
+    libsnappy1v5 \
     qpdf \
     && rm -rf /var/lib/apt/lists/*
 
@@ -105,6 +107,7 @@ RUN mkdir /var/log/php && \
     touch /var/log/php/www-access.log && \
     touch /var/log/php/www-error.log && \
     touch /var/log/php/www-slow.log && \
+    touch /var/log/php/supervisord.log && \
     chmod -R 777 /var/log/php
 
 EXPOSE 80
@@ -139,16 +142,15 @@ RUN curl -fsSL "https://download.newrelic.com/php_agent/release/${NEWRELIC_PHP_T
         -e 's|^;\?newrelic\.logfile = .*|newrelic.logfile = "/var/log/php/newrelic-php_agent.log"|' \
         /usr/local/etc/php/conf.d/newrelic.ini
 
-RUN mkdir -p /var/www/storage/logs \
-    && sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
-    && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/www/storage/logs/supervisord.log|' /etc/supervisord.conf \
+RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
+    && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/log/php/supervisord.log|' /etc/supervisord.conf \
     && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
     && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown, /bin/chmod, /bin/mkdir' > /etc/sudoers.d/www \
     && chmod 0440 /etc/sudoers.d/www \
     && visudo -cf /etc/sudoers.d/www \
     && mkdir -p /var/log/newrelic \
-    && chown -R www:www /var/www /var/log/nginx /var/log/newrelic /home/www/.doppler
+    && chown -R www:www /var/www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler
 
 ENV HOME=/home/www
 
