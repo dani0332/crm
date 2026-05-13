@@ -400,6 +400,9 @@ class SendUpdateLogService
                 }
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                if ($relation === 'deviceQuote') {
+                    $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
+                }
                 // Check if relationObject is a Collection
                 if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
