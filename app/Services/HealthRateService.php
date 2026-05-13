@@ -130,16 +130,16 @@ class HealthRateService extends BaseService
                 $healthRateControl = HealthRateControl::create([
                     'health_plan_id' => $data['health_plan_id'],
                     'version' => $data['version'],
-                    // 'effective_from' => $data['effective_from'],
-                    // 'effective_to' => $data['effective_to'],
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $data['effective_to'],
                     'total_records' => count($existingRates ?? []) + 1,
                     'created_by' => $data['user_id'],
                 ]);
             } else {
                 // Update existing health rate control
                 $healthRateControl->total_records++;
-                // $healthRateControl->effective_from = $data['effective_from'];
-                // $healthRateControl->effective_to = $data['effective_to'];
+                $healthRateControl->effective_from = $data['effective_from'];
+                $healthRateControl->effective_to = $data['effective_to'];
                 $healthRateControl->health_plan_id = $data['health_plan_id'];
                 $healthRateControl->save();
 
@@ -299,6 +299,12 @@ class HealthRateService extends BaseService
 
                 $rate->fill($data);
                 $rate->save();
+
+                // Update health rate control
+                HealthRateControl::where('id', $rate->health_rate_control_id)->update([
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $data['effective_to'],
+                ]);
 
                 return $rate;
             });
