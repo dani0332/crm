@@ -307,20 +307,34 @@ const permissionsEnum = { RenewalsRetrigger: 'renewals-retrigger' };
               </tr>
               <tr>
                 <td>18</td>
+                <td>Previous Commission</td>
+                <td>Previous Commission amount</td>
+                <td>No</td>
+                <td>25</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td>Previous Ref-ID</td>
+                <td>Previous Reference ID</td>
+                <td>No</td>
+                <td>100</td>
+              </tr>
+              <tr>
+                <td>20</td>
                 <td>Sales Channel</td>
                 <td>Source of the quotation</td>
                 <td>No</td>
                 <td>100</td>
               </tr>
               <tr>
-                <td>19</td>
+                <td>21</td>
                 <td>Notes</td>
                 <td>Any other Information</td>
                 <td>No</td>
                 <td>200</td>
               </tr>
               <tr>
-                <td>20</td>
+                <td>22</td>
                 <td>Plan Name</td>
                 <td>Plan Name - Effective for Health Only</td>
                 <td>No</td>
