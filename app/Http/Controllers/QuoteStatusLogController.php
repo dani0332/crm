@@ -15,8 +15,8 @@ class QuoteStatusLogController extends Controller
         $validatedData = $request->validated();
 
         $logs = $quoteStatusLogService->getQuoteStatusLogs(
-            $validatedData['quoteTypeId'],
-            $validatedData['quoteId']
+            (int) $validatedData['quoteTypeId'],
+            (int) $validatedData['quoteId']
         );
 
         return response()->json($logs);
