@@ -6,7 +6,9 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\CentralService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
@@ -42,6 +44,7 @@ class SendUpdateValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
@@ -49,6 +52,10 @@ class SendUpdateValidationRequest extends FormRequest
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
                 $validator->errors()->add('error', 'Update booking already in queued');
+            }
+
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($personalQuote)) {
+                $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
             }
 
             $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
