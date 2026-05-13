@@ -28,7 +28,6 @@ steps:
   - script: |
       sed -i "s/imcrmdev/imcrmuat/g" "$(System.DefaultWorkingDirectory)/docker/nginx.conf"
       sed -i "s/development-alfredcrm/uat2-alfredcrm01/g" "$(System.DefaultWorkingDirectory)/docker/log_files.yml"
-      export DOCKER_BUILDKIT=1
       doppler --token $(IMCRM_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .
       if [ $? -ne 0 ]; then
        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(DEPLOYMENT_NOTIFICATION_KEY)' \

@@ -30,7 +30,6 @@ bootstrap/cache/*
 
 # Tests (composer --no-dev does not autoload Tests)
 tests
-cypress
 
 # Docs and tooling not needed in the image
 *.md
