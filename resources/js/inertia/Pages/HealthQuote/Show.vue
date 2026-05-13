@@ -2340,7 +2340,14 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER FIRST NAME (As per Emirates Id)' : 'INSURED FIRST NAME' }}</dt>
+                  <dt class="font-medium">
+                    <template v-if="isMigrated">
+                      POLICYHOLDER FIRST NAME
+                      <br />
+                      (As per Emirates Id)
+                    </template>
+                    <template v-else>INSURED FIRST NAME</template>
+                  </dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
@@ -2352,7 +2359,14 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER LAST NAME (As per Emirates Id)' : 'INSURED LAST NAME' }}</dt>
+                  <dt class="font-medium">
+                    <template v-if="isMigrated">
+                      POLICYHOLDER LAST NAME
+                      <br />
+                      (As per Emirates Id)
+                    </template>
+                    <template v-else>INSURED LAST NAME</template>
+                  </dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
@@ -2438,16 +2452,20 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
                 <div class="grid sm:grid-cols-2" v-if="isMigrated">
-                  <dt class="font-medium">Visa Category</dt>
+                  <dt class="font-medium">VISA CATEGORY</dt>
                   <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField && isMigrated">
-                  <dt class="font-medium">Policyholder Category</dt>
+                  <dt class="font-medium">POLICYHOLDER CATEGORY</dt>
                   <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2" v-if="showIncludePolicyholderField && isMigrated">
-                  <dt class="font-medium">Is the Policyholder Included in the Policy?</dt>
+                  <dt class="font-medium">IS THE POLICYHOLDER INCLUDED IN THE POLICY?</dt>
                   <dd>{{ isIncludePolicyholder ? 'Yes' : 'No' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="isMigrated">
+                  <dt class="font-medium">PREFFERED START DATE</dt>
+                  <dd>{{ dateFormat(page.props.quote.policy_start_date) }}</dd>
                 </div>
               </dl>
               <dl
