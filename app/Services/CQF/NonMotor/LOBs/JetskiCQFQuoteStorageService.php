@@ -48,6 +48,7 @@ class JetskiCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldJetskiQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         JetskiQuote::create($data);
 
         LoggerService::info(self::class.' - Jetski quote detail copied for renewal quote');

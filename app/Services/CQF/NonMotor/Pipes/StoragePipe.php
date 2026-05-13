@@ -11,7 +11,7 @@ class StoragePipe
 {
     public function handle(CQFRenewalContext $context, Closure $next): CQFRenewalContext
     {
-        if ($context->storage === null) {
+        if ($context->storage === null || $context->hasErrors()) {
             return $next($context);
         }
 

@@ -143,6 +143,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     {
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data['personal_quote_id'] = $newQuote->id;
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
@@ -159,6 +160,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldBikeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');

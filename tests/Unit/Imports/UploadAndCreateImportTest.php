@@ -13,30 +13,32 @@ test('getColumns does not include object column', function () {
     expect($columns)->not->toHaveKey('object');
 });
 
-test('getColumns has correct indices for premium source notes and plan_name after object removal', function () {
+test('getColumns has correct indices for premium previous fields then source notes plan_name', function () {
     $lead = new RenewalsUploadLeads;
     $import = new UploadAndCreateImport($lead);
     $columns = $import->getColumns();
 
     expect($columns['premium']['index'])->toBe(16);
-    expect($columns['source']['index'])->toBe(17);
-    expect($columns['notes']['index'])->toBe(18);
-    expect($columns['plan_name']['index'])->toBe(19);
+    expect($columns['previous_commission']['index'])->toBe(17);
+    expect($columns['previous_ref_id']['index'])->toBe(18);
+    expect($columns['source']['index'])->toBe(19);
+    expect($columns['notes']['index'])->toBe(20);
+    expect($columns['plan_name']['index'])->toBe(21);
 });
 
-test('getColumns has exactly 20 columns for upload and create template', function () {
+test('getColumns has exactly 22 columns for upload and create template', function () {
     $lead = new RenewalsUploadLeads;
     $import = new UploadAndCreateImport($lead);
     $columns = $import->getColumns();
 
-    expect($columns)->toHaveCount(20);
+    expect($columns)->toHaveCount(22);
 });
 
 test('mapQuoteData does not throw when row has fewer columns than schema', function () {
     $lead = new RenewalsUploadLeads;
     $import = new UploadAndCreateImport($lead);
 
-    // Row with only 19 columns (indices 0-18); plan_name at index 19 is missing
+    // Row with only 19 columns (indices 0-18); previous_ref_id (18) through plan_name (21) missing
     $row = array_fill(0, 19, '');
     $row[0] = 'Customer';
     $row[1] = 'test@example.com';
@@ -47,9 +49,11 @@ test('mapQuoteData does not throw when row has fewer columns than schema', funct
 
     $mapped = $import->mapQuoteData($row);
 
-    expect($mapped)->toHaveKey('plan_name');
-    expect($mapped['plan_name'])->toBeNull();
-    expect($mapped['customer_name'])->toBe('Customer');
+    expect($mapped)->toHaveKey('plan_name')
+        ->and($mapped['plan_name'])->toBeNull()
+        ->and($mapped['previous_ref_id'])->toBeNull()
+        ->and($mapped['source'])->toBeNull()
+        ->and($mapped['customer_name'])->toBe('Customer');
 });
 
 test('mapQuoteData preserves numeric zero premium so user-entered 0 is not silently dropped', function () {
@@ -60,7 +64,7 @@ test('mapQuoteData preserves numeric zero premium so user-entered 0 is not silen
     $lead = new RenewalsUploadLeads;
     $import = new UploadAndCreateImport($lead);
 
-    $row = array_fill(0, 20, '');
+    $row = array_fill(0, 22, '');
     $row[0] = 'Customer';
     $row[1] = 'test@example.com';
     $row[2] = '1234567890';
@@ -87,4 +91,30 @@ test('mapQuoteData preserves numeric zero premium so user-entered 0 is not silen
     $row[16] = '';
     $mappedEmpty = $import->mapQuoteData($row);
     expect($mappedEmpty['premium'])->toBeNull();
+});
+
+test('mapQuoteData maps previous_commission previous_ref_id source notes and plan_name at trailing indices', function () {
+    $lead = new RenewalsUploadLeads;
+    $import = new UploadAndCreateImport($lead);
+
+    $row = array_fill(0, 22, '');
+    $row[0] = 'Customer';
+    $row[1] = 'test@example.com';
+    $row[2] = '1234567890';
+    $row[3] = 'CAR';
+    $row[8] = 'POL-001';
+    $row[10] = '01/01/2025';
+    $row[17] = 12.5;
+    $row[18] = 'PET-OLD-001';
+    $row[19] = 'renewal_upload';
+    $row[20] = 'Note text';
+    $row[21] = 'Gold';
+
+    $mapped = $import->mapQuoteData($row);
+
+    expect($mapped['previous_commission'])->toBe(12.5)
+        ->and($mapped['previous_ref_id'])->toBe('PET-OLD-001')
+        ->and($mapped['source'])->toBe('renewal_upload')
+        ->and($mapped['notes'])->toBe('Note text')
+        ->and($mapped['plan_name'])->toBe('Gold');
 });

@@ -48,6 +48,8 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributesForBusinessQuote($oldBusinessQuote->getAttributes(), $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
+
         $businessQuote = BusinessQuote::create($data);
         $newQuote->businessQuote()->associate($businessQuote);
         $newQuote->save();

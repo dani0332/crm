@@ -49,6 +49,7 @@ class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldYachtQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         $newYachtQuote = YachtQuote::create($data);
 
         if ($oldYachtQuote->yachtQuoteRequestDetail) {

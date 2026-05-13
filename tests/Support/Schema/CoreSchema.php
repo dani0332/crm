@@ -23,6 +23,7 @@ class CoreSchema
         $this->ensureQuoteTables();
         $this->ensureCatARevivalBuyLeadSupport();
         $this->ensureBusinessQuoteTables();
+        $this->ensurePetQuoteTables();
         $this->ensureEmbeddedProductTables();
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
@@ -735,6 +736,10 @@ class CoreSchema
                 $table->timestamps();
             },
         ]);
+
+        SchemaUtils::addColumnIfMissing('personal_quotes', 'renewal_batch_id', function (Blueprint $table) {
+            $table->unsignedBigInteger('renewal_batch_id')->nullable();
+        });
     }
 
     private function ensureBusinessQuoteTables(): void
@@ -778,6 +783,39 @@ class CoreSchema
                 $table->softDeletes();
             },
         ]);
+
+        SchemaUtils::addColumnIfMissing('business_quote_request', 'renewal_batch_id', function (Blueprint $table) {
+            $table->unsignedBigInteger('renewal_batch_id')->nullable();
+        });
+    }
+
+    private function ensurePetQuoteTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'pet_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->timestamps();
+            },
+            'pet_quote_request_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('pet_quote_request_id');
+                $table->timestamps();
+            },
+        ]);
+
+        SchemaUtils::addColumnIfMissing('pet_quote_request', 'renewal_batch_id', function (Blueprint $table) {
+            $table->unsignedBigInteger('renewal_batch_id')->nullable();
+        });
     }
 
     /**

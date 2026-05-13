@@ -122,4 +122,38 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
 
         return $attributes;
     }
+
+    /**
+     * After copying a LOB quote row from the previous policy, align lead fields with the new renewal PersonalQuote
+     * (source, status, advisor, assignment, renewal batch).
+     *
+     * Only updates keys present in $data so we do not insert columns absent from the copied payload (and target table).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function alignCopiedLobRowWithRenewalPersonalQuote(array $data, PersonalQuote $newQuote): array
+    {
+        if (array_key_exists('source', $data)) {
+            $data['source'] = $newQuote->source;
+        }
+
+        if (array_key_exists('quote_status_id', $data)) {
+            $data['quote_status_id'] = $newQuote->quote_status_id;
+        }
+
+        if (array_key_exists('advisor_id', $data)) {
+            $data['advisor_id'] = $newQuote->advisor_id;
+        }
+
+        if (array_key_exists('assignment_type', $data)) {
+            $data['assignment_type'] = $newQuote->assignment_type;
+        }
+
+        if (array_key_exists('renewal_batch_id', $data)) {
+            $data['renewal_batch_id'] = $newQuote->renewal_batch_id;
+        }
+
+        return $data;
+    }
 }

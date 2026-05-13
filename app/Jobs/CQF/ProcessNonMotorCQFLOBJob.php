@@ -58,14 +58,16 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             ->whereNotIn('quote_status_id', $filter['quote_status'])
             ->whereIn('payment_status_id', $filter['payment_status']);
 
-        $personalQuery->pluck('id')->each(function ($quoteId) use (&$quoteJobs): void {
-            $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
-                $quoteId,
-                QuoteTypes::PERSONAL->value,
-                $this->quoteType,
-                $this->renewalsUploadLeadsId,
-                $this->renewalDaysThreshold
-            );
+        $personalQuery->chunkById(500, function ($quotes) use (&$quoteJobs): void {
+            foreach ($quotes as $quote) {
+                $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
+                    $quote->id,
+                    QuoteTypes::PERSONAL->value,
+                    $this->quoteType,
+                    $this->renewalsUploadLeadsId,
+                    $this->renewalDaysThreshold
+                );
+            }
         });
 
         if ($this->quoteType === QuoteTypes::BIKE) {
@@ -73,15 +75,16 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
                 ->whereNotIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])
-                ->pluck('id')
-                ->each(function ($quoteId) use (&$quoteJobs): void {
-                    $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
-                        $quoteId,
-                        QuoteTypes::CAR->value,
-                        $this->quoteType,
-                        $this->renewalsUploadLeadsId,
-                        $this->renewalDaysThreshold
-                    );
+                ->chunkById(500, function ($quotes) use (&$quoteJobs): void {
+                    foreach ($quotes as $quote) {
+                        $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
+                            $quote->id,
+                            QuoteTypes::CAR->value,
+                            $this->quoteType,
+                            $this->renewalsUploadLeadsId,
+                            $this->renewalDaysThreshold
+                        );
+                    }
                 });
         }
 

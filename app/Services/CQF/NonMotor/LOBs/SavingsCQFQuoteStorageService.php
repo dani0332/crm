@@ -48,6 +48,7 @@ class SavingsCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldSavingsQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         SavingsQuote::create($data);
 
         LoggerService::info(self::class.' - Savings quote detail copied for renewal quote');

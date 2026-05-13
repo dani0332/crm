@@ -48,6 +48,7 @@ class CycleCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldCycleQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
         LoggerService::info(self::class.' - Cycle quote detail copied for renewal quote', ['data' => $data]);
         CycleQuote::create($data);
 
