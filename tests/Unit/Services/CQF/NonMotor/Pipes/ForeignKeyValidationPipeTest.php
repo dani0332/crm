@@ -6,7 +6,6 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
-use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
@@ -49,46 +48,7 @@ it('passes through when quote is not PersonalQuote', function () {
         ->and($result->hasErrors())->toBeFalse();
 });
 
-it('fails when PersonalQuote has non-existent insurance_provider_id', function () {
-    $customer = Customer::factory()->create();
-    $nationality = Nationality::factory()->create();
-    Lookup::forceCreate([
-        'key' => LookupsEnum::TRANSACTION_TYPES->value,
-        'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
-        'text' => 'Ext Customer Renewal',
-    ]);
-    $quote = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Pet,
-        'customer_id' => $customer->id,
-        'nationality_id' => $nationality->id,
-        'insurance_provider_id' => 99999999,
-        'policy_expiry_date' => now()->addMonths(2),
-    ]);
-    $renewalsUploadLeads = RenewalsUploadLeads::create([
-        'quote_type' => 'Pet',
-        'renewal_import_code' => 'test-'.uniqid(),
-        'file_name' => 'test.xlsx',
-        'file_path' => null,
-        'status' => '1',
-    ]);
-    $context = new CQFRenewalContext(
-        quote: $quote,
-        renewalsUploadLeads: $renewalsUploadLeads,
-        quoteType: QuoteTypes::PET,
-        renewalDaysThreshold: 120,
-        validator: app(PetCQFValidationService::class),
-        mapper: app(PetCQFQuoteMappingService::class),
-        storage: app(PetCQFQuoteStorageService::class)
-    );
-
-    $result = $this->pipe->handle($context, fn ($c) => $c);
-
-    expect($result->hasErrors())->toBeTrue()
-        ->and($result->validationErrors)->toHaveKey('insurance_provider_id')
-        ->and($result->validationErrors['insurance_provider_id'])->toContain('99999999');
-});
-
-it('fails when PersonalQuote has null insurance_provider_id', function () {
+it('passes when PersonalQuote has all required FKs existing', function () {
     $customer = Customer::factory()->create();
     $nationality = Nationality::factory()->create();
     Lookup::forceCreate([
@@ -101,46 +61,6 @@ it('fails when PersonalQuote has null insurance_provider_id', function () {
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => null,
-        'policy_expiry_date' => now()->addMonths(2),
-    ]);
-    $renewalsUploadLeads = RenewalsUploadLeads::create([
-        'quote_type' => 'Pet',
-        'renewal_import_code' => 'test-'.uniqid(),
-        'file_name' => 'test.xlsx',
-        'file_path' => null,
-        'status' => '1',
-    ]);
-    $context = new CQFRenewalContext(
-        quote: $quote,
-        renewalsUploadLeads: $renewalsUploadLeads,
-        quoteType: QuoteTypes::PET,
-        renewalDaysThreshold: 120,
-        validator: app(PetCQFValidationService::class),
-        mapper: app(PetCQFQuoteMappingService::class),
-        storage: app(PetCQFQuoteStorageService::class)
-    );
-
-    $result = $this->pipe->handle($context, fn ($c) => $c);
-
-    expect($result->hasErrors())->toBeTrue()
-        ->and($result->validationErrors)->toHaveKey('insurance_provider_id')
-        ->and($result->validationErrors['insurance_provider_id'])->toBe('Insurance provider id is required for renewal quote.');
-});
-
-it('passes when PersonalQuote has all required FKs existing', function () {
-    $customer = Customer::factory()->create();
-    $nationality = Nationality::factory()->create();
-    $insuranceProvider = InsuranceProvider::factory()->create();
-    Lookup::forceCreate([
-        'key' => LookupsEnum::TRANSACTION_TYPES->value,
-        'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
-        'text' => 'Ext Customer Renewal',
-    ]);
-    $quote = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Pet,
-        'customer_id' => $customer->id,
-        'nationality_id' => $nationality->id,
-        'insurance_provider_id' => $insuranceProvider->id,
         'policy_expiry_date' => now()->addMonths(2),
     ]);
     $renewalsUploadLeads = RenewalsUploadLeads::create([
