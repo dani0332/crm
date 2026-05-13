@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EmirateTypeEnum;
+use App\Enums\GenderEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
@@ -274,8 +275,9 @@ class RateCoverageUploadService
                     }
 
                     // Validate premium as integers
-                    if (! ctype_digit(strval($premium))) {
-                        throw new \Exception('All premiums values must be integers.');
+                    if (! preg_match('/^\d+(\.\d{1,2})?$/', strval($premium))) {
+
+                        throw new \Exception('All premiums can be a decimal upto 2 digits.');
                     }
 
                     // Validate gender based on plan gender enabled
@@ -296,7 +298,7 @@ class RateCoverageUploadService
                             throw new \Exception('Cohort is required when plan cohort is enabled.');
                         }
 
-                        if (! in_array($cohort, $allCohorts, true)) {
+                        if (! in_array(strtoupper($cohort), $allCohorts, true)) {
                             throw new \Exception('Invalid cohort value.');
                         }
                     }
@@ -308,8 +310,8 @@ class RateCoverageUploadService
                             throw new \Exception('Gender must be enabled when marital status is enabled.');
                         }
 
-                        if (empty($maritalStatus)) {
-                            throw new \Exception('Marital status is required when marital status is enabled.');
+                        if (empty($maritalStatus && strtolower($gender) == strtolower(GenderEnum::FEMALE->value))) {
+                            throw new \Exception('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
                         $allowedMaritalStatuses = ['single', 'married'];
@@ -329,16 +331,30 @@ class RateCoverageUploadService
                     }
 
                     // Apply unique combination
-                    // Track seen combinations of columns as row
+                    // Track seen combinations of columns as row, using array for storing multiple ranges per combination
                     $combinationKey = "{$copaymentCode}|{$emirateType}|{$gender}|{$maritalStatus}|{$cohort}";
 
-                    // Check for duplicate combination key
-                    if (in_array($combinationKey, $seenCombinations, true)) {
-                        throw new \Exception('Duplicate row detected');
+                    // Initialize the array to store age ranges for each combination
+                    if (! isset($combinationAgeRanges[$combinationKey])) {
+                        $combinationAgeRanges[$combinationKey] = [];
+                    } else {
+                        // Check age overlap with any previous row that matches this combination
+                        foreach ($combinationAgeRanges[$combinationKey] as $range) {
+                            $overlaps = (
+                                ($minAge >= $range['min_age'] && $minAge <= $range['max_age']) ||
+                                ($maxAge >= $range['min_age'] && $maxAge <= $range['max_age']) ||
+                                ($minAge <= $range['min_age'] && $maxAge >= $range['max_age'])
+                            );
+                            if ($overlaps) {
+                                throw new \Exception("Age range ({$minAge} - {$maxAge}) overlaps with an existing row for this combination.");
+                            }
+                        }
                     }
+                    // Store the age range for this combination key
+                    $combinationAgeRanges[$combinationKey][] = ['min_age' => $minAge, 'max_age' => $maxAge];
 
                     // Initialize combination age ranges if not already set
-                    if (! isset($combinationAgeRanges)) {
+                    /*if (! isset($combinationAgeRanges)) {
                         $combinationAgeRanges = [];
                     }
 
@@ -352,7 +368,7 @@ class RateCoverageUploadService
                         }
                     }
 
-                    $combinationAgeRanges[] = ['min' => $minAge, 'max' => $maxAge];
+                    $combinationAgeRanges[] = ['min' => $minAge, 'max' => $maxAge];*/
                     $seenCombinations[] = $combinationKey;
                 }
 

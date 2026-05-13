@@ -122,7 +122,7 @@ function onSubmit() {
       .then(() => {
         contactLoader.value = false;
         notification.success({
-          title: 'Rates upload is being processed.',
+          title: 'Rates uploaded successfully.',
           position: 'top',
         });
         files = [];
@@ -277,7 +277,9 @@ const showFailedRates = (id, badCount) => {
             name="effective_from"
             label="Effective From"
             format="dd/MM/yyyy"
+            :min-date="new Date(new Date().setDate(new Date().getDate() + 1))"
           />
+    
           <DatePicker
             v-model="dates.effective_to"
             name="effective_to"
