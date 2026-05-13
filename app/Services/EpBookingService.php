@@ -432,11 +432,22 @@ class EpBookingService extends BaseService
 
     public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote): bool
     {
+        $return = true;
         $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
         if (! $insuranceProvider) {
             LoggerService::warning(self::class." - Insurance provider not found: {$quote->code}");
+            $return = false;
+        }
 
-            return false;
+        if ($quote->sage_invoice_no_update_at != null) {
+            LoggerService::warning(self::class.' - Sage invoice number already updated for EP Sage booking', extra: [
+                'ep_code' => $quote->code,
+            ]);
+            $return = false;
+        }
+
+        if (! $return) {
+            return $return;
         }
 
         $quoteUuid = Str::afterLast($quote->code, '-');
