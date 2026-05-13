@@ -17,7 +17,7 @@ class DeleteHealthRateSheetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthRateSheetStatusValidRule('Only draft or scheduled rate sheets can be deleted')],
+            'id' => ['bail', 'integer', 'exists:health_rates_control,id', new HealthRateSheetStatusValidRule('Only draft or scheduled rate sheets can be deleted')],
         ];
     }
 
