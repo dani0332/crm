@@ -238,17 +238,17 @@ class NonMotorCQFRenewalExecutionService
     protected function getEagerLoadRelationsForLOB(QuoteTypes $quoteType): array
     {
         return match ($quoteType) {
-            QuoteTypes::BIKE => ['bikeQuote', 'bikeQuote.bikeQuoteRequestDetail', 'embeddedTransactions', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::HOME => ['homeQuote', 'homeQuote.homeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::LIFE => ['lifeQuote', 'lifeQuote.lifeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::SAVINGS => ['savingsQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::CYCLE => ['cycleQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::JETSKI => ['jetskiQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            default => ['insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::BIKE => ['bikeQuote', 'bikeQuote.bikeQuoteRequestDetail', 'embeddedTransactions', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::HOME => ['homeQuote', 'homeQuote.homeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::LIFE => ['lifeQuote', 'lifeQuote.lifeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::SAVINGS => ['savingsQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::CYCLE => ['cycleQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::JETSKI => ['jetskiQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            default => ['insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
         };
     }
 }

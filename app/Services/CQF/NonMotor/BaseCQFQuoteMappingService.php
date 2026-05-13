@@ -110,6 +110,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         RenewalsUploadLeads $renewalsUploadLeads,
         string $quoteUuid
     ): array {
+        $quote->loadMissing('payments');
         $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', $this->getQuoteType()->shortCode());
 
