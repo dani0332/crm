@@ -7,8 +7,18 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
 use Database\Seeders\DocumentTypesSeeder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
+
+/**
+ * DocumentTypesSeeder::seedDeviceDocumentTypes runs outside Model::unguarded; DocumentType does not
+ * list `code` as fillable. Unguard only for the seeder run.
+ */
+function runDocumentTypesSeeder(): void
+{
+    Model::unguarded(fn () => (new DocumentTypesSeeder)->run());
+}
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
@@ -17,7 +27,7 @@ beforeEach(function () {
 });
 
 it('seeds compliance approval document type for each configured non-business quote type', function () {
-    (new DocumentTypesSeeder)->run();
+    runDocumentTypesSeeder();
 
     $nonBusiness = DocumentType::query()
         ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
@@ -48,7 +58,7 @@ it('seeds business compliance rows per active insurance type for IBTC and CBTC',
         ['code' => 'BTI_B', 'text' => 'Type B', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
     ]);
 
-    (new DocumentTypesSeeder)->run();
+    runDocumentTypesSeeder();
 
     $businessRows = DocumentType::query()
         ->where('code', DocumentTypeCode::COMPLIANCE_APPROVAL)
@@ -79,8 +89,8 @@ it('is idempotent when run twice', function () {
         ['code' => 'BTI_A', 'text' => 'Type A', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
     ]);
 
-    (new DocumentTypesSeeder)->run();
-    (new DocumentTypesSeeder)->run();
+    runDocumentTypesSeeder();
+    runDocumentTypesSeeder();
 
     expect(
         DocumentType::query()
