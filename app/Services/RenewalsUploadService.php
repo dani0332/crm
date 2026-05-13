@@ -4135,7 +4135,7 @@ class RenewalsUploadService
     /**
      * Validate previous reference ID against the correct quote model.
      */
-    private function validatePreviousRefId(object $leadData, ?Builder $quoteTypeObject, Collection $leadValidationErrors): void
+    private function validatePreviousRefId(object $leadData, Builder|false|null $quoteTypeObject, Collection $leadValidationErrors): void
     {
         if (! empty($leadData->previous_ref_id) && $quoteTypeObject && ! (clone $quoteTypeObject)->where('code', $leadData->previous_ref_id)->exists()) {
             $leadValidationErrors->push("Previous Ref-ID '{$leadData->previous_ref_id}' does not exist in the system.");
