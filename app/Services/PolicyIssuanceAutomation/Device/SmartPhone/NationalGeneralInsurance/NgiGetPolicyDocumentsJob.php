@@ -7,7 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,8 +20,12 @@ use Throwable;
  * FRD Requirements:
  * - Initial delay: 3 minutes after policy creation (handled by dispatch delay)
  * - Retry: up to 3 times with 5-minute gaps
+ *
+ * Implements ShouldBeUnique (not ShouldBeUniqueUntilProcessing) so the unique lock is held
+ * until the job finishes. UntilProcessing releases the lock before handle(), which allows a
+ * second dispatch to queue another job while the first worker is still running.
  */
-class NgiGetPolicyDocumentsJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
+class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -41,9 +45,10 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUniqueUntilProcessing, ShouldQ
     public int $backoff = 300;
 
     /**
-     * Unique lock duration (slightly longer than timeout to prevent overlap)
+     * Cache lock TTL for unique dispatch (seconds). Must cover initial delay plus worst-case
+     * retries: DOCUMENT_FETCH_DELAY + tries * timeout + (tries - 1) * backoff, with headroom.
      */
-    public int $uniqueFor = 1800;
+    public int $uniqueFor = 7200;
 
     private int $processId;
 
