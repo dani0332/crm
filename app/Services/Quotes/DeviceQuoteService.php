@@ -429,8 +429,8 @@ class DeviceQuoteService extends BaseQuoteService
             getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
         );
 
-        // adding advisor email to cc if it is not in recipient email this happened on capture failure situation
-        if ($quote?->advisor?->email && $quote->advisor->email !== $recipientEmail) {
+        // CC advisor when they are not the resolved To address (e.g. booking failure sends To production, not the job's default recipient).
+        if ($quote?->advisor?->email && $quote->advisor->email !== $payload['recipientEmail']) {
             $distribution[] = $quote->advisor->email;
         }
 

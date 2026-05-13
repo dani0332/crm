@@ -2,30 +2,21 @@
 
 namespace App\Services\Allocation;
 
-use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class AllocationCreationService
 {
-    private const LIFE_REVIVAL_START_DATE = '2026-05-08'; // this is the start date of the life revival campaign only for staging environment
-
     public function executeLifeRevivalAllocation(): Collection
     {
-        $lifeRevivalStartDate = Carbon::parse(self::LIFE_REVIVAL_START_DATE)->startOfDay();
-
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])
-            ->when(config('constants.APP_ENV') == EnvEnum::STAGING, function ($query) use ($lifeRevivalStartDate) {
-                $query->where('created_at', '>=', $lifeRevivalStartDate);
-            })
-            ->where('created_at', '<=', now()->subMinutes(20))
+            ->whereDate('created_at', '<=', now()->subDays(90))
             ->where('is_revived', false)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where(function ($query) {
