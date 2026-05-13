@@ -5,7 +5,9 @@ namespace App\Enums;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CyberQuote;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -58,8 +60,11 @@ class quoteTypeCode extends Enum
     const SAVINGS = 'Savings';
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
+    const Device = 'Device';
     const CYBER = 'Cyber';
+    const Smartphone = 'Smartphone';
 
+    /** Please stop using this class instead use App\Enums\QuoteTypes (native PHP Enums) */
     public static function getName($value)
     {
         return match ($value) {
@@ -75,6 +80,8 @@ class quoteTypeCode extends Enum
             CycleQuote::class => self::Cycle,
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
+            DeviceQuote::class => self::Device,
+            CyberQuote::class => self::CYBER,
         };
     }
 
@@ -82,6 +89,7 @@ class quoteTypeCode extends Enum
     {
         return match ($quoteTypeCode) {
             self::CYBER => TeamNameEnum::CYBER,
+            self::Device => TeamNameEnum::DEVICE,
             default => $quoteTypeCode,
         };
     }
@@ -90,7 +98,15 @@ class quoteTypeCode extends Enum
     {
         return match ($productName) {
             TeamNameEnum::CYBER => self::CYBER,
+            TeamNameEnum::DEVICE => self::Device,
             default => $productName,
         };
+    }
+
+    public static function resolveQuoteType(string $quoteTypeCode): string
+    {
+        return ucfirst($quoteTypeCode) === self::Device
+            ? self::Smartphone
+            : $quoteTypeCode;
     }
 }

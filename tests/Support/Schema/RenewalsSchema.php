@@ -92,55 +92,43 @@ class RenewalsSchema
 
     private function ensureColumns(): void
     {
+        $commonRenewalColumns = [
+            'quote_status_date' => function (Blueprint $table) {
+                $table->dateTime('quote_status_date')->nullable();
+            },
+            'renewal_batch' => function (Blueprint $table) {
+                $table->string('renewal_batch')->nullable();
+            },
+            'source' => function (Blueprint $table) {
+                $table->string('source')->nullable();
+            },
+            'insurance_provider_id' => function (Blueprint $table) {
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+            },
+            'advisor_id' => function (Blueprint $table) {
+                $table->unsignedBigInteger('advisor_id')->nullable();
+            },
+        ];
+
         SchemaUtils::ensureColumns([
             'renewal_quote_processes' => [
                 'email_sent' => function (Blueprint $table) {
                     $table->boolean('email_sent')->default(false);
                 },
             ],
-            'health_quote_request' => [
+            'health_quote_request' => array_merge([
                 'health_quote_id' => function (Blueprint $table) {
                     $table->unsignedBigInteger('health_quote_id')->nullable();
                 },
-                'quote_status_date' => function (Blueprint $table) {
-                    $table->dateTime('quote_status_date')->nullable();
-                },
-                'renewal_batch' => function (Blueprint $table) {
-                    $table->string('renewal_batch')->nullable();
-                },
-                'source' => function (Blueprint $table) {
-                    $table->string('source')->nullable();
-                },
-                'insurance_provider_id' => function (Blueprint $table) {
-                    $table->unsignedBigInteger('insurance_provider_id')->nullable();
-                },
-                'advisor_id' => function (Blueprint $table) {
-                    $table->unsignedBigInteger('advisor_id')->nullable();
-                },
-            ],
-            'car_quote_request' => [
+            ], $commonRenewalColumns),
+            'car_quote_request' => array_merge([
                 'car_quote_id' => function (Blueprint $table) {
                     $table->unsignedBigInteger('car_quote_id')->nullable();
-                },
-                'quote_status_date' => function (Blueprint $table) {
-                    $table->dateTime('quote_status_date')->nullable();
-                },
-                'renewal_batch' => function (Blueprint $table) {
-                    $table->string('renewal_batch')->nullable();
-                },
-                'source' => function (Blueprint $table) {
-                    $table->string('source')->nullable();
-                },
-                'insurance_provider_id' => function (Blueprint $table) {
-                    $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 },
                 'currently_insured_with' => function (Blueprint $table) {
                     $table->string('currently_insured_with')->nullable();
                 },
-                'advisor_id' => function (Blueprint $table) {
-                    $table->unsignedBigInteger('advisor_id')->nullable();
-                },
-            ],
+            ], $commonRenewalColumns),
         ]);
     }
 }

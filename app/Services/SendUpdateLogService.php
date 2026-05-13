@@ -31,6 +31,7 @@ use App\Models\CarAddOn;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -55,6 +56,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -308,6 +310,13 @@ class SendUpdateLogService
                             ],
                         ];
                         break;
+                    case quoteTypeCode::Device:
+                        $personalQuoteRelation = [
+                            'deviceQuote' => [
+                                'parentClass' => DeviceQuote::class,
+                            ],
+                        ];
+                        break;
                 }
 
                 $quoteRelations = [
@@ -392,6 +401,9 @@ class SendUpdateLogService
                 }
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                if ($relation === 'deviceQuote') {
+                    $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
+                }
                 // Check if relationObject is a Collection
                 if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
@@ -516,8 +528,8 @@ class SendUpdateLogService
     public function linkedQuoteDetails($quoteTypeCode, $quote)
     {
         LoggerService::info('fn:linkedQuoteDetails - Start - SendUpdateLogService');
-
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
+
         $quoteModel = $this->getModelObject($quoteTypeCode);
         $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
 
@@ -638,10 +650,18 @@ class SendUpdateLogService
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
+            $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
+                ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
+                : null;
+            $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
+                $sendUpdateLog->quote_type_id,
+                $quoteType,
+                $deviceType
+            );
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProvider->code.'-'.$quoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$quoteTypeDisplayLabel.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
@@ -676,10 +696,15 @@ class SendUpdateLogService
     public function getPayments($quoteId, $quoteUuid, $quoteType)
     {
         LoggerService::info('fn:getPayments - Start - SendUpdateLogService');
-
         if (checkPersonalQuotes($quoteType)) {
-            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $quote = $quoteType !== QuoteTypes::CYBER->value ? $repository::getBy('uuid', $quoteUuid) : app(CyberQuoteService::class)->getOne($quoteUuid);
+            if ($quoteType == quoteTypeCode::Device) {
+                $quote = app(DeviceQuoteService::class)->getOne($quoteUuid);
+            } elseif ($quoteType == quoteTypeCode::CYBER) {
+                $quote = app(CyberQuoteService::class)->getOne($quoteUuid);
+            } else {
+                $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+                $quote = $repository::getBy('uuid', $quoteUuid);
+            }
             $payments = $quote?->payments ?? null;
             if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
@@ -1334,20 +1359,25 @@ class SendUpdateLogService
 
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
+        $documents = collect([]);
+        $documentTypeCodes = [];
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
-            $docCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', $docCodes)->toArray();
-        } elseif ($quoteTypeId == QuoteTypeId::Business) {
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
+            $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+        } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
+            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+            $documentTypeCodes = [
                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
                 DocumentTypeCode::PAYMENT_RECEIPT,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-            ])->toArray();
+            ];
+        }
+
+        if (! empty($documentTypeCodes)) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', $documentTypeCodes)->toArray();
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -1463,19 +1493,24 @@ class SendUpdateLogService
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE);
             }
         } else {
-            $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
-            if (
-                $quoteTypeId == QuoteTypeId::Car &&
-                (
-                    app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
-                    $quote->vehicle_use == CarVehicleUse::COMMERCIAL
-                )
-            ) {
-                $emailData->companyName = $quote?->company_name ?? '-';
-                $templateCode = 'COMMERCIAL_'.$templateCode;
+            // Device/Smartphone uses a specific update policy template
+            if ($quoteTypeId == QuoteTypeId::Device) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_UPDATE_POLICY_TEMPLATE);
+            } else {
+                $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
+                if (
+                    $quoteTypeId == QuoteTypeId::Car &&
+                    (
+                        app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                        $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+                    )
+                ) {
+                    $emailData->companyName = $quote?->company_name ?? '-';
+                    $templateCode = 'COMMERCIAL_'.$templateCode;
+                }
+                $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+                $templateId = getAppStorageValueByKey(constant($constantName));
             }
-            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
-            $templateId = getAppStorageValueByKey(constant($constantName));
         }
 
         $emailData->templateId = $templateId;
@@ -1492,7 +1527,6 @@ class SendUpdateLogService
             } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
                 $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
             }
-
             if (! empty($quote->plan->insuranceProvider->code) && ! in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
                 $roadsideAssistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? null;
                 if (! is_null($roadsideAssistanceNumber) && $roadsideAssistanceNumber != 0) {
@@ -1503,15 +1537,15 @@ class SendUpdateLogService
             $emailData->refID = $sendUpdateLog->code;
             $start_date = $quote->policy_start_date ?? '';
             $expiry_date = $quote->policy_expiry_date ?? '';
-
             if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
                 $start_date = $sendUpdateLog->start_date ?? $quote->policy_start_date;
                 $expiry_date = $sendUpdateLog->expiry_date ?? $quote->policy_expiry_date;
             }
             $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
             $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
-
             $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
+        } elseif ($quoteTypeId == QuoteTypeId::Device) {
+            $emailData->quoteDocuments = collect([]);
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
