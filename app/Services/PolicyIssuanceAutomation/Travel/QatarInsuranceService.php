@@ -225,7 +225,7 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             $lastNameTraveller[] = $member->last_name ?? ' ';
             $dobTraveller[] = $member->dob ? Carbon::parse($member->dob)->format('Y-m-d') : null;
             $passportTraveller[] = $member->passport;
-            $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
+            $nationalityTraveller[] = (string) $member->nationality->alliance_nationality_id;
         }
 
         $endPoint = '/v1/quote/'.$travelType.'/finalise';
