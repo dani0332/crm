@@ -21,6 +21,9 @@ class LifeRevivalCommand extends Command
 
     private $logPrefix = 'LifeRevivalCommand - ';
 
+    private const REVIVAL_DISPATCH_CHUNK_SIZE = 500;
+    private const DELAY_BETWEEN_JOBS = 10;
+
     /**
      * The console command description.
      *
@@ -52,24 +55,35 @@ class LifeRevivalCommand extends Command
     {
         $leads = $revivalLeads->values()->all();
 
-        if ($leads != null && count($leads)) {
-            LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($leads));
-            $this->executeJobs($leads);
-        } else {
+        if ($leads === [] || count($leads) === 0) {
             LoggerService::info("{$this->logPrefix} No Life Revival Leads Jobs Found");
+
+            return;
         }
+
+        LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($leads));
+
+        $chunks = array_chunk($leads, self::REVIVAL_DISPATCH_CHUNK_SIZE);
+        $delayOffsetSeconds = 0;
+
+        foreach ($chunks as $index => $chunk) {
+            LoggerService::info("{$this->logPrefix} Dispatching chunk ".($index + 1).' of '.count($chunks).' ('.count($chunk).' leads)');
+            $this->executeJobs($chunk, $delayOffsetSeconds);
+            $delayOffsetSeconds += count($chunk) * self::DELAY_BETWEEN_JOBS;
+        }
+
+        LoggerService::info("{$this->logPrefix} All Life Revival Leads Jobs dispatched");
     }
 
-    private function executeJobs(array $leads)
+    private function executeJobs(array $leads, int $initialDelaySeconds = 0): void
     {
         $logPrefix = $this->logPrefix;
-        $delayInSeconds = 0;
+        $delayInSeconds = $initialDelaySeconds;
 
         foreach ($leads as $lead) {
             LoggerService::info("{$logPrefix} Dispatching Life Revival Lead Job for lead {$lead->uuid}");
             LifeRevivalLeadsCreationJob::dispatch($lead->id)->delay(now()->addSeconds($delayInSeconds));
-            $delayInSeconds += 10;
+            $delayInSeconds += self::DELAY_BETWEEN_JOBS;
         }
-        LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
 }
