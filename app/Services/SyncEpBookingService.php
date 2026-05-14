@@ -114,15 +114,37 @@ class SyncEpBookingService extends BaseService
      */
     private function resolveProcessContextOrFailure(array $data): array
     {
-        $message = null;
+        $validated = $this->buildSyncEpBookingValidatedContext($data);
+        if ($validated['message'] !== null) {
+            return ['ok' => false, 'message' => $validated['message']];
+        }
+
+        $lockKey = 'ep-sync-sage-booking-'.$validated['transaction']->id;
+        if (! Cache::add($lockKey, true, now()->addMinutes(5))) {
+            return ['ok' => false, 'message' => 'Sage booking retry is already in progress for this embedded product. Please wait and try again.'];
+        }
+
+        return [
+            'ok' => true,
+            'lockKey' => $lockKey,
+            'quote' => $validated['quote'],
+            'transaction' => $validated['transaction'],
+            'ep' => $validated['ep'],
+            'quoteTypeId' => $validated['quoteTypeId'],
+        ];
+    }
+
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     */
+    private function buildSyncEpBookingValidatedContext(array $data): array
+    {
+        $message = $this->syncEpBookingUnauthorizedMessage();
         $quote = null;
         $transaction = null;
         $ep = null;
         $quoteTypeId = null;
-
-        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])) {
-            $message = 'You are not authorized to perform this action.';
-        }
 
         if ($message === null) {
             $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
@@ -153,7 +175,7 @@ class SyncEpBookingService extends BaseService
             $message = 'This embedded product is not eligible for Sage booking retry.';
         }
 
-        if ($message === null && (int) $ep->insurance_provider_id !== (int) $data['insuranceProviderId']) {
+        if ($message === null && $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
             $message = 'Insurance provider mismatch.';
         }
 
@@ -164,26 +186,40 @@ class SyncEpBookingService extends BaseService
             }
         }
 
-        if ($message === null && ((int) $transaction->quote_type_id !== (int) $quoteTypeId || (int) $transaction->quote_request_id !== (int) $quote->id)) {
+        if ($message === null && $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
             $message = 'Transaction does not match the selected quote.';
         }
 
         if ($message !== null) {
-            return ['ok' => false, 'message' => $message];
-        }
-
-        $lockKey = 'ep-sync-sage-booking-'.$transaction->id;
-        if (! Cache::add($lockKey, true, now()->addMinutes(5))) {
-            return ['ok' => false, 'message' => 'Sage booking retry is already in progress for this embedded product. Please wait and try again.'];
+            return ['message' => $message];
         }
 
         return [
-            'ok' => true,
-            'lockKey' => $lockKey,
+            'message' => null,
             'quote' => $quote,
             'transaction' => $transaction,
             'ep' => $ep,
             'quoteTypeId' => $quoteTypeId,
         ];
+    }
+
+    private function syncEpBookingUnauthorizedMessage(): ?string
+    {
+        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return 'You are not authorized to perform this action.';
+        }
+
+        return null;
+    }
+
+    private function syncEpBookingInsuranceProviderMismatch(EmbeddedProduct $ep, int $insuranceProviderId): bool
+    {
+        return (int) $ep->insurance_provider_id !== $insuranceProviderId;
+    }
+
+    private function embeddedTransactionDoesNotMatchQuote(EmbeddedTransaction $transaction, int $quoteTypeId, mixed $quote): bool
+    {
+        return (int) $transaction->quote_type_id !== $quoteTypeId
+            || (int) $transaction->quote_request_id !== (int) $quote->id;
     }
 }
