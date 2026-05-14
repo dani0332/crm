@@ -1415,8 +1415,10 @@ class CoreSchema
             'send_update_status_logs' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('send_update_log_id');
-                $table->string('current_status')->nullable();
                 $table->string('previous_status')->nullable();
+                $table->string('current_status')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->text('notes')->nullable();
                 $table->timestamps();
             },
         ]);
@@ -1426,6 +1428,9 @@ class CoreSchema
                 'personal_quote_id' => function (Blueprint $table) {
                     $table->unsignedBigInteger('personal_quote_id')->nullable();
                 },
+            ],
+            'send_update_status_logs' => [
+                'notes' => fn (Blueprint $table) => $table->text('notes')->nullable(),
             ],
         ]);
     }

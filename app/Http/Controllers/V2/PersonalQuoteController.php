@@ -119,14 +119,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @return mixed
-     */
-    public function getAuditHistory($quoteId)
-    {
-        return PersonalQuoteRepository::getAuditHistory($quoteId);
-    }
-
-    /**
      * @return RedirectResponse
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
