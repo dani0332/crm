@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Facades\DicHttpFacade;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
@@ -106,6 +107,7 @@ class DicApiService
         $quote->policy_number = $body['certificateNumber'];
         $quote->price_vat_applicable = $body['amount'];
         $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
+        $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
         $quote->save();
     }
 
