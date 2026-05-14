@@ -151,6 +151,9 @@ class SageFailedRecordsService extends BaseService
             ? Carbon::parse($request['date_to'])->endOfDay()
             : Carbon::now()->endOfMonth();
 
+        $startDateSql = $pdo->quote($startDate->format('Y-m-d H:i:s'));
+        $endDateSql = $pdo->quote($endDate->format('Y-m-d H:i:s'));
+
         foreach ($getFilteredSources as $source) {
             $model = $pdo->quote($source['model']);
 
@@ -160,11 +163,22 @@ class SageFailedRecordsService extends BaseService
                     id AS section_id
                 FROM {$source['table']}
                 WHERE {$source['status_column']} IN ({$source['statuses']})
-                AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                AND created_at BETWEEN {$startDateSql} AND {$endDateSql}
             ";
         }
 
+        if ($queries === []) {
+            return $this->emptyFailedLeadsNoMatchSubquery($pdo);
+        }
+
         return implode("\nUNION ALL\n", $queries);
+    }
+
+    private function emptyFailedLeadsNoMatchSubquery(\PDO $pdo): string
+    {
+        $placeholderType = $pdo->quote('__sage_failed_leads_no_match__');
+
+        return "SELECT {$placeholderType} AS section_type, 0 AS section_id WHERE 1 = 0";
     }
 
     private function baseFailedSageApiLogsQuery(ValidatedInput $request, string $oldestFailedLogsCTE): Builder
@@ -193,7 +207,7 @@ class SageFailedRecordsService extends BaseService
             ->all();
     }
 
-    private function getFilteredSources($pdo, $request)
+    private function getFilteredSources($pdo, $request): array
     {
         $bookingStatuses = implode(',', [
             QuoteStatusEnum::POLICY_BOOKING_QUEUED,
@@ -205,7 +219,46 @@ class SageFailedRecordsService extends BaseService
             $pdo->quote(SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED),
         ]);
 
-        $mainLeadsWithEPs = [
+        $epStatuses = implode(',', [
+            SageEmbeddedProductEnum::BOOKING_FAILED->id(),
+            SageEmbeddedProductEnum::BOOKING_QUEUED->id(),
+        ]);
+
+        $mainLeadsWithEPs = $this->getMainLeadSources($bookingStatuses, $epStatuses);
+        $sendUpdate = [
+            'send_update' => [
+                'table' => 'send_update_logs',
+                'model' => SendUpdateLog::class,
+                'status_column' => 'status',
+                'statuses' => $updateStatuses,
+            ],
+        ];
+
+        $allSources = array_merge($mainLeadsWithEPs, $sendUpdate);
+        $sources = $this->resolveSourcesByOption(
+            $request['option'] ?? null,
+            $mainLeadsWithEPs,
+            $sendUpdate,
+            $allSources
+        );
+
+        $quoteTypeIds = array_values(array_filter(
+            $request['quote_type_id'] ?? [],
+            static fn ($id): bool => $id !== null && $id !== ''
+        ));
+
+        if ($quoteTypeIds === []) {
+            return array_values($sources);
+        }
+
+        return array_values(
+            $this->filterSourcesByQuoteTypes($sources, $quoteTypeIds)
+        );
+    }
+
+    private function getMainLeadSources(string $bookingStatuses, string $epStatuses): array
+    {
+        return [
             'personal_quotes' => [
                 'table' => 'personal_quotes',
                 'model' => PersonalQuote::class,
@@ -245,65 +298,55 @@ class SageFailedRecordsService extends BaseService
                 'table' => 'embedded_transactions',
                 'model' => EmbeddedTransaction::class,
                 'status_column' => 'sage_status_id',
-                'statuses' => SageEmbeddedProductEnum::BOOKING_FAILED->id(),
+                'statuses' => $epStatuses,
             ],
         ];
+    }
 
-        $sendUpdate = [
-            'send_update' => [
-                'table' => 'send_update_logs',
-                'model' => SendUpdateLog::class,
-                'status_column' => 'status',
-                'statuses' => $updateStatuses,
-            ],
+    private function resolveSourcesByOption(?string $option, array $mainLeadsWithEPs, array $sendUpdate, array $allSources): array
+    {
+        return match ($option) {
+            GenericRequestEnum::MAIN_LEAD_AS_TEXT => $mainLeadsWithEPs,
+            GenericRequestEnum::SEND_UPDATE_AS_TEXT => $sendUpdate,
+            default => $allSources,
+        };
+    }
+
+    private function filterSourcesByQuoteTypes(array $sources, array $quoteTypeIds): array
+    {
+        $filteredSources = [];
+        $personalQuotes = getPersonalQuoteTypeIds();
+
+        $typeMappings = [
+            GenericRequestEnum::SEND_UPDATE_AS_TEXT => 'send_update',
+            QuoteTypeId::Car => 'car',
+            QuoteTypeId::Health => 'health',
+            QuoteTypeId::Travel => 'travel',
+            QuoteTypeId::Business => 'business',
         ];
 
-        $allSources = array_merge($mainLeadsWithEPs, $sendUpdate);
-        $sources = [];
+        foreach ($quoteTypeIds as $type) {
+            if (in_array($type, $personalQuotes)) {
+                $this->addSourceIfExists($filteredSources, $sources, 'personal_quotes');
 
-        $option = $request['option'] ?? null;
-        $quoteTypeIds = $request['quote_type_id'] ?? [];
-
-        if ($option === 'Main Lead') {
-            $sources = $mainLeadsWithEPs;
-        } elseif ($option === 'Send Update') {
-            $sources = $sendUpdate;
-        } else {
-            $sources = $allSources;
-        }
-
-        if (! empty($quoteTypeIds)) {
-
-            $filteredSources = [];
-            $personalQuotes = getPersonalQuoteTypeIds();
-            $typeMappings = [
-                GenericRequestEnum::SEND_UPDATE_AS_TEXT => 'send_update',
-
-                QuoteTypeId::Car => 'car',
-                QuoteTypeId::Health => 'health',
-                QuoteTypeId::Travel => 'travel',
-                QuoteTypeId::Business => 'business',
-            ];
-
-            foreach ($quoteTypeIds as $type) {
-                if (in_array($type, $personalQuotes)) {
-                    if (isset($sources['personal_quotes'])) {
-                        $filteredSources['personal_quotes'] = $sources['personal_quotes'];
-                    }
-
-                    continue;
-                }
-
-                $key = $typeMappings[$type] ?? null;
-                if ($key && isset($sources[$key])) {
-                    $filteredSources[$key] = $sources[$key];
-                }
+                continue;
             }
 
-            $sources = $filteredSources;
+            $key = $typeMappings[$type] ?? null;
+
+            if ($key) {
+                $this->addSourceIfExists($filteredSources, $sources, $key);
+            }
         }
 
-        return array_values($sources);
+        return $filteredSources;
+    }
+
+    private function addSourceIfExists(array &$filteredSources, array $sources, string $key): void
+    {
+        if (isset($sources[$key])) {
+            $filteredSources[$key] = $sources[$key];
+        }
     }
 
     private function failedSageLogsMorphWith(array $morphModelClasses): array
