@@ -62,6 +62,7 @@ class quoteTypeCode extends Enum
     const CompanyCar = 'CompanyCar';
     const Device = 'Device';
     const CYBER = 'Cyber';
+    const Smartphone = 'Smartphone';
 
     /** Please stop using this class instead use App\Enums\QuoteTypes (native PHP Enums) */
     public static function getName($value)
@@ -100,5 +101,12 @@ class quoteTypeCode extends Enum
             TeamNameEnum::DEVICE => self::Device,
             default => $productName,
         };
+    }
+
+    public static function resolveQuoteType(string $quoteTypeCode): string
+    {
+        return ucfirst($quoteTypeCode) === self::Device
+            ? self::Smartphone
+            : $quoteTypeCode;
     }
 }

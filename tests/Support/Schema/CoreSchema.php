@@ -198,6 +198,12 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+            'vehicle_type' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            },
             'nationality' => function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->nullable();
@@ -707,6 +713,15 @@ class CoreSchema
                 $table->string('quote_uuid');
                 $table->string('name');
                 $table->unsignedBigInteger('quote_type_id');
+                $table->timestamps();
+            },
+            'kyc_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->unsignedBigInteger('quote_request_id')->nullable();
+                $table->string('decision')->nullable();
+                $table->string('screening_type')->nullable();
+                $table->string('screenshot')->nullable();
                 $table->timestamps();
             },
             'savings_quote_request' => function (Blueprint $table) {
@@ -1378,6 +1393,21 @@ class CoreSchema
                 $table->unsignedBigInteger('option_id')->nullable();
                 $table->timestamps();
             },
+            'send_update_status_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('send_update_log_id');
+                $table->string('current_status')->nullable();
+                $table->string('previous_status')->nullable();
+                $table->timestamps();
+            },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'send_update_logs' => [
+                'personal_quote_id' => function (Blueprint $table) {
+                    $table->unsignedBigInteger('personal_quote_id')->nullable();
+                },
+            ],
         ]);
     }
 
