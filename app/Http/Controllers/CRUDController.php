@@ -1275,6 +1275,7 @@ class CRUDController extends Controller
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
                     'hasPecTag' => $hasPecTag,
+                    'canBypassPlanLock' => $this->healthQuoteService->canBypassPlanLock($record, $payments),
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
