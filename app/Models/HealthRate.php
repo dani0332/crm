@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HealthRate extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'health_plan_id',
         'health_rate_control_id',
