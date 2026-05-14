@@ -107,23 +107,34 @@ class DicApiService
         }
         $startDate = $quote->policy_start_date ?: $quote->start_date;
 
-        $DicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
+        if (! $startDate) {
+            LoggerService::error('DIC applyIssuePolicyResponseToQuote: no start date on quote, skipping update', [
+                'quote_code' => $quote->code,
+            ]);
 
-        DB::transaction(function () use ($quote, $body, $startDate, $DicPercentage): void {
+            return;
+        }
+
+        $DicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
+        $commissionInvoiceDate = data_get($body, 'additionalDetails.commission_invoice_date');
+
+        DB::transaction(function () use ($quote, $body, $startDate, $DicPercentage, $commissionInvoiceDate): void {
             $quote->policy_number = $body['certificateNumber'];
             $quote->price_vat_applicable = $body['amount'];
             $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
             $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
             $quote->policy_start_date = $startDate;
-            $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for);
+            // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
+            $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
             $quote->save();
 
             $payment = $quote->payments()->mainLeadPayment()->first();
             if ($payment !== null) {
-                $payment->update([
-                    'insurer_invoice_date' => Carbon::parse(data_get($body, 'additionalDetails.commission_invoice_date', null))->format('Y-m-d'),
-                    'commission_vat_applicable' => round($quote->price_vat_applicable * $DicPercentage, 2),
-                ]);
+                $paymentData = ['commission_vat_applicable' => round($quote->price_vat_applicable * $DicPercentage, 2)];
+                if ($commissionInvoiceDate !== null) {
+                    $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
+                }
+                $payment->update($paymentData);
             }
         });
     }
