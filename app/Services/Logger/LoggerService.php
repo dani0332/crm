@@ -79,6 +79,7 @@ class LoggerService
 
     public static function error(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
+
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
         }
@@ -90,6 +91,7 @@ class LoggerService
 
     public static function warning(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
+
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
         }
@@ -101,6 +103,7 @@ class LoggerService
 
     public static function info(string $message, array|string $extra = [], array $context = [])
     {
+
         self::addExtra($extra);
 
         Log::info($message, $context);

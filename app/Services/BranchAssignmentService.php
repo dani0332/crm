@@ -120,6 +120,10 @@ class BranchAssignmentService extends BaseService
      */
     public function hasBranchAssignment($quote, $quoteTypeId): bool
     {
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            return true;
+        }
+
         $advisorPrimaryBranch = $quote->advisor?->primaryBranch() ?? null;
         $emirateOfYourVisaId = $quote->emirate_of_your_visa_id ?? null;
         $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
@@ -206,6 +210,10 @@ class BranchAssignmentService extends BaseService
      */
     public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            return self::$branches->find(BranchEnum::DUBAI->value);
+        }
+
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
             return $this->getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $quoteTypeId);
         }
