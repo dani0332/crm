@@ -19,9 +19,7 @@ class ProcessMyAlfredWelcomeEmailSqsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-
     public int $timeout = 120;
-
     public int $backoff = 60;
 
     public function __construct(
@@ -37,6 +35,7 @@ class ProcessMyAlfredWelcomeEmailSqsJob implements ShouldQueue
     {
         // Mark logs as coming from the SQS inbound consumer so it's distinguishable from API-origin logs.
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SQS_INBOUND_QUEUE);
+        LoggerService::info('ProcessMyAlfredWelcomeEmailSqsJob started');
 
         $welcomeEmailInboundService->process(
             $this->email,
