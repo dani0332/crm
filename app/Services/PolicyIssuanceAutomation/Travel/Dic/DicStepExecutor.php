@@ -287,6 +287,7 @@ class DicStepExecutor
                     $payment->update([
                         'insurer_commmission_invoice_number' => $invoiceNumber,
                         'insurer_invoice_date' => $quote->policy_issuance_date,
+                        'commission_vat_applicable' => round($quote->price_vat_applicable * 0.56, 2),
                     ]);
                     LoggerService::info('DIC Travel: GetBrokerInvoice stored insurer_commmission_invoice_number on main payment', [
                         'quote_code' => $quote->code,
