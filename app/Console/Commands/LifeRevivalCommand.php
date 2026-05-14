@@ -9,6 +9,7 @@ use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 
 class LifeRevivalCommand extends Command
 {
@@ -21,7 +22,6 @@ class LifeRevivalCommand extends Command
 
     private $logPrefix = 'LifeRevivalCommand - ';
 
-    private const REVIVAL_DISPATCH_CHUNK_SIZE = 500;
     private const DELAY_BETWEEN_JOBS = 10;
 
     /**
@@ -51,7 +51,7 @@ class LifeRevivalCommand extends Command
         $this->processRevivalLeads($revivalLeads);
     }
 
-    private function processRevivalLeads($revivalLeads)
+    private function processRevivalLeads($revivalLeads): void
     {
         $leads = $revivalLeads->values()->all();
 
@@ -61,29 +61,32 @@ class LifeRevivalCommand extends Command
             return;
         }
 
-        LoggerService::info("{$this->logPrefix} Life Revival Leads Jobs Count: ".count($leads));
-
-        $chunks = array_chunk($leads, self::REVIVAL_DISPATCH_CHUNK_SIZE);
-        $delayOffsetSeconds = 0;
-
-        foreach ($chunks as $index => $chunk) {
-            LoggerService::info("{$this->logPrefix} Dispatching chunk ".($index + 1).' of '.count($chunks).' ('.count($chunk).' leads)');
-            $this->executeJobs($chunk, $delayOffsetSeconds);
-            $delayOffsetSeconds += count($chunk) * self::DELAY_BETWEEN_JOBS;
-        }
-
-        LoggerService::info("{$this->logPrefix} All Life Revival Leads Jobs dispatched");
-    }
-
-    private function executeJobs(array $leads, int $initialDelaySeconds = 0): void
-    {
         $logPrefix = $this->logPrefix;
-        $delayInSeconds = $initialDelaySeconds;
+        LoggerService::info("{$logPrefix} Life Revival Leads Jobs Count: ".count($leads));
+
+        $jobs = [];
+        $delayInSeconds = 0;
 
         foreach ($leads as $lead) {
-            LoggerService::info("{$logPrefix} Dispatching Life Revival Lead Job for lead {$lead->uuid}");
-            LifeRevivalLeadsCreationJob::dispatch($lead->id)->delay(now()->addSeconds($delayInSeconds));
+            LoggerService::info("{$logPrefix} Queuing Life Revival Lead Job for lead {$lead->uuid}");
+            $jobs[] = (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds($delayInSeconds));
             $delayInSeconds += self::DELAY_BETWEEN_JOBS;
         }
+
+        Bus::batch($jobs)
+            ->then(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} all life revival batch jobs completed successfully");
+            })
+            ->catch(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} one of life revival batch jobs failed.");
+            })
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} life revival batch finished");
+            })
+            ->allowFailures()
+            ->name('Life DTT Batch Jobs')
+            ->dispatch();
+
+        LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
 }
