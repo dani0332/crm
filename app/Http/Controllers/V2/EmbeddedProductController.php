@@ -39,6 +39,7 @@ class EmbeddedProductController extends Controller
         $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
         $this->middleware('permission:'.PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE, ['only' => ['updateEpDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING, ['only' => ['syncEpBooking']]);
     }
 
     /**

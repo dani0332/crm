@@ -480,7 +480,7 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canBookEmbeddedProduct(?EmbeddedTransaction $transaction, mixed $quote, ?EmbeddedProduct $ep): bool
     {
-        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (! Auth::user()?->can(PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING)) {
             return false;
         }
 

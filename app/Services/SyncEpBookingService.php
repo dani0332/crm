@@ -8,9 +8,9 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
@@ -205,7 +205,7 @@ class SyncEpBookingService extends BaseService
 
     private function syncEpBookingUnauthorizedMessage(): ?string
     {
-        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (! Auth::user()?->can(PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING)) {
             return 'You are not authorized to perform this action.';
         }
 
