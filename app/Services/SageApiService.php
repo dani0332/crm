@@ -1906,9 +1906,12 @@ class SageApiService
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     $dueDate = $bookingDateFormatted;
                 } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1
-                        ? $bookingDateFormatted
-                        : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+
+                    if ($paymentSplit['sr_no'] == 1) {
+                        $dueDate = $bookingDateFormatted;
+                    } else {
+                        $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                    }
                 }
 
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1927,7 +1930,11 @@ class SageApiService
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        if ($paymentSplit['sr_no'] == 1) {
+                            $dueDate = $bookingDateFormatted;
+                        } else {
+                            $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                        }
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -2406,7 +2413,11 @@ class SageApiService
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                 $dueDate = $bookingDateFormatted;
                             } else {
-                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                if ($paymentSplits[$key]['sr_no'] == 1) {
+                                    $dueDate = $bookingDateFormatted;
+                                } else {
+                                    $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplits[$key]['due_date'], $bookingDateFormatted);
+                                }
                             }
 
                             $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
@@ -4545,5 +4556,19 @@ class SageApiService
     public function allowedProviderForSageEPBooking()
     {
         return [InsuranceProviderEnum::OIC->value, InsuranceProviderEnum::NGI->value];
+    }
+
+    public function resolveInstallmentDueDateAgainstBookingDate(string|int $rawInstallmentDueDate, string $bookingDate): string
+    {
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $installmentDueDate = date($dateFormat, strtotime((string) $rawInstallmentDueDate));
+        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+        $resolvedBookingDate = Carbon::parse($bookingDate)->startOfDay();
+
+        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+            return $resolvedBookingDate->format($dateFormat);
+        }
+
+        return $resolvedDueDate->format($dateFormat);
     }
 }
