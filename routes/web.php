@@ -959,10 +959,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
         // Sage Failed Processes Routes
-        // Route::middleware(['permission:'.PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT])->group(function () {
-        //     Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->name('sage-failed-processes.index');
-        //     Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->name('sage-failed-processes.export');
-        // });
+        Route::middleware(['permission:'.PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT])->group(function () {
+            Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->name('sage-failed-processes.index');
+            Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->name('sage-failed-processes.export');
+        });
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
