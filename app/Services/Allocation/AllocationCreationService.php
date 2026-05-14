@@ -7,12 +7,15 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Collection;
 
 class AllocationCreationService
 {
     public function executeLifeRevivalAllocation(): Collection
     {
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - fetching leads to revive');
+
         // Step 1: Get all LIFE quotes eligible for revival
         $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])

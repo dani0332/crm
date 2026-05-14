@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApplicationStorageService;
@@ -32,6 +33,8 @@ class LifeRevivalCommand extends Command
      */
     public function handle(AllocationCreationService $allocationCreationService)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
+
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_LIFE_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::info("{$this->logPrefix} DTT Life Revival is not enabled from cms");
