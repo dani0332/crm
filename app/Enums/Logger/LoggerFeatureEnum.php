@@ -15,6 +15,7 @@ enum LoggerFeatureEnum: string
     case CREATE_PAYMENT = 'create-payment';
     case UPDATE_PAYMENT = 'update-payment';
     case DELETE_PARENT_PAYMENT = 'delete-parent-payment';
+    case RESET_MANAGE_PAYMENTS = 'reset-manage-payments';
     case DELETE_SPLIT_PAYMENT = 'delete-split-payment';
     case APPROVE_DECLINE_CHILD_PAYMENT = 'approve-decline-child-payment';
     case APPROVE_PARENT_PAYMENT = 'approve-parent-payment';
@@ -91,4 +92,5 @@ enum LoggerFeatureEnum: string
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case CSV_EXPORT = 'csv-export';
     case CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT = 'conversion-optimization-scheduled-export';
+    case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 }

@@ -58,7 +58,6 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
@@ -1501,15 +1500,6 @@ class AMLService
             DB::transaction(function () use ($skipBridgerScreeningRequest) {
                 $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
                 LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
-
-                QuoteStatusLog::create([
-                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
-                    'quote_request_id' => $skipBridgerScreeningRequest->quote_request_id,
-                    'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                    'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
 
                 $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
                 $quoteDetails->save();

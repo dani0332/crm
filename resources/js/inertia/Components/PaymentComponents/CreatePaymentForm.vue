@@ -336,6 +336,24 @@ const rules = {
       return 'Please enter a valid URL';
     }
   },
+  /** Collection date, split due dates — today or future (local day). Uses moment so DD/MM/YYYY from the picker is not parsed as US MM/DD. */
+  dateOnOrAfterToday: v => {
+    if (!v) {
+      return true;
+    }
+    const raw = typeof v === 'string' ? v.trim() : v;
+    const selected =
+      typeof raw === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)
+        ? moment(raw, 'DD/MM/YYYY', true)
+        : moment(raw);
+    if (!selected.isValid()) {
+      return 'Date is invalid';
+    }
+    if (selected.clone().startOf('day').isBefore(moment().startOf('day'))) {
+      return 'Date cannot be earlier than today';
+    }
+    return true;
+  },
 };
 
 const isPaymentLocked = computed(() => {
