@@ -13,7 +13,7 @@ class HealthPlanRateControlPublishableRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $healthPlan = HealthPlan::with(['draftRateControl.rates', 'activeRateControl'])
+        $healthPlan = HealthPlan::with(['draftRateControl'])
             ->find($value);
 
         if (! $healthPlan) {
