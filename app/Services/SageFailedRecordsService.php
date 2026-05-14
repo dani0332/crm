@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -156,6 +155,7 @@ class SageFailedRecordsService extends BaseService
 
         foreach ($getFilteredSources as $source) {
             $model = $pdo->quote($source['model']);
+            $quoteTypeFilterSql = $this->buildPersonalQuoteTypeIdFilterSql($source);
 
             $queries[] = "
                 SELECT
@@ -164,6 +164,7 @@ class SageFailedRecordsService extends BaseService
                 FROM {$source['table']}
                 WHERE {$source['status_column']} IN ({$source['statuses']})
                 AND created_at BETWEEN {$startDateSql} AND {$endDateSql}
+                {$quoteTypeFilterSql}
             ";
         }
 
@@ -306,8 +307,8 @@ class SageFailedRecordsService extends BaseService
     private function resolveSourcesByOption(?string $option, array $mainLeadsWithEPs, array $sendUpdate, array $allSources): array
     {
         return match ($option) {
-            GenericRequestEnum::MAIN_LEAD_AS_TEXT => $mainLeadsWithEPs,
-            GenericRequestEnum::SEND_UPDATE_AS_TEXT => $sendUpdate,
+            self::MODEL_TYPE_MAIN_LEAD => $mainLeadsWithEPs,
+            self::MODEL_TYPE_SEND_UPDATE => $sendUpdate,
             default => $allSources,
         };
     }
@@ -315,31 +316,84 @@ class SageFailedRecordsService extends BaseService
     private function filterSourcesByQuoteTypes(array $sources, array $quoteTypeIds): array
     {
         $filteredSources = [];
-        $personalQuotes = getPersonalQuoteTypeIds();
+        $personalQuoteTypeIds = getPersonalQuoteTypeIds();
 
         $typeMappings = [
-            GenericRequestEnum::SEND_UPDATE_AS_TEXT => 'send_update',
+            self::MODEL_TYPE_SEND_UPDATE => 'send_update',
             QuoteTypeId::Car => 'car',
             QuoteTypeId::Health => 'health',
             QuoteTypeId::Travel => 'travel',
             QuoteTypeId::Business => 'business',
         ];
 
-        foreach ($quoteTypeIds as $type) {
-            if (in_array($type, $personalQuotes)) {
-                $this->addSourceIfExists($filteredSources, $sources, 'personal_quotes');
+        $requestedPersonalQuoteTypeIds = [];
 
+        foreach ($quoteTypeIds as $type) {
+            if ($type === null || $type === '') {
                 continue;
             }
 
-            $key = $typeMappings[$type] ?? null;
+            if (is_numeric($type)) {
+                $id = (int) $type;
 
-            if ($key) {
+                if (in_array($id, $personalQuoteTypeIds, true)) {
+                    $requestedPersonalQuoteTypeIds[$id] = $id;
+
+                    continue;
+                }
+
+                $key = $typeMappings[$id] ?? null;
+            } else {
+                $key = $typeMappings[$type] ?? null;
+            }
+
+            if ($key !== null) {
                 $this->addSourceIfExists($filteredSources, $sources, $key);
             }
         }
 
+        if ($requestedPersonalQuoteTypeIds !== [] && isset($sources['personal_quotes'])) {
+            $filteredSources['personal_quotes'] = $sources['personal_quotes'];
+            $filteredSources['personal_quotes']['quote_type_ids'] = array_values($requestedPersonalQuoteTypeIds);
+        }
+
         return $filteredSources;
+    }
+
+    private function buildPersonalQuoteTypeIdFilterSql(array $source): string
+    {
+        if (! isset($source['quote_type_ids']) || ! is_array($source['quote_type_ids']) || $source['quote_type_ids'] === []) {
+            return '';
+        }
+
+        $inList = $this->buildSqlInListForPositiveIntegers($source['quote_type_ids']);
+        if ($inList === '') {
+            return '';
+        }
+
+        return " AND quote_type_id IN ({$inList})";
+    }
+
+    private function buildSqlInListForPositiveIntegers(array $ids): string
+    {
+        $ints = [];
+        foreach ($ids as $id) {
+            if (! is_numeric($id)) {
+                continue;
+            }
+
+            $value = (int) $id;
+
+            if ($value > 0) {
+                $ints[$value] = $value;
+            }
+        }
+
+        if ($ints === []) {
+            return '';
+        }
+
+        return implode(',', $ints);
     }
 
     private function addSourceIfExists(array &$filteredSources, array $sources, string $key): void
