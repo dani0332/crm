@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Facades\DicHttpFacade;
@@ -113,10 +114,12 @@ class DicApiService
         $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for);
         $quote->save();
 
+        $DicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
+
         $payment = $quote->payments()->mainLeadPayment()->first();
         $payment->update([
             'insurer_invoice_date' => Carbon::parse(data_get($body, 'additionalDetails.commission_invoice_date', null))->format('Y-m-d'),
-            'commission_vat_applicable' => round($quote->price_vat_applicable * data_get($body, 'additionalDetails.commission_excluding_vat', null), 2),
+            'commission_vat_applicable' => round($quote->price_vat_applicable * $DicPercentage, 2),
         ]);
     }
 
