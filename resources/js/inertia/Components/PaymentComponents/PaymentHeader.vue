@@ -1,8 +1,11 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import axios from 'axios';
+import { router } from '@inertiajs/vue3';
 import UpdateTotalPrice from './../UpdateTotalPrice.vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
+import { ResetManagePaymentsModal } from './PaymentModal/index.js';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -24,7 +27,21 @@ const props = defineProps({
   quoteType: String,
   totalPrice: Number,
   planDetail: Object,
+  canBypassPlanLock: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const resetManagePaymentsModal = ref(false);
+
+const showResetManagePayments = computed(
+  () => props.canBypassPlanLock && props.payments?.length > 0,
+);
+
+const openResetManagePaymentsModal = () => {
+  resetManagePaymentsModal.value = true;
+};
 
 const readOnlyMode = reactive({
   isDisable: true,
@@ -227,7 +244,16 @@ const downloadProformaPayment = async () => {
                 payments[0].total_amount + payments[0].discount_value
               "
             />
-            <div v-if="readOnlyMode.isDisable">
+            <div v-if="readOnlyMode.isDisable" class="flex items-center gap-2">
+              <x-button
+                v-if="showResetManagePayments"
+                size="sm"
+                color="error"
+                outlined
+                @click="openResetManagePaymentsModal"
+              >
+                Reset
+              </x-button>
               <x-button
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
@@ -261,5 +287,12 @@ const downloadProformaPayment = async () => {
         </template>
       </div>
     </div>
+
+    <ResetManagePaymentsModal
+      v-model="resetManagePaymentsModal"
+      :quote-type="quoteType"
+      :quote-code="quoteRequest.code"
+      :quote-request-id="quoteRequest.id"
+    />
   </div>
 </template>

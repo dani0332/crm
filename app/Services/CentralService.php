@@ -1245,25 +1245,6 @@ class CentralService extends BaseService
         return $quoteStatuses;
     }
 
-    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
-    {
-        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
-
-        SendUpdateStatusLog::updateOrCreate([
-            'send_update_log_id' => $sendUpdateLogId,
-            'previous_status' => $previousStatus,
-            'current_status' => $currentStatus,
-        ], [
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        LoggerService::info('SendUpdateLog status changed', extra: [
-            'previousStatus' => $previousStatus,
-            'current_status' => $currentStatus,
-        ]);
-    }
-
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
         LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
@@ -1388,7 +1369,6 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {

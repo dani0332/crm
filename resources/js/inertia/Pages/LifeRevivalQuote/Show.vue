@@ -19,7 +19,7 @@ import CreatePlanVariant from '../LifeQuote/Partials/CreateVariant.vue';
 import EditPlan from '../LifeQuote/Partials/EditPlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -3052,7 +3052,11 @@ const getDisplayPriceInAED = item => {
       :quote-type="quoteType"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"
