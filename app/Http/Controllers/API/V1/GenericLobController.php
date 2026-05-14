@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
-use App\Exceptions\CustomerNotFoundForWelcomeEmailException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
@@ -11,11 +11,13 @@ use App\Http\Requests\MaWelcomEmailRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\TravelEmailService;
-use App\Services\MyAlfredWelcomeEmailInboundService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -143,25 +145,43 @@ class GenericLobController extends Controller
         return $service->exportPlansPdf($quoteType, $request->validated());
     }
 
-    public function sendMyAlfredWelcomeEmail(
-        MaWelcomEmailRequest $request,
-        MyAlfredWelcomeEmailInboundService $welcomeEmailInboundService,
-    ) {
+    public function sendMyAlfredWelcomeEmail(MaWelcomEmailRequest $request)
+    {
         try {
-            $welcomeEmailInboundService->process(
-                $request->email,
-                $request->code,
-                $request->source,
-                $request->tag,
-            );
+            LoggerService::startFeatureLogging(feature: LoggerFeatureEnum::SEND_MA_WELCOME_EMAIL);
+
+            LoggerService::info('MyAlfred Welcome Email - Request received', [
+                'customer_email' => $request->email,
+                'code' => $request->code,
+                'source' => $request->source,
+                'tag' => $request->tag,
+            ]);
+
+            $customer = Customer::where('email', $request->email)->first();
+
+            if (! $customer) {
+                LoggerService::warning('MyAlfred Welcome Email - Customer not found', [
+                    'customer_email' => $request->email,
+                ]);
+
+                return response()->json([
+                    'message' => 'Customer not found',
+                    'error' => 'CUSTOMER_NOT_FOUND',
+                ], 404);
+            }
+
+            LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+                'customer_email' => $customer->email,
+            ]);
+
+            MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
 
             return response()->json(['message' => 'Welcome email job dispatched successfully'], 200);
-        } catch (CustomerNotFoundForWelcomeEmailException) {
-            return response()->json([
-                'message' => 'Customer not found',
-                'error' => 'CUSTOMER_NOT_FOUND',
-            ], 404);
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
+            LoggerService::error('MyAlfred Welcome Email - Exception occurred', [], exception: $e, context: [
+                'customer_email' => $request->email ?? null,
+            ]);
+
             return response()->json([
                 'message' => 'Failed to process welcome email request',
                 'error' => $e->getMessage(),
