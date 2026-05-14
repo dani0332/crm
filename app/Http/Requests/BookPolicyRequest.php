@@ -5,9 +5,11 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BookPolicyRequest extends FormRequest
@@ -24,7 +26,7 @@ class BookPolicyRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -52,6 +54,10 @@ class BookPolicyRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
+
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteModel ?: null)) {
+                $validator->errors()->add('value', PlaceholderPrimaryEmail::message());
             }
 
             $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type, request()->has('through_automation'));

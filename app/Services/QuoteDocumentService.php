@@ -32,6 +32,7 @@ use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
+use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -41,8 +42,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use League\Flysystem\UnableToCheckExistence;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
+use Throwable;
 
 class QuoteDocumentService extends BaseService
 {
@@ -51,6 +54,7 @@ class QuoteDocumentService extends BaseService
     private const LOG_WITH_KEY = ' with key: ';
 
     protected $client;
+    use ChecksAzureFileExistence;
     use GenericQueriesAllLobs;
 
     public function __construct()
@@ -70,6 +74,7 @@ class QuoteDocumentService extends BaseService
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->notRestrictedInternalDocument()
             ->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
                 $query->where('category', $documentTypeCategory);
             })
@@ -182,11 +187,11 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
+
             // LoggerService::info('Document deleted', [
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']
             // ]);
-
             return response()->json(['message' => 'document deleted successfully']);
         }
 
@@ -325,8 +330,9 @@ class QuoteDocumentService extends BaseService
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
-                'document_category' => $data['document_category'] ?? null,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => auth()->id() ?? null,
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
             ]);
 
             // update the Bor log reference with uploaded document time and status
@@ -562,6 +568,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
+            QuoteTypeId::Device => [DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF],
             QuoteTypeId::Cyber => ['CYDPDR', 'CYPD', 'CYPDR'],
         ];
 
@@ -1009,20 +1016,48 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
     {
-        // Early return if filePath is empty or null to avoid any errors
         if (empty($filePath)) {
             return null;
         }
 
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
-            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
-        }
+        try {
+            if (! $this->checkAzureFileExistsWithRetry($filePath, $storageDisk)) {
+                return null;
+            }
 
-        return null;
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        } catch (UnableToCheckExistence $e) {
+            LoggerService::warning(
+                'Unable to check document existence (Azure); returning no URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        } catch (Throwable $e) {
+            LoggerService::error(
+                'Error generating temporary document URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        }
     }
 
     /**

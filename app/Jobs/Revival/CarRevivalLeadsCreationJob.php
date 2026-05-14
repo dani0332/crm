@@ -5,16 +5,16 @@ namespace App\Jobs\Revival;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
-use App\Enums\TiersEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
-use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\QuoteBatches;
-use App\Models\Tier;
-use App\Services\CarQuoteService;
+use App\Services\BirdService;
+use App\Services\CarRevivalService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
@@ -33,6 +33,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable;
     use GenericQueriesAllLobs;
+
+    private const LOG_FLOW = 'car_dtt_revival_creation';
 
     public $tries = 3;
     public $timeout = 90;
@@ -61,18 +63,22 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
             return false;
         }
 
-        $logPrefix = 'CarRevivalLeadsCreationJob - ';
-
         $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            LoggerService::info($logPrefix.'Dtt is not enabled from cms');
+            LoggerService::info(self::class.': DTT disabled in CMS', [
+                'flow' => self::LOG_FLOW,
+                'parent_lead_uuid' => $this->lead->uuid,
+            ]);
 
             return false;
         }
 
         $this->lead->refresh();
         if ($this->lead->is_revived) {
-            LoggerService::info($logPrefix.$this->lead->uuid.' - Lead Already Revived');
+            LoggerService::info(self::class.': Lead already revived', [
+                'flow' => self::LOG_FLOW,
+                'parent_lead_uuid' => $this->lead->uuid,
+            ]);
 
             return false;
         }
@@ -106,6 +112,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 'referenceUrl' => config('constants.APP_URL'),
                 'sicFlowEnabled' => false,
                 'whatsappConsent' => true,
+                'vehicleUse' => $this->lead?->vehicle_use,
             ];
 
             $carQuoteExists = CarQuote::select('uuid')->where([
@@ -118,23 +125,27 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
             ])->where('created_at', '>=', Carbon::now()->subMonths(11)->toDateString())->first();
 
             $revivedLead = null;
+            $revivalCarQuoteUUID = null;
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
                 if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
-                    LoggerService::error('Error Creating Revival Lead '.$this->lead->uuid, extra: [
-                        'data' => $dataArr,
-                        'url' => '/api/v1-save-car-quote',
-                        'response' => $capiResponse,
+                    LoggerService::warning(self::class.': CAPI v1-save-car-quote failed - Error Creating Revival Lead', [
+                        'flow' => self::LOG_FLOW,
+                        'parent_lead_uuid' => $this->lead->uuid,
+                        'parent_lead_id' => $this->lead->id,
+                        'capi_path' => '/api/v1-save-car-quote',
+                        'capi_errors' => $capiResponse->errors ?? null,
+                        'capi_response' => $capiResponse,
                     ]);
 
                     return false;
                 } else {
                     $revivalCarQuoteUUID = $capiResponse->quoteUID;
-                    LoggerService::info($logPrefix.$this->lead->uuid.' - childLeadCreated - '.$revivalCarQuoteUUID);
+                    LoggerService::info(self::class.' - '.$this->lead->uuid.' - childLeadCreated - '.$revivalCarQuoteUUID);
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
-                LoggerService::info($logPrefix.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
+                LoggerService::info(self::class.' - '.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
                 $revivedLead = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID,
@@ -150,57 +161,38 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true, false, true);
-
                 // Allocate the revived car lead using the CarAllocation strategy.
                 QuoteTypes::CAR->allocate($carQuote->uuid, false, false, false, false, true);
-                // Get the quote plans count.
-                $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
-
-                if ($quotePlansCount == 0) {
-                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
-                } elseif ($quotePlansCount == 1) {
-                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
-                } else {
-                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
-                }
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
                 $previousAdvisor = null;
                 if (! empty($carQuote->previous_advisor_id)) {
                     $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
                 }
-                $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
-                $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+                $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
+                $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_OCB;
+                // Shifted to Bird Workflow, previous it was using Brevo
+                $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
-                $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+                if (! $workflowUrl || empty($workflowUrl->value)) {
+                    LoggerService::warning(self::class.': MOTOR_REVIVAL_WORKFLOW URL missing in CMS (OCB not sent)', [
+                        'flow' => self::LOG_FLOW,
+                        'parent_lead_uuid' => $this->lead->uuid,
+                        'child_quote_uuid' => $revivalCarQuoteUUID,
+                    ]);
+                    $response = (object) ['status_code' => 0];
+                } else {
 
-                $customerName = $carQuote->first_name.' '.$carQuote->last_name;
+                    $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+                }
 
-                $emailData->subject = $customerName."'s".' Car Insurance with Alfred '.$carQuote->code;
-
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->uuid = $carQuote->uuid;
-
-                $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
-
-                $advisor = explode(',', $dttAdvisor);
-
-                $emailData->advisorName = $advisor[0];
-                $emailData->advisorEmail = $advisor[1];
-                $emailData->tag = 'dtt-initial-email';
-                $emailData->lob = QuoteTypes::CAR->id();
-
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
-
-                if ($response == 201) {
-                    LoggerService::info($logPrefix.'carRevivalParentLead - '.$revivalCarQuoteUUID.' - Email Sent');
+                if (in_array($response->status_code, [201, 200])) {
+                    app(CarRevivalService::class)->markRevivalCommsTriggered($revivalCarQuoteUUID);
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
 
-                    DttRevival::create([
+                    $dttRevival = DttRevival::create([
                         'quote_type_id' => QuoteTypes::CAR->id(),
                         'quote_id' => $carQuote->id,
                         'uuid' => $revivalCarQuoteUUID,
@@ -208,26 +200,58 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                         'email_sent' => true,
                     ]);
 
-                    $response = Ken::request('/send-ocb-whatsapp-revival', 'post', [
-                        'quoteUID' => $revivalCarQuoteUUID,
-                        'callSource' => 'imcrm',
-                    ]);
-
-                    LoggerService::info($logPrefix.'send-ocb-whatsapp-revival - '.$revivalCarQuoteUUID.' - '.json_encode($response));
-
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+                    app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $response, QuoteFlowType::MOTOR_REVIVAL_OCB->value, (int) QuoteTypes::CAR->id());
+
+                    if (app(BirdService::class)->isFollowupExecuted($revivalCarQuoteUUID, (int) QuoteTypes::CAR->id(), QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value)) {
+                        LoggerService::info(self::class.': follow-up email already executed', [
+                            'flow' => self::LOG_FLOW,
+                            'dtt_revival_id' => $dttRevival->id,
+                            'parent_lead_uuid' => $this->lead->uuid,
+                            'child_quote_uuid' => $revivalCarQuoteUUID,
+                        ]);
+                    } else {
+                        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
+
+                        CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
+
+                        LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
+                            'flow' => self::LOG_FLOW,
+                            'dtt_revival_id' => $dttRevival->id,
+                            'parent_lead_uuid' => $this->lead->uuid,
+                            'child_quote_uuid' => $revivalCarQuoteUUID,
+                        ]);
+                    }
                 } else {
-                    LoggerService::info($logPrefix.'carRevivalParentLead - '.$this->lead->uuid.' - childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    LoggerService::warning(self::class.': Bird OCB call did not return success (no dtt / no follow-up)', [
+                        'flow' => self::LOG_FLOW,
+                        'parent_lead_uuid' => $this->lead->uuid,
+                        'child_quote_uuid' => $revivalCarQuoteUUID,
+                        'response_code' => $response->status_code,
+                    ]);
                 }
             }
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix.'DTT Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
+            LoggerService::warning(self::class.': exception in handle', [
+                'flow' => self::LOG_FLOW,
+                'parent_lead_id' => $this->lead->id,
+                'parent_lead_uuid' => $this->lead->uuid,
+                'exception_class' => $exception::class,
+                'exception_message' => $exception->getMessage(),
+            ]);
         }
     }
 
     public function failed(Throwable $exception)
     {
-        LoggerService::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
+        LoggerService::warning(self::class.': job failed after max tries', [
+            'flow' => self::LOG_FLOW,
+            'parent_lead_id' => $this->lead->id,
+            'parent_lead_uuid' => $this->lead->uuid ?? null,
+            'exception_class' => $exception::class,
+            'exception_message' => $exception->getMessage(),
+        ]);
     }
 
     public function middleware()

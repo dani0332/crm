@@ -214,6 +214,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
             quoteTypeCode::CYBER => ! Auth::user()->hasRole(RolesEnum::CyberAdvisor),
+            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::SmartPhoneAdvisor),
         ];
 
         return [
@@ -235,6 +236,7 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::GroupMedical,
                     quoteTypeCode::SAVINGS,
                     quoteTypeCode::CYBER,
+                    quoteTypeCode::Device,
                 ],
             ],
             'sub_teams' => [
@@ -300,6 +302,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
             quoteTypeCode::CYBER => PermissionsEnum::CYBER_DISTRIBUTION_REPORT,
+            quoteTypeCode::Device => PermissionsEnum::DEVICE_DISTRIBUTION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {
@@ -419,6 +422,36 @@ class AdvisorDistributionReportService extends BaseService
         ];
     }
 
+    /**
+     * Normalizes advisor-assigned date range from request input.
+     * Single-date arrays (missing index 1) use that day as both start and end.
+     *
+     * @return array{0: string, 1: string} DB-formatted start and end datetimes
+     */
+    private function resolveAdvisorAssignedDateRange(object $filters, string $dateFormat, int $maxDays, bool $freshLoad): array
+    {
+        $dates = $filters->advisorAssignedDates ?? null;
+        $defaultStart = $freshLoad
+            ? Carbon::parse(now())->startOfDay()->format($dateFormat)
+            : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat);
+        $defaultEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+        if (! is_array($dates) || ! array_key_exists(0, $dates) || $dates[0] === null || $dates[0] === '') {
+            return [$defaultStart, $defaultEnd];
+        }
+
+        $startDate = Carbon::parse((string) $dates[0])->startOfDay()->format($dateFormat);
+
+        $endRaw = $dates[1] ?? null;
+        if ($endRaw !== null && $endRaw !== '') {
+            $endDate = Carbon::parse((string) $endRaw)->endOfDay()->format($dateFormat);
+        } else {
+            $endDate = Carbon::parse((string) $dates[0])->endOfDay()->format($dateFormat);
+        }
+
+        return [$startDate, $endDate];
+    }
+
     private function applyFiltersForCar($query, $filters)
     {
         $filters = (object) $filters;
@@ -427,11 +460,7 @@ class AdvisorDistributionReportService extends BaseService
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($filters->page);
 
-        $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-        $endDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+        [$startDate, $endDate] = $this->resolveAdvisorAssignedDateRange($filters, $dateFormat, $maxDays, $freshLoad);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
@@ -500,11 +529,7 @@ class AdvisorDistributionReportService extends BaseService
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($filters->page);
 
-        $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-        $endDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+        [$startDate, $endDate] = $this->resolveAdvisorAssignedDateRange($filters, $dateFormat, $maxDays, $freshLoad);
 
         $query->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);
 

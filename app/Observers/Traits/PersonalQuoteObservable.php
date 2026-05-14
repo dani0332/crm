@@ -189,16 +189,21 @@ trait PersonalQuoteObservable
         }
     }
 
-    private function updatePersonalQuote(PersonalQuote $personalQuote, array $data): void
+    private function updatePersonalQuote(PersonalQuote $personalQuote, array $data, bool $withEvents = false): void
     {
-        PersonalQuote::withoutEvents(function () use ($personalQuote, $data) {
+        if (! $withEvents) {
+            PersonalQuote::withoutEvents(function () use ($personalQuote, $data) {
+                $personalQuote->update($data);
+            });
+        } else {
             $personalQuote->update($data);
-        });
+        }
     }
 
     private function handleTransactionApproved(PersonalQuote $personalQuote): void
     {
         $this->updatePersonalQuote($personalQuote, ['transaction_approved_at' => now()]);
+        $this->handleRevivalQuote($personalQuote);
     }
 
     private function handlePolicyIssued(PersonalQuote $personalQuote): void
@@ -216,7 +221,8 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isCyber()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isDevice() || $personalQuote->isCyber()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
@@ -304,6 +310,22 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
             LoggerService::info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+        }
+    }
+
+    private function handleRevivalQuote(PersonalQuote $personalQuote): void
+    {
+        LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Request Received', [
+            'uuid' => $personalQuote->uuid,
+        ]);
+        if ($personalQuote->quote_type_id == (int) QuoteTypes::LIFE->id() && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])) {
+            $this->updatePersonalQuote($personalQuote, ['source' => LeadSourceEnum::REVIVAL_PAID], withEvents: true);
+            LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Updated to Revival Paid', [
+                'quote_type_id' => $personalQuote->quote_type_id,
+                'uuid' => $personalQuote->uuid,
+                'quote_status_id' => $personalQuote->quote_status_id,
+                'source' => $personalQuote->source,
+            ]);
         }
     }
 

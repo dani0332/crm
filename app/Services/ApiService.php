@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\MotorRevivalEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -29,8 +32,10 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ClaimAllocation\ClaimAllocationService;
+use App\Services\EmailServices\DeviceEmailService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
@@ -667,5 +672,92 @@ class ApiService
                 'message' => 'STP Advisor notification failed: '.$e->getMessage(),
             ];
         }
+    }
+    public function sendZeroPlansEmail($request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        LoggerService::info(self::class.': Sending zero plans email for quote uuid: '.$request->quoteUuid);
+        if (! $quoteType) {
+            LoggerService::info(self::class.': Invalid quote type');
+
+            return [
+                'success' => false,
+                'message' => 'Invalid quote type',
+            ];
+        }
+        switch ($quoteType->value) {
+            case QuoteTypes::DEVICE->value:
+                $lead = PersonalQuote::where('uuid', $request->quoteUuid)->first();
+                if (! $lead) {
+                    return [
+                        'success' => false,
+                        'message' => 'Lead not found',
+                    ];
+                }
+                $response = app(DeviceEmailService::class)->sendZeroPlansEmail($lead);
+                if ($response['success']) {
+                    return [
+                        'success' => true,
+                        'message' => $response['message'],
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => $response['message'],
+                    ];
+                }
+                break;
+            default:
+                return [
+                    'success' => false,
+                    'message' => 'Invalid quote type',
+                ];
+        }
+    }
+
+    public function isEligibleForRevivalFollowups(CarQuote $carQuote): bool
+    {
+        $engagementLevel = $carQuote->carQuoteRequestDetail->engagement_level;
+        $eligibleEngagementLevels = [
+            MotorRevivalEnum::COMMS_TRIGGERED->value,
+            MotorRevivalEnum::INTENT_LOW->value,
+        ];
+        $disallowedPaymentStatusIds = [
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ];
+
+        $isRevivalSource = $carQuote->source === LeadSourceEnum::REVIVAL;
+        $isAdvisorUnassigned = blank($carQuote->advisor_id);
+        $isLeadStatusNew = (int) $carQuote->quote_status_id === QuoteStatusEnum::NewLead;
+        $hasDisallowedPaymentStatus = $carQuote->payments()
+            ->whereIn('payment_status_id', $disallowedPaymentStatusIds)
+            ->exists();
+        $isPaymentStatusNotAuthorizedPaidOrPartial = ! $hasDisallowedPaymentStatus;
+        $isEngagementCommsTriggeredOrIntentLow = in_array($engagementLevel, $eligibleEngagementLevels, true);
+
+        $isEligible = $isRevivalSource
+            && $isAdvisorUnassigned
+            && $isLeadStatusNew
+            && $isPaymentStatusNotAuthorizedPaidOrPartial
+            && $isEngagementCommsTriggeredOrIntentLow;
+
+        LoggerService::info(self::class.': Eligible for revival followups business logic evaluated', extra: [
+            'quoteUID' => $carQuote->uuid,
+            'isEligible' => $isEligible,
+            'isRevivalSource' => $isRevivalSource,
+            'isAdvisorUnassigned' => $isAdvisorUnassigned,
+            'isLeadStatusNew' => $isLeadStatusNew,
+            'isPaymentStatusNotAuthorizedPaidOrPartial' => $isPaymentStatusNotAuthorizedPaidOrPartial,
+            'isEngagementCommsTriggeredOrIntentLow' => $isEngagementCommsTriggeredOrIntentLow,
+            'source' => $carQuote->source,
+            'advisor_id' => $carQuote->advisor_id,
+            'quote_status_id' => $carQuote->quote_status_id,
+            'payment_status_id' => $carQuote->payment_status_id,
+            'engagement_level' => $engagementLevel,
+        ]);
+
+        return $isEligible;
     }
 }

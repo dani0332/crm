@@ -5,57 +5,37 @@ declare(strict_types=1);
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Models\EmbeddedTransaction;
+use App\Models\SendUpdateLog;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * Export class for failed sage processes
- *
- * This class handles the export of failed sage processes data to Excel format.
- */
 class SageProcessesExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
 
-    /**
-     * @var string Default value for unavailable data
-     */
     private string $notAvailable = 'N/A';
-
-    /**
-     * @var \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection
-     */
     private $failedProcesses;
 
-    /**
-     * Constructor
-     *
-     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection  $failedProcesses
-     */
     public function __construct($failedProcesses)
     {
         $this->failedProcesses = $failedProcesses;
     }
 
-    /**
-     * Get the collection of failed processes
-     */
     public function collection(array $requestParams = []): Collection
     {
         return $this->failedProcesses;
     }
 
-    /**
-     * Define the headings for the Excel export - matching frontend table columns
-     */
     public function headings(): array
     {
         return [
-            'Sage Pro. ID',
+            'Sage Log ID',
             'Quote UUID',
             'REF ID',
             'SU Ref ID',
+            'EP Ref ID',
             'Lead Create Date',
             'Policy Number',
             'Price Vat Applicable',
@@ -73,36 +53,19 @@ class SageProcessesExport implements CsvExportableInterface
             'Insurer Commission Tax Invoice No.',
             'Lead Status',
             'Sage Receipt ID',
-            'Sage Proc. Status',
+            'Sage Log Status',
             'Failed Sage API',
             'Failed API Error',
             'Error displayed in IMCRM',
         ];
     }
 
-    /**
-     * Map the data for each row in the Excel export
-     *
-     * @param  mixed  $row
-     */
     public function map($row): array
     {
-        // Extract payment information (first payment if exists)
         $payment = $row->model?->payments[0] ?? null;
-
-        // Extract sage API log information (first failed log)
-        $sageApiLog = $row->model?->sageApiLogs[0] ?? null;
-        // Parse sage response to extract error message if available
-        $sageResponse = $sageApiLog?->response ?? $this->notAvailable;
-
-        // Format dates
-        // Note: Payment model's getCapturedAtAttribute accessor already formats captured_at using DATETIME_DISPLAY_FORMAT
         $paymentDate = $payment && $payment->captured_at ? $payment->captured_at : $this->notAvailable;
-
-        // Format lead create date - handle custom formats like "02-Jul-2025 01:09pm"
         $leadCreateDate = $this->formatLeadCreateDate($row->model?->created_at);
 
-        // Get lead status
         $leadStatus = $this->notAvailable;
         if ($row->model) {
             if (isset($row->model->quoteStatus)) {
@@ -112,16 +75,28 @@ class SageProcessesExport implements CsvExportableInterface
             }
         }
 
-        // Determine if this is SendUpdateLog or Main Lead
-        $isSendUpdate = $row->model_type === \App\Models\SendUpdateLog::class;
-        $refId = $isSendUpdate ? $this->notAvailable : ($row->model?->code ?? $this->notAvailable);
+        $isSendUpdate = $row->model_type === SendUpdateLog::class;
+        $isEmbeddedTransaction = $row->model_type === EmbeddedTransaction::class;
+        $mainLead = match (true) {
+            $isSendUpdate => $row->model?->personalQuote,
+            $isEmbeddedTransaction => $row->model?->quoteRequest,
+            default => $row->model,
+        };
+        $sectionType = $row->section_type ?? null;
+        $refId = $mainLead?->code ?? $this->notAvailable;
         $suRefId = $isSendUpdate ? ($row->model?->code ?? $this->notAvailable) : $this->notAvailable;
+        $epRefId = match (true) {
+            $sectionType === EmbeddedTransaction::class => $row->section?->code ?? $this->notAvailable,
+            $isEmbeddedTransaction => $row->model?->code ?? $this->notAvailable,
+            default => $this->notAvailable,
+        };
 
         return [
             $row->id ?? $this->notAvailable,
-            $row->model?->uuid ?? $this->notAvailable,
+            $mainLead?->uuid ?? $row->model?->uuid ?? $this->notAvailable,
             $refId,
             $suRefId,
+            $epRefId,
             $leadCreateDate,
             $row->model?->policy_number ?? $this->notAvailable,
             $payment?->price_vat_applicable ?? $this->notAvailable,
@@ -138,27 +113,19 @@ class SageProcessesExport implements CsvExportableInterface
             $payment?->insurer_tax_number ?? $this->notAvailable,
             $payment?->insurer_commmission_invoice_number ?? $this->notAvailable,
             $leadStatus,
-            $row->collected_sage_receipt_ids ?? $this->notAvailable,
-            $row->status ?? $this->notAvailable,
-            $sageApiLog?->sage_end_point ?? $this->notAvailable,
-            $sageResponse,
+            $payment?->collected_sage_receipt_ids ?? $this->notAvailable,
+            $row->sage_api_status ?? $this->notAvailable,
+            $row->failed_api ?? $this->notAvailable,
+            $row->failed_error ?? $this->notAvailable,
             $row->imcrm_error ?? $this->notAvailable,
         ];
     }
 
-    /**
-     * Define the title for the Excel sheet
-     */
     public function title(): string
     {
         return 'Failed Sage Processes';
     }
 
-    /**
-     * Format lead create date - handles custom date formats
-     *
-     * @param  mixed  $createdAt
-     */
     private function formatLeadCreateDate($createdAt): string
     {
         if (! $createdAt) {
@@ -174,9 +141,6 @@ class SageProcessesExport implements CsvExportableInterface
         }
     }
 
-    /**
-     * Get export metadata with sage process specific information
-     */
     public function getExportMetadata(array $requestParams = []): array
     {
         return [

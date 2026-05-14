@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class SageApiLog extends Model
 {
@@ -33,18 +35,24 @@ class SageApiLog extends Model
         'updated_at',
     ];
 
-    public function section()
+    public function section(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function model()
+    public function model(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no']);
+    }
+
+    // Reminder:: This relationship is used through Sage Processes
+    public function insuranceProvider(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceProvider::class);
     }
 }

@@ -346,7 +346,7 @@ class ClaimsController extends Controller
                     'user_id' => Auth::id(),
                     'claim' => $claim,
                 ]);
-                
+
                 if ($claim) {
                     $this->claimsService->assignClaim($claim, $managerId);
                     LoggerService::info(' Claim assigned successfully - UUID: '.$uuid, extra: [
@@ -356,7 +356,7 @@ class ClaimsController extends Controller
                     ]);
                     $assigned++;
                 }
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 $errors[] = $uuid.': '.implode(' ', $e->validator->errors()->all());
             } catch (Exception $e) {
                 LoggerService::error(' Error bulk assigning claim - UUID: '.$uuid, extra: [

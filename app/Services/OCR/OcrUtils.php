@@ -12,6 +12,7 @@ use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\HealthQuote;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
@@ -56,7 +57,7 @@ trait OcrUtils
 
         try {
             return Carbon::parse($date)->format('Y-m-d');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to format date', exception: $e);
 
             return null;
@@ -354,7 +355,7 @@ trait OcrUtils
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
                 'error' => $e->getMessage(),
                 'quote_type' => get_class($quote),
@@ -409,11 +410,12 @@ trait OcrUtils
         return $providerCode;
     }
 
-    private function getQuoteTypeId($quote): int
+    public function getQuoteTypeId($quote): int
     {
         return match (true) {
             $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
             $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
             $quote instanceof BusinessQuote => (int) QuoteTypes::BUSINESS->id(),
             default => $quote->quote_type_id,
         };

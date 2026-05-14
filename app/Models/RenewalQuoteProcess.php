@@ -4,20 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RenewalQuoteProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id', 'step', 'retry_count', 'last_step_attempted', 'step_errors'];
+    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id', 'insurance_provider_transition_id', 'step', 'retry_count', 'last_step_attempted', 'step_errors'];
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',
         'step_errors' => 'array',
+        'insurance_provider_transition_id' => 'integer',
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function renewalUploadLead()
     {
@@ -25,7 +27,7 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function carQuote()
     {
@@ -48,7 +50,36 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * Transition used for this lead (source insurer → target provider), if any.
+     *
+     * @return BelongsTo
+     */
+    public function insuranceProviderTransition()
+    {
+        return $this->belongsTo(InsuranceProviderTransition::class, 'insurance_provider_transition_id');
+    }
+
+    /**
+     * Whether this process is a transitionable lead (has a resolved and active provider transition).
+     */
+    public function checkIsTransitionableLead(): bool
+    {
+        if ($this->insurance_provider_transition_id === null) {
+            return false;
+        }
+
+        // Ensure transition exists, is active, and both providers exist
+        // to maintain consistency with RenewalsUploadService::isTransitionableLeadForProcess
+        $transition = $this->insuranceProviderTransition;
+
+        return (bool) ($transition &&
+            $transition->is_active &&
+            $transition->targetProvider &&
+            $transition->sourceProvider);
+    }
+
+    /**
+     * @return BelongsTo
      */
     public function healthQuote()
     {

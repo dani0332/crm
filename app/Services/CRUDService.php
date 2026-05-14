@@ -38,6 +38,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -201,7 +202,8 @@ class CRUDService extends BaseService
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes"),
+                DB::raw("(SELECT NAME FROM users WHERE id = NULLIF(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), IF(JSON_EXTRACT(a.new_values, '$.advisor_id') IS NULL, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), NULL))) AS OldAdvisor"),
             )
             ->where(function ($query) {
                 $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
@@ -412,10 +414,17 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
+        // For unit test since concact does not work in sqllite
+        $driver = DB::connection()->getDriverName();
+
+        $nameExpression = $driver === 'sqlite'
+            ? "users.name || ' - ' || r.name"
+            : "CONCAT(users.name,' - ',r.name)";
+
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->select('users.id', DB::raw("$nameExpression AS name"))
             ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
@@ -637,13 +646,13 @@ class CRUDService extends BaseService
                                 'is_fulfilled' => 0,
                                 'action_type' => 'CAPTURE',
                                 'amount' => $amount,
-                                'created_by' => $createdBy ?? auth()->user()->email,
+                                'created_by' => $createdBy ?? auth()->user()?->email,
                                 'is_manager_approved' => 1,
                             ]
                         );
                         LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
-                    } catch (\Illuminate\Database\QueryException $e) {
+                    } catch (QueryException $e) {
                         LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
                             LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');

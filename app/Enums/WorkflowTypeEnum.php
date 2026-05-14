@@ -38,11 +38,15 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const OTHER_BUSINESS_NEW_POLICY = 'other_business_new_policy';
+    public const DEVICE_NEW_POLICY = 'device_new_policy';
+    public const DEVICE_AUTOMATION_FAILED = 'device_automation_failed';
+    public const DEVICE_UPDATE_POLICY = 'device_update_policy';
     public const CYBER_NEW_POLICY = 'cyber_new_policy';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
     public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER = 'send_policy_issued_whatsapp_message_to_customer';
+    public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL = 'send_policy_issued_whatsapp_message_to_customer_travel';
     public const MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups';
     public const MOTOR_PCP_OCB = 'motor_pcp_ocb';
     public const COMPANY_CAR_AUTOMATED_FOLLOWUPS = 'company_car_automated_followups';
@@ -87,8 +91,22 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';
     public const HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 'health_stp_advisor_notification_api_failed';
 
+    // Device Workflow Types
+    public const DEVICE_AUTOMATED_FOLLOWUPS = 'device_automated_followups';
+    public const DEVICE_OCB_INTRO_EMAIL = 'device_ocb_intro_email';
+    public const DEVICE_OCB_INTRO_WHATSAPP = 'device_ocb_intro_whatsapp';
+    public const DEVICE_ZERO_PLANS_EMAIL = 'device_zero_plans_email';
+
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
     public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
+    public const CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS = 'car_intro_email_without_vehicle_details';
+
+    // Motor Revival workflow
+    public const MOTOR_REVIVAL_OCB = 'motor_revival_ocb';
+    public const MOTOR_REVIVAL_FOLLOWUP = 'motor_revival_followup';
+
+    // Life Revival OCB
+    public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
 }

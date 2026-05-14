@@ -382,7 +382,6 @@ $child = Child::factory()
 
 ```php
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 

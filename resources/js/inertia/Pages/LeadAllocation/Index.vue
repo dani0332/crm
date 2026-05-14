@@ -48,6 +48,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  canMutateLeadAllocation: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const autoRefresh = ref(true);
@@ -113,7 +117,7 @@ const currentRow = id => {
 const editCap = id => {
   if (
     hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) ||
-    lobSpecificLeadAllocation
+    props.canMutateLeadAllocation
   ) {
     const row = leadData?.value.find(item => item.id === id);
     row.capEdit = true;
@@ -228,6 +232,9 @@ async function fetchData() {
 }
 
 const onSubmitChanges = async () => {
+  if (!props.canMutateLeadAllocation) {
+    return;
+  }
   loaders.submit = true;
   const max_cap = leadData?.value
     .filter(item => item.capEdit && item.cap !== item.maxCapacity)
@@ -375,6 +382,7 @@ onMounted(() => {
             color="emerald"
             :loading="loaders.submit"
             block
+            :disabled="!canMutateLeadAllocation"
             @click="onSubmitChanges"
           >
             Save Cap Changes
@@ -437,6 +445,7 @@ onMounted(() => {
             "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             :loading="leadData.find(item => item.id === id)?.loading"
             :refresh="leadData.find(item => item.id === id)?.reset"
             @toggle="onToggleStatus($event.active, id, userId)"
@@ -451,6 +460,7 @@ onMounted(() => {
           <ItemToggler
             :is-active="normalAllocationEnabled"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleNormalAllocation($event.active, userId, id)"
           />
         </div>
@@ -461,6 +471,7 @@ onMounted(() => {
           <ItemToggler
             :is-active="reset_cap"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleResetCap($event.active, userId, id)"
           />
         </div>

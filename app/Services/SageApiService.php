@@ -66,10 +66,10 @@ class SageApiService
     public function __construct()
     {
         // Guzzle was not working for post request
-        $this->sageLogin = env('SAGE_300_LOGIN');
-        $this->sagePassword = env('SAGE_300_PASSWORD');
-        $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
-        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
+        $this->sageLogin = config('constants.SAGE_300_LOGIN');
+        $this->sagePassword = config('constants.SAGE_300_PASSWORD');
+        $this->sageRequestUrl = config('constants.SAGE_300_BASE_URL').config('constants.SAGE_300_VERSION');
+        $this->sageDBName = config('constants.SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -773,8 +773,12 @@ class SageApiService
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $quote?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+
+            if (! $emirate) {
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical'];
+            }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
 
@@ -912,9 +916,9 @@ class SageApiService
 
         // Dispatch the policy document job first, before any policy booking operations
         $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Travel, QuoteTypeId::Cyber])) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+            if (in_array($quote->policyIssuance?->status, [PolicyIssuanceEnum::COMPLETED_STATUS, PolicyIssuanceEnum::PROCESSING_STATUS]) && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
@@ -933,6 +937,12 @@ class SageApiService
             LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
 
             return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL && ! $quote->emirate_of_registration_id) {
+            LoggerService::info('Emirate of registration is mandatory for SAGE posting.', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Emirate of registration is mandatory for SAGE posting.'];
         }
 
         if (! $isPolicyBookedOnSage) {
@@ -2399,7 +2409,7 @@ class SageApiService
                                 $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
                             }
 
-                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
                             $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                             $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
                             $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
@@ -3298,7 +3308,7 @@ class SageApiService
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
-            $quoteData['stale_at'] = null;
+            $quoteData['stale_at'] = null; // TODO:: NGI:: need to ask ali or bilal about stale_at should we pass device here in above in_array condition ?
         }
         if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
             $quoteData['policy_booking_date'] = Carbon::now();
@@ -3517,8 +3527,8 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
-                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]) || $isCyberLob) {
+                $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+                if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider?->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
                 } else {
                     // TODO:: This should be updated with the new function in PolicyIssuanceService

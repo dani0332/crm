@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CustomerPrimaryEmailRequest extends FormRequest
@@ -21,7 +22,7 @@ class CustomerPrimaryEmailRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

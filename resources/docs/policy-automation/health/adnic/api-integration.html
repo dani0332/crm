@@ -1,0 +1,1812 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC API Integration - Complete Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #27ae60;
+      }
+
+      .section h3 {
+        color: #27ae60;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .endpoint-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid #27ae60;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .endpoint-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .method-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 0.9em;
+        color: white;
+        background: #27ae60;
+      }
+
+      .endpoint-url {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1em;
+        color: #2c3e50;
+        font-weight: 600;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block.json {
+        background: #1e1e1e;
+      }
+
+      .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .info-box {
+        background: #e8f5e9;
+        border-left: 4px solid #27ae60;
+        padding: 15px 20px;
+        border-radius: 5px;
+        margin: 15px 0;
+      }
+
+      .info-box.warning {
+        background: #fff3cd;
+        border-left-color: #ffc107;
+      }
+
+      .info-box.error {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+      }
+
+      .info-box strong {
+        color: #27ae60;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .info-box.warning strong {
+        color: #856404;
+      }
+
+      .info-box.error strong {
+        color: #721c24;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table th {
+        background: #27ae60;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .status-code {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.85em;
+      }
+
+      .status-200 {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-404 {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-500 {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .config-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #27ae60;
+      }
+
+      .config-item strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      .config-item code {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        color: #27ae60;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .endpoint-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .code-block {
+          font-size: 0.8em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/adnic/index.html">ADNIC</a>
+        <span>></span>
+        <span>API Integration</span>
+      </div>
+
+      <div class="header">
+        <h1>🔌 ADNIC API Integration</h1>
+        <p>
+          Complete API Documentation for ADNIC Health Insurance Policy Issuance
+        </p>
+      </div>
+
+      <!-- Authentication & Authorization -->
+      <div class="section">
+        <h2>🔐 Authentication & Authorization</h2>
+
+        <p>
+          All ADNIC API requests require authentication using header-based
+          credentials. The API uses a combination of Bearer token and
+          subscription key for authentication.
+        </p>
+
+        <div class="info-box">
+          <strong>Authentication Method</strong>
+          Header-based authentication with Bearer token and Azure API Management
+          subscription key
+        </div>
+
+        <div class="info-box warning">
+          <strong>⚠️ Important Requirements</strong>
+          <ul style="margin-left: 20px; margin-top: 8px">
+            <li>
+              <strong>STP Cases Only:</strong> Automation only runs for STP
+              cases (<code>$quote->isSTPCase()</code>)
+            </li>
+            <li>
+              <strong>Pre-Captured Payment:</strong> Payment must be authorized
+              before automation starts
+            </li>
+            <li>
+              <strong>Transaction ID:</strong> Used as
+              <code>PaymentRefNo</code> from
+              <code>$splitPayment?->paymentCharges?->transaction_id</code>
+            </li>
+          </ul>
+        </div>
+
+        <h3>Required Headers</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Header Name</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Authorization</code></td>
+              <td>Bearer token or authorization token provided by ADNIC</td>
+              <td><code>Bearer {TOKEN}</code> or <code>{TOKEN}</code></td>
+            </tr>
+            <tr>
+              <td><code>Ocp-Apim-Subscription-Key</code></td>
+              <td>Azure API Management subscription key</td>
+              <td><code>{SUBSCRIPTION_KEY}</code></td>
+            </tr>
+            <tr>
+              <td><code>Content-Type</code></td>
+              <td>Request content type (always JSON)</td>
+              <td><code>application/json</code></td>
+            </tr>
+            <tr>
+              <td><code>Accept</code></td>
+              <td>Expected response format</td>
+              <td><code>application/json</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Header Structure Example</h3>
+        <div class="code-block">
+          <pre>
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Ocp-Apim-Subscription-Key": "your_subscription_key_here",
+  "Authorization": "Bearer your_authorization_token_here"
+}</pre
+          >
+        </div>
+
+        <h3>Configuration</h3>
+        <p>
+          Authentication credentials are configured via environment variables:
+        </p>
+        <div class="config-grid">
+          <div class="config-item">
+            <strong>Authorization Token</strong>
+            <code>ADNIC_AUTHORIZATION_TOKEN</code>
+            <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
+              Bearer token or authorization token
+            </p>
+          </div>
+          <div class="config-item">
+            <strong>Subscription Key</strong>
+            <code>ADNIC_SUBSCRIPTION_KEY</code>
+            <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
+              Azure API Management subscription key
+            </p>
+          </div>
+          <div class="config-item">
+            <strong>Partner ID</strong>
+            <code>ADNIC_PARTNER_ID</code>
+            <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
+              Partner identifier for API requests
+            </p>
+          </div>
+          <div class="config-item">
+            <strong>Partner Reference No</strong>
+            <code>ADNIC_PARTNER_REFERENCE_NO</code>
+            <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
+              Partner reference number
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Base URL & Configuration -->
+      <div class="section">
+        <h2>🌐 API Base URL & Configuration</h2>
+
+        <h3>Base URL Structure</h3>
+        <div class="code-block">
+          <pre>
+{ADNIC_API_BASE_URL}/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical</pre
+          >
+        </div>
+
+        <div class="info-box">
+          <strong>Environment Variable</strong>
+          <code>ADNIC_API_BASE_URL</code> - Base URL for ADNIC API (e.g.,
+          <code>https://api.adnic.ae</code>)
+        </div>
+
+        <h3>API Timeout Configuration</h3>
+        <p>
+          API timeout is configurable via ApplicationStorage runtime
+          configuration:
+        </p>
+        <div class="config-item">
+          <strong>Timeout Configuration</strong>
+          <code>ADNIC_HEALTH_AUTOMATION_API_TIMEOUT</code>
+          <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
+            Timeout in seconds (default: configurable via ApplicationStorage)
+          </p>
+        </div>
+
+        <div class="info-box warning">
+          <strong>⚠️ Important</strong>
+          Timeout values are retrieved from ApplicationStorage at runtime,
+          allowing configuration changes without code deployment.
+        </div>
+
+        <h3>Retry Configuration</h3>
+        <p>
+          The HTTP client implements automatic retry logic for connection and
+          timeout errors:
+        </p>
+        <ul style="margin-left: 30px; margin-top: 10px; line-height: 2">
+          <li><strong>Retry Attempts:</strong> 5 times</li>
+          <li><strong>Retry Delay:</strong> 10 seconds between attempts</li>
+          <li>
+            <strong>Retry Conditions:</strong> Connection exceptions and timeout
+            errors
+          </li>
+        </ul>
+      </div>
+
+      <!-- API Endpoints -->
+      <div class="section">
+        <h2>📡 API Endpoints</h2>
+
+        <p>
+          The ADNIC Health Insurance API provides three main endpoints for
+          policy issuance automation. <strong>Note:</strong> Automation only
+          runs for STP cases, and payment must be pre-captured before automation
+          starts.
+        </p>
+
+        <!-- Endpoint 1: Generate Policy -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url">/GeneratePolicy</span>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Creates a health insurance policy with ADNIC using quote
+            information, customer details, and pre-captured payment reference.
+            Payment is already authorized before automation starts, and the
+            transaction ID is used as <code>PaymentRefNo</code>.
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Content-Type: application/json
+Accept: application/json
+Ocp-Apim-Subscription-Key: {SUBSCRIPTION_KEY}
+Authorization: {AUTHORIZATION_TOKEN}</pre
+            >
+          </div>
+
+          <h4>Request Payload Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER_ID"
+  },
+  "SponsorInfo": {
+    "SponserType": "Individual",
+    "SponserName": "John Doe",
+    "MobileNo": "+971505636254",
+    "EmailId": "email@example.com",
+    "Address": "Dubai",
+    "DateOfBirth": "01-01-1990",
+    "Gender": "M",
+    "Nationality": 1,
+    "SalaryType": 1,
+    "EmiratesId": "784-1990-1234567-1",
+    "City": "1",
+    "SponserCategory": "1",
+    "MaritalStatus": "1",
+    "PassportNo": "A12345678",
+    "UIDNo": "784-1990-1234567-1",
+    "MemberCategory": "1",
+    "VisaType": "1",
+    "PreviousVisaEmirate": "1",
+    "CustomerClassification": "1"
+  },
+  "QuoteInfo": {
+    "PartnerReferenceNo": "REF123",
+    "PartnerPremium": 1000.00,
+    "QuotationNo": "QUOTE123",
+    "VisaEmirate": 1,
+    "ProductType": "SHIFA",
+    "PolicyType": "F",
+    "PlanType": "GO",
+    "DeductibleAmount": 500,
+    "CoInsurancePercent": 20,
+    "DentalCover": "Y",
+    "OpticalCover": "Y",
+    "SalaryBand": 1,
+    "NoOfPersonsToInsure": 1
+  },
+  "InsuredInfo": [
+    {
+      "MemberSeqNo": 1,
+      "Salutation": "Mr",
+      "MemberName": "John Doe",
+      "DateOfBirth": "01-01-1990",
+      "Gender": "M",
+      "Relation": "S",
+      "Height": 175,
+      "Weight": 75,
+      "MaritalStatus": "1",
+      "DisclaimerSelected": "Y",
+      "Occupation": "Engineer",
+      "LoadingInfo": {
+        "LoadingType": "N",
+        "LoadingTypeValue": 0,
+        "LoadingAmount": 0
+      },
+      "QuestionnarieInfo": {},
+      "PregnantStatus": "N",
+      "PreviouslyCovered": "N",
+      "EmiratesId": "784-1990-1234567-1",
+      "EntryPermitNoOrFileNo": "123456",
+      "CustomerClassification": "1",
+      "MemberCategory": "1",
+      "SalaryType": 1,
+      "Commission": "N",
+      "VisaType": "1",
+      "City": "1",
+      "Nationality": 1,
+      "PassportNo": "A12345678",
+      "UIDNo": "784-1990-1234567-1",
+      "WorkLocation": "1",
+      "ResidenceLocation": "1",
+      "Industry": "IT",
+      "DocumentInfo": {
+        "1": [
+          {
+            "DocumentType": "3",
+            "DocumentId": "DOC123"
+          }
+        ]
+      },
+      "PreviousVisaEmirate": "1"
+    }
+  ],
+  "PolicyInfo": {
+    "PolicyStartDate": "01-02-2024",
+    "PaymentType": 5,
+    "PaymentRefNo": "ch_1234567890"
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Request Payload Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field Path</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>PartnerInfo.PartnerId</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Partner identifier from configuration</td>
+              </tr>
+              <tr>
+                <td><code>SponsorInfo.SponserType</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Sponsor type (e.g., "Individual")</td>
+              </tr>
+              <tr>
+                <td><code>SponsorInfo.SponserName</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Full name of the sponsor</td>
+              </tr>
+              <tr>
+                <td><code>SponsorInfo.DateOfBirth</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Date of birth in format: dd-mm-yyyy</td>
+              </tr>
+              <tr>
+                <td><code>SponsorInfo.Gender</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Gender: "M" or "F"</td>
+              </tr>
+              <tr>
+                <td><code>SponsorInfo.Nationality</code></td>
+                <td>integer</td>
+                <td>Yes</td>
+                <td>Nationality code (mapped from country name)</td>
+              </tr>
+              <tr>
+                <td><code>QuoteInfo.QuotationNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Quotation number from previous quote generation</td>
+              </tr>
+              <tr>
+                <td><code>QuoteInfo.PartnerPremium</code></td>
+                <td>decimal</td>
+                <td>Yes</td>
+                <td>Premium amount</td>
+              </tr>
+              <tr>
+                <td><code>InsuredInfo[]</code></td>
+                <td>array</td>
+                <td>Yes</td>
+                <td>Array of insured members</td>
+              </tr>
+              <tr>
+                <td><code>InsuredInfo[].MemberSeqNo</code></td>
+                <td>integer</td>
+                <td>Yes</td>
+                <td>Member sequence number</td>
+              </tr>
+              <tr>
+                <td><code>InsuredInfo[].DocumentInfo</code></td>
+                <td>object</td>
+                <td>Yes</td>
+                <td>Document information grouped by MemberSeqNo</td>
+              </tr>
+              <tr>
+                <td><code>PolicyInfo.PolicyStartDate</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Policy start date in format: dd-mm-yyyy</td>
+              </tr>
+              <tr>
+                <td><code>PolicyInfo.PaymentType</code></td>
+                <td>integer</td>
+                <td>Yes</td>
+                <td>Payment type code (default: 5)</td>
+              </tr>
+              <tr>
+                <td><code>PolicyInfo.PaymentRefNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>
+                  Payment reference number (transaction ID from pre-captured
+                  payment). Source:
+                  <code>$splitPayment?->paymentCharges?->transaction_id</code>.
+                  Payment is already authorized before automation starts.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Success Response (HTTP 200)</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "data": {
+    "QuoteInfo": {
+      "QuotationNo": "QUOTE123",
+      "PartnerReferenceNo": "REF123"
+    },
+    "PolicyInfo": {
+      "PolicyNo": "POL123456",
+      "PolicyStartDate": "01-02-2024",
+      "PolicyEndDate": "31-01-2025",
+      "PolicyIssuedDate": "15-01-2024"
+    },
+    "PolicyDocumentInfo": {
+      "PolicyDocumentId": "POLDOC123",
+      "CommisionNoteDocumentId": "COMDOC123",
+      "TaxInvoiceDocumentId": "TAXDOC123"
+    }
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Response Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field Path</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>data.PolicyInfo.PolicyNo</code></td>
+                <td>string</td>
+                <td>Generated policy number</td>
+              </tr>
+              <tr>
+                <td><code>data.PolicyInfo.PolicyStartDate</code></td>
+                <td>string</td>
+                <td>Policy start date</td>
+              </tr>
+              <tr>
+                <td><code>data.PolicyInfo.PolicyEndDate</code></td>
+                <td>string</td>
+                <td>Policy end date</td>
+              </tr>
+              <tr>
+                <td><code>data.PolicyDocumentInfo.PolicyDocumentId</code></td>
+                <td>string</td>
+                <td>Policy document ID for download</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>data.PolicyDocumentInfo.CommisionNoteDocumentId</code>
+                </td>
+                <td>string</td>
+                <td>Commission note document ID for download</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>data.PolicyDocumentInfo.TaxInvoiceDocumentId</code>
+                </td>
+                <td>string</td>
+                <td>Tax invoice document ID for download</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Error Response</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "ErrorInfo": [
+    {
+      "ErrorCode": "E001",
+      "ErrorMsg": "Invalid quotation number"
+    }
+  ]
+}</pre
+            >
+          </div>
+        </div>
+
+        <!-- Endpoint 2: Upload Document -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url">/UploadDocument</span>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Uploads customer documents (Emirates ID, Visa, Passport, etc.) to
+            ADNIC for policy members. Documents are uploaded per-member, meaning
+            each insured member's documents are uploaded separately with their
+            <code>MemberSeqNo</code>.
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Content-Type: application/json
+Accept: application/json
+Ocp-Apim-Subscription-Key: {SUBSCRIPTION_KEY}
+Authorization: {AUTHORIZATION_TOKEN}</pre
+            >
+          </div>
+
+          <h4>Request Payload Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER_ID"
+  },
+  "DocumentInfo": {
+    "QuotationNo": "QUOTE123",
+    "MemberSeqNo": 1,
+    "DocumentType": "3",
+    "DocumentName": "Emirates_ID.pdf",
+    "DocumentUploadDate": "2024-01-15T10:30:00Z",
+    "IsDocumentValidated": "Y",
+    "DocumentContent": "JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PC9MZW5ndGggMiAwIFIvRmlsdGVyL0ZsYXRlRGVjb2RlPj4Kc3RyZWFtCngBXZ..."
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Request Payload Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>PartnerInfo.PartnerId</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Partner identifier</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.QuotationNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Quotation number</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.MemberSeqNo</code></td>
+                <td>integer</td>
+                <td>Yes</td>
+                <td>
+                  Member sequence number. Documents are uploaded per-member,
+                  meaning each insured member's documents are uploaded
+                  separately.
+                </td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.DocumentType</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Document type code (3=Emirates ID, 6=Visa, etc.)</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.DocumentName</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Original document filename</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.DocumentUploadDate</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>ISO 8601 formatted upload date</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.IsDocumentValidated</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Validation flag: "Y" or "N"</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.DocumentContent</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Base64 encoded document content</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Document Type Codes</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Document Type</th>
+                <th>IMCRM Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>3</code></td>
+                <td>Emirates ID</td>
+                <td>HEA_EID</td>
+              </tr>
+              <tr>
+                <td><code>6</code></td>
+                <td>Visa</td>
+                <td>HEA_VISA</td>
+              </tr>
+              <tr>
+                <td><code>7</code></td>
+                <td>Passport</td>
+                <td>HEA_PASSPORT</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info-box">
+            <strong>📄 Document Requirements</strong>
+            <ul style="margin-left: 20px; margin-top: 8px">
+              <li>Documents must be base64 encoded</li>
+              <li>Allowed MIME types: PDF, JPEG, PNG</li>
+              <li>Document content is fetched from Azure Storage</li>
+              <li>MIME type validation is performed before upload</li>
+              <li>
+                <strong>Per-Member Upload:</strong> Each insured member's
+                documents are uploaded separately with their
+                <code>MemberSeqNo</code>
+              </li>
+            </ul>
+          </div>
+
+          <h4>Success Response (HTTP 200)</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "DocumentInfo": {
+    "DocumentId": "DOC123",
+    "DocumentType": "3",
+    "QuotationNo": "QUOTE123",
+    "MemberSeqNo": 1
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Response Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DocumentInfo.DocumentId</code></td>
+                <td>string</td>
+                <td>Generated document ID (used in policy generation)</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.DocumentType</code></td>
+                <td>string</td>
+                <td>Document type code</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.QuotationNo</code></td>
+                <td>string</td>
+                <td>Quotation number</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.MemberSeqNo</code></td>
+                <td>integer</td>
+                <td>Member sequence number</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Error Response</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "ErrorInfo": [
+    {
+      "ErrorCode": "E002",
+      "ErrorMsg": "Invalid document type"
+    }
+  ]
+}</pre
+            >
+          </div>
+
+          <div class="code-block json">
+            <pre>
+{
+  "DocumentInfo": {
+    "ErrorInfo": [
+      {
+        "ErrorCode": "E003",
+        "ErrorMsg": "Document validation failed"
+      }
+    ]
+  }
+}</pre
+            >
+          </div>
+        </div>
+
+        <!-- Endpoint 3: Download Document -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url">/GeneratePolicyDocument</span>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Downloads policy documents (Policy Schedule, Tax Invoice, Tax
+            Invoice Raised By Buyer) from ADNIC as base64-encoded PDF files.
+            <strong
+              >All 3 documents must be successfully downloaded and uploaded for
+              the step to pass.</strong
+            >
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Content-Type: application/json
+Accept: application/json
+Ocp-Apim-Subscription-Key: {SUBSCRIPTION_KEY}
+Authorization: {AUTHORIZATION_TOKEN}</pre
+            >
+          </div>
+
+          <h4>Request Payload Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER_ID"
+  },
+  "PolicyDocumentInfo": {
+    "PartnerReferenceNo": "REF123",
+    "QuotationNo": "QUOTE123",
+    "PolicyNo": "POL123456",
+    "DocumentId": "POLDOC123"
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Request Payload Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>PartnerInfo.PartnerId</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Partner identifier</td>
+              </tr>
+              <tr>
+                <td><code>PolicyDocumentInfo.PartnerReferenceNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Partner reference number</td>
+              </tr>
+              <tr>
+                <td><code>PolicyDocumentInfo.QuotationNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Quotation number</td>
+              </tr>
+              <tr>
+                <td><code>PolicyDocumentInfo.PolicyNo</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Policy number from GeneratePolicy response</td>
+              </tr>
+              <tr>
+                <td><code>PolicyDocumentInfo.DocumentId</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>
+                  Document ID from GeneratePolicy response (PolicyDocumentId,
+                  CommisionNoteDocumentId, or TaxInvoiceDocumentId)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info-box">
+            <strong>📋 Document Types Retrieved</strong>
+            <ul style="margin-left: 20px; margin-top: 8px">
+              <li>
+                <strong>Policy Schedule:</strong> PolicyDocumentId → Mapped to
+                IMCRM code: POLICY_SCHEDULE
+              </li>
+              <li>
+                <strong>Tax Invoice Raised By Buyer:</strong>
+                CommisionNoteDocumentId → Mapped to IMCRM code: CTIRBB
+              </li>
+              <li>
+                <strong>Tax Invoice:</strong> TaxInvoiceDocumentId → Mapped to
+                IMCRM code: TI
+              </li>
+              <li>
+                <strong>All 3 Required:</strong> All three documents must be
+                successfully downloaded and uploaded. Step fails if any document
+                fails.
+              </li>
+            </ul>
+          </div>
+
+          <h4>Success Response (HTTP 200)</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "DocumentInfo": {
+    "documentContent": "JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PC9MZW5ndGggMiAwIFIvRmlsdGVyL0ZsYXRlRGVjb2RlPj4Kc3RyZWFtCngBXZ...",
+    "documentName": "Policy_POL123456.pdf",
+    "documentType": "Policy"
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Response Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DocumentInfo.documentContent</code></td>
+                <td>string</td>
+                <td>Base64 encoded PDF document content</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.documentName</code></td>
+                <td>string</td>
+                <td>Document filename</td>
+              </tr>
+              <tr>
+                <td><code>DocumentInfo.documentType</code></td>
+                <td>string</td>
+                <td>Document type (Policy, Commission Note, Tax Invoice)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Error Response</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "DocumentInfo": {
+    "ErrorInfo": [
+      {
+        "ErrorCode": "E004",
+        "ErrorMsg": "Document not found"
+      }
+    ]
+  }
+}</pre
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Handling -->
+      <div class="section">
+        <h2>⚠️ Error Handling</h2>
+
+        <h3>HTTP Status Codes</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Status Code</th>
+              <th>Description</th>
+              <th>Handling</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="status-code status-200">200 OK</span></td>
+              <td>Request successful</td>
+              <td>
+                Check response body for API-level errors in ErrorInfo array
+              </td>
+            </tr>
+            <tr>
+              <td><span class="status-code status-404">404 Not Found</span></td>
+              <td>Endpoint not found</td>
+              <td>Verify endpoint URL and base URL configuration</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="status-code status-500"
+                  >500 Internal Server Error</span
+                >
+              </td>
+              <td>Server error</td>
+              <td>Retry with exponential backoff</td>
+            </tr>
+            <tr>
+              <td><strong>Timeout</strong></td>
+              <td>Request timeout</td>
+              <td>Automatic retry (5 attempts, 10s delay) if retry enabled</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>API-Level Error Detection</h3>
+        <p>The response handler checks for errors in the following order:</p>
+        <ol style="margin-left: 30px; line-height: 2">
+          <li>
+            <strong>Null Response:</strong> If response object is null, treat as
+            error
+          </li>
+          <li>
+            <strong>ErrorInfo Array:</strong> Check for
+            <code>ErrorInfo</code> array at root level
+          </li>
+          <li>
+            <strong>Nested ErrorInfo:</strong> Check for
+            <code>DocumentInfo.ErrorInfo</code> array
+          </li>
+        </ol>
+
+        <h3>Error Response Structure</h3>
+        <div class="code-block json">
+          <pre>
+{
+  "ErrorInfo": [
+    {
+      "ErrorCode": "E001",
+      "ErrorMsg": "Error message description"
+    }
+  ]
+}</pre
+          >
+        </div>
+
+        <h3>Nested Error Response Structure</h3>
+        <div class="code-block json">
+          <pre>
+{
+  "DocumentInfo": {
+    "ErrorInfo": [
+      {
+        "ErrorCode": "E002",
+        "ErrorMsg": "Document validation failed"
+      }
+    ]
+  }
+}</pre
+          >
+        </div>
+
+        <h3>Error Extraction Logic</h3>
+        <div class="code-block">
+          <pre>
+// Error detection priority:
+1. Check if responseObject == null → Error
+2. Check if ErrorInfo array exists and has items → Extract ErrorInfo[0].ErrorMsg
+3. Check if DocumentInfo.ErrorInfo array exists → Extract DocumentInfo.ErrorInfo[0].ErrorMsg
+4. Default error message: "{API_KEY} API Failed"</pre
+          >
+        </div>
+
+        <div class="info-box error">
+          <strong>⚠️ Important</strong>
+          Even if HTTP status is 200, always check the response body for
+          API-level errors. A successful HTTP response does not guarantee a
+          successful API operation.
+        </div>
+      </div>
+
+      <!-- Request/Response Examples -->
+      <div class="section">
+        <h2>📝 Complete Request/Response Examples</h2>
+
+        <h3>Example 1: Upload Document Flow</h3>
+        <h4>Step 1: Upload Emirates ID</h4>
+        <div class="code-block json">
+          <pre>
+POST /UploadDocument
+Headers:
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Ocp-Apim-Subscription-Key": "abc123xyz",
+  "Authorization": "Bearer token123"
+}
+
+Request:
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER001"
+  },
+  "DocumentInfo": {
+    "QuotationNo": "QUOTE20240115001",
+    "MemberSeqNo": 1,
+    "DocumentType": "3",
+    "DocumentName": "emirates_id_784199012345671.pdf",
+    "DocumentUploadDate": "2024-01-15T10:30:00Z",
+    "IsDocumentValidated": "Y",
+    "DocumentContent": "JVBERi0xLjQKJeLjz9MK..."
+  }
+}
+
+Response (200 OK):
+{
+  "DocumentInfo": {
+    "DocumentId": "DOC20240115001",
+    "DocumentType": "3",
+    "QuotationNo": "QUOTE20240115001",
+    "MemberSeqNo": 1
+  }
+}</pre
+          >
+        </div>
+
+        <h3>Example 2: Generate Policy Flow</h3>
+        <h4>Step 2: Generate Policy (after document upload)</h4>
+        <div class="code-block json">
+          <pre>
+POST /GeneratePolicy
+Headers:
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Ocp-Apim-Subscription-Key": "abc123xyz",
+  "Authorization": "Bearer token123"
+}
+
+Request:
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER001"
+  },
+  "SponsorInfo": {
+    "SponserType": "Individual",
+    "SponserName": "Ahmed Al Maktoum",
+    "MobileNo": "+971501234567",
+    "EmailId": "ahmed@example.com",
+    "Address": "Dubai",
+    "DateOfBirth": "15-05-1985",
+    "Gender": "M",
+    "Nationality": 1,
+    "SalaryType": 2,
+    "EmiratesId": "784-1985-1234567-1",
+    "City": "1",
+    "SponserCategory": "1",
+    "MaritalStatus": "2",
+    "PassportNo": "A98765432",
+    "UIDNo": "784-1985-1234567-1",
+    "MemberCategory": "1",
+    "VisaType": "1",
+    "PreviousVisaEmirate": "1",
+    "CustomerClassification": "1"
+  },
+  "QuoteInfo": {
+    "PartnerReferenceNo": "REF20240115001",
+    "PartnerPremium": 2500.00,
+    "QuotationNo": "QUOTE20240115001",
+    "VisaEmirate": 1,
+    "ProductType": "SHIFA",
+    "PolicyType": "F",
+    "PlanType": "GO",
+    "DeductibleAmount": 500,
+    "CoInsurancePercent": 20,
+    "DentalCover": "Y",
+    "OpticalCover": "Y",
+    "SalaryBand": 2,
+    "NoOfPersonsToInsure": 1
+  },
+  "InsuredInfo": [
+    {
+      "MemberSeqNo": 1,
+      "Salutation": "Mr",
+      "MemberName": "Ahmed Al Maktoum",
+      "DateOfBirth": "15-05-1985",
+      "Gender": "M",
+      "Relation": "S",
+      "Height": 180,
+      "Weight": 80,
+      "MaritalStatus": "2",
+      "DisclaimerSelected": "Y",
+      "Occupation": "Engineer",
+      "LoadingInfo": {
+        "LoadingType": "N",
+        "LoadingTypeValue": 0,
+        "LoadingAmount": 0
+      },
+      "QuestionnarieInfo": {},
+      "PregnantStatus": "N",
+      "PreviouslyCovered": "N",
+      "EmiratesId": "784-1985-1234567-1",
+      "EntryPermitNoOrFileNo": "987654",
+      "CustomerClassification": "1",
+      "MemberCategory": "1",
+      "SalaryType": 2,
+      "Commission": "N",
+      "VisaType": "1",
+      "City": "1",
+      "Nationality": 1,
+      "PassportNo": "A98765432",
+      "UIDNo": "784-1985-1234567-1",
+      "WorkLocation": "1",
+      "ResidenceLocation": "1",
+      "Industry": "IT",
+      "DocumentInfo": {
+        "1": [
+          {
+            "DocumentType": "3",
+            "DocumentId": "DOC20240115001"
+          }
+        ]
+      },
+      "PreviousVisaEmirate": "1"
+    }
+  ],
+  "PolicyInfo": {
+    "PolicyStartDate": "01-02-2024",
+    "PaymentType": 5,
+    "PaymentRefNo": "ch_abc123xyz789"
+  }
+}
+
+Response (200 OK):
+{
+  "data": {
+    "QuoteInfo": {
+      "QuotationNo": "QUOTE20240115001",
+      "PartnerReferenceNo": "REF20240115001"
+    },
+    "PolicyInfo": {
+      "PolicyNo": "POL20240115001",
+      "PolicyStartDate": "01-02-2024",
+      "PolicyEndDate": "31-01-2025",
+      "PolicyIssuedDate": "15-01-2024"
+    },
+    "PolicyDocumentInfo": {
+      "PolicyDocumentId": "POLDOC20240115001",
+      "CommisionNoteDocumentId": "COMDOC20240115001",
+      "TaxInvoiceDocumentId": "TAXDOC20240115001"
+    }
+  }
+}</pre
+          >
+        </div>
+
+        <h3>Example 3: Download Policy Document</h3>
+        <h4>Step 3: Download Policy Schedule</h4>
+        <div class="code-block json">
+          <pre>
+POST /GeneratePolicyDocument
+Headers:
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Ocp-Apim-Subscription-Key": "abc123xyz",
+  "Authorization": "Bearer token123"
+}
+
+Request:
+{
+  "PartnerInfo": {
+    "PartnerId": "PARTNER001"
+  },
+  "PolicyDocumentInfo": {
+    "PartnerReferenceNo": "REF20240115001",
+    "QuotationNo": "QUOTE20240115001",
+    "PolicyNo": "POL20240115001",
+    "DocumentId": "POLDOC20240115001"
+  }
+}
+
+Response (200 OK):
+{
+  "DocumentInfo": {
+    "documentContent": "JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PC9MZW5ndGggMiAwIFIvRmlsdGVyL0ZsYXRlRGVjb2RlPj4Kc3RyZWFtCngBXZ...",
+    "documentName": "Policy_POL20240115001.pdf",
+    "documentType": "Policy"
+  }
+}</pre
+          >
+        </div>
+      </div>
+
+      <!-- Configuration Reference -->
+      <div class="section">
+        <h2>⚙️ Configuration Reference</h2>
+
+        <h3>Environment Variables</h3>
+        <p>Required environment variables in <code>.env</code> file:</p>
+        <div class="code-block">
+          <pre>
+# ADNIC API Base Configuration
+ADNIC_API_BASE_URL=https://api.adnic.ae
+ADNIC_AUTHORIZATION_TOKEN=your_authorization_token_here
+ADNIC_SUBSCRIPTION_KEY=your_subscription_key_here
+ADNIC_PARTNER_ID=your_partner_id_here
+ADNIC_PARTNER_REFERENCE_NO=your_partner_reference_no_here</pre
+          >
+        </div>
+
+        <h3>ApplicationStorage Configuration</h3>
+        <p>Runtime configuration via ApplicationStorage (database):</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Purpose</th>
+              <th>Type</th>
+              <th>Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE</code></td>
+              <td>Master switch for automation</td>
+              <td>boolean</td>
+              <td>false</td>
+            </tr>
+            <tr>
+              <td>
+                <code>ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE</code>
+              </td>
+              <td>Enable retry for timeout cases</td>
+              <td>boolean</td>
+              <td>false</td>
+            </tr>
+            <tr>
+              <td><code>ADNIC_HEALTH_AUTOMATION_API_TIMEOUT</code></td>
+              <td>API timeout in seconds</td>
+              <td>integer</td>
+              <td>Configurable</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Constants Configuration</h3>
+        <p>Configuration in <code>config/constants.php</code>:</p>
+        <div class="code-block">
+          <pre>
+'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL'),
+'ADNIC_PARTNER_ID' => env('ADNIC_PARTNER_ID'),
+'ADNIC_PARTNER_REFERENCE_NO' => env('ADNIC_PARTNER_REFERENCE_NO'),
+'ADNIC_AUTHORIZATION_TOKEN' => env('ADNIC_AUTHORIZATION_TOKEN'),
+'ADNIC_SUBSCRIPTION_KEY' => env('ADNIC_SUBSCRIPTION_KEY'),</pre
+          >
+        </div>
+
+        <div class="info-box">
+          <strong>💡 Configuration Priority</strong>
+          <ol style="margin-left: 20px; margin-top: 8px">
+            <li>Environment variables (highest priority)</li>
+            <li>ApplicationStorage (runtime configuration)</li>
+            <li>Constants config (default values)</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Data Mappings -->
+      <div class="section">
+        <h2>🗺️ Data Mappings</h2>
+
+        <h3>Gender Mapping</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>IMCRM Value</th>
+              <th>ADNIC Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Female, F, female, etc.</td>
+              <td><code>F</code></td>
+            </tr>
+            <tr>
+              <td>Male, M, male, etc.</td>
+              <td><code>M</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Marital Status Mapping</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>IMCRM ID</th>
+              <th>ADNIC Code</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><code>1</code></td>
+              <td>Single</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>2</code></td>
+              <td>Married</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><code>3</code></td>
+              <td>Widowed</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><code>4</code></td>
+              <td>Divorced</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Salary Band Mapping</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>IMCRM ID</th>
+              <th>ADNIC Code</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><code>1</code></td>
+              <td>4000 and less</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>2</code></td>
+              <td>More than 4000</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Relation Mapping</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>IMCRM Value</th>
+              <th>ADNIC Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>self</td>
+              <td><code>S</code></td>
+            </tr>
+            <tr>
+              <td>spouse</td>
+              <td><code>SP</code></td>
+            </tr>
+            <tr>
+              <td>child</td>
+              <td><code>C</code></td>
+            </tr>
+            <tr>
+              <td>parent</td>
+              <td><code>P</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Nationality Mapping</h3>
+        <p>Nationality names are mapped to ADNIC numeric codes. Examples:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Country Name</th>
+              <th>ADNIC Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>EMIRATI</td>
+              <td><code>1</code></td>
+            </tr>
+            <tr>
+              <td>JORDANIAN</td>
+              <td><code>11</code></td>
+            </tr>
+            <tr>
+              <td>LEBANESE</td>
+              <td><code>12</code></td>
+            </tr>
+            <tr>
+              <td>EGYPTIAN</td>
+              <td><code>14</code></td>
+            </tr>
+            <tr>
+              <td>INDIAN</td>
+              <td><code>...</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <strong>📌 Note</strong>
+          Use ADNIC's nationality code list from their integration
+          specification; values must match the codes expected by the Generate
+          Quote / member APIs.
+        </div>
+      </div>
+
+      <!-- Best Practices -->
+      <div class="section">
+        <h2>✅ Best Practices</h2>
+
+        <h3>Request Handling</h3>
+        <ul style="margin-left: 30px; line-height: 2">
+          <li>Always validate data before making API calls</li>
+          <li>Use pre-validation to prevent unnecessary API requests</li>
+          <li>Format dates as <code>dd-mm-yyyy</code> for policy dates</li>
+          <li>Ensure document content is properly base64 encoded</li>
+          <li>Include all required fields in request payloads</li>
+        </ul>
+
+        <h3>Response Handling</h3>
+        <ul style="margin-left: 30px; line-height: 2">
+          <li>Always check for API-level errors even on HTTP 200</li>
+          <li>Parse error messages from ErrorInfo arrays</li>
+          <li>Store API logs for audit trails</li>
+          <li>Extract document IDs from upload responses</li>
+          <li>Validate document IDs exist before download requests</li>
+        </ul>
+
+        <h3>Error Handling</h3>
+        <ul style="margin-left: 30px; line-height: 2">
+          <li>Implement retry logic for timeout errors</li>
+          <li>Log all API errors with context</li>
+          <li>Update status appropriately on failures</li>
+          <li>Handle null responses gracefully</li>
+          <li>Check nested error structures (DocumentInfo.ErrorInfo)</li>
+        </ul>
+
+        <h3>Security</h3>
+        <ul style="margin-left: 30px; line-height: 2">
+          <li>Never log sensitive credentials</li>
+          <li>Store credentials in environment variables</li>
+          <li>Validate document MIME types before upload</li>
+          <li>Use secure storage for document content</li>
+          <li>Implement proper access controls</li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <p><strong>ADNIC API Integration Documentation</strong></p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

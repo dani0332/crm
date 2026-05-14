@@ -47,7 +47,9 @@ class RolePermissionSeeder extends Seeder
         $this->addBranchesPermission();
         $this->addCarLegacyKycSkipInsurerApiPermission();
         $this->addCarDriverEmiratesIdUpdatePermission();
+        $this->addReTriggerPolicyIssuancePermission();
         $this->addRuleConfigWritePermissions();
+        $this->addLifeRevivalPermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -641,6 +643,20 @@ class RolePermissionSeeder extends Seeder
         }
     }
 
+    private function addReTriggerPolicyIssuancePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RE_TRIGGER_POLICY_ISSUANCE,
+            'guard_name' => 'web',
+        ]);
+
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+        }
+    }
+
     /**
      * Grant rule-config-create and rule-config-update to every role that already has rule-config-list
      * so existing behavior is preserved until administrators narrow role permissions.
@@ -684,6 +700,47 @@ class RolePermissionSeeder extends Seeder
 
             if (! $role->hasPermissionTo($update)) {
                 $role->givePermissionTo($update);
+            }
+        }
+    }
+
+    private function addLifeRevivalPermissions(): void
+    {
+        $permissionRevivalQuoteList = Permission::firstOrCreate([
+            'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $permissionRevivalQuoteShow = Permission::firstOrCreate([
+            'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_SHOW,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $permissionRevivalQuoteEdit = Permission::firstOrCreate([
+            'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole) {
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteList)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteList);
+            }
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteShow)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteShow);
+            }
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteEdit)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteEdit);
             }
         }
     }

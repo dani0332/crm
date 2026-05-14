@@ -82,12 +82,23 @@ class LeadAllocationService extends BaseService
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
-                ->whereIn('t.code', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::GBP])
+                ->whereIn('t.name', [
+                    TeamNameEnum::EBP,
+                    TeamNameEnum::RM_NB,
+                    TeamNameEnum::RM_SPEED,
+                    TeamNameEnum::GBP,
+                    TeamNameEnum::PEC,
+                    TeamNameEnum::AUH,
+                ])
                 ->where('lead_allocation.quote_type_id', QuoteTypes::HEALTH->id())
                 ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
+                $departmentIds = auth()->user()->department()->pluck('id')->toArray();
+                $query->whereIn('u.department_id', $departmentIds);
+            } elseif (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
                 $query->whereIn('lead_allocation.user_id', $userIds);
             }

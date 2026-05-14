@@ -12,9 +12,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -302,6 +304,7 @@ class BusinessQuoteService extends BaseService
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
+            'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -853,9 +856,9 @@ class BusinessQuoteService extends BaseService
         // Send a single email for all assigned leads
         if (! empty($updatedLeadIds) && $supportUserId) {
             try {
-                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
-                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
-                    \Illuminate\Support\Facades\Auth::id(),
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
@@ -872,7 +875,7 @@ class BusinessQuoteService extends BaseService
 
         // Return success message if any leads were updated
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            $supportUserName = User::find($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }
