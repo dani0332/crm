@@ -132,13 +132,25 @@ const tableHeader = computed(() => [
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
 
+const today = new Date()
+const startOfMonth = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  1
+)
+const endOfMonth = new Date(
+  today.getFullYear(),
+  today.getMonth() + 1,
+  0
+)
+
 // Available filters
 const availableFilters = reactive({
   insurance_provider_id: props.filters?.insurance_provider_id || [],
   quote_type_id: props.filters?.quote_type_id || [],
   option: props.filters?.option || '',
-  date_from: props.filters?.date_from || '',
-  date_to: props.filters?.date_to || '',
+  date_from: props.filters?.date_from || startOfMonth,
+  date_to: props.filters?.date_to || endOfMonth,
   page: props.failedProcesses?.current_page || 1,
 });
 

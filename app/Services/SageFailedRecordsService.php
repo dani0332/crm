@@ -4,13 +4,22 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
+use App\Models\HealthQuote;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
+use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -79,7 +88,7 @@ class SageFailedRecordsService extends BaseService
 
     private function buildFailedSageRecordsQuery(ValidatedInput $request): Builder
     {
-        $oldestFailedLogsCTE = $this->getOldestFailedSageLogsCTE();
+        $oldestFailedLogsCTE = $this->getOldestFailedSageLogsCTE($request);
         $morphModelClasses = $this->distinctMorphClassesFromOldestFailedLogsCTE($oldestFailedLogsCTE);
         $filteredBase = $this->baseFailedSageApiLogsQuery($request, $oldestFailedLogsCTE);
         $embeddedTransactionMorphClass = DB::connection()->getPdo()->quote(EmbeddedTransaction::class);
@@ -97,8 +106,6 @@ class SageFailedRecordsService extends BaseService
                 'sage_api_logs.model_id',
                 DB::raw("CASE WHEN sage_api_logs.section_type = {$embeddedTransactionMorphClass} THEN sage_api_logs.section_type ELSE NULL END AS section_type"),
                 DB::raw("CASE WHEN sage_api_logs.section_type = {$embeddedTransactionMorphClass} THEN sage_api_logs.section_id ELSE NULL END AS section_id"),
-                'oldest_logs.section_type as oldest_failed_log_section_type',
-                'oldest_logs.section_id as oldest_failed_log_section_id',
                 'sage_processes.insurance_provider_id',
                 'sage_processes.request',
                 DB::raw(
@@ -107,27 +114,62 @@ class SageFailedRecordsService extends BaseService
             ]);
     }
 
-    private function getOldestFailedSageLogsCTE(): string
+    private function getOldestFailedSageLogsCTE($request): string
     {
-        $logs = (new SageApiLog)->getTable();
         $pdo = DB::connection()->getPdo();
+
+        $logsTable = (new SageApiLog)->getTable();
         $failStatus = $pdo->quote(SageEnum::STATUS_FAIL);
+
+        $failedLeads = $this->getFailedLeadsUnionSubquery($pdo, $request);
 
         return "
             SELECT
-                MIN({$logs}.id) AS id,
-                {$logs}.section_type,
-                {$logs}.section_id,
-                {$logs}.model_type
-            FROM {$logs}
-            WHERE {$logs}.status = {$failStatus}
-            GROUP BY {$logs}.section_type, {$logs}.section_id
+                MIN(sal.id) AS id,
+                sal.model_type,
+                sal.model_id
+            FROM {$logsTable} sal
+            INNER JOIN (
+                {$failedLeads}
+            ) fl
+                ON fl.section_type = sal.model_type
+                AND fl.section_id = sal.model_id
+            WHERE sal.status = {$failStatus}
+            GROUP BY sal.model_type, sal.model_id
         ";
+    }
+
+    private function getFailedLeadsUnionSubquery(\PDO $pdo, $request): string
+    {
+        $queries = [];
+        $getFilteredSources = $this->getFilteredSources($pdo, $request);
+        $startDate = $request['date_from']
+            ? Carbon::parse($request['date_from'])->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request['date_to']
+            ? Carbon::parse($request['date_to'])->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        foreach ($getFilteredSources as $source) {
+            $model = $pdo->quote($source['model']);
+
+            $queries[] = "
+                SELECT
+                    {$model} AS section_type,
+                    id AS section_id
+                FROM {$source['table']}
+                WHERE {$source['status_column']} IN ({$source['statuses']})
+                AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
+            ";
+        }
+
+        return implode("\nUNION ALL\n", $queries);
     }
 
     private function baseFailedSageApiLogsQuery(ValidatedInput $request, string $oldestFailedLogsCTE): Builder
     {
-        return SageApiLog::query()
+        return SageApiLog::query()->where('sage_api_logs.status', SageEnum::STATUS_FAIL)
             ->withExpression('oldest_logs', $oldestFailedLogsCTE)
             ->join('oldest_logs', 'sage_api_logs.id', '=', 'oldest_logs.id')
             ->leftJoin('sage_processes', function ($join) {
@@ -149,6 +191,119 @@ class SageFailedRecordsService extends BaseService
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function getFilteredSources($pdo, $request)
+    {
+        $bookingStatuses = implode(',', [
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ]);
+
+        $updateStatuses = implode(',', [
+            $pdo->quote(SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED),
+            $pdo->quote(SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED),
+        ]);
+
+        $mainLeadsWithEPs = [
+            'personal_quotes' => [
+                'table' => 'personal_quotes',
+                'model' => PersonalQuote::class,
+                'status_column' => 'quote_status_id',
+                'statuses' => $bookingStatuses,
+            ],
+
+            'car' => [
+                'table' => 'car_quote_request',
+                'model' => CarQuote::class,
+                'status_column' => 'quote_status_id',
+                'statuses' => $bookingStatuses,
+            ],
+
+            'health' => [
+                'table' => 'health_quote_request',
+                'model' => HealthQuote::class,
+                'status_column' => 'quote_status_id',
+                'statuses' => $bookingStatuses,
+            ],
+
+            'travel' => [
+                'table' => 'travel_quote_request',
+                'model' => TravelQuote::class,
+                'status_column' => 'quote_status_id',
+                'statuses' => $bookingStatuses,
+            ],
+
+            'business' => [
+                'table' => 'business_quote_request',
+                'model' => BusinessQuote::class,
+                'status_column' => 'quote_status_id',
+                'statuses' => $bookingStatuses,
+            ],
+
+            'embedded_transaction' => [
+                'table' => 'embedded_transactions',
+                'model' => EmbeddedTransaction::class,
+                'status_column' => 'sage_status_id',
+                'statuses' => SageEmbeddedProductEnum::BOOKING_FAILED->id(),
+            ],
+        ];
+
+        $sendUpdate = [
+            'send_update' => [
+                'table' => 'send_update_logs',
+                'model' => SendUpdateLog::class,
+                'status_column' => 'status',
+                'statuses' => $updateStatuses,
+            ],
+        ];
+
+        $allSources = array_merge($mainLeadsWithEPs, $sendUpdate);
+        $sources = [];
+
+        $option = $request['option'] ?? null;
+        $quoteTypeIds = $request['quote_type_id'] ?? [];
+
+        if ($option === 'Main Lead') {
+            $sources = $mainLeadsWithEPs;
+        } elseif ($option === 'Send Update') {
+            $sources = $sendUpdate;
+        } else {
+            $sources = $allSources;
+        }
+
+        if (! empty($quoteTypeIds)) {
+
+            $filteredSources = [];
+            $personalQuotes = getPersonalQuoteTypeIds();
+            $typeMappings = [
+                GenericRequestEnum::SEND_UPDATE_AS_TEXT => 'send_update',
+
+                QuoteTypeId::Car => 'car',
+                QuoteTypeId::Health => 'health',
+                QuoteTypeId::Travel => 'travel',
+                QuoteTypeId::Business => 'business',
+            ];
+
+            foreach ($quoteTypeIds as $type) {
+                if (in_array($type, $personalQuotes)) {
+                    if (isset($sources['personal_quotes'])) {
+                        $filteredSources['personal_quotes'] = $sources['personal_quotes'];
+                    }
+
+                    continue;
+                }
+
+                $key = $typeMappings[$type] ?? null;
+                if ($key && isset($sources[$key])) {
+                    $filteredSources[$key] = $sources[$key];
+                }
+            }
+
+            $sources = $filteredSources;
+        }
+
+        return array_values($sources);
     }
 
     private function failedSageLogsMorphWith(array $morphModelClasses): array
@@ -284,121 +439,7 @@ class SageFailedRecordsService extends BaseService
         $query
             ->when(! empty($request->insurance_provider_id), function ($q) use ($request) {
                 $q->whereIn('sage_processes.insurance_provider_id', $request->insurance_provider_id);
-            })
-            ->when($request->option, function ($q) use ($request) {
-                if ($request->option === self::MODEL_TYPE_MAIN_LEAD) {
-                    $q->where('sage_api_logs.model_type', '!=', SendUpdateLog::class);
-                }
-
-                if ($request->option === self::MODEL_TYPE_SEND_UPDATE) {
-                    $q->where('sage_api_logs.model_type', SendUpdateLog::class);
-                }
-            })
-            ->when($request->date_from, function ($q) use ($request) {
-                $q->where('sage_api_logs.created_at', '>=', Carbon::parse($request->date_from)->startOfDay());
-            })
-            ->when($request->date_to, function ($q) use ($request) {
-                $q->where('sage_api_logs.created_at', '<=', Carbon::parse($request->date_to)->endOfDay());
-            })
-            ->when(! empty($request->quote_type_id), function ($q) use ($request) {
-                $this->applyQuoteTypeFilter($q, $request);
             });
-    }
-
-    private function applyQuoteTypeFilter(Builder $query, ValidatedInput $request): void
-    {
-        if ($request->option === self::MODEL_TYPE_SEND_UPDATE) {
-            $numericQuoteTypeIds = $this->numericQuoteTypeIdsFromQuoteTypeFilter($request);
-            if ($numericQuoteTypeIds === []) {
-                return;
-            }
-
-            $query->whereExists(function ($existsQuery) use ($numericQuoteTypeIds) {
-                $existsQuery->select(DB::raw(1))
-                    ->from('send_update_logs')
-                    ->whereColumn('send_update_logs.id', 'sage_api_logs.model_id')
-                    ->where('sage_api_logs.model_type', SendUpdateLog::class)
-                    ->where(function ($typeQuery) use ($numericQuoteTypeIds) {
-                        $typeQuery->whereIn('send_update_logs.quote_type_id', $numericQuoteTypeIds)
-                            ->orWhereExists(function ($pqQuery) use ($numericQuoteTypeIds) {
-                                $pqQuery->select(DB::raw(1))
-                                    ->from('personal_quotes')
-                                    ->whereColumn('personal_quotes.id', 'send_update_logs.personal_quote_id')
-                                    ->whereIn('personal_quotes.quote_type_id', $numericQuoteTypeIds);
-                            });
-                    });
-            });
-
-            return;
-        }
-
-        [$directModelClasses, $personalQuoteTypeIds] = $this->getDirectModelClassesAndPersonalQuoteTypeIds($request);
-
-        $query->where(function ($subQuery) use ($directModelClasses, $personalQuoteTypeIds) {
-            if (! empty($directModelClasses)) {
-                $subQuery->whereIn('sage_api_logs.model_type', $directModelClasses);
-            }
-
-            if (! empty($personalQuoteTypeIds)) {
-                $subQuery->orWhere(function ($personalQuery) use ($personalQuoteTypeIds) {
-                    $personalQuery->where('sage_api_logs.model_type', PersonalQuote::class)
-                        ->whereExists(function ($existsQuery) use ($personalQuoteTypeIds) {
-                            $existsQuery->select(DB::raw(1))
-                                ->from('personal_quotes')
-                                ->whereColumn('personal_quotes.id', 'sage_api_logs.model_id')
-                                ->whereIn('personal_quotes.quote_type_id', $personalQuoteTypeIds);
-                        });
-                });
-            }
-        });
-    }
-
-    private function numericQuoteTypeIdsFromQuoteTypeFilter(ValidatedInput $request): array
-    {
-        if (! $request->has('quote_type_id') || ! is_array($request->quote_type_id)) {
-            return [];
-        }
-
-        $ids = [];
-        foreach ($request->quote_type_id as $value) {
-            if ($value === self::MODEL_TYPE_SEND_UPDATE) {
-                continue;
-            }
-            if (is_numeric($value)) {
-                $ids[] = (int) $value;
-            }
-        }
-
-        return array_values(array_unique($ids));
-    }
-
-    private function getDirectModelClassesAndPersonalQuoteTypeIds(ValidatedInput $request): array
-    {
-        $directModelClasses = [];
-        $personalQuoteTypeIds = [];
-
-        if (! $request->has('quote_type_id') || ! is_array($request->quote_type_id)) {
-            return [$directModelClasses, $personalQuoteTypeIds];
-        }
-
-        foreach ($request->quote_type_id as $quote_type_id) {
-            if ($quote_type_id == self::MODEL_TYPE_SEND_UPDATE) {
-                $directModelClasses[] = SendUpdateLog::class;
-            } else {
-                $quoteTypeEnum = QuoteTypes::getName($quote_type_id);
-
-                if ($quoteTypeEnum) {
-                    if (checkPersonalQuotes($quoteTypeEnum->value)) {
-                        $personalQuoteTypeIds[] = $quote_type_id;
-                    } else {
-                        $modelClass = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
-                        $directModelClasses[] = $modelClass;
-                    }
-                }
-            }
-        }
-
-        return [$directModelClasses, $personalQuoteTypeIds];
     }
     // endregion
 }
