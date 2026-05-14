@@ -287,6 +287,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
         } elseif (! $response['status']) {
             $errorMessage = $response['error'] ?? 'Unknown error';
+            if (! is_string($errorMessage)) {
+                $errorMessage = json_encode($errorMessage);
+            }
 
             LoggerService::info('Automation execution failed', [
                 'process_id' => $this->process->id,
