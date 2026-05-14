@@ -806,6 +806,8 @@ class CoreSchema
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();
+                $table->unsignedTinyInteger('sage_status_id')->nullable();
+                $table->timestamp('failure_email_sent_at')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();

@@ -1,0 +1,189 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\SageEmbeddedProductEnum;
+use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedTransaction;
+use App\Services\Logger\LoggerService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Traits\SendsEpFailureEmail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Throwable;
+
+class SyncEpBookingService extends BaseService
+{
+    use GenericQueriesAllLobs;
+    use SendsEpFailureEmail;
+
+    private const string LOG_PREFIX = 'SyncEpBookingService:';
+
+    public function __construct(
+        protected SageApiEmbeddedProductService $sageApiEmbeddedProductService
+    ) {
+        parent::__construct();
+    }
+
+    /**
+     * Eligibility for manual "Sync EP Booking" retry (EP Admin, all API-integrated EP LOBs except courier).
+     */
+    public function isTransactionEligibleForManualSageBookingRetry(?EmbeddedTransaction $transaction, mixed $quote, ?EmbeddedProduct $ep): bool
+    {
+        $isInvalidTransaction = ! $transaction || ! $quote || ! $ep;
+        $isCourierEp = $ep?->short_code === EmbeddedProductEnum::COURIER;
+        $isPolicyBooked = (int) $quote?->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $isReadyForSage = $transaction?->policy_status === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+        $isPaymentCaptured = (int) $transaction?->payment_status_id === PaymentStatusEnum::CAPTURED;
+        $isBookingQueued = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_QUEUED->id();
+        $isSageBookingCompleted = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_COMPLETED->id();
+        $isSageBookingCancelled = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_CANCELLED->id();
+
+        $isNotEligible = $isInvalidTransaction || $isCourierEp || ! $isPolicyBooked || ! $isReadyForSage || ! $isPaymentCaptured || $isBookingQueued || $isSageBookingCompleted || $isSageBookingCancelled;
+
+        if ($isNotEligible) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Manual Sage EP booking retry from IMCRM (EP Admin only).
+     *
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{success: bool, message: string}
+     */
+    public function process(array $data): array
+    {
+        $logPrefix = self::LOG_PREFIX.' ';
+        $resolved = $this->resolveProcessContextOrFailure($data);
+
+        if (! $resolved['ok']) {
+            return ['success' => false, 'message' => $resolved['message']];
+        }
+
+        $success = false;
+        $message = '';
+
+        try {
+            LoggerService::startQuoteLogging($resolved['quote']->code, LoggerFeatureEnum::EP_PROCESS_SYNC_EP_BOOKING);
+
+            $request = [
+                'epTransactionId' => $resolved['transaction']->id,
+                'insuranceProviderId' => (int) $data['insuranceProviderId'],
+                'modelType' => $data['modelType'],
+                'quoteId' => $resolved['quote']->id,
+                'isManualEpBookingRetry' => true,
+            ];
+
+            $result = $this->sageApiEmbeddedProductService->scheduleBookingOfEmbeddedProduct($request);
+
+            if (! ($result['status'] ?? false)) {
+                $this->sendEpFailureEmail((int) $resolved['quote']->id, (int) $resolved['quoteTypeId'], (int) $resolved['transaction']->id, $logPrefix, true);
+            }
+
+            $success = (bool) ($result['status'] ?? false);
+            $message = (string) ($result['message'] ?? 'Sage booking retry completed.');
+        } catch (Throwable $e) {
+            LoggerService::error($logPrefix.$e->getMessage(), extra: ['exception' => $e]);
+            $this->sendEpFailureEmail((int) $resolved['quote']->id, (int) $resolved['quoteTypeId'], (int) $resolved['transaction']->id, $logPrefix, true);
+
+            $message = $e->getMessage();
+        } finally {
+            Cache::forget($resolved['lockKey']);
+        }
+
+        return ['success' => $success, 'message' => $message];
+    }
+
+    /**
+     * Validates input, loads related models, acquires the sync lock, or returns a failure message.
+     *
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{ok: true, lockKey: string, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}|array{ok: false, message: string}
+     */
+    private function resolveProcessContextOrFailure(array $data): array
+    {
+        $message = null;
+        $quote = null;
+        $transaction = null;
+        $ep = null;
+        $quoteTypeId = null;
+
+        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])) {
+            $message = 'You are not authorized to perform this action.';
+        }
+
+        if ($message === null) {
+            $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+            if (empty($quote)) {
+                $message = 'Quote not found';
+            }
+        }
+
+        if ($message === null) {
+            $transaction = EmbeddedTransaction::query()
+                ->with('product.embeddedProduct')
+                ->whereKey($data['epTransactionId'])
+                ->first();
+
+            if (! $transaction) {
+                $message = 'Embedded transaction not found';
+            }
+        }
+
+        if ($message === null) {
+            $ep = $transaction->product?->embeddedProduct;
+            if (! $ep) {
+                $message = 'Embedded product not found';
+            }
+        }
+
+        if ($message === null && ! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
+            $message = 'This embedded product is not eligible for Sage booking retry.';
+        }
+
+        if ($message === null && (int) $ep->insurance_provider_id !== (int) $data['insuranceProviderId']) {
+            $message = 'Insurance provider mismatch.';
+        }
+
+        if ($message === null) {
+            $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
+            if ($quoteTypeId === null) {
+                $message = 'Invalid quote type.';
+            }
+        }
+
+        if ($message === null && ((int) $transaction->quote_type_id !== (int) $quoteTypeId || (int) $transaction->quote_request_id !== (int) $quote->id)) {
+            $message = 'Transaction does not match the selected quote.';
+        }
+
+        if ($message !== null) {
+            return ['ok' => false, 'message' => $message];
+        }
+
+        $lockKey = 'ep-sync-sage-booking-'.$transaction->id;
+        if (! Cache::add($lockKey, true, now()->addMinutes(5))) {
+            return ['ok' => false, 'message' => 'Sage booking retry is already in progress for this embedded product. Please wait and try again.'];
+        }
+
+        return [
+            'ok' => true,
+            'lockKey' => $lockKey,
+            'quote' => $quote,
+            'transaction' => $transaction,
+            'ep' => $ep,
+            'quoteTypeId' => $quoteTypeId,
+        ];
+    }
+}

@@ -20,8 +20,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\SageEmbeddedProductEnum;
-use App\Enums\SageEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
@@ -45,11 +43,11 @@ use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
-use App\Models\SageProcess;
 use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SyncEpBookingService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -58,9 +56,11 @@ use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\SendsEpFailureEmail;
 use Carbon\Carbon;
 use Exception;
 use finfo;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDF;
@@ -68,7 +68,7 @@ use Throwable;
 
 class EmbeddedProductRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, SendsEpFailureEmail;
 
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
@@ -478,20 +478,13 @@ class EmbeddedProductRepository extends BaseRepository
         return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid || $isPolicyBookedDateInvalid;
     }
 
-    private function canBookEmbeddedProduct($transaction, $quote, $ep)
+    private function canBookEmbeddedProduct(?EmbeddedTransaction $transaction, mixed $quote, ?EmbeddedProduct $ep): bool
     {
-        $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
-        $isMedXEP = in_array($ep->short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
-        if ($isMedXEP) {
-            $epTranSageStatusFailed = $transaction?->sage_status_id == SageEmbeddedProductEnum::BOOKING_FAILED->id();
-            $epTransSageProcess = SageProcess::where(['model_type' => $transaction?->getMorphClass(), 'model_id' => $transaction?->id])->first();
-            $isSageProcessFailed = $epTransSageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
-
-            return $isPolicyBooked && $isMedXEP && (! $transaction?->sage_status_id || $epTranSageStatusFailed) && (! $epTransSageProcess || $isSageProcessFailed);
+        if (! Auth::user()?->hasAnyRole([RolesEnum::EpAdmin, RolesEnum::Engineering])) {
+            return false;
         }
 
-        return false;
-
+        return app(SyncEpBookingService::class)->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep);
     }
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)

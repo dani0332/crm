@@ -1,7 +1,7 @@
 <strong>Dear Team,</strong>
 <br><br>
 
-We would like to inform you that the execution of Embedded Product for {{ $epProductName ?? 'Unknown' }} has failed for RefID: {{ $refId ?? 'Unknown' }}.
+We would like to inform you that the sage booking of Embedded Product - {{ $epProductName ?? 'Unknown' }} has failed for RefID: {{ $refId ?? 'Unknown' }}.
 <br><br>
 
 <strong>Action Required:</strong> Please review the lead and take the necessary steps to resolve the issue.<br>

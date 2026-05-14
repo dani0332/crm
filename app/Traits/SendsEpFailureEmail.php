@@ -60,7 +60,7 @@ trait SendsEpFailureEmail
     /**
      * Send EP failure notification email for ECB and other embedded products
      */
-    protected function sendEpFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix): void
+    protected function sendEpFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix, bool $isSageBooking = false): void
     {
         // Check if email was already sent
         $transaction = EmbeddedTransaction::find($etId);
@@ -74,7 +74,7 @@ trait SendsEpFailureEmail
         }
 
         try {
-            Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId));
+            Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId, $isSageBooking));
 
             // Update failure_email_sent_at after successful send
             DB::table('embedded_transactions')

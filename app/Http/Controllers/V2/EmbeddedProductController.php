@@ -8,11 +8,11 @@ use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\SageEmbeddedProductEnum;
-use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Http\Requests\SyncEpBookingRequest;
 use App\Http\Requests\UpdateEpDocumentRequest;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
@@ -21,8 +21,9 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\EmbeddedTransactionService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
+use App\Services\SyncEpBookingService;
 use Exception;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
 use Inertia\ResponseFactory;
@@ -31,8 +32,9 @@ class EmbeddedProductController extends Controller
 {
     public function __construct(
         private EmbeddedTransactionService $embeddedTransactionService,
+        private SyncEpBookingService $syncEpBookingService,
     ) {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument', 'syncEpBooking']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
         $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
@@ -307,6 +309,16 @@ class EmbeddedProductController extends Controller
             'ok' => true,
             'message' => 'Re-syncing Request Submitted Successfully. Please Wait for the process to complete.',
         ]);
+    }
+
+    public function syncEpBooking(SyncEpBookingRequest $request): JsonResponse
+    {
+        $result = $this->syncEpBookingService->process($request->validated());
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'] ?? '',
+        ], $result['success'] ? 200 : 422);
     }
 
     public function scheduleEPSageBooking(Request $request)
