@@ -239,9 +239,11 @@ class RateCoverageUploadService
                     $premium = $rowAssoc['premium'] ?? null;
                     $copaymentCode = $rowAssoc['copayment_code'] ?? null;
                     $emirateType = $rowAssoc['emirate_type'] ?? null;
-                    $gender = $rowAssoc['gender'] ?? null;
-                    $maritalStatus = $rowAssoc['marital_status'] ?? null;
-                    $cohort = $rowAssoc['cohort'] ?? null;
+                    $gender = $plan->gender_enabled ? $rowAssoc['gender'] ?? null : null;
+                    $maritalStatus = $plan->marital_status_enabled
+                        && ! empty($gender)
+                        && strtolower($gender) == strtolower(GenderEnum::FEMALE->value) ? $rowAssoc['marital_status'] ?? null : null;
+                    $cohort = $plan->cohort_enabled ? $rowAssoc['cohort'] ?? null : null;
 
                     // Throw error if any required value is empty
                     if (
