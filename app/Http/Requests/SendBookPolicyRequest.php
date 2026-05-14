@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -59,6 +60,10 @@ class SendBookPolicyRequest extends FormRequest
                 } else {
                     $validator->errors()->add('error', 'Quote not found');
                 }
+
+                if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
+                    $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
+                }
             });
         }
 
@@ -70,6 +75,10 @@ class SendBookPolicyRequest extends FormRequest
             }
             $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
+                    if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
+                        $validator->errors()->add('value', PlaceholderPrimaryEmail::message());
+                    }
+
                     if ($quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! request()->has('through_automation') && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                         $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
                     }

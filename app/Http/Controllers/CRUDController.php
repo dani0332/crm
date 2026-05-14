@@ -1735,6 +1735,9 @@ class CRUDController extends Controller
         if (strpos($url, 'savings')) {
             $this->genericModel->modelType = 'Savings';
         }
+        if (strpos($url, 'device')) {
+            $this->genericModel->modelType = 'Device';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -1744,7 +1747,8 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER];
+
+        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER, quoteTypeCode::Device];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
@@ -2537,7 +2541,7 @@ class CRUDController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  ClaimStatus  $claimsStatus
+     * @param  ClaimStatus  $claimStatus
      * @return \Illuminate\Http\Response
      */
     private function getCarMakeDropdown()

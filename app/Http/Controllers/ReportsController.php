@@ -189,8 +189,18 @@ class ReportsController extends Controller
      */
     public function fetchTeamListByLob(Request $request)
     {
-        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
-        $lobId = $this->getProductByName($productName)->id;
+        $quoteType = QuoteTypes::tryFrom($request->lob);
+        $lob = $request->lob;
+
+        /** $request->lob can have LOB (quote_types) or in some cases product names (teams) from UI
+         *      incase of quoteType: we do 2 steps quoteType >> getTeams >> getProductByName
+         *      because for example like quote_types:device and teams:"device insurrance" has diffrent names
+         *      & can't be directly plug in to the getProductByName
+         * */
+        if ($quoteType !== null) {
+            $lob = $quoteType->getTeams()[0]->value;
+        }
+        $lobId = $this->getProductByName($lob)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
 
         if (auth()->user()->hasAnyRole([
@@ -219,8 +229,13 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
-        $usersReportToLoggedInUser = $this->getUsersByProductName($productName);
+        $quoteType = QuoteTypes::tryFrom($request->lob);
+        $lob = $request->lob;
+        if ($quoteType !== null) {
+            $lob = $quoteType->getTeams()[0]->value;
+        }
+
+        $usersReportToLoggedInUser = $this->getUsersByProductName($lob);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,

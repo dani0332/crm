@@ -69,7 +69,7 @@ abstract class BaseAllocationPipe extends AllocationService
                 $this->allocationRequest->getQuoteType() === QuoteTypes::CAR
                     && ! $this->allocationRequest->getQuoteType()->isPersonalQuote(),
                 fn ($query) => $query->with([
-                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at',
+                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at,utm_campaign',
                 ])
             );
 
@@ -236,7 +236,6 @@ abstract class BaseAllocationPipe extends AllocationService
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
-
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 

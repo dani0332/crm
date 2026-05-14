@@ -123,6 +123,7 @@ class CentralController extends Controller
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::CYBER->value,
+            QuoteTypes::DEVICE->value,
         ])) {
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
@@ -399,7 +400,6 @@ class CentralController extends Controller
                 app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
             }
         }
-
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
         app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 

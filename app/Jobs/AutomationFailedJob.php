@@ -10,6 +10,7 @@ use App\Enums\UserNameEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -92,6 +93,7 @@ class AutomationFailedJob implements ShouldQueue
             }
         }
 
+        $cc = [];
         $cc['approvalemail'] = null;
         $cc['prodemail'] = null;
         $cc['advisoremail'] = null;
@@ -116,7 +118,7 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
-        $escalationLink = $notificationContext['escalationLink'] ?? '';
+        $escalationLink = $this->getLobEscalationLink($quoteType);
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
@@ -140,7 +142,7 @@ class AutomationFailedJob implements ShouldQueue
         if ($response == 200) {
             LoggerService::info('job:AutomationFailedJob - email sent successfully - Insurer: '.$this->insurerName);
         } else {
-            LoggerService::info('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
+            LoggerService::error('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
                 'response' => json_encode($response),
             ]);
         }
@@ -160,9 +162,30 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
+    private function getLobEscalationLink($quoteType)
+    {
+        switch ($quoteType) {
+            case QuoteTypes::DEVICE->value:
+                return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK, '');
+            case QuoteTypes::CYBER->value:
+                return getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+            default:
+                return '';
+        }
+    }
+
     private function addLobViseDataForMail($quoteType, $quote, $cc)
     {
         switch ($quoteType) {
+            case QuoteTypes::DEVICE->value:
+                return app(DeviceQuoteService::class)
+                    ->determineDeviceNgiRecipient(
+                        $quote,
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
+                    );
             case QuoteTypes::CYBER->value:
                 return app(CyberQuoteService::class)
                     ->applyAutomationFailureNotificationRules(
@@ -181,4 +204,5 @@ class AutomationFailedJob implements ShouldQueue
         }
 
     }
+
 }

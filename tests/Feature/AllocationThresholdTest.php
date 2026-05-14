@@ -2,11 +2,11 @@
 
 use App\Enums\PermissionsEnum;
 use App\Enums\TeamCategoryEnum;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\Helpers\VerifyCsrfToken;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
@@ -16,7 +16,7 @@ beforeEach(function () {
     TestDataSeeder::seedRolePermissions('Admin', [PermissionsEnum::TeamThresholdView]);
 
     $this->actingAs($this->admin);
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     // Ensure teams table has category column (required for fetchTeamByPriceAndCategory)
     if ($db->getSchemaBuilder()->hasTable('teams')) {

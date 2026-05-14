@@ -40,6 +40,7 @@ use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CyberQuote;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -107,6 +108,7 @@ class AMLService
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'), // Need to confirm because, no need to check migrated data for life quotes
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'), // Need to confirm because, no need to check migrated data for savings quotes
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::DEVICE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
@@ -127,6 +129,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::DEVICE->id() => $quoteRequestId,
             QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
@@ -147,6 +150,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::DEVICE->id() => DeviceQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::CYBER->id() => CyberQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
@@ -280,6 +284,13 @@ class AMLService
                 'personal_quote' => true,
                 'relations' => array_merge($commonRelations, [
                     'savingsQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::DEVICE) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'deviceQuote',
                 ]),
             ],
             QuoteTypes::getId(QuoteTypes::CYBER) => [
@@ -2385,6 +2396,7 @@ class AMLService
             14 => 'PetQuote', // QuoteTypes::PET
             15 => 'YachtQuote', // QuoteTypes::YACHT
             16 => 'HomeQuote', // QuoteTypes::HOME
+            20 => 'DeviceQuote', // QuoteTypes::DEVICE
         ];
 
         $nonPersonalMapping = [
