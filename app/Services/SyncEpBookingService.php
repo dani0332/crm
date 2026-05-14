@@ -140,67 +140,86 @@ class SyncEpBookingService extends BaseService
      */
     private function buildSyncEpBookingValidatedContext(array $data): array
     {
-        $message = $this->syncEpBookingUnauthorizedMessage();
+        $payload = $this->resolveSyncEpBookingValidatedContextPayload($data);
+
+        return $payload['message'] !== null
+            ? ['message' => $payload['message']]
+            : [
+                'message' => null,
+                'quote' => $payload['quote'],
+                'transaction' => $payload['transaction'],
+                'ep' => $payload['ep'],
+                'quoteTypeId' => $payload['quoteTypeId'],
+            ];
+    }
+
+    /**
+     * Loads models and runs validation checks in order; on failure the array contains only a string message.
+     *
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     */
+    private function resolveSyncEpBookingValidatedContextPayload(array $data): array
+    {
+        $errorMessage = $this->syncEpBookingUnauthorizedMessage();
         $quote = null;
         $transaction = null;
         $ep = null;
         $quoteTypeId = null;
 
-        if ($message === null) {
+        if ($errorMessage === null) {
             $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
             if (empty($quote)) {
-                $message = 'Quote not found';
+                $errorMessage = 'Quote not found';
             }
         }
 
-        if ($message === null) {
+        if ($errorMessage === null) {
             $transaction = EmbeddedTransaction::query()
                 ->with('product.embeddedProduct')
                 ->whereKey($data['epTransactionId'])
                 ->first();
 
             if (! $transaction) {
-                $message = 'Embedded transaction not found';
+                $errorMessage = 'Embedded transaction not found';
             }
         }
 
-        if ($message === null) {
+        if ($errorMessage === null) {
             $ep = $transaction->product?->embeddedProduct;
             if (! $ep) {
-                $message = 'Embedded product not found';
+                $errorMessage = 'Embedded product not found';
             }
         }
 
-        if ($message === null && ! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
-            $message = 'This embedded product is not eligible for Sage booking retry.';
+        if ($errorMessage === null && ! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
+            $errorMessage = 'This embedded product is not eligible for Sage booking retry.';
         }
 
-        if ($message === null && $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
-            $message = 'Insurance provider mismatch.';
+        if ($errorMessage === null && $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
+            $errorMessage = 'Insurance provider mismatch.';
         }
 
-        if ($message === null) {
+        if ($errorMessage === null) {
             $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
             if ($quoteTypeId === null) {
-                $message = 'Invalid quote type.';
+                $errorMessage = 'Invalid quote type.';
             }
         }
 
-        if ($message === null && $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
-            $message = 'Transaction does not match the selected quote.';
+        if ($errorMessage === null && $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
+            $errorMessage = 'Transaction does not match the selected quote.';
         }
 
-        if ($message !== null) {
-            return ['message' => $message];
-        }
-
-        return [
-            'message' => null,
-            'quote' => $quote,
-            'transaction' => $transaction,
-            'ep' => $ep,
-            'quoteTypeId' => $quoteTypeId,
-        ];
+        return $errorMessage !== null
+            ? ['message' => $errorMessage]
+            : [
+                'message' => null,
+                'quote' => $quote,
+                'transaction' => $transaction,
+                'ep' => $ep,
+                'quoteTypeId' => $quoteTypeId,
+            ];
     }
 
     private function syncEpBookingUnauthorizedMessage(): ?string
