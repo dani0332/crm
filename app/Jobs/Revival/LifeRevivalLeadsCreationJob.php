@@ -39,6 +39,10 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
      */
     public function handle(LifeRevivalService $lifeRevivalService): void
     {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+
         LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
         LoggerService::info(self::class.' - handle - starting life revival job');
 

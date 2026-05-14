@@ -78,7 +78,7 @@ class LifeRevivalCommand extends Command
                 LoggerService::info("{$logPrefix} all life revival batch jobs completed successfully");
             })
             ->catch(function () use ($logPrefix) {
-                LoggerService::info("{$logPrefix} one of life revival batch jobs failed.");
+                LoggerService::warning("{$logPrefix} one of life revival batch jobs failed.");
             })
             ->finally(function () use ($logPrefix) {
                 LoggerService::info("{$logPrefix} life revival batch finished");
