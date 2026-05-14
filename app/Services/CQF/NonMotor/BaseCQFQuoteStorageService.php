@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor;
 
-use App\Enums\QuoteTypeId;
+use App\Enums\AMLStatusCode;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,7 +27,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
     public function storeRenewalQuote(
         Model $quote,
         RenewalsUploadLeads $renewalsUploadLeads,
-        int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
         if (! $quote instanceof PersonalQuote) {
@@ -35,8 +34,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         LoggerService::info(self::class.' - Storing '.$this->getLobName().' CQF renewal quote');
-
-        [$policyStartDate, $newPolicyExpiryDate] = $this->computePolicyDates($quote, $renewalDaysThreshold);
 
         $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
@@ -46,8 +43,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        $quoteData['policy_start_date'] = $policyStartDate;
-        $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
         return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
@@ -86,19 +81,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
      * @param  array<int, string>  $epCodes
      */
     protected function collectEmbeddedProductCodes(Model $oldQuote, PersonalQuote $newQuote, array &$epCodes): void {}
-
-    /**
-     * @return array{0: Carbon, 1: Carbon}
-     */
-    protected function computePolicyDates(Model $quote, int $renewalDaysThreshold): array
-    {
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
-
-        return [$policyStartDate, $newPolicyExpiryDate];
-    }
-
     /**
      * Default copyable attributes for LOB quote tables (id, personal_quote_id, timestamps, uuid, code replaced).
      * Override in subclasses if different (e.g. Business uses quote_id; Life unsets quote_id).
@@ -125,37 +107,80 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
 
     /**
      * After copying a LOB quote row from the previous policy, align lead fields with the new renewal PersonalQuote
-     * (source, status, advisor, assignment, renewal batch).
+     * (source, status, advisor, assignment, renewal batch, previous-policy references) and clear stale
+     * plan/policy detail fields that belong to the old issued policy.
      *
      * Only updates keys present in $data so we do not insert columns absent from the copied payload (and target table).
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    protected function alignCopiedLobRowWithRenewalPersonalQuote(array $data, PersonalQuote $newQuote): array
+    protected function alignCopiedLobRowWithRenewalPersonalQuote(array $data, PersonalQuote $newQuote, ?Model $oldLobQuote = null): array
     {
-        if (array_key_exists('source', $data)) {
-            $data['source'] = $newQuote->source;
+        // Fields inherited from the new renewal PersonalQuote (lead/assignment + previous-policy references).
+        $fromNewQuote = [
+            'source',
+            'quote_status_id',
+            'advisor_id',
+            'assignment_type',
+            'renewal_batch_id',
+            'previous_quote_policy_number',
+            'previous_policy_start_date',
+            'previous_policy_expiry_date',
+            'previous_quote_policy_premium',
+            'previous_quote_policy_commission',
+            'previous_advisor_id',
+            'transaction_approved_at',
+            'transaction_type_id',
+        ];
+
+        foreach ($fromNewQuote as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = $newQuote->$field;
+            }
         }
 
-        if (array_key_exists('quote_status_id', $data)) {
-            $data['quote_status_id'] = $newQuote->quote_status_id;
+        if (array_key_exists('previous_policy_expiry_date', $data)) {
+            $data['previous_policy_expiry_date'] = $newQuote->previous_policy_expiry_date
+                ? Carbon::parse($newQuote->previous_policy_expiry_date)->format('Y-m-d')
+                : null;
         }
 
-        if (array_key_exists('advisor_id', $data)) {
-            $data['advisor_id'] = $newQuote->advisor_id;
+        // aml_status_id is NOT NULL on LOB tables; old records may have null (legacy).
+        // Reset to 1 (pending) so AML is re-triggered on the renewal.
+        if (array_key_exists('aml_status_id', $data)) {
+            $data['aml_status_id'] ??= 1;
         }
 
-        if (array_key_exists('assignment_type', $data)) {
-            $data['assignment_type'] = $newQuote->assignment_type;
+        if (array_key_exists('aml_status', $data)) {
+            $data['aml_status'] = AMLStatusCode::AMLPending;
         }
 
-        if (array_key_exists('renewal_batch_id', $data)) {
-            $data['renewal_batch_id'] = $newQuote->renewal_batch_id;
+        // previous_quote_id references the old LOB row's own table, not PersonalQuote.
+        if (array_key_exists('previous_quote_id', $data)) {
+            $data['previous_quote_id'] = $oldLobQuote?->id;
         }
 
-        if (array_key_exists('insurance_provider_id', $data)) {
-            $data['insurance_provider_id'] = null;
+        // Plan / policy detail fields — null out stale values from the old issued policy.
+        // The new renewal quote starts without an insurer, pricing, or issued policy details.
+        $nullableFields = [
+            'insurance_provider_id',
+            'price_vat_applicable',
+            'price_vat_not_applicable',
+            'price_with_vat',
+            'insurer_quote_number',
+            'policy_number',
+            'policy_issuance_date',
+            'policy_issuance_status_id',
+            'policy_start_date',
+            'policy_expiry_date',
+            'kyc_decision',
+        ];
+
+        foreach ($nullableFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = null;
+            }
         }
 
         return $data;

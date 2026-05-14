@@ -129,6 +129,8 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
         $model = $quote->carModel?->text ?? null;
         $year = $quote->getAttribute('Year_of_manufacture') ?? $quote->getAttribute('year_of_manufacture') ?? null;
 
+        $quote->loadMissing('payments');
+
         return [
             'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
             'email' => $quote->email ?? null,
@@ -147,6 +149,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'year' => $year,
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
+            'previous_quote_policy_commission' => $quote->payments->first()?->commission ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->notes ?? null,
             'plan_name' => null,

@@ -114,6 +114,8 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', $this->getQuoteType()->shortCode());
 
+        $payment = $quote->payments->first() ?? $this->resolveLobPayment($quote);
+
         $quoteData = [
             'customer_id' => $quote->customer_id,
             'first_name' => $quote->first_name,
@@ -134,7 +136,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->price_with_vat,
-            'previous_quote_policy_commission' => $quote->payments?->first()?->commission,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($payment),
             'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'quote_type_id' => $this->getQuoteTypeId(),
@@ -163,6 +165,8 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
     {
         $quote->loadMissing('payments');
 
+        $payment = $quote->payments->first() ?? $this->resolveLobPayment($quote);
+
         $base = [
             'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
             'email' => $quote->email ?? null,
@@ -178,7 +182,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'batch' => null,
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->price_with_vat ?? null,
-            'previous_quote_policy_commission' => $quote->payments?->first()?->commission ?? null,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($payment),
             'source' => $quote->source ?? null,
             'notes' => $quote->notes ?? null,
             'plan_name' => null,
@@ -186,5 +190,37 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         ];
 
         return array_merge($base, $this->getFailedQuoteDataExtra($quote));
+    }
+
+    /**
+     * Override in subclasses where payments are attached to the LOB model rather than PersonalQuote.
+     */
+    protected function resolveLobPayment(PersonalQuote $quote): ?object
+    {
+        return null;
+    }
+
+    /**
+     * Mirrors the Vue BookingDetails calculateCommission formula:
+     * total_commission = commission_vat_not_applicable + commission_vat_applicable + commission_vat
+     * Falls back to the stored commission column if breakdown fields are absent.
+     */
+    private function resolveTotalCommission(?object $payment): ?float
+    {
+        if ($payment === null) {
+            return null;
+        }
+
+        $vatApplicable = (float) ($payment->commission_vat_applicable ?? 0);
+        $vatNotApplicable = (float) ($payment->commission_vat_not_applicable ?? 0);
+        $vatOnCommission = (float) ($payment->commission_vat ?? 0);
+
+        $total = $vatApplicable + $vatNotApplicable + $vatOnCommission;
+
+        if ($total > 0) {
+            return $total;
+        }
+
+        return $payment->commission !== null ? (float) $payment->commission : null;
     }
 }

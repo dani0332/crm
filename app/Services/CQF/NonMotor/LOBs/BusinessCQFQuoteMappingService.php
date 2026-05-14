@@ -26,6 +26,13 @@ class BusinessCQFQuoteMappingService extends BaseCQFQuoteMappingService
         return 'Business insurance';
     }
 
+    protected function resolveLobPayment(PersonalQuote $quote): ?object
+    {
+        $quote->loadMissing('businessQuote.payments');
+
+        return $quote->businessQuote?->payments->first();
+    }
+
     /**
      * @return array<string, mixed>
      */

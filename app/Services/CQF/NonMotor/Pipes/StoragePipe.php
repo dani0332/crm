@@ -18,7 +18,6 @@ class StoragePipe
         $context->newQuote = $context->storage->storeRenewalQuote(
             $context->quote,
             $context->renewalsUploadLeads,
-            $context->renewalDaysThreshold,
             $context->epCodes
         );
 

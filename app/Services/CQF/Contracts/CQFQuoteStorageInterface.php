@@ -18,7 +18,6 @@ interface CQFQuoteStorageInterface
     public function storeRenewalQuote(
         Model $quote,
         RenewalsUploadLeads $renewalsUploadLeads,
-        int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model;
 }

@@ -48,7 +48,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldPetQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldPetQuote);
 
         $newPetQuote = PetQuote::create($data);
 

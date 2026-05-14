@@ -28,15 +28,14 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     public function storeRenewalQuote(
         Model $quote,
         RenewalsUploadLeads $renewalsUploadLeads,
-        int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
         if ($quote instanceof CarQuote) {
-            return $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
+            return $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $epCodes);
         }
 
         if ($quote instanceof PersonalQuote) {
-            return parent::storeRenewalQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
+            return parent::storeRenewalQuote($quote, $renewalsUploadLeads, $epCodes);
         }
 
         return null;
@@ -101,12 +100,9 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     protected function storeRenewalQuoteFromCarQuote(
         CarQuote $quote,
         RenewalsUploadLeads $renewalsUploadLeads,
-        int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
         LoggerService::info(self::class.' - Storing bike CQF renewal quote from car_quote_request');
-
-        [$policyStartDate, $newPolicyExpiryDate] = $this->computePolicyDates($quote, $renewalDaysThreshold);
 
         $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
@@ -116,8 +112,6 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        $quoteData['policy_start_date'] = $policyStartDate;
-        $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
         return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
@@ -143,7 +137,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     {
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data['personal_quote_id'] = $newQuote->id;
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
@@ -160,7 +154,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $data = $this->copyableAttributes($oldBikeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote);
+        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldBikeQuote);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
