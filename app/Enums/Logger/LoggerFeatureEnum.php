@@ -95,5 +95,4 @@ enum LoggerFeatureEnum: string
 
     // Life Revival
     case LIFE_REVIVAL = 'life-revival';
-    case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 }
