@@ -483,9 +483,9 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Search', route('search-leads'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
-            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
-        }
+        // if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
+        //     $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
+        // }
 
         /* personal quotes section */
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
@@ -818,7 +818,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
