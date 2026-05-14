@@ -317,7 +317,7 @@ class RateCoverageUploadService
                         }
 
                         $allowedMaritalStatuses = ['single', 'married'];
-                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true) && ! empty($maritalStatus)) {
+                        if (! empty($maritalStatus) && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
                             throw new \Exception('Marital status value must be either "single" or "married".');
                         }
                     }
