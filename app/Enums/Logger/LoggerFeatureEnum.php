@@ -92,4 +92,5 @@ enum LoggerFeatureEnum: string
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case CSV_EXPORT = 'csv-export';
     case CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT = 'conversion-optimization-scheduled-export';
+    case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 }
