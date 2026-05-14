@@ -482,5 +482,15 @@ const fixedValue = numberString => {
         </p>
       </template>
     </DataTable>
+
+    <Pagination
+      :links="{
+        next: quotes.next_page_url,
+        prev: quotes.prev_page_url,
+        current: quotes.current_page,
+        from: quotes.from,
+        to: quotes.to,
+      }"
+    />
   </div>
 </template>
