@@ -576,6 +576,10 @@ class ConversionOptimizationReportService extends BaseService
                     LeadSourceEnum::INSLY,
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::IMCRM,
+                    LeadSourceEnum::REVIVAL_PAID,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::CROSS_SELL,
+                    LeadSourceEnum::ECOM,
                 ]);
             })
             ->when(! empty($filters->registration_type) && $filters->registration_type !== 'All', function ($builder) use ($filters) {
@@ -634,6 +638,10 @@ class ConversionOptimizationReportService extends BaseService
                     LeadSourceEnum::INSLY,
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::IMCRM,
+                    LeadSourceEnum::REVIVAL_PAID,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::CROSS_SELL,
+                    LeadSourceEnum::ECOM,
                 ]);
             })
             ->when($lob === quoteTypeCode::Health, function ($builder) use ($filters) {

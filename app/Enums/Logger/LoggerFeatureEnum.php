@@ -91,4 +91,7 @@ enum LoggerFeatureEnum: string
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case CSV_EXPORT = 'csv-export';
     case CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT = 'conversion-optimization-scheduled-export';
+
+    // Life Revival
+    case LIFE_REVIVAL = 'life-revival';
 }
