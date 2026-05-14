@@ -30,7 +30,9 @@ class AllocationCreationService
             })
             ->get();
 
-        LoggerService::info(self::class.' - executeLifeRevivalAllocation - found '.count($leadsToRevive).' leads to revive before filtering');
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - leads to revive before filtering with count', [
+            'count' => count($leadsToRevive),
+        ]);
 
         // Step 2: Filter duplicate insured
         $filteredLeads = $this->filterDuplicateInsured($leadsToRevive);
@@ -43,7 +45,9 @@ class AllocationCreationService
             return $lead->quote_status_id != QuoteStatusEnum::PolicyBooked;
         });
 
-        LoggerService::info(self::class.' - executeLifeRevivalAllocation - found '.count($filteredLeads).' leads to revive after filtering');
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - leads to revive after filtering with count', [
+            'count' => count($filteredLeads),
+        ]);
 
         return $filteredLeads;
     }
