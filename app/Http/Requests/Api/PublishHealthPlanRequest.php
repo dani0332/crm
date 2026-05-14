@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Rules\HealthPlanRateControlPublishableRule;
 use App\Rules\HealthPlanStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,7 +18,12 @@ class PublishHealthPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft health plans can be published')],
+            'id' => [
+                'bail',
+                'integer',
+                new HealthPlanStatusValidRule('Only draft health plans can be published'),
+                new HealthPlanRateControlPublishableRule,
+            ],
         ];
     }
 
