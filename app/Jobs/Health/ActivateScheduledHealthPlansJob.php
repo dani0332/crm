@@ -91,6 +91,7 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
 
                 if ($plan->status === HealthPlanRateSheetStatusEnum::SCHEDULED->value) {
                     $plan->version = $newVersion;
+                    $plan->parent_id = null;
                 }
 
                 $plan->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
@@ -128,6 +129,7 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
 
         if ($activePlan->id !== $incomingPlan->id) {
             $activePlan->status = HealthPlanRateSheetStatusEnum::ARCHIVED->value;
+            $activePlan->parent_id = $incomingPlan->id;
             $activePlan->save();
 
             LoggerService::info(self::class." - Archived previously active plan ID: {$activePlan->id}");
