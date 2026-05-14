@@ -80,7 +80,7 @@ class EpFailureNotification extends Mailable
 
     private function getEmailSubject(string $epProductName, string $refId): string
     {
-        return "❗Action Required: Embedded Product for {$epProductName} ".($this->isSageBooking ? 'Sage booking' : '')." failed for REF-ID: {$refId} – Immediate Attention Needed";
+        return "❗Action Required: Embedded Product for {$epProductName} has ".($this->isSageBooking ? 'Sage booking ' : '')."failed for REF-ID: {$refId} – Immediate Attention Needed";
     }
 
     private function buildCcEmails(): array
