@@ -115,6 +115,14 @@ class DicApiService
             return;
         }
 
+        if ($quote->days_cover_for === null) {
+            LoggerService::error('DIC applyIssuePolicyResponseToQuote: days_cover_for is null on quote, skipping update', [
+                'quote_code' => $quote->code,
+            ]);
+
+            return;
+        }
+
         $DicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
         $commissionInvoiceDate = data_get($body, 'additionalDetails.commission_invoice_date');
 
