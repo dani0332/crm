@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Models\Customer;
 use App\Models\CustomerInsured;
 use App\Models\RenewalBatch;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -191,6 +192,10 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (! $isTravelLeadTransactionApproved && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteObject ?: null)) {
+                    $validator->errors()->add('value', PlaceholderPrimaryEmail::message());
+                }
+
                 $customerInsured = CustomerInsured::active()
                     ->forQuote($quoteTypesIds[request()->modelType], request()->leadId)
                     ->where('customer_id', $quoteObject->customer_id)

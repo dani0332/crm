@@ -31,6 +31,7 @@ use App\Models\CarAddOn;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -52,6 +53,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\DeviceQuoteService;
@@ -308,6 +310,13 @@ class SendUpdateLogService
                             ],
                         ];
                         break;
+                    case quoteTypeCode::Device:
+                        $personalQuoteRelation = [
+                            'deviceQuote' => [
+                                'parentClass' => DeviceQuote::class,
+                            ],
+                        ];
+                        break;
                 }
 
                 $quoteRelations = [
@@ -392,6 +401,9 @@ class SendUpdateLogService
                 }
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                if ($relation === 'deviceQuote') {
+                    $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
+                }
                 // Check if relationObject is a Collection
                 if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
@@ -1019,6 +1031,11 @@ class SendUpdateLogService
 
         $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteDetails)) {
+            return ['status' => false, 'message' => PlaceholderPrimaryEmail::message()];
+        }
+
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
         if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
