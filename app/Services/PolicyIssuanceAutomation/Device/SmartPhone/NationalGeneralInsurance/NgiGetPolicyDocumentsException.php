@@ -12,7 +12,7 @@ use Illuminate\Contracts\Debug\ShouldntReport;
  * Implements {@see ShouldntReport} so queue retries and {@see NgiGetPolicyDocumentsJob::failed()}
  * still run, while Laravel/Sentry do not treat each attempt as an application error.
  */
-class NgiException extends Exception implements ShouldntReport
+class NgiGetPolicyDocumentsException extends Exception implements ShouldntReport
 {
     public const PROCESS_NOT_FOUND = 'process_not_found';
     public const QUOTE_NOT_FOUND = 'quote_not_found';
