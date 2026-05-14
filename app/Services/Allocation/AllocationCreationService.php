@@ -19,7 +19,18 @@ class AllocationCreationService
         LoggerService::info(self::class.' - executeLifeRevivalAllocation - fetching leads to revive');
 
         // Step 1: Get all LIFE quotes eligible for revival
-        $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
+        $leadsToRevive = PersonalQuote::query()
+            ->select([
+                'id',
+                'uuid',
+                'dob',
+                'gender',
+                'email',
+                'mobile_no',
+                'quote_status_id',
+            ])
+            ->with('lifeQuote')
+            ->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])
             ->whereDate('created_at', '<=', now()->subDays(90))
             ->where('is_revived', false)
