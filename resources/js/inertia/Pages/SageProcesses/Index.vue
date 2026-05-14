@@ -151,10 +151,10 @@ function serializeFilterDate(value) {
 
 const today = new Date();
 const defaultDateFrom = formatLocalYmd(
-  new Date(today.getFullYear(), today.getMonth(), 1)
+  new Date(today.getFullYear(), today.getMonth(), 1),
 );
 const defaultDateTo = formatLocalYmd(
-  new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  new Date(today.getFullYear(), today.getMonth() + 1, 0),
 );
 
 // Available filters
