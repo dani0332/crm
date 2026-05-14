@@ -138,6 +138,7 @@ class HealthPlanService extends BaseService
                 ]);
 
                 $draftRateControl->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
+                $draftRateControl->published_at = now()->toDateString();
                 $draftRateControl->save();
             }
         });
