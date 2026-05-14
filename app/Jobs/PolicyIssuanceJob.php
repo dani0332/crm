@@ -287,9 +287,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
         } elseif (! $response['status']) {
             $rawError = $response['error'] ?? 'Unknown error';
-            $errorMessage = is_string($rawError)
-                ? $rawError
-                : (json_encode($rawError) ?: 'Unserializable error');
+            if (! is_string($rawError)) {
+                $rawError = json_encode($rawError) ?: 'Unserializable error';
+            }
+            $errorMessage = $rawError;
 
             LoggerService::info('Automation execution failed', [
                 'process_id' => $this->process->id,
@@ -304,8 +305,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
 
             $this->fail(new \RuntimeException($errorMessage));
-
-            return;
         } else {
             if (isset($response['documents_pending']) && $response['documents_pending']) {
                 LoggerService::info('Automation: Documents pending (async job dispatched)', [
