@@ -34,6 +34,7 @@ class LifeRevivalCommand extends Command
     public function handle(AllocationCreationService $allocationCreationService)
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
+        LoggerService::info(self::class.' - handle - starting life revival command');
 
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_LIFE_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
