@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\QuoteStatusLog;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
@@ -34,7 +35,7 @@ class SageProcessesMarkFailedCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): void
     {
         LoggerService::info('cmd:SageProcessesMarkFailedCommand : Started');
 
@@ -51,21 +52,11 @@ class SageProcessesMarkFailedCommand extends Command
 
             if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                 $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
-
-                $previousQuoteStatusId = $quote->quote_status_id;
-                $newQuoteStatusId = QuoteStatusEnum::POLICY_BOOKING_FAILED;
-
                 $quote->update([
-                    'quote_status_id' => $newQuoteStatusId,
+                    'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
                     'quote_status_date' => now(),
                 ]);
 
-                QuoteStatusLog::create([
-                    'quote_type_id' => $sageRequest->quoteTypeId,
-                    'quote_request_id' => $quote->id,
-                    'current_quote_status_id' => $newQuoteStatusId,
-                    'previous_quote_status_id' => $previousQuoteStatusId,
-                ]);
                 LoggerService::info('cmd:SageProcessesMarkFailedCommand : updated quote status to ', extra: ['Quote Code' => $quote->code, 'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
             } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                 $model = $sageProcess->model;

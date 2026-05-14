@@ -42,7 +42,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SavingsQuote;
@@ -1234,31 +1233,17 @@ class SendUpdateLogService
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelledReissued;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
                         'quote_batch_id' => null,
                     ]);
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $sendUpdateLog->quote_type_id,
-                        'quote_request_id' => $quote->id,
-                        'current_quote_status_id' => $newLeadStatus,
-                        'previous_quote_status_id' => $oldLeadStatus,
-                    ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
-                    ]);
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $sendUpdateLog->quote_type_id,
-                        'quote_request_id' => $quote->id,
-                        'current_quote_status_id' => $newLeadStatus,
-                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 }

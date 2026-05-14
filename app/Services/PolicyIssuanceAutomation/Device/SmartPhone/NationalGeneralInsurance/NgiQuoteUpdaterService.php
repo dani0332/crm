@@ -154,6 +154,8 @@ class NgiQuoteUpdaterService
             $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult?->commision_inv_no ?? '';
         }
 
+        $updateData['commmission_percentage'] = ($policyDocumentsResult->policy_commision_without_tax / $policyDocumentsResult->policy_premium_without_tax) * 100;
+
         return $updateData;
     }
 
@@ -168,6 +170,7 @@ class NgiQuoteUpdaterService
             'insurer_invoice_date',
             'insurer_tax_number',
             'insurer_commmission_invoice_number',
+            'commmission_percentage',
         ];
 
         return array_diff_key($paymentData, array_flip($excludeFields));
