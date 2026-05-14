@@ -29,7 +29,6 @@ class AllocationCreationService
                 'mobile_no',
                 'quote_status_id',
             ])
-            ->with('lifeQuote')
             ->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])
             ->whereDate('created_at', '<=', now()->subDays(90))
