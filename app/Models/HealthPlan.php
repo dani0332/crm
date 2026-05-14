@@ -63,7 +63,7 @@ class HealthPlan extends Model
         return $this->hasMany(HealthRate::class, 'health_plan_id');
     }
 
-    public function rateControls(): HasMany
+    public function healthRateControls(): HasMany
     {
         return $this->hasMany(HealthRateControl::class, 'health_plan_id');
     }
@@ -78,12 +78,5 @@ class HealthPlan extends Model
     {
         return $this->hasOne(HealthRateControl::class, 'health_plan_id')
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value);
-    }
-
-    protected static function booted(): void
-    {
-        static::deleting(function (HealthPlan $healthPlan) {
-            $healthPlan->rates()->delete();
-        });
     }
 }

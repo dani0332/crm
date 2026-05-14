@@ -2,28 +2,29 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Rules\HealthRateStatusValidRule;
+use App\Rules\HealthRateSheetStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class DeleteHealthRateRequest extends FormRequest
+class DeleteHealthRateSheetRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
         $this->merge(['id' => $this->route('id')]);
     }
+
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthRateStatusValidRule('Only draft or scheduled rates can be deleted')],
+            'id' => ['bail', 'integer', 'exists:health_rates_control,id', new HealthRateSheetStatusValidRule('Only draft or scheduled rate sheets can be deleted')],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'id.integer' => 'Id must be an integer',
+            'id.exists' => 'Rate sheet does not exist',
         ];
     }
 

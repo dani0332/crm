@@ -7,9 +7,10 @@ use App\Models\HealthRate;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class HealthRateStatusValidRule implements ValidationRule
+class HealthRateUpdateStatusValidRule implements ValidationRule
 {
     public function __construct(protected string $message) {}
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $rate = HealthRate::find($value);
@@ -20,17 +21,7 @@ class HealthRateStatusValidRule implements ValidationRule
             return;
         }
 
-        if (
-            ! in_array(
-                strtolower($rate->status),
-                [
-                    strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value),
-                    strtolower(HealthPlanRateSheetStatusEnum::SCHEDULED->value),
-                ]
-            )
-
-        ) {
-
+        if ($rate->status == HealthPlanRateSheetStatusEnum::SCHEDULED->value) {
             $fail($this->message);
         }
     }

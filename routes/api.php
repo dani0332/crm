@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\HealthPlanController;
+use App\Http\Controllers\API\HealthRateControlController;
 use App\Http\Controllers\API\HealthRateController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
@@ -176,6 +177,7 @@ Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
         Route::post('/', [HealthRateController::class, 'create']);
         Route::put('/{id}', [HealthRateController::class, 'update']);
         Route::delete('/{id}', [HealthRateController::class, 'delete']);
+        Route::delete('/sheet/{id}', [HealthRateControlController::class, 'delete']);
     });
 });
 

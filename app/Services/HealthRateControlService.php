@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthRateControl;
+use Illuminate\Support\Facades\DB;
 
 class HealthRateControlService extends BaseService
 {
@@ -12,5 +13,22 @@ class HealthRateControlService extends BaseService
         return HealthRateControl::where('health_plan_id', $planId)
             ->where('status', $status)
             ->first();
+    }
+
+    public function delete(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            $rateSheet = HealthRateControl::findOrFail($id);
+            $plan = $rateSheet->healthPlan;
+
+            $rateSheet->rates()->delete();
+            $rateSheet->delete();
+
+            // If plan is scheduled, make it draft
+            if ($plan->status == HealthPlanRateSheetStatusEnum::SCHEDULED->value) {
+                $plan->status = HealthPlanRateSheetStatusEnum::DRAFT->value;
+                $plan->save();
+            }
+        });
     }
 }

@@ -180,7 +180,10 @@ class HealthPlanService extends BaseService
     public function delete(int $id): void
     {
         DB::transaction(function () use ($id) {
-            HealthPlan::destroy($id);
+            $healthPlan = HealthPlan::findOrFail($id);
+            $healthPlan->rates()->delete();
+            $healthPlan->healthRateControls()->delete();
+            $healthPlan->delete();
         });
     }
 }

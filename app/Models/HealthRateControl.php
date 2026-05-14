@@ -40,6 +40,6 @@ class HealthRateControl extends Model
 
     public function rates(): HasMany
     {
-        return $this->hasMany(HealthRate::class, 'health_rate_control_id');
+        return $this->hasMany(HealthRate::class, 'health_rate_control_id', 'id');
     }
 }

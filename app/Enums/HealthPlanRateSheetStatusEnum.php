@@ -5,8 +5,8 @@ namespace App\Enums;
 enum HealthPlanRateSheetStatusEnum: string
 {
     case DRAFT = 'draft';
-    case SCHEDULED = 'scheduled';
     case PUBLISHED = 'published';
     case ARCHIVED = 'archived';
     case ACTIVE = 'active';
+    case SCHEDULED = 'scheduled';
 }

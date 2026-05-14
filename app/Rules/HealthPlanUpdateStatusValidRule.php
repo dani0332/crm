@@ -7,7 +7,7 @@ use App\Models\HealthPlan;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class HealthPlanStatusValidRule implements ValidationRule
+class HealthPlanUpdateStatusValidRule implements ValidationRule
 {
     public function __construct(protected string $message) {}
 
@@ -21,13 +21,7 @@ class HealthPlanStatusValidRule implements ValidationRule
             return;
         }
 
-        if (! in_array(
-            strtolower($healthPlan->status),
-            [
-                strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value),
-                strtolower(HealthPlanRateSheetStatusEnum::SCHEDULED->value),
-            ]
-        )) {
+        if ($healthPlan->status == HealthPlanRateSheetStatusEnum::SCHEDULED->value) {
             $fail($this->message);
         }
     }

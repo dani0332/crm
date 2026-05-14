@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EmirateTypeEnum;
+use App\Enums\GenderEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
@@ -202,6 +203,7 @@ class RateCoverageUploadService
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
+        $seenCombinations = [];
         $excelRecords = [];
         if ($data && isset($data['file_name']) && file_exists($data['file_name'])) {
             $excelRecords = Excel::toArray([], $data['file_name']);
@@ -214,7 +216,6 @@ class RateCoverageUploadService
             if ($rowCount > 1) {
                 // normalize header case
                 $headers = array_map('strtolower', $rows[0]);
-                $seenCombinations = [];
                 $allCohorts = $this->cohortMappingService->getAllCohorts();
                 $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
@@ -274,8 +275,9 @@ class RateCoverageUploadService
                     }
 
                     // Validate premium as integers
-                    if (! ctype_digit(strval($premium))) {
-                        throw new \Exception('All premiums values must be integers.');
+                    if (! preg_match('/^\d+(\.\d{1,2})?$/', strval($premium))) {
+
+                        throw new \Exception('All premiums can be a decimal upto 2 digits.');
                     }
 
                     // Validate gender based on plan gender enabled
@@ -296,7 +298,7 @@ class RateCoverageUploadService
                             throw new \Exception('Cohort is required when plan cohort is enabled.');
                         }
 
-                        if (! in_array($cohort, $allCohorts, true)) {
+                        if (! in_array(strtoupper($cohort), $allCohorts, true)) {
                             throw new \Exception('Invalid cohort value.');
                         }
                     }
@@ -308,12 +310,12 @@ class RateCoverageUploadService
                             throw new \Exception('Gender must be enabled when marital status is enabled.');
                         }
 
-                        if (empty($maritalStatus)) {
-                            throw new \Exception('Marital status is required when marital status is enabled.');
+                        if (empty($maritalStatus) && strtolower($gender) == strtolower(GenderEnum::FEMALE->value)) {
+                            throw new \Exception('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
                         $allowedMaritalStatuses = ['single', 'married'];
-                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
+                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true) && ! empty($maritalStatus)) {
                             throw new \Exception('Marital status value must be either "single" or "married".');
                         }
                     }
@@ -329,31 +331,36 @@ class RateCoverageUploadService
                     }
 
                     // Apply unique combination
-                    // Track seen combinations of columns as row
-                    $combinationKey = "{$copaymentCode}|{$emirateType}|{$gender}|{$maritalStatus}|{$cohort}";
+                    $combinationKey = "{$gender}|{$maritalStatus}|{$cohort}";
 
-                    // Check for duplicate combination key
-                    if (in_array($combinationKey, $seenCombinations, true)) {
-                        throw new \Exception('Duplicate row detected');
+                    // Initialize storage for combinations if not already
+                    if (! isset($seenCombinations)) {
+                        $seenCombinations = [];
                     }
 
-                    // Initialize combination age ranges if not already set
-                    if (! isset($combinationAgeRanges)) {
-                        $combinationAgeRanges = [];
-                    }
-
-                    // Check age overlap
-                    foreach ($combinationAgeRanges as $range) {
-                        if (
-                            ($minAge >= $range['min'] && $minAge <= $range['max'])
-                            || ($maxAge >= $range['min'] && $maxAge <= $range['max'])
-                        ) {
-                            throw new \Exception("Age range ({$minAge} - {$maxAge}) overlaps with an existing row.");
+                    // Check if this combinationKey has been seen before
+                    if (isset($seenCombinations[$combinationKey])) {
+                        // If combination detected, check if age ranges overlap
+                        foreach ($seenCombinations[$combinationKey] as $seenAgeRange) {
+                            // Check if min_age and max_age overlap
+                            if (
+                                ($minAge <= $seenAgeRange['max_age'] && $maxAge >= $seenAgeRange['min_age'])
+                            ) {
+                                throw new \Exception('Duplicate row detected');
+                            }
                         }
+                        // If no overlap, add the new age range to the combination
+                        $seenCombinations[$combinationKey][] = [
+                            'min_age' => $minAge,
+                            'max_age' => $maxAge,
+                        ];
+                    } else {
+                        // First time this combination, add age range array
+                        $seenCombinations[$combinationKey][] = [
+                            'min_age' => $minAge,
+                            'max_age' => $maxAge,
+                        ];
                     }
-
-                    $combinationAgeRanges[] = ['min' => $minAge, 'max' => $maxAge];
-                    $seenCombinations[] = $combinationKey;
                 }
 
                 // Upload file and rates in a transaction
@@ -409,6 +416,7 @@ class RateCoverageUploadService
 
     private function uploadRates(int $planId, int $healthRateControlId, float $version, array $data)
     {
+        $plan = $this->healthPlanService->getPlanById($planId);
         $headers = array_map('strtolower', $data[0]);
         $codes = [];
 
@@ -439,9 +447,11 @@ class RateCoverageUploadService
                 'emirate_type' => $emirateType->value,
                 'min_age' => $rowAssoc['min_age'],
                 'max_age' => $rowAssoc['max_age'],
-                'gender' => $rowAssoc['gender'],
-                'marital_status' => $rowAssoc['marital_status'],
-                'cohort' => $rowAssoc['cohort'],
+                'gender' => $plan->gender_enabled ? $rowAssoc['gender'] : null,
+                'marital_status' => $plan->marital_status_enabled
+                        && ! empty($rowAssoc['gender'])
+                        && strtolower($rowAssoc['gender']) == strtolower(GenderEnum::FEMALE->value) ? $rowAssoc['marital_status'] : null,
+                'cohort' => $plan->cohort_enabled ? $rowAssoc['cohort'] : null,
                 'premium' => $rowAssoc['premium'],
                 'status' => HealthPlanRateSheetStatusEnum::DRAFT,
                 'is_active' => 0,

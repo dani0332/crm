@@ -8,6 +8,7 @@ use App\Models\HealthPlan;
 use App\Rules\HealthRateCohortValidRule;
 use App\Rules\HealthRateGenderValidRule;
 use App\Rules\HealthRateMaritalStatusValidRule;
+use App\Rules\HealthRateUpdateStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,11 +26,9 @@ class UpdateHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', 'exists:health_rates,id'],
-            'effective_from' => ['required', 'date'],
-            'effective_to' => ['required', 'date', 'after:effective_from'],
-            'text' => ['required'],
-            'text_ar' => ['required'],
+            'id' => ['bail', 'integer', 'exists:health_rates,id', new HealthRateUpdateStatusValidRule('Scheduled rates cannot be updated')],
+            'effective_from' => ['bail', 'required', 'date'],
+            'effective_to' => ['bail', 'required', 'date', 'after:effective_from'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
             'emirate_type' => ['bail', 'required', new Enum(EmirateTypeEnum::class)],
@@ -39,7 +38,6 @@ class UpdateHealthRateRequest extends FormRequest
             'cohort' => new HealthRateCohortValidRule($this->health_plan_id),
             'marital_status' => new HealthRateMaritalStatusValidRule($this->health_plan_id, $this->gender),
             'premium' => ['bail', 'required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
-            'is_active' => ['bail', 'required', 'boolean'],
             'user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
         ];
     }
@@ -55,7 +53,6 @@ class UpdateHealthRateRequest extends FormRequest
             'health_plan_id.exists' => 'Health plan does not exist',
             'health_plan_co_payment_id.exists' => 'Health plan co payment does not exist',
             'emirate_type.enum' => 'Emirate type must be a valid emirate type',
-            'boolean' => ':attribute must be a boolean',
             'effective_to.after' => 'Effective to must be greater than effective from',
             'user_id.exists' => 'User does not exist',
             'premium.regex' => 'Premium can be a decimal upto 2 digits',

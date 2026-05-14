@@ -19,7 +19,7 @@ class DeleteHealthPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft health plans can be deleted')],
+            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft or scheduled health plans can be deleted')],
         ];
     }
 

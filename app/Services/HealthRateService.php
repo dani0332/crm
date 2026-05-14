@@ -33,7 +33,6 @@ class HealthRateService extends BaseService
                 'premium',
                 'status',
                 'version',
-                'is_active',
                 'created_at',
                 'updated_at',
             )
@@ -63,7 +62,6 @@ class HealthRateService extends BaseService
                 'premium',
                 'status',
                 'version',
-                'is_active',
                 'created_at',
                 'updated_at',
             )
@@ -189,10 +187,7 @@ class HealthRateService extends BaseService
                 'health_rate_control_id' => $healthRateControl->id,
                 'version' => $data['version'],
                 'health_plan_co_payment_id' => $data['health_plan_co_payment_id'],
-                'text' => $data['text'],
-                'text_ar' => $data['text_ar'],
                 'premium' => $data['premium'],
-                'is_active' => $data['is_active'],
                 'emirate_type' => $data['emirate_type'],
                 'min_age' => $data['min_age'],
                 'max_age' => $data['max_age'],
@@ -236,10 +231,7 @@ class HealthRateService extends BaseService
         $existingRates = $existingRates->get();
 
         // Prepare fields for duplicate check
-        $matchingFields = [
-            'health_plan_co_payment_id',
-            'emirate_type',
-        ];
+        $matchingFields = [];
 
         if ($plan->gender_enabled) {
             $matchingFields[] = 'gender';
@@ -257,14 +249,26 @@ class HealthRateService extends BaseService
         if ($existingRates) {
             foreach ($existingRates as $rate) {
                 $duplicate = true;
+
+                // Loop through composite key fields to check duplicate
                 foreach ($matchingFields as $field) {
-                    if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
+                    // Check duplicate by composite key
+                    // Compare, treating null and missing as equivalent
+                    $rateValue = $rate->{$field} !== null ? strtolower($rate->{$field}) : null;
+                    $dataValue = isset($data[$field]) && $data[$field] !== null ? strtolower($data[$field]) : null;
+                    if ($rateValue !== $dataValue) {
                         $duplicate = false;
                         break;
                     }
                 }
 
-                if ($duplicate) {
+                // If basic combination is not duplicate, continue
+                if (! $duplicate) {
+                    continue;
+                }
+
+                // If composite combination matches and age overlaps, throw an error
+                if ($duplicate && $rate->min_age <= $data['max_age'] && $rate->max_age >= $data['min_age']) {
                     // Same format as api response
                     throw new HttpResponseException(
                         response()->json([
@@ -276,23 +280,6 @@ class HealthRateService extends BaseService
                     );
                 }
             }
-
-            // Check age overlap
-            $overlapExists = $existingRates->contains(function ($rate) use ($data) {
-                return $rate->min_age <= $data['max_age'] &&
-                       $rate->max_age >= $data['min_age'];
-            });
-
-            if ($overlapExists) {
-                throw new HttpResponseException(
-                    response()->json([
-                        'status' => false,
-                        'errors' => [
-                            'Age range overlaps with an existing rate sheet.',
-                        ],
-                    ], 422)
-                );
-            }
         }
     }
 
@@ -302,13 +289,30 @@ class HealthRateService extends BaseService
 
         // If draft, update same version
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
-            // Check duplicate rates under same sheet
-            $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
+            return DB::transaction(function () use ($data, $rate) {
+                // Get plan to validate cohort, gender
+                $plan = $this->healthPlanService->getPlanById($rate->health_plan_id);
 
-            $rate->fill($data);
-            $rate->save();
+                // Check duplicate rates under same sheet
+                $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
 
-            return $rate;
+                // Update gender, cohort, marital status if plan has enabled
+                $data['cohort'] = $plan->cohort_enabled ? $data['cohort'] : null;
+                $data['gender'] = $plan->gender_enabled ? $data['gender'] : null;
+                $data['marital_status'] = $plan->marital_status_enabled && $plan->gender_enabled
+                    && strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value) ? $data['marital_status'] : null;
+
+                $rate->fill($data);
+                $rate->save();
+
+                // Update health rate control
+                HealthRateControl::where('id', $rate->health_rate_control_id)->update([
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $data['effective_to'],
+                ]);
+
+                return $rate;
+            });
         }
 
         // Check if draft version exists for this active plan
@@ -356,6 +360,7 @@ class HealthRateService extends BaseService
             $rate = HealthRate::select('health_rate_control_id')->find($id);
             $healthRateControlId = $rate->health_rate_control_id;
 
+            // Delete health rate
             HealthRate::destroy($id);
 
             // After deleteing check if there is any rate exists with the same health rate control id
