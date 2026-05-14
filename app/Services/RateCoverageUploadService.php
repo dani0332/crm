@@ -310,12 +310,12 @@ class RateCoverageUploadService
                             throw new \Exception('Gender must be enabled when marital status is enabled.');
                         }
 
-                        if (empty($maritalStatus && strtolower($gender) == strtolower(GenderEnum::FEMALE->value))) {
+                        if (empty($maritalStatus) && strtolower($gender) == strtolower(GenderEnum::FEMALE->value)) {
                             throw new \Exception('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
                         $allowedMaritalStatuses = ['single', 'married'];
-                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
+                        if (! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true) && ! empty($maritalStatus)) {
                             throw new \Exception('Marital status value must be either "single" or "married".');
                         }
                     }

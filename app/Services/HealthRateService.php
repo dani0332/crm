@@ -231,10 +231,7 @@ class HealthRateService extends BaseService
         $existingRates = $existingRates->get();
 
         // Prepare fields for duplicate check
-        $matchingFields = [
-            'health_plan_co_payment_id',
-            'emirate_type',
-        ];
+        $matchingFields = [];
 
         if ($plan->gender_enabled) {
             $matchingFields[] = 'gender';
@@ -256,13 +253,21 @@ class HealthRateService extends BaseService
                 // Loop through composite key fields to check duplicate
                 foreach ($matchingFields as $field) {
                     // Check duplicate by composite key
-                    if ($rate->{$field} && isset($data[$field]) && strtolower($rate->{$field}) != strtolower($data[$field])) {
+                    // Compare, treating null and missing as equivalent
+                    $rateValue = $rate->{$field} !== null ? strtolower($rate->{$field}) : null;
+                    $dataValue = isset($data[$field]) && $data[$field] !== null ? strtolower($data[$field]) : null;
+                    if ($rateValue !== $dataValue) {
                         $duplicate = false;
                         break;
                     }
                 }
 
-                // If composite combination match, throw an error
+                // If basic combination is not duplicate, continue
+                if (! $duplicate) {
+                    continue;
+                }
+
+                // If composite combination matches and age overlaps, throw an error
                 if ($duplicate && $rate->min_age <= $data['max_age'] && $rate->max_age >= $data['min_age']) {
                     // Same format as api response
                     throw new HttpResponseException(
