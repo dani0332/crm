@@ -3,6 +3,7 @@
 namespace App\Services\Allocation;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -14,6 +15,7 @@ class AllocationCreationService
 {
     public function executeLifeRevivalAllocation(): Collection
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
         LoggerService::info(self::class.' - executeLifeRevivalAllocation - fetching leads to revive');
 
         // Step 1: Get all LIFE quotes eligible for revival
