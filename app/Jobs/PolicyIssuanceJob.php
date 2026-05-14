@@ -286,10 +286,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
             ]);
         } elseif (! $response['status']) {
-            $errorMessage = $response['error'] ?? 'Unknown error';
-            if (! is_string($errorMessage)) {
-                $errorMessage = json_encode($errorMessage);
-            }
+            $rawError = $response['error'] ?? 'Unknown error';
+            $errorMessage = is_string($rawError)
+                ? $rawError
+                : (json_encode($rawError) ?: 'Unserializable error');
 
             LoggerService::info('Automation execution failed', [
                 'process_id' => $this->process->id,
