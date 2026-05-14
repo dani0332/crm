@@ -22,7 +22,7 @@ class LifeRevivalCommand extends Command
 
     private $logPrefix = 'LifeRevivalCommand - ';
 
-    private const DELAY_BETWEEN_JOBS = 10;
+    private const DELAY_IN_SECONDS = 30;
 
     /**
      * The console command description.
@@ -65,12 +65,12 @@ class LifeRevivalCommand extends Command
         LoggerService::info("{$logPrefix} Life Revival Leads Jobs Count: ".count($leads));
 
         $jobs = [];
-        $delayInSeconds = 0;
+        $delayCounter = 0;
 
         foreach ($leads as $lead) {
             LoggerService::info("{$logPrefix} Queuing Life Revival Lead Job for lead {$lead->uuid}");
-            $jobs[] = (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds($delayInSeconds));
-            $delayInSeconds += self::DELAY_BETWEEN_JOBS;
+            $jobs[] = (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds(self::DELAY_IN_SECONDS + $delayCounter));
+            $delayCounter += self::DELAY_IN_SECONDS;
         }
 
         Bus::batch($jobs)
