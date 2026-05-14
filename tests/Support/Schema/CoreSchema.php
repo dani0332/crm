@@ -1424,6 +1424,8 @@ class CoreSchema
                 $table->integer('total_records')->default(0);
                 $table->string('file_name')->nullable();
                 $table->unsignedBigInteger('created_by')->nullable();
+                $table->date('published_at')->nullable();
+                $table->unsignedBigInteger('published_by')->nullable();
                 $table->timestamps();
             },
             'health_rates' => function (Blueprint $table) {
