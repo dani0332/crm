@@ -14,7 +14,6 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
-use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
@@ -90,7 +89,7 @@ class SageFailedRecordsService extends BaseService
         $oldestFailedLogsCTE = $this->getOldestFailedSageLogsCTE($request);
         $morphModelClasses = $this->distinctMorphClassesFromOldestFailedLogsCTE($oldestFailedLogsCTE);
         $filteredBase = $this->baseFailedSageApiLogsQuery($request, $oldestFailedLogsCTE);
-        $embeddedTransactionMorphClass = DB::connection()->getPdo()->quote(EmbeddedTransaction::class);
+        $embeddedTransactionMorphClass = $pdo->quote(EmbeddedTransaction::class);
 
         return $filteredBase
             ->with($this->failedSageLogsMorphWith($morphModelClasses))
@@ -150,8 +149,8 @@ class SageFailedRecordsService extends BaseService
             ? Carbon::parse($request['date_to'])->endOfDay()
             : Carbon::now()->endOfMonth();
 
-        $startDateSql = $pdo->quote($startDate->format('Y-m-d H:i:s'));
-        $endDateSql = $pdo->quote($endDate->format('Y-m-d H:i:s'));
+        $startDateSql = $pdo->quote($startDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
+        $endDateSql = $pdo->quote($endDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
 
         foreach ($getFilteredSources as $source) {
             $model = $pdo->quote($source['model']);
@@ -487,11 +486,6 @@ class SageFailedRecordsService extends BaseService
     {
         return function (Relation $payment): void {
             $paymentsTable = $payment->getRelated()->getTable();
-
-            $sageReceiptIdsByPaymentCode = PaymentSplits::query()
-                ->selectRaw('code, GROUP_CONCAT(DISTINCT sage_reciept_id) as collected_sage_receipt_ids')
-                ->groupBy('code');
-
             $payment->with([
                 'paymentStatus:id,text',
             ])
@@ -514,17 +508,10 @@ class SageFailedRecordsService extends BaseService
                     "{$paymentsTable}.payment_status_id",
                     "{$paymentsTable}.send_update_log_id",
                 ])
-                ->leftJoinSub(
-                    $sageReceiptIdsByPaymentCode,
-                    'sage_reciept_ids_by_payment_code',
-                    fn ($join) => $join->on(
-                        'sage_reciept_ids_by_payment_code.code',
-                        '=',
-                        "{$paymentsTable}.code",
-                    ),
-                )
                 ->addSelect(DB::raw(
-                    'sage_reciept_ids_by_payment_code.collected_sage_receipt_ids as collected_sage_receipt_ids'
+                    "(SELECT GROUP_CONCAT(DISTINCT ps.sage_reciept_id)
+                      FROM payment_splits ps
+                      WHERE ps.code = {$paymentsTable}.code) AS collected_sage_receipt_ids"
                 ));
         };
     }
