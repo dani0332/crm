@@ -7,6 +7,7 @@ use App\Http\Requests\Api\CreateHealthRateRequest;
 use App\Http\Requests\Api\DeleteHealthRateRequest;
 use App\Http\Requests\Api\HealthPlanDetailRequest;
 use App\Http\Requests\Api\HealthRateDetailRequest;
+use App\Http\Requests\Api\PublishHealthRateControlRequest;
 use App\Http\Requests\Api\UpdateHealthRateRequest;
 use App\Http\Resources\HealthRateResource;
 use App\Services\HealthRateService;
@@ -66,6 +67,16 @@ class HealthRateController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Health rate deleted successfully',
+        ]);
+    }
+
+    public function publish(PublishHealthRateControlRequest $request): JsonResponse
+    {
+        $this->healthRateService->publishRateControl($request->id);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Rate control scheduled successfully. It will be activated on the effective from date.',
         ]);
     }
 }

@@ -178,6 +178,7 @@ Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
         Route::put('/{id}', [HealthRateController::class, 'update']);
         Route::delete('/{id}', [HealthRateController::class, 'delete']);
         Route::delete('/sheet/{id}', [HealthRateControlController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthRateController::class, 'publish']);
     });
 });
 
