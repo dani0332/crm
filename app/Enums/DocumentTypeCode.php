@@ -177,4 +177,6 @@ class DocumentTypeCode extends Enum
     public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
     public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
     public const HEA_INSURED_EMIRATES_ID_APPLICATION = 'HEAEIDA'; // Insured Emirates ID Application
+    public const TCOMP_PC = 'TCOMP_PC'; // Business Policical Violence Policy Certificate
+    public const TCOMP_PS = 'TCOMP_PS'; // Business Policical Violence Policy Schedule
 }
