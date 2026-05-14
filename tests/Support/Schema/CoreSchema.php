@@ -619,6 +619,7 @@ class CoreSchema
                 $table->unsignedBigInteger('support_user_id')->nullable();
                 $table->unsignedBigInteger('marital_status_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('previous_advisor_id')->nullable();
                 $table->unsignedBigInteger('lead_type_id')->nullable();
@@ -660,6 +661,9 @@ class CoreSchema
                 $table->unsignedBigInteger('branch_id')->nullable();
                 $table->boolean('is_branch_applicable')->default(0);
                 $table->boolean('is_error_email_sent')->default(0);
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->boolean('is_quote_locked')->default(0);
+                $table->text('reason_for_reset')->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -1064,6 +1068,21 @@ class CoreSchema
                 $table->id();
                 $table->unsignedBigInteger('current_payment_status_id')->nullable();
                 $table->unsignedBigInteger('previous_payment_status_id')->nullable();
+                $table->string('payment_code')->nullable();
+                $table->timestamps();
+            },
+            'quote_status_log' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->unsignedBigInteger('quote_request_id')->nullable();
+                $table->unsignedBigInteger('current_quote_status_id')->nullable();
+                $table->unsignedBigInteger('previous_quote_status_id')->nullable();
+                $table->text('notes')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->timestamps();
+            },
+            'payment_status_history' => function (Blueprint $table) {
+                $table->id();
                 $table->string('payment_code')->nullable();
                 $table->timestamps();
             },

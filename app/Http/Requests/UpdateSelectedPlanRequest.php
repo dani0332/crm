@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
 use App\Rules\ValidateAuthorizedPayment;
+use App\Services\HealthQuoteService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -51,8 +52,15 @@ class UpdateSelectedPlanRequest extends FormRequest
             $rule->validate($validator, $code);
 
             if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
-                $quote = HealthQuote::where('code', request()->code)->first();
-                if ($quote?->is_quote_locked) {
+                $quote = HealthQuote::where('code', request()->code)->with(['payments.paymentSplits'])->first();
+                if (! $quote) {
+                    $validator->errors()->add('error', 'Quote not found');
+
+                    return;
+                }
+                $payments = $quote->payments;
+
+                if ($quote?->is_quote_locked && ! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
                     $validator->errors()->add('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
                 }
             }
