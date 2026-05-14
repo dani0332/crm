@@ -70,52 +70,36 @@ class HealthRateService extends BaseService
 
     public function create(array $data)
     {
-        $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
+        // $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
 
         // Fetch related plan ids (if exists)
         // We have to check against active and draft plans only
         $planIds = $this->healthPlanService->getRelatedPlanIds($data['health_plan_id']);
 
         // If plan is draft, add or upadte draft rate sheet
-        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
-            // Get draft rate sheet against plan ids
-            $draftRatesSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
-                ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
-                ->first();
+        // if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
 
-            // If not found, add new draft rate sheet
-            if (! $draftRatesSheet) {
-                return $this->addRate($data, $planIds);
-            }
-
-            // Else add rate to existing draft rate sheet
-            return $this->addRate($data, $planIds, $draftRatesSheet);
-        }
-
-        // Get draft rate sheet against active plan
-        $draftRatesSheet = HealthRateControl::where('health_plan_id', $data['health_plan_id'])
+        // Get draft rate sheet against plan ids
+        $draftRatesSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
             ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
             ->first();
 
-        if ($draftRatesSheet) {
-            throw new HttpResponseException(
-                response()->json([
-                    'status' => false,
-                    'errors' => [
-                        'Draft version already exists for this plan.',
-                    ],
-                ], 422)
-            );
+        // If not found, add new draft rate sheet
+        if (! $draftRatesSheet) {
+            return $this->addRate($data, $planIds);
         }
+
+        // Else add rate to existing draft rate sheet
+        return $this->addRate($data, $planIds, $draftRatesSheet);
+        // }
 
         // Else Active plan
         // Get active rate sheet against plan id
-        $activeRates = HealthRate::where('health_plan_id', $data['health_plan_id'])
+        /*$activeRates = HealthRate::where('health_plan_id', $data['health_plan_id'])
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->get();
 
-        return $this->addRate($data, $planIds, null, $activeRates);
-
+        return $this->addRate($data, $planIds, null, $activeRates);*/
     }
 
     private function addRate(array $data, array $planIds, ?HealthRateControl $healthRateControl = null, ?Collection $existingRates = null): HealthRate
@@ -237,7 +221,7 @@ class HealthRateService extends BaseService
             $matchingFields[] = 'gender';
         }
 
-        if ($plan->marital_status_enabled) {
+        if ($plan->marital_status_enabled and ! empty($data['gender']) and strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value)) {
             $matchingFields[] = 'marital_status';
         }
 
@@ -256,6 +240,7 @@ class HealthRateService extends BaseService
                     // Compare, treating null and missing as equivalent
                     $rateValue = $rate->{$field} !== null ? strtolower($rate->{$field}) : null;
                     $dataValue = isset($data[$field]) && $data[$field] !== null ? strtolower($data[$field]) : null;
+
                     if ($rateValue !== $dataValue) {
                         $duplicate = false;
                         break;
@@ -291,7 +276,7 @@ class HealthRateService extends BaseService
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return DB::transaction(function () use ($data, $rate) {
                 // Get plan to validate cohort, gender
-                $plan = $this->healthPlanService->getPlanById($rate->health_plan_id);
+                $plan = $rate->healthPlan; // $this->healthPlanService->getPlanById($rate->health_plan_id);
 
                 // Check duplicate rates under same sheet
                 $this->checkDuplicateRates($rate->health_rate_control_id, $data, $rate->healthPlan);
@@ -315,22 +300,6 @@ class HealthRateService extends BaseService
             });
         }
 
-        // Check if draft version exists for this active plan
-        $draftRatesSheet = HealthRateControl::where('health_plan_id', $rate->health_plan_id)
-            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
-            ->first();
-
-        if ($draftRatesSheet) {
-            throw new HttpResponseException(
-                response()->json([
-                    'status' => false,
-                    'errors' => [
-                        'Draft version already exists for this plan.',
-                    ],
-                ], 422)
-            );
-        }
-
         // As per bot comment
         if ($data['health_plan_id'] != $rate->health_plan_id) {
             throw new HttpResponseException(
@@ -350,7 +319,13 @@ class HealthRateService extends BaseService
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->get();
 
-        return $this->addRate($data, [$rate->health_plan_id], null, $activeRates);
+        // Get draft version of rate sheet
+        // Since we need to append existing active rates to draft rate sheet
+        $draftRateSheet = HealthRateControl::where('health_plan_id', $rate->health_plan_id)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        return $this->addRate($data, [$rate->health_plan_id], $draftRateSheet, $activeRates);
     }
 
     public function delete(int $id): void
