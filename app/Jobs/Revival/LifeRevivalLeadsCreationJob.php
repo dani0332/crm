@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Revival;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
@@ -38,6 +39,13 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
      */
     public function handle(LifeRevivalService $lifeRevivalService): void
     {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
+        LoggerService::info(self::class.' - handle - starting life revival job');
+
         $this->lead = PersonalQuote::query()
             ->with('lifeQuote')
             ->where('is_revived', false)
@@ -116,6 +124,8 @@ class LifeRevivalLeadsCreationJob implements ShouldQueue
 
     public function middleware(): array
     {
+        LoggerService::info(self::class.' - middleware - adding middleware');
+
         return [(new WithoutOverlapping($this->personalQuoteId))->dontRelease()];
     }
 
