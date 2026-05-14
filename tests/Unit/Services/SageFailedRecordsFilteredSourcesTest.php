@@ -3,19 +3,33 @@
 declare(strict_types=1);
 
 use App\Enums\QuoteTypeId;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Services\SageFailedRecordsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-test('failed leads union subquery stays valid when send update option conflicts with car quote type', function () {
+/**
+ * @param  array<string, mixed>  $requestPayload
+ */
+function sageFailedRecordsFailedLeadsUnionSql(array $requestPayload): string
+{
     $service = app(SageFailedRecordsService::class);
     $pdo = DB::connection()->getPdo();
+
+    $sourcesMethod = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
+    $sourcesMethod->setAccessible(true);
+    $filteredSources = $sourcesMethod->invoke($service, $pdo, $requestPayload);
 
     $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
     $method->setAccessible(true);
 
-    $sql = $method->invoke($service, $pdo, [
+    return $method->invoke($service, $pdo, $requestPayload, $filteredSources);
+}
+
+test('failed leads union subquery stays valid when send update option conflicts with car quote type', function () {
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Send Update',
         'quote_type_id' => ['1'],
         'date_from' => '2024-01-01',
@@ -27,13 +41,7 @@ test('failed leads union subquery stays valid when send update option conflicts 
 });
 
 test('failed leads union subquery stays valid when main lead option conflicts with send update quote type', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
-
-    $sql = $method->invoke($service, $pdo, [
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Main Lead',
         'quote_type_id' => ['Send Update'],
         'date_from' => '2024-01-01',
@@ -60,16 +68,12 @@ test('get filtered sources returns all main lead sources when quote_type_id is e
 });
 
 test('failed leads union subquery quotes date bounds with PDO for SQL safety', function () {
-    $service = app(SageFailedRecordsService::class);
     $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
 
     $dateFrom = '2024-01-15';
     $dateTo = '2024-01-20';
 
-    $sql = $method->invoke($service, $pdo, [
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Main Lead',
         'quote_type_id' => [],
         'date_from' => $dateFrom,
@@ -101,13 +105,7 @@ test('get filtered sources narrows personal quotes to requested personal quote t
 });
 
 test('failed leads union subquery restricts personal_quotes by intersected quote_type_id list', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
-
-    $sql = $method->invoke($service, $pdo, [
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Main Lead',
         'quote_type_id' => [(string) QuoteTypeId::Home],
         'date_from' => '2024-01-01',
@@ -116,4 +114,23 @@ test('failed leads union subquery restricts personal_quotes by intersected quote
 
     expect($sql)->toContain('FROM personal_quotes')
         ->and($sql)->toContain('AND quote_type_id IN ('.QuoteTypeId::Home.')');
+});
+
+test('morph model classes for eager load are derived from filtered sources without querying oldest_logs CTE', function () {
+    $service = app(SageFailedRecordsService::class);
+    $pdo = DB::connection()->getPdo();
+
+    $sourcesMethod = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
+    $sourcesMethod->setAccessible(true);
+    $filteredSources = $sourcesMethod->invoke($service, $pdo, [
+        'option' => 'Main Lead',
+        'quote_type_id' => [(string) QuoteTypeId::Car],
+    ]);
+
+    $morphMethod = new ReflectionMethod(SageFailedRecordsService::class, 'morphModelClassesFromFailedLeadSources');
+    $morphMethod->setAccessible(true);
+    $morphClasses = $morphMethod->invoke($service, $filteredSources);
+
+    expect($morphClasses)->toContain(CarQuote::class)
+        ->and($morphClasses)->not->toContain(SendUpdateLog::class);
 });
