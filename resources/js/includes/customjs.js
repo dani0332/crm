@@ -2222,7 +2222,7 @@ $(document).ready(function () {
 
     $.ajax({
       url:
-        '/quotes/lead-history?modelType=' +
+        '/quotes/status-logs?modelType=' +
         modelType +
         '&recordId=' +
         leadId +

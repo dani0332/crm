@@ -65,7 +65,7 @@ class BookPolicyOnSageJob implements ShouldQueue
                     LoggerService::info('Booking policy on Sage failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
 
-                    (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
+                    (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
                 }
 
             } else {
@@ -111,7 +111,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, $sageProcessStatus, $message);
 
         LoggerService::info('Updating Quote status to POLICY_BOOKING_FAILED', extra: ['QuoteCode' => $this->quote->code]);
-        (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
+        (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
         LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequest->insurerID);

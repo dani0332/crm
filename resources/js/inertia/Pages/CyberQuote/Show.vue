@@ -1,9 +1,9 @@
 <script setup>
 import { createReusableTemplate } from '@vueuse/core';
 import { reactive } from 'vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -73,7 +73,6 @@ const countDays = computed(() =>
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quote = page.props?.quote;
-const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const hasRole = role => useHasRole(role);
@@ -1719,7 +1718,11 @@ const formatDob = dob => {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"

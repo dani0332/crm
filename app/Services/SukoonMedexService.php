@@ -393,7 +393,7 @@ class SukoonMedexService
     {
         $sageApiService = (new SageApiService);
         if ($this->currentQuote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         }
 
         $request = new \stdClass;
@@ -407,7 +407,7 @@ class SukoonMedexService
         $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->currentQuote);
 
         if (! $createSageProcessResponse['status']) {
-            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
         }
 
         return $createSageProcessResponse;
