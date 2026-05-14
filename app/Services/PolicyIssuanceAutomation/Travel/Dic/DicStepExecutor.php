@@ -284,7 +284,10 @@ class DicStepExecutor
             if (is_string($invoiceNumber) && $invoiceNumber !== '') {
                 $payment = $quote->payments()->mainLeadPayment()->first();
                 if ($payment !== null) {
-                    $payment->update(['insurer_commmission_invoice_number' => $invoiceNumber]);
+                    $payment->update([
+                        'insurer_commmission_invoice_number' => $invoiceNumber,
+                        'insurer_invoice_date' => $quote->policy_issuance_date,
+                    ]);
                     LoggerService::info('DIC Travel: GetBrokerInvoice stored insurer_commmission_invoice_number on main payment', [
                         'quote_code' => $quote->code,
                         'payment_code' => $payment->code,
