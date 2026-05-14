@@ -56,7 +56,6 @@ use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\SendsEpFailureEmail;
 use Carbon\Carbon;
 use Exception;
 use finfo;
@@ -68,7 +67,7 @@ use Throwable;
 
 class EmbeddedProductRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs, SendsEpFailureEmail;
+    use GenericQueriesAllLobs;
 
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
