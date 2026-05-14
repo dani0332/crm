@@ -6,6 +6,7 @@ import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import SendUpdateHistorySection from '@/inertia/Components/SendUpdateHistorySection.vue';
 import { XInput } from '@indielayer/ui';
 import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -481,6 +482,8 @@ const cancelOptionsList = computed(() => {
     }));
   }
 });
+
+const sectionExpanded = computed(() => true);
 </script>
 
 <template>
@@ -919,6 +922,11 @@ const cancelOptionsList = computed(() => {
       :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
       :ocrLoadingDocTypes="ocrLoadingDocTypes"
       :isDocTypeLoading="isDocTypeLoading"
+    />
+
+    <SendUpdateHistorySection
+      :expanded="sectionExpanded"
+      :send-update-log-id="props.sendUpdateLog.id"
     />
 
     <AuditLogs

@@ -1,6 +1,7 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
@@ -72,6 +73,10 @@ const props = defineProps({
   isAUHLead: Boolean,
   branchOptions: Object,
   hasPecTag: Boolean,
+  canBypassPlanLock: {
+    type: Boolean,
+    default: false,
+  },
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -259,7 +264,6 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   selectedPlans = ref([]),
   exportLoader = ref(false),
   toggleLoader = ref(false),
-  historyLoading = ref(false),
   isDisabled = ref(false);
 
 const { copy, copied } = useClipboard();
@@ -1555,26 +1559,6 @@ const additionalContactPrimaryConfirmed = (keepExistingPrimaryEmail = true) => {
   );
 };
 
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
-
 const dateToYMD = date => {
   if (date) {
     const d = new Date(date);
@@ -2038,7 +2022,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isLocked = page.props.quote.is_quote_locked ?? false;
+const isLocked = computed(() => props.quote?.is_quote_locked ?? false);
 
 const isPrimaryEmailLocked = computed(() => {
   return [
@@ -4269,6 +4253,7 @@ const validateEmirateOfVisa = () => {
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
+      :canBypassPlanLock="canBypassPlanLock"
       :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
@@ -4594,40 +4579,11 @@ const validateEmirateOfVisa = () => {
       </template>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="page.props.quote.id"
+      :quoteTypeId="page.props.quoteTypeId"
+    />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"

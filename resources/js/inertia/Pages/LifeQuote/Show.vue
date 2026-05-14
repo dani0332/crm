@@ -19,7 +19,7 @@ import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -545,34 +545,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
-
-const historyLoading = ref(false);
-
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  // const res = await fetch(
-  //   `/quotes/getLeadHistory?modelType=life&recordId=${page.props.quote.id}`,
-  // );
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'life',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 
 const leadDuplicateForm = useForm({
   modelType: 'life',
@@ -3052,7 +3024,11 @@ const getDisplayPriceInAED = item => {
       :quote-type="quoteType"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

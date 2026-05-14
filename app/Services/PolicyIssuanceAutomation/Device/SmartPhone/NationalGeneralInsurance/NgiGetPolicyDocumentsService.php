@@ -42,7 +42,7 @@ class NgiGetPolicyDocumentsService
      * @param  int  $maxTries  Maximum number of tries (for logging)
      * @return array{status: bool, error?: string, documents_count?: int}
      *
-     * @throws NgiException When validation or API calls fail
+     * @throws NgiGetPolicyDocumentsException When validation or API calls fail
      */
     public function execute(int $processId, int $attempt = 1, int $maxTries = 4): array
     {
@@ -81,9 +81,9 @@ class NgiGetPolicyDocumentsService
                 $errorMessage .= ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIX_MESSAGE, $quote->email, 'document download from provider or upload to IMCRM');
             }
 
-            throw new NgiException(
+            throw new NgiGetPolicyDocumentsException(
                 "{$this->logPrefix} {$errorMessage}",
-                NgiException::DOCUMENT_DOWNLOAD_FAILED,
+                NgiGetPolicyDocumentsException::DOCUMENT_DOWNLOAD_FAILED,
                 ['process_id' => $processId, 'error' => $errorMessage]
             );
         }
@@ -100,7 +100,7 @@ class NgiGetPolicyDocumentsService
     /**
      * Get policy issuance process with quote relationship.
      *
-     * @throws NgiException When process or quote not found
+     * @throws NgiGetPolicyDocumentsException When process or quote not found
      */
     private function getProcessWithQuote(int $processId): PolicyIssuance
     {
@@ -110,9 +110,9 @@ class NgiGetPolicyDocumentsService
             LoggerService::error("{$this->logPrefix} Process not found", [
                 'process_id' => $processId,
             ]);
-            throw new NgiException(
+            throw new NgiGetPolicyDocumentsException(
                 "{$this->logPrefix} Process not found. process_id -> {$processId}",
-                NgiException::PROCESS_NOT_FOUND,
+                NgiGetPolicyDocumentsException::PROCESS_NOT_FOUND,
                 ['process_id' => $processId]
             );
         }
@@ -121,9 +121,9 @@ class NgiGetPolicyDocumentsService
             LoggerService::error("{$this->logPrefix} Quote not found", [
                 'process_id' => $processId,
             ]);
-            throw new NgiException(
+            throw new NgiGetPolicyDocumentsException(
                 "{$this->logPrefix} Quote not found. process_id -> {$processId}",
-                NgiException::QUOTE_NOT_FOUND,
+                NgiGetPolicyDocumentsException::QUOTE_NOT_FOUND,
                 ['process_id' => $processId]
             );
         }
@@ -134,7 +134,7 @@ class NgiGetPolicyDocumentsService
     /**
      * Validate that policy number exists on the quote.
      *
-     * @throws NgiException When policy number validation fails
+     * @throws NgiGetPolicyDocumentsException When policy number validation fails
      */
     private function validatePolicyNumber(PersonalQuote $quote, int $processId): void
     {
@@ -145,9 +145,9 @@ class NgiGetPolicyDocumentsService
                 'process_id' => $processId,
                 'error' => $validationResult['error'] ?? 'No policy number',
             ]);
-            throw new NgiException(
+            throw new NgiGetPolicyDocumentsException(
                 "{$this->logPrefix} Policy number validation failed ".($validationResult['error'] ?? 'Policy number not found'),
-                NgiException::POLICY_NUMBER_VALIDATION_FAILED,
+                NgiGetPolicyDocumentsException::POLICY_NUMBER_VALIDATION_FAILED,
                 ['process_id' => $processId, 'error' => $validationResult['error'] ?? 'Policy number not found']
             );
         }
@@ -158,7 +158,7 @@ class NgiGetPolicyDocumentsService
      *
      * @return array{status: bool, documents_count?: int, error?: string}
      *
-     * @throws NgiException When document download fails
+     * @throws NgiGetPolicyDocumentsException When document download fails
      */
     private function downloadDocuments(PersonalQuote $quote, PolicyIssuance $process, int $processId, array $documentsApiResponse): array
     {
