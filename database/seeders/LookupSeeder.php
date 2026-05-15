@@ -870,6 +870,7 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
                 'sort_order' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
             [
                 'code' => 'relParent',
@@ -878,6 +879,7 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
                 'sort_order' => 2,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
             [
                 'code' => 'relChild',
@@ -886,6 +888,7 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
                 'sort_order' => 3,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
             [
                 'code' => 'relSibling',
@@ -894,6 +897,7 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
                 'sort_order' => 4,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
             [
                 'code' => 'relOtherRelatives',
@@ -902,6 +906,7 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
                 'sort_order' => 5,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
         ]);
     }
@@ -916,6 +921,7 @@ class LookupSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
+                'quote_type_id' => QuoteTypeId::Health,
             ],
         ]);
     }
