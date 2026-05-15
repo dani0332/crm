@@ -152,8 +152,8 @@ class DicApiService
                 $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5%
 
                 $payment->update($paymentData);
+                $quote->save();
             }
-            $quote->save();
         });
     }
 
