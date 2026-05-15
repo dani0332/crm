@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicStepExecutor;
@@ -22,6 +23,7 @@ beforeEach(function (): void {
         Mockery::mock(DicStepExecutor::class),
         Mockery::mock(DicValidationService::class),
         Mockery::mock(DicResponseHandler::class),
+        Mockery::mock(PolicyIssuanceService::class),
     );
 });
 

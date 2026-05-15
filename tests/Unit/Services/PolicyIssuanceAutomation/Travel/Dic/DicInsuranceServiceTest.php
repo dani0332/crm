@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\ApplicationStorageService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicStepExecutor;
@@ -14,11 +15,13 @@ beforeEach(function () {
     $this->stepExecutorMock = Mockery::mock(DicStepExecutor::class);
     $this->validationServiceMock = Mockery::mock(DicValidationService::class);
     $this->responseHandlerMock = Mockery::mock(DicResponseHandler::class);
+    $this->policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
 
     $this->service = new DicInsuranceService(
         $this->stepExecutorMock,
         $this->validationServiceMock,
         $this->responseHandlerMock,
+        $this->policyIssuanceServiceMock,
     );
 
     mockDicTravelAutomationSettings(true, true);

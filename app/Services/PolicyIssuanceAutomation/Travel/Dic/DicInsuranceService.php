@@ -38,6 +38,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
         private DicStepExecutor $stepExecutor,
         private DicValidationService $validationService,
         private DicResponseHandler $responseHandler,
+        private PolicyIssuanceService $policyIssuanceService,
     ) {}
 
     /**
@@ -125,7 +126,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
         ]);
 
         if ($this->isPolicyIssuanceAutomationEnabled()) {
-            (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, QuoteTypes::TRAVEL->value, self::class);
+            $this->policyIssuanceService->schedulePolicyIssuance($quote, $insurer, QuoteTypes::TRAVEL->value, self::class);
         }
 
         return $quote->policyIssuance;
@@ -249,7 +250,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
             return $failureResponse;
         }
 
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult($quote, true);
+        $this->policyIssuanceService->applyTravelDicAutomationResult($quote, true);
 
         return [
             'status' => true,
@@ -320,7 +321,7 @@ class DicInsuranceService implements PolicyIssuanceInterface
             default => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
         };
 
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+        $this->policyIssuanceService->applyTravelDicAutomationResult(
             $quote,
             false,
             (int) $newInsurerApiStatus,
