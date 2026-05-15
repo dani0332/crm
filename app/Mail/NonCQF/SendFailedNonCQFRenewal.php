@@ -75,7 +75,7 @@ class SendFailedNonCQFRenewal extends Mailable
      */
     protected function getBirdWorkflowUrl(): ?string
     {
-        $config = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVISOR_WORKFLOW)->first();
+        $config = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW)->first();
 
         return $config?->value;
     }

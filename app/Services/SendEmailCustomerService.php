@@ -1910,7 +1910,7 @@ class SendEmailCustomerService extends BaseService
             'bccEmails' => $bccEmails,
         ];
 
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVISOR_WORKFLOW);
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
         if (! empty($customerNotificationWorkflow)) {
             app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
             LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());

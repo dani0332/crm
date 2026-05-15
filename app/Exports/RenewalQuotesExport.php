@@ -88,6 +88,6 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
 
     public function collection($requestParams = [])
     {
-        return $this->query->get();
+        return $this->query->with(['previousAdvisor', 'nationality'])->get();
     }
 }

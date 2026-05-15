@@ -60,7 +60,7 @@ trait Batchable
     protected function generateBatchNumbers($startDate = null)
     {
         $batchArray = [];
-        $renewalDaysThreshold = (int) (getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_RENEWAL_BATCH_DAYS) ?: 120);
+        $renewalDaysThreshold = (int) (getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD) ?: 120);
         $today = $startDate ? Carbon::parse($startDate) : now()->startOfWeek();
         $endDate = $today->copy()->addDays($renewalDaysThreshold);
 

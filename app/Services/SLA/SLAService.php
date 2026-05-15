@@ -240,7 +240,7 @@ class SLAService
 
     private function triggerBirdWorkflow(array $payload): bool
     {
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVISOR_WORKFLOW, useCache: true);
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
         if (! empty($customerNotificationWorkflow)) {
             $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
 
