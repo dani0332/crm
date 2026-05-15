@@ -99,8 +99,7 @@ class HealthPlanService extends BaseService
             'parent_id',
             $currentPlan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $id : $currentPlan->parent_id
         )
-
-            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->whereIn('status', [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value])
             ->first();
 
         if ($existingDraft) {
@@ -108,7 +107,7 @@ class HealthPlanService extends BaseService
                 response()->json([
                     'status' => false,
                     'errors' => [
-                        'Draft version already exists for this plan.',
+                        'Draft or scheduled version already exists for this plan.',
                     ],
                 ], 422)
             );
