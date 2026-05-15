@@ -98,7 +98,7 @@ it('fails when health plan has no draft rate control', function () {
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Health plan does not have a draft rate draft sheet.');
+    expect($failed)->toBe('Health plan does not have a draft rate sheet.');
 });
 
 it('fails when draft rate control has no rates in draft status', function () {
@@ -111,7 +111,7 @@ it('fails when draft rate control has no rates in draft status', function () {
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Rate control does not have any rates in draft status.');
+    expect($failed)->toBe('Rate sheet does not have any draft rates.');
 });
 
 it('fails when draft rate control effective_from is today', function () {
@@ -125,7 +125,7 @@ it('fails when draft rate control effective_from is today', function () {
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Rate control effective from date must be greater than today.');
+    expect($failed)->toBe('Effective from date must be greater than today.');
 });
 
 it('fails when draft rate control effective_from is in the past', function () {
@@ -139,7 +139,7 @@ it('fails when draft rate control effective_from is in the past', function () {
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Rate control effective from date must be greater than today.');
+    expect($failed)->toBe('Effective from date must be greater than today.');
 });
 
 it('fails when draft rate control effective_from is not greater than the active rate control', function () {
@@ -154,7 +154,7 @@ it('fails when draft rate control effective_from is not greater than the active 
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Rate control effective from date must be greater than the active rate control effective from date.');
+    expect($failed)->toBe('Effective from date must be greater than the existing active rate sheet effective from date.');
 });
 
 it('passes when draft rate control effective_from is after today and after the active rate control', function () {
