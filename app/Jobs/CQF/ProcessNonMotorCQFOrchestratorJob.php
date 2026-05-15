@@ -64,7 +64,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
             ]);
         }
 
-        if (! empty($lobJobs) && count($lobJobs) > 0) {
+        if (! empty($lobJobs)) {
             $batchName = self::BATCH_NAME_PREFIX.' - '.now()->format(config('constants.DATE_FORMAT_ONLY'));
             Bus::batch($lobJobs)
                 ->name($batchName)

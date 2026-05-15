@@ -138,9 +138,28 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data['personal_quote_id'] = $newQuote->id;
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
+        $data = $this->remapCarColumnsToBike($data);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
+    }
+
+    /**
+     * Rename CarQuote-specific columns to their BikeQuote equivalents before mass-assigning.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function remapCarColumnsToBike(array $data): array
+    {
+        foreach (['car_make_id' => 'make_id', 'car_model_id' => 'model_id', 'car_value' => 'bike_value'] as $from => $to) {
+            if (array_key_exists($from, $data)) {
+                $data[$to] = $data[$from];
+                unset($data[$from]);
+            }
+        }
+
+        return $data;
     }
 
     protected function copyBikeQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
