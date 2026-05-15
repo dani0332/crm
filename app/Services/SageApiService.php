@@ -26,6 +26,7 @@ use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookEmbeddedProductOnSageJob;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\PostPrepaymentToSageJob;
+use App\Jobs\ReverseEmbeddedProductOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
@@ -3469,6 +3470,16 @@ class SageApiService
                                     continue;
                                 }
                                 BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST) {
+                                $ePTransaction = $sageProcess->model;
+                                if (! $ePTransaction) {
+                                    LoggerService::warning('ePTransaction not found for REVERSE_EMBEDDED_PRODUCT_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                ReverseEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
                             }
                         } catch (\Throwable $e) {
                             LoggerService::warning('Error processing individual sage process', extra: [
