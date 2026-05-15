@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Services\CRUDService;
 
 // Provide insly defaults so ?-> null-safe access on stdClass doesn't throw
@@ -42,18 +43,40 @@ it('returns true for PolicyCancelledReissued status', function () {
 });
 
 // ============================================================================
-// Statuses that should BLOCK Send Update (pre-booking states)
+// Statuses that should BLOCK Send Update (pre-booking states, non-Life LOBs)
 // ============================================================================
 
-it('returns false for PolicyIssued status', function () {
+it('returns false for PolicyIssued status on non-Life LOB', function () {
     expect($this->service->hasAtleastOneStatusPolicyIssued(
         makeRecord(['quote_status_id' => QuoteStatusEnum::PolicyIssued])
     ))->toBeFalse();
 });
 
-it('returns false for PolicySentToCustomer status', function () {
+it('returns false for PolicySentToCustomer status on non-Life LOB', function () {
     expect($this->service->hasAtleastOneStatusPolicyIssued(
         makeRecord(['quote_status_id' => QuoteStatusEnum::PolicySentToCustomer])
+    ))->toBeFalse();
+});
+
+// ============================================================================
+// Life LOB exception — pre-booking statuses remain allowed
+// ============================================================================
+
+it('returns true for PolicyIssued on Life LOB', function () {
+    expect($this->service->hasAtleastOneStatusPolicyIssued(
+        makeRecord(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'quote_type_id' => QuoteTypeId::Life])
+    ))->toBeTrue();
+});
+
+it('returns true for PolicySentToCustomer on Life LOB', function () {
+    expect($this->service->hasAtleastOneStatusPolicyIssued(
+        makeRecord(['quote_status_id' => QuoteStatusEnum::PolicySentToCustomer, 'quote_type_id' => QuoteTypeId::Life])
+    ))->toBeTrue();
+});
+
+it('returns false for PolicyIssued when quote_type_id is not Life', function () {
+    expect($this->service->hasAtleastOneStatusPolicyIssued(
+        makeRecord(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'quote_type_id' => 1])
     ))->toBeFalse();
 });
 
