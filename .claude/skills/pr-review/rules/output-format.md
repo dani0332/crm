@@ -35,15 +35,16 @@ Always produce a review in this exact structure:
 
 Each finding must include:
 
-```
+````
 **[CATEGORY]** `path/to/File.php:line`
 > What the issue is and why it matters.
 
 ```php
 // Problematic code (if short enough to quote)
-```
+````
 
 Fix: what to do instead.
+
 ```
 
 ## Categories
@@ -57,3 +58,4 @@ Use one of: `SECURITY`, `N+1`, `VALIDATION`, `AUTHORIZATION`, `TESTING`, `JOBS`,
 - If a file has no issues, do not mention it.
 - If the PR only adds tests, skip categories that don't apply and say so.
 - Keep fix suggestions concise — one or two lines of code is enough.
+```

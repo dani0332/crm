@@ -25,6 +25,7 @@ Common misses: `status`, `type`, `created_at` on large tables, composite sort co
 ## Reversible `down()` Method
 
 Every migration must have a working `down()` that reverses the `up()`. Flag:
+
 - Empty `down()` methods
 - `down()` that calls `Schema::drop()` on a table it didn't create
 - Missing column drops matching added columns
