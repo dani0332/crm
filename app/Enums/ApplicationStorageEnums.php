@@ -253,6 +253,7 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+    public const BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL = 'BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL';
 
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
