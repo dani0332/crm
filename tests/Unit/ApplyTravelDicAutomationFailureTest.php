@@ -30,8 +30,9 @@ it('dispatches travel alliance failed allocation job for DIC failure instead of 
     ]);
 
     TravelQuote::withoutEvents(function () use ($travelQuote): void {
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
             TravelQuote::query()->findOrFail($travelQuote->id),
+            false,
             PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
             PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY,
         );
@@ -55,8 +56,9 @@ it('does not dispatch travel alliance failed allocation job when insurer API was
     ]);
 
     TravelQuote::withoutEvents(function () use ($travelQuote): void {
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
             TravelQuote::query()->findOrFail($travelQuote->id),
+            false,
             PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
             PolicyIssuanceEnum::DIC_TRAVEL_GET_POLICY_DOC,
         );

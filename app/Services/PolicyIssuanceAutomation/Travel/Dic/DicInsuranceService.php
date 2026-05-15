@@ -249,6 +249,8 @@ class DicInsuranceService implements PolicyIssuanceInterface
             return $failureResponse;
         }
 
+        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult($quote, true);
+
         return [
             'status' => true,
             'message' => 'All DIC Travel policy issuance steps completed successfully',
@@ -318,8 +320,9 @@ class DicInsuranceService implements PolicyIssuanceInterface
             default => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
         };
 
-        app(PolicyIssuanceService::class)->applyTravelDicAutomationFailure(
+        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
             $quote,
+            false,
             (int) $newInsurerApiStatus,
             $processInvolved,
             $newApiIssuanceStatus !== null ? (int) $newApiIssuanceStatus : null,

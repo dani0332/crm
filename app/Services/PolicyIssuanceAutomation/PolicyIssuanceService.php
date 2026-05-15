@@ -533,7 +533,7 @@ class PolicyIssuanceService
         $hasFailureContext = ! empty($statusAPIFailed) && ! empty($processInvolved);
         $isCarOrCyber = in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value], true);
         // Other LOBs (e.g. Home policy issuance): add `$quoteType === QuoteTypes::HOME->value` and extend `resolveAutomationFailureRouting`.
-        // Travel failures use insurer-specific paths (e.g. {@see applyTravelDicAutomationFailure}, Alliance allocateLead); they do not populate `$statusAPIFailed` here.
+        // Travel failures use insurer-specific paths (e.g. {@see applyTravelDicAutomationResult}, Alliance allocateLead); they do not populate `$statusAPIFailed` here.
 
         if ($hasFailureContext && $isCarOrCyber && ! $isPolicyBooked) {
             $this->dispatchAutomationFailedJob(
@@ -790,34 +790,46 @@ class PolicyIssuanceService
     }
 
     /**
-     * Travel DIC: persist failure on the quote, then allocate if needed and notify via
-     * {@see SendTravelAllianceFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
+     * Travel DIC: apply automation result on the quote. On failure, allocates the lead and
+     * notifies via {@see SendTravelAllianceFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
      * matching {@see AllianceInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
      */
-    public function applyTravelDicAutomationFailure(TravelQuote $quote, int $insurerApiStatusId, string $processInvolved, ?int $apiIssuanceStatusId = null): void
-    {
+    public function applyTravelDicAutomationResult(
+        TravelQuote $quote,
+        bool $success,
+        ?int $insurerApiStatusId = null,
+        ?string $processInvolved = null,
+        ?int $apiIssuanceStatusId = null,
+    ): void {
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Travel DIC failure handling', extra: [
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Travel DIC result handling', extra: [
             'quote_code' => $quote->code,
+            'success' => $success,
             'insurer_api_status_id' => $insurerApiStatusId,
             'process_involved' => $processInvolved,
         ]);
 
-        $apiIssuanceStatusId ??= PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+        $apiIssuanceStatusId ??= $success
+            ? PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID
+            : PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
 
-        $quote->update([
-            'insurer_api_status_id' => $insurerApiStatusId,
-            'api_issuance_status_id' => $apiIssuanceStatusId,
-        ]);
-        $quote->refresh();
+        $updateData = ['api_issuance_status_id' => $apiIssuanceStatusId];
+        if (! $success && $insurerApiStatusId !== null) {
+            $updateData['insurer_api_status_id'] = $insurerApiStatusId;
+        }
 
-        $this->allocateTravelDicFailedLeadForBirdNotification($quote, $isInsurerApiStatusAlreadyFailed);
+        $quote->update($updateData);
+
+        if (! $success) {
+            $quote->refresh();
+            $this->allocateTravelDicFailedLeadForBirdNotification($quote, $isInsurerApiStatusAlreadyFailed);
+        }
     }
 
     /**
      * Post–DIC failure: same allocation + Bird email path as {@see AllianceInsuranceService::allocateLead},
-     * without {@see AutomationFailedJob}.
+     * without {@see AutomationFailedJob}. Called by {@see applyTravelDicAutomationResult} on failure.
      */
     private function allocateTravelDicFailedLeadForBirdNotification(TravelQuote $quote, bool $isInsurerApiStatusAlreadyFailed): void
     {

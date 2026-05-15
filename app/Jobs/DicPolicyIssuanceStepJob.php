@@ -196,6 +196,7 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
 
             $next = $dicInsuranceService->resolveAsyncStepToRun($process);
             if ($next === null) {
+                $policyIssuanceService->applyTravelDicAutomationResult($quote->fresh(), true);
                 $process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
                 LoggerService::info('DIC Travel: async pipeline completed', [
                     'policy_issuance_id' => $process->id,
@@ -272,8 +273,9 @@ class DicPolicyIssuanceStepJob implements ShouldBeUniqueUntilProcessing, ShouldQ
     ): void {
         $ctx = $dicInsuranceService->resolveTravelDicAsyncFailureContext($this->step, $stepResponse);
 
-        $policyIssuanceService->applyTravelDicAutomationFailure(
+        $policyIssuanceService->applyTravelDicAutomationResult(
             $quote->fresh(),
+            false,
             $ctx['insurer_api_status_id'],
             $ctx['process_involved'],
         );

@@ -194,7 +194,7 @@ it('fails issuance immediately without retry when runSingleDicAsyncStep throws n
     app()->instance(DicInsuranceService::class, $dic);
 
     $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
-    $policyIssuanceService->shouldReceive('applyTravelDicAutomationFailure')->once();
+    $policyIssuanceService->shouldReceive('applyTravelDicAutomationResult')->once();
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 
     (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
@@ -250,7 +250,7 @@ it('marks issuance failed after max attempts when runSingleDicAsyncStep throws',
 
     $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
     $policyIssuanceService->shouldReceive('storePolicyIssuanceLog')->once();
-    $policyIssuanceService->shouldReceive('applyTravelDicAutomationFailure')->once();
+    $policyIssuanceService->shouldReceive('applyTravelDicAutomationResult')->once();
     app()->instance(PolicyIssuanceService::class, $policyIssuanceService);
 
     (new DicPolicyIssuanceStepJob($process->id, PolicyIssuanceEnum::DIC_TRAVEL_ISSUE_POLICY))
