@@ -10,7 +10,6 @@ use App\Models\QuoteStatusLog;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 
 class QuoteStatusLogService extends BaseService
 {
@@ -27,7 +26,6 @@ class QuoteStatusLogService extends BaseService
             'status_change_source' => LeadSourceEnum::IMCRM,
             'notes' => $this->buildStatusChangeNotes(),
             'created_by' => Auth::id(),
-            'send_update_log_id' => Context::get('send_update_log_id'),
         ]);
     }
 
