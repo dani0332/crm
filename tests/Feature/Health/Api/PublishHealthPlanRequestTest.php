@@ -1,45 +1,16 @@
 <?php
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
+use App\Models\HealthPlan;
+use App\Models\HealthRate;
+use App\Models\HealthRateControl;
 use App\Rules\HealthPlanRateControlPublishableRule;
 use App\Rules\HealthPlanStatusValidRule;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::ensureMinimalSchema();
 });
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function createPlan(string $status = 'draft'): int
-{
-    return DB::connection('sqlite')->table('health_plan')->insertGetId(['status' => $status]);
-}
-
-function createControl(int $planId, string $status, ?string $effectiveFrom = null): int
-{
-    return DB::connection('sqlite')->table('health_rates_control')->insertGetId([
-        'health_plan_id' => $planId,
-        'status' => $status,
-        'effective_from' => $effectiveFrom,
-    ]);
-}
-
-function createDraftRate(int $planId, int $controlId): void
-{
-    DB::connection('sqlite')->table('health_rates')->insert([
-        'health_plan_id' => $planId,
-        'health_rate_control_id' => $controlId,
-        'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
-    ]);
-}
-
-// ============================================================================
-// HealthPlanStatusValidRule
-// ============================================================================
 
 it('fails when health plan does not exist', function () {
     $failed = null;
@@ -52,11 +23,11 @@ it('fails when health plan does not exist', function () {
 });
 
 it('fails when health plan is not in draft status', function () {
-    $id = createPlan(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    $plan = HealthPlan::factory()->active()->create();
 
     $failed = null;
     (new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]))
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -64,20 +35,16 @@ it('fails when health plan is not in draft status', function () {
 });
 
 it('passes when health plan is in draft status', function () {
-    $id = createPlan(HealthPlanRateSheetStatusEnum::DRAFT->value);
+    $plan = HealthPlan::factory()->create();
 
     $failed = null;
     (new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]))
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
     expect($failed)->toBeNull();
 });
-
-// ============================================================================
-// HealthPlanRateControlPublishableRule
-// ============================================================================
 
 it('passes silently when health plan does not exist', function () {
     $failed = null;
@@ -90,11 +57,11 @@ it('passes silently when health plan does not exist', function () {
 });
 
 it('fails when health plan has no draft rate control', function () {
-    $id = createPlan();
+    $plan = HealthPlan::factory()->create();
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -102,12 +69,15 @@ it('fails when health plan has no draft rate control', function () {
 });
 
 it('fails when draft rate control has no rates in draft status', function () {
-    $id = createPlan();
-    createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->addDays(5)->toDateString());
+    $plan = HealthPlan::factory()->create();
+    HealthRateControl::factory()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(5)->toDateString(),
+    ]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -115,13 +85,13 @@ it('fails when draft rate control has no rates in draft status', function () {
 });
 
 it('fails when draft rate control effective_from is today', function () {
-    $id = createPlan();
-    $controlId = createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->toDateString());
-    createDraftRate($id, $controlId);
+    $plan = HealthPlan::factory()->create();
+    $control = HealthRateControl::factory()->effectiveToday()->create(['health_plan_id' => $plan->id]);
+    HealthRate::factory()->create(['health_plan_id' => $plan->id, 'health_rate_control_id' => $control->id]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -129,13 +99,13 @@ it('fails when draft rate control effective_from is today', function () {
 });
 
 it('fails when draft rate control effective_from is in the past', function () {
-    $id = createPlan();
-    $controlId = createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->subDay()->toDateString());
-    createDraftRate($id, $controlId);
+    $plan = HealthPlan::factory()->create();
+    $control = HealthRateControl::factory()->effectiveYesterday()->create(['health_plan_id' => $plan->id]);
+    HealthRate::factory()->create(['health_plan_id' => $plan->id, 'health_rate_control_id' => $control->id]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -143,14 +113,20 @@ it('fails when draft rate control effective_from is in the past', function () {
 });
 
 it('fails when draft rate control effective_from is not greater than the active rate control', function () {
-    $id = createPlan();
-    createControl($id, HealthPlanRateSheetStatusEnum::ACTIVE->value, now()->addDays(10)->toDateString());
-    $controlId = createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->addDays(5)->toDateString());
-    createDraftRate($id, $controlId);
+    $plan = HealthPlan::factory()->create();
+    HealthRateControl::factory()->active()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(10)->toDateString(),
+    ]);
+    $control = HealthRateControl::factory()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(5)->toDateString(),
+    ]);
+    HealthRate::factory()->create(['health_plan_id' => $plan->id, 'health_rate_control_id' => $control->id]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -158,14 +134,20 @@ it('fails when draft rate control effective_from is not greater than the active 
 });
 
 it('passes when draft rate control effective_from is after today and after the active rate control', function () {
-    $id = createPlan();
-    createControl($id, HealthPlanRateSheetStatusEnum::ACTIVE->value, now()->addDays(5)->toDateString());
-    $controlId = createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->addDays(10)->toDateString());
-    createDraftRate($id, $controlId);
+    $plan = HealthPlan::factory()->create();
+    HealthRateControl::factory()->active()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(5)->toDateString(),
+    ]);
+    $control = HealthRateControl::factory()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(10)->toDateString(),
+    ]);
+    HealthRate::factory()->create(['health_plan_id' => $plan->id, 'health_rate_control_id' => $control->id]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 
@@ -173,13 +155,16 @@ it('passes when draft rate control effective_from is after today and after the a
 });
 
 it('passes when draft rate control effective_from is after today and there is no active rate control', function () {
-    $id = createPlan();
-    $controlId = createControl($id, HealthPlanRateSheetStatusEnum::DRAFT->value, now()->addDays(5)->toDateString());
-    createDraftRate($id, $controlId);
+    $plan = HealthPlan::factory()->create();
+    $control = HealthRateControl::factory()->create([
+        'health_plan_id' => $plan->id,
+        'effective_from' => now()->addDays(5)->toDateString(),
+    ]);
+    HealthRate::factory()->create(['health_plan_id' => $plan->id, 'health_rate_control_id' => $control->id]);
 
     $failed = null;
     (new HealthPlanRateControlPublishableRule)
-        ->validate('id', $id, function (string $msg) use (&$failed) {
+        ->validate('id', $plan->id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
 

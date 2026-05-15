@@ -14,10 +14,15 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ActivateScheduledHealthPlansJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tries = 3;
+    public $timeout = 60;
+    public $backoff = 300;
 
     public function handle(): void
     {
@@ -29,6 +34,11 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
         $this->activateScheduledControls($today);
 
         LoggerService::info(self::class.' - Finished processing scheduled health plans');
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        LoggerService::warning(self::class.' - Job failed after '.$this->attempts().' attempt(s)', exception: $exception);
     }
 
     private function archiveExpiredControls(Carbon $today): void
@@ -66,6 +76,18 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
             ->whereDate('effective_from', $today)
             ->get();
 
+        if ($scheduledControls->isEmpty()) {
+            return;
+        }
+
+        $planCodes = $scheduledControls->pluck('healthPlan.code')->values();
+
+        $activePlansByCode = HealthPlan::whereIn('code', $planCodes)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->with('activeRateControl')
+            ->get()
+            ->keyBy('code');
+
         foreach ($scheduledControls as $rateControl) {
             $plan = $rateControl->healthPlan;
 
@@ -73,8 +95,10 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
                 continue;
             }
 
-            DB::transaction(function () use ($plan, $rateControl, $today) {
-                $this->archiveCurrentlyActivePlan($plan, $today);
+            $activePlan = $activePlansByCode->get($plan->code);
+
+            DB::transaction(function () use ($plan, $rateControl, $today, $activePlan) {
+                $this->archiveCurrentlyActivePlan($plan, $today, $activePlan);
 
                 $prevPlanVersion = $plan->version;
                 $prevControlVersion = $rateControl->version;
@@ -105,20 +129,16 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
         }
     }
 
-    private function archiveCurrentlyActivePlan(HealthPlan $incomingPlan, Carbon $today): void
-    {
-        $activePlan = HealthPlan::where('code', $incomingPlan->code)
-            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
-            ->first();
-
+    private function archiveCurrentlyActivePlan(
+        HealthPlan $incomingPlan,
+        Carbon $today,
+        ?HealthPlan $activePlan,
+    ): void {
         if (! $activePlan) {
             return;
         }
 
-        $activeControl = HealthRateControl::where('health_plan_id', $activePlan->id)
-            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
-            ->first();
-
+        $activeControl = $activePlan->activeRateControl;
         if ($activeControl) {
             $activeControl->rates()->update(['status' => HealthPlanRateSheetStatusEnum::ARCHIVED->value]);
 

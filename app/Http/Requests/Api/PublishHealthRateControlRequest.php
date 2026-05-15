@@ -9,6 +9,11 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class PublishHealthRateControlRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge(['id' => $this->route('id')]);
