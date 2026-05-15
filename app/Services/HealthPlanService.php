@@ -131,16 +131,13 @@ class HealthPlanService extends BaseService
             $plan->save();
 
             $draftRateControl = $plan->draftRateControl;
+            $draftRateControl->rates()->update([
+                'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
+            ]);
 
-            if ($draftRateControl) {
-                $draftRateControl->rates()->update([
-                    'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
-                ]);
-
-                $draftRateControl->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
-                $draftRateControl->published_at = now()->toDateString();
-                $draftRateControl->save();
-            }
+            $draftRateControl->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
+            $draftRateControl->published_at = now()->toDateString();
+            $draftRateControl->save();
         });
     }
 

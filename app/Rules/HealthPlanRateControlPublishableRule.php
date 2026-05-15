@@ -23,7 +23,7 @@ class HealthPlanRateControlPublishableRule implements ValidationRule
         $draftRateControl = $healthPlan->draftRateControl;
 
         if (! $draftRateControl) {
-            $fail('Health plan does not have a rate control in draft status.');
+            $fail('Health plan does not have a draft rate control.');
 
             return;
         }

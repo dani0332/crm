@@ -16,7 +16,7 @@ trait ValidatesRateControlPublishable
             ->exists();
 
         if (! $hasDraftRates) {
-            $fail('Rate control does not have any rates in draft status.');
+            $fail('Rate control does not have any draft rates.');
 
             return;
         }
