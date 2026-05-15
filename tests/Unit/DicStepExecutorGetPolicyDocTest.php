@@ -25,6 +25,7 @@ function makeDicStepExecutorForGetPolicyDocTest(
         new DicResponseHandler,
         $documents ?? Mockery::mock(DicDocumentService::class),
         new DicBookPolicyService(Mockery::mock(PolicyIssuanceService::class)),
+        Mockery::mock(PolicyIssuanceService::class),
     );
 }
 

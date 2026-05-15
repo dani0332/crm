@@ -18,6 +18,7 @@ class DicStepExecutor
         private DicResponseHandler $responseHandler,
         private DicDocumentService $documentService,
         private DicBookPolicyService $bookPolicyService,
+        private PolicyIssuanceService $policyIssuanceService,
     ) {}
 
     /**
@@ -35,7 +36,7 @@ class DicStepExecutor
 
         if (! $result['status']) {
             if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+                $this->policyIssuanceService->applyTravelDicAutomationResult(
                     $quote,
                     false,
                     PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
@@ -79,7 +80,7 @@ class DicStepExecutor
     private function buildGetPolicyDocResponseAfterFailedApi(TravelQuote $quote, bool $applyQuoteFailure, array $result): array
     {
         if ($applyQuoteFailure) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+            $this->policyIssuanceService->applyTravelDicAutomationResult(
                 $quote,
                 false,
                 PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
@@ -105,7 +106,7 @@ class DicStepExecutor
         string $message,
     ): array {
         if ($applyQuoteFailure) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+            $this->policyIssuanceService->applyTravelDicAutomationResult(
                 $quote,
                 false,
                 PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
@@ -189,7 +190,7 @@ class DicStepExecutor
                 'exception' => $e->getMessage(),
             ]);
             if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+                $this->policyIssuanceService->applyTravelDicAutomationResult(
                     $quote,
                     false,
                     PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
@@ -238,7 +239,7 @@ class DicStepExecutor
     private function buildGetBrokerInvoiceResponseAfterFailedApi(TravelQuote $quote, bool $applyQuoteFailure, array $result): array
     {
         if ($applyQuoteFailure) {
-            app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+            $this->policyIssuanceService->applyTravelDicAutomationResult(
                 $quote,
                 false,
                 PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
@@ -266,7 +267,7 @@ class DicStepExecutor
         if (! $documentUrl) {
             $message = 'Document URL missing in GetBrokerInvoice response (configure extractDocumentUrlFromResponse)';
             if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+                $this->policyIssuanceService->applyTravelDicAutomationResult(
                     $quote,
                     false,
                     PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
@@ -316,7 +317,7 @@ class DicStepExecutor
                 'exception' => $e->getMessage(),
             ]);
             if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+                $this->policyIssuanceService->applyTravelDicAutomationResult(
                     $quote,
                     false,
                     PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
@@ -354,7 +355,7 @@ class DicStepExecutor
 
         if (! $result['status']) {
             if ($applyQuoteFailure) {
-                app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+                $this->policyIssuanceService->applyTravelDicAutomationResult(
                     $quote,
                     false,
                     PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
