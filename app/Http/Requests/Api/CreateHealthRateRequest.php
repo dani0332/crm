@@ -19,7 +19,7 @@ class CreateHealthRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'effective_from' => ['bail', 'required', 'date'],
+            'effective_from' => ['bail', 'required', 'date', 'after:today'],
             'effective_to' => ['bail', 'required', 'date', 'after:effective_from'],
             'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
