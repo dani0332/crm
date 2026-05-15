@@ -9,11 +9,19 @@ use App\Models\FtcEmailLog;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePaymentRequest extends FormRequest
 {
     use GenericQueriesAllLobs;
+
+    /**
+     * Quote from {@see getQuoteObject()} for this request; `false` when not found; unset until {@see rules()} or resolution in {@see withValidator()}.
+     *
+     * @var Model|false|null
+     */
+    private mixed $quoteModel = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -30,7 +38,7 @@ class UpdatePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
-        $quoteModel = $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
+        $this->quoteModel = $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
 
         /*
          * Collection date and split due dates must be on or after today for quotes that are not
@@ -38,8 +46,8 @@ class UpdatePaymentRequest extends FormRequest
          * collection or instalment dates (on or before policy inception); requiring
          * `after_or_equal:today` would block legitimate edits. CU: 86exmagnm
          */
-        $isPolicyBooked = $quoteModel !== false
-            && (int) $quoteModel->quote_status_id === (int) QuoteStatusEnum::PolicyBooked;
+        $isPolicyBooked = $this->quoteModel !== false
+            && (int) $this->quoteModel->quote_status_id === (int) QuoteStatusEnum::PolicyBooked;
 
         $collectionAndSplitDateRules = $isPolicyBooked
             ? 'required|date'
@@ -79,7 +87,7 @@ class UpdatePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
 
             $payment = Payment::where('code', request()->paymentCode)->first();
-            $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+            $quoteModel = $this->quoteModel ?? $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
 
             // check if the user is authorized to apply discount
             if (request()->input('payment.discount_value') > 0 && $payment->discount_value != request()->input('payment.discount_value') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
