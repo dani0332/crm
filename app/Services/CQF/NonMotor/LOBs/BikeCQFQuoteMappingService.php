@@ -150,6 +150,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
+            'previous_ref_id' => $quote->code ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->notes ?? null,
             'plan_name' => null,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\Pipes;
 
+use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
@@ -23,12 +24,15 @@ class ForeignKeyValidationPipe
 {
     public function handle(CQFRenewalContext $context, Closure $next): CQFRenewalContext
     {
-        if (! $context->quote instanceof PersonalQuote) {
+        $quote = $context->quote;
+
+        if ($quote instanceof PersonalQuote) {
+            $errors = $this->validateForeignKeys($quote);
+        } elseif ($quote instanceof CarQuote) {
+            $errors = $this->validateCarQuoteForeignKeys($quote);
+        } else {
             return $next($context);
         }
-
-        $quote = $context->quote;
-        $errors = $this->validateForeignKeys($quote);
 
         if (! empty($errors)) {
             return $context->fail($errors);
@@ -91,6 +95,31 @@ class ForeignKeyValidationPipe
         $renewalBatchId = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($quote->policy_expiry_date);
         if ($renewalBatchId !== null && ! RenewalBatch::where('id', $renewalBatchId)->exists()) {
             $errors['renewal_batch_id'] = "Renewal batch with id {$renewalBatchId} does not exist.";
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate FK references for CarQuote-based Bike renewals (mapRenewalQuoteFromCarQuote fields).
+     *
+     * @return array<string, string>
+     */
+    protected function validateCarQuoteForeignKeys(CarQuote $quote): array
+    {
+        $errors = [];
+
+        $customerId = $quote->getAttribute('customer_id');
+        if ($customerId === null) {
+            $errors['customer_id'] = 'Customer id is required for renewal quote.';
+        } elseif (! Customer::where('id', $customerId)->exists()) {
+            $errors['customer_id'] = "Customer with id {$customerId} does not exist.";
+        }
+
+        // Transaction type lookup by id if set
+        if ($quote->transaction_type_id !== null &&
+            ! LookupRepository::where('id', $quote->transaction_type_id)->exists()) {
+            $errors['transaction_type_id'] = "Transaction type with id {$quote->transaction_type_id} does not exist.";
         }
 
         return $errors;

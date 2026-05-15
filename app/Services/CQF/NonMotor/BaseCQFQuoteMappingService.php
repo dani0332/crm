@@ -183,6 +183,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->price_with_vat ?? null,
             'previous_quote_policy_commission' => $this->resolveTotalCommission($payment),
+            'previous_ref_id' => $quote->code ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->notes ?? null,
             'plan_name' => null,
