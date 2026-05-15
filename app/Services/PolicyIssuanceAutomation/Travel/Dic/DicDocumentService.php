@@ -19,7 +19,7 @@ class DicDocumentService
     private const TYPE = quoteTypeCode::Travel;
     private const TYPE_ID = QuoteTypeId::Travel;
 
-    public function attachFromUrl(TravelQuote $quote, string $documentUrl, string $documentCode, ?string $originalName = null): void
+    public function attachFromUrl(TravelQuote $quote, string $documentUrl, string $documentCode, string $originalName): void
     {
         LoggerService::info('DIC Travel: attaching document from URL', [
             'quote_code' => $quote->code,
