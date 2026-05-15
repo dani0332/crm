@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Rules\HealthPlanStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,7 +20,7 @@ class DeleteHealthPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft or scheduled health plans can be deleted')],
+            'id' => ['bail', 'integer', new HealthPlanStatusValidRule('Only draft or scheduled health plans can be deleted', [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value])],
         ];
     }
 

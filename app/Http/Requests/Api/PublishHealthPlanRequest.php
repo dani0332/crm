@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Rules\HealthPlanRateControlPublishableRule;
 use App\Rules\HealthPlanStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -21,7 +22,7 @@ class PublishHealthPlanRequest extends FormRequest
             'id' => [
                 'bail',
                 'integer',
-                new HealthPlanStatusValidRule('Only draft health plans can be published'),
+                new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]),
                 new HealthPlanRateControlPublishableRule,
             ],
         ];
