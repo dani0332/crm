@@ -43,7 +43,7 @@ function createDraftRate(int $planId, int $controlId): void
 
 it('fails when health plan does not exist', function () {
     $failed = null;
-    (new HealthPlanStatusValidRule('Only draft health plans can be published'))
+    (new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]))
         ->validate('id', 999, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
@@ -55,7 +55,7 @@ it('fails when health plan is not in draft status', function () {
     $id = createPlan(HealthPlanRateSheetStatusEnum::ACTIVE->value);
 
     $failed = null;
-    (new HealthPlanStatusValidRule('Only draft health plans can be published'))
+    (new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]))
         ->validate('id', $id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
@@ -67,7 +67,7 @@ it('passes when health plan is in draft status', function () {
     $id = createPlan(HealthPlanRateSheetStatusEnum::DRAFT->value);
 
     $failed = null;
-    (new HealthPlanStatusValidRule('Only draft health plans can be published'))
+    (new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]))
         ->validate('id', $id, function (string $msg) use (&$failed) {
             $failed = $msg;
         });
@@ -98,7 +98,7 @@ it('fails when health plan has no draft rate control', function () {
             $failed = $msg;
         });
 
-    expect($failed)->toBe('Health plan does not have a rate control in draft status.');
+    expect($failed)->toBe('Health plan does not have a draft rate draft sheet.');
 });
 
 it('fails when draft rate control has no rates in draft status', function () {
