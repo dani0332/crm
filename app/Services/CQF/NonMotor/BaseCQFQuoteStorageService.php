@@ -140,9 +140,15 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             }
         }
 
+        if (array_key_exists('previous_policy_start_date', $data)) {
+            $data['previous_policy_start_date'] = $newQuote->previous_policy_start_date
+                ? Carbon::parse($newQuote->previous_policy_start_date)->format(config('constants.DATE_FORMAT_ONLY'))
+                : null;
+        }
+
         if (array_key_exists('previous_policy_expiry_date', $data)) {
             $data['previous_policy_expiry_date'] = $newQuote->previous_policy_expiry_date
-                ? Carbon::parse($newQuote->previous_policy_expiry_date)->format('Y-m-d')
+                ? Carbon::parse($newQuote->previous_policy_expiry_date)->format(config('constants.DATE_FORMAT_ONLY'))
                 : null;
         }
 
