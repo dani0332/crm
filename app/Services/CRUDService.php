@@ -1194,8 +1194,6 @@ class CRUDService extends BaseService
     {
         if (
             isset($record->quote_status_id) && in_array($record->quote_status_id, [
-                QuoteStatusEnum::PolicyIssued,
-                QuoteStatusEnum::PolicySentToCustomer,
                 QuoteStatusEnum::PolicyBooked,
                 QuoteStatusEnum::CancellationPending,
                 QuoteStatusEnum::PolicyCancelled,

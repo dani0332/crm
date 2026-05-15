@@ -35,6 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -64,6 +65,16 @@ class SendUpdateLogController extends Controller
     {
         LoggerService::startQuoteLogging($request->quote_code);
         LoggerService::info('fn:store - Start - SendUpdateLogController');
+
+        $quoteType = QuoteTypes::getName($request->input('quote_type_id'))->value;
+        $modelClass = $this->getModelObject($quoteType);
+        if ($modelClass) {
+            $quote = $modelClass::where('uuid', $request->input('quote_uuid'))->first();
+            if ($quote && ! app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote)) {
+                return redirect()->back()->with('error', 'Send Update can only be created after the policy is fully booked.');
+            }
+        }
+
         try {
             DB::beginTransaction();
 
