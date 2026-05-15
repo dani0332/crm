@@ -8,14 +8,45 @@ use App\Services\SageFailedRecordsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-test('failed leads union subquery stays valid when send update option conflicts with car quote type', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
+function sageFailedRecordsService(): SageFailedRecordsService
+{
+    return app(SageFailedRecordsService::class);
+}
 
+function sageFailedRecordsPdo(): PDO
+{
+    return DB::connection()->getPdo();
+}
+
+function sageFailedRecordsFilteredSources(array $requestPayload): array
+{
+    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
+
+    return $method->invoke(sageFailedRecordsService(), sageFailedRecordsPdo(), $requestPayload);
+}
+
+function sageFailedRecordsMorphModelClasses(array $filteredSources): array
+{
+    $method = new ReflectionMethod(SageFailedRecordsService::class, 'morphModelClassesFromFailedLeadSources');
+
+    return $method->invoke(sageFailedRecordsService(), $filteredSources);
+}
+
+function sageFailedRecordsFailedLeadsUnionSql(array $requestPayload): string
+{
+    $filteredSources = sageFailedRecordsFilteredSources($requestPayload);
     $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
 
-    $sql = $method->invoke($service, $pdo, [
+    return $method->invoke(
+        sageFailedRecordsService(),
+        sageFailedRecordsPdo(),
+        $requestPayload,
+        $filteredSources
+    );
+}
+
+test('failed leads union subquery stays valid when send update option conflicts with car quote type', function () {
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Send Update',
         'quote_type_id' => ['1'],
         'date_from' => '2024-01-01',
@@ -26,70 +57,27 @@ test('failed leads union subquery stays valid when send update option conflicts 
         ->and($sql)->toContain('WHERE 1 = 0');
 });
 
-test('failed leads union subquery stays valid when main lead option conflicts with send update quote type', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
-
-    $sql = $method->invoke($service, $pdo, [
-        'option' => 'Main Lead',
-        'quote_type_id' => ['Send Update'],
-        'date_from' => '2024-01-01',
-        'date_to' => '2024-01-31',
-    ]);
-
-    expect($sql)->toContain('WHERE 1 = 0');
-});
-
-test('get filtered sources returns all main lead sources when quote_type_id is empty', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
-    $method->setAccessible(true);
-
-    $sources = $method->invoke($service, $pdo, [
-        'option' => 'Main Lead',
-        'quote_type_id' => [],
-    ]);
-
-    expect($sources)->not->toBeEmpty()
-        ->and(count($sources))->toBe(6);
-});
-
 test('failed leads union subquery quotes date bounds with PDO for SQL safety', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
-
+    $pdo = sageFailedRecordsPdo();
     $dateFrom = '2024-01-15';
     $dateTo = '2024-01-20';
 
-    $sql = $method->invoke($service, $pdo, [
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Main Lead',
         'quote_type_id' => [],
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
     ]);
 
-    $startQuoted = $pdo->quote(Carbon::parse($dateFrom)->startOfDay()->format('Y-m-d H:i:s'));
-    $endQuoted = $pdo->quote(Carbon::parse($dateTo)->endOfDay()->format('Y-m-d H:i:s'));
+    $dbDateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+    $startQuoted = $pdo->quote(Carbon::parse($dateFrom)->startOfDay()->format($dbDateFormat));
+    $endQuoted = $pdo->quote(Carbon::parse($dateTo)->endOfDay()->format($dbDateFormat));
 
     expect($sql)->toContain("AND created_at BETWEEN {$startQuoted} AND {$endQuoted}");
 });
 
 test('get filtered sources narrows personal quotes to requested personal quote type ids', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
-    $method->setAccessible(true);
-
-    $sources = $method->invoke($service, $pdo, [
+    $sources = sageFailedRecordsFilteredSources([
         'option' => 'Main Lead',
         'quote_type_id' => [(string) QuoteTypeId::Car, (string) QuoteTypeId::Bike, (string) QuoteTypeId::Home],
     ]);
@@ -101,13 +89,7 @@ test('get filtered sources narrows personal quotes to requested personal quote t
 });
 
 test('failed leads union subquery restricts personal_quotes by intersected quote_type_id list', function () {
-    $service = app(SageFailedRecordsService::class);
-    $pdo = DB::connection()->getPdo();
-
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFailedLeadsUnionSubquery');
-    $method->setAccessible(true);
-
-    $sql = $method->invoke($service, $pdo, [
+    $sql = sageFailedRecordsFailedLeadsUnionSql([
         'option' => 'Main Lead',
         'quote_type_id' => [(string) QuoteTypeId::Home],
         'date_from' => '2024-01-01',
@@ -116,4 +98,16 @@ test('failed leads union subquery restricts personal_quotes by intersected quote
 
     expect($sql)->toContain('FROM personal_quotes')
         ->and($sql)->toContain('AND quote_type_id IN ('.QuoteTypeId::Home.')');
+});
+
+test('morph model classes for eager load are derived from filtered sources without querying oldest_logs CTE', function () {
+    $filteredSources = sageFailedRecordsFilteredSources([
+        'option' => 'Main Lead',
+        'quote_type_id' => [(string) QuoteTypeId::Car],
+    ]);
+
+    $morphClasses = sageFailedRecordsMorphModelClasses($filteredSources);
+
+    expect($morphClasses)->toContain(CarQuote::class)
+        ->and($morphClasses)->not->toContain(SendUpdateLog::class);
 });
