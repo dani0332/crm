@@ -132,25 +132,25 @@ const exportLoader = ref(false);
 watch(
   () => filters,
   () => {
-    if (
+    canExport.value =
       can(permissionsEnum.DATA_EXTRACTION) &&
-      ((filters.created_at_start && filters.created_at_end) ||
-        (filters.policy_expiry_date_start && filters.policy_expiry_date_end) ||
-        filters.payment_due_date ||
-        filters.booking_date)
-    ) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
+      Boolean(filters.created_at_start && filters.created_at_end);
   },
   { deep: true, immediate: true },
 );
 
 const showExportRequirements = () => {
+  if (!can(permissionsEnum.DATA_EXTRACTION)) {
+    notification.error({
+      title: 'You need data-extraction permission to export.',
+      position: 'top',
+    });
+
+    return;
+  }
+
   notification.error({
-    title:
-      'Created dates, policy expiry dates, payment due date, or booking date are required to export data.',
+    title: 'Created date start and end are required to export.',
     position: 'top',
   });
 };
@@ -613,8 +613,8 @@ const fixedValue = numberString => {
             </div>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or policy expiry dates or payment due date or
-                booking date are required to export data.
+                data-extraction permission and created date start &amp; end are
+                required to export.
               </span>
             </template>
           </x-tooltip>
