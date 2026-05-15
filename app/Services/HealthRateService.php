@@ -70,14 +70,9 @@ class HealthRateService extends BaseService
 
     public function create(array $data)
     {
-        // $plan = $this->healthPlanService->getPlanById($data['health_plan_id']);
-
         // Fetch related plan ids (if exists)
         // We have to check against active and draft plans only
         $planIds = $this->healthPlanService->getRelatedPlanIds($data['health_plan_id']);
-
-        // If plan is draft, add or upadte draft rate sheet
-        // if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
 
         // Get draft rate sheet against plan ids
         $draftRatesSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
@@ -91,15 +86,6 @@ class HealthRateService extends BaseService
 
         // Else add rate to existing draft rate sheet
         return $this->addRate($data, $planIds, $draftRatesSheet);
-        // }
-
-        // Else Active plan
-        // Get active rate sheet against plan id
-        /*$activeRates = HealthRate::where('health_plan_id', $data['health_plan_id'])
-            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
-            ->get();
-
-        return $this->addRate($data, $planIds, null, $activeRates);*/
     }
 
     private function addRate(array $data, array $planIds, ?HealthRateControl $healthRateControl = null, ?Collection $existingRates = null): HealthRate
@@ -324,6 +310,14 @@ class HealthRateService extends BaseService
         $draftRateSheet = HealthRateControl::where('health_plan_id', $rate->health_plan_id)
             ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
             ->first();
+
+        // Validate duplicate between existing active rates and draft rates
+        // Since we are copying exting active rates into draft rates
+        if ($draftRateSheet and $activeRates) {
+            foreach ($activeRates as $activeRate) {
+                $this->checkDuplicateRates($draftRateSheet->id, $activeRate->toArray(), $rate->healthPlan);
+            }
+        }
 
         return $this->addRate($data, [$rate->health_plan_id], $draftRateSheet, $activeRates);
     }
