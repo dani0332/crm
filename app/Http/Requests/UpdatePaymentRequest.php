@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\FtcEmailLog;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
@@ -29,6 +30,21 @@ class UpdatePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $quoteModel = $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
+
+        /*
+         * Collection date and split due dates must be on or after today for quotes that are not
+         * yet Policy Booked. For Policy Booked leads, payment updates may reference historical
+         * collection or instalment dates (on or before policy inception); requiring
+         * `after_or_equal:today` would block legitimate edits. CU: 86exmagnm
+         */
+        $isPolicyBooked = $quoteModel !== false
+            && (int) $quoteModel->quote_status_id === (int) QuoteStatusEnum::PolicyBooked;
+
+        $collectionAndSplitDateRules = $isPolicyBooked
+            ? 'required|date'
+            : 'required|date|after_or_equal:today';
+
         $rules = [
             'modelType' => 'required',
             'quote_id' => 'required|numeric',
@@ -43,13 +59,13 @@ class UpdatePaymentRequest extends FormRequest
             'payment.frequency' => 'required|string|in:upfront,monthly,quarterly,semi_annual,split_payments,custom',
             'payment.collection_type' => 'required|string|in:broker,insurer',
             'payment.total_amount' => 'required|numeric|min:0',
-            'payment.collection_date' => 'required|date|after_or_equal:today',
+            'payment.collection_date' => $collectionAndSplitDateRules,
             'payment.discount_value' => 'nullable|numeric|min:0',
             'payment.payment_methods' => 'required|string',
             'payment.payment_splits.*.sr_no' => 'required|integer|min:1',
             'payment.payment_splits.*.payment_amount' => 'required|numeric',
             'payment.payment_splits.*.payment_method' => 'required|string',
-            'payment.payment_splits.*.due_date' => 'required|date|after_or_equal:today',
+            'payment.payment_splits.*.due_date' => $collectionAndSplitDateRules,
         ];
 
         return $rules;
