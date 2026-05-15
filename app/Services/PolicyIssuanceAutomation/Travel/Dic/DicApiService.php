@@ -134,16 +134,17 @@ class DicApiService
             $quote->policy_start_date = $startDate;
             // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
             $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
-            $quote->save();
 
             $payment = $quote->payments()->mainLeadPayment()->first();
             if ($payment !== null) {
-                $paymentData = ['commission_vat_applicable' => round($quote->price_vat_applicable * $dicPercentage, 2)];
+                $paymentData = ['commission_vat_applicable' => round($body['amount'] * $dicPercentage, 2)];
                 if ($commissionInvoiceDate !== null) {
                     $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
                 }
+                $quote->price_with_vat = $payment->premium_captured;
                 $payment->update($paymentData);
             }
+            $quote->save();
         });
     }
 
