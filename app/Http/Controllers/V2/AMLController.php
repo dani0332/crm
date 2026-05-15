@@ -12,7 +12,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -38,7 +37,6 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\KycLog;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteStatus;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -66,6 +64,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Context;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class AMLController extends Controller
 {
@@ -101,6 +101,11 @@ class AMLController extends Controller
         return inertia('Aml/DetailPage', $data);
     }
 
+    /**
+     * Display the specified resource.
+     *
+     * @return Response|ResponseFactory
+     */
     public function show(AML $aml, AMLDisplayService $amlDisplayService, $insuredId = null, $customerId = null)
     {
         $data = $amlDisplayService->prepareShowData(
@@ -417,15 +422,6 @@ class AMLController extends Controller
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
             if (in_array($quoteTypeId, $quoteTypeIds)) {
                 $quoteDetails->stale_at = null;
             }
@@ -439,15 +435,6 @@ class AMLController extends Controller
             }
             // info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared - Ref-ID: '.$quoteDetails->code);
         } else {
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();

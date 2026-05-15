@@ -144,10 +144,12 @@ const can = permission => useCan(permission);
 const getCaptureOption = computed(() => {
   const payment = props.payment;
   if (props.payments.length === 0) return;
-
+  const isTravelOrDeviceQuote =
+    props.quoteType === quoteTypeCodeEnum.Travel ||
+    props.quoteType === quoteTypeCodeEnum.Device;
   let isCaptureButtonEnabled =
     page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
+  if (isTravelOrDeviceQuote && !props.sendUpdate) {
     isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
   }
 
@@ -236,6 +238,7 @@ const shouldProcessUpdate = () => {
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.Device,
   ];
 
   const captureOption = getCaptureOption.value;

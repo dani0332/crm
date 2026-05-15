@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
+    Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
@@ -162,6 +163,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
+    Route::post('quotes/send-zero-plans-email', [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 
