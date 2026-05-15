@@ -413,12 +413,24 @@ class OCRService
             return false;
         }
 
+
+
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         // Validate document type
         $docTypeCheck = $this->handleDocumentTypeValidation($quote, $quoteType, $documentType, $docType, $userId);
         if (! $docTypeCheck) {
             return null;
+        }
+
+        // Plan validation (doc-type aware): validator will skip if no mapping exists for this quote type / document type.
+        if (! $this->isPlanEligibleForOcr($quoteType, $docType, $quote)) {
+            LoggerService::info('OCR processing skipped - Plan not eligible for OCR - Quote UUID: '.$quote->uuid, [
+                'quote_type' => $quoteType->value,
+                'document_type' => $docType->value,
+            ]);
+
+            return false;
         }
 
         // Send start notification (skip for ecom)
@@ -463,6 +475,7 @@ class OCRService
             LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
+
                 $result = $this->processOcrData(
                     $quote,
                     $quoteType,
