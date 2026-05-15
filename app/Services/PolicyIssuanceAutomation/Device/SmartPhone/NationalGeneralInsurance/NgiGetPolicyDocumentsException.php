@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
 use Exception;
+use Illuminate\Contracts\Debug\ShouldntReport;
 
-class NgiException extends Exception
+/**
+ * Expected operational failures for NGI policy document automation (validation, API, download).
+ * Implements {@see ShouldntReport} so queue retries and {@see NgiGetPolicyDocumentsJob::failed()}
+ * still run, while Laravel/Sentry do not treat each attempt as an application error.
+ */
+class NgiGetPolicyDocumentsException extends Exception implements ShouldntReport
 {
     public const PROCESS_NOT_FOUND = 'process_not_found';
     public const QUOTE_NOT_FOUND = 'quote_not_found';

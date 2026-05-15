@@ -802,7 +802,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::QUOTE_SYNC_LOGS,
             PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ];
-        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -818,7 +818,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
