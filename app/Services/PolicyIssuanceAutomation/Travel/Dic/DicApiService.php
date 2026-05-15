@@ -130,17 +130,20 @@ class DicApiService
         DB::transaction(function () use ($quote, $body, $startDate, $dicPercentage, $commissionInvoiceDate): void {
             $payment = $quote->payments()->mainLeadPayment()->first();
             $policyExpiry = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
+            $vat = $payment->total_price - $payment->price_vat_applicable;
             if ($payment !== null) {
                 $paymentData = [
-                    'commission_vat_applicable' => round($body['amount'] * (float) $dicPercentage / 100, 2),
+                    'commission_vat_applicable' => data_get($body, 'additionalDetails.commission_excluding_vat'),
+                    'commission_vat' => $vat,
                     'commmission_percentage' => $dicPercentage,
+                    'commission' => data_get($body, 'additionalDetails.commission_including_vat'),
                     'policy_expiry_date' => $policyExpiry,
                 ];
                 if ($commissionInvoiceDate !== null) {
                     $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
                 }
                 $quote->policy_number = $body['certificateNumber'];
-                $quote->price_vat_applicable = $body['amount'];
+                $quote->price_vat_applicable = $payment->price_vat_applicable;
                 $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
                 $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
                 $quote->policy_issuance_status_id = PolicyIssuanceStatusEnum::PolicyIssued;
@@ -148,8 +151,8 @@ class DicApiService
                 $quote->policy_start_date = $startDate;
                 // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
                 $quote->policy_expiry_date = $policyExpiry;
-                $quote->price_with_vat = $payment->premium_captured;
-                $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5%
+                $quote->price_with_vat = $payment->total_price;
+                $quote->vat = $vat;
 
                 $payment->update($paymentData);
                 $quote->save();
