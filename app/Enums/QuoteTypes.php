@@ -73,6 +73,7 @@ enum QuoteTypes: string
     case GROUP_MEDICAL = 'Group Medical';
     case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
+    case LIFE_REVIVAL = 'LifeRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case DEVICE = 'Device';
@@ -233,7 +234,7 @@ enum QuoteTypes: string
             self::CAR, self::CAR_REVIVAL, self::CAR_BIKE => 'CAR-',
             self::HOME => 'HOM-',
             self::HEALTH => 'HEA-',
-            self::LIFE => 'LIF-',
+            self::LIFE, self::LIFE_REVIVAL => 'LIF-',
             self::BUSINESS, self::GROUP_MEDICAL, self::CORPLINE, self::AMT => 'BUS-',
             self::BIKE => 'BIK-',
             self::YACHT => 'YAC-',
@@ -560,6 +561,13 @@ enum QuoteTypes: string
             self::DEVICE => DeviceQuote::class,
             default => PersonalQuote::class,
         };
+    }
+
+    public static function quoteJourneyOnCustomerDocumentUploadTypes(): array
+    {
+        return [
+            self::SAVINGS,
+        ];
     }
 
 }

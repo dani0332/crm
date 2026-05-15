@@ -42,6 +42,7 @@ use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\KenService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -210,10 +211,16 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
-            ->where(function ($query) {
-                $query->where('personal_quotes.source', '!=', LeadSourceEnum::REVIVAL)
-                    ->orWhereNull('personal_quotes.source');
-            }) // Exclude revival leads from the regular leads list while keeping legacy NULL-source records
+            ->when(
+                $this->shouldExcludeRevivalSourcesForSegmentFilter(request()->input('segment_filter')),
+                function ($query): void {
+                    $query->where(function ($inner): void {
+                        $inner->whereNotIn('personal_quotes.source', LifeRevivalService::REVIVAL_SOURCES)
+                            ->orWhereNull('personal_quotes.source');
+                    });
+                }
+            )
+            ->filterBySegment(request()->input('segment_filter'), QuoteTypeId::Life)
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
@@ -1083,5 +1090,13 @@ class LifeQuoteService extends BaseService
             $sendUpdateLogs,
             $sendUpdateEnum,
         ];
+    }
+
+    private function shouldExcludeRevivalSourcesForSegmentFilter(?string $segmentFilter): bool
+    {
+        return ! in_array($segmentFilter, [
+            QuoteSegmentEnum::ALL->value,
+            QuoteSegmentEnum::SIC_REVIVAL->value,
+        ], true);
     }
 }
