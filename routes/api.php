@@ -106,6 +106,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // amt
     Route::post('amt/quotes/{quoteType}/documents/census-list-excel', [QuoteDocumentController::class, 'storeCensusListExcel']);
 
+    // pre qualification advisor allocation
+    Route::post('/imcrm/pqa-allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');

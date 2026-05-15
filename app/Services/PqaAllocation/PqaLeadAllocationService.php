@@ -10,6 +10,7 @@ use App\Enums\UserStatusEnum;
 use App\Models\PqaLeadAllocationConfig;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PqaLeadAllocationService
@@ -19,7 +20,8 @@ class PqaLeadAllocationService
      */
     public function syncPqaAllocationConfig(int $userId, object $data): bool
     {
-        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId === QuoteTypes::BUSINESS->id()) {
+
+        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $existing = PqaLeadAllocationConfig::query()
                 ->where('user_id', $userId)
                 ->where('quote_type_id', $data->quoteTypeId)
@@ -224,9 +226,9 @@ class PqaLeadAllocationService
 
     /**
      * @param  array<int, array<string, mixed>>  $items
-     * @return \Illuminate\Support\Collection<string, PqaLeadAllocationConfig>
+     * @return Collection<string, PqaLeadAllocationConfig>
      */
-    public function getConfigs(array $items): \Illuminate\Support\Collection
+    public function getConfigs(array $items): Collection
     {
         $userIds = collect($items)->pluck('userId')->unique()->toArray();
         $configIds = collect($items)->pluck('id')->unique()->toArray();

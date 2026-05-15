@@ -32,6 +32,7 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\PqaAllocationRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
@@ -73,6 +74,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PqaAllocation\PqaAllocationService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\Reports\ConversionOptimizationScheduledExportService;
@@ -148,6 +150,38 @@ class ApiController extends Controller
             LoggerService::error(self::class.': Lead allocation failed due to validation errors', exception: $e);
 
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function preQualificationAdvisorAllocation(PqaAllocationRequest $request): JsonResponse
+    {
+        try {
+            LoggerService::info(self::class.': Processing PQA allocation request', extra: $request->all());
+
+            if ($this->apiService->isLeadAllocationEndpointDisabled()) {
+                return apiResponse(null, Response::HTTP_SERVICE_UNAVAILABLE, 'Lead allocation endpoint disabled');
+            }
+
+            return app(PqaAllocationService::class)->processPqaAllocation($request);
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
+
+            return apiResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], $e->getCode() ?? Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (ValidationException $e) {
+            LoggerService::warning(self::class.': PQA allocation failed due to validation errors', extra: [
+                'errors' => $e->errors(),
+            ], exception: $e);
+
+            return apiResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -1130,4 +1164,5 @@ class ApiController extends Controller
         dd($records);
 
     }
+
 }
