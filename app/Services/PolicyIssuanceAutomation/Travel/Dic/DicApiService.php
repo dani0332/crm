@@ -127,14 +127,6 @@ class DicApiService
         $commissionInvoiceDate = data_get($body, 'additionalDetails.commission_invoice_date');
 
         DB::transaction(function () use ($quote, $body, $startDate, $dicPercentage, $commissionInvoiceDate): void {
-            $quote->policy_number = $body['certificateNumber'];
-            $quote->price_vat_applicable = $body['amount'];
-            $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
-            $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
-            $quote->policy_start_date = $startDate;
-            // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
-            $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
-
             $payment = $quote->payments()->mainLeadPayment()->first();
             if ($payment !== null) {
                 $paymentData = [
@@ -144,8 +136,16 @@ class DicApiService
                 if ($commissionInvoiceDate !== null) {
                     $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
                 }
+                $quote->policy_number = $body['certificateNumber'];
+                $quote->price_vat_applicable = $body['amount'];
+                $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
+                $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
+                $quote->policy_start_date = $startDate;
+                // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
+                $quote->policy_expiry_date = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
                 $quote->price_with_vat = $payment->premium_captured;
                 $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5% of the commission amount for DIC
+
                 $payment->update($paymentData);
             }
             $quote->save();
