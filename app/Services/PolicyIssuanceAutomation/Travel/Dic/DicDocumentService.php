@@ -56,15 +56,14 @@ class DicDocumentService
         }
 
         $mimeType = $this->mimeTypeFromResponseHeader($download->header('Content-Type'));
-        $docName = $this->fileNameFromDownload($download, $documentUrl);
 
-        $fileNameAzure = uniqid('', true).'_'.$quote->uuid.'_'.$docName;
+        $fileNameAzure = uniqid('', true).'_'.$quote->uuid.'_'.str_replace(' ', '_', $originalName);
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIMPrivate')->put($filePathAzure, $download->body());
 
         $newDocument = $quote->documents()->create([
-            'doc_name' => $docName,
-            'original_name' => $originalName ?? $docName,
+            'doc_name' => $originalName,
+            'original_name' => $originalName,
             'doc_url' => $filePathAzure,
             'doc_mime_type' => $mimeType,
             'document_type_code' => $documentType->code,
