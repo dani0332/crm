@@ -188,11 +188,9 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         foreach ($columns as $key => $column) {
             if ($key === 'premium') {
                 $row[$key] = $leadData['premium'] ?? $leadData['previous_quote_policy_premium'] ?? null;
-            }
-            if ($key === 'previous_commission') {
+            } elseif ($key === 'previous_commission') {
                 $row[$key] = $leadData['previous_commission'] ?? $leadData['previous_quote_policy_commission'] ?? null;
-            }
-            if ($key === 'previous_ref_id') {
+            } elseif ($key === 'previous_ref_id') {
                 $row[$key] = $leadData['previous_ref_id'] ?? null;
             } else {
                 $row[$key] = $leadData[$key] ?? null;
