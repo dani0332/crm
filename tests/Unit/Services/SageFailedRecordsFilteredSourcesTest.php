@@ -6,7 +6,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Services\SageFailedRecordsService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 function sageFailedRecordsService(): SageFailedRecordsService
 {
@@ -15,7 +14,7 @@ function sageFailedRecordsService(): SageFailedRecordsService
 
 function sageFailedRecordsPdo(): PDO
 {
-    return DB::connection()->getPdo();
+    return new PDO('sqlite:memory');
 }
 
 function sageFailedRecordsFilteredSources(array $requestPayload): array
@@ -23,13 +22,6 @@ function sageFailedRecordsFilteredSources(array $requestPayload): array
     $method = new ReflectionMethod(SageFailedRecordsService::class, 'getFilteredSources');
 
     return $method->invoke(sageFailedRecordsService(), sageFailedRecordsPdo(), $requestPayload);
-}
-
-function sageFailedRecordsMorphModelClasses(array $filteredSources): array
-{
-    $method = new ReflectionMethod(SageFailedRecordsService::class, 'morphModelClassesFromFailedLeadSources');
-
-    return $method->invoke(sageFailedRecordsService(), $filteredSources);
 }
 
 function sageFailedRecordsFailedLeadsUnionSql(array $requestPayload): string
@@ -105,7 +97,8 @@ test('morph model classes for eager load are derived from filtered sources witho
         'quote_type_id' => [(string) QuoteTypeId::Car],
     ]);
 
-    $morphClasses = sageFailedRecordsMorphModelClasses($filteredSources);
+    $method = new ReflectionMethod(SageFailedRecordsService::class, 'morphModelClassesFromFailedLeadSources');
+    $morphClasses = $method->invoke(sageFailedRecordsService(), $filteredSources);
 
     expect($morphClasses)->toContain(CarQuote::class)
         ->and($morphClasses)->not->toContain(SendUpdateLog::class);
