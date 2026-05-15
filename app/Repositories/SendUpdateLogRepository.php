@@ -22,7 +22,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
@@ -548,15 +547,11 @@ class SendUpdateLogRepository extends BaseRepository
         return $response;
     }
 
-    public function fetchUpdateQuoteStatusLog($quoteTypeId, $quoteUuid, $quoteStatusId, $sendUpdateLogId = null)
+    public function fetchUpdateQuoteStatusLog($quoteTypeId, $quoteUuid, $quoteStatusId)
     {
         LoggerService::info('fn:fetchUpdateQuoteStatusLog - SendUpdateLogRepository');
 
         try {
-            if ($sendUpdateLogId) {
-                Context::add('send_update_log_id', $sendUpdateLogId);
-            }
-
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
             if ($quote && $quote?->policy_booking_date) {
@@ -567,8 +562,6 @@ class SendUpdateLogRepository extends BaseRepository
             }
         } catch (\Exception $ex) {
             LoggerService::error('Error while updating Quote status', exception: $ex);
-        } finally {
-            Context::forget('send_update_log_id');
         }
     }
 
