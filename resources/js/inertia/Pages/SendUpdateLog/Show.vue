@@ -53,6 +53,7 @@ const props = defineProps({
   cancelOptions: Array,
   isEndorsementBookingActionDisabled: Boolean,
   ocrDocumentTypeEnum: Object,
+  hasEndorsementPayments: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -110,6 +111,8 @@ const isUpdateBooked = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   );
 });
+
+const isSubtypeLocked = computed(() => props.hasEndorsementPayments);
 
 const changeReasonOptions = computed(() => {
   return [];
@@ -673,7 +676,7 @@ const sectionExpanded = computed(() => true);
                     <dd>
                       <x-select
                         size="xs"
-                        :disabled="!state.edit || isUpdateBooked"
+                        :disabled="!state.edit || isUpdateBooked || isSubtypeLocked"
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
                         class="w-3/4"
