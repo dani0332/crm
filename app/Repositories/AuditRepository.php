@@ -53,7 +53,12 @@ class AuditRepository extends BaseRepository
     }
 
     /**
-     * Primary auditable_type from getAuditables() for the given quote_type, or null if it cannot be resolved.
+     * Primary auditable_type from getAuditables() for the given quote_type.
+     *
+     * Returns null only when $quoteType is null or empty. Otherwise callers must treat
+     * a null return or any thrown exception as an unresolved type (fail closed).
+     *
+     * @throws \Throwable when the quote model cannot be resolved or getAuditables() fails
      */
     public static function primaryAuditableTypeForQuoteType(?string $quoteType): ?string
     {
@@ -61,13 +66,9 @@ class AuditRepository extends BaseRepository
             return null;
         }
 
-        try {
-            $auditables = self::resolveQuoteObjectForAuditRequest($quoteType)->getAuditables();
+        $auditables = self::resolveQuoteObjectForAuditRequest($quoteType)->getAuditables();
 
-            return $auditables['auditable_type'] ?? null;
-        } catch (\Throwable) {
-            return null;
-        }
+        return $auditables['auditable_type'] ?? null;
     }
 
     public function fetchGetQuoteAudits()

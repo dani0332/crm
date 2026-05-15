@@ -199,9 +199,27 @@ class AuditableController extends Controller
     {
         $user = $request->user();
         $quoteType = $request->input('quote_type');
-        $primaryAuditableType = AuditRepository::primaryAuditableTypeForQuoteType(
-            is_string($quoteType) ? $quoteType : null
-        );
+        $quoteTypeString = is_string($quoteType) && $quoteType !== '' ? $quoteType : null;
+
+        $primaryAuditableType = null;
+        if ($quoteTypeString !== null) {
+            try {
+                $primaryAuditableType = AuditRepository::primaryAuditableTypeForQuoteType($quoteTypeString);
+            } catch (\Throwable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if ($primaryAuditableType === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
+
         $requiresSelfAuditableId = $primaryAuditableType === User::class;
 
         $forbidden = $requiresSelfAuditableId
