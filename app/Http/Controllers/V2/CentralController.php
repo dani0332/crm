@@ -24,6 +24,7 @@ use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
+use App\Exports\LifeRevivalQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
@@ -193,6 +194,13 @@ class CentralController extends Controller
                 }
 
                 return app(HealthQuotesExport::class)->download('Health-List');
+
+            case QuoteTypes::LIFE_REVIVAL->value:
+                if ($request['exportType'] == 'email') {
+                    return app(LifeRevivalQuotesExport::class)->emailCSV('Life-List', $request->all());
+                }
+
+                return app(LifeRevivalQuotesExport::class)->download('life_revival_leads');
 
             case RetentionReportEnum::RETENTION:
                 return app(RetentionReportExport::class)->download('Retention-Report-List');
