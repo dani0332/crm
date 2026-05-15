@@ -68,6 +68,31 @@ it('does not dispatch travel alliance failed allocation job when insurer API was
     Queue::assertNotPushed(AutomationFailedJob::class);
 });
 
+it('sets api_issuance_status to YES and does not write insurer_api_status or notify on success', function (): void {
+    Queue::fake();
+
+    $travelQuote = TravelQuote::factory()->create([
+        'code' => 'TRV-DIC-SUCCESS-1',
+        'insurer_api_status_id' => null,
+        'api_issuance_status_id' => null,
+        'quote_status_id' => 1,
+    ]);
+
+    TravelQuote::withoutEvents(function () use ($travelQuote): void {
+        app(PolicyIssuanceService::class)->applyTravelDicAutomationResult(
+            TravelQuote::query()->findOrFail($travelQuote->id),
+            true,
+        );
+    });
+
+    $fresh = $travelQuote->fresh();
+    expect($fresh->api_issuance_status_id)->toBe(PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
+        ->and($fresh->insurer_api_status_id)->toBeNull();
+
+    Queue::assertNotPushed(SendTravelAllianceFailedAllocationEmailJob::class);
+    Queue::assertNotPushed(AutomationFailedJob::class);
+});
+
 it('allocateLead never dispatches AutomationFailedJob for travel failure context because travel uses insurer-specific flows', function (): void {
     Queue::fake();
 
