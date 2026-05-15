@@ -85,7 +85,7 @@ class HealthPlanController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Health plan scheduled successfully. It will be activated on the rate control effective from date.',
+            'message' => 'Health plan scheduled successfully. It will be activated on the rate sheet effective from date.',
         ]);
     }
 }

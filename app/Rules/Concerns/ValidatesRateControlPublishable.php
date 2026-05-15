@@ -16,7 +16,7 @@ trait ValidatesRateControlPublishable
             ->exists();
 
         if (! $hasDraftRates) {
-            $fail('Rate control does not have any draft rates.');
+            $fail('Rate sheet does not have any draft rates.');
 
             return;
         }
@@ -25,7 +25,7 @@ trait ValidatesRateControlPublishable
         $today = Carbon::today();
 
         if (! $effectiveFrom->isAfter($today)) {
-            $fail('Rate control effective from date must be greater than today.');
+            $fail('Effective from date must be greater than today.');
         } else {
             $activeRateControl = $rateControl->healthPlan?->activeRateControl;
 
@@ -33,7 +33,7 @@ trait ValidatesRateControlPublishable
                 $activeEffectiveFrom = Carbon::parse($activeRateControl->effective_from)->startOfDay();
 
                 if (! $effectiveFrom->isAfter($activeEffectiveFrom)) {
-                    $fail('Rate control effective from date must be greater than the active rate control effective from date.');
+                    $fail('Effective from date must be greater than the existing active rate sheet effective from date.');
                 }
             }
         }
