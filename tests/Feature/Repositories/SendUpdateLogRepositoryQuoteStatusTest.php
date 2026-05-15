@@ -45,13 +45,10 @@ test('updateQuoteStatusLog records send update booking sync via observer and con
         'policy_booking_date' => now()->toDateString(),
     ]);
 
-    $sendUpdateLogId = 9001;
-
     SendUpdateLogRepository::updateQuoteStatusLog(
         QuoteTypeId::Car,
         $quote->uuid,
         QuoteStatusEnum::PolicyCancelled,
-        $sendUpdateLogId,
     );
 
     $log = QuoteStatusLog::query()

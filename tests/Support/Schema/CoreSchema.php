@@ -1413,6 +1413,7 @@ class CoreSchema
             },
             'send_update_status_logs' => function (Blueprint $table) {
                 $table->id();
+                $table->unsignedBigInteger('send_update_log_id')->nullable();
                 $table->string('previous_status')->nullable();
                 $table->string('current_status')->nullable();
                 $table->unsignedBigInteger('created_by')->nullable();
@@ -1428,6 +1429,7 @@ class CoreSchema
                 },
             ],
             'send_update_status_logs' => [
+                'send_update_log_id' => fn (Blueprint $table) => $table->unsignedBigInteger('send_update_log_id')->nullable(),
                 'notes' => fn (Blueprint $table) => $table->text('notes')->nullable(),
             ],
         ]);
