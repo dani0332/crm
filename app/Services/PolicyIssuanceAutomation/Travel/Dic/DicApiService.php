@@ -6,6 +6,7 @@ namespace App\Services\PolicyIssuanceAutomation\Travel\Dic;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Facades\DicHttpFacade;
 use App\Models\PolicyIssuance;
@@ -142,7 +143,7 @@ class DicApiService
                 $quote->price_vat_applicable = $body['amount'];
                 $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
                 $quote->quote_status_id = QuoteStatusEnum::PolicyIssued;
-                $quote->policy_issuance_status_id = QuoteStatusEnum::PolicyIssued;
+                $quote->policy_issuance_status_id = PolicyIssuanceStatusEnum::PolicyIssued;
                 $quote->quote_status_date = now();
                 $quote->policy_start_date = $startDate;
                 // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
