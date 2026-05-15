@@ -137,11 +137,15 @@ class DicApiService
 
             $payment = $quote->payments()->mainLeadPayment()->first();
             if ($payment !== null) {
-                $paymentData = ['commission_vat_applicable' => round($body['amount'] * $dicPercentage, 2)];
+                $paymentData = [
+                    'commission_vat_applicable' => round($body['amount'] * (float) $dicPercentage / 100, 2),
+                    'commmission_percentage' => $dicPercentage,
+                ];
                 if ($commissionInvoiceDate !== null) {
                     $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
                 }
                 $quote->price_with_vat = $payment->premium_captured;
+                $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5% of the commission amount for DIC
                 $payment->update($paymentData);
             }
             $quote->save();
