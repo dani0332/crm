@@ -5,6 +5,9 @@ const props = defineProps({
 });
 
 const page = usePage();
+/** Sync filters from URL query (same approach as LifeQuote/Index.vue). */
+let params = useUrlSearchParams('history');
+
 const hasAnyRole = role => useHasAnyRole(role);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -66,6 +69,77 @@ const filters = reactive({
   sum_insured_range: '',
   updated_at: '',
   page: 1,
+});
+
+function setQueryFilters() {
+  const integerArrayFields = [
+    'quote_status',
+    'purpose_of_insurance_id',
+    'tenure_of_insurance_id',
+  ];
+
+  const integerSingleFields = ['page'];
+
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index, 10)] = value;
+    } else if (key.includes('[]')) {
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
+    } else {
+      singleParams[key] = value;
+    }
+  }
+
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (fieldName === 'advisors') {
+      filters[fieldName] = cleanValues
+        .map(v =>
+          String(v) === 'unassigned' ? 'unassigned' : parseInt(String(v), 10),
+        )
+        .filter(v => v === 'unassigned' || !Number.isNaN(v));
+    } else if (integerArrayFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(String(v), 10))
+        .filter(v => !Number.isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (key === 'sum_insured_currency_id') {
+      if (value === '' || value === null || value === undefined) {
+        filters.sum_insured_currency_id = null;
+      } else {
+        const n = parseInt(String(value), 10);
+        filters.sum_insured_currency_id = Number.isNaN(n) ? null : n;
+      }
+    } else if (
+      integerSingleFields.includes(key) &&
+      String(value).trim() !== '' &&
+      !Number.isNaN(parseInt(String(value), 10))
+    ) {
+      filters[key] = parseInt(String(value), 10);
+    } else {
+      filters[key] = value;
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryFilters();
 });
 
 const advisorOptions = computed(() => {
