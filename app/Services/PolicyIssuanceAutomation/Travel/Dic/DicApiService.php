@@ -123,10 +123,10 @@ class DicApiService
             return;
         }
 
-        $DicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
+        $dicPercentage = (float) getAppStorageValueByKey(ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE);
         $commissionInvoiceDate = data_get($body, 'additionalDetails.commission_invoice_date');
 
-        DB::transaction(function () use ($quote, $body, $startDate, $DicPercentage, $commissionInvoiceDate): void {
+        DB::transaction(function () use ($quote, $body, $startDate, $dicPercentage, $commissionInvoiceDate): void {
             $quote->policy_number = $body['certificateNumber'];
             $quote->price_vat_applicable = $body['amount'];
             $quote->policy_issuance_date = Carbon::parse(data_get($body, 'additionalDetails.premium_issuing_date', null))->format('Y-m-d');
@@ -138,7 +138,7 @@ class DicApiService
 
             $payment = $quote->payments()->mainLeadPayment()->first();
             if ($payment !== null) {
-                $paymentData = ['commission_vat_applicable' => round($quote->price_vat_applicable * $DicPercentage, 2)];
+                $paymentData = ['commission_vat_applicable' => round($quote->price_vat_applicable * $dicPercentage, 2)];
                 if ($commissionInvoiceDate !== null) {
                     $paymentData['insurer_invoice_date'] = Carbon::parse($commissionInvoiceDate)->format('Y-m-d');
                 }
