@@ -13,11 +13,11 @@ use App\Models\ApplicationStorage;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
-use App\Models\User;
 use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Schema;
+use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -104,6 +104,52 @@ test('returns 422 when quoteType is not in the automatable LOB registry', functi
     $response->assertJsonValidationErrors(['quoteType']);
 });
 
+test('returns 422 when personal quote aml row is missing last name', function () {
+    $uuid = '01900000-0000-7000-8000-000000000006';
+    $personalQuote = PersonalQuote::create([
+        'uuid' => $uuid,
+        'code' => 'SAV-NOLAST',
+        'quote_type_id' => QuoteTypeId::Savings,
+        'customer_id' => 1,
+        'first_name' => 'A',
+        'last_name' => '',
+        'email' => 'c@example.com',
+        'dob' => '1990-01-01',
+        'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
+        'aml_status' => AMLStatusCode::AMLPending,
+        'nationality_id' => 1,
+        'gender' => 'male',
+    ]);
+
+    $insured = Insured::create([
+        'customer_type' => 'Individual',
+        'first_name' => 'A',
+        'last_name' => 'B',
+        'dob' => '1990-01-01',
+        'nationality_id' => 1,
+        'gender' => 'male',
+        'id_type' => 'passport',
+        'id_number' => 'AB1234567',
+    ]);
+
+    CustomerInsured::create([
+        'quote_type_id' => QuoteTypeId::Savings,
+        'quote_request_id' => $personalQuote->id,
+        'insured_id' => $insured->id,
+        'customer_id' => 1,
+        'is_active' => true,
+    ]);
+
+    $response = $this->postJson('/api/v1/imcrm/quotes/automate-aml-screening', [
+        'quoteUuid' => $uuid,
+        'quoteType' => QuoteTypes::SAVINGS->value,
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonFragment(['success' => false])
+        ->assertJsonFragment(['message' => 'Missing Info: Last Name']);
+});
+
 test('returns 422 when customer insured data is missing', function () {
     $uuid = '01900000-0000-7000-8000-000000000003';
     PersonalQuote::create([
@@ -133,9 +179,8 @@ test('returns 422 when customer insured data is missing', function () {
 test('dispatches aml screening job for valid savings quote', function () {
     Bus::fake();
 
-    $advisor = User::factory()->create([
+    $advisor = TestDataSeeder::createUser([
         'email' => 'adv@example.com',
-        'last_login' => now(),
     ]);
     $uuid = '01900000-0000-7000-8000-000000000004';
 
@@ -188,9 +233,8 @@ test('dispatches aml screening job for valid savings quote', function () {
 test('returns 422 when aml automation row blocks re-dispatch', function (string $status, string $expectedMessage) {
     Bus::fake();
 
-    $advisor = User::factory()->create([
+    $advisor = TestDataSeeder::createUser([
         'email' => 'block@example.com',
-        'last_login' => now(),
     ]);
     $uuid = '01900000-0000-7000-8000-000000000005';
 
