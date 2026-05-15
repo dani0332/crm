@@ -1065,6 +1065,17 @@ class RenewalsUploadService
                 $homeQuote->homeQuoteRequestDetail()->create($detailData);
             }
 
+            // As Bike is a personal Quote, creating entry for BikeQuote and BikeQuoteDetail
+            if ($quoteType->code == quoteTypeCode::Bike) {
+
+                // unsetting fields as bike_quote_request table doesn't have them
+                unset($quoteData['quote_type_id'], $quoteData['currently_insured_with_id']);
+                $bikeQuote = $quote->bikeQuote()->create($quoteData);
+
+                unset($detailData['additional_notes'], $detailData['previous_advisor_id']);
+                $bikeQuote->bikeQuoteRequestDetail()->create($detailData);
+            }
+
             // update advisor assign date/time
             if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
