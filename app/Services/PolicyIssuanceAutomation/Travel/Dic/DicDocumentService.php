@@ -10,7 +10,6 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -88,22 +87,5 @@ class DicDocumentService
         }
 
         return trim(explode(';', $contentType, 2)[0]);
-    }
-
-    private function fileNameFromDownload(Response $response, string $documentUrl): string
-    {
-        $contentDisposition = $response->header('Content-Disposition');
-        if (is_string($contentDisposition) && $contentDisposition !== '' && preg_match(
-            '/filename\*?=(?:UTF-\d\'\')?["\']?([^"\';\r\n]+)/',
-            $contentDisposition,
-            $matches,
-        )) {
-            return urldecode($matches[1]);
-        }
-
-        $path = (string) parse_url($documentUrl, PHP_URL_PATH);
-        $base = $path !== '' ? basename($path) : '';
-
-        return $base !== '' && $base !== '/' ? $base : 'document.pdf';
     }
 }
