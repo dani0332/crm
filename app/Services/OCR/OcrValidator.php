@@ -49,7 +49,7 @@ trait OcrValidator
         // Group Medical-only
         InsuranceProviderEnum::TE->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::OI2->value => [QuoteTypes::GROUP_MEDICAL],
-        InsuranceProviderEnum::NGI->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::NGI->value => [QuoteTypes::GROUP_MEDICAL, QuoteTypes::DEVICE],
         InsuranceProviderEnum::MTL->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::DNIRC->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],

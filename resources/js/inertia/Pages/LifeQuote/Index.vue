@@ -32,7 +32,10 @@ const quoteSegments = page.props.quoteSegments;
 const quoteSegmentsLife = [
   { value: 'all', label: 'All' },
   ...quoteSegments.filter(
-    segment => segment.value === 'fic' || segment.value === 'non-fic',
+    segment =>
+      segment.value === 'fic' ||
+      segment.value === 'non-fic' ||
+      segment.value === 'sic-revival',
   ),
 ];
 

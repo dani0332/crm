@@ -596,6 +596,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id')->with('deviceMake', 'deviceModel');
+    }
+
     // *********************** Cyber Quote ***********************
 
     public function cyberQuote()
@@ -640,7 +645,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+        return in_array($this->insurer_api_status_id, app(abstract: PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     /**
@@ -692,4 +697,5 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
+
 }

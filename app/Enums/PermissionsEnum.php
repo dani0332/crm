@@ -228,6 +228,9 @@ final class PermissionsEnum extends Enum
     public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
     public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
     public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
+    public const LIFE_REVIVAL_QUOTES_LIST = 'life-revival-quotes-list';
+    public const LIFE_REVIVAL_QUOTES_EDIT = 'life-revival-quotes-edit';
+    public const LIFE_REVIVAL_QUOTES_SHOW = 'life-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -284,6 +287,7 @@ final class PermissionsEnum extends Enum
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
+    public const EDIT_PLAN_AFTER_TRANSACTION_APPROVAL = 'edit-plan-after-transaction-approval';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
     public const SAVE_QUOTE_NOTES = 'save-quote-notes';
     public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
@@ -485,6 +489,12 @@ final class PermissionsEnum extends Enum
     public const DELETE_ADDITIONAL_CONTACT = 'delete-additional-contact';
     public const COMPANY_PRIVATE_CAR_DRIVER_UPDATES = 'company-private-car-driver-updates';
 
+    // Smart Phone Permissions
+    public const DEVICE_QUOTES_LIST = 'device-quotes-list';
+    public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
+    public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
+    public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
+
     // Cyber Permissions
     public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
     public const CYBER_QUOTES_CREATE = 'cyber-quotes-create';
@@ -497,7 +507,17 @@ final class PermissionsEnum extends Enum
     public const CYBER_AS_AT_REPORT_MANAGER = 'cyber-as-at-report-manager';
     public const CYBER_LEADPOOL = 'cyber-leadpool';
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
+
     // End of Cyber Permissions
+    public const DEVICE_LEAD_ALLOCATION_DASHBOARD = 'device-lead-allocation-dashboard';
+    public const DEVICE_LEADPOOL = 'device-leadpool';
+    public const DEVICE_CONVERSION_REPORT = 'device-conversion-report';
+    public const DEVICE_DISTRIBUTION_REPORT = 'device-distribution-report';
+
+    /**
+     * IMCRM: re-trigger device policy automation (e.g. NGI document sync after repeated failures).
+     */
+    public const RE_TRIGGER_POLICY_AUTOMATION_DEVICE = 're-trigger-policy-automation-device';
 
     // Lead allocation dashboards (view-only access for managers)
     public const CAR_LEAD_ALLOCATION_VIEW_ONLY = 'car-lead-allocation-view-only';

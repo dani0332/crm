@@ -49,14 +49,20 @@ class CarRevivalService
 
     public function updateSource(string $quoteUuid, string $source): void
     {
+        LoggerService::info(self::class.' - updateSource request received', [
+            'quote_uuid' => $quoteUuid,
+            'source' => $source,
+        ]);
+
         $quote = CarQuote::query()
             ->where('uuid', $quoteUuid)
             ->where('source', LeadSourceEnum::REVIVAL)
             ->first();
 
         if (! $quote) {
-            LoggerService::info('CarRevivalService::updateSource - source not updated (no revival car quote)', [
+            LoggerService::info(self::class.' - updateSource - source not updated (no revival car quote)', [
                 'quote_uuid' => $quoteUuid,
+                'source' => $source,
             ]);
 
             return;
@@ -64,7 +70,7 @@ class CarRevivalService
 
         $quote->update(['source' => $source]);
 
-        LoggerService::info('CarRevivalService::updateSource - source updated', [
+        LoggerService::info(self::class.' - updateSource - source updated', [
             'quote_uuid' => $quoteUuid,
             'source' => $source,
         ]);

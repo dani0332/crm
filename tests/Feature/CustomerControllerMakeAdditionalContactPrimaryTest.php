@@ -6,7 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Http\Middleware\CheckRouteAccess;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\Customer;
@@ -34,7 +34,7 @@ beforeEach(function () {
     });
 
     $this->withoutMiddleware([
-        VerifyCsrfToken::class,
+        PreventRequestForgery::class,
         CheckRouteAccess::class,
     ]);
 });

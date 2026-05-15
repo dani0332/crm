@@ -14,6 +14,8 @@ class QuoteFlowDetails extends Model
     protected $guarded = [];
     protected $casts = [
         'flow_type' => QuoteFlowType::class, // Cast the flow_type to the FlowType enum
+        'started_at' => 'datetime',
+        'ended_at' => 'datetime',
     ];
 
     // Accessor to get the flow type label

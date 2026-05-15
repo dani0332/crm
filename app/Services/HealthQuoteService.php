@@ -12,6 +12,7 @@ use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -35,6 +36,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
 use App\Models\QuoteType;
@@ -1881,6 +1883,50 @@ class HealthQuoteService extends BaseService
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
             ->orderBy('q.created_at', 'ASC');
+    }
+
+    /**
+     * Whether the user may edit plan despite {@see HealthQuote::$is_quote_locked}
+     * when the quote is transaction-approved, the user has {@see PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL},
+     * the first pre-loaded payment has splits loaded, {@see Payment::$total_payments} matches the split row count,
+     * and every split uses insurer payment ({@see PaymentMethodsEnum::InsurerPayment}).
+     *
+     * @param  iterable<int, Payment>|null  $payments  Pre-loaded payments for the quote (e.g. from CRUD show). When null, resolves via {@see HealthQuote::payments()} when $quote is a {@see HealthQuote}.
+     */
+    public function canBypassPlanLock(object $quote, ?iterable $payments = null): bool
+    {
+        $hasEligibleQuoteStatusForBypass = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
+        $userCanEditPlanAfterTransactionApproval = auth()->user()->can(PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL);
+
+        $firstPayment = collect($payments)->first();
+        $mainPayment = $hasEligibleQuoteStatusForBypass && $userCanEditPlanAfterTransactionApproval && $firstPayment instanceof Payment
+            ? $firstPayment
+            : null;
+
+        $qualifiesByInsurerOnlySplits = $this->hasInsurerOnlySplits($mainPayment);
+
+        return $userCanEditPlanAfterTransactionApproval && $qualifiesByInsurerOnlySplits;
+    }
+
+    private function hasInsurerOnlySplits(?Payment $mainPayment): bool
+    {
+        if (! $mainPayment) {
+            return false;
+        }
+
+        $paymentSplits = $mainPayment->paymentSplits;
+        if ($paymentSplits === null || $paymentSplits->isEmpty()) {
+            return false;
+        }
+
+        $splitCount = $paymentSplits->count();
+
+        $expectedSplitCount = $mainPayment->total_payments;
+        if ($expectedSplitCount === null || (int) $expectedSplitCount !== $splitCount) {
+            return false;
+        }
+
+        return $paymentSplits->where('payment_method', PaymentMethodsEnum::InsurerPayment)->count() === $splitCount;
     }
 
     private function getTransactionApprovedDates($request)

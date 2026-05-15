@@ -138,6 +138,12 @@ it('correctly checks access using advisorRoles method instead of string concaten
     // Test JETSKI advisor role
     $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor, ['email' => 'jetski@test.com']);
     expect(QuoteTypes::JETSKI->userHasAccess($jetskiAdvisor))->toBeTrue();
+
+    $smartPhoneAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'device@test.com']);
+    expect(QuoteTypes::DEVICE->userHasAccess($smartPhoneAdvisor))->toBeTrue();
+
+    $smartPhoneAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::SmartPhoneAdvisor, ['email' => 'smartphone-advisor@test.com']);
+    expect(QuoteTypes::DEVICE->userHasAccess($smartPhoneAdvisor))->toBeTrue();
 });
 
 it('correctly checks manager roles for quote type access', function () {
@@ -154,11 +160,12 @@ it('correctly checks manager roles for quote type access', function () {
 it('returns correct primary types from the enum', function () {
     $primaryTypes = QuoteTypes::primaryTypes();
 
-    expect($primaryTypes)->toHaveCount(12)
+    expect($primaryTypes)->toHaveCount(13)
         ->and($primaryTypes)->toContain(QuoteTypes::CAR)
         ->and($primaryTypes)->toContain(QuoteTypes::HOME)
         ->and($primaryTypes)->toContain(QuoteTypes::HEALTH)
         ->and($primaryTypes)->toContain(QuoteTypes::SAVINGS)
+        ->and($primaryTypes)->toContain(QuoteTypes::CYBER)
         ->and($primaryTypes)->not->toContain(QuoteTypes::AMT)
         ->and($primaryTypes)->not->toContain(QuoteTypes::PERSONAL)
         ->and($primaryTypes)->not->toContain(QuoteTypes::GROUP_MEDICAL)

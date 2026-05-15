@@ -428,6 +428,12 @@ class HandleInertiaRequests extends Middleware
                         'Cyber',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
                         fn ($s) => $s->attributes(['icon' => 'cyber'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD),
+                        'Device',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::DEVICE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -546,11 +552,26 @@ class HandleInertiaRequests extends Middleware
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::LifeQuotesList)
+                    (auth()->user()->hasAnyPermission(
+                        PermissionsEnum::LifeQuotesList,
+                        PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST)
                         || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
-                    fn ($s) => $s->attributes(['icon' => 'life'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'life'])
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                            'Life Quotes',
+                            route('life-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST),
+                            'Life Revival Quotes',
+                            route('life-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        ),
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
@@ -560,6 +581,7 @@ class HandleInertiaRequests extends Middleware
                     route('home-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'home'])
                 )
+                ->addIf((auth()->user()->can(PermissionsEnum::DEVICE_QUOTES_LIST) || (userHasProduct(quoteTypeCode::Device) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Smartphone Quotes', route('device-quotes-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                 ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList) || (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
@@ -780,7 +802,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::QUOTE_SYNC_LOGS,
             PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ];
-        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -796,7 +818,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
