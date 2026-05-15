@@ -888,7 +888,7 @@ class AMLController extends Controller
 
         $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],
-            $validated['quoteType'],
+            $request->validatedQuoteType(),
         );
 
         return response()->json([

@@ -36,8 +36,23 @@ class AutomateQuoteAmlScreeningRequest extends FormRequest
     {
         return [
             'quoteUuid' => ['required', 'string'],
-            'quoteType' => ['required', 'string', Rule::in($this->allowedQuoteTypeValues())],
+            'quoteType' => [
+                'required',
+                'string',
+                Rule::enum(QuoteTypes::class)->only(AmlAutomatableLobRegistry::allowed()),
+            ],
         ];
+    }
+
+    /**
+     * Resolved quote line-of-business after validation.
+     */
+    public function validatedQuoteType(): QuoteTypes
+    {
+        /** @var array{quoteUuid: string, quoteType: string} $validated */
+        $validated = $this->validated();
+
+        return QuoteTypes::from($validated['quoteType']);
     }
 
     /**
@@ -52,7 +67,7 @@ class AutomateQuoteAmlScreeningRequest extends FormRequest
             'quoteUuid.string' => 'Quote UUID must be a valid string',
             'quoteType.required' => 'Quote type is required',
             'quoteType.string' => 'Quote type must be a valid string',
-            'quoteType.in' => 'AML automation is not supported for this quote type',
+            'quoteType.enum' => 'AML automation is not supported for this quote type',
         ];
     }
 
@@ -67,18 +82,5 @@ class AutomateQuoteAmlScreeningRequest extends FormRequest
             'quoteUuid' => 'Quote UUID',
             'quoteType' => 'Quote Type',
         ];
-    }
-
-    /**
-     * String values of LOBs that are eligible for API-triggered AML automation.
-     *
-     * @return list<string>
-     */
-    private function allowedQuoteTypeValues(): array
-    {
-        return array_map(
-            static fn (QuoteTypes $type): string => $type->value,
-            AmlAutomatableLobRegistry::allowed()
-        );
     }
 }

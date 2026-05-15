@@ -123,7 +123,7 @@ class EventServiceProvider extends ServiceProvider
             HandleNationalityPoolCreated::class,
         ],
         AmlAutomationScreeningSucceeded::class => [
-            [SendAmlAutomationOutcomeNotifications::class, 'handleSucceeded'],
+            SendAmlAutomationOutcomeNotifications::class,
         ],
     ];
 
