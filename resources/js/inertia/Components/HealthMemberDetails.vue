@@ -372,10 +372,11 @@ const onAddMemberModal = () => {
   memberForm.is_policy_holder = 0;
   memberForm.is_insured = 1;
   memberForm.emirate_of_your_visa_id = getPrincipalEmirateOfYourVisaId();
-  memberForm.relation_code = relationCodeEnum.SELF;
+  memberForm.relation_code = null;
 
   if(isDomesticHelper.value) {
     memberForm.salary_band_id = salaryBandEnum.BELOW_OR_EQ_4000;
+    memberForm.relation_code = relationCodeEnum.DOMESTIC_WORKER;
   }
 };
 
@@ -548,7 +549,7 @@ const memberPrincipal = data => {
   memberForm.is_principal = 1;
   if(makeActionName.value === 'policyholder') {
     memberForm.is_policy_holder = 1;
-    memberForm.relation_code = null;
+    memberForm.relation_code = relationCodeEnum.SELF;
   } else {
     memberForm.is_policy_holder = 0;
   }
@@ -1254,7 +1255,7 @@ defineExpose({
             />
 
             <x-select
-              v-if="memberForm.is_policy_holder != 1"
+              v-if="memberForm.is_policy_holder != 1 && !isDomesticHelper"
               v-model="memberForm.relation_code"
               label="Relationship with Policyholder"
               :options="memberRelations"

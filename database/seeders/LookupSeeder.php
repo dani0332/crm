@@ -917,27 +917,6 @@ class LookupSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-            [
-                'code' => 'relMaid',
-                'text' => 'Maid',
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'code' => 'relDriver',
-                'text' => 'Driver',
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'code' => 'relNanny',
-                'text' => 'Nanny',
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
         ]);
     }
 }
