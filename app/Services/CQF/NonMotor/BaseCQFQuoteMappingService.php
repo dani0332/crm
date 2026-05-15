@@ -211,14 +211,12 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             return null;
         }
 
-        $vatApplicable = (float) ($payment->commission_vat_applicable ?? 0);
-        $vatNotApplicable = (float) ($payment->commission_vat_not_applicable ?? 0);
-        $vatOnCommission = (float) ($payment->commission_vat ?? 0);
+        $vatApplicable = $payment->commission_vat_applicable;
+        $vatNotApplicable = $payment->commission_vat_not_applicable;
+        $vatOnCommission = $payment->commission_vat;
 
-        $total = $vatApplicable + $vatNotApplicable + $vatOnCommission;
-
-        if ($total > 0) {
-            return $total;
+        if ($vatApplicable !== null || $vatNotApplicable !== null || $vatOnCommission !== null) {
+            return (float) ($vatApplicable ?? 0) + (float) ($vatNotApplicable ?? 0) + (float) ($vatOnCommission ?? 0);
         }
 
         return $payment->commission !== null ? (float) $payment->commission : null;
