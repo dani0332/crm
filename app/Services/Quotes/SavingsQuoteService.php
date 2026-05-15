@@ -2,10 +2,12 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -29,6 +31,7 @@ use App\Services\LookupService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -169,10 +172,12 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
-            'branch:id,name',
             'quoteCustomerPlan',
             'latestInsured',
             'latestInsured.insuredKyc',
+            'branch:id,name',
+            'customer',
+            'passportVisaDetails',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -310,8 +315,21 @@ class SavingsQuoteService extends BaseQuoteService
         $lookUpData = $this->getSavingsQuoteLookUpData();
         $localLookups = $this->getLocalLookups();
 
+        $eligiblePlanCodesRaw = (string) getAppStorageValueByKey(
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES,
+            default: '',
+            useCache: true
+        );
+        $passportEligiblePlanCodes = array_values(array_filter(
+            array_map('trim', explode(',', $eligiblePlanCodesRaw)),
+            static fn (string $code): bool => $code !== ''
+        ));
+
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
+            'ocrEligiblePlanCodes' => [
+                OCRDocumentTypeEnum::PASSPORT->value => $passportEligiblePlanCodes,
+            ],
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,
@@ -697,10 +715,12 @@ class SavingsQuoteService extends BaseQuoteService
             'keyFeatureDocument' => $plan->keyFeatureDocument ?? [],
             'description' => $plan->description ?? '',
             'policyWordings' => $plan->policyWordings ?? [],
+            'fundDetails' => $plan->fundDetails ?? [],
             'actualPremium' => $plan->actualPremium ?? 0,
             'insurerQuoteNo' => $plan->insurerQuoteNo ?? '',
             'isDisabled' => $plan->isDisabled ?? false,
             'isManualUpdate' => $plan->isManualUpdate ?? false,
+            'instantPolicy' => (bool) ($plan->instantPolicy ?? false),
         ];
     }
 
@@ -713,6 +733,51 @@ class SavingsQuoteService extends BaseQuoteService
         $found = collect($eligibility)->firstWhere('code', $code);
 
         return $found ? $found->value : 'N/A';
+    }
+
+    /**
+     * Call KEN to fetch savings provider plan data (e.g. lump sum for Purple Investment).
+     *
+     * @param  array<string, mixed>  $payload  Body for /fetch-savings-provider-plan (quoteUID is set by the controller).
+     * @return array{success: bool, data?: mixed, message?: string, status?: int}
+     */
+    public function fetchSavingsProviderPlan(array $payload): array
+    {
+        LoggerService::info('SavingsQuoteService - fetchSavingsProviderPlan', [
+            'quoteUID' => $payload['quoteUID'] ?? null,
+            'planId' => $payload['planId'] ?? null,
+        ]);
+
+        try {
+            $response = app(KenService::class)->sendRequest('/fetch-savings-provider-plan', 'post', $payload);
+        } catch (ConnectionException $e) {
+            LoggerService::error('SavingsQuoteService - fetchSavingsProviderPlan connection failed', exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'Unable to reach the savings provider service. Please try again later.',
+                'status' => 503,
+            ];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'data' => $response->json()];
+        }
+
+        $json = $response->json();
+        $message = 'Failed to fetch savings provider plan';
+        if (is_array($json)) {
+            $message = $json['message'] ?? $json['msg'] ?? $json['error'] ?? $message;
+            if (! is_string($message)) {
+                $message = 'Failed to fetch savings provider plan';
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => $message,
+            'status' => $response->status(),
+        ];
     }
 
     /**

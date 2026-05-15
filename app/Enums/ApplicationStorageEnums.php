@@ -349,6 +349,9 @@ final class ApplicationStorageEnums extends Enum
     /* Bird EP Workflow URL */
     public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
 
+    /* OCR - Eligible Plan Codes (comma-separated) */
+    public const OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES = 'OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES';
+
     /* EP ECB Policy Configuration */
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';

@@ -236,6 +236,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
     Route::post('quotes/savings/{quoteUuId}/send-oca', [SavingsQuoteController::class, 'sendOCAEmail'])->name('savingsSendOCAEmail');
     Route::post('quotes/savings/{quoteUuId}/savings-plan-manual-process', [SavingsQuoteController::class, 'savingsPlanManualProcess'])->name('savingsPlanManualProcess');
+    Route::post('quotes/savings/{quoteUuId}/fetch-savings-provider-plan', [SavingsQuoteController::class, 'fetchSavingsProviderPlan'])->name('savingsFetchProviderPlan');
     Route::get('personal-quotes/savings/provider-plans/{providerId}', [SavingsQuoteController::class, 'getProviderPlans'])->name('savings-provider-plans');
     Route::get('personal-quotes/savings/riders/{planId}', [SavingsQuoteController::class, 'riders'])->name('savings-plan-riders');
     Route::post('personal-quotes/savings/toggle-savings-plan-visibility', [SavingsQuoteController::class, 'toggleSavingsPlanVisibility'])->name('savings-plan-toggle-visibility');
