@@ -50,11 +50,7 @@ class SyncEpBookingService extends BaseService
 
         $isNotEligible = $isInvalidTransaction || $isCourierEp || ! $isPolicyBooked || ! $isReadyForSage || ! $isPaymentCaptured || $isBookingQueued || $isSageBookingCompleted || $isSageBookingCancelled;
 
-        if ($isNotEligible) {
-            return false;
-        }
-
-        return true;
+        return ! $isNotEligible;
     }
 
     /**
@@ -114,7 +110,7 @@ class SyncEpBookingService extends BaseService
      */
     private function resolveProcessContextOrFailure(array $data): array
     {
-        $validated = $this->buildSyncEpBookingValidatedContext($data);
+        $validated = $this->resolveSyncEpBookingValidatedContextPayload($data);
         if ($validated['message'] !== null) {
             return ['ok' => false, 'message' => $validated['message']];
         }
@@ -135,77 +131,68 @@ class SyncEpBookingService extends BaseService
     }
 
     /**
-     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
-     * @return array{message: string}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
-     */
-    private function buildSyncEpBookingValidatedContext(array $data): array
-    {
-        $payload = $this->resolveSyncEpBookingValidatedContextPayload($data);
-
-        return $payload['message'] !== null
-            ? ['message' => $payload['message']]
-            : [
-                'message' => null,
-                'quote' => $payload['quote'],
-                'transaction' => $payload['transaction'],
-                'ep' => $payload['ep'],
-                'quoteTypeId' => $payload['quoteTypeId'],
-            ];
-    }
-
-    /**
-     * Loads models and runs validation checks in order; on failure the array contains only a string message.
+     * Loads models and runs validation checks in order.
      *
      * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
-     * @return array{message: string}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
      */
     private function resolveSyncEpBookingValidatedContextPayload(array $data): array
     {
-        $payload = $this->buildSyncEpBookingValidatedContextPayload($data);
+        $loaded = $this->loadSyncEpBookingModelsOrFailure($data);
 
-        if ($payload['message'] !== null) {
-            return ['message' => $payload['message']];
+        if ($loaded['message'] !== null) {
+            return $loaded;
+        }
+
+        return $this->finalizeSyncEpBookingValidatedContextPayload($data, $loaded['quote'], $loaded['transaction'], $loaded['ep']);
+    }
+
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct}
+     */
+    private function loadSyncEpBookingModelsOrFailure(array $data): array
+    {
+        $message = $this->syncEpBookingUnauthorizedMessage();
+        $quote = null;
+        $transaction = null;
+        $ep = null;
+
+        if ($message === null) {
+            $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+            if (empty($quote)) {
+                $message = 'Quote not found';
+            }
+        }
+
+        if ($message === null) {
+            $transaction = EmbeddedTransaction::query()
+                ->with('product.embeddedProduct')
+                ->whereKey($data['epTransactionId'])
+                ->first();
+
+            if (! $transaction) {
+                $message = 'Embedded transaction not found';
+            }
+        }
+
+        if ($message === null) {
+            $ep = $transaction->product?->embeddedProduct;
+            if (! $ep) {
+                $message = 'Embedded product not found';
+            }
+        }
+
+        if ($message !== null) {
+            return $this->syncEpBookingValidatedContextFailure($message);
         }
 
         return [
             'message' => null,
-            'quote' => $payload['quote'],
-            'transaction' => $payload['transaction'],
-            'ep' => $payload['ep'],
-            'quoteTypeId' => $payload['quoteTypeId'],
+            'quote' => $quote,
+            'transaction' => $transaction,
+            'ep' => $ep,
         ];
-    }
-
-    /**
-     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
-     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
-     */
-    private function buildSyncEpBookingValidatedContextPayload(array $data): array
-    {
-        if ($message = $this->syncEpBookingUnauthorizedMessage()) {
-            return $this->syncEpBookingValidatedContextFailure($message);
-        }
-
-        $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-        if (empty($quote)) {
-            return $this->syncEpBookingValidatedContextFailure('Quote not found');
-        }
-
-        $transaction = EmbeddedTransaction::query()
-            ->with('product.embeddedProduct')
-            ->whereKey($data['epTransactionId'])
-            ->first();
-
-        if (! $transaction) {
-            return $this->syncEpBookingValidatedContextFailure('Embedded transaction not found');
-        }
-
-        $ep = $transaction->product?->embeddedProduct;
-        if (! $ep) {
-            return $this->syncEpBookingValidatedContextFailure('Embedded product not found');
-        }
-
-        return $this->finalizeSyncEpBookingValidatedContextPayload($data, $quote, $transaction, $ep);
     }
 
     /**
@@ -218,21 +205,24 @@ class SyncEpBookingService extends BaseService
         EmbeddedTransaction $transaction,
         EmbeddedProduct $ep,
     ): array {
+        $message = null;
+        $quoteTypeId = null;
+
         if (! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
-            return $this->syncEpBookingValidatedContextFailure('This embedded product is not eligible for Sage booking retry.');
+            $message = 'This embedded product is not eligible for Sage booking retry.';
+        } elseif ($this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
+            $message = 'Insurance provider mismatch.';
+        } else {
+            $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
+            if ($quoteTypeId === null) {
+                $message = 'Invalid quote type.';
+            } elseif ($this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
+                $message = 'Transaction does not match the selected quote.';
+            }
         }
 
-        if ($this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
-            return $this->syncEpBookingValidatedContextFailure('Insurance provider mismatch.');
-        }
-
-        $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
-        if ($quoteTypeId === null) {
-            return $this->syncEpBookingValidatedContextFailure('Invalid quote type.');
-        }
-
-        if ($this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
-            return $this->syncEpBookingValidatedContextFailure('Transaction does not match the selected quote.');
+        if ($message !== null) {
+            return $this->syncEpBookingValidatedContextFailure($message);
         }
 
         return [
