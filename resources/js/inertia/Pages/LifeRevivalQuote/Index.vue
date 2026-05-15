@@ -49,6 +49,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   insurer_aml_status: [],
+  lead_source: [],
   policy_number: '',
   policy_expiry_date_start: '',
   policy_expiry_date_end: '',
@@ -114,6 +115,114 @@ const currencyOptions = computed(() => {
     label: row.text,
   }));
 });
+
+const leadSourceOptions = computed(() => {
+  return (props.formOptions.leadSources || []).map(row => ({
+    value: row.value,
+    label: row.label,
+  }));
+});
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const notification = useToast();
+const canExport = ref(false);
+const exportLoader = ref(false);
+
+watch(
+  () => filters,
+  () => {
+    if (
+      can(permissionsEnum.DATA_EXTRACTION) &&
+      ((filters.created_at_start && filters.created_at_end) ||
+        (filters.policy_expiry_date_start && filters.policy_expiry_date_end) ||
+        filters.payment_due_date ||
+        filters.booking_date)
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
+const showExportRequirements = () => {
+  notification.error({
+    title:
+      'Created dates, policy expiry dates, payment due date, or booking date are required to export data.',
+    position: 'top',
+  });
+};
+
+const onDataExport = (exportType = 'download') => {
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+
+      return;
+    }
+  }
+
+  filters.exportType = exportType;
+
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'LifeRevival');
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
+    exportType,
+    url: `${url}?${new URLSearchParams(data).toString()}`,
+  };
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result) {
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+      }
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response?.data?.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+      throw err;
+    });
+};
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -291,6 +400,26 @@ const fixedValue = numberString => {
           truncate
           class="w-full"
         />
+        <x-select
+          v-model="filters.lead_source"
+          label="Lead Source"
+          name="lead_source"
+          placeholder="Select Lead Source"
+          :options="leadSourceOptions"
+          filterable
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.lead_source = leadSourceOptions.map(o => o.value)
+              "
+              @clear="filters.lead_source = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-model="filters.policy_number"
           type="search"
@@ -440,7 +569,57 @@ const fixedValue = numberString => {
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div />
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            class="justify-self-start mr-3"
+            :loading="exportLoader"
+            @click.prevent="onDataExport()"
+          >
+            Export
+          </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            class="justify-self-start mr-3"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+          >
+            Export via email
+          </x-button>
+          <x-tooltip v-else placement="right">
+            <div class="inline-flex gap-3">
+              <x-button
+                tag="div"
+                size="sm"
+                color="emerald"
+                class="opacity-50 cursor-not-allowed"
+                @click.prevent="showExportRequirements"
+              >
+                Export
+              </x-button>
+              <x-button
+                tag="div"
+                size="sm"
+                color="emerald"
+                class="opacity-50 cursor-not-allowed"
+                @click.prevent="showExportRequirements"
+              >
+                Export via email
+              </x-button>
+            </div>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
         <div class="flex justify-self-end gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
