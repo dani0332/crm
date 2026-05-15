@@ -17,13 +17,13 @@ class HealthRateControlPublishableRule implements ValidationRule
         $rateControl = HealthRateControl::with('healthPlan.activeRateControl')->find($value);
 
         if (! $rateControl) {
-            $fail('Rate control not found.');
+            $fail('Rate sheet not found.');
 
             return;
         }
 
         if (strtolower($rateControl->status) !== strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value)) {
-            $fail('Rate control must be in draft status to be published.');
+            $fail('Only draft rate sheets can be published.');
 
             return;
         }

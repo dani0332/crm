@@ -72,11 +72,11 @@ class HealthRateController extends Controller
 
     public function publish(PublishHealthRateControlRequest $request): JsonResponse
     {
-        $this->healthRateService->publishRateControl($request->id);
+        $this->healthRateService->publishRateControl($request->id, $request->user_id);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Rate control scheduled successfully. It will be activated on the effective from date.',
+            'message' => 'Rate sheet scheduled successfully. It will be activated on the effective from date.',
         ]);
     }
 }

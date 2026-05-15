@@ -122,9 +122,9 @@ class HealthPlanService extends BaseService
         return HealthPlan::create($data);
     }
 
-    public function publish(int $id): void
+    public function publish(int $id, int $publishedById): void
     {
-        DB::transaction(function () use ($id) {
+        DB::transaction(function () use ($id, $publishedById) {
             $plan = HealthPlan::with('draftRateControl.rates')->find($id);
 
             $plan->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
@@ -137,6 +137,7 @@ class HealthPlanService extends BaseService
 
             $draftRateControl->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
             $draftRateControl->published_at = now()->toDateString();
+            $draftRateControl->published_by_id = $publishedById;
             $draftRateControl->save();
         });
     }

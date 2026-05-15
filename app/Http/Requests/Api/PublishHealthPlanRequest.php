@@ -25,7 +25,7 @@ class PublishHealthPlanRequest extends FormRequest
                 new HealthPlanStatusValidRule('Only draft health plans can be published', [HealthPlanRateSheetStatusEnum::DRAFT->value]),
                 new HealthPlanRateControlPublishableRule,
             ],
-            'published_by_id' => 'bail|required|integer|exists:users,id',
+            'user_id' => 'bail|required|integer|exists:users,id',
         ];
     }
 
@@ -34,7 +34,7 @@ class PublishHealthPlanRequest extends FormRequest
         return [
             'integer' => ':attribute must be an integer',
             'id.exists' => 'Health plan not found',
-            'published_by_id.exists' => 'Publish by user not found',
+            'user_id.exists' => 'Publish by user not found',
         ];
     }
 

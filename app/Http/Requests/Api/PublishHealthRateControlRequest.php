@@ -22,6 +22,7 @@ class PublishHealthRateControlRequest extends FormRequest
                 'integer',
                 new HealthRateControlPublishableRule,
             ],
+            'user_id' => 'bail|required|integer|exists:users,id',
         ];
     }
 
@@ -29,6 +30,7 @@ class PublishHealthRateControlRequest extends FormRequest
     {
         return [
             'id.integer' => 'Id must be an integer',
+            'user_id.exists' => 'Publish by user not found',
         ];
     }
 

@@ -81,7 +81,7 @@ class HealthPlanController extends Controller
 
     public function publish(PublishHealthPlanRequest $request): JsonResponse
     {
-        $this->healthPlanService->publish($request->id);
+        $this->healthPlanService->publish($request->id, $request->user_id);
 
         return response()->json([
             'status' => 'success',
