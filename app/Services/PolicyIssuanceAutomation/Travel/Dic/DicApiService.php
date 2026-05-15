@@ -149,7 +149,7 @@ class DicApiService
                 // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
                 $quote->policy_expiry_date = $policyExpiry;
                 $quote->price_with_vat = $payment->premium_captured;
-                $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5% of the commission amount for DIC
+                $quote->vat = $payment->price_vat_applicable * (0.05); // VAT is 5%
 
                 $payment->update($paymentData);
             }
