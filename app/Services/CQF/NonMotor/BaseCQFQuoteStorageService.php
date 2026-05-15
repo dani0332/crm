@@ -146,10 +146,9 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
                 : null;
         }
 
-        // aml_status_id is NOT NULL on LOB tables; old records may have null (legacy).
-        // Reset to 1 (pending) so AML is re-triggered on the renewal.
+        // Always reset to pending so AML is re-triggered on the renewal quote.
         if (array_key_exists('aml_status_id', $data)) {
-            $data['aml_status_id'] ??= 1;
+            $data['aml_status_id'] = AMLStatusCode::AML_SCREENING_FAILED_ID;
         }
 
         if (array_key_exists('aml_status', $data)) {
