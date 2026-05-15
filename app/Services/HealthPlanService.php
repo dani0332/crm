@@ -125,25 +125,22 @@ class HealthPlanService extends BaseService
     public function publish(int $id): void
     {
         DB::transaction(function () use ($id) {
-            $plan = HealthPlan::find($id);
+            $plan = HealthPlan::with('draftRateControl.rates')->find($id);
 
-            // Update related versions to become child version
-            HealthPlan::where(function ($query) use ($plan) {
-                $query->where('id', $plan->parent_id)
-                    ->orWhere('parent_id', $plan->parent_id);
-            })
-                ->where('id', '!=', $id)
-                ->update([
-                    'status' => HealthPlanRateSheetStatusEnum::ARCHIVED,
-                    'parent_id' => $id,
+            $plan->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
+            $plan->save();
+
+            $draftRateControl = $plan->draftRateControl;
+
+            if ($draftRateControl) {
+                $draftRateControl->rates()->update([
+                    'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
                 ]);
 
-            // Update plan version and status as publish
-            $version = $this->deriveVersion($plan);
-            $plan->version = $version;
-            $plan->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
-            $plan->parent_id = null;
-            $plan->save();
+                $draftRateControl->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
+                $draftRateControl->published_at = now()->toDateString();
+                $draftRateControl->save();
+            }
         });
     }
 

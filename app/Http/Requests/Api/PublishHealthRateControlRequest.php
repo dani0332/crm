@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Rules\HealthPlanRateControlPublishableRule;
-use App\Rules\HealthPlanStatusValidRule;
+use App\Rules\HealthRateControlPublishableRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class PublishHealthPlanRequest extends FormRequest
+class PublishHealthRateControlRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
@@ -21,8 +20,7 @@ class PublishHealthPlanRequest extends FormRequest
             'id' => [
                 'bail',
                 'integer',
-                new HealthPlanStatusValidRule('Only draft health plans can be published'),
-                new HealthPlanRateControlPublishableRule,
+                new HealthRateControlPublishableRule,
             ],
         ];
     }
@@ -31,7 +29,6 @@ class PublishHealthPlanRequest extends FormRequest
     {
         return [
             'id.integer' => 'Id must be an integer',
-            'id.exists' => 'Health plan does not exist',
         ];
     }
 

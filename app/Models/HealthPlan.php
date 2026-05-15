@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class HealthPlan extends Model
 {
@@ -65,5 +66,17 @@ class HealthPlan extends Model
     public function healthRateControls(): HasMany
     {
         return $this->hasMany(HealthRateControl::class, 'health_plan_id');
+    }
+
+    public function draftRateControl(): HasOne
+    {
+        return $this->hasOne(HealthRateControl::class, 'health_plan_id')
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value);
+    }
+
+    public function activeRateControl(): HasOne
+    {
+        return $this->hasOne(HealthRateControl::class, 'health_plan_id')
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value);
     }
 }

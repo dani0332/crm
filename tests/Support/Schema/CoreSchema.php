@@ -29,6 +29,7 @@ class CoreSchema
         $this->ensureSageTables();
         $this->ensureCustomerAdditionalContactTables();
         $this->ensureEPLogsTables();
+        $this->ensureHealthPricingTables();
     }
 
     private function ensureAuditTables(): void
@@ -1385,6 +1386,55 @@ class CoreSchema
                 $table->timestamps();
 
                 $table->index('embedded_transaction_id');
+            },
+        ]);
+    }
+
+    private function ensureHealthPricingTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'health_plan' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->unsignedBigInteger('provider_id')->nullable();
+                $table->string('health_business_type')->nullable();
+                $table->unsignedBigInteger('plan_type_id')->nullable();
+                $table->unsignedBigInteger('health_rating_eligibility_id')->nullable();
+                $table->unsignedBigInteger('health_network_id')->nullable();
+                $table->string('maf_link')->nullable();
+                $table->boolean('is_hidden')->default(0);
+                $table->boolean('is_active')->default(1);
+                $table->string('status')->default('draft');
+                $table->float('version')->default(1.0);
+                $table->unsignedBigInteger('parent_id')->nullable();
+                $table->boolean('cohort_enabled')->default(0);
+                $table->boolean('gender_enabled')->default(0);
+                $table->boolean('marital_status_enabled')->default(0);
+                $table->timestamps();
+            },
+            'health_rates_control' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('health_plan_id');
+                $table->string('status')->default('draft');
+                $table->date('effective_from')->nullable();
+                $table->date('effective_to')->nullable();
+                $table->float('version')->default(1.0);
+                $table->integer('total_records')->default(0);
+                $table->string('file_name')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->date('published_at')->nullable();
+                $table->unsignedBigInteger('published_by')->nullable();
+                $table->timestamps();
+            },
+            'health_rates' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('health_plan_id');
+                $table->unsignedBigInteger('health_rate_control_id');
+                $table->string('status')->default('draft');
+                $table->float('version')->default(1.0);
+                $table->timestamps();
             },
         ]);
     }
