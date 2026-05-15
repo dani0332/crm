@@ -28,8 +28,6 @@ class PassportVisaDetail extends Model
 
     /**
      * Get the parent quoteable model (e.g. PersonalQuote).
-     *
-     * @return MorphTo
      */
     public function quoteable(): MorphTo
     {

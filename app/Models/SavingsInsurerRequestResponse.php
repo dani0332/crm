@@ -7,9 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class SavingsInsurerRequestResponse extends Model
 {
     protected $connection = 'mongodb';
-
     protected $table = 'savings-insurer-request-responses';
-
     protected $casts = ['createdAt' => 'datetime:Y-m-d', 'updatedAt' => 'datetime:Y-m-d'];
 
     public function insuranceProvider()

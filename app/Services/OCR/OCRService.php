@@ -413,8 +413,6 @@ class OCRService
             return false;
         }
 
-
-
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         // Validate document type
