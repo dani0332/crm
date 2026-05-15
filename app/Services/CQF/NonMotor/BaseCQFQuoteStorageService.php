@@ -125,8 +125,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             'assignment_type',
             'renewal_batch_id',
             'previous_quote_policy_number',
-            'previous_policy_start_date',
-            'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'previous_quote_policy_commission',
             'previous_advisor_id',
