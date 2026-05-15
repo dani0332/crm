@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\CohortMapping;
+use App\Models\Lookup;
 
 class CohortMappingService extends BaseService
 {
     public function getAllCohorts(): ?array
     {
-        return CohortMapping::distinct()->pluck('cohort')->toArray();
+        return Lookup::where('key', 'cohort-mapping')->distinct()->pluck('text')->toArray();
     }
 }
