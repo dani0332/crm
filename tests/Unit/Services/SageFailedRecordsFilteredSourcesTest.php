@@ -53,8 +53,7 @@ test('failed leads union subquery stays valid when send update option conflicts 
         'date_to' => '2024-01-31',
     ]);
 
-    expect($sql)->not->toBe('')
-        ->and($sql)->toContain('WHERE 1 = 0');
+    expect($sql)->toContain('WHERE 1 = 0');
 });
 
 test('failed leads union subquery quotes date bounds with PDO for SQL safety', function () {
@@ -84,8 +83,8 @@ test('get filtered sources narrows personal quotes to requested personal quote t
 
     $personal = collect($sources)->first(fn (array $s): bool => ($s['model'] ?? '') === PersonalQuote::class);
 
-    expect($personal)->not->toBeNull()
-        ->and($personal['quote_type_ids'])->toBe([QuoteTypeId::Bike, QuoteTypeId::Home]);
+    expect($personal['quote_type_ids'])
+        ->toBe([QuoteTypeId::Bike, QuoteTypeId::Home]);
 });
 
 test('failed leads union subquery restricts personal_quotes by intersected quote_type_id list', function () {
