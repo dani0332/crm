@@ -284,15 +284,23 @@ trait GenericQueriesAllLobs
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
+
+        $deviceType = isset($record->deviceQuote) ? ($record->deviceQuote?->device_type ?? null) : null;
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
+            $quoteType,
+            $quoteType,
+            $deviceType
+        );
+
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteTypeDisplayLabel, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
-        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
+        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteTypeDisplayLabel);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
         $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
@@ -314,7 +322,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel) {
+        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel || $bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Device) {
             $payments = $payments->map(function ($payment) use ($quoteType, $record) {
                 $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
                 $payment->isCreditCardEnabled = $tapPaymentConfiguration['isCreditCardEnabled'];
@@ -334,6 +342,8 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
             $bookPolicyDetails['sendButton'] = true;
             $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['missingDocumentCodes'] = $areSendPolicyDocsUploaded['missingDocumentCodes'];
+            $bookPolicyDetails['missingDocuments'] = $areSendPolicyDocsUploaded['missingDocuments'];
             $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
             if ($bookPolicyDetails['sendButton']) {
@@ -342,7 +352,6 @@ trait GenericQueriesAllLobs
                 if ($taxDocumentsCount == count($taxDocuments)) {
                     $bookPolicyDetails['editButton'] = true;
                     $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-
                     if ($areBookingDetailsFilled) {
                         $isMainLead = $this->checkMainLead($record, $quoteType);
                         if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
@@ -876,7 +885,7 @@ trait GenericQueriesAllLobs
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $record?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
@@ -959,10 +968,15 @@ trait GenericQueriesAllLobs
             return null;
         }
 
-        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
-            ->orWhere('code', $nationality)
-            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
-            ->first();
+        $cacheKey = 'customer_verification_nationality_'.md5(strtolower($nationality));
+        $nationalityRecord = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
+            return Nationality::whereAny(
+                ['text', 'country_name'],
+                'LIKE',
+                "%{$nationality}%"
+            )->orWhere('code', $nationality)
+                ->first(['id']);
+        });
 
         return $nationalityRecord?->id;
     }

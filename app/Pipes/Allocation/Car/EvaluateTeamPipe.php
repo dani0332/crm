@@ -44,6 +44,11 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 'isPUA' => $lead->isPUA(),
                 'sicAdvisorRequested' => $lead->sic_advisor_requested,
             ]);
+        } elseif ($lead->isRevivalCommsIntentHighOrMedium()) {
+            $teamName = TeamNameEnum::ORGANIC;
+            LoggerService::info('Lead is a Revival lead and has intent high or medium. Assigning to Organic team.', [
+                'engagement_level' => $lead->carQuoteRequestDetail?->engagement_level,
+            ]);
         } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested() && ! in_array($lead->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');

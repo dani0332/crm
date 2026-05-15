@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { notifyGmQuoteEmirateUpdated } from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
 import KYCDetails from './KYCDetails.vue';
@@ -21,6 +22,10 @@ const props = defineProps({
     default: () => ({}),
   },
   isAddionalFieldsEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  isEmirateOfRegistrationLocked: {
     type: Boolean,
     default: false,
   },
@@ -225,6 +230,7 @@ const screeningFormDetails = useForm({
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
+    quoteRequest.emirate_of_registration_id ??
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
   lead_source: quoteRequest.source,
   insurance_provider_code:
@@ -706,6 +712,15 @@ const submitScreeningForm = isValid => {
         }
       },
       onSuccess: response => {
+        if (
+          page.props.quoteType.code === page.props.quoteTypeCodeEnum.Business
+        ) {
+          notifyGmQuoteEmirateUpdated({
+            quoteUuid: quoteRequest.uuid,
+            quoteId: quoteRequest.id,
+            source: 'aml-screening-modal',
+          });
+        }
         if (response.props.flash.success?.length === 0) {
           notification.success({
             title: 'Quote is updated',
@@ -1022,8 +1037,43 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :error="screeningFormDetails.errors.industry_type_code"
           />
         </x-field>
-        <x-field label="Emirates of Registration" required>
+        <div>
+          <h4 class="text-gray-700 text-sm font-medium mb-1">
+            <x-tooltip placement="bottom">
+              <span
+                class="underline decoration-dotted decoration-primary-600 cursor-help"
+              >
+                Emirates of Registration
+              </span>
+              <template #tooltip>
+                Editing this will update the Entity Profile and may alter
+                available plans, premiums, and branch assignment.
+              </template>
+            </x-tooltip>
+            <sup class="text-red-500">*</sup>
+          </h4>
+          <x-tooltip
+            v-if="isEmirateOfRegistrationLocked"
+            placement="top"
+            class="block w-full"
+          >
+            <x-select
+              v-model="screeningFormDetails.emirate_of_registration_id"
+              :options="emiratesOfRegistrationOptions"
+              placeholder="Emirates of Registration"
+              disabled
+              type="text"
+              class="w-full"
+              :rules="[isRequired]"
+              :error="screeningFormDetails.errors.emirate_of_registration_id"
+            />
+            <template #tooltip>
+              Emirate of registration cannot be changed after the policy is
+              booked.
+            </template>
+          </x-tooltip>
           <x-select
+            v-else
             v-model="screeningFormDetails.emirate_of_registration_id"
             :options="emiratesOfRegistrationOptions"
             placeholder="Emirates of Registration"
@@ -1032,7 +1082,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :rules="[isRequired]"
             :error="screeningFormDetails.errors.emirate_of_registration_id"
           />
-        </x-field>
+        </div>
       </template>
     </dl>
     <x-divider

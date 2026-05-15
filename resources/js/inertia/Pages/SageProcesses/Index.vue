@@ -2,7 +2,10 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 import { router, usePage, Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
-import { useDateTimeFormat } from '@/inertia/Composables/utilities';
+import { SEND_UPDATE_LOG_MODEL_TYPE } from '@/inertia/Composables/useSageProcessRefId';
+import SageFailedProcessEpRefIdCell from '@/inertia/Components/SageProcesses/SageFailedProcessEpRefIdCell.vue';
+import SageFailedProcessRefIdCell from '@/inertia/Components/SageProcesses/SageFailedProcessRefIdCell.vue';
+
 const { copy, copied } = useClipboard();
 
 const props = defineProps({
@@ -17,8 +20,6 @@ const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const SEND_UPDATE_LOG_MODEL_TYPE = 'App\\Models\\SendUpdateLog';
-
 const loader = reactive({
   table: false,
   export: false,
@@ -26,9 +27,10 @@ const loader = reactive({
 
 // Table headers
 const tableHeader = computed(() => [
-  { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
+  { text: 'Sage Log ID', value: 'id', width: 40, sortable: true },
   { text: 'REF ID', value: 'ref_id', width: 150, sortable: true },
   { text: 'SU Ref ID', value: 'su_ref_id', width: 150, sortable: true },
+  { text: 'EP Ref ID', value: 'ep_ref_id', width: 150, sortable: true },
   {
     text: 'Lead Create Date',
     value: 'lead_create_date',
@@ -108,7 +110,12 @@ const tableHeader = computed(() => [
     width: 180,
     sortable: true,
   },
-  { text: 'Sage Proc. Status', value: 'status', width: 60, sortable: true },
+  {
+    text: 'Sage API Status',
+    value: 'sage_api_status',
+    width: 60,
+    sortable: true,
+  },
   { text: 'Failed Sage API', value: 'failed_api', width: 120, sortable: false },
   {
     text: 'Failed API Error',
@@ -125,13 +132,38 @@ const tableHeader = computed(() => [
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
 
+function formatLocalYmd(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function serializeFilterDate(value) {
+  if (value === null || value === undefined || value === '') {
+    return value;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatLocalYmd(value);
+  }
+  return value;
+}
+
+const today = new Date();
+const defaultDateFrom = formatLocalYmd(
+  new Date(today.getFullYear(), today.getMonth(), 1),
+);
+const defaultDateTo = formatLocalYmd(
+  new Date(today.getFullYear(), today.getMonth() + 1, 0),
+);
+
 // Available filters
 const availableFilters = reactive({
   insurance_provider_id: props.filters?.insurance_provider_id || [],
   quote_type_id: props.filters?.quote_type_id || [],
   option: props.filters?.option || '',
-  date_from: props.filters?.date_from || '',
-  date_to: props.filters?.date_to || '',
+  date_from: props.filters?.date_from || defaultDateFrom,
+  date_to: props.filters?.date_to || defaultDateTo,
   page: props.failedProcesses?.current_page || 1,
 });
 
@@ -207,6 +239,8 @@ function onSubmit() {
     method: 'get',
     data: {
       ...availableFilters,
+      date_from: serializeFilterDate(availableFilters.date_from),
+      date_to: serializeFilterDate(availableFilters.date_to),
     },
     preserveState: true,
     preserveScroll: true,
@@ -226,20 +260,6 @@ function clearFilters() {
   router.visit(route('sage-failed-processes.index'));
 }
 
-function getDetailPageRoute(item) {
-  const sageRequest = JSON.parse(item?.request);
-  let quoteTypeId = sageRequest?.sagePayload?.quoteTypeId;
-  if (item.model?.status) {
-    return route('send-update.show', item.model?.uuid);
-  } else {
-    return useGetShowPageRoute(
-      item.model?.uuid,
-      quoteTypeId,
-      item.model?.business_type_of_insurance_id,
-    );
-  }
-}
-
 // Export to Excel
 async function exportExcel() {
   try {
@@ -251,6 +271,8 @@ async function exportExcel() {
     const response = await axios.get(exportURL, {
       params: {
         ...availableFilters,
+        date_from: serializeFilterDate(availableFilters.date_from),
+        date_to: serializeFilterDate(availableFilters.date_to),
       },
       responseType: 'blob',
     });
@@ -292,7 +314,9 @@ async function exportExcel() {
 
 <template>
   <div>
-    <Head :title="'Failed Sage Processes'" />
+    <Head>
+      <title>Failed Sage Processes</title>
+    </Head>
     <div class="flex justify-between items-center">
       <x-form @submit="onSubmit" :auto-focus="false" class="w-full mt-4 py-4">
         <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -378,28 +402,25 @@ async function exportExcel() {
     >
       <!-- REF ID Column - Main Lead -->
       <template #item-ref_id="item">
-        <Link
-          v-if="item.model?.code || item.model?.personal_quote?.code"
-          :href="getDetailPageRoute(item)"
-          class="text-primary-500 hover:underline"
-        >
-          <span>{{
-            item.model?.personal_quote?.code || item.model?.code
-          }}</span>
-        </Link>
-        <span v-else>N/A</span>
+        <SageFailedProcessRefIdCell :item="item" />
       </template>
 
       <!-- SU Ref ID Column - Send Update -->
       <template #item-su_ref_id="item">
         <Link
-          v-if="item.model_type === SEND_UPDATE_LOG_MODEL_TYPE"
-          :href="getDetailPageRoute(item)"
+          v-if="
+            item.model_type === SEND_UPDATE_LOG_MODEL_TYPE && item.model?.uuid
+          "
+          :href="route('send-update.show', item.model.uuid)"
           class="text-primary-500 hover:underline"
         >
           <span>{{ item.model?.code }}</span>
         </Link>
         <span v-else>N/A</span>
+      </template>
+
+      <template #item-ep_ref_id="item">
+        <SageFailedProcessEpRefIdCell :item="item" />
       </template>
 
       <!-- Lead Create Date Column -->
@@ -502,7 +523,7 @@ async function exportExcel() {
 
       <!-- Payment Date -->
       <template #item-payment_date="item">
-        <span>{{ item.model?.payments?.[0]?.captured_at }}</span>
+        <span>{{ item.model?.payments?.[0]?.captured_at ?? 'N/A' }}</span>
       </template>
 
       <!-- Payment Status -->
@@ -547,22 +568,28 @@ async function exportExcel() {
 
       <!-- Sage Receipt ID -->
       <template #item-sage_receipt_id="item">
-        <span>{{ item.collected_sage_receipt_ids || 'N/A' }}</span>
+        <span class="whitespace-pre-line">{{
+          item.model?.payments?.[0]?.collected_sage_receipt_ids
+            ?.split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .join(',\n') || 'N/A'
+        }}</span>
       </template>
 
       <!-- Sage Status Column -->
-      <template #item-status="{ status }">
-        <span>{{ status ? status.toUpperCase() : 'N/A' }}</span>
+      <template #item-sage_api_status="item">
+        <span>{{
+          item.sage_api_status ? item.sage_api_status.toUpperCase() : 'N/A'
+        }}</span>
       </template>
 
       <!-- Failed Sage API Endpoint -->
       <template #item-failed_api="item">
-        <div v-if="item.model?.sage_api_logs?.[0]?.sage_end_point">
-          {{ truncate(item.model?.sage_api_logs[0]?.sage_end_point, 50) }}
+        <div v-if="item.failed_api">
+          {{ truncate(item.failed_api, 50) }}
           <x-icon
-            @click.prevent="
-              copyToClipboard(item.model?.sage_api_logs[0]?.sage_end_point)
-            "
+            @click.prevent="copyToClipboard(item.failed_api)"
             icon="copy"
             class="text-primary cursor-pointer"
             size="md"
@@ -575,12 +602,10 @@ async function exportExcel() {
 
       <!-- Failed API Error -->
       <template #item-failed_error="item">
-        <div v-if="item.model?.sage_api_logs?.[0]?.response">
-          {{ truncate(item.model?.sage_api_logs[0]?.response, 80) }}
+        <div v-if="item.failed_error">
+          {{ truncate(item.failed_error, 80) }}
           <x-icon
-            @click.prevent="
-              copyToClipboard(item.model?.sage_api_logs[0]?.response)
-            "
+            @click.prevent="copyToClipboard(item.failed_error)"
             icon="copy"
             class="text-primary cursor-pointer"
             size="md"

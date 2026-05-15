@@ -307,6 +307,42 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             ->and($codes)->not->toContain('DOC_NOT_RECEIVE');
     });
 
+    test('getQuoteDocumentsToReceive excludes restricted internal document types', function () {
+        DocumentType::factory()->create([
+            'code' => 'DOC_PUBLIC_RECEIVE',
+            'text' => 'Public receive document',
+            'is_active' => 1,
+            'receive_from_customer' => 1,
+            'quote_type_id' => QuoteTypeId::CompanyCar,
+            'registration_type' => null,
+            'vehicle_use' => null,
+            'sort_order' => 1,
+            'is_restricted_internal_document' => 0,
+        ]);
+
+        DocumentType::factory()->create([
+            'code' => 'DOC_RESTRICTED_RECEIVE',
+            'text' => 'Restricted internal document',
+            'is_active' => 1,
+            'receive_from_customer' => 1,
+            'quote_type_id' => QuoteTypeId::CompanyCar,
+            'registration_type' => null,
+            'vehicle_use' => null,
+            'sort_order' => 2,
+            'is_restricted_internal_document' => 1,
+        ]);
+
+        $documents = $this->service->getQuoteDocumentsToReceive(
+            QuoteTypeId::CompanyCar,
+            null,
+            null
+        );
+
+        $codes = $documents->pluck('code')->toArray();
+        expect($codes)->toContain('DOC_PUBLIC_RECEIVE')
+            ->and($codes)->not->toContain('DOC_RESTRICTED_RECEIVE');
+    });
+
     test('getQuoteDocumentsToReceive returns documents sorted by sort_order', function () {
         // Create documents with different sort orders
         DocumentType::factory()->create([

@@ -19,6 +19,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -39,6 +40,7 @@ use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CyberQuote;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -56,7 +58,6 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
@@ -106,6 +107,7 @@ class AMLService
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'), // Need to confirm because, no need to check migrated data for life quotes
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'), // Need to confirm because, no need to check migrated data for savings quotes
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::DEVICE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
@@ -126,6 +128,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::DEVICE->id() => $quoteRequestId,
             QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
@@ -146,6 +149,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::DEVICE->id() => DeviceQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::CYBER->id() => CyberQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
@@ -279,6 +283,13 @@ class AMLService
                 'personal_quote' => true,
                 'relations' => array_merge($commonRelations, [
                     'savingsQuote',
+                ]),
+            ],
+            QuoteTypes::getId(QuoteTypes::DEVICE) => [
+                'model' => PersonalQuote::class,
+                'personal_quote' => true,
+                'relations' => array_merge($commonRelations, [
+                    'deviceQuote',
                 ]),
             ],
             QuoteTypes::getId(QuoteTypes::CYBER) => [
@@ -1490,15 +1501,6 @@ class AMLService
                 $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
                 LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
 
-                QuoteStatusLog::create([
-                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
-                    'quote_request_id' => $skipBridgerScreeningRequest->quote_request_id,
-                    'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                    'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
-
                 $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
                 $quoteDetails->save();
 
@@ -1626,7 +1628,7 @@ class AMLService
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
 
-        $insured = $this->createOrUpdateInsured($request, $isEntity);
+        $insured = $this->createOrUpdateInsured($request, $isEntity, $quoteTypeId, $quote);
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
 
         $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
@@ -1641,7 +1643,7 @@ class AMLService
         return [$shouldApplicableForScreening, $insured, $entityId];
     }
 
-    private function createOrUpdateInsured($request, bool $isEntity): Insured
+    private function createOrUpdateInsured($request, bool $isEntity, $quoteTypeId, $quote): Insured
     {
         if ($isEntity) {
             LoggerService::info('Entity Details', extra: [
@@ -1653,17 +1655,38 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
 
-            $insured = Insured::updateOrCreate([
-                'customer_type' => CustomerTypeEnum::Entity,
-                'id_type' => $request->screening_id_type,
-                'id_number' => $request->screening_id_number,
-            ], [
+            $insuredData = [
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
                 'trade_license_no' => $request->screening_id_number,
-            ]);
+            ];
+
+            if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+                if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                    if ($quote->isPolicyBooked()) {
+                        // Do not take emirate from the request (it may be empty or stale for booked policies).
+                        // If we unset, updateOrCreate creates a new insured with emirate = null when no row matches.
+                        // Carrying the quote's value keeps the insured row aligned for both update and first insert.
+                        $insuredData['emirate_of_registration_id'] = $quote->emirate_of_registration_id;
+                        LoggerService::info('Entity Details', extra: [
+                            'id_type' => $request->screening_id_type,
+                            'id_number' => $request->screening_id_number,
+                            'company_name' => $request->company_name,
+                            'company_address' => $request->company_address,
+                            'policy_booked' => true,
+                            'industry_type_code' => $request->industry_type_code,
+                            'emirate_of_registration_id' => $insuredData['emirate_of_registration_id'],
+                        ]);
+                    }
+                }
+            }
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Entity,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
+            ], $insuredData);
         } else {
             // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
@@ -1876,29 +1899,56 @@ class AMLService
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
-
-        $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
-        $entity->fill($entityData);
-
-        if (! $entity->exists) {
-            $entity->save();
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
-        } elseif ($entity->isDirty()) {
-            $entity->save();
+        if ($quoteTypeId == QuoteTypeId::Business && $quote instanceof BusinessQuote) {
+            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                if ($quote->isPolicyBooked()) {
+                    unset($entityData['emirate_of_registration_id']);
+                }
+            }
         }
 
-        $entity->refresh();
+        $persistEntityAndMapping = function () use ($request, $quoteTypeId, $quote, $entityData): int {
+            if (isset($entityData['emirate_of_registration_id'])
+                && $quoteTypeId == QuoteTypeId::Business
+                && $quote instanceof BusinessQuote
+                && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $quote->emirate_of_registration_id = $entityData['emirate_of_registration_id'];
+                $quote->save();
+            }
 
-        QuoteRequestEntityMapping::updateOrCreate([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ], [
-            'entity_id' => $entity->id,
-            'entity_type_code' => $request->entity_type_code,
-        ]);
+            LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
-        return $entity->id;
+            $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
+            $entity->fill($entityData);
+
+            if (! $entity->exists) {
+                $entity->save();
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            } elseif ($entity->isDirty()) {
+                $entity->save();
+            }
+
+            $entity->refresh();
+
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ], [
+                'entity_id' => $entity->id,
+                'entity_type_code' => $request->entity_type_code,
+            ]);
+
+            return $entity->id;
+        };
+
+        // Avoid nesting DB::transaction when callers (e.g. customer profile / AML flows) already
+        // hold a transaction: a nested transaction uses a savepoint, so a failure here can roll
+        // back only this block while the outer work still commits, leaving BQR/entity/lead inconsistent.
+        if (DB::transactionLevel() === 0) {
+            return DB::transaction($persistEntityAndMapping);
+        }
+
+        return $persistEntityAndMapping();
     }
 
     private function updateCustomerData($request): void
@@ -2336,6 +2386,7 @@ class AMLService
             14 => 'PetQuote', // QuoteTypes::PET
             15 => 'YachtQuote', // QuoteTypes::YACHT
             16 => 'HomeQuote', // QuoteTypes::HOME
+            20 => 'DeviceQuote', // QuoteTypes::DEVICE
         ];
 
         $nonPersonalMapping = [

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -50,6 +51,11 @@ class DocumentType extends Model implements AuditableContract
         $query->where('is_active', 1);
     }
 
+    public function scopeNotRestrictedInternalDocument(Builder $query): Builder
+    {
+        return $query->where('is_restricted_internal_document', 0);
+    }
+
     public function scopeSortDocumentType($query)
     {
         $query->orderBy('is_required', 'desc')->orderBy('text', 'asc');
@@ -67,7 +73,7 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeTaxDocument($query)
     {
-        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
+        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER])->issuingDocument()->active();
     }
 
     public function scopeRequiredForSendPolicy($query)
@@ -77,7 +83,7 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeSendToCustomer($query)
     {
-        $query->whereNotIn('code', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
+        $query->whereNotIn('code', [DocumentTypeCode::CTIRBB, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER])->where('send_to_customer', 1)->active();
     }
 
     public function scopeByBusinessTypeOfInsurance($query, $businessTypeOfInsurance)

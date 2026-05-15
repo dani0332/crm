@@ -7,7 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\HomeQuote;
 use Illuminate\Support\Str;
 
-class HomeAllocation extends BaseAllocation
+class HomeAllocationOld extends BaseAllocation
 {
     private const CONTENTS_VALUE_THRESHOLD = 100000;
     private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 100000;

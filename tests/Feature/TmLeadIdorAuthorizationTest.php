@@ -2,7 +2,7 @@
 
 use App\Enums\RolesEnum;
 use App\Http\Controllers\TmLeadController;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Services\TMLeadsService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,7 @@ use Tests\Support\Schema\SchemaUtils;
  */
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
     ensureTmLeadsTableExists();
 });
 

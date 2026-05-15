@@ -42,6 +42,7 @@ use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\KenService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -210,7 +211,16 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
-
+            ->when(
+                request()->input('segment_filter') !== QuoteSegmentEnum::SIC_REVIVAL->value,
+                function ($query): void {
+                    $query->where(function ($inner): void {
+                        $inner->whereNotIn('personal_quotes.source', LifeRevivalService::REVIVAL_SOURCES)
+                            ->orWhereNull('personal_quotes.source');
+                    });
+                }
+            )
+            ->filterBySegment(request()->input('segment_filter'), QuoteTypeId::Life)
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 

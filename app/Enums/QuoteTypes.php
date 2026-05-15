@@ -5,6 +5,7 @@ namespace App\Enums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -15,6 +16,7 @@ use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
@@ -39,6 +41,7 @@ use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\DeviceAllocation;
 use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
@@ -70,8 +73,10 @@ enum QuoteTypes: string
     case GROUP_MEDICAL = 'Group Medical';
     case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
+    case LIFE_REVIVAL = 'LifeRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
+    case DEVICE = 'Device';
     case CYBER = 'Cyber';
     case CAR_CAT_A = 'CAR_CAT_A';
 
@@ -97,6 +102,7 @@ enum QuoteTypes: string
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
             QuoteTypes::SAVINGS => 18,
+            QuoteTypes::DEVICE => 20,
             QuoteTypes::CYBER => 19,
             default => null,
         };
@@ -120,6 +126,7 @@ enum QuoteTypes: string
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
             19 => QuoteTypes::CYBER,
+            20 => QuoteTypes::DEVICE,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -148,6 +155,7 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             'Savings' => QuoteTypes::SAVINGS,
+            'Device' => QuoteTypes::DEVICE,
             'Cyber' => QuoteTypes::CYBER,
             default => null,
         };
@@ -170,6 +178,7 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
+            self::DEVICE => checkPersonalQuotes($this->value) ? new PersonalQuote : new DeviceQuote,
             self::CYBER => new PersonalQuote,
             default => new PersonalQuote,
         };
@@ -203,6 +212,7 @@ enum QuoteTypes: string
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
             self::HOME => SendHomeOCBIntroEmailJob::class,
             self::CYBER => SendCyberOCBIntroEmailJob::class,
+            self::DEVICE => SendDeviceOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -224,7 +234,7 @@ enum QuoteTypes: string
             self::CAR, self::CAR_REVIVAL, self::CAR_BIKE => 'CAR-',
             self::HOME => 'HOM-',
             self::HEALTH => 'HEA-',
-            self::LIFE => 'LIF-',
+            self::LIFE, self::LIFE_REVIVAL => 'LIF-',
             self::BUSINESS, self::GROUP_MEDICAL, self::CORPLINE, self::AMT => 'BUS-',
             self::BIKE => 'BIK-',
             self::YACHT => 'YAC-',
@@ -233,6 +243,7 @@ enum QuoteTypes: string
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
+            self::DEVICE => 'DEV-',
             self::CYBER => 'CYB-',
             default => null,
         };
@@ -253,6 +264,7 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
+            'DEV' => self::DEVICE,
             'CYB' => self::CYBER,
         ];
 
@@ -278,6 +290,7 @@ enum QuoteTypes: string
             self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
             self::SAVINGS => route('savings-quotes-show', $uuid),
+            self::DEVICE => route('device-quotes-show', $uuid),
             self::CYBER => route('cyber-quotes-show', $uuid),
         };
     }
@@ -309,6 +322,7 @@ enum QuoteTypes: string
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::CYBER => new CyberAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::DEVICE => new DeviceAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
@@ -338,15 +352,11 @@ enum QuoteTypes: string
             self::CYBER => [RolesEnum::CyberAdvisor],
             self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             self::JETSKI => [RolesEnum::JetskiAdvisor],
+            self::DEVICE => [RolesEnum::SmartPhoneAdvisor],
             default => [],
         };
     }
 
-    /**
-     * Get the primary LOB types used for role-based filtering and reporting.
-     *
-     * @return array<self>
-     */
     public static function primaryTypes(): array
     {
         return [
@@ -362,7 +372,29 @@ enum QuoteTypes: string
             self::CYCLE,
             self::JETSKI,
             self::SAVINGS,
+            self::CYBER,
         ];
+    }
+
+    public static function primaryTypesWithIds(): array
+    {
+        $options = [];
+
+        foreach (self::primaryTypes() as $quoteType) {
+            $id = self::getId($quoteType);
+            if ($id === null) {
+                continue;
+            }
+
+            $options[] = [
+                'id' => $id,
+                'text' => $quoteType->value,
+            ];
+        }
+
+        usort($options, static fn (array $a, array $b): int => strcasecmp($a['text'], $b['text']));
+
+        return $options;
     }
 
     /**
@@ -480,10 +512,29 @@ enum QuoteTypes: string
     {
         return match ($this) {
             self::BUSINESS => [
-                self::CORPLINE,
-                self::GROUP_MEDICAL,
+                TeamsEnum::CORPLINE,
+                TeamsEnum::GROUP_MEDICAL,
+            ],
+            self::DEVICE => [
+                TeamsEnum::DEVICE_INSURANCE,
+            ],
+            self::CYBER => [
+                TeamsEnum::CYBER_INSURANCE,
             ],
             default => [$this],
+        };
+    }
+
+    /**
+     * Resolve the QuoteType enum for a given team name.
+     */
+    public static function getQuoteTypesFromTeamName(string $teamName)
+    {
+        return match ($teamName) {
+            TeamsEnum::DEVICE_INSURANCE->value => [
+                self::DEVICE,
+            ],
+            default => [$teamName],
         };
     }
 
@@ -507,6 +558,7 @@ enum QuoteTypes: string
             self::CYCLE => CycleQuote::class,
             self::JETSKI => JetskiQuote::class,
             self::SAVINGS => SavingsQuote::class,
+            self::DEVICE => DeviceQuote::class,
             default => PersonalQuote::class,
         };
     }

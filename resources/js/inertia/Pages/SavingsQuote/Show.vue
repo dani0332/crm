@@ -1,10 +1,10 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 import { onMounted, reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -71,7 +71,6 @@ const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const hasRole = role => useHasRole(role);
@@ -1239,7 +1238,11 @@ const handlePlanSelected = plan => {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
 

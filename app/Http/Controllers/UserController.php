@@ -6,6 +6,7 @@ use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
@@ -389,7 +390,7 @@ class UserController extends Controller
                         if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                             $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
                         } else {
-                            $quoteTypeName = $type->name;
+                            $quoteTypeName = TeamNameEnum::getQuoteTypeValue($type->name);
                         }
                         $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
                         if (! empty($quoteTypeId)) {

@@ -24,6 +24,7 @@ use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -40,8 +41,16 @@ class HealthQuoteObserver
 
     public function updating(HealthQuote $quote): void
     {
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+        if ($quote->isDirty('quote_status_id')) {
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                QuoteTypeId::Health,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
+
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 

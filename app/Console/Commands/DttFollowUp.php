@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJobOld;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -13,12 +13,14 @@ use Illuminate\Support\Facades\Bus;
 
 class DttFollowUp extends Command
 {
+    private const LEGACY_FOLLOW_UP_CUTOFF_DATE = '2026-04-29';
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'Dtt:followup';
+    protected $signature = 'Dtt:followup {--date= : Anchor date (Y-m-d) for follow-up windows; defaults to now when omitted}';
 
     /**
      * The console command description.
@@ -52,11 +54,20 @@ class DttFollowUp extends Command
                 return Command::SUCCESS;
             }
 
-            $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
-            $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
-            $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
-            $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
-            $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
+            $dateOption = $this->option('date');
+            $carbon = filled($dateOption)
+                ? Carbon::parse((string) $dateOption)->startOfDay()
+                : Carbon::now();
+
+            $followUpAnchorDate = filled($dateOption)
+                ? Carbon::parse((string) $dateOption)->toDateString()
+                : null;
+
+            $twoDaysBefore = $carbon->copy()->subDays(2)->toDateString();
+            $sevenDaysBefore = $carbon->copy()->subDays(7)->toDateString();
+            $thirteenDaysBefore = $carbon->copy()->subDays(13)->toDateString();
+            $twentyDaysBefore = $carbon->copy()->subDays(20)->toDateString();
+            $twentyEightDaysBefore = $carbon->copy()->subDays(28)->toDateString();
 
             $logPrefix = 'carRevivalFollowUpEmailJob -';
 
@@ -71,12 +82,14 @@ class DttFollowUp extends Command
                 $q->orWhereDate('created_at', '=', $twentyDaysBefore);
                 $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
             })
+                ->whereDate('created_at', '<=', self::LEGACY_FOLLOW_UP_CUTOFF_DATE)
                 ->where('reply_received', 0)
                 ->select('id', 'uuid') // Only select needed fields to reduce memory usage
-                ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
+                ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter, $followUpAnchorDate) {
                     foreach ($unreplied as $item) {
                         // Pass only the ID to avoid serialization issues with full model
-                        $jobs[] = (new CarRevivalFollowUpEmailJob($item->id))->delay(now()->addSeconds(10 + $delayCounter));
+                        $jobs[] = (new CarRevivalFollowUpEmailJobOld($item->id, $followUpAnchorDate))
+                            ->delay(now()->addSeconds(10 + $delayCounter));
                         $delayCounter += 10;
                     }
                 });
