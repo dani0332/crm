@@ -22,6 +22,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Helpers\SyncEpBookingHelper;
 use App\Jobs\EP\CancelEPJob;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpSendDocumentJob;
@@ -47,7 +48,6 @@ use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SyncEpBookingService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -483,7 +483,7 @@ class EmbeddedProductRepository extends BaseRepository
             return false;
         }
 
-        return app(SyncEpBookingService::class)->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep);
+        return SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep);
     }
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)

@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EmbeddedProductEnum;
-use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\SageEmbeddedProductEnum;
+use App\Helpers\SyncEpBookingHelper;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
@@ -32,25 +28,6 @@ class SyncEpBookingService extends BaseService
         protected SageApiEmbeddedProductService $sageApiEmbeddedProductService
     ) {
         parent::__construct();
-    }
-
-    /**
-     * Eligibility for manual "Sync EP Booking" retry (EP Admin, all API-integrated EP LOBs except courier).
-     */
-    public function isTransactionEligibleForManualSageBookingRetry(?EmbeddedTransaction $transaction, mixed $quote, ?EmbeddedProduct $ep): bool
-    {
-        $isInvalidTransaction = ! $transaction || ! $quote || ! $ep;
-        $isCourierEp = $ep?->short_code === EmbeddedProductEnum::COURIER;
-        $isPolicyBooked = (int) $quote?->quote_status_id === QuoteStatusEnum::PolicyBooked;
-        $isReadyForSage = $transaction?->policy_status === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
-        $isPaymentCaptured = (int) $transaction?->payment_status_id === PaymentStatusEnum::CAPTURED;
-        $isBookingQueued = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_QUEUED->id();
-        $isSageBookingCompleted = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_COMPLETED->id();
-        $isSageBookingCancelled = (int) $transaction?->sage_status_id === SageEmbeddedProductEnum::BOOKING_CANCELLED->id();
-
-        $isNotEligible = $isInvalidTransaction || $isCourierEp || ! $isPolicyBooked || ! $isReadyForSage || ! $isPaymentCaptured || $isBookingQueued || $isSageBookingCompleted || $isSageBookingCancelled;
-
-        return ! $isNotEligible;
     }
 
     /**
@@ -208,7 +185,7 @@ class SyncEpBookingService extends BaseService
         $message = null;
         $quoteTypeId = null;
 
-        if (! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
+        if (! SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
             $message = 'This embedded product is not eligible for Sage booking retry.';
         } elseif ($this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
             $message = 'Insurance provider mismatch.';
