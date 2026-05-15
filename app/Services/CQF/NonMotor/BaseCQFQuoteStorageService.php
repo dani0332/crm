@@ -146,12 +146,6 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
                 : null;
         }
 
-        // Always reset to pending so AML is re-triggered on the renewal quote.
-        if (array_key_exists('aml_status_id', $data)) {
-            $data['aml_status_id'] = AMLStatusCode::AML_PENDING_ID;
-
-        }
-
         if (array_key_exists('aml_status', $data)) {
             $data['aml_status'] = AMLStatusCode::AMLPending;
         }
