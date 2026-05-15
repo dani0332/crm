@@ -61,10 +61,13 @@ class TestDataSeeder
         }
 
         // Assign role
+        $now = now();
         $db->table('model_has_roles')->insertOrIgnore([
             'role_id' => $roleId,
             'model_type' => User::class,
             'model_id' => $user->id,
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         return $user;
@@ -224,10 +227,13 @@ class TestDataSeeder
             ]);
         }
 
+        $now = now();
         $db->table('model_has_roles')->insertOrIgnore([
             'role_id' => $roleId,
             'model_type' => User::class,
             'model_id' => $user->id,
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         // In app, Admin users are expected to pass permission middleware checks.

@@ -20,7 +20,8 @@ class PqaLeadAllocationService
      */
     public function syncPqaAllocationConfig(int $userId, object $data): bool
     {
-        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId === QuoteTypes::BUSINESS->id()) {
+
+        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $existing = PqaLeadAllocationConfig::query()
                 ->where('user_id', $userId)
                 ->where('quote_type_id', $data->quoteTypeId)

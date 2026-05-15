@@ -408,7 +408,6 @@ class UserController extends Controller
                                 app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                             }
                             if ($user->hasAnyRole([RolesEnum::PreQualificationAdvisor])) {
-
                                 app(PqaLeadAllocationService::class)->syncPqaAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                             }
                         }
