@@ -130,8 +130,8 @@ class DicApiService
         DB::transaction(function () use ($quote, $body, $startDate, $dicPercentage, $commissionInvoiceDate): void {
             $payment = $quote->payments()->mainLeadPayment()->first();
             $policyExpiry = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
-            $vat = $payment->total_price - $payment->price_vat_applicable;
             if ($payment !== null) {
+                $vat = $payment->total_price - $payment->price_vat_applicable;
                 $paymentData = [
                     'commission_vat_applicable' => data_get($body, 'additionalDetails.commission_excluding_vat'),
                     'commission_vat' => $vat,
