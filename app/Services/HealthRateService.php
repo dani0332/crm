@@ -325,10 +325,17 @@ class HealthRateService extends BaseService
     public function publishRateControl(int $rateControlId, int $publishedById): void
     {
         DB::transaction(function () use ($rateControlId, $publishedById) {
-            $rateControl = HealthRateControl::find($rateControlId);
+            $rateControl = HealthRateControl::with('healthPlan')->find($rateControlId);
 
             if (! $rateControl) {
                 return;
+            }
+
+            // Check it associated plan is draft, if so, make it scheduled
+            $plan = $rateControl->healthPlan;
+            if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+                $plan->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
+                $plan->save();
             }
 
             $rateControl->rates()->update([
