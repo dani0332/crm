@@ -559,7 +559,6 @@ class SendUpdateLogRepository extends BaseRepository
                     'quote_status_id' => $quoteStatusId,
                     'quote_status_date' => now(),
                 ]);
-
             }
         } catch (\Exception $ex) {
             LoggerService::error('Error while updating Quote status', exception: $ex);

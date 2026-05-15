@@ -64,10 +64,6 @@ class DeviceAllocation implements Allocation
                     'uuid' => $this->uuid,
                     'message' => $e->getMessage(),
                 ]);
-            } else {
-                LoggerService::error(self::class.' - Exception occurred in Device allocation pipeline', extra: [
-                    'uuid' => $this->uuid,
-                ], exception: $e);
             }
 
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);

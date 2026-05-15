@@ -24,7 +24,6 @@ beforeEach(function (): void {
             $table->unsignedBigInteger('current_quote_status_id')->nullable();
             $table->unsignedBigInteger('previous_quote_status_id')->nullable();
             $table->string('status_change_source')->nullable();
-            $table->unsignedBigInteger('send_update_log_id')->nullable();
             $table->text('notes')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('personal_quote_id')->nullable();

@@ -1878,7 +1878,7 @@ class CentralService extends BaseService
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
                         DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
-                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
+                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE, DocumentTypeCode::TCOMP_PC,
                     ]);
                 })->first();
 
@@ -1981,7 +1981,8 @@ class CentralService extends BaseService
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
                 $scheduleDocumentTypeCodes = [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic,
+                    DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS, DocumentTypeCode::TCOMP_PS,
                 ];
 
                 return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
