@@ -19,6 +19,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Services\SageApiService;
 use Carbon\Carbon;
 use stdClass;
 
@@ -508,9 +509,10 @@ class SagePayloadFactory
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $bookingDate;
             } else {
-                $dueDate = date('Y-m-d', strtotime($item->due_date));
                 if ($item->sr_no == 1) {
                     $dueDate = $bookingDate;
+                } else {
+                    $dueDate = app(SageApiService::class)->resolveInstallmentDueDateAgainstBookingDate($item->due_date, $bookingDate);
                 }
             }
 

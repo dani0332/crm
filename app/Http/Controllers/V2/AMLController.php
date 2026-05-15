@@ -12,7 +12,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -24,6 +23,7 @@ use App\Exports\AmlCftReportExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\AutomateQuoteAmlScreeningRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
@@ -37,7 +37,6 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\KycLog;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteStatus;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -223,7 +222,7 @@ class AMLController extends Controller
         LoggerService::info('IM AML Screening Process Started');
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
-        $isAutomation = $AMLCheckRequest->is_automation ?? false;
+        $isAutomation = $AMLCheckRequest->isTrustedInternalAutomation();
         $processbyUser = $isAutomation ? $systemUser : FacadesAuth::user();
 
         if ($updateQuote) {
@@ -423,15 +422,6 @@ class AMLController extends Controller
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
             if (in_array($quoteTypeId, $quoteTypeIds)) {
                 $quoteDetails->stale_at = null;
             }
@@ -445,15 +435,6 @@ class AMLController extends Controller
             }
             // info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared - Ref-ID: '.$quoteDetails->code);
         } else {
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
@@ -883,5 +864,24 @@ class AMLController extends Controller
                 'message' => 'Unable to toggle policy issuance automation, Please try again later.',
             ], 500);
         }
+    }
+
+    /**
+     * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
+     */
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+            $validated['quoteUuid'],
+            $validated['quoteType'],
+        );
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'data' => $result['data'] ?? null,
+        ], $result['http_status']);
     }
 }

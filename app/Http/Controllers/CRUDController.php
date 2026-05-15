@@ -1280,6 +1280,7 @@ class CRUDController extends Controller
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
                     'hasPecTag' => $hasPecTag,
+                    'canBypassPlanLock' => $this->healthQuoteService->canBypassPlanLock($record, $payments),
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
@@ -2119,14 +2120,6 @@ class CRUDController extends Controller
         $leadHistory = $this->crudService->getLeadAuditHistory($request->modelType, $request->recordId);
 
         return $leadHistory;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getLeadHistoryLogs(Request $request)
-    {
-        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->recordId);
     }
 
     public function searchLead(Request $request)

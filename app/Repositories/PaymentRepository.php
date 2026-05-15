@@ -22,7 +22,6 @@ use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
@@ -576,7 +575,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         ]);
         if ($request->send_update_id > 0) {
             LoggerService::info("Updating send update status logs for quote ID: {$quoteModel->id}");
-            app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
             $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
         } else {
             LoggerService::info("Updating quote status to TransactionDeclined for main lead quote ID: {$quoteModel->id}");

@@ -6,7 +6,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -149,8 +148,6 @@ class SendUpdateToCustomerJob implements ShouldQueue
             'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             'status_code' => $response,
         ]);
-
-        app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
 
         $sendUpdateLog->update([
             'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
