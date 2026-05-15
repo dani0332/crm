@@ -25,6 +25,7 @@ class CalculateOrderTotal  { public function execute(Order $order): float { } }
 ```
 
 Flag these SRP violations specifically:
+
 - A model with complex business-logic methods (move to Actions)
 - A job that also contains data transformation logic (extract to a dedicated class)
 - A controller that calls multiple services and assembles a response manually (extract to an Action)
@@ -86,6 +87,7 @@ All public methods on new classes must declare parameter types and return types.
 Flag logic that appears more than once across the diff. Every piece of knowledge must have a single authoritative representation.
 
 **Duplicated query constraints** — extract to a local scope:
+
 ```php
 // Bad — same WHERE clause in three controllers
 User::where('status', 'active')->where('verified', true)->get();
@@ -95,6 +97,7 @@ User::active()->verified()->get();
 ```
 
 **Duplicated validation rules across Form Requests** — extract shared rules to a base class or trait:
+
 ```php
 // Bad — same address rules copy-pasted into ShippingRequest and BillingRequest
 // Good
@@ -112,6 +115,7 @@ trait HasAddressRules
 ```
 
 **Duplicated conditional logic** — extract to a method, helper, or value object:
+
 ```php
 // Bad — same if-chain in a controller and a job
 if ($order->status === 'pending' && $order->created_at->diffInHours() > 24) { ... }
@@ -127,6 +131,7 @@ DRY violations to flag at **High** severity when the duplicated logic contains b
 ## PHP 8 Syntax
 
 Flag old-style patterns when PHP 8+ equivalents exist:
+
 - `isset($x) ? $x : $default` → `$x ?? $default`
 - `is_null($x)` → `$x === null`
 - String concatenation for multi-part strings → `sprintf()` or interpolation

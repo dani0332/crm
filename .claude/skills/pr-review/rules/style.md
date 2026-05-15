@@ -2,14 +2,14 @@
 
 ## Naming Conventions
 
-| Entity | Convention | Example |
-|--------|-----------|---------|
-| Classes, Models, Controllers | PascalCase | `OrderController`, `UserPolicy` |
-| Methods, variables | camelCase | `$isActive`, `placeOrder()` |
-| Database columns, migrations | snake_case | `created_at`, `user_id` |
-| Routes (URL slugs) | kebab-case | `/payment-methods` |
-| Config keys | snake_case | `retry_after` |
-| Constants | SCREAMING_SNAKE_CASE | `MAX_RETRY_ATTEMPTS` |
+| Entity                       | Convention           | Example                         |
+| ---------------------------- | -------------------- | ------------------------------- |
+| Classes, Models, Controllers | PascalCase           | `OrderController`, `UserPolicy` |
+| Methods, variables           | camelCase            | `$isActive`, `placeOrder()`     |
+| Database columns, migrations | snake_case           | `created_at`, `user_id`         |
+| Routes (URL slugs)           | kebab-case           | `/payment-methods`              |
+| Config keys                  | snake_case           | `retry_after`                   |
+| Constants                    | SCREAMING_SNAKE_CASE | `MAX_RETRY_ATTEMPTS`            |
 
 Flag deviations from these conventions in new or changed code.
 
@@ -26,6 +26,7 @@ $deliveryDate, $apiResponse, $currentUser, $processedPayload
 ```
 
 Also flag boolean names that don't read as questions:
+
 ```php
 // Bad
 $discount(), $cache
@@ -39,6 +40,7 @@ $isRegisteredForDiscounts, $shouldCache
 Hardcoded string literals scattered through business logic are untrackable and error-prone. Flag any static string that represents a domain concept, status, type, or constant value.
 
 **Status / type literals → PHP 8.1 Enums:**
+
 ```php
 // Bad
 if ($order->status === 'pending') { }
@@ -50,6 +52,7 @@ Order::where('status', OrderStatus::Active)->get();
 ```
 
 **Queue / event / channel names → constants or config:**
+
 ```php
 // Bad
 dispatch(new ProcessOrder($order))->onQueue('high-priority');
@@ -60,6 +63,7 @@ dispatch(new ProcessOrder($order))->onQueue(config('queue.priorities.high'));
 ```
 
 **Error / success messages → lang files:**
+
 ```php
 // Bad
 return response()->json(['message' => 'Order placed successfully.'], 201);
@@ -69,6 +73,7 @@ return response()->json(['message' => __('orders.placed')], 201);
 ```
 
 **Repeated numeric thresholds → named constants or config:**
+
 ```php
 // Bad
 if ($cart->total > 500) { $cart->applyFreeShipping(); }
@@ -83,16 +88,16 @@ Severity: **High** when the literal is a domain status value used across multipl
 
 Flag raw PHP functions when a Laravel helper exists:
 
-| Raw PHP | Laravel equivalent |
-|---------|-------------------|
-| `strlen($str)` | `Str::length($str)` |
-| `strtolower($str)` | `Str::lower($str)` |
-| `implode(',', $arr)` | `collect($arr)->implode(',')` |
-| `array_map(fn, $arr)` | `collect($arr)->map(fn)` |
+| Raw PHP               | Laravel equivalent            |
+| --------------------- | ----------------------------- |
+| `strlen($str)`        | `Str::length($str)`           |
+| `strtolower($str)`    | `Str::lower($str)`            |
+| `implode(',', $arr)`  | `collect($arr)->implode(',')` |
+| `array_map(fn, $arr)` | `collect($arr)->map(fn)`      |
 
 ## Comments
 
-Flag comments that describe *what* the code does — well-named code is self-documenting. Only comments explaining *why* (a non-obvious constraint, a workaround) are acceptable.
+Flag comments that describe _what_ the code does — well-named code is self-documenting. Only comments explaining _why_ (a non-obvious constraint, a workaround) are acceptable.
 
 Flag multi-line comment blocks on new code unless they document a public API or a genuinely complex algorithm.
 

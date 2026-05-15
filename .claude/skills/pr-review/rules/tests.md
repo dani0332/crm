@@ -3,6 +3,7 @@
 ## Coverage Requirement
 
 Every PR that adds or changes public behavior must include tests. Flag PRs with:
+
 - New controller actions without feature tests
 - New jobs without tests covering the `handle()` and `failed()` paths
 - New validation rules without tests for valid and invalid cases

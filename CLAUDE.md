@@ -189,6 +189,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Inertia + Vue
 
 Vue components must have a single root element.
+
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
