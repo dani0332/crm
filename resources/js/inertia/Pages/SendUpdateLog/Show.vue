@@ -676,7 +676,9 @@ const sectionExpanded = computed(() => true);
                     <dd>
                       <x-select
                         size="xs"
-                        :disabled="!state.edit || isUpdateBooked || isSubtypeLocked"
+                        :disabled="
+                          !state.edit || isUpdateBooked || isSubtypeLocked
+                        "
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
                         class="w-3/4"
