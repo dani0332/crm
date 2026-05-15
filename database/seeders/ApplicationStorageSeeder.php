@@ -1880,6 +1880,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedDttLifeEnabled(): void
