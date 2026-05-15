@@ -161,65 +161,101 @@ class SyncEpBookingService extends BaseService
      */
     private function resolveSyncEpBookingValidatedContextPayload(array $data): array
     {
-        $errorMessage = $this->syncEpBookingUnauthorizedMessage();
-        $quote = null;
-        $transaction = null;
-        $ep = null;
-        $quoteTypeId = null;
+        $payload = $this->buildSyncEpBookingValidatedContextPayload($data);
 
-        if ($errorMessage === null) {
-            $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-            if (empty($quote)) {
-                $errorMessage = 'Quote not found';
-            }
+        if ($payload['message'] !== null) {
+            return ['message' => $payload['message']];
         }
 
-        if ($errorMessage === null) {
-            $transaction = EmbeddedTransaction::query()
-                ->with('product.embeddedProduct')
-                ->whereKey($data['epTransactionId'])
-                ->first();
+        return [
+            'message' => null,
+            'quote' => $payload['quote'],
+            'transaction' => $payload['transaction'],
+            'ep' => $payload['ep'],
+            'quoteTypeId' => $payload['quoteTypeId'],
+        ];
+    }
 
-            if (! $transaction) {
-                $errorMessage = 'Embedded transaction not found';
-            }
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     */
+    private function buildSyncEpBookingValidatedContextPayload(array $data): array
+    {
+        if ($message = $this->syncEpBookingUnauthorizedMessage()) {
+            return $this->syncEpBookingValidatedContextFailure($message);
         }
 
-        if ($errorMessage === null) {
-            $ep = $transaction->product?->embeddedProduct;
-            if (! $ep) {
-                $errorMessage = 'Embedded product not found';
-            }
+        $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        if (empty($quote)) {
+            return $this->syncEpBookingValidatedContextFailure('Quote not found');
         }
 
-        if ($errorMessage === null && ! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
-            $errorMessage = 'This embedded product is not eligible for Sage booking retry.';
+        $transaction = EmbeddedTransaction::query()
+            ->with('product.embeddedProduct')
+            ->whereKey($data['epTransactionId'])
+            ->first();
+
+        if (! $transaction) {
+            return $this->syncEpBookingValidatedContextFailure('Embedded transaction not found');
         }
 
-        if ($errorMessage === null && $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
-            $errorMessage = 'Insurance provider mismatch.';
+        $ep = $transaction->product?->embeddedProduct;
+        if (! $ep) {
+            return $this->syncEpBookingValidatedContextFailure('Embedded product not found');
         }
 
-        if ($errorMessage === null) {
-            $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
-            if ($quoteTypeId === null) {
-                $errorMessage = 'Invalid quote type.';
-            }
+        return $this->finalizeSyncEpBookingValidatedContextPayload($data, $quote, $transaction, $ep);
+    }
+
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     */
+    private function finalizeSyncEpBookingValidatedContextPayload(
+        array $data,
+        object $quote,
+        EmbeddedTransaction $transaction,
+        EmbeddedProduct $ep,
+    ): array {
+        if (! $this->isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
+            return $this->syncEpBookingValidatedContextFailure('This embedded product is not eligible for Sage booking retry.');
         }
 
-        if ($errorMessage === null && $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
-            $errorMessage = 'Transaction does not match the selected quote.';
+        if ($this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
+            return $this->syncEpBookingValidatedContextFailure('Insurance provider mismatch.');
         }
 
-        return $errorMessage !== null
-            ? ['message' => $errorMessage]
-            : [
-                'message' => null,
-                'quote' => $quote,
-                'transaction' => $transaction,
-                'ep' => $ep,
-                'quoteTypeId' => $quoteTypeId,
-            ];
+        $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
+        if ($quoteTypeId === null) {
+            return $this->syncEpBookingValidatedContextFailure('Invalid quote type.');
+        }
+
+        if ($this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
+            return $this->syncEpBookingValidatedContextFailure('Transaction does not match the selected quote.');
+        }
+
+        return [
+            'message' => null,
+            'quote' => $quote,
+            'transaction' => $transaction,
+            'ep' => $ep,
+            'quoteTypeId' => $quoteTypeId,
+        ];
+    }
+
+    /**
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}
+     */
+    private function syncEpBookingValidatedContextFailure(string $message): array
+    {
+        return [
+            'message' => $message,
+            'quote' => null,
+            'transaction' => null,
+            'ep' => null,
+            'quoteTypeId' => null,
+        ];
     }
 
     private function syncEpBookingUnauthorizedMessage(): ?string
