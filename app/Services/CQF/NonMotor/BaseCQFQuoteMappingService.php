@@ -114,7 +114,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', $this->getQuoteType()->shortCode());
 
-        $payment = $quote->payments->first() ?? $this->resolveLobPayment($quote);
+        $payment = $quote->payments?->first() ?? $this->resolveLobPayment($quote);
 
         $quoteData = [
             'customer_id' => $quote->customer_id,
@@ -165,7 +165,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
     {
         $quote->loadMissing('payments');
 
-        $payment = $quote->payments->first() ?? $this->resolveLobPayment($quote);
+        $payment = $quote->payments?->first() ?? $this->resolveLobPayment($quote);
 
         $base = [
             'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
