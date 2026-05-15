@@ -8,6 +8,7 @@ use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\SageEmbeddedProductEnum;
+use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
