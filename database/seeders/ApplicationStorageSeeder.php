@@ -182,6 +182,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMotorRevivalWorkflow();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedDttLifeEnabled();
+        $this->seedOcrPlanValidation();
     }
 
     private function livaCarAutomationSeed()
@@ -1907,6 +1908,20 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+    }
+
+    private function seedOcrPlanValidation()
+    {
+        /** For sukoon purple API */
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
+            [
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ],
         );
     }
