@@ -66,27 +66,27 @@ trait SendsEpFailureEmail
      */
     protected function sendEpFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix, bool $isSageBooking = false): void
     {
-        $transaction = EmbeddedTransaction::find($etId);
+        try {
+            $transaction = EmbeddedTransaction::find($etId);
 
-        if ($isSageBooking) {
-            if ($transaction && ! empty($transaction->sage_booking_failure_email_sent_at)) {
-                LoggerService::info("{$logPrefix} Sage booking EP failure email already sent, skipping", extra: [
+            if ($isSageBooking) {
+                if ($transaction && ! empty($transaction->sage_booking_failure_email_sent_at)) {
+                    LoggerService::info("{$logPrefix} Sage booking EP failure email already sent, skipping", extra: [
+                        'etId' => $etId,
+                        'sage_booking_failure_email_sent_at' => $transaction->sage_booking_failure_email_sent_at,
+                    ]);
+
+                    return;
+                }
+            } elseif ($transaction && ! empty($transaction->failure_email_sent_at)) {
+                LoggerService::info("{$logPrefix} EP failure email already sent, skipping", extra: [
                     'etId' => $etId,
-                    'sage_booking_failure_email_sent_at' => $transaction->sage_booking_failure_email_sent_at,
+                    'failure_email_sent_at' => $transaction->failure_email_sent_at,
                 ]);
 
                 return;
             }
-        } elseif ($transaction && ! empty($transaction->failure_email_sent_at)) {
-            LoggerService::info("{$logPrefix} EP failure email already sent, skipping", extra: [
-                'etId' => $etId,
-                'failure_email_sent_at' => $transaction->failure_email_sent_at,
-            ]);
 
-            return;
-        }
-
-        try {
             Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId, $isSageBooking));
 
             $timestampColumn = $isSageBooking ? 'sage_booking_failure_email_sent_at' : 'failure_email_sent_at';
@@ -102,6 +102,7 @@ trait SendsEpFailureEmail
         } catch (Throwable $e) {
             LoggerService::error("{$logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage(), extra: [
                 'etId' => $etId,
+                'isSageBooking' => $isSageBooking,
             ]);
         }
     }
