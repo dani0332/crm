@@ -1687,8 +1687,10 @@ class SagePayloadFactory
         $reversePayLoad->Invoices[$invoiceIndex]->DueDate = $bookingDate;
         $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $bookingDate;
 
-        if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules[0])) {
-            $reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules[0]->DueDate = $bookingDate;
+        if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules)) {
+            foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $schedule) {
+                $schedule->DueDate = $bookingDate;
+            }
         }
 
         return $reversePayLoad;
@@ -1705,13 +1707,9 @@ class SagePayloadFactory
         $reversePayLoad->Invoices[$invoiceIndex]->DueDate = $bookingDate;
         $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $bookingDate;
 
-        // Update InvoicePaymentSchedules DueDate only, keeping amounts the same
         if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules) && is_array($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules)) {
-            $newPaymentSchedules = self::createPaymentSchedules($paymentSplits, $bookingDate);
-            foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $index => $schedule) {
-                if (isset($newPaymentSchedules[$index])) {
-                    $schedule->DueDate = $newPaymentSchedules[$index]['DueDate'];
-                }
+            foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $schedule) {
+                $schedule->DueDate = $bookingDate;
             }
         }
 
