@@ -32,6 +32,8 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -44,9 +46,24 @@ class AdvisorConversionReportService extends BaseService
 
     public function getReportData($request)
     {
+        $builder = $this->getReportQueryBuilder($request);
+        if ($builder === null) {
+            return collect();
+        }
+
+        LoggerService::sql(self::class.' - Advisor Conversion Report Query', $builder);
+
+        return $this->mapAdvisorConversionQueryResults(collect($builder->get()));
+    }
+
+    /**
+     * Base SQL for advisor conversion and reports that extend it (e.g. conversion optimization export chunking).
+     */
+    public function getReportQueryBuilder($request): ?Builder
+    {
         $lob = $request->lob ?? '';
         if (empty($lob)) {
-            return [];
+            return null;
         }
 
         $filters = [
@@ -78,18 +95,21 @@ class AdvisorConversionReportService extends BaseService
 
         if ($lob === quoteTypeCode::Car) {
             $query = $this->getCarQuoteQuery($lob);
-            $query = $this->applyFiltersForCar($query, $filters);
-        } else {
-            $query = $this->getPersonsalQuoteQuery($lob);
-            $query = $this->applyFilters($query, $filters);
+
+            return $this->applyFiltersForCar($query, $filters);
         }
 
-        LoggerService::sql(self::class.' - Advisor Conversion Report Query', $query);
+        $query = $this->getPersonsalQuoteQuery($lob);
 
-        $query = $query->get();
+        return $this->applyFilters($query, $filters);
+    }
 
-        // map operation to calculate gross and net conversions of records
-        return $query->map(function ($row) {
+    /**
+     * Apply net/gross conversion fields to aggregated advisor-batch rows (same logic as legacy inline map).
+     */
+    public function mapAdvisorConversionQueryResults(Collection $rows): Collection
+    {
+        return $rows->map(function ($row) {
             $netDenominator = $row->total_leads - $row->bad_leads;
             $grossDenominator = $row->total_leads;
             $row->net_conversion = (float) $netDenominator > 0 ? round(($row->sale_leads / $netDenominator) * 100, 2) : 0;
@@ -418,6 +438,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_CONVERSION_REPORT,
             quoteTypeCode::CYBER => PermissionsEnum::CYBER_CONVERSION_REPORT,
+            quoteTypeCode::Device => PermissionsEnum::DEVICE_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

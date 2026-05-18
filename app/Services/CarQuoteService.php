@@ -9,7 +9,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -19,9 +18,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
@@ -32,9 +28,9 @@ use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\RenewalQuoteProcess;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
@@ -44,6 +40,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\OCRTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -625,6 +623,8 @@ class CarQuoteService extends BaseService
                 'vdd.driver_eid_number',
                 'vdd.driver_gender',
                 'cqrd.is_update_quote_ready',
+                'cqrd.engagement_level',
+                DB::raw('DATE_FORMAT(cqrd.engagement_level_updated_at, "%d-%m-%Y %H:%i:%s") as engagement_level_updated_at'),
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -1224,21 +1224,12 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
-        }
-
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
-            'quote_id' => $carQuote->id,
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
@@ -1261,6 +1252,10 @@ class CarQuoteService extends BaseService
                     'file_name' => $pdf['name'],
                 ];
             }
+        }
+
+        if ($latestUpdateRenewalQuoteProcess && $latestUpdateRenewalQuoteProcess->data) {
+            $carQuote->isTransitionableLead = $isTransitionableLead;
         }
 
         $carQuote->plans = $plans;
@@ -1306,7 +1301,7 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             LoggerService::info('Calling KEN get-car-quote-plans to update plans', ['quote_uuid' => $quoteUuId, 'data' => $plansDataArr]);
@@ -1332,14 +1327,14 @@ class CarQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
 
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if (strpos($contents, 'Genesis') !== false) {
-                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false || strpos($contents, 'Phoenix') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Transition Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             } else {
                 LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             }
@@ -1840,7 +1835,7 @@ class CarQuoteService extends BaseService
             // If sub_source_id is provided, validate sub_source_options_id based on available options
             if (! empty($request->sub_source_id) && is_numeric($request->sub_source_id)) {
                 // Check if the selected sub-source has child options
-                $subSource = \App\Models\Lookup::with('childs')->find($request->sub_source_id);
+                $subSource = Lookup::with('childs')->find($request->sub_source_id);
                 if ($subSource && $subSource->childs && $subSource->childs->count() > 0) {
                     $validationArray['sub_source_options_id'] = 'required|integer|exists:lookups,id';
                 }
@@ -2106,7 +2101,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2249,7 +2244,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2366,7 +2361,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RuleTypeEnum;
 use App\Models\LeadSource;
 use App\Models\QuoteType;
 use App\Models\RuleDetail;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,13 +20,22 @@ class RuleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        if ($user === null) {
+            return false;
+        }
+
+        return match ($this->route()?->getName()) {
+            'rule.store' => $user->can(PermissionsEnum::RULE_CONFIG_CREATE),
+            'rule.update' => $user->can(PermissionsEnum::RULE_CONFIG_UPDATE),
+            default => false,
+        };
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

@@ -19,6 +19,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Services\SageApiService;
 use Carbon\Carbon;
 use stdClass;
 
@@ -27,7 +28,7 @@ class SagePayloadFactory
     public static function instanceData()
     {
         return (object) [
-            'sage_api_date_format' => env('SAGE_300_API_DATE_FORMAT'),
+            'sage_api_date_format' => config('constants.SAGE_300_API_DATE_FORMAT'),
         ];
     }
 
@@ -400,7 +401,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -508,9 +509,10 @@ class SagePayloadFactory
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $bookingDate;
             } else {
-                $dueDate = date('Y-m-d', strtotime($item->due_date));
                 if ($item->sr_no == 1) {
                     $dueDate = $bookingDate;
+                } else {
+                    $dueDate = app(SageApiService::class)->resolveInstallmentDueDateAgainstBookingDate($item->due_date, $bookingDate);
                 }
             }
 
@@ -1167,7 +1169,7 @@ class SagePayloadFactory
         }
 
         $sageRequest->policyNumber = $policyNumber;
-        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(config('constants.DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequest;
     }
@@ -1212,20 +1214,20 @@ class SagePayloadFactory
         $sageRequest->quoteRefId = $personalQuote?->code ?? '';
         $sageRequest->userId = auth()->id();
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
-        $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(config('constants.DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
 
         // For EP Reversal, use send update's booking date instead of main lead's policy booking date
         if (isset($extras['isEPReversal']) && $extras['isEPReversal'] && $extras['sendUpdateLog']) {
-            $sageRequest->bookingDate = $extras['sendUpdateLog']?->booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
-            $sageRequest->policyBookingDate = $extras['sendUpdateLog']?->booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+            $sageRequest->bookingDate = $extras['sendUpdateLog']?->booking_date ? date(config('constants.DATE_FORMAT_ONLY'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
+            $sageRequest->policyBookingDate = $extras['sendUpdateLog']?->booking_date ? date(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
         }
 
-        $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
-        $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
+        $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
+        $sageRequest->insurerInvoiceDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
-            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
+            $sageRequest->paymentDueDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
         }
 
         $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';

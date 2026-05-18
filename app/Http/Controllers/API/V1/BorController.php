@@ -12,6 +12,7 @@ use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -31,7 +32,7 @@ class BorController extends Controller
      * This function is only used to get uploaded documents for a BOR log for frontend display
      *
      * @param  string  $borRefId
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getBorLog($borRefId)
     {

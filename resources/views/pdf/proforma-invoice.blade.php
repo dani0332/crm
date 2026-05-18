@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+@inject('userService', \App\Services\UserService::class)
 <html lang="en">
 
 <head>
@@ -525,9 +526,9 @@
             <td class="text-left left-column">UAE Central Bank Registration number 85</td>
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
-                @if($advisor?->profile_photo_path)
+                @if(($advisorPhotoDataUri = $userService->profilePhotoDataUriForPdf($advisor?->profile_photo_path)))
                     <img class="im-logo"
-                         src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                         src="{{ $advisorPhotoDataUri }}" alt="" />
                 @endif
 
             </td>

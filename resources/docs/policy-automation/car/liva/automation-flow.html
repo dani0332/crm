@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liva Car - Automation Flow Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #805ad5;
+      }
+
+      .section h3 {
+        color: #805ad5;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .step-card {
+        background: #f8f9fa;
+        border-left: 5px solid #805ad5;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .step-card h4 {
+        color: #805ad5;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .step-number {
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #f8f9fa;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .info-box {
+        background: #ede9fe;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .info-box strong {
+        color: #805ad5;
+      }
+
+      .warning-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .success-box {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .back-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+      }
+
+      .back-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .flow-diagram {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: center;
+        border: 2px dashed #805ad5;
+      }
+
+      ul.process-steps {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      ul.process-steps li {
+        padding: 10px 0;
+        padding-left: 30px;
+        position: relative;
+      }
+
+      ul.process-steps li:before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #805ad5;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/liva/index.html">Liva (RSA)</a>
+        <span>></span>
+        <span>Automation Flow</span>
+      </div>
+
+      <div class="header">
+        <h1>🔄 Liva Car Insurance - Automation Flow</h1>
+        <p>Detailed step-by-step workflow documentation</p>
+      </div>
+
+      <div class="section">
+        <h2>💳 Pre-Automation Payment Capture</h2>
+        <div
+          class="info-box"
+          style="
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-left-color: #10b981;
+          "
+        >
+          <h4 style="color: #065f46; margin-top: 0; margin-bottom: 15px">
+            🔑 Critical Prerequisite Step
+          </h4>
+          <p style="color: #065f46; margin-bottom: 15px; line-height: 1.7">
+            <strong>Auto-capture is a mandatory prerequisite</strong> that
+            executes <strong>BEFORE</strong> the automation workflow begins.
+            Payment must be successfully captured before automation can proceed.
+          </p>
+          <h4 style="color: #065f46; margin-top: 20px; margin-bottom: 10px">
+            Payment Flow
+          </h4>
+          <ol style="color: #065f46; padding-left: 25px; line-height: 1.8">
+            <li><strong>Customer pays online</strong> → Payment authorized</li>
+            <li>
+              <strong>Background job processes</strong> →
+              <code>CcPaymentProcess</code> handles split payment approval
+            </li>
+            <li>
+              <strong>Auto-capture executes</strong> →
+              <code>SplitPaymentService->processSplitPaymentApprove()</code>
+              calls <code>CRUDService->capturePayment()</code>
+            </li>
+            <li>
+              <strong>Marshall API call</strong> → Creates
+              <code>PaymentAction</code> record with
+              <code>action_type: 'CAPTURE'</code> and <code>amount</code>
+            </li>
+            <li>
+              <strong>Success path:</strong> If capture succeeds → Automation
+              workflow scheduled via
+              <code>createPolicyIssuanceAutomation()</code>
+            </li>
+            <li>
+              <strong>Failure path:</strong> If capture fails →
+              <code>handleAutomationError()</code> sets
+              <code>insurer_api_status_id</code> to
+              <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team
+            </li>
+          </ol>
+          <h4 style="color: #065f46; margin-top: 20px; margin-bottom: 10px">
+            Implementation Details
+          </h4>
+          <ul style="color: #065f46; padding-left: 25px; line-height: 1.8">
+            <li>
+              <strong>Code Location:</strong>
+              <code>SplitPaymentService.php</code> lines 770-792, 1475-1487
+            </li>
+            <li>
+              <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+              between retries
+            </li>
+            <li>
+              <strong>Provider Support:</strong> Currently implemented for GIG
+              (AXA) and potentially other providers
+            </li>
+            <li>
+              <strong>Failure Handling:</strong> If capture fails, automation is
+              prevented from starting and quote is allocated for manual handling
+            </li>
+          </ul>
+          <p
+            style="
+              color: #065f46;
+              margin-top: 15px;
+              margin-bottom: 0;
+              font-weight: 600;
+            "
+          >
+            ⚠️ <strong>Important:</strong> This explains why documentation
+            refers to "pre-captured" payments - the payment is already captured
+            before any automation steps execute.
+          </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📋 Overview</h2>
+        <p>
+          The Liva Car Insurance Automation follows a sequential 4-step
+          workflow. Each step must complete successfully before proceeding to
+          the next. The system maintains state through the
+          <strong>PolicyIssuance</strong> model, allowing resume from the last
+          completed step on retry.
+        </p>
+
+        <div class="flow-diagram">
+          <p><strong>Complete Automation Flow</strong></p>
+          <p style="margin-top: 20px; font-size: 1.1em">
+            Auto-Capture Payment → OAuth Token → Step 1: Upload Documents → Step
+            2: Issue Policy → Step 3: Upload Policy Documents → Step 4: Book
+            Policy → Complete
+          </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔐 Pre-requisites: OAuth Authentication</h2>
+        <p>
+          Before executing any step, the system retrieves an OAuth 2.0 access
+          token. The token is cached in Redis to minimize API calls.
+        </p>
+
+        <div class="step-card">
+          <h4>
+            <span class="step-number">🔑</span>
+            OAuth Token Retrieval
+          </h4>
+          <ul class="process-steps">
+            <li>Check Redis cache for existing token</li>
+            <li>If token exists and valid, use cached token</li>
+            <li>If token missing/expired, request new token from Liva API</li>
+            <li>Cache token in Redis with expiration time</li>
+            <li>Set authentication headers for subsequent API calls</li>
+          </ul>
+
+          <div class="info-box">
+            <strong>Token Endpoint:</strong>
+            <code>POST {LIVA_API_BASE_URL}/auth-token</code><br />
+            <strong>Grant Type:</strong> client_credentials<br />
+            <strong>Cache Duration:</strong> Based on expires_in from API
+            response (default: 3599 seconds)<br />
+            <strong>Cache Key:</strong>
+            <code>RSA_POLICY_ISSUANCE_API_ACCESS_TOKEN</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Step 1: Upload Documents</h2>
+        <div class="step-card">
+          <h4>
+            <span class="step-number">1</span>
+            Upload Documents to Liva API
+          </h4>
+
+          <h3>Purpose</h3>
+          <p>
+            Upload required customer documents (Driving License, Emirates ID,
+            Registration Card) to Liva API before policy issuance.
+          </p>
+
+          <h3>Process Flow</h3>
+          <ul class="process-steps">
+            <li>Validate that required documents exist in quote</li>
+            <li>Retrieve documents from Azure storage</li>
+            <li>Encode each document to base64</li>
+            <li>
+              Map document types to Liva document codes:
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li>Driving License (DL) → Code: '4'</li>
+                <li>Emirates ID (CEID) → Code: '16'</li>
+                <li>Registration Card (CAR_MULKIY) → Code: '5'</li>
+              </ul>
+            </li>
+            <li>
+              Determine transaction type based on <code>$quote->source</code>:
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li><code>'5'</code> = New policy (default)</li>
+                <li>
+                  <code>'6'</code> = Renewal (when
+                  <code>$quote->source == RENEWAL_UPLOAD</code>)
+                </li>
+              </ul>
+            </li>
+            <li>Build payload with transaction type and attachments</li>
+            <li>Call Liva API: <code>motor/documents/upload/v2</code></li>
+            <li>Validate upload status for each document</li>
+            <li>Update process completed_step if all successful</li>
+          </ul>
+
+          <h3>API Endpoint</h3>
+          <div class="code-block">
+            POST {LIVA_API_BASE_URL}/motor/documents/upload/v2 Headers: {
+            "Content-Type": "application/json", "Authorization": "Basic
+            {LIVA_BASIC_AUTH}", "PartnerId": "{LIVA_PARENT_ID}", "location":
+            "{LIVA_LOCATION}", "Authentication": "Bearer {access_token}",
+            "SubscriptionKey": "{LIVA_SUBSCRIPTION_KEY}" } Payload: {
+            "UploadDocumentsRequest": { "TransactionType": "5" | "6", // 5 =
+            New, 6 = Renewal "TransactionNumber": "{insurer_quote_no}",
+            "Attachments": [ { "DocumentType": "4" | "16" | "5", "Content":
+            "{base64_encoded_content}", "Extension": "pdf" | "jpg" | "png" } ] }
+            }
+          </div>
+
+          <h3>Success Criteria</h3>
+          <div class="success-box">
+            <strong>✓ All documents uploaded successfully</strong><br />
+            All attachments in response have <code>UploadStatus: true</code>
+          </div>
+
+          <h3>Failure Handling</h3>
+          <div class="warning-box">
+            <strong>⚠ On Failure:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Update policy issuance status to FAILED</li>
+              <li>Log error details</li>
+              <li>Stop workflow execution</li>
+              <li>Allow manual retry from this step</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Step 2: Issue Policy</h2>
+        <div class="step-card">
+          <h4>
+            <span class="step-number">2</span>
+            Create Policy with Liva API
+          </h4>
+
+          <h3>Purpose</h3>
+          <p>
+            Create the insurance policy with Liva using quote and payment
+            information.
+          </p>
+
+          <h3>Process Flow</h3>
+          <ul class="process-steps">
+            <li>
+              <strong>Payment is PRE-CAPTURED</strong> - Payment already
+              captured via auto-capture process before automation starts (see
+              Pre-Automation Payment Capture section above)
+            </li>
+            <li>Retrieve main payment and credit card split payment</li>
+            <li>
+              Build policy request payload with:
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li>Quotation number</li>
+                <li>Premium amount</li>
+                <li>
+                  <strong
+                    >Payment transaction details (from pre-captured
+                    payment):</strong
+                  >
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>
+                      <code>PaymtTransactionNumber</code>:
+                      <code>$splitPayment?->payment_receipt_id</code>
+                    </li>
+                    <li>
+                      <code>PaymtTransactionDate</code>:
+                      <code>$payment?->authorized_at</code> (Y-m-d H:i:s format)
+                    </li>
+                    <li>
+                      <code>AuthCode</code>:
+                      <code>$splitPayment?->payment_auth_code</code>
+                    </li>
+                    <li>
+                      <code>Amount</code>:
+                      <code>$payment?->price_vat_applicable</code>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <code>IsPaymentProcessed</code>:
+                  <code>'Success'</code> (payment already processed)
+                </li>
+                <li>Payment mode (7 = Credit Card)</li>
+              </ul>
+            </li>
+            <li>Call Liva API: <code>motor/policy/create/v2</code></li>
+            <li>Parse policy response</li>
+            <li>
+              Extract policy number from
+              <code>PolicyResponse->PolicyNumber</code>
+            </li>
+            <li>
+              Update quote with policy information:
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li>Policy number (from PolicyNumber field)</li>
+                <li>Policy issuance date</li>
+                <li>Policy start/expiry dates</li>
+                <li>Premium amounts (with/without VAT)</li>
+                <li>VAT amount</li>
+              </ul>
+            </li>
+            <li>Update payment with commission details</li>
+            <li>Update quote status to PolicyIssued</li>
+            <li>Update process completed_step</li>
+          </ul>
+
+          <h3>API Endpoint</h3>
+          <div class="code-block">
+            POST {LIVA_API_BASE_URL}/motor/policy/create/v2 Payload: {
+            "PolicyRequest": { "QuotationNo": "{insurer_quote_no}",
+            "PremiumPayable": {total_amount}, "IsPaymentProcessed": "Success",
+            "PartnerTrnReferenceNumber": "{quote_uuid}", "PaymtMode": 7,
+            "PaymtTransactionDate": "{Y-m-d H:i:s}", "PaymtTransactionNumber":
+            "{payment_receipt_id}", "Amount": {price_vat_applicable},
+            "AuthCode": "{payment_auth_code}", "Documents": { "DocsInResponse":
+            false, "DocsDetails": { "PolicySchedule": false,
+            "HirePurchaseLetter": false, "ProposalForm": false, "LetterToBank":
+            false, "MotorArabicCertificate": false, "Receipt": false,
+            "BreakDownRecovery": false, "UPRInvoice": false } },
+            "PolicyConfirmationSMS": false, "PolicyConfirmationEmail": false } }
+          </div>
+
+          <h3>Success Criteria</h3>
+          <div class="success-box">
+            <strong>✓ Policy created successfully</strong><br />
+            Response contains <code>PolicyResponse</code> with policy number and
+            dates
+          </div>
+
+          <h3>Failure Handling</h3>
+          <div class="warning-box">
+            <strong>⚠ On Failure:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Update policy issuance status to FAILED</li>
+              <li>Log error details</li>
+              <li>Stop workflow execution</li>
+              <li>Policy number stored for retry</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Step 3: Upload Policy Documents to IMCRM</h2>
+        <div class="step-card">
+          <h4>
+            <span class="step-number">3</span>
+            Retrieve Policy Documents and Upload to IMCRM
+          </h4>
+
+          <h3>Purpose</h3>
+          <p>
+            Retrieve policy documents (Policy Schedule, Policy Certificate, Tax
+            Invoice, etc.) from Liva API and store them in IMCRM Azure storage.
+          </p>
+
+          <h3>Process Flow</h3>
+          <ul class="process-steps">
+            <li>
+              <strong>Documents retrieved ONE AT A TIME</strong> - Each document
+              type fetched individually
+            </li>
+            <li>
+              For each document type (DebitNote, CreditNote, PolicySchedule,
+              MotorArabicCertificate):
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li>
+                  Set document flag to <code>true</code> in payload (toggle
+                  flag)
+                </li>
+                <li>Set all other document flags to <code>false</code></li>
+                <li>
+                  Call Liva API:
+                  <code>motor/transactions/retrieve/v2</code> with
+                  <code>RetrieveType: '6'</code>
+                </li>
+                <li>Extract document content from response</li>
+                <li>
+                  <strong>Apply DOUBLE base64 decoding</strong> (CRITICAL - Liva
+                  API requirement):
+                  <code>base64_decode(base64_decode($documentContent))</code>
+                </li>
+                <li>Store document in Azure storage</li>
+                <li>Create quote document record</li>
+                <li>
+                  If Policy Certificate (MotorArabicCertificate): Update
+                  <code>rta_upload_status</code> to <code>DONE</code>
+                </li>
+                <li>Dispatch watermark job</li>
+                <li>
+                  Reset document flag to <code>false</code> before next
+                  iteration
+                </li>
+              </ul>
+            </li>
+            <li>Validate all documents retrieved successfully</li>
+            <li>Update process completed_step</li>
+            <li>Set booking_pending flag to true</li>
+          </ul>
+
+          <h3>Double Base64 Encoding</h3>
+          <div class="info-box">
+            <strong>⚠ Important:</strong> Liva API returns documents with
+            <strong>double base64 encoding</strong>. The system must decode
+            twice to get the actual file content.
+          </div>
+
+          <div class="code-block">
+            // Document retrieval from Liva API $documentContent =
+            $response->RetrieveResponse->Policies[0]->PolicyResponse->Documents->PolicyReportsPdf[0];
+            // Double base64 decoding (required) $fileContents =
+            base64_decode(base64_decode($documentContent)); // Fallback if
+            decoding fails if ($fileContents === false) { $fileContents =
+            $documentContent; }
+          </div>
+
+          <h3>API Endpoint</h3>
+          <div class="code-block">
+            POST {LIVA_API_BASE_URL}/motor/transactions/retrieve/v2 Payload: {
+            "RetrieveRequest": { "RetrieveType": "6", "TransactionNumber":
+            "{policy_number}", "PartnerTrnReferenceNumber": "{quote_uuid}",
+            "Documents": { "DocsInResponse": true, "DocsDetails": { "DebitNote":
+            true, // Tax Invoice "CreditNote": false, // Tax Invoice Raised By
+            Buyer "PolicySchedule": true, // Policy Schedule
+            "MotorArabicCertificate": true, // Policy Certificate
+            "HirePurchaseLetter": false, "ProposalForm": false, "LetterToBank":
+            false, "Receipt": false } }, "ProposalForm": false } }
+          </div>
+
+          <h3>Document Type Mapping</h3>
+          <div class="code-block">
+            Liva Document Type → IMCRM Document Code: - DebitNote → TI (Tax
+            Invoice) - CreditNote → CTIRBB (Tax Invoice Raised By Buyer) -
+            PolicySchedule → POLICY_SCHEDULE - MotorArabicCertificate →
+            POLICY_CERTIFICATE
+          </div>
+
+          <h3>Success Criteria</h3>
+          <div class="success-box">
+            <strong>✓ All documents retrieved and uploaded</strong><br />
+            All required documents successfully retrieved from Liva and stored
+            in IMCRM
+          </div>
+
+          <h3>Failure Handling</h3>
+          <div class="warning-box">
+            <strong>⚠ On Failure:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Log which documents failed to retrieve</li>
+              <li>Update policy issuance status to FAILED</li>
+              <li>Stop workflow execution</li>
+              <li>Allow retry from this step</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Step 4: Book Policy</h2>
+        <div class="step-card">
+          <h4>
+            <span class="step-number">4</span>
+            Finalize Booking with Sage Integration
+          </h4>
+
+          <h3>Purpose</h3>
+          <p>
+            Complete the booking process by updating booking details and
+            triggering Sage ERP integration.
+          </p>
+
+          <h3>Process Flow</h3>
+          <ul class="process-steps">
+            <li>
+              Update booking details:
+              <ul style="margin-top: 10px; padding-left: 20px">
+                <li>Invoice date</li>
+                <li>Insurer tax invoice number</li>
+                <li>Commission invoice number</li>
+                <li>Discount value</li>
+                <li>Commission details (VAT applicable/not applicable)</li>
+                <li>Broker invoice number</li>
+              </ul>
+            </li>
+            <li>Validate booking prerequisites using SendBookPolicyRequest</li>
+            <li>Create Sage process request</li>
+            <li>Call Sage API: <code>postBookPolicyToSage</code></li>
+            <li>Update process completed_step</li>
+            <li>Return success message</li>
+          </ul>
+
+          <h3>Validation</h3>
+          <div class="info-box">
+            <strong>Pre-booking Validation:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Quote ID validation</li>
+              <li>Model type validation</li>
+              <li>Send policy type validation</li>
+              <li>Transaction payment status validation</li>
+            </ul>
+          </div>
+
+          <h3>Success Criteria</h3>
+          <div class="success-box">
+            <strong>✓ Booking process initiated</strong><br />
+            Sage process created successfully, booking will complete
+            asynchronously
+          </div>
+
+          <h3>Failure Handling</h3>
+          <div class="warning-box">
+            <strong>⚠ On Failure:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Log validation or API errors</li>
+              <li>Update policy issuance status to FAILED</li>
+              <li>Stop workflow execution</li>
+              <li>Allow manual retry</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔄 State Management & Resume</h2>
+        <p>
+          The system maintains state through the
+          <strong>PolicyIssuance</strong> model, allowing the workflow to resume
+          from the last completed step on retry.
+        </p>
+
+        <h3>Step Tracking</h3>
+        <div class="code-block">
+          // Step sequence const STEPS = [ 'UploadDocuments', 'IssuePolicy',
+          'UploadPolicyDocumentsToIMCRM', 'BookPolicy' ]; // Get next step based
+          on completed step function getNextStep($completedStep) { if
+          (!$completedStep) { return STEPS[0]; // Start from beginning } $index
+          = array_search($completedStep, STEPS); if ($index === false || $index
+          === count(STEPS) - 1) { return null; // All steps completed } return
+          STEPS[$index + 1]; // Return next step }
+        </div>
+
+        <h3>Resume Capability</h3>
+        <div class="info-box">
+          <strong>Resume Logic:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px">
+            <li>On retry, system checks <code>completed_step</code></li>
+            <li>Executes only steps after the last completed step</li>
+            <li>Prevents duplicate API calls</li>
+            <li>Maintains data consistency</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>⏱️ Timeout Handling</h2>
+        <p>
+          The system includes comprehensive timeout handling with configurable
+          retry mechanisms.
+        </p>
+
+        <h3>Timeout Configuration</h3>
+        <div class="code-block">
+          // Configurable timeout (ApplicationStorage)
+          LIVA_AUTOMATION_API_TIMEOUT // Usage in HTTP calls
+          Http::timeout($this->apiTimeout) ->withHeaders($this->headers)
+          ->post($url, $payload);
+        </div>
+
+        <h3>Timeout Detection</h3>
+        <div class="info-box">
+          <strong>Timeout Detection Logic:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px">
+            <li>Checks for null status responses</li>
+            <li>Detects failed logs with null messages</li>
+            <li>Updates policy issuance status to TIMEOUT</li>
+            <li>Enables retry if configured</li>
+          </ul>
+        </div>
+
+        <h3>Retry Mechanism</h3>
+        <div class="code-block">
+          // Feature toggle for timeout retry
+          ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE // Retry logic if
+          ($isTimeout && $retryEnabled) { // Allow retry from last completed
+          step // System will resume workflow }
+        </div>
+      </div>
+
+      <div class="section">
+        <a href="/docs/policy-automation/car/liva/index.html" class="back-link"
+          >← Back to Overview</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

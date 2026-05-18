@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liva Car - API Integration Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #805ad5;
+      }
+
+      .section h3 {
+        color: #805ad5;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .api-endpoint {
+        background: #f8f9fa;
+        border-left: 5px solid #805ad5;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .api-endpoint h4 {
+        color: #805ad5;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #f8f9fa;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+
+      .code-block code {
+        color: #f8f9fa;
+      }
+
+      .info-box {
+        background: #ede9fe;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .info-box strong {
+        color: #805ad5;
+      }
+
+      .warning-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .success-box {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .back-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+      }
+
+      .back-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+
+      table th,
+      table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      table th {
+        background: #805ad5;
+        color: white;
+        font-weight: 600;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/liva/index.html">Liva (RSA)</a>
+        <span>></span>
+        <span>API Integration</span>
+      </div>
+
+      <div class="header">
+        <h1>🔌 Liva Car Insurance - API Integration</h1>
+        <p>
+          Complete API endpoints documentation with request/response formats
+        </p>
+      </div>
+
+      <div class="section">
+        <h2>🔐 Authentication</h2>
+        <p>
+          All Liva API endpoints require OAuth 2.0 authentication using Client
+          Credentials flow. The access token must be included in the
+          <code>Authentication</code> header.
+        </p>
+
+        <div class="api-endpoint">
+          <h4>OAuth Token Endpoint</h4>
+          <div class="code-block">
+            <strong>Endpoint:</strong> POST {LIVA_API_BASE_URL}/auth-token<br />
+            <strong>Method:</strong> POST<br />
+            <strong>Purpose:</strong> OAuth 2.0 Client Credentials flow
+            authentication
+
+            <strong>Headers:</strong>
+            Content-Type: application/x-www-form-urlencoded
+
+            <strong>Request Body:</strong>
+            client_id={LIVA_CLIENT_ID} &client_secret={LIVA_CLIENT_SECRET}
+            &grant_type=client_credentials &scope={LIVA_SCOPE}
+
+            <strong>Response:</strong>
+            { "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "token_type": "Bearer", "expires_in": 3599, "scope": "{LIVA_SCOPE}"
+            }
+          </div>
+
+          <div class="info-box">
+            <strong>Token Caching:</strong> Tokens are cached in Redis with key
+            <code>RSA_POLICY_ISSUANCE_API_ACCESS_TOKEN</code> and expiration
+            time based on <code>expires_in</code> value (typically 3599 seconds
+            / ~60 minutes).
+          </div>
+        </div>
+
+        <h3>API Request Headers</h3>
+        <p>All API endpoints require the following headers:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Value</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Content-Type</code></td>
+              <td>application/json</td>
+              <td>Request content type</td>
+            </tr>
+            <tr>
+              <td><code>Authorization</code></td>
+              <td>Basic {LIVA_BASIC_AUTH}</td>
+              <td>Basic authentication token</td>
+            </tr>
+            <tr>
+              <td><code>PartnerId</code></td>
+              <td>{LIVA_PARENT_ID}</td>
+              <td>Partner identifier</td>
+            </tr>
+            <tr>
+              <td><code>location</code></td>
+              <td>{LIVA_LOCATION}</td>
+              <td>Location code</td>
+            </tr>
+            <tr>
+              <td><code>Authentication</code></td>
+              <td>Bearer {access_token}</td>
+              <td>OAuth bearer token</td>
+            </tr>
+            <tr>
+              <td><code>SubscriptionKey</code></td>
+              <td>{LIVA_SUBSCRIPTION_KEY}</td>
+              <td>API subscription key</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>📄 API Endpoint 1: Upload Documents v2</h2>
+        <div class="api-endpoint">
+          <h4>Upload Required Documents</h4>
+          <p>
+            <strong>Purpose:</strong> Upload customer documents (Driving
+            License, Emirates ID, Registration Card) to Liva before policy
+            issuance.
+          </p>
+
+          <div class="code-block">
+            <strong>Endpoint:</strong> POST
+            {LIVA_API_BASE_URL}/motor/documents/upload/v2
+
+            <strong>Request Payload:</strong>
+            { "UploadDocumentsRequest": { "TransactionType": "5" | "6", // "5" =
+            New (default), "6" = Renewal (based on $quote->source)
+            "TransactionNumber": "{insurer_quote_no}", "Attachments": [ {
+            "DocumentType": "4" | "16" | "5", "Content":
+            "{base64_encoded_file_content}", "Extension": "pdf" | "jpg" | "png"
+            } ] } }
+
+            <strong>Document Type Codes:</strong>
+            - "4" = Driving License (DL) - "16" = Emirates ID (CEID) - "5" =
+            Registration Card / Mulkiya (CAR_MULKIY)
+
+            <strong>Response:</strong>
+            { "UploadDocumentsResponse": { "Status": true, "Attachments": [ {
+            "DocumentType": "4", "UploadStatus": true, "Message": "Document
+            uploaded successfully" } ] } }
+          </div>
+
+          <div class="info-box">
+            <strong>Document Encoding:</strong> Documents are read from Azure
+            storage, then encoded to base64 before sending to Liva API.
+          </div>
+
+          <div class="warning-box">
+            <strong>Validation:</strong> System validates that all required
+            documents exist before making API call. If any document is missing,
+            the request fails with appropriate error message.
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📋 API Endpoint 2: Create Policy v2</h2>
+        <div class="api-endpoint">
+          <h4>Issue Insurance Policy</h4>
+          <p>
+            <strong>Purpose:</strong> Create the insurance policy with Liva
+            using quote and payment information.
+          </p>
+          <div class="info-box">
+            <strong>⚠ Payment Status:</strong> Payment is
+            <strong>PRE-CAPTURED</strong> before automation starts. Full
+            transaction details are sent in the request to indicate payment was
+            already processed.
+          </div>
+
+          <div class="code-block">
+            <strong>Endpoint:</strong> POST
+            {LIVA_API_BASE_URL}/motor/policy/create/v2
+
+            <strong>Request Payload:</strong>
+            { "PolicyRequest": { "QuotationNo": "{insurer_quote_no}",
+            "PremiumPayable": {total_amount}, "IsPaymentProcessed": "Success",
+            "PartnerTrnReferenceNumber": "{quote_uuid}", "PaymtMode": 7, // 7 =
+            Credit Card "PaymtTransactionDate": "{Y-m-d H:i:s}", // From
+            $payment->authorized_at "PaymtTransactionNumber":
+            "{payment_receipt_id}", // From $splitPayment->payment_receipt_id
+            "Amount": {price_vat_applicable}, // From
+            $payment->price_vat_applicable "AuthCode": "{payment_auth_code}", //
+            From $splitPayment->payment_auth_code "Documents": {
+            "DocsInResponse": false, "DocsDetails": { "PolicySchedule": false,
+            "HirePurchaseLetter": false, "ProposalForm": false, "LetterToBank":
+            false, "MotorArabicCertificate": false, "Receipt": false,
+            "BreakDownRecovery": false, "UPRInvoice": false } },
+            "PolicyConfirmationSMS": false, "PolicyConfirmationEmail": false } }
+
+            <strong>Response:</strong>
+            { "PolicyResponse": { "Status": true, "PolicyNumber":
+            "{policy_number}", "ConcatPolNumberWithRenCnt":
+            "{policy_number_with_renewal}", "PolicyCreationDate": "{Y-m-d
+            H:i:s}", "PolicyEffectiveDate": "{Y-m-d}", "PolicyExpiryDate":
+            "{Y-m-d}", "PremiumWithoutVAT": {amount}, "VatAmount": {vat_amount},
+            "PaidAmount": {total_with_vat}, "Commission": {commission_amount},
+            "Commissionincldvat": {commission_with_vat}, "VatonCommission":
+            {commission_vat}, "CommissionPercentage": {percentage},
+            "InsurerCommissionTaxInvoice": "{invoice_number}",
+            "InsurerPremiumTaxInvoice": "{tax_invoice_number}",
+            "InsurerInvoicedate": "{Y-m-d}" } }
+          </div>
+
+          <div class="success-box">
+            <strong>✓ On Success:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>
+                Policy number extracted from
+                <code>PolicyResponse->PolicyNumber</code> (not
+                ConcatPolNumberWithRenCnt)
+              </li>
+              <li>
+                System updates quote with policy number, dates, premium amounts,
+                and commission details
+              </li>
+              <li>
+                Payment record is also updated with commission information
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📥 API Endpoint 3: Retrieve Documents v2</h2>
+        <div class="api-endpoint">
+          <h4>Retrieve Policy Documents</h4>
+          <p>
+            <strong>Purpose:</strong> Retrieve policy documents (Policy
+            Schedule, Policy Certificate, Tax Invoice, etc.) from Liva after
+            policy issuance.
+          </p>
+          <div class="warning-box">
+            <strong>⚠ CRITICAL:</strong> Documents are retrieved
+            <strong>ONE AT A TIME</strong>. Each document type must be toggled
+            individually in the payload before making the API call.
+          </div>
+
+          <div class="code-block">
+            <strong>Endpoint:</strong> POST
+            {LIVA_API_BASE_URL}/motor/transactions/retrieve/v2
+
+            <strong>Request Payload:</strong>
+            { "RetrieveRequest": { "RetrieveType": "6", "TransactionNumber":
+            "{policy_number}", "PartnerTrnReferenceNumber": "{quote_uuid}",
+            "Documents": { "DocsInResponse": true, "DocsDetails": { "DebitNote":
+            true, // Tax Invoice "CreditNote": false, // Tax Invoice Raised By
+            Buyer "PolicySchedule": true, // Policy Schedule
+            "MotorArabicCertificate": true, // Policy Certificate (Arabic)
+            "HirePurchaseLetter": false, "ProposalForm": false, "LetterToBank":
+            false, "Receipt": false } }, "ProposalForm": false } }
+
+            <strong>Response:</strong>
+            { "RetrieveResponse": { "Status": true, "Policies": [ {
+            "PolicyResponse": { "Documents": { "PolicyReportsPdf": [
+            "{double_base64_encoded_content}" ] } } } ] } }
+          </div>
+
+          <div class="warning-box">
+            <strong>⚠ CRITICAL: Double Base64 Decoding (Liva-Specific)</strong
+            ><br /><br />
+            Liva API returns documents with
+            <strong>double base64 encoding</strong>. This is
+            <strong>unique to Liva only</strong>. The system must decode twice
+            to get the actual PDF content:
+            <div class="code-block" style="margin-top: 15px">
+              // Extract document content $documentContent =
+              $response->RetrieveResponse->Policies[0]->PolicyResponse->Documents->PolicyReportsPdf[0];
+              // Apply DOUBLE base64 decoding (CRITICAL - Liva requirement)
+              $fileContents = base64_decode(base64_decode($documentContent)); //
+              Fallback if decoding fails if ($fileContents === false) {
+              $fileContents = $documentContent; }
+            </div>
+            <p style="margin-top: 10px">
+              <strong>Note:</strong> This double encoding/decoding is specific
+              to Liva API and does not apply to other providers (GIG, ADNIC,
+              Alliance).
+            </p>
+          </div>
+
+          <h3>Document Type Mapping</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Liva Document Type</th>
+                <th>IMCRM Document Code</th>
+                <th>Document Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DebitNote</code></td>
+                <td>TI</td>
+                <td>Tax Invoice</td>
+              </tr>
+              <tr>
+                <td><code>CreditNote</code></td>
+                <td>CTIRBB</td>
+                <td>Tax Invoice Raised By Buyer</td>
+              </tr>
+              <tr>
+                <td><code>PolicySchedule</code></td>
+                <td>POLICY_SCHEDULE</td>
+                <td>Policy Schedule</td>
+              </tr>
+              <tr>
+                <td><code>MotorArabicCertificate</code></td>
+                <td>POLICY_CERTIFICATE</td>
+                <td>Policy Certificate (Arabic)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info-box">
+            <strong>Document Processing:</strong> After retrieval, documents
+            are:
+            <ul style="margin-top: 10px; padding-left: 20px">
+              <li>Double base64 decoded</li>
+              <li>Stored in Azure storage</li>
+              <li>Attached to quote as QuoteDocument</li>
+              <li>Dispatched for watermarking</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>⚙️ Error Handling</h2>
+        <p>
+          All API endpoints return standardized error responses. The system
+          handles errors gracefully with comprehensive logging.
+        </p>
+
+        <h3>Error Response Format</h3>
+        <div class="code-block">
+          { "UploadDocumentsResponse": { "Status": false, "errors": [ { "code":
+          "ERROR_CODE", "message": "Error description" } ] } }
+        </div>
+
+        <h3>HTTP Status Codes</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Status Code</th>
+              <th>Description</th>
+              <th>Handling</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>200</td>
+              <td>Success</td>
+              <td>Process response normally</td>
+            </tr>
+            <tr>
+              <td>201</td>
+              <td>Created</td>
+              <td>Process response normally</td>
+            </tr>
+            <tr>
+              <td>404</td>
+              <td>Not Found</td>
+              <td>Log error, mark as failed</td>
+            </tr>
+            <tr>
+              <td>401</td>
+              <td>Unauthorized</td>
+              <td>Refresh token, retry request</td>
+            </tr>
+            <tr>
+              <td>500</td>
+              <td>Server Error</td>
+              <td>Log error, mark as failed</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Error Detection Logic</h3>
+        <div class="code-block">
+          // Check for errors in response if
+          (isset($responseObject->$keyAPI->errors) ||
+          (isset($responseObject->$keyAPI->Status) &&
+          $responseObject->$keyAPI->Status == false)) { // Extract error message
+          $errorMessage = extractErrorMessage($responseObject, $keyAPI); // Mark
+          as failed $response['status'] = false; $response['error'] =
+          $errorMessage; }
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>⏱️ Timeout Configuration</h2>
+        <p>
+          API calls use configurable timeout settings to prevent hanging
+          requests.
+        </p>
+
+        <div class="code-block">
+          // Timeout configuration (ApplicationStorage)
+          LIVA_AUTOMATION_API_TIMEOUT // Usage in HTTP calls
+          Http::timeout($this->apiTimeout) ->withHeaders($this->headers)
+          ->post($url, $payload);
+        </div>
+
+        <div class="info-box">
+          <strong>Timeout Handling:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px">
+            <li>Configurable per environment via ApplicationStorage</li>
+            <li>Applied to all API calls</li>
+            <li>Timeout exceptions are caught and logged</li>
+            <li>System can retry on timeout if enabled</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📊 Response Parsing</h2>
+        <p>
+          All API responses are parsed and validated before processing. The
+          system extracts relevant data and updates models accordingly.
+        </p>
+
+        <h3>Response Structure</h3>
+        <div class="code-block">
+          // Standard response structure { "status": true | false, "error": null
+          | "error message", "message": "success message" | "error message",
+          "data": {response_object}, "completed_step": "step_name" | null }
+        </div>
+
+        <h3>Data Extraction</h3>
+        <div class="code-block">
+          // Policy Response Extraction $issuePolicyResult =
+          $issuePolicy['data']->PolicyResponse; // Extract policy number (from
+          PolicyNumber field, not ConcatPolNumberWithRenCnt) $policyNumber =
+          $issuePolicyResult->PolicyNumber; // Update quote (uses
+          ConcatPolNumberWithRenCnt for quote update) $quote->update([
+          'policy_number' => $issuePolicyResult->ConcatPolNumberWithRenCnt,
+          'policy_issuance_date' => $issuePolicyResult->PolicyCreationDate,
+          'policy_start_date' => $issuePolicyResult->PolicyEffectiveDate,
+          'policy_expiry_date' => $issuePolicyResult->PolicyExpiryDate, // ...
+          more fields ]);
+        </div>
+      </div>
+
+      <div class="section">
+        <a href="/docs/policy-automation/car/liva/index.html" class="back-link"
+          >← Back to Overview</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

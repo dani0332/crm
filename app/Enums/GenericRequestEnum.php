@@ -70,4 +70,5 @@ final class GenericRequestEnum extends Enum
     const SEND_UPDATE_AS_QUOTE_TYPE = 'sendupdate';
     const QUOTE_INITIATED = 'Quote Initiated';
     const QUOTE_FINALIZED = 'Quote Finalized';
+    const TRAVEL_SENIOR_MEMBER_AGE = 65;
 }

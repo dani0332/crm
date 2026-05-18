@@ -20,4 +20,5 @@ final class BusinessTypeOfInsuranceIdEnum extends Enum
     const SEVERAL_INSURANCES = 1;
     const CAR_FLEET = 9;
     const TRADE_CREDIT = 16;
+    const POLITICAL_VIOLENCE = 37;
 }

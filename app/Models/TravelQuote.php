@@ -15,7 +15,9 @@ use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -98,6 +100,7 @@ class TravelQuote extends Model implements AuditableContract
             'auditable_type' => self::class,
         ];
     }
+
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -240,7 +243,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
@@ -380,7 +383,7 @@ class TravelQuote extends Model implements AuditableContract
     }
 
     // Reminder::Get the active insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,

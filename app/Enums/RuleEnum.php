@@ -8,5 +8,6 @@ enum RuleEnum: string
 
     case COMMERCIAL_USE = 'Commercial Use';
     case PRIVATE_USE = 'Private Use';
+    case COMPANY_USE = 'Company Use';
 
 }

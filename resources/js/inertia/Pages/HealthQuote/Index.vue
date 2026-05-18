@@ -1419,6 +1419,9 @@ const paymentStatusOptions = computed(() => {
           {{ item.renewal_batch_text }}
         </p>
       </template>
+      <template #item-health_team_type="item">
+        {{ item.health_team_type ?? item.notional_team }}
+      </template>
     </DataTable>
 
     <Pagination

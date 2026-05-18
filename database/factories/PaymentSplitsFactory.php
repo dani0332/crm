@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PaymentSplits>
+ * @extends Factory<PaymentSplits>
  */
 class PaymentSplitsFactory extends Factory
 {

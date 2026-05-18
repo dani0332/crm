@@ -13,9 +13,9 @@ use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Services\BranchAssignmentService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
-use Mockery;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -71,7 +71,7 @@ test('queues listener when QuotePolicyBooked event is dispatched', function () {
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
     event($event);
 
-    Queue::assertPushed(function (\Illuminate\Events\CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
+    Queue::assertPushed(function (CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
         return $job->class === TriggerConversionApis::class
             && $job->data[0]->quoteUID === $quoteUID
             && $job->data[0]->quoteTypeId === $quoteTypeId;
@@ -85,7 +85,7 @@ test('queues listener with correct event data', function () {
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
     event($event);
 
-    Queue::assertPushed(function (\Illuminate\Events\CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
+    Queue::assertPushed(function (CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
         $eventData = $job->data[0];
 
         return $job->class === TriggerConversionApis::class
@@ -101,7 +101,7 @@ test('handles API failures gracefully without breaking the flow', function () {
 
     $mockCapi = Mockery::mock('alias:'.Capi::class);
     $mockCapi->shouldReceive('request')
-        ->andThrow(new \Exception('API Error'));
+        ->andThrow(new Exception('API Error'));
 
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
@@ -115,7 +115,7 @@ test('handles network errors gracefully', function () {
 
     $mockCapi = Mockery::mock('alias:'.Capi::class);
     $mockCapi->shouldReceive('request')
-        ->andThrow(new \Exception('Connection timeout'));
+        ->andThrow(new Exception('Connection timeout'));
 
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
@@ -135,8 +135,8 @@ test('queues listener for different quote types', function () {
         event($event);
     }
 
-    // Verify that listener was queued for each quote type
-    Queue::assertPushed(\Illuminate\Events\CallQueuedListener::class, count($quoteTypes));
+    // One queued listener per event for conversion API; QuotePolicyBooked also queues other listeners (e.g. Alfred Coins).
+    expect(Queue::listenersPushed(TriggerConversionApis::class))->toHaveCount(count($quoteTypes));
 });
 
 test('queues listener with correct event structure for real example data', function () {
@@ -146,7 +146,7 @@ test('queues listener with correct event structure for real example data', funct
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
     event($event);
 
-    Queue::assertPushed(function (\Illuminate\Events\CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
+    Queue::assertPushed(function (CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
         $eventData = $job->data[0];
 
         return $job->class === TriggerConversionApis::class
@@ -163,7 +163,7 @@ test('queues listener with different quote type ID', function () {
     $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
     event($event);
 
-    Queue::assertPushed(function (\Illuminate\Events\CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
+    Queue::assertPushed(function (CallQueuedListener $job) use ($quoteUID, $quoteTypeId) {
         $eventData = $job->data[0];
 
         return $job->class === TriggerConversionApis::class
@@ -185,7 +185,7 @@ test('queues listener with dynamic quote type IDs', function () {
         $event = new QuotePolicyBooked($testCase['quoteUID'], $testCase['quoteTypeId']);
         event($event);
 
-        Queue::assertPushed(function (\Illuminate\Events\CallQueuedListener $job) use ($testCase) {
+        Queue::assertPushed(function (CallQueuedListener $job) use ($testCase) {
             $eventData = $job->data[0];
 
             return $job->class === TriggerConversionApis::class

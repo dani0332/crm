@@ -2,24 +2,33 @@
 
 namespace App\Providers;
 
+use App\Events\AmlAutomationScreeningSucceeded;
 use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\Device\DevicePaymentAuthorised;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
+use App\Events\NationalityPoolCreated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuoteEmailUpdated;
 use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Listeners\ApplyPrivateClientTagListener;
 use App\Listeners\Axiom\HandleAxiomBatchFlush;
+use App\Listeners\Device\HandleDevicePaymentAuthorised;
 use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleBookPolicyJobFailed;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
+use App\Listeners\HandleNationalityPoolCreated;
 use App\Listeners\HandleTravelAdvisorUpdated;
 use App\Listeners\Health\HandleHealthTransactionApproved;
 use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\SendAlfredCoinsInsurancePurchasedWebhook;
+use App\Listeners\SendAmlAutomationOutcomeNotifications;
 use App\Listeners\TriggerConversionApis;
 use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
@@ -28,7 +37,15 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Console\Events\ScheduledTaskFinished;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Queue\Events\JobExceptionOccurred;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobReleasedAfterException;
+use Illuminate\Queue\Events\JobTimedOut;
 use Lab404\Impersonate\Events\TakeImpersonation;
 
 class EventServiceProvider extends ServiceProvider
@@ -66,44 +83,53 @@ class EventServiceProvider extends ServiceProvider
         HealthTransactionApproved::class => [
             HandleHealthTransactionApproved::class,
         ],
+        DevicePaymentAuthorised::class => [
+            HandleDevicePaymentAuthorised::class,
+        ],
         TakeImpersonation::class => [
             HandleImpersonatedSession::class,
         ],
         FlushAxiomBatch::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Console\Events\CommandFinished::class => [
+        CommandFinished::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Console\Events\ScheduledTaskFailed::class => [
+        ScheduledTaskFailed::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Console\Events\ScheduledTaskFinished::class => [
+        ScheduledTaskFinished::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Queue\Events\JobProcessed::class => [
+        JobProcessed::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Queue\Events\JobExceptionOccurred::class => [
+        JobExceptionOccurred::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Queue\Events\JobFailed::class => [
+        JobFailed::class => [
             HandleAxiomBatchFlush::class,
             HandleBookPolicyJobFailed::class,
         ],
-        \Illuminate\Queue\Events\JobReleasedAfterException::class => [
+        JobReleasedAfterException::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \Illuminate\Queue\Events\JobTimedOut::class => [
+        JobTimedOut::class => [
             HandleAxiomBatchFlush::class,
         ],
-        \App\Events\PrivateClientUpdatedEvent::class => [
-            \App\Listeners\ApplyPrivateClientTagListener::class,
+        PrivateClientUpdatedEvent::class => [
+            ApplyPrivateClientTagListener::class,
         ],
         QuotePolicyBooked::class => [
             TriggerConversionApis::class,
+            SendAlfredCoinsInsurancePurchasedWebhook::class,
         ],
-
+        NationalityPoolCreated::class => [
+            HandleNationalityPoolCreated::class,
+        ],
+        AmlAutomationScreeningSucceeded::class => [
+            SendAmlAutomationOutcomeNotifications::class,
+        ],
     ];
 
     /**

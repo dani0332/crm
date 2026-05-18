@@ -121,7 +121,7 @@ class AMLInsuredService
         return $customerInsured;
     }
 
-    public function getInsuredWithKyc(?int $insuredId): ?Insured
+    public function getInsuredWithKyc(mixed $insuredId): ?Insured
     {
         if (! $insuredId) {
             return null;

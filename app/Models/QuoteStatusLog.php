@@ -7,6 +7,7 @@ use Config;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[ObservedBy(QuoteStatusLogObserver::class)]
 class QuoteStatusLog extends Model
@@ -14,7 +15,18 @@ class QuoteStatusLog extends Model
     use HasFactory;
 
     protected $table = 'quote_status_log';
-    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id', 'notes', 'created_by'];
+    protected $fillable = [
+        'quote_type_id',
+        'quote_request_id',
+        'previous_quote_status_id',
+        'current_quote_status_id',
+        'created_at',
+        'updated_at',
+        'notes',
+        'created_by',
+        'personal_quote_id',
+        'status_change_source',
+    ];
 
     /**
      * @return void
@@ -39,7 +51,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function previousQuoteStatus()
     {
@@ -47,7 +59,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function currentQuoteStatus()
     {
@@ -55,7 +67,7 @@ class QuoteStatusLog extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function createdBy()
     {

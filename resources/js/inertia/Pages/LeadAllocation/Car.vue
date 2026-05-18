@@ -1,5 +1,30 @@
 <script setup>
 const page = usePage();
+const notification = useNotifications('toast');
+
+const onToggleRequestError = error => {
+  if (error?.response?.status === 403) {
+    notification.error({
+      title: 'You do not have permission to perform this action.',
+      position: 'top',
+    });
+
+    return true;
+  }
+
+  return false;
+};
+
+/** Remount row ItemTogglers so internal state re-syncs from :is-active (server) after 403. */
+const itemTogglerRemountKey = reactive({});
+
+const bumpItemTogglerRemount = rowId => {
+  if (rowId == null) {
+    return;
+  }
+  const id = String(rowId);
+  itemTogglerRemountKey[id] = (itemTogglerRemountKey[id] || 0) + 1;
+};
 
 const refreshGrid = useStorage('refresh-user-counts');
 const { isRequired } = useRules();
@@ -43,6 +68,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  canMutateLeadAllocation: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
@@ -51,6 +80,17 @@ const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+
+/** Car cap / BL cap inline edit: roles, or dashboard|edit (not view-only). */
+const canEditCarAllocationCaps = computed(() => {
+  if (
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+  ) {
+    return true;
+  }
+
+  return props.canMutateLeadAllocation;
+});
 
 const confirmModal = reactive({
   show: false,
@@ -139,16 +179,16 @@ const currentRow = (id, type = 'normal') => {
 };
 
 const editCap = (id, type = 'normal') => {
-  if (
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
-  ) {
-    const row = leadData?.value.find(item => item.id === id);
+  if (!canEditCarAllocationCaps.value) {
+    return;
+  }
 
-    if (type === 'buy-lead') {
-      row.BlCapEdit = true;
-    } else {
-      row.capEdit = true;
-    }
+  const row = leadData?.value.find(item => item.id === id);
+
+  if (type === 'buy-lead') {
+    row.BlCapEdit = true;
+  } else {
+    row.capEdit = true;
   }
 };
 
@@ -195,6 +235,9 @@ const onConfirmClose = event => {
 };
 
 const toggleOption = (value, type) => {
+  if (!props.canMutateLeadAllocation) {
+    return;
+  }
   confirmModal.type = type;
   confirmModal.status = value ? 1 : 0;
   confirmModal.title =
@@ -215,6 +258,15 @@ const onUpdateConfirm = async () => {
         preserveScroll: true,
         preserveState: true,
       });
+    })
+    .catch(e => {
+      if (onToggleRequestError(e)) {
+        if (confirmModal.type === 1) {
+          canManage.value = !canManage.value;
+        } else if (confirmModal.type === 2) {
+          pickupSequence.value = !pickupSequence.value;
+        }
+      }
     })
     .finally(() => {
       confirmModal.loader = false;
@@ -274,57 +326,76 @@ const onStatusSubmit = async () => {
 
 const onToggleResetCap = async (active, userId, leadId) => {
   loaders.table = true;
-  await axios
-    .post('/lead-allocation/toggle-reset-cap', {
+  try {
+    await axios.post('/lead-allocation/toggle-reset-cap', {
       leadId,
       userId,
       resetCap: active,
-    })
-    .finally(() => {
-      loaders.table = false;
     });
+  } catch (e) {
+    if (onToggleRequestError(e)) {
+      bumpItemTogglerRemount(leadId);
+    }
+  } finally {
+    loaders.table = false;
+  }
 };
 
 const onToggleBlStatus = async (active, userId, leadId) => {
   loaders.table = true;
-  await axios
-    .post('/lead-allocation/toggle-bl-status', {
+  try {
+    await axios.post('/lead-allocation/toggle-bl-status', {
       leadId,
       userId,
       buyLeadStatus: active,
-    })
-    .finally(() => {
-      loaders.table = false;
     });
+  } catch (e) {
+    if (onToggleRequestError(e)) {
+      bumpItemTogglerRemount(leadId);
+    }
+  } finally {
+    loaders.table = false;
+  }
 };
 
 const onToggleNormalAllocation = async (active, userId, laId) => {
   loaders.table = true;
-  await axios
-    .post('/lead-allocation/toggle-normal-allocation', {
+  try {
+    await axios.post('/lead-allocation/toggle-normal-allocation', {
       laId,
       userId,
       nlStatus: active,
-    })
-    .finally(() => {
-      loaders.table = false;
     });
+  } catch (e) {
+    if (onToggleRequestError(e)) {
+      bumpItemTogglerRemount(laId);
+    }
+  } finally {
+    loaders.table = false;
+  }
 };
 
 const onToggleBLResetCap = async (active, userId, laId) => {
   loaders.table = true;
-  await axios
-    .post('/lead-allocation/toggle-bl-reset-cap', {
+  try {
+    await axios.post('/lead-allocation/toggle-bl-reset-cap', {
       laId,
       userId,
       blResetCap: active,
-    })
-    .finally(() => {
-      loaders.table = false;
     });
+  } catch (e) {
+    if (onToggleRequestError(e)) {
+      bumpItemTogglerRemount(laId);
+    }
+  } finally {
+    loaders.table = false;
+  }
 };
 
 const onSubmitChanges = async type => {
+  if (!props.canMutateLeadAllocation) {
+    return;
+  }
   loaders.submit = true;
   let max_cap = leadData?.value;
 
@@ -455,12 +526,11 @@ watch(
 onMounted(() => {
   setQueryStringFilters(params, filters);
   tableHeader.value = tableHeader.value.filter(column => {
-    if (
-      !hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
-    ) {
-      return column.value !== 'reset_cap';
+    if (column.value === 'reset_cap' && !canEditCarAllocationCaps.value) {
+      return false;
     }
-    return column;
+
+    return true;
   });
   leadData.value = props.data.map(item => {
     return {
@@ -489,6 +559,7 @@ onMounted(() => {
           v-model="canManage"
           color="emerald"
           size="lg"
+          :disabled="!canMutateLeadAllocation"
           @update:model-value="toggleOption($event, 1)"
         />
       </div>
@@ -507,6 +578,7 @@ onMounted(() => {
           v-model="pickupSequence"
           color="emerald"
           size="lg"
+          :disabled="!canMutateLeadAllocation"
           @update:model-value="toggleOption($event, 2)"
         />
       </div>
@@ -553,6 +625,7 @@ onMounted(() => {
             color="emerald"
             :loading="loaders.submit"
             block
+            :disabled="!canMutateLeadAllocation"
             @click="() => onSubmitChanges()"
           >
             Save Cap Changes
@@ -569,6 +642,7 @@ onMounted(() => {
             color="emerald"
             :loading="loaders.submit"
             block
+            :disabled="!canMutateLeadAllocation"
             @click="() => onSubmitChanges('buy-lead')"
           >
             Save Buy Lead Cap Changes
@@ -709,7 +783,7 @@ onMounted(() => {
               ])
             "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
-            :disabled="!canManage"
+            :disabled="!canManage || !canMutateLeadAllocation"
             :id="id"
             :loading="leadData.find(item => item.id === id)?.loading"
             :refresh="leadData.find(item => item.id === id)?.reset"
@@ -721,8 +795,10 @@ onMounted(() => {
       <template #item-reset_cap="{ reset_cap, userId, id }">
         <div class="text-center">
           <ItemToggler
+            :key="`rc-${id}-${itemTogglerRemountKey[id] ?? 0}`"
             :is-active="reset_cap"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleResetCap($event.active, userId, id)"
           />
         </div>
@@ -731,8 +807,10 @@ onMounted(() => {
       <template #item-BLStatus="{ BLStatus, userId, id }">
         <div class="text-center">
           <ItemToggler
+            :key="`bls-${id}-${itemTogglerRemountKey[id] ?? 0}`"
             :is-active="BLStatus"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleBlStatus($event.active, userId, id)"
           />
         </div>
@@ -743,8 +821,10 @@ onMounted(() => {
       >
         <div class="text-center">
           <ItemToggler
+            :key="`na-${id}-${itemTogglerRemountKey[id] ?? 0}`"
             :is-active="normalAllocationEnabled"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleNormalAllocation($event.active, userId, id)"
           />
         </div>
@@ -753,8 +833,10 @@ onMounted(() => {
       <template #item-blResetCap="{ blResetCap, userId, id }">
         <div class="text-center">
           <ItemToggler
+            :key="`blrc-${id}-${itemTogglerRemountKey[id] ?? 0}`"
             :is-active="blResetCap"
             :id="id"
+            :disabled="!canMutateLeadAllocation"
             @toggle="onToggleBLResetCap($event.active, userId, id)"
           />
         </div>

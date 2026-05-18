@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Policy Issuance Automation - Technical Documentation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        background: #27ae60;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      .overview-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .overview-section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .lob-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+      }
+
+      .lob-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 30px;
+        border-left: 4px solid #e74c3c;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .lob-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .lob-card.health {
+        border-left-color: #27ae60;
+      }
+
+      .lob-card.car {
+        border-left-color: #e74c3c;
+      }
+
+      .lob-card.travel {
+        border-left-color: #3498db;
+      }
+
+      .lob-card h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .lob-card .providers {
+        list-style: none;
+        margin-top: 15px;
+      }
+
+      .lob-card .providers li {
+        padding: 10px;
+        margin: 8px 0;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .lob-card .providers li:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: translateX(5px);
+      }
+
+      .lob-card .provider-link {
+        text-decoration: none;
+        color: #2c3e50;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .tech-item {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .tech-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .tech-item strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .lob-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>Policy Issuance Automation</span>
+      </div>
+
+      <div class="header">
+        <h1>🤖 Policy Issuance Automation</h1>
+        <p>Comprehensive Insurance Policy Automation System</p>
+        <span class="status-badge">Active System</span>
+      </div>
+
+      <div class="overview-section">
+        <h2>❓ What is Policy Issuance Automation?</h2>
+        <p
+          style="
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.15em;
+            margin-bottom: 20px;
+            line-height: 1.8;
+          "
+        >
+          The Policy Issuance Automation system is a comprehensive, modular
+          architecture designed to automate the complete policy issuance
+          workflow with insurance providers. It provides a
+          <strong>standardized interface</strong> for integrating multiple
+          insurers across different Lines of Business (LOB) -
+          <strong>Health, Car, and Travel</strong>.
+        </p>
+
+        <div
+          style="
+            background: linear-gradient(135deg, #27ae60, #229954);
+            padding: 25px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 30px;
+            border-left: 5px solid #fff;
+          "
+        >
+          <h4 style="margin-bottom: 15px">💳 Pre-Automation Payment Capture</h4>
+          <p style="margin: 0; line-height: 1.7">
+            <strong>Auto-capture is a critical prerequisite step</strong> that
+            happens <strong>BEFORE</strong> the automation workflow begins:<br /><br />
+            ✓ <strong>Payment Flow:</strong> Customer pays online → Payment
+            authorized → Background job processes split payment approval<br />
+            ✓ <strong>Auto-Capture Executes:</strong> System captures authorized
+            payment via Marshall/Tap API before automation starts<br />
+            ✓ <strong>Success Path:</strong> If capture succeeds → Automation
+            workflow is scheduled
+            (<code>createPolicyIssuanceAutomation()</code>)<br />
+            ✓ <strong>Failure Path:</strong> If capture fails → Quote marked
+            with <code>AUTO_CAPTURE_FAILED</code> status and allocated to team
+            for manual handling<br />
+            ✓ <strong>Implementation:</strong> Located in
+            <code>SplitPaymentService->processSplitPaymentApprove()</code>
+            (lines 770-792, 1475-1487)<br />
+            ✓ <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+            between retries<br />
+            ✓ <strong>Provider Support:</strong> Currently implemented for GIG
+            (AXA) and potentially other providers<br /><br />
+            <strong>Note:</strong> This explains why documentation refers to
+            "pre-captured" payments - the payment is already captured before any
+            automation steps execute.
+          </p>
+        </div>
+
+        <div
+          style="
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            padding: 25px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 30px;
+          "
+        >
+          <h4 style="margin-bottom: 15px">💡 Why This System?</h4>
+          <p style="margin: 0; line-height: 1.7">
+            <strong>Policy Issuance Automation</strong> eliminates manual
+            processing and reduces errors. The system:<br /><br />
+            ✓ <strong>Automates the entire lifecycle</strong> from quote to
+            booked policy<br />
+            ✓ <strong>Provides consistent error handling</strong> with retry
+            mechanisms for transient failures<br />
+            ✓ <strong>Enables seamless integration</strong> with multiple
+            insurance providers through a common interface<br />
+            ✓ <strong>Maintains data integrity</strong> with comprehensive audit
+            trails throughout automation<br />
+            ✓ <strong>Handles documents automatically</strong> with
+            upload/download and Azure storage integration<br />
+            ✓ <strong>Tracks status in real-time</strong> with detailed logging
+            at each step<br />
+            ✓ <strong>Processes asynchronously</strong> using queue-based jobs
+            for scalability
+          </p>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>🏢 Lines of Business (LOB) & Insurance Providers</h2>
+        <p
+          style="
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+          "
+        >
+          Automated policy issuance across multiple insurance providers and
+          product lines
+        </p>
+
+        <div class="lob-grid">
+          <div class="lob-card health">
+            <h3>🏥 Health Insurance</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px">
+              Comprehensive health insurance policy automation with individual
+              and group coverage
+            </p>
+            <ul class="providers">
+              <li>
+                <a
+                  href="/docs/policy-automation/health/adnic/index.html"
+                  class="provider-link"
+                >
+                  <span>📋</span>
+                  <span
+                    ><strong>ADNIC Health</strong> - 3-step automation (STP
+                    only)</span
+                  >
+                </a>
+              </li>
+            </ul>
+            <div
+              style="
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid #e0e0e0;
+              "
+            >
+              <strong style="color: #27ae60"
+                >Automation Steps (3 steps):</strong
+              >
+              <ul style="margin-top: 10px; padding-left: 20px; color: #7f8c8d">
+                <li>Upload Documents (per-member)</li>
+                <li>Issue Policy (with payment reference)</li>
+                <li>Upload Policy Documents to IMCRM</li>
+              </ul>
+              <p style="margin-top: 10px; color: #7f8c8d; font-size: 0.9em">
+                <strong>Note:</strong> STP cases only. Payment pre-captured.
+                Booking handled separately.
+              </p>
+            </div>
+          </div>
+
+          <div class="lob-card car">
+            <h3>🚗 Car Insurance</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px">
+              Motor insurance policy automation for comprehensive and
+              third-party coverage
+            </p>
+            <ul class="providers">
+              <li>
+                <a
+                  href="/docs/policy-automation/car/gig/index.html"
+                  class="provider-link"
+                >
+                  <span>📋</span>
+                  <span
+                    ><strong>GIG (AXA) Car</strong> - 5-step automation with OCR
+                    processing</span
+                  >
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/docs/policy-automation/car/liva/index.html"
+                  class="provider-link"
+                >
+                  <span>📋</span>
+                  <span
+                    ><strong>Liva (RSA) Car</strong> - 4-step automation with
+                    timeout handling</span
+                  >
+                </a>
+              </li>
+            </ul>
+            <div
+              style="
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid #e0e0e0;
+              "
+            >
+              <strong style="color: #e74c3c">Automation Steps:</strong>
+              <ul style="margin-top: 10px; padding-left: 20px; color: #7f8c8d">
+                <li>GIG: 5 steps (Upload → Issue → Get Docs → OCR → Book)</li>
+                <li>Liva: 4 steps (Upload → Issue → Get Docs → Book)</li>
+              </ul>
+              <p style="margin-top: 10px; color: #7f8c8d; font-size: 0.9em">
+                <strong>Key Differences:</strong> GIG uses OAuth2 + OCR batch
+                processing. Liva uses double base64 decode + timeout detection.
+              </p>
+            </div>
+          </div>
+
+          <div class="lob-card travel">
+            <h3>✈️ Travel Insurance</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px">
+              Travel insurance policy automation for individual and family
+              coverage
+            </p>
+            <ul class="providers">
+              <li>
+                <a
+                  href="/docs/policy-automation/travel/alliance/index.html"
+                  class="provider-link"
+                >
+                  <span>📋</span>
+                  <span
+                    ><strong>Alliance Travel</strong> - 5-step automation
+                    workflow</span
+                  >
+                </a>
+              </li>
+            </ul>
+            <div
+              style="
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid #e0e0e0;
+              "
+            >
+              <strong style="color: #3498db">Automation Steps:</strong>
+              <ul style="margin-top: 10px; padding-left: 20px; color: #7f8c8d">
+                <li>Issue Policy (Inbound/Outbound)</li>
+                <li>Purchase Policy</li>
+                <li>Upload Policy Documents</li>
+                <li>Fill Policy Booking Details</li>
+                <li>Book Policy to Sage</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>🛠️ System Architecture Overview</h2>
+        <p
+          style="
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+          "
+        >
+          Modular, provider-agnostic architecture with standardized interface
+          and comprehensive logging
+        </p>
+
+        <div class="tech-grid">
+          <div class="tech-item">
+            <strong>Interface Layer</strong>
+            PolicyIssuanceInterface defines contract for all providers
+          </div>
+          <div class="tech-item">
+            <strong>Service Layer</strong>
+            10+ specialized services per provider (orchestrator, executor, API,
+            validation)
+          </div>
+          <div class="tech-item">
+            <strong>HTTP Layer</strong>
+            Dedicated HTTP client with timeout and retry configuration
+          </div>
+          <div class="tech-item">
+            <strong>Validation Layer</strong>
+            Pre-validation before API calls to prevent unnecessary failures
+          </div>
+          <div class="tech-item">
+            <strong>Document Layer</strong>
+            Automated document fetch from Azure, upload to insurer and IMCRM
+          </div>
+          <div class="tech-item">
+            <strong>Response Layer</strong>
+            Normalized response parsing with standardized error handling
+          </div>
+          <div class="tech-item">
+            <strong>Logging Layer</strong>
+            Comprehensive audit trails with LoggerService integration
+          </div>
+          <div class="tech-item">
+            <strong>Queue Layer</strong>
+            Asynchronous job processing with retry mechanisms
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 30px;
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+          "
+        >
+          <h4 style="color: #856404; margin-bottom: 10px">
+            🎯 Design Patterns Used
+          </h4>
+          <div class="tech-grid" style="margin-top: 15px">
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Strategy Pattern</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Provider-specific implementations
+              </p>
+            </div>
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Chain of Responsibility</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Sequential step execution
+              </p>
+            </div>
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Builder Pattern</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Complex payload construction
+              </p>
+            </div>
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Facade Pattern</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Simplified HTTP client interface
+              </p>
+            </div>
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Adapter Pattern</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Response normalization
+              </p>
+            </div>
+            <div style="background: #fffef7; padding: 15px; border-radius: 8px">
+              <strong style="color: #856404">Command Pattern</strong>
+              <p style="color: #856404; font-size: 0.9em; margin-top: 5px">
+                Step execution handlers
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>🔑 Key Features & Benefits</h2>
+        <div class="tech-grid">
+          <div class="tech-item" style="border-left-color: #27ae60">
+            <strong>Multi-step Automation</strong>
+            Sequential step execution with state management and progress
+            tracking
+          </div>
+          <div class="tech-item" style="border-left-color: #e74c3c">
+            <strong>Provider-agnostic Design</strong>
+            Common interface for all insurance providers with provider-specific
+            strategies
+          </div>
+          <div class="tech-item" style="border-left-color: #3498db">
+            <strong>Comprehensive Logging</strong>
+            Detailed audit trails using LoggerService at every step
+          </div>
+          <div class="tech-item" style="border-left-color: #f39c12">
+            <strong>Validation at Each Step</strong>
+            Pre-validation before API calls to prevent unnecessary failures
+          </div>
+          <div class="tech-item" style="border-left-color: #9b59b6">
+            <strong>Retry Mechanisms</strong>
+            Handles timeouts and transient failures with configurable retry
+            logic
+          </div>
+          <div class="tech-item" style="border-left-color: #1abc9c">
+            <strong>Document Management</strong>
+            Automated document upload/download with Azure storage integration
+          </div>
+          <div class="tech-item" style="border-left-color: #e67e22">
+            <strong>Status Tracking</strong>
+            Real-time tracking of automation progress with UI step locking
+          </div>
+          <div class="tech-item" style="border-left-color: #c0392b">
+            <strong>Queue-based Processing</strong>
+            Asynchronous job processing for scalability and performance
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Policy Issuance Automation Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Active System
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

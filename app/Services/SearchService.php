@@ -12,6 +12,7 @@ use App\Models\Role;
 use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +67,8 @@ class SearchService extends BaseService
 
         // Select columns for normal query
         $baseQuery->select($selectColumns);
+
+        LoggerService::sql(__CLASS__.'::'.__FUNCTION__, $baseQuery);
 
         // Use cursor for better memory usage with large result sets
         return $baseQuery->paginate(15)->withQueryString();
@@ -179,7 +182,7 @@ class SearchService extends BaseService
      * Apply table joins from request
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      */
     private function applyTableJoins(Builder $query, $request): void
     {
@@ -343,7 +346,7 @@ class SearchService extends BaseService
     /**
      * Get filtered company cases columns
      *
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      * @param  array  $selectColumns  Base select columns
      * @return array Filtered select columns
      */
@@ -362,7 +365,7 @@ class SearchService extends BaseService
      * Apply search filters to the query
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      * @param  bool  $isSendUpdateFilter  Whether this is for send update filter
      */
     private function searchQuoteQueryFilters($query, $request, $isSendUpdateFilter = false): void
@@ -470,7 +473,7 @@ class SearchService extends BaseService
             }
 
             // Filter by update status
-            if ($request->has('update_status') && ! isset($request->su_code)) {
+            if ($isSendUpdateFilter && $request->has('update_status') && ! isset($request->su_code)) {
                 $formattedUpdateStatuses = array_map(function ($string) {
                     return strtoupper(str_replace(' ', '_', $string));
                 }, $request->update_status);
@@ -478,7 +481,7 @@ class SearchService extends BaseService
             }
 
             // Filter by send update type
-            if ($request->has('send_update_type') && ! isset($request->su_code)) {
+            if ($isSendUpdateFilter && $request->has('send_update_type') && ! isset($request->su_code)) {
                 $query->whereIn('send_update_logs.category_id', $request->send_update_type);
             }
         } catch (\Exception $e) {
@@ -493,7 +496,7 @@ class SearchService extends BaseService
      * Apply insured name search with better performance
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      */
     private function applyInsuredNameSearch($query, $request): void
     {
@@ -506,7 +509,7 @@ class SearchService extends BaseService
      * Apply member name search
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      */
     private function applyMemberNameSearch($query, $request): void
     {
@@ -527,6 +530,7 @@ class SearchService extends BaseService
                     QuoteTypeId::Life => 'life_quote_request',
                     QuoteTypeId::Business => 'business_quote_request',
                     QuoteTypeId::Travel => 'travel_quote_request',
+                    QuoteTypeId::Device => 'device_quote_request',
                 ];
 
                 $quoteType = $quoteTypes[request()->line_of_business] ?? null;
@@ -558,7 +562,7 @@ class SearchService extends BaseService
      * Apply date range filter
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      * @param  bool  $isSendUpdateFilter  Whether this is for send update filter
      */
     private function applyDateRangeFilter($query, $request, $isSendUpdateFilter): void
@@ -595,7 +599,7 @@ class SearchService extends BaseService
      * Apply payment status filter
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      * @param  bool  $isSendUpdateFilter  Whether this is for send update filter
      */
     private function applyPaymentStatusFilter($query, $request, $isSendUpdateFilter): void
@@ -625,7 +629,7 @@ class SearchService extends BaseService
      * Apply tax invoice filters
      *
      * @param  Builder  $query  Query builder instance
-     * @param  \Illuminate\Http\Request  $request  Request instance
+     * @param  Request  $request  Request instance
      * @param  bool  $isSendUpdateFilter  Whether this is for send update filter
      */
     private function applyTaxInvoiceFilters($query, $request, $isSendUpdateFilter): void

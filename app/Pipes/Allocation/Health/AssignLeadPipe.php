@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Health;
 
 use App\Enums\HealthTeamType;
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamNameEnum;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\HealthQuoteRequestDetail;
@@ -55,7 +56,14 @@ class AssignLeadPipe extends BaseAllocationPipe
                 ]
             )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::GBP])) {
+                    if (in_array($lead->health_team_type, [
+                        HealthTeamType::EBP,
+                        HealthTeamType::RM_NB,
+                        HealthTeamType::RM_SPEED,
+                        HealthTeamType::GBP,
+                        TeamNameEnum::AUH,
+                        TeamNameEnum::PEC,
+                    ])) {
                         IntroEmailJob::dispatch(
                             quoteTypeCode::Health,
                             'Capi',

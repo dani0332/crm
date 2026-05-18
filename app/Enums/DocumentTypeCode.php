@@ -77,6 +77,7 @@ class DocumentTypeCode extends Enum
     const SPD_RECEIPT = 'SPDR';
     const QD = 'QD';
     const AML = 'AML';
+    const COMPLIANCE_APPROVAL = 'compliance_approval';
     const E_TICKETS = 'E_TICKETS';
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
@@ -84,6 +85,7 @@ class DocumentTypeCode extends Enum
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
     const MTL_EID = 'MTL_EID';
+    public const TIRBB = 'TIRBB'; // tax invoice raised by buyer
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -151,4 +153,30 @@ class DocumentTypeCode extends Enum
     const COMP_Polic = 'COMP_Polic'; // Holiday Homes Policy Schedule
     const FIDEL_POS = 'FIDEL_POS'; // Goods In Transit Policy Schedule
     const IND_PS = 'IND_PS'; // Group Travel Policy Schedule
+
+    // DEVICE document types
+    const DEVICE_SMARTPHONE_PAYMENT_PROOF = 'DEV_SP_PD';
+    const DEVICE_SMARTPHONE_PAYMENT_RECEIPT = 'DEV_SP_PDR';
+    const DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF = 'DEV_SP_DPDR';
+    const DEVICE_SMARTPHONE_EMIRATES_ID = 'DEV_SP_EID';
+    const DEVICE_SMARTPHONE_OTHER_DOCUMENTS = 'DEV_SP_OTHER_DOCS';
+    const DEVICE_SMARTPHONE_POLICY_CERTIFICATE = 'DEV_SP_PC';
+    const DEVICE_SMARTPHONE_POLICY_SCHEDULE = 'DEV_SP_PS';
+    const DEVICE_SMARTPHONE_TAX_INVOICE = 'DEV_SP_TI';
+    const DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER = 'DEV_SP_TIRBB';
+    const DEVICE_SMARTPHONE_POLICY_HANDBOOK = 'DEV_SP_PHB';
+
+    /* Health Quote */
+    const HEA_EID = 'HEAEID'; // Emirates ID
+    const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
+    const HEA_EID_BACK = 'HEAEIDB'; // Emirates ID Back
+    public const HEA_VISA = 'MEV'; // Visa
+    public const HEA_PAS = 'MEPP'; // Passport
+    public const HEA_BIRTH_CERTIFICATE = 'MEBC'; // Birth Certificate
+    public const HEA_MEDICAL_APPLICATION_FORM = 'MED_HLTH'; // medical application form
+    public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
+    public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
+    public const HEA_INSURED_EMIRATES_ID_APPLICATION = 'HEAEIDA'; // Insured Emirates ID Application
+    public const TCOMP_PC = 'TCOMP_PC'; // Business Policical Violence Policy Certificate
+    public const TCOMP_PS = 'TCOMP_PS'; // Business Policical Violence Policy Schedule
 }

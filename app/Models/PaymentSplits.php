@@ -10,6 +10,7 @@ use Config;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -106,7 +107,7 @@ class PaymentSplits extends Model implements Auditable
         return $this->hasOne(CcPaymentProcess::class)->failed();
     }
 
-    public function paymentCharges(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function paymentCharges(): HasOne
     {
         return $this->hasOne(PaymentCharge::class, 'payment_split_id', 'id');
     }

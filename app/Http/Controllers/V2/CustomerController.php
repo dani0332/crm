@@ -12,12 +12,17 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class CustomerController extends Controller
 {
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -32,7 +37,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
@@ -44,7 +49,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -60,7 +65,7 @@ class CustomerController extends Controller
     /**
      * @param  $quoteTypeCode
      * @param  $quoteId
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function update($uuid, CustomerRequest $customerRequest)
     {
@@ -83,7 +88,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function storeAdditionalContact($customerId, CustomerAdditionalContactRequest $request)
     {

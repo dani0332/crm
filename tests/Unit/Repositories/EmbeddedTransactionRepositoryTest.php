@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
+use Illuminate\Support\Collection;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -44,7 +45,7 @@ describe('EmbeddedTransactionRepository', function () {
                 []
             );
 
-            expect($result)->toBeInstanceOf(\Illuminate\Support\Collection::class)
+            expect($result)->toBeInstanceOf(Collection::class)
                 ->and($result->isEmpty())->toBeTrue();
         });
 

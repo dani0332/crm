@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 class SendPaymentEmailToAdvisor extends Command
 {
@@ -75,7 +76,7 @@ class SendPaymentEmailToAdvisor extends Command
         return Command::SUCCESS;
     }
 
-    private function getAdvisorWisePayments($authorizedDays): \Illuminate\Support\Collection
+    private function getAdvisorWisePayments($authorizedDays): Collection
     {
         $authorizedDate = Carbon::today()->subDays($authorizedDays);
 

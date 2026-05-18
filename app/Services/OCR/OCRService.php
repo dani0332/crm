@@ -269,7 +269,7 @@ class OCRService
         // Update Accuracy Matrix cache after successful OCR processing
         try {
             $this->updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log error but don't interrupt OCR flow
             LoggerService::error('Accuracy Matrix update failed but OCR completed successfully - ', exception: $e);
         }
@@ -333,7 +333,7 @@ class OCRService
     }
 
     private function handleProcessingException(
-        \Exception $e,
+        Exception $e,
         Model $quote,
         QuoteTypes $quoteType,
         DocumentType $documentType,
@@ -421,6 +421,16 @@ class OCRService
             return null;
         }
 
+        // Plan validation (doc-type aware): validator will skip if no mapping exists for this quote type / document type.
+        if (! $this->isPlanEligibleForOcr($quoteType, $docType, $quote)) {
+            LoggerService::info('OCR processing skipped - Plan not eligible for OCR - Quote UUID: '.$quote->uuid, [
+                'quote_type' => $quoteType->value,
+                'document_type' => $docType->value,
+            ]);
+
+            return false;
+        }
+
         // Send start notification (skip for ecom)
         if (! $isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
@@ -463,6 +473,7 @@ class OCRService
             LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
+
                 $result = $this->processOcrData(
                     $quote,
                     $quoteType,
@@ -491,7 +502,7 @@ class OCRService
                     $startTime
                 );
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleProcessingException(
                 $e,
                 $quote,

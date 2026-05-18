@@ -115,7 +115,7 @@ class ConversionApiServiceTest extends TestCase
         $result = $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
-            ->with('ConversionApiService - Calling facebook conversion API', \Mockery::on(function ($context) use ($quoteTypeId) {
+            ->with('ConversionApiService - Calling facebook conversion API', Mockery::on(function ($context) use ($quoteTypeId) {
                 return isset($context['eventType']) && $context['eventType'] === 'Purchase'
                     && isset($context['platform']) && $context['platform'] === 'facebook'
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
@@ -139,7 +139,7 @@ class ConversionApiServiceTest extends TestCase
         $result = $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
-            ->with('ConversionApiService - Calling google conversion API', \Mockery::on(function ($context) use ($quoteTypeId) {
+            ->with('ConversionApiService - Calling google conversion API', Mockery::on(function ($context) use ($quoteTypeId) {
                 return isset($context['eventType']) && $context['eventType'] === 'Purchase'
                     && isset($context['platform']) && $context['platform'] === 'google'
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
@@ -160,7 +160,7 @@ class ConversionApiServiceTest extends TestCase
         $result = $this->service->triggerFacebookConversion('test-uuid-success', QuoteTypeId::Car);
 
         Log::shouldHaveReceived('info')
-            ->with('ConversionApiService - facebook conversion API call successful', \Mockery::type('array'))
+            ->with('ConversionApiService - facebook conversion API call successful', Mockery::type('array'))
             ->once();
 
         $this->assertTrue($result);
@@ -177,7 +177,7 @@ class ConversionApiServiceTest extends TestCase
         $result = $this->service->triggerFacebookConversion('test-uuid-error', QuoteTypeId::Car);
 
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - facebook conversion API call exception', \Mockery::on(function ($context) {
+            ->with('ConversionApiService - facebook conversion API call exception', Mockery::on(function ($context) {
                 return isset($context['exception']) && is_array($context['exception'])
                     && isset($context['exception']['message'])
                     && isset($context['exception']['trace'])
@@ -348,7 +348,7 @@ class ConversionApiServiceTest extends TestCase
         $this->assertFalse($result);
 
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - facebook conversion API returned errors', \Mockery::on(function ($context) {
+            ->with('ConversionApiService - facebook conversion API returned errors', Mockery::on(function ($context) {
                 return isset($context['errors'])
                     && isset($context['response'])
                     && isset($context['platform'])
@@ -374,7 +374,7 @@ class ConversionApiServiceTest extends TestCase
         $this->assertFalse($result);
 
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - google conversion API returned errors', \Mockery::on(function ($context) {
+            ->with('ConversionApiService - google conversion API returned errors', Mockery::on(function ($context) {
                 return isset($context['errors'])
                     && isset($context['platform'])
                     && $context['platform'] === 'google';
@@ -396,7 +396,7 @@ class ConversionApiServiceTest extends TestCase
         $this->assertFalse($result);
 
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - facebook conversion API returned empty response', \Mockery::on(function ($context) {
+            ->with('ConversionApiService - facebook conversion API returned empty response', Mockery::on(function ($context) {
                 return isset($context['platform'])
                     && $context['platform'] === 'facebook';
             }))
@@ -417,7 +417,7 @@ class ConversionApiServiceTest extends TestCase
         $this->assertFalse($result);
 
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - google conversion API returned empty response', \Mockery::on(function ($context) {
+            ->with('ConversionApiService - google conversion API returned empty response', Mockery::on(function ($context) {
                 return isset($context['platform'])
                     && $context['platform'] === 'google';
             }))
@@ -448,12 +448,12 @@ class ConversionApiServiceTest extends TestCase
 
         // Verify error was logged for first call
         Log::shouldHaveReceived('error')
-            ->with('ConversionApiService - facebook conversion API returned errors', \Mockery::type('array'))
+            ->with('ConversionApiService - facebook conversion API returned errors', Mockery::type('array'))
             ->once();
 
         // Verify success was logged only for second call
         Log::shouldHaveReceived('info')
-            ->with('ConversionApiService - facebook conversion API call successful', \Mockery::type('array'))
+            ->with('ConversionApiService - facebook conversion API call successful', Mockery::type('array'))
             ->once();
     }
 }

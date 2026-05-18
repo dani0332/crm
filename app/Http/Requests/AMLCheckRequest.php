@@ -8,11 +8,27 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 
 class AMLCheckRequest extends FormRequest
 {
+    /**
+     * Request attribute set only by trusted server-side callers (e.g. {@see AMLService::quoteAmlProcessCall}).
+     * Must not be derived from user-controlled input; clients cannot set {@see Request::attributes}.
+     */
+    public const INTERNAL_AUTOMATION_ATTRIBUTE = 'blanka.aml_internal_automation';
+
+    /**
+     * Whether this AML check is running from the queue/automation pipeline (not a browser user forging flags).
+     */
+    public function isTrustedInternalAutomation(): bool
+    {
+        return (bool) $this->attributes->get(self::INTERNAL_AUTOMATION_ATTRIBUTE, false);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +40,7 @@ class AMLCheckRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -71,7 +87,11 @@ class AMLCheckRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if (! auth()->user()->can(PermissionsEnum::AMLList)) {
+            if ($this->isTrustedInternalAutomation()) {
+                return;
+            }
+
+            if (! auth()->user()?->can(PermissionsEnum::AMLList)) {
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
             }
         });

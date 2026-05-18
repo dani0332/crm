@@ -10,6 +10,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
@@ -18,19 +19,29 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Response as HttpClientResponse;
+use JsonSerializable;
 
 class PolicyIssuanceService
 {
     use GenericQueriesAllLobs;
 
     private string $className = 'policyIssuanceService';
+
+    private const ALLOCATABLE_QUOTE_TYPES = [
+        QuoteTypes::DEVICE,
+    ];
 
     public function __construct() {}
 
@@ -44,7 +55,14 @@ class PolicyIssuanceService
             QuoteTypes::CAR->value => match ($insurerCode) {
                 InsuranceProvidersEnum::RSA => new LivaInsuranceService,
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
-
+                default => null,
+            },
+            QuoteTypes::DEVICE->value => match ($insurerCode) {
+                InsuranceProvidersEnum::NGI => app(NgiInsuranceService::class),
+                default => null,
+            },
+            QuoteTypes::HEALTH->value => match ($insurerCode) {
+                InsuranceProvidersEnum::ADNIC => app(AdnicInsuranceService::class),
                 default => null,
             },
             QuoteTypes::CYBER->value => match ($insurerCode) {
@@ -207,7 +225,7 @@ class PolicyIssuanceService
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('renewals');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id);
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });
@@ -293,8 +311,9 @@ class PolicyIssuanceService
         }
 
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
+        $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
 
-        if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {
+        if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
             $this->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         } else {
             // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -329,6 +348,8 @@ class PolicyIssuanceService
 
     public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status, $policyIssuance): void
     {
+        $responsePayload = $this->resolvePolicyIssuanceLogResponse($response);
+
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $policyIssuance->id,
             'model_type' => $quote->getMorphClass(),
@@ -336,11 +357,73 @@ class PolicyIssuanceService
             'step' => $step,
             'endPoint' => $endPoint,
             'payload' => json_encode($payload),
-            'response' => json_encode($response),
+            'response' => json_encode($responsePayload),
             'status' => $status,
         ]);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' PID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
+    }
+
+    private function resolvePolicyIssuanceLogResponse(mixed $response): mixed
+    {
+        if ($response instanceof HttpClientResponse) {
+            $responsePayload = $response->json();
+
+            $resolvedResponse = $responsePayload === null
+                ? $response->body()
+                : $responsePayload;
+
+            return $this->normalizeLogResponseValue($resolvedResponse);
+        }
+
+        return $this->normalizeLogResponseValue($response);
+    }
+
+    private function convertObjectToArray(object $object): array
+    {
+        $array = [];
+
+        foreach ((array) $object as $key => $value) {
+            $array[$key] = $this->normalizeLogResponseValue($value);
+        }
+
+        return $array;
+    }
+
+    private function normalizeLogResponseValue(mixed $value): mixed
+    {
+        if (is_object($value)) {
+            if (method_exists($value, 'toArray')) {
+                return $value->toArray();
+            }
+
+            if ($value instanceof JsonSerializable) {
+                return $value->jsonSerialize();
+            }
+
+            return $this->convertObjectToArray($value);
+        }
+
+        if (is_array($value)) {
+            return array_map([$this, 'normalizeLogResponseValue'], $value);
+        }
+
+        return $value;
+    }
+
+    public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool
+    {
+        if (! $insuranceProvider) {
+            return false;
+        }
+
+        return match ($quoteType) {
+            QuoteTypes::DEVICE->value => $insuranceProvider->code === InsuranceProvidersEnum::NGI,
+            QuoteTypes::CYBER->value => $insuranceProvider->code === InsuranceProvidersEnum::AWNI,
+            QuoteTypes::CAR->value => in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]),
+            QuoteTypes::HEALTH->value => $insuranceProvider->code === InsuranceProvidersEnum::ADNIC,
+            default => false,
+        };
     }
 
     public function updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $newInsurerApiStatus = null, $newApiIssuanceStatus = null, $processInvolved = null)
@@ -361,7 +444,6 @@ class PolicyIssuanceService
         if (! $apiIssuanceStatus) {
             if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
                 $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-
             } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
                 if (! $insurerApiStatus) {
                     $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
@@ -379,7 +461,8 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) && $processInvolved) {
+
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
@@ -431,10 +514,20 @@ class PolicyIssuanceService
         // Assign advisor to lead for cyber policy issuance automation if not assigned and policy is booked only for cyber
         if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
             $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
+        } elseif (! $advisorId && $isPolicyBooked) {
+            $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
+            $advisorId = $allocationResult['advisorId'] ?? null;
+
+            if ($allocationResult['allocationAttempted'] ?? false) {
+                LoggerService::info('Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                    'allocation_response' => $allocationResult['response'] ?? null,
+                ]);
+            }
         }
 
         if (
-            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) &&
+            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) &&
             (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
             ! $isPolicyBooked
         ) {
@@ -461,6 +554,8 @@ class PolicyIssuanceService
             )->onQueue('policy-issuance-automation');
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+        } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
+            app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
 
         if ($advisorId) {
@@ -483,18 +578,66 @@ class PolicyIssuanceService
 
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
     {
-        $isCyber = $quoteType === QuoteTypes::CYBER->value;
+        $paUser = UserNameEnum::PA_USER;
+        $isBookPolicy = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
 
-        $quoteTypeId = $isCyber ? QuoteTypeId::Cyber : QuoteTypeId::Car;
-        $workflowType = $isCyber ? WorkflowTypeEnum::CYBER_AUTOMATION_FAILED : WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
-        $recipientUser = UserNameEnum::PA_USER;
+        // Non-booking failures for Device/Cyber notify the assigned SIC advisor directly (recipientUser null).
+        return match ($quoteType) {
+            QuoteTypes::DEVICE->value => [
+                QuoteTypeId::Device,
+                WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED,
+                $isBookPolicy ? $paUser : null,
+            ],
+            QuoteTypes::CYBER->value => [
+                QuoteTypeId::Cyber,
+                WorkflowTypeEnum::CYBER_AUTOMATION_FAILED,
+                $isBookPolicy ? $paUser : null,
+            ],
+            default => [
+                QuoteTypeId::Car,
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                $paUser,
+            ],
+        };
+    }
 
-        if ($isCyber && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
-            // For Cyber non-booking failures we notify the assigned SIC advisor directly.
-            $recipientUser = null;
+    private function attemptAdvisorAllocation(string $quoteType, string $uuid): array
+    {
+        $quoteTypeEnum = QuoteTypes::tryFrom($quoteType);
+
+        $allocationAttempted = $quoteTypeEnum && $this->isAllocationSupported($quoteTypeEnum);
+
+        if (! $allocationAttempted) {
+            return [
+                'advisorId' => null,
+                'response' => null,
+                'quoteType' => $quoteTypeEnum?->value,
+                'allocationAttempted' => false,
+            ];
         }
 
-        return [$quoteTypeId, $workflowType, $recipientUser];
+        $teamId = $this->getAllocationTeamId($quoteTypeEnum);
+        $response = $quoteTypeEnum->allocate($uuid, $teamId);
+
+        return [
+            'advisorId' => is_array($response) ? ($response['advisorId'] ?? null) : null,
+            'response' => $response,
+            'quoteType' => $quoteTypeEnum->value,
+            'allocationAttempted' => true,
+        ];
+    }
+
+    private function isAllocationSupported(QuoteTypes $quoteTypeEnum): bool
+    {
+        return in_array($quoteTypeEnum, self::ALLOCATABLE_QUOTE_TYPES, true);
+    }
+
+    private function getAllocationTeamId(QuoteTypes $quoteTypeEnum): int|false
+    {
+        return match ($quoteTypeEnum) {
+            QuoteTypes::DEVICE => getTeamId(TeamNameEnum::SIC_UNASSISTED),
+            default => false,
+        };
     }
 
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)
@@ -507,6 +650,7 @@ class PolicyIssuanceService
             PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED,
             PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED,
             PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID => PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED,
+            PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED,
             PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID => PolicyIssuanceEnum::PIA_LEGACY_NON_API,
         ];
 
@@ -619,5 +763,62 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);
+    }
+
+    /**
+     * IMCRM allowlist: statuses where manual re-trigger of policy automation may be offered.
+     */
+    public function isReTriggerPolicyAutomationStatusAllowed(?string $status): bool
+    {
+        $allowed = [
+            PolicyIssuanceEnum::TIMEOUT_STATUS,
+            PolicyIssuanceEnum::FAILED_STATUS,
+        ];
+
+        return in_array($status, $allowed, true);
+    }
+
+    /**
+     * Whether IMCRM should show "Re Trigger Policy Automation" for this issuance (LOB-specific rules apply).
+     */
+    public function shouldOfferReTriggerPolicyAutomation(PolicyIssuance $policyIssuance): bool
+    {
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            return false;
+        }
+
+        return match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status),
+            default => false,
+        };
+    }
+
+    /**
+     * Re-run LOB-specific recovery (e.g. immediate NGI document job). Caller must authorize and validate request context.
+     *
+     * @throws \InvalidArgumentException When automation is disabled, LOB unsupported, or eligibility fails
+     */
+    public function reTriggerPolicyAutomation(PolicyIssuance $policyIssuance): void
+    {
+        if (! $this->isReTriggerPolicyAutomationStatusAllowed($policyIssuance->status)) {
+            throw new \InvalidArgumentException('Policy issuance automation is not allowed for this status ('.$policyIssuance->status.').');
+        }
+
+        $policyIssuance->loadMissing('insuranceProvider');
+        $insuranceProvider = $policyIssuance->insuranceProvider;
+        $automation = $this->init($policyIssuance->quote_type, $insuranceProvider?->code);
+
+        if (! $automation?->isPolicyIssuanceAutomationEnabled()) {
+            throw new \InvalidArgumentException('Policy issuance automation is not enabled for this quote.');
+        }
+
+        match (ucfirst((string) $policyIssuance->quote_type)) {
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->identifyAutomationStepToReTrigger($policyIssuance),
+            default => throw new \InvalidArgumentException('Re-trigger is not supported for this line of business.'),
+        };
     }
 }

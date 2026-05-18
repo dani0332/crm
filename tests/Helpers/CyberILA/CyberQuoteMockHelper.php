@@ -6,13 +6,14 @@ use App\Enums\QuoteTypeId;
 use App\Models\CyberQuote;
 use App\Models\PersonalQuote;
 use Mockery;
+use Mockery\MockInterface;
 
 class CyberQuoteMockHelper
 {
     /**
      * Mock CapiRequestService to simulate external Cyber API behavior.
      */
-    public static function mockCapiRequestService(string $testUuid): \Mockery\MockInterface
+    public static function mockCapiRequestService(string $testUuid): MockInterface
     {
         $mock = Mockery::mock('alias:App\Facades\Capi');
         $mock->shouldReceive('request')
@@ -28,7 +29,7 @@ class CyberQuoteMockHelper
     /**
      * Mock KEN Service for retrieving plans.
      */
-    public static function mockKenService(array $plans = []): \Mockery\MockInterface
+    public static function mockKenService(array $plans = []): MockInterface
     {
         $mock = Mockery::mock('alias:App\Facades\Ken');
 
@@ -48,7 +49,7 @@ class CyberQuoteMockHelper
     /**
      * Mock BIRD Service for email workflows.
      */
-    public static function mockBirdService(): \Mockery\MockInterface
+    public static function mockBirdService(): MockInterface
     {
         $mock = Mockery::mock('alias:App\Services\BirdService');
         $mock->shouldReceive('triggerWebHookRequest')

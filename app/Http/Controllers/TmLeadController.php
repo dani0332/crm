@@ -14,6 +14,7 @@ use App\Services\TMLeadsService;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class TmLeadController extends Controller
 {
@@ -24,16 +25,16 @@ class TmLeadController extends Controller
     public function __construct(TMLeadsService $tmLeadsCreateUpdateService)
     {
         $this->teleMarketingLeadsService = $tmLeadsCreateUpdateService;
-        $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'show', 'store']]);
         $this->middleware('permission:telemarketing-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update', 'tmLeadUpdate']]);
         $this->middleware('permission:telemarketing-delete', ['only' => ['destroy']]);
     }
 
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request, TmLead $tmLead)
     {
@@ -68,7 +69,7 @@ class TmLeadController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -110,8 +111,8 @@ class TmLeadController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return Response
      */
     public function store(TmLeadRequest $request)
     {
@@ -127,13 +128,13 @@ class TmLeadController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(TmLead $tmlead)
     {
         $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number);
         if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
-            return redirect()->route('tmleads.index')->with('message', "You don't have access to view this lead");
+            return redirect()->route('tmleads-list')->with('error', "You don't have access to view this lead");
         }
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');
@@ -169,13 +170,13 @@ class TmLeadController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(TmLead $tmlead)
     {
         if (Auth::user()->hasRole('TM_ADVISOR')) {
             if (Auth::user()->id != $tmlead->assigned_to_id) {
-                return redirect()->route('tmleads.index')->with('message', "You don't have access to edit this lead");
+                return redirect()->route('tmleads-list')->with('error', "You don't have access to edit this lead");
             }
             $isUserTmAdvisor = '1';
         } else {
@@ -215,11 +216,15 @@ class TmLeadController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return Response
      */
     public function update(TmLeadRequest $request, TmLead $tmlead)
     {
+        if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
+            return redirect()->route('tmleads-list')->with('error', "You don't have access to edit this lead");
+        }
+
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, 'update', $tmlead->id);
 
         if (isset($request->return_to_view)) {
@@ -232,14 +237,14 @@ class TmLeadController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(TmLead $tmlead)
     {
         $tmlead->is_deleted = 1;
         $tmlead->save();
 
-        return redirect()->route('tmleads.index')->with('message', 'TM Lead has been deleted');
+        return redirect()->route('tmleads-list')->with('message', 'TM Lead has been deleted');
     }
 
     public function tmLeadUpdate(Request $request)
@@ -249,8 +254,19 @@ class TmLeadController extends Controller
 
         $this->validate($request, [
             'tm_lead_statuses_id' => 'required',
+            'tmLeadId' => 'required|integer',
             'notes' => 'max:500',
         ]);
+
+        $tmLeadData = TmLead::find($request->input('tmLeadId'));
+
+        if (! $tmLeadData) {
+            return redirect()->route('tmleads-list')->with('error', 'Lead not found.');
+        }
+
+        if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmLeadData->assigned_to_id) {
+            return redirect()->route('tmleads-list')->with('error', "You don't have access to edit this lead");
+        }
 
         if ((($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < '3')
             || ($tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate

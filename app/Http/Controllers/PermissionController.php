@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Permission;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionController extends Controller
 {
@@ -18,7 +21,7 @@ class PermissionController extends Controller
     /**
      * Display a listing of the permissions.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -39,7 +42,7 @@ class PermissionController extends Controller
         }
 
         // Get roles for the dropdown filter
-        $roles = \Spatie\Permission\Models\Role::orderBy('name')->get();
+        $roles = Role::orderBy('name')->get();
 
         $permissions = $query->orderBy('name', 'asc')->simplePaginate();
 
@@ -56,7 +59,7 @@ class PermissionController extends Controller
     /**
      * Show the form for creating a new permission.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -66,7 +69,7 @@ class PermissionController extends Controller
     /**
      * Store a newly created permission in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -88,14 +91,14 @@ class PermissionController extends Controller
      * Display the specified permission.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
         $permission = Permission::findOrFail($id);
 
         // Get roles that have this permission
-        $rolesWithPermission = \Spatie\Permission\Models\Role::with('permissions')
+        $rolesWithPermission = Role::with('permissions')
             ->whereHas('permissions', function ($q) use ($id) {
                 $q->where('permissions.id', $id);
             })
@@ -111,7 +114,7 @@ class PermissionController extends Controller
      * Show the form for editing the specified permission.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
@@ -126,7 +129,7 @@ class PermissionController extends Controller
      * Update the specified permission in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $id)
     {
@@ -145,7 +148,7 @@ class PermissionController extends Controller
         $permission->save();
 
         // Clear permission cache
-        app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app()->make(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect(route('permissions.show', $permission->id))
             ->with('success', 'Permission has been updated successfully');
@@ -155,7 +158,7 @@ class PermissionController extends Controller
      * Remove the specified permission from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {
@@ -164,7 +167,7 @@ class PermissionController extends Controller
             $permission->delete();
 
             // Clear permission cache
-            app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            app()->make(PermissionRegistrar::class)->forgetCachedPermissions();
 
             return redirect()->route('permissions.index')
                 ->with('success', 'Permission has been deleted successfully');

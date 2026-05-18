@@ -32,12 +32,16 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class JetskiQuoteController extends Controller
 {
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -60,7 +64,7 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -85,9 +89,9 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(JetskiQuoteRequest $request)
     {
@@ -101,7 +105,7 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -120,7 +124,7 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {
@@ -208,7 +212,7 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update($uuid, JetskiQuoteRequest $request)
     {

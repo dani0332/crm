@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC Health Automation Flow - Complete 3-Step Workflow</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #27ae60;
+      }
+
+      .section h3 {
+        color: #27ae60;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #2c3e50;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .workflow-overview {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .workflow-step {
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        flex: 1;
+        min-width: 250px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .workflow-step h3 {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 10px;
+      }
+
+      .workflow-step .step-number {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .workflow-step p {
+        opacity: 0.95;
+        line-height: 1.7;
+      }
+
+      .step-detail {
+        background: #f8f9fa;
+        border-left: 4px solid #27ae60;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .step-detail h4 {
+        color: #27ae60;
+        margin-top: 0;
+      }
+
+      .process-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .process-list li {
+        padding: 12px 0 12px 35px;
+        position: relative;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .process-list li:last-child {
+        border-bottom: none;
+      }
+
+      .process-list li:before {
+        content: counter(step-counter);
+        counter-increment: step-counter;
+        position: absolute;
+        left: 0;
+        top: 12px;
+        background: #27ae60;
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+
+      .process-list {
+        counter-reset: step-counter;
+      }
+
+      .success-criteria,
+      .failure-handling {
+        background: #e8f5e9;
+        border-left: 4px solid #27ae60;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .failure-handling {
+        background: #ffebee;
+        border-left-color: #e53935;
+      }
+
+      .success-criteria h4,
+      .failure-handling h4 {
+        margin-top: 0;
+      }
+
+      .success-criteria ul,
+      .failure-handling ul {
+        margin-top: 10px;
+        padding-left: 25px;
+      }
+
+      .success-criteria li,
+      .failure-handling li {
+        margin: 8px 0;
+        line-height: 1.6;
+      }
+
+      .data-flow-diagram {
+        background: white;
+        border: 2px solid #27ae60;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 30px 0;
+        overflow-x: auto;
+      }
+
+      .flow-box {
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 10px;
+        display: inline-block;
+        min-width: 150px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .flow-arrow {
+        display: inline-block;
+        color: #27ae60;
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0 10px;
+        vertical-align: middle;
+      }
+
+      .state-diagram {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 30px 0;
+      }
+
+      .state-box {
+        background: white;
+        border: 2px solid #27ae60;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        flex: 1;
+        min-width: 200px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .state-box h4 {
+        color: #27ae60;
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+
+      .state-box p {
+        color: #7f8c8d;
+        font-size: 0.9em;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .info-box h4 {
+        color: #1976d2;
+        margin-top: 0;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .highlight {
+        background: #fff3cd;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .workflow-overview {
+          flex-direction: column;
+        }
+
+        .state-diagram {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/adnic/index.html">ADNIC</a>
+        <span>></span>
+        <span>Automation Flow</span>
+      </div>
+
+      <div class="header">
+        <h1>🔄 ADNIC Health Automation Flow</h1>
+        <p>
+          Complete 3-Step Policy Issuance Workflow with Detailed Process
+          Documentation
+        </p>
+      </div>
+
+      <!-- Pre-Automation Payment Capture -->
+      <div class="section">
+        <h2>💳 Pre-Automation Payment Capture</h2>
+        <div
+          class="info-box"
+          style="
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-left-color: #27ae60;
+          "
+        >
+          <h4 style="color: #155724; margin-top: 0; margin-bottom: 15px">
+            🔑 Critical Prerequisite Step
+          </h4>
+          <p style="color: #155724; margin-bottom: 15px; line-height: 1.7">
+            <strong>Auto-capture is a mandatory prerequisite</strong> that
+            executes <strong>BEFORE</strong> the automation workflow begins.
+            Payment must be successfully captured before automation can proceed.
+          </p>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Payment Flow
+          </h4>
+          <ol style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li><strong>Customer pays online</strong> → Payment authorized</li>
+            <li>
+              <strong>Background job processes</strong> →
+              <code>CcPaymentProcess</code> handles split payment approval
+            </li>
+            <li>
+              <strong>Auto-capture executes</strong> →
+              <code>SplitPaymentService->processSplitPaymentApprove()</code>
+              calls <code>CRUDService->capturePayment()</code>
+            </li>
+            <li>
+              <strong>Marshall API call</strong> → Creates
+              <code>PaymentAction</code> record with
+              <code>action_type: 'CAPTURE'</code> and <code>amount</code>
+            </li>
+            <li>
+              <strong>Success path:</strong> If capture succeeds → Automation
+              workflow scheduled via
+              <code>createPolicyIssuanceAutomation()</code>
+            </li>
+            <li>
+              <strong>Failure path:</strong> If capture fails →
+              <code>handleAutomationError()</code> sets
+              <code>insurer_api_status_id</code> to
+              <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team
+            </li>
+          </ol>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Implementation Details
+          </h4>
+          <ul style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li>
+              <strong>Code Location:</strong>
+              <code>SplitPaymentService.php</code> lines 770-792, 1475-1487
+            </li>
+            <li>
+              <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+              between retries
+            </li>
+            <li>
+              <strong>Provider Support:</strong> Currently implemented for ADNIC
+              Health and other e-commerce providers
+            </li>
+            <li>
+              <strong>Failure Handling:</strong> If capture fails, automation is
+              prevented from starting and quote is allocated for manual handling
+            </li>
+          </ul>
+          <p
+            style="
+              color: #155724;
+              margin-top: 15px;
+              margin-bottom: 0;
+              font-weight: 600;
+            "
+          >
+            ⚠️ <strong>Important:</strong> This explains why documentation
+            refers to "pre-captured" payments - the payment is already captured
+            before any automation steps execute.
+          </p>
+        </div>
+      </div>
+
+      <!-- Workflow Overview -->
+      <div class="section">
+        <h2>📋 Complete Automation Workflow Overview</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 30px">
+          The ADNIC Health Policy Issuance Automation follows a sequential
+          3-step process for STP cases only, where each step must complete
+          successfully before proceeding to the next. Payment is pre-captured
+          before automation starts. The system maintains state throughout the
+          process, allowing for retry mechanisms and manual intervention when
+          needed.
+        </p>
+
+        <div class="workflow-overview">
+          <div class="workflow-step">
+            <span class="step-number">Step 1</span>
+            <h3>Upload Documents</h3>
+            <p>
+              Upload required customer documents per member (Emirates ID,
+              Passport, etc.) to ADNIC's document management system. Each
+              insured member's documents are uploaded separately.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 2</span>
+            <h3>Issue Policy</h3>
+            <p>
+              Create policy with ADNIC API using customer and plan details with
+              pre-captured payment reference (transaction ID). Updates quote
+              with policy number, dates, and amounts.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 3</span>
+            <h3>Upload Policy Docs to IMCRM</h3>
+            <p>
+              Download all 3 policy documents from ADNIC (Tax Invoice, Tax
+              Invoice Raised By Buyer, Policy Schedule) and upload to IMCRM. All
+              3 documents must succeed for this step to pass.
+            </p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Workflow Characteristics</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>STP-Only:</strong> Automation only runs for STP cases
+              (<code>$quote->isSTPCase()</code>)
+            </li>
+            <li>
+              <strong>Pre-Captured Payment:</strong> Payment is already
+              authorized before automation starts; transaction ID used as
+              <code>PaymentRefNo</code>
+            </li>
+            <li>
+              <strong>Per-Member Upload:</strong> Documents are uploaded
+              separately for each insured member
+            </li>
+            <li>
+              <strong>Sequential Execution:</strong> Steps execute in order,
+              each dependent on the previous step's success
+            </li>
+            <li>
+              <strong>State Management:</strong> Completed steps are tracked in
+              the <code>PolicyIssuance</code> model's
+              <code>completed_step</code> field
+            </li>
+            <li>
+              <strong>Resumable:</strong> Failed automations can be resumed from
+              the last completed step
+            </li>
+            <li>
+              <strong>Audit Trail:</strong> Every API call is logged in
+              <code>PolicyIssuanceLog</code> for complete traceability
+            </li>
+            <li>
+              <strong>Error Recovery:</strong> Each step has specific error
+              handling and can be retried independently
+            </li>
+            <li>
+              <strong>All 3 Documents Required:</strong> Step 3 requires all 3
+              policy documents to succeed
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 1: Upload Documents -->
+      <div class="section">
+        <h2>1️⃣ Step 1: Upload Documents</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The first step uploads required customer documents to ADNIC's document
+          management system. Documents are uploaded per-member, meaning each
+          insured member's documents are uploaded separately with their
+          <code>MemberSeqNo</code>. This typically includes Emirates ID,
+          Passport, and other required documents based on the policy type.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>STP Case Validation:</strong> Validate that quote is an
+              STP case using <code>$quote->isSTPCase()</code> - automation only
+              runs for STP cases
+            </li>
+            <li>
+              <strong>Document Validation:</strong> Validate required documents
+              are uploaded (Emirates ID, Passport, etc.) using
+              <code>AdnicValidationService::validateUploadDocuments()</code>
+            </li>
+            <li>
+              <strong>Member Loop:</strong> For each insured member in the
+              quote:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Get member sequence number (<code>MemberSeqNo</code>)</li>
+                <li>Fetch member-specific documents from Azure Storage</li>
+                <li>Validate document MIME types (PDF, JPEG, PNG)</li>
+                <li>Convert document content to base64 encoding</li>
+                <li>Build upload payload with member sequence number</li>
+                <li>
+                  Call ADNIC API endpoint <code>/UploadDocument</code> via
+                  <code>AdnicApiService::uploadDocuments()</code>
+                </li>
+                <li>Store API log for each document upload</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Validation Check:</strong> Verify Emirates ID front and
+              back are both uploaded (if applicable)
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed only if
+              all required documents for all members uploaded successfully
+              (<code>completed_step = STEP_UPLOAD_DOCUMENTS</code>)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #27ae60; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">STP Validation</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">For Each Member</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Fetch from Azure</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Base64 Encode</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">ADNIC API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Verify Upload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Store Log</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>Quote is validated as STP case</li>
+            <li>
+              All required documents for all insured members are successfully
+              uploaded to ADNIC
+            </li>
+            <li>
+              Each document upload API call returns HTTP 200 with success
+              confirmation
+            </li>
+            <li>
+              Document type codes are correctly mapped (e.g., HEA_EID → insurer
+              document code)
+            </li>
+            <li>All documents pass MIME type validation (PDF, JPEG, PNG)</li>
+            <li>
+              Emirates ID front and back are both uploaded (if applicable)
+            </li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = STEP_UPLOAD_DOCUMENTS</code
+              >)
+            </li>
+            <li>
+              API logs are stored for each document upload with
+              <code>SUCCESS_STATUS</code>
+            </li>
+            <li>
+              LoggerService logs successful completion with document count and
+              member details
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Non-STP Case:</strong> Return error if quote is not STP
+              case; log STP validation error
+            </li>
+            <li>
+              <strong>Missing Documents:</strong> Return error with specific
+              document names and member details; log missing document types
+            </li>
+            <li>
+              <strong>Azure Storage Error:</strong> Log storage connectivity
+              issues; return error with document fetch failure details
+            </li>
+            <li>
+              <strong>Invalid MIME Type:</strong> Reject document and log error;
+              return specific document name, member, and invalid type
+            </li>
+            <li>
+              <strong>Document Upload Failure:</strong> Stop on first failed
+              document; log detailed error including document name, member, and
+              API error; update insurer API status
+            </li>
+            <li>
+              <strong>Partial Success:</strong> If some documents succeed but
+              others fail, mark step as incomplete; log partial success details
+              per member
+            </li>
+            <li>
+              <strong>API Timeout:</strong> Handle timeout per document; allow
+              retry for failed documents only
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>📄 Document Types</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Emirates ID (HEA_EID):</strong> Required for all health
+              policies - uploaded per member
+            </li>
+            <li>
+              <strong>Passport (HEA_PAS):</strong> Required document - uploaded
+              per member
+            </li>
+            <li>
+              <strong>Visa (HEA_VISA):</strong> May be required based on policy
+              type - uploaded per member
+            </li>
+            <li>
+              <strong>Other Documents:</strong> Birth Certificate, Medical
+              Application Form, Customer Due Diligence - uploaded per member
+            </li>
+            <li>
+              <strong>Document Mapping:</strong> Document types are mapped from
+              IMCRM codes to ADNIC-specific codes using
+              <code>AdnicDocumentHandler::getDocTypeCodeForHealth()</code>
+            </li>
+            <li>
+              <strong>Per-Member Upload:</strong> Each insured member's
+              documents are uploaded separately with their
+              <code>MemberSeqNo</code>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2: Issue Policy -->
+      <div class="section">
+        <h2>2️⃣ Step 2: Issue Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The second step creates a policy with ADNIC Insurance Company using
+          customer information, plan details, and pre-captured payment data.
+          Payment is already authorized before automation starts, and the
+          transaction ID is used as <code>PaymentRefNo</code> in the API call.
+          This step establishes the policy foundation and generates the policy
+          number.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 1 (Upload
+              Documents) completed successfully by checking
+              <code>completed_step</code>
+            </li>
+            <li>
+              <strong>Pre-Validation:</strong> Validate required data including
+              customer details, nationality, plan information, and payment data
+              using <code>AdnicValidationService::validateRequiredData()</code>
+            </li>
+            <li>
+              <strong>Payment Reference:</strong> Extract transaction ID from
+              pre-captured payment:
+              <code>$splitPayment?->paymentCharges?->transaction_id</code>
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build issue policy payload
+              with customer and plan details, including
+              <code>PaymentRefNo</code> (transaction ID) using
+              <code>AdnicRequestBuilder::buildIssuePolicyPayload()</code>
+            </li>
+            <li>
+              <strong>API Call:</strong> Call ADNIC API endpoint
+              <code>/GeneratePolicy</code> via
+              <code>AdnicApiService::issuePolicy()</code>
+            </li>
+            <li>
+              <strong>Response Parsing:</strong> Parse API response and extract
+              policy details (policy number, dates, amounts, document IDs) using
+              <code>AdnicResponseHandler::parseHttpResponse()</code>
+            </li>
+            <li>
+              <strong>Quote Update:</strong> Update quote with policy number,
+              policy start date, policy end date, and premium amounts using
+              <code
+                >AdnicQuoteUpdaterService::updateQuoteFromIssuePolicyResponse()</code
+              >
+            </li>
+            <li>
+              <strong>Document IDs Storage:</strong> Store document IDs from
+              response (Tax Invoice, Tax Invoice Raised By Buyer, Policy
+              Schedule) in quote record
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store complete API request and
+              response in <code>PolicyIssuanceLog</code> for audit trail
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed by
+              updating <code>PolicyIssuance.completed_step</code> to
+              <code>STEP_ISSUE_POLICY</code>
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #27ae60; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Prerequisites</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Get Payment Ref</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Payload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">ADNIC API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Parse Response</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Quote</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Store Log</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 status code with successful response</li>
+            <li>Policy number is generated and present in response</li>
+            <li>
+              Payment reference (transaction ID) is correctly included in
+              payload as <code>PaymentRefNo</code>
+            </li>
+            <li>
+              Quote record is updated with policy number, start date, end date,
+              and premium amounts
+            </li>
+            <li>
+              All 3 document IDs are stored in quote (Tax Invoice, Tax Invoice
+              Raised By Buyer, Policy Schedule)
+            </li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = STEP_ISSUE_POLICY</code
+              >)
+            </li>
+            <li>API log is stored with <code>SUCCESS_STATUS</code></li>
+            <li>
+              LoggerService logs successful completion with process context
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 1 not
+              completed; log prerequisite validation error
+            </li>
+            <li>
+              <strong>Validation Failure:</strong> Return error response
+              immediately without API call, log validation errors
+            </li>
+            <li>
+              <strong>Missing Payment Reference:</strong> Return error if
+              transaction ID not found; log payment reference error
+            </li>
+            <li>
+              <strong>API Error:</strong> Log detailed error including endpoint,
+              payload keys, and error message; update insurer API status to
+              failed; store failed log
+            </li>
+            <li>
+              <strong>HTTP Exception:</strong> Catch and log exception with full
+              context; update process status; return error response
+            </li>
+            <li>
+              <strong>Timeout:</strong> If retry enabled, mark process as
+              <code>TIMEOUT_STATUS</code> for retry; otherwise mark as
+              <code>FAILED_STATUS</code>
+            </li>
+            <li>
+              <strong>Invalid Response:</strong> Validate response structure;
+              log parsing errors; return error with specific message
+            </li>
+            <li>
+              <strong>Database Update Failure:</strong> Log database errors;
+              maintain API success but flag update failure; allow manual
+              intervention
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Data Updates</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Quote:</strong> Policy number, policy start date, policy
+              end date, premium amounts, document IDs (tax invoice, tax invoice
+              raised by buyer, policy schedule)
+            </li>
+            <li>
+              <strong>Payment Reference:</strong> Transaction ID from
+              <code>$splitPayment?->paymentCharges?->transaction_id</code> used
+              as <code>PaymentRefNo</code>
+            </li>
+            <li>
+              <strong>PolicyIssuance:</strong>
+              <code>completed_step = STEP_ISSUE_POLICY</code>
+            </li>
+            <li>
+              <strong>PolicyIssuanceLog:</strong> Complete request/response
+              payload, endpoint URL, status, timestamp
+            </li>
+            <li>
+              <strong>Payment Status:</strong> Payment is PRE-CAPTURED before
+              automation starts - no payment capture in this step
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 3: Upload Policy Documents to IMCRM -->
+      <div class="section">
+        <h2>3️⃣ Step 3: Upload Policy Documents to IMCRM</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The third step downloads all 3 policy documents (Tax Invoice, Tax
+          Invoice Raised By Buyer, Policy Schedule) from ADNIC and uploads them
+          to IMCRM's document management system. These documents are generated
+          by ADNIC after policy issuance.
+          <strong
+            >All 3 documents must be successfully downloaded and uploaded for
+            this step to pass.</strong
+          >
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 2 (Issue
+              Policy) completed successfully
+            </li>
+            <li>
+              <strong>Document ID Validation:</strong> Validate that all three
+              document IDs exist in quote:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Tax Invoice Document ID
+                  (<code>insurer_tax_invoice_doc_id</code>)
+                </li>
+                <li>
+                  Tax Invoice Raised By Buyer Document ID
+                  (<code>insurer_debit_note_doc_id</code>)
+                </li>
+                <li>
+                  Policy Schedule Document ID
+                  (<code>insurer_policy_doc_id</code>)
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Download Loop:</strong> For each document ID:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Build download payload with document ID using
+                  <code
+                    >AdnicRequestBuilder::buildDownloadDocumentPayload()</code
+                  >
+                </li>
+                <li>
+                  Call ADNIC API endpoint
+                  <code>/cyber/downloadDocument</code> via
+                  <code>AdnicApiService::downloadDocument()</code>
+                </li>
+                <li>Parse response and extract base64 document content</li>
+                <li>Decode base64 content to binary</li>
+                <li>
+                  Map document type to IMCRM codes (TI, CTIRBB, POLICY_SCHEDULE)
+                </li>
+                <li>
+                  Upload to IMCRM using <code>QuoteDocumentService</code> via
+                  <code
+                    >AdnicDocumentHandler::uploadAndAttachToQuoteDocuments()</code
+                  >
+                </li>
+                <li>Store API log for download operation</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Validation:</strong> Verify all three documents downloaded
+              and uploaded successfully - <strong>all 3 must succeed</strong>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed only if
+              all 3 documents succeeded (<code
+                >completed_step = STEP_UPLOAD_POLICY_DOCS</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #27ae60; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Doc IDs</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Download from ADNIC</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Parse Base64</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Map Document Type</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Upload to IMCRM</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Verify All Docs</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>All three document IDs are present in quote record</li>
+            <li>
+              All three documents are successfully downloaded from ADNIC API
+            </li>
+            <li>All three documents are successfully uploaded to IMCRM</li>
+            <li>
+              Document types are correctly mapped:
+              <ul style="margin-top: 8px; padding-left: 25px">
+                <li>Tax Invoice → TI in IMCRM</li>
+                <li>Tax Invoice Raised By Buyer → CTIRBB in IMCRM</li>
+                <li>Policy Schedule → POLICY_SCHEDULE in IMCRM</li>
+              </ul>
+            </li>
+            <li>
+              <strong>All 3 documents must succeed:</strong> Step fails if any
+              document download or upload fails
+            </li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = STEP_UPLOAD_POLICY_DOCS</code
+              >)
+            </li>
+            <li>
+              API logs are stored for each download operation with
+              <code>SUCCESS_STATUS</code>
+            </li>
+            <li>
+              LoggerService logs successful completion with all three document
+              names
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Missing Document IDs:</strong> Return error listing
+              missing document IDs; log validation error
+            </li>
+            <li>
+              <strong>Download Failure:</strong> Stop on first failed download;
+              log detailed error including document ID and API error; update
+              insurer API status
+            </li>
+            <li>
+              <strong>Invalid Base64:</strong> Log parsing error; return error
+              with document name and parsing failure details
+            </li>
+            <li>
+              <strong>IMCRM Upload Failure:</strong> Log IMCRM upload error;
+              return error with specific document name; maintain downloaded
+              document for retry
+            </li>
+            <li>
+              <strong>Partial Success:</strong> If some documents succeed but
+              others fail, mark step as incomplete; log which documents
+              succeeded/failed
+            </li>
+            <li>
+              <strong>Document Type Mapping Error:</strong> Log mapping error;
+              return error with document type details
+            </li>
+            <li>
+              <strong>API Timeout:</strong> Handle timeout per document; allow
+              retry for failed documents only
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>📋 Document Mapping</h4>
+          <div class="code-block">
+            <code>
+              Tax Invoice (insurer_tax_invoice_doc_id) → TI in IMCRM<br />
+              Tax Invoice Raised By Buyer (insurer_debit_note_doc_id) → CTIRBB
+              in IMCRM<br />
+              Policy Schedule (insurer_policy_doc_id) → POLICY_SCHEDULE in IMCRM
+            </code>
+          </div>
+          <p style="margin-top: 10px">
+            Document type mapping is handled by
+            <code>AdnicDocumentHandler::getDocTypeCodeForIMCRM()</code> method.
+          </p>
+        </div>
+      </div>
+
+      <!-- State Management -->
+      <div class="section">
+        <h2>🔄 State Management & Step Progression</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The automation system maintains state throughout the process, tracking
+          completed steps and allowing for resumable execution. This enables
+          retry mechanisms and manual intervention when needed.
+        </p>
+
+        <div class="state-diagram">
+          <div class="state-box">
+            <h4>PENDING_STATUS</h4>
+            <p>
+              Initial state when automation schedule is created. Waiting to be
+              processed by queue worker.
+            </p>
+          </div>
+          <div class="state-box">
+            <h4>PROCESSING_STATUS</h4>
+            <p>
+              Automation is currently executing. Steps are being processed
+              sequentially.
+            </p>
+          </div>
+          <div class="state-box">
+            <h4>BOOKING_PENDING_STATUS</h4>
+            <p>
+              All steps completed except booking. Waiting for booking
+              confirmation or manual intervention.
+            </p>
+          </div>
+          <div class="state-box">
+            <h4>TIMEOUT_STATUS</h4>
+            <p>
+              Process timed out during execution. Eligible for retry if retry
+              mechanism is enabled.
+            </p>
+          </div>
+          <div class="state-box">
+            <h4>FAILED_STATUS</h4>
+            <p>
+              Process failed at a step. Requires manual intervention or retry
+              after fixing issues.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-detail">
+          <h4>📊 Completed Step Tracking</h4>
+          <p>
+            The <code>PolicyIssuance</code> model tracks progress using the
+            <code>completed_step</code> field:
+          </p>
+          <ul style="margin-top: 15px; padding-left: 25px">
+            <li><code>null</code> - No steps completed yet</li>
+            <li>
+              <code>STEP_UPLOAD_DOCUMENTS</code> - Step 1 completed successfully
+            </li>
+            <li>
+              <code>STEP_ISSUE_POLICY</code> - Steps 1 and 2 completed
+              successfully
+            </li>
+            <li>
+              <code>STEP_UPLOAD_POLICY_DOCS</code> - All 3 steps completed
+              successfully
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔄 Step Progression Logic</h4>
+          <div class="code-block">
+            <code>
+              // Determine next step based on completed steps<br />
+              getNextStep($completedStep = null): ?string<br />
+              {<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;return match ($completedStep) {<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;null =>
+              STEP_UPLOAD_DOCUMENTS,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STEP_UPLOAD_DOCUMENTS
+              => STEP_ISSUE_POLICY,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STEP_ISSUE_POLICY
+              => STEP_UPLOAD_POLICY_DOCS,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STEP_UPLOAD_POLICY_DOCS
+              => null, // All steps completed<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default =>
+              STEP_UPLOAD_DOCUMENTS,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;};<br />
+              }
+            </code>
+          </div>
+        </div>
+
+        <div class="step-detail">
+          <h4>🔄 Resumable Execution</h4>
+          <p>The automation can resume from the last completed step:</p>
+          <ul style="margin-top: 15px; padding-left: 25px">
+            <li>If Step 1 fails, retry starts from Step 1</li>
+            <li>
+              If Step 2 fails, retry starts from Step 2 (Step 1 already
+              completed)
+            </li>
+            <li>
+              If Step 3 fails, retry starts from Step 3 (Steps 1 and 2 already
+              completed)
+            </li>
+          </ul>
+          <p style="margin-top: 15px">
+            This prevents redundant API calls and ensures efficient retry
+            mechanisms.
+          </p>
+        </div>
+      </div>
+
+      <!-- Data Flow Overview -->
+      <div class="section">
+        <h2>📊 Complete Data Flow Overview</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The complete automation flow involves multiple systems, services, and
+          data transformations. This diagram shows the end-to-end data flow.
+        </p>
+
+        <div class="data-flow-diagram" style="padding: 40px">
+          <h4 style="color: #27ae60; margin-bottom: 30px; text-align: center">
+            🔄 End-to-End Data Flow
+          </h4>
+          <div style="text-align: center; line-height: 3">
+            <div style="display: block; margin-bottom: 20px">
+              <div class="flow-box" style="display: block; margin: 10px auto">
+                Quote & Payment Data
+              </div>
+              <span class="flow-arrow" style="display: block; margin: 10px 0"
+                >↓</span
+              >
+            </div>
+            <div style="display: block; margin-bottom: 20px">
+              <div class="flow-box" style="display: block; margin: 10px auto">
+                AdnicInsuranceService
+              </div>
+              <span class="flow-arrow" style="display: block; margin: 10px 0"
+                >↓</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-around;
+                flex-wrap: wrap;
+                gap: 20px;
+                margin: 20px 0;
+              "
+            >
+              <div>
+                <div class="flow-box">Step 1: Upload Docs</div>
+                <span class="flow-arrow" style="display: block; margin: 10px 0"
+                  >↓</span
+                >
+                <div
+                  class="flow-box"
+                  style="background: #e3f2fd; color: #1976d2"
+                >
+                  ADNIC API<br />(Per Member)
+                </div>
+              </div>
+              <div>
+                <div class="flow-box">Step 2: Issue Policy</div>
+                <span class="flow-arrow" style="display: block; margin: 10px 0"
+                  >↓</span
+                >
+                <div
+                  class="flow-box"
+                  style="background: #e3f2fd; color: #1976d2"
+                >
+                  ADNIC API<br />(Pre-Captured Payment)
+                </div>
+              </div>
+              <div>
+                <div class="flow-box">Step 3: Download & Upload</div>
+                <span class="flow-arrow" style="display: block; margin: 10px 0"
+                  >↓</span
+                >
+                <div
+                  class="flow-box"
+                  style="background: #e3f2fd; color: #1976d2"
+                >
+                  IMCRM<br />(All 3 Docs Required)
+                </div>
+              </div>
+            </div>
+            <div style="display: block; margin-top: 20px">
+              <span class="flow-arrow" style="display: block; margin: 10px 0"
+                >↓</span
+              >
+              <div class="flow-box" style="display: block; margin: 10px auto">
+                PolicyIssuanceLog (Audit Trail)
+              </div>
+              <span class="flow-arrow" style="display: block; margin: 10px 0"
+                >↓</span
+              >
+              <div class="flow-box" style="display: block; margin: 10px auto">
+                Completed Automation
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>🔗 System Integrations</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>ADNIC API:</strong> Document upload (per-member), policy
+              creation (with pre-captured payment), document download
+            </li>
+            <li>
+              <strong>Azure Storage:</strong> Customer document storage and
+              retrieval
+            </li>
+            <li>
+              <strong>IMCRM:</strong> Policy document storage and quote
+              management
+            </li>
+            <li>
+              <strong>Payment System:</strong> Pre-captured payment with
+              transaction ID
+            </li>
+            <li><strong>LoggerService:</strong> Comprehensive audit logging</li>
+            <li>
+              <strong>STP Validation:</strong> Automation only runs for STP
+              cases
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div
+        class="section"
+        style="
+          text-align: center;
+          background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+          color: white;
+        "
+      >
+        <h2 style="color: white; border-bottom-color: rgba(255, 255, 255, 0.3)">
+          📚 Related Documentation
+        </h2>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+          "
+        >
+          <a
+            href="/docs/policy-automation/health/adnic/index.html"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 15px 30px;
+              border-radius: 25px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s;
+            "
+            >← Back to Overview</a
+          >
+          <a
+            href="/docs/policy-automation/health/adnic/architecture.html"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 15px 30px;
+              border-radius: 25px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s;
+            "
+            >View Architecture →</a
+          >
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>ADNIC Health Insurance Automation Flow Documentation</strong>
+        </p>
+        <p>Complete 3-Step Workflow with State Management and Error Handling</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

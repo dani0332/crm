@@ -1,13 +1,14 @@
 <?php
 
 use App\Enums\QuoteTypeId;
+use App\Http\Middleware\BasicAuth;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->withoutMiddleware(\App\Http\Middleware\BasicAuth::class);
+    $this->withoutMiddleware(BasicAuth::class);
 });
 
 afterEach(function () {

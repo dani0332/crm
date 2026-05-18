@@ -3,7 +3,6 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -213,15 +212,10 @@ trait Carable
 
     private function getRulesForVehicleUse($lead)
     {
-        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
-            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+        LoggerService::info(self::class." - Lead is {$lead->vehicle_use} use, applying company use rules for lead with Ref-ID: {$lead->uuid} ");
 
-            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
-        } else {
-            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+        return $this->getCompanyUsageRules($lead, RuleEnum::COMPANY_USE->value);
 
-            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
-        }
     }
 
     private function getCompanyUsageRules($lead, $ruleName = null)

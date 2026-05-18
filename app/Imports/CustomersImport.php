@@ -8,6 +8,7 @@ use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Row;
@@ -36,7 +37,7 @@ class CustomersImport implements OnEachRow
 
     /**
      * @param  array  $row
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @return Model|null
      */
     public function onRow(Row $row)
     {

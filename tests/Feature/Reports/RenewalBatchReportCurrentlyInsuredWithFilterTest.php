@@ -2,14 +2,19 @@
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\RenewalBatch;
+use App\Models\Team;
 use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request as HttpRequest;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -31,22 +36,22 @@ beforeEach(function () {
     ]);
 
     // Create required teams that RenewalBatchReportService expects
-    \App\Models\Team::create([
-        'name' => \App\Enums\TeamNameEnum::BDM,
+    Team::create([
+        'name' => TeamNameEnum::BDM,
         'is_active' => 1,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    \App\Models\Team::create([
-        'name' => \App\Enums\TeamNameEnum::RENEWALS,
+    Team::create([
+        'name' => TeamNameEnum::RENEWALS,
         'is_active' => 1,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    \App\Models\Team::create([
-        'name' => \App\Enums\TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
+    Team::create([
+        'name' => TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
         'is_active' => 1,
         'created_at' => now(),
         'updated_at' => now(),
@@ -104,7 +109,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
         // Create car quote request with insurance_provider_id
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteAxa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'currently_insured_with' => $this->insurerAxa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -122,7 +127,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteRsa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerRsa->id,
             'currently_insured_with' => $this->insurerRsa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -141,7 +146,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
         $result = $this->service->getReportData($request);
 
         // Should return a paginator
-        expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
+        expect($result)->toBeInstanceOf(LengthAwarePaginator::class);
         // The filter was applied successfully if no errors occurred
     });
 
@@ -155,7 +160,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteAxa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'currently_insured_with' => $this->insurerAxa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -173,7 +178,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteRsa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerRsa->id,
             'currently_insured_with' => $this->insurerRsa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -191,7 +196,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteOther->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerOther->id,
             'currently_insured_with' => $this->insurerOther->text,
             'renewal_batch' => $this->carBatch->name,
@@ -210,7 +215,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
         $result = $this->service->getReportData($request);
 
         // Should return a paginator
-        expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
+        expect($result)->toBeInstanceOf(LengthAwarePaginator::class);
     });
 
     test('returns all car quotes when currently_insured_with filter is not provided', function () {
@@ -223,7 +228,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteAxa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'currently_insured_with' => $this->insurerAxa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -241,7 +246,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteRsa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerRsa->id,
             'currently_insured_with' => $this->insurerRsa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -259,7 +264,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
         $result = $this->service->getReportData($request);
 
         // Should return a paginator
-        expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
+        expect($result)->toBeInstanceOf(LengthAwarePaginator::class);
     });
 
     test('returns empty result when filtering by non-existent insurance provider', function () {
@@ -272,7 +277,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
 
         DB::table('car_quote_request')->insert([
             'car_quote_id' => $carQuoteAxa->id,
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'currently_insured_with' => $this->insurerAxa->text,
             'renewal_batch' => $this->carBatch->name,
@@ -291,7 +296,7 @@ describe('Car Renewal Batch Report - Currently Insured With Filter', function ()
         $result = $this->service->getReportData($request);
 
         // Should return a paginator
-        expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
+        expect($result)->toBeInstanceOf(LengthAwarePaginator::class);
     });
 });
 
@@ -299,7 +304,7 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
     test('filters health quotes by single insurance provider', function () {
         // Create minimal health_quote_request entries with insurance_provider_id
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -309,7 +314,7 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         ]);
 
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerRsa->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -327,13 +332,13 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         $result = $this->service->getSuperRetentionData($request);
 
         // Should return a Collection
-        expect($result)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
+        expect($result)->toBeInstanceOf(Collection::class);
     });
 
     test('filters health quotes by multiple insurance providers', function () {
         // Create minimal health_quote_request entries with insurance_provider_id
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -343,7 +348,7 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         ]);
 
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerRsa->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -353,7 +358,7 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         ]);
 
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerOther->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -371,13 +376,13 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         $result = $this->service->getSuperRetentionData($request);
 
         // Should return a Collection
-        expect($result)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
+        expect($result)->toBeInstanceOf(Collection::class);
     });
 
     test('returns all health quotes when currently_insured_with filter is not provided', function () {
         // Create minimal health_quote_request entries
         DB::table('health_quote_request')->insert([
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'insurance_provider_id' => $this->insurerAxa->id,
             'renewal_batch' => $this->healthBatch->name,
             'quote_status_id' => QuoteStatusEnum::TransactionApproved,
@@ -394,7 +399,7 @@ describe('Health Renewal Batch Report - Currently Insured With Filter', function
         $result = $this->service->getSuperRetentionData($request);
 
         // Should return a Collection
-        expect($result)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
+        expect($result)->toBeInstanceOf(Collection::class);
     });
 });
 

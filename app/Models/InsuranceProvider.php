@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -76,6 +77,31 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     public function isProvider($code)
     {
         return $this->code === $code;
+    }
+
+    /**
+     * Transitions where this provider is the source (lead insurer).
+     *
+     * @return HasMany
+     */
+    public function transitionsAsSource()
+    {
+        return $this->hasMany(InsuranceProviderTransition::class, 'source_insurance_provider_id');
+    }
+
+    /**
+     * Allowed target providers this source can transition to.
+     *
+     * @return BelongsToMany
+     */
+    public function allowedTransitionTargets()
+    {
+        return $this->belongsToMany(
+            InsuranceProvider::class,
+            'renewal_insurance_provider_transitions',
+            'source_insurance_provider_id',
+            'target_insurance_provider_id'
+        );
     }
 
     public function genericDocuments()

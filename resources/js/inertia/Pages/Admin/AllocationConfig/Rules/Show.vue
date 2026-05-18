@@ -4,6 +4,10 @@ const props = defineProps({
   ruleTypeEnumLeadSource: String,
 });
 
+const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
 
 // Check if rule type is "lead source" (id = 1)
@@ -16,10 +20,19 @@ const isLeadSourceRuleType = computed(
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Rule Detail</h2>
     <div class="flex gap-2">
-      <Link :href="route('rule.index')">
+      <Link
+        v-if="
+          can(permissionsEnum.RULE_CONFIG_LIST) ||
+          can(permissionsEnum.RULE_CONFIG_UPDATE)
+        "
+        :href="route('rule.index')"
+      >
         <x-button size="sm" color="#1d83bc" tag="div"> Rules List </x-button>
       </Link>
-      <Link :href="route('rule.edit', rule.id)">
+      <Link
+        v-if="can(permissionsEnum.RULE_CONFIG_UPDATE)"
+        :href="route('rule.edit', rule.id)"
+      >
         <x-button size="sm" tag="div">Edit</x-button>
       </Link>
     </div>

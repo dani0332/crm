@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
@@ -73,6 +74,17 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($lifeQuote->uuid, QuoteTypeId::Life);
+            } catch (Exception $e) {
+                LoggerService::error('LifeQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $lifeQuote->uuid]);
+            }
         }
 
         if (

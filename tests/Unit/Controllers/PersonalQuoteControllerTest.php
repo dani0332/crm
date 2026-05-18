@@ -9,6 +9,7 @@ use App\Http\Requests\ChangePrimaryContactRequest;
 use App\Models\PersonalQuote;
 use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestSchemaCreator;
@@ -71,7 +72,7 @@ test('changePrimaryContact calls service makeAdditionalContactPrimary with corre
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
 
     // Assert: Should return redirect response
-    expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($result)->toBeInstanceOf(RedirectResponse::class);
 });
 
 test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when not provided', function () {
@@ -119,7 +120,7 @@ test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
 
     // Assert: Should return redirect response
-    expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($result)->toBeInstanceOf(RedirectResponse::class);
 });
 
 test('changePrimaryContact handles mobile_no key correctly', function () {
@@ -167,7 +168,7 @@ test('changePrimaryContact handles mobile_no key correctly', function () {
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
 
     // Assert: Should return redirect response
-    expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($result)->toBeInstanceOf(RedirectResponse::class);
 });
 
 test('changePrimaryContact throws ModelNotFoundException when quote not found', function () {
@@ -231,7 +232,7 @@ test('changePrimaryContact converts keep_existing_primary_email to boolean corre
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
 
     // Assert: Should return redirect response
-    expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($result)->toBeInstanceOf(RedirectResponse::class);
 });
 
 test('changePrimaryContact allows service exceptions to bubble up', function () {
@@ -254,7 +255,7 @@ test('changePrimaryContact allows service exceptions to bubble up', function () 
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
         ->once()
-        ->andThrow(new \RuntimeException('Service error occurred'));
+        ->andThrow(new RuntimeException('Service error occurred'));
 
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
@@ -270,7 +271,7 @@ test('changePrimaryContact allows service exceptions to bubble up', function () 
 
     // Action & Assert: Should allow exception to bubble up
     expect(fn () => $controller->changePrimaryContact($personalQuoteId, $mockRequest))
-        ->toThrow(\RuntimeException::class, 'Service error occurred');
+        ->toThrow(RuntimeException::class, 'Service error occurred');
 });
 
 test('changePrimaryContact handles invalid key value gracefully', function () {
@@ -324,5 +325,5 @@ test('changePrimaryContact handles invalid key value gracefully', function () {
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
 
     // Assert: Controller still returns redirect (validation happens at request level)
-    expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($result)->toBeInstanceOf(RedirectResponse::class);
 });

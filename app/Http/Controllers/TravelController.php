@@ -59,7 +59,10 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Inertia\Response;
@@ -434,7 +437,7 @@ class TravelController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(StoreTravelRequest $request)
@@ -526,7 +529,7 @@ class TravelController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -630,7 +633,7 @@ class TravelController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {

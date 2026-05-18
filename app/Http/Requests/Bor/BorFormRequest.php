@@ -5,6 +5,7 @@ namespace App\Http\Requests\Bor;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
+use App\Models\InsuranceProvider;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -161,7 +162,7 @@ class BorFormRequest extends FormRequest
     private function isSukoonInsurance($insuranceProviderId): bool
     {
         // Check if the provider is Sukoon/OIC
-        $provider = \App\Models\InsuranceProvider::find($insuranceProviderId);
+        $provider = InsuranceProvider::find($insuranceProviderId);
 
         if (! $provider) {
             return false;

@@ -8,6 +8,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UAELicenseHeldForEnum;
@@ -74,8 +75,8 @@ class CarCQFQuoteMappingService
             'uae_license_held_for_id' => $this->getNextUAELicenseHeldForId($quote),
         ];
 
-        $lookup = LookupRepository::where('key', \App\Enums\LookupsEnum::TRANSACTION_TYPES)
-            ->where('code', \App\Enums\LookupsEnum::EXT_CUSTOMER_RENWAL)
+        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
             ->first();
 
         if ($lookup) {

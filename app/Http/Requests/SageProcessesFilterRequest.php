@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Form Request for validating Sage Processes filters
@@ -26,7 +29,7 @@ class SageProcessesFilterRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -82,9 +85,9 @@ class SageProcessesFilterRequest extends FormRequest
      * Handle a failed validation attempt.
      *
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): void
+    protected function failedValidation(Validator $validator): void
     {
         LoggerService::warning('SageProcessesFilterRequest - Validation Failed', extra: [
             'errors' => $validator->errors()->toArray(),

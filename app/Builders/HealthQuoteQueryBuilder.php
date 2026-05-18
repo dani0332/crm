@@ -28,6 +28,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'source',
             'sub_source_id',
             'health_team_type',
+            'notional_team',
             'premium',
             'policy_number',
             'support_user_id',
@@ -75,6 +76,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'pec_marked_at',
             'branch_id',
             'is_branch_applicable',
+            'health_plan_type_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',

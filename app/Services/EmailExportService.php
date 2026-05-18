@@ -9,6 +9,7 @@ use App\Enums\EnvEnum;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class EmailExportService
@@ -125,14 +126,14 @@ class EmailExportService
             );
 
             // Log successful email send
-            \Illuminate\Support\Facades\Log::info('Export email sent successfully', [
+            Log::info('Export email sent successfully', [
                 'recipient' => $recipientEmail,
                 'subject' => $emailConfig['subject'],
                 'file' => basename($attachmentFilePath),
             ]);
         } catch (\Throwable $e) {
             // Log email sending failure
-            \Illuminate\Support\Facades\Log::error('Failed to send export email', [
+            Log::error('Failed to send export email', [
                 'recipient' => $recipientEmail,
                 'subject' => $emailConfig['subject'],
                 'error' => $e->getMessage(),

@@ -23,12 +23,16 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\ExportDocumentService;
+use App\Services\QuoteDocumentAccessService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -44,6 +48,7 @@ class QuoteDocumentController extends Controller
     protected $userService;
     protected $exportDocumentService;
     protected $applicationStorageService;
+    protected $quoteDocumentAccessService;
 
     public function __construct(
         CRUDService $crudService,
@@ -54,6 +59,7 @@ class QuoteDocumentController extends Controller
         UserService $userService,
         ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
+        QuoteDocumentAccessService $quoteDocumentAccessService,
     ) {
         $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest', 'downloadProformaPaymentRequest']]);
 
@@ -65,13 +71,14 @@ class QuoteDocumentController extends Controller
         $this->userService = $userService;
         $this->exportDocumentService = $exportDocumentService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->quoteDocumentAccessService = $quoteDocumentAccessService;
     }
 
     /**
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -289,9 +296,27 @@ class QuoteDocumentController extends Controller
             'doc_uuid' => 'required|string',
         ]);
 
-        $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
+        $document = QuoteDocument::with('quoteDocumentable')
+            ->where('id', $request->doc_id)
+            ->where('doc_uuid', $request->doc_uuid)
+            ->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
+        }
+
+        $quoteDocumentable = $document->quoteDocumentable;
+        if (! $quoteDocumentable instanceof Model) {
+            return redirect()->back()->with('error', 'Quote not found for this document.');
+        }
+
+        if ($response = $this->authorizeQuoteDocumentableOrRedirect($quoteDocumentable, forQuoteDocumentDestroy: true)) {
+            return $response;
+        }
+
+        // check if the document is locked
+        $isEnableUploadDocument = $this->quoteDocumentService->isEnableUploadDocument($quoteDocumentable->quote_status_id ?? null);
+        if (! $isEnableUploadDocument) {
+            return redirect()->back()->with('error', 'Document cannot be deleted as the policy is locked.');
         }
 
         // Update Accuracy Matrix cache before deleting document
@@ -477,6 +502,25 @@ class QuoteDocumentController extends Controller
             'BusinessQuote' => QuoteTypes::GROUP_MEDICAL, // Group Medical quotes use BusinessQuote
             default => null,
         };
+    }
+
+    /**
+     * Ensure the authenticated user may act on quote documents for the given morph parent.
+     *
+     * By default uses LOB manager/assigned-advisor checks (plus admin/engineering). When the second argument is true
+     * (delete flows only), users with {@see PermissionsEnum::DOCUMENT_DELETE} are also allowed. Do not pass true
+     * for upload or other document mutations, or those users would be over-authorized.
+     *
+     * @param  bool  $forQuoteDocumentDestroy  When true, {@see QuoteDocumentAccessService::userCanAccessQuoteDocumentable()} applies delete permission bypass.
+     * @return RedirectResponse|null Redirect with error when access is denied; null when allowed.
+     */
+    protected function authorizeQuoteDocumentableOrRedirect(Model $quoteDocumentable, bool $forQuoteDocumentDestroy = false): ?RedirectResponse
+    {
+        if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable(auth()->user(), $quoteDocumentable, $forQuoteDocumentDestroy)) {
+            return redirect()->back()->with('error', 'You are not authorized to perform this action on this quote.');
+        }
+
+        return null;
     }
 
     public function getTempUrl(Request $request)

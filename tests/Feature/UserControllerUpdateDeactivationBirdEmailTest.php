@@ -1,7 +1,8 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Services\UserService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -18,14 +19,14 @@ beforeEach(function () {
 
     $this->actingAs($this->admin);
     // Keep full route middleware (auth/last_login_check/check_route_access) enabled; skip CSRF only.
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     $this->workflowUrl = 'https://example.test/bird/manager-deactivation-workflow';
     $this->itSupportEmail = 'it-support-'.uniqid().'@example.test';
 
     TestDataSeeder::seedApplicationStorage([
-        \App\Enums\ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW => $this->workflowUrl,
-        \App\Enums\ApplicationStorageEnums::IT_SUPPORT_EMAIL => $this->itSupportEmail,
+        ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW => $this->workflowUrl,
+        ApplicationStorageEnums::IT_SUPPORT_EMAIL => $this->itSupportEmail,
     ]);
 
     ['productTeamId' => $this->productTeamId, 'teamId' => $this->teamId] = TestDataSeeder::seedTeamHierarchy();

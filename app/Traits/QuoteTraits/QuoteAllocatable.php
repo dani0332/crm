@@ -5,6 +5,7 @@ namespace App\Traits\QuoteTraits;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -351,7 +352,7 @@ trait QuoteAllocatable
 
     public function isAllocationFailed(): bool
     {
-        return filled($this->lead_allocation_failed_at);
+        return ! empty($this->lead_allocation_failed_at);
     }
 
     public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder
@@ -366,5 +367,31 @@ trait QuoteAllocatable
                             ->whereBetween('created_at', [$extendedStartDate, $to]);
                     });
             });
+    }
+
+    public function isRevivalCommsIntentHighOrMedium(): bool
+    {
+        if ($this->source !== LeadSourceEnum::REVIVAL) {
+            return false;
+        }
+
+        $detail = $this->carQuoteRequestDetail;
+
+        if (! filled($detail?->engagement_level) || ! filled($detail?->engagement_level_updated_at)) {
+            return false;
+        }
+
+        $updatedAt = Carbon::parse($detail->engagement_level_updated_at);
+
+        return match ($detail->engagement_level) {
+            MotorRevivalEnum::INTENT_HIGH->value => now()->greaterThan($updatedAt->copy()->addMinutes(MotorRevivalEnum::ILA_HIGH_INTENT_WAIT_MINUTES)),
+            MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS)),
+            default => false,
+        };
+    }
+
+    public function isRevivalReinstated(): bool
+    {
+        return $this->source === LeadSourceEnum::REVIVAL_REINSTATED;
     }
 }

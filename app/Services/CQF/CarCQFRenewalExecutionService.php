@@ -6,6 +6,7 @@ namespace App\Services\CQF;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -113,7 +114,7 @@ class CarCQFRenewalExecutionService
         $quoteMappingService = app(CarCQFQuoteMappingService::class);
 
         foreach ($quotes as $quote) {
-            LoggerService::startQuoteLogging($quote, \App\Enums\Logger\LoggerFeatureEnum::CAR_CQF_RENEWALS);
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::CAR_CQF_RENEWALS);
 
             try {
                 $this->totalQuotesProcessed++;

@@ -34,8 +34,16 @@ use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -54,7 +62,7 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
     {
@@ -64,7 +72,7 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and update import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadUpdate(RenewalsUploadRequest $request)
     {
@@ -75,7 +83,7 @@ class RenewalsUploadController extends Controller
      * fetch plans batch wise.
      *
      * @param  $id
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function fetchPlans($batch)
     {
@@ -259,7 +267,7 @@ class RenewalsUploadController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads)
     {
@@ -372,7 +380,7 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans for all pending quotes.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
+     * @return Application|Factory|View|never
      */
     public function plansProcesses($batch)
     {
@@ -453,7 +461,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
     {
@@ -559,7 +567,7 @@ class RenewalsUploadController extends Controller
      *
      * @return void
      *
-     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
+     * @throws PhpVersionNotSupportedException
      */
     public function search(Request $request)
     {
@@ -601,7 +609,7 @@ class RenewalsUploadController extends Controller
     /**
      * Retry all failed renewal processes for an upload batch
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function retryRenewalProcesses(RenewalsUploadLeads $renewalsUploadLead)
     {

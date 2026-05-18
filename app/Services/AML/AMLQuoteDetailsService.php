@@ -18,6 +18,7 @@ use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 
 class AMLQuoteDetailsService
@@ -65,7 +66,7 @@ class AMLQuoteDetailsService
 
         // Get reference data
         $nationalities = NationalityRepository::withActive()->get();
-        $emirates = Emirate::withActive()->orderBy('sort_order')->get();
+        $emirates = Emirate::withActive()->orderBy('text', 'asc')->get();
 
         // Get member details
         $membersDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
@@ -102,11 +103,17 @@ class AMLQuoteDetailsService
         // Get RTA configuration for Car quotes
         $rtaConfigurationData = $this->amlService->getRTATransactionConfigurations($quoteType->code);
 
+        $isEmirateOfRegistrationLocked = app(CentralService::class)->isEmirateOfRegistrationLocked(
+            $quoteRequest,
+            $quoteType->code
+        );
+
         // Prepare enums
         $enums = $this->prepareEnums();
 
         return array_merge([
             'quoteType' => $quoteType,
+            'isEmirateOfRegistrationLocked' => $isEmirateOfRegistrationLocked,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
             'amlLogs' => $amlLogs,

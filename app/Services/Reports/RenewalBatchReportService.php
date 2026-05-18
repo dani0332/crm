@@ -27,6 +27,7 @@ use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -1089,7 +1090,7 @@ class RenewalBatchReportService extends BaseService
     /**
      * Get all active insurance providers with caching
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     protected function getCachedInsuranceProviders()
     {

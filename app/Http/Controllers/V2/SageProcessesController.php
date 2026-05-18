@@ -4,58 +4,49 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\PermissionsEnum;
 use App\Exports\SageProcessesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SageProcessesFilterRequest;
 use App\Services\Logger\LoggerService;
-use App\Services\SageProcessesService;
+use App\Services\SageFailedRecordsService;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
-/**
- * Controller for managing failed sage processes
- *
- * This controller handles the listing and export of failed sage processes
- * along with their related quote/send_update entries and sage api logs.
- */
 class SageProcessesController extends Controller
 {
-    protected SageProcessesService $sageProcessesService;
+    protected SageFailedRecordsService $sageFailedRecordsService;
 
-    /**
-     * Constructor
-     */
-    public function __construct(SageProcessesService $sageProcessesService)
+    public function __construct(SageFailedRecordsService $sageFailedRecordsService)
     {
-        $this->sageProcessesService = $sageProcessesService;
-
-        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT, ['only' => ['index', 'export']]);
+        $this->sageFailedRecordsService = $sageFailedRecordsService;
     }
 
     /**
      * Display a listing of failed sage processes
      */
-    public function index(SageProcessesFilterRequest $request): \Inertia\Response|\Inertia\ResponseFactory
+    public function index(SageProcessesFilterRequest $request): Response|ResponseFactory
     {
-
-        $dropdownData = $this->sageProcessesService->dropdownData();
+        $dropDowns = $this->sageFailedRecordsService->getDropDownData();
+        $filters = $request->safe()->all();
 
         try {
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe());
+            $sageFailedRecords = $this->sageFailedRecordsService->getFailedSageRecords($request->safe());
 
             $response = [
-                'failedProcesses' => $failedProcesses,
-                'filters' => request()->all(),
-                'dropdowns' => $dropdownData,
+                'failedProcesses' => $sageFailedRecords,
+                'filters' => $filters,
+                'dropdowns' => $dropDowns,
             ];
 
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching failed Sage processes: '.$e->getMessage(), extra: [
+        } catch (\Throwable $e) {
+            LoggerService::warning('Error fetching failed Sage failed records', extra: [
+                'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             $response = [
                 'failedProcesses' => [],
-                'filters' => request()->all(),
-                'dropdowns' => $dropdownData,
+                'filters' => $filters,
+                'dropdowns' => $dropDowns,
                 'error' => 'Failed to fetch data. Please try again.',
             ];
         }
@@ -66,10 +57,8 @@ class SageProcessesController extends Controller
     public function export(SageProcessesFilterRequest $request)
     {
         try {
-            // Get failed sage processes with applied filters
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe(), true);
+            $failedProcesses = $this->sageFailedRecordsService->getFailedSageRecords($request->safe(), true);
 
-            // Check if there's any data to export
             if ($failedProcesses->isEmpty()) {
                 return response()->json([
                     'message' => 'No data available to export.',
@@ -80,8 +69,9 @@ class SageProcessesController extends Controller
             $filename = 'sage-failed-processes-'.date('His');
 
             return (new SageProcessesExport($failedProcesses))->download($filename);
-        } catch (\Exception $e) {
-            LoggerService::error('SageProcessesController - export - Error: '.$e->getMessage(), extra: [
+        } catch (\Throwable $e) {
+            LoggerService::warning('Error exporting failed Sage failed records', extra: [
+                'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 

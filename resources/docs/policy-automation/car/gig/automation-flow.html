@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIG Car Automation Flow - Complete 5-Step Workflow</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #e53e3e;
+      }
+
+      .section h3 {
+        color: #e53e3e;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #2c3e50;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .workflow-overview {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .workflow-step {
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        flex: 1;
+        min-width: 250px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .workflow-step h3 {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 10px;
+      }
+
+      .workflow-step .step-number {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .workflow-step p {
+        opacity: 0.95;
+        line-height: 1.7;
+      }
+
+      .step-detail {
+        background: #fff5f5;
+        border-left: 4px solid #e53e3e;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .step-detail h4 {
+        color: #e53e3e;
+        margin-top: 0;
+      }
+
+      .process-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .process-list li {
+        padding: 12px 0 12px 35px;
+        position: relative;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .process-list li:last-child {
+        border-bottom: none;
+      }
+
+      .process-list li:before {
+        content: counter(step-counter);
+        counter-increment: step-counter;
+        position: absolute;
+        left: 0;
+        top: 12px;
+        background: #e53e3e;
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+
+      .process-list {
+        counter-reset: step-counter;
+      }
+
+      .success-criteria,
+      .failure-handling {
+        background: #ffe5e5;
+        border-left: 4px solid #e53e3e;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .failure-handling {
+        background: #ffebee;
+        border-left-color: #c62828;
+      }
+
+      .success-criteria h4,
+      .failure-handling h4 {
+        margin-top: 0;
+      }
+
+      .success-criteria ul,
+      .failure-handling ul {
+        margin-top: 10px;
+        padding-left: 25px;
+      }
+
+      .success-criteria li,
+      .failure-handling li {
+        margin: 8px 0;
+        line-height: 1.6;
+      }
+
+      .data-flow-diagram {
+        background: white;
+        border: 2px solid #e53e3e;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 30px 0;
+        overflow-x: auto;
+      }
+
+      .flow-box {
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 10px;
+        display: inline-block;
+        min-width: 150px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .flow-arrow {
+        display: inline-block;
+        color: #e53e3e;
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0 10px;
+        vertical-align: middle;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border-left: 4px solid #ff9800;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .info-box h4 {
+        color: #e65100;
+        margin-top: 0;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .highlight {
+        background: #fff3cd;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      .nav-links {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-links h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .workflow-overview {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/gig/index.html">GIG (AXA)</a>
+        <span>></span>
+        <span>Automation Flow</span>
+      </div>
+
+      <div class="header">
+        <h1>🔄 GIG Car Automation Flow</h1>
+        <p>Complete 5-Step Policy Issuance Workflow with OCR Processing</p>
+      </div>
+
+      <div class="nav-links">
+        <h3>📚 Navigation</h3>
+        <a href="/docs/policy-automation/car/gig/index.html"
+          >← Back to Overview</a
+        >
+        <a href="/docs/policy-automation/car/gig/architecture.html"
+          >Architecture →</a
+        >
+        <a href="/docs/policy-automation/car/gig/api-integration.html"
+          >API Integration →</a
+        >
+        <a href="/docs/policy-automation/car/gig/configuration.html"
+          >Configuration →</a
+        >
+      </div>
+
+      <!-- Pre-Automation Payment Capture -->
+      <div class="section">
+        <h2>💳 Pre-Automation Payment Capture</h2>
+        <div
+          class="info-box"
+          style="
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-left-color: #27ae60;
+          "
+        >
+          <h4 style="color: #155724; margin-top: 0; margin-bottom: 15px">
+            🔑 Critical Prerequisite Step
+          </h4>
+          <p style="color: #155724; margin-bottom: 15px; line-height: 1.7">
+            <strong>Auto-capture is a mandatory prerequisite</strong> that
+            executes <strong>BEFORE</strong> the automation workflow begins.
+            Payment must be successfully captured before automation can proceed.
+          </p>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Payment Flow
+          </h4>
+          <ol style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li><strong>Customer pays online</strong> → Payment authorized</li>
+            <li>
+              <strong>Background job processes</strong> →
+              <code>CcPaymentProcess</code> handles split payment approval
+            </li>
+            <li>
+              <strong>Auto-capture executes</strong> →
+              <code>SplitPaymentService->processSplitPaymentApprove()</code>
+              calls <code>CRUDService->capturePayment()</code>
+            </li>
+            <li>
+              <strong>Marshall API call</strong> → Creates
+              <code>PaymentAction</code> record with
+              <code>action_type: 'CAPTURE'</code> and <code>amount</code>
+            </li>
+            <li>
+              <strong>Success path:</strong> If capture succeeds → Automation
+              workflow scheduled via
+              <code>createPolicyIssuanceAutomation()</code>
+            </li>
+            <li>
+              <strong>Failure path:</strong> If capture fails →
+              <code>handleAutomationError()</code> sets
+              <code>insurer_api_status_id</code> to
+              <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team
+            </li>
+          </ol>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Implementation Details
+          </h4>
+          <ul style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li>
+              <strong>Code Location:</strong>
+              <code>SplitPaymentService.php</code> lines 770-792, 1475-1487
+            </li>
+            <li>
+              <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+              between retries
+            </li>
+            <li>
+              <strong>Provider Support:</strong> Currently implemented for GIG
+              (AXA) and potentially other providers
+            </li>
+            <li>
+              <strong>Failure Handling:</strong> If capture fails, automation is
+              prevented from starting and quote is allocated for manual handling
+            </li>
+          </ul>
+          <p
+            style="
+              color: #155724;
+              margin-top: 15px;
+              margin-bottom: 0;
+              font-weight: 600;
+            "
+          >
+            ⚠️ <strong>Important:</strong> This explains why documentation
+            refers to "pre-captured" payments - the payment is already captured
+            before any automation steps execute.
+          </p>
+        </div>
+      </div>
+
+      <!-- Workflow Overview -->
+      <div class="section">
+        <h2>📋 Complete Automation Workflow Overview</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 30px">
+          The GIG Car Policy Issuance Automation follows a sequential 5-step
+          process, where each step must complete successfully before proceeding
+          to the next. The system maintains state throughout the process,
+          includes OAuth authentication, batch OCR processing, and allows for
+          retry mechanisms and manual intervention when needed.
+        </p>
+
+        <div class="workflow-overview">
+          <div class="workflow-step">
+            <span class="step-number">Step 1</span>
+            <h3>Upload Documents</h3>
+            <p>
+              Upload required documents (Car Registration Card, Emirates ID,
+              Driving License) to GIG API. Documents are fetched from Azure
+              Storage, base64 encoded, and uploaded with proper document type
+              codes.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 2</span>
+            <h3>Issue Policy</h3>
+            <p>
+              Create policy with GIG API using quote ID and payment details.
+              Updates quote with policy number, dates, and syncs latest car
+              quote information.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 3</span>
+            <h3>Get & Upload Policy Docs</h3>
+            <p>
+              Download policy documents (Tax Invoice, Tax Invoice by Buyer,
+              Receipt, Policy Schedule, Certificate of Insurance) from GIG and
+              upload to IMCRM with proper document type mapping.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 4</span>
+            <h3>Execute OCR Processing</h3>
+            <p>
+              Process policy documents through OCR batch jobs for data
+              extraction. Uses Laravel batch jobs to process multiple documents
+              in parallel, with callback handling for completion.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 5</span>
+            <h3>Book Policy</h3>
+            <p>
+              Finalize booking process, update booking details with commission
+              and payment information, validate prerequisites, and trigger Sage
+              ERP integration.
+            </p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Workflow Characteristics</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>OAuth Authentication:</strong> OAuth 2.0 client
+              credentials flow with Redis token caching
+            </li>
+            <li>
+              <strong>Sequential Execution:</strong> Steps execute in order,
+              each dependent on the previous step's success
+            </li>
+            <li>
+              <strong>State Management:</strong> Completed steps are tracked in
+              the <code>PolicyIssuance</code> model's
+              <code>completed_step</code> field
+            </li>
+            <li>
+              <strong>Resumable:</strong> Failed automations can be resumed from
+              the last completed step
+            </li>
+            <li>
+              <strong>Batch OCR Processing:</strong> Step 4 uses Laravel batch
+              jobs for parallel document processing
+            </li>
+            <li>
+              <strong>Audit Trail:</strong> Every API call is logged in
+              <code>PolicyIssuanceLog</code> for complete traceability
+            </li>
+            <li>
+              <strong>Error Recovery:</strong> Each step has specific error
+              handling and can be retried independently
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 1: Upload Documents -->
+      <div class="section">
+        <h2>1️⃣ Step 1: Upload Documents</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The first step uploads required customer documents to GIG's document
+          management system. This includes Car Registration Card, Emirates ID,
+          and Driving License. Documents are fetched from Azure Storage,
+          validated, base64 encoded, and uploaded with proper document type
+          codes.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>OAuth Token Initialization:</strong> Initialize OAuth
+              access token from Redis cache or fetch new token if expired
+            </li>
+            <li>
+              <strong>Document Validation:</strong> Validate required documents
+              exist using
+              <code>PolicyIssuanceService::documentUploadPreChecks()</code>:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Car Registration Card (<code>CAR_REGISTRATION_CARD</code>) →
+                  DT01
+                </li>
+                <li>Emirates ID (<code>CAR_EMIRATE_ID</code>) → DT03</li>
+                <li>Driving License (<code>DRIVING_LICENSE</code>) → DT02</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Document Fetching:</strong> For each required document
+              type, fetch all documents from Azure Storage using
+              <code>Storage::disk('azureIMPrivate')->get()</code>. Supports
+              multiple documents per type (e.g., Emirates ID front/back).
+            </li>
+            <li>
+              <strong>Base64 Encoding:</strong> Convert document content to
+              base64 encoding for API transmission
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build upload payload with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li><code>referenceType</code>: 'quotation'</li>
+                <li>
+                  <code>referenceValue</code>: Quote's insurer quote number
+                </li>
+                <li>
+                  <code>documentType</code>: Object with code and value:
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>DT01: Car Registration Document (Mulkiya)</li>
+                    <li>DT02: Driving License</li>
+                    <li>DT03: National ID (Emirates ID)</li>
+                  </ul>
+                </li>
+                <li>
+                  <code>documentContent</code>: Base64 encoded document content
+                </li>
+                <li><code>documentName</code>: Unique document name</li>
+                <li><code>mimeType</code>: Document MIME type</li>
+              </ul>
+            </li>
+            <li>
+              <strong>API Call:</strong> Call GIG API endpoint
+              <code>/v1/insurance-documents</code> via POST for each document.
+              All documents of a type must succeed for that type to be marked as
+              uploaded.
+            </li>
+            <li>
+              <strong>Response Validation:</strong> Parse response and track
+              upload status for each document type. Track success per document
+              type; all documents of a type must succeed.
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store API log for each document
+              upload attempt in <code>PolicyIssuanceLog</code>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed only if
+              all required documents uploaded successfully (<code
+                >completed_step = UploadDocuments</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #e53e3e; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">OAuth Token</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Validate Docs</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Fetch from Azure</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Base64 Encode</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Payload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">GIG API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Verify Upload</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>
+              OAuth access token successfully obtained and cached in Redis
+            </li>
+            <li>
+              All three required document types are successfully uploaded to GIG
+            </li>
+            <li>
+              Each document upload API call returns HTTP 200 with success
+              confirmation
+            </li>
+            <li>Document type codes are correctly mapped (DT01, DT02, DT03)</li>
+            <li>All documents pass MIME type validation</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = UploadDocuments</code
+              >)
+            </li>
+            <li>
+              API logs are stored for each document upload with
+              <code>SUCCESS_STATUS</code>
+            </li>
+            <li>
+              LoggerService logs successful completion with document count and
+              types
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>OAuth Token Failure:</strong> Return error if token cannot
+              be obtained; log authentication failure
+            </li>
+            <li>
+              <strong>Missing Documents:</strong> Return error with specific
+              document names; log missing document types
+            </li>
+            <li>
+              <strong>Azure Storage Error:</strong> Log storage connectivity
+              issues; return error with document fetch failure details
+            </li>
+            <li>
+              <strong>Document Upload Failure:</strong> Track failed documents
+              per type; log detailed error including document name and API error
+            </li>
+            <li>
+              <strong>Partial Success:</strong> If some documents succeed but
+              others fail, mark step as incomplete; log partial success details
+              with counts
+            </li>
+            <li>
+              <strong>API Timeout:</strong> Handle timeout per document; allow
+              retry for failed documents only
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>📄 Document Type Mapping</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Car Registration Card (DT01):</strong>
+              <code>CAR_REGISTRATION_CARD</code> → 'Car Registration Document'
+            </li>
+            <li>
+              <strong>Driving License (DT02):</strong>
+              <code>DRIVING_LICENSE</code> → 'Driving License'
+            </li>
+            <li>
+              <strong>National ID (DT03):</strong> <code>CAR_EMIRATE_ID</code> →
+              'National ID'
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2: Issue Policy -->
+      <div class="section">
+        <h2>2️⃣ Step 2: Issue Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The second step creates a policy with GIG Insurance Company using
+          quote information and payment details. This step establishes the
+          policy foundation and generates the policy number.
+          <strong>Note:</strong> Payment is PRE-CAPTURED before automation
+          starts; only payment amount and mode are sent (NO transaction_id
+          used).
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 1 (Upload
+              Documents) completed successfully
+            </li>
+            <li>
+              <strong>OAuth Token:</strong> Ensure valid OAuth access token is
+              available
+            </li>
+            <li>
+              <strong>Payment Retrieval:</strong> Get main lead payment from
+              quote using
+              <code>$quote->payments()->mainLeadPayment()->first()</code>.
+              Payment is already authorized/captured before automation starts.
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build issue policy payload:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li><code>quoteId</code>: Quote's insurer quote number</li>
+                <li><code>isActive</code>: 'true'</li>
+                <li>
+                  <code>payment</code>: Object with payment mode and amount:
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>
+                      <code>paymentMode.code</code>: 'CT068' (Upfront Commission
+                      Partner Payment)
+                    </li>
+                    <li>
+                      <code>paymentMode.value</code>: 'Upfront Commission
+                      Partner Payment'
+                    </li>
+                    <li>
+                      <code>paymentAmount.amount</code>:
+                      <code>$payment->total_amount</code> in AED currency
+                    </li>
+                    <li><code>paymentAmount.currencyCode</code>: 'AED'</li>
+                    <li>
+                      <strong>Note:</strong> NO transaction_id is used or sent
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>API Call:</strong> Call GIG API endpoint
+              <code>/v3/policies</code> via POST
+            </li>
+            <li>
+              <strong>Response Parsing:</strong> Parse API response and extract
+              policy ID
+            </li>
+            <li>
+              <strong>Quote Update:</strong> Update quote with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Policy number (<code>policy_number</code>)</li>
+                <li>Quote status (<code>PolicyIssued</code>)</li>
+                <li>Policy issuance status (<code>PolicyIssued</code>)</li>
+                <li>Quote status date</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Sync Car Quote Info:</strong> Sync latest car quote
+              information to quote using
+              <code>CentralService::syncLatestCarQuoteInfoToQuote()</code>
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store complete API request and
+              response in <code>PolicyIssuanceLog</code>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = IssuePolicy</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 status code with successful response</li>
+            <li>Policy ID is generated and present in response</li>
+            <li>Quote record is updated with policy number and status</li>
+            <li>Car quote information is synced successfully</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = IssuePolicy</code
+              >)
+            </li>
+            <li>API log is stored with <code>SUCCESS_STATUS</code></li>
+            <li>LoggerService logs successful completion</li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 1 not
+              completed; log prerequisite validation error
+            </li>
+            <li>
+              <strong>OAuth Token Expired:</strong> Attempt to refresh token; if
+              fails, return authentication error
+            </li>
+            <li>
+              <strong>API Error:</strong> Log detailed error including endpoint,
+              payload, and error message; update insurer API status to failed
+            </li>
+            <li>
+              <strong>HTTP Exception:</strong> Catch and log exception with full
+              context; update process status; return error response
+            </li>
+            <li>
+              <strong>Invalid Response:</strong> Validate response structure;
+              log parsing errors; return error with specific message
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 3: Get & Upload Policy Documents -->
+      <div class="section">
+        <h2>3️⃣ Step 3: Get & Upload Policy Documents to IMCRM</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The third step downloads policy documents from GIG (Tax Invoice, Tax
+          Invoice by Buyer, Receipt, Policy Schedule, Certificate of Insurance)
+          and uploads them to IMCRM's document management system. These
+          documents are generated by GIG after policy issuance.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 2 (Issue
+              Policy) completed successfully
+            </li>
+            <li>
+              <strong>Policy Issuance Response:</strong> Retrieve policy
+              issuance response from <code>PolicyIssuanceLog</code> where step =
+              <code>IssuePolicy</code> and status = <code>SUCCESS_STATUS</code>
+            </li>
+            <li>
+              <strong>Document List Extraction:</strong> Extract policy
+              documents array and policy ID from response
+            </li>
+            <li>
+              <strong>Download Loop:</strong> For each document in the policy
+              documents array:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Skip Certificate of Insurance in non-production environments
+                  (handled separately - duplicated from Policy Schedule)
+                </li>
+                <li>Skip Commission statement documents</li>
+                <li>
+                  Build download headers with document ID, reference type
+                  ('policy'), and reference value (policy ID):
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li><code>opCo</code>: 'UAE'</li>
+                    <li>
+                      <code>documentType</code>: Document ID from policy
+                      issuance response
+                    </li>
+                    <li><code>referenceType</code>: 'policy'</li>
+                    <li><code>referenceValue</code>: Policy ID</li>
+                  </ul>
+                </li>
+                <li>
+                  Call GIG API endpoint
+                  <code>/v1/insurance-documents/document</code> via GET with
+                  headers
+                </li>
+                <li>
+                  Wait 10 seconds between document downloads (rate limiting)
+                </li>
+                <li>
+                  Parse response and extract base64 document content (base64
+                  decoded before storage)
+                </li>
+                <li>
+                  Map document name to IMCRM document type codes:
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>'Tax invoice' → <code>TI</code> (Tax Invoice)</li>
+                    <li>
+                      'Tax invoice by buyer' → <code>CTIRBB</code> (Tax Invoice
+                      Raised By Buyer)
+                    </li>
+                    <li>'Receipt with reference' → <code>CPD_RECEIPT</code></li>
+                    <li>
+                      'Motor Insurance Policy Schedule' →
+                      <code>CPS</code> (Policy Schedule)
+                    </li>
+                    <li>
+                      'Certificate of Insurance' →
+                      <code>CPC</code> (Certificate)
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  Upload to IMCRM using
+                  <code>uploadAndAttachToQuoteDocuments()</code>
+                </li>
+                <li>Trigger watermark job for uploaded document</li>
+                <li>Store API log for download operation</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Certificate of Insurance Handling:</strong>
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li><strong>Production:</strong> Fetched from API</li>
+                <li>
+                  <strong>Non-production:</strong> Duplicated from Policy
+                  Schedule (for testing)
+                </li>
+                <li>
+                  Update <code>rta_upload_status</code> when certificate is
+                  available
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Validation:</strong> Verify all documents downloaded and
+              uploaded successfully
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = GetAndUploadPolicyDocumentsToIMCRM</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>All policy documents are successfully downloaded from GIG</li>
+            <li>All documents are successfully uploaded to IMCRM</li>
+            <li>Document type codes are correctly mapped to IMCRM codes</li>
+            <li>
+              Certificate of Insurance is available and RTA upload status is
+              updated
+            </li>
+            <li>Watermark jobs are dispatched for all uploaded documents</li>
+            <li>Step is marked as completed</li>
+            <li>
+              API logs are stored for each document download with
+              <code>SUCCESS_STATUS</code>
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 2 not
+              completed
+            </li>
+            <li>
+              <strong>Policy Issuance Response Not Found:</strong> Return error
+              with message about missing response
+            </li>
+            <li>
+              <strong>Document Download Failure:</strong> Log error for specific
+              document; continue with other documents
+            </li>
+            <li>
+              <strong>Document Mapping Failure:</strong> Log warning for
+              unmapped document types; skip upload
+            </li>
+            <li>
+              <strong>IMCRM Upload Failure:</strong> Log error for specific
+              document; track failed documents
+            </li>
+            <li>
+              <strong>Certificate of Insurance Missing:</strong> Update RTA
+              upload status to pending; log warning
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4: Execute OCR Processing -->
+      <div class="section">
+        <h2>4️⃣ Step 4: Execute OCR Processing</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The fourth step processes policy documents through OCR (Optical
+          Character Recognition) batch jobs for data extraction. This step uses
+          Laravel batch jobs to process multiple documents in parallel, with
+          callback handling for completion and error recovery.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 3 (Get &
+              Upload Policy Documents) completed successfully
+            </li>
+            <li>
+              <strong>Document Retrieval:</strong> Get policy documents that
+              were uploaded in Step 3:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Filter by document type codes: <code>TI</code> (Tax Invoice)
+                  and <code>CTIRBB</code> (Tax Invoice Raised By Buyer) only
+                </li>
+                <li>
+                  Filter documents created within 30 minutes of step completion
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Document Validation:</strong> Verify documents exist;
+              return error if no documents found
+            </li>
+            <li>
+              <strong>Batch Job Creation:</strong> Create Laravel Bus batch job
+              for OCR processing:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Get API automation user (happiness user)</li>
+                <li>
+                  For each document, create
+                  <code>PopulateDocumentData</code> job with:
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>Quote type (Car)</li>
+                    <li>Quote model</li>
+                    <li>Document type model</li>
+                    <li>Document URL</li>
+                    <li>Document MIME type</li>
+                    <li>User ID</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Batch Dispatch:</strong> Dispatch batch with callbacks:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  <strong>then() callback:</strong> On complete success, update
+                  process:
+                  <ul style="margin-top: 5px; padding-left: 20px">
+                    <li>
+                      Set <code>completed_step = ExecuteOCRProcessing</code>
+                    </li>
+                    <li>Set status = <code>BOOKING_PENDING_STATUS</code></li>
+                    <li>Log completion</li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>catch() callback:</strong> On complete failure, update
+                  status to failed and log error
+                </li>
+                <li>
+                  <strong>finally() callback:</strong> Log batch completion with
+                  statistics
+                </li>
+                <li>
+                  Set <code>allowFailures()</code> to handle partial failures
+                </li>
+                <li>Dispatch on <code>'shared'</code> queue</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Response Handling:</strong> Return response indicating OCR
+              processing is in progress
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #e53e3e; margin-bottom: 20px">
+            🔄 Batch OCR Processing Flow
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Get Documents</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Create Jobs</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Dispatch Batch</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Process in Parallel</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Batch Callback</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Status</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>OCR batch is successfully dispatched with all document jobs</li>
+            <li>All OCR jobs complete successfully</li>
+            <li>
+              Batch callback updates process status to
+              <code>BOOKING_PENDING_STATUS</code>
+            </li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = ExecuteOCRProcessing</code
+              >)
+            </li>
+            <li>LoggerService logs batch dispatch and completion</li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>No Documents Found:</strong> Return error if no policy
+              documents found for OCR processing
+            </li>
+            <li>
+              <strong>Batch Dispatch Failure:</strong> Log exception; return
+              error response
+            </li>
+            <li>
+              <strong>Partial Batch Failure:</strong> Batch callback logs
+              statistics; process continues if <code>allowFailures()</code> is
+              set
+            </li>
+            <li>
+              <strong>Complete Batch Failure:</strong> catch() callback updates
+              status to failed; logs error
+            </li>
+            <li>
+              <strong>OCR Job Failure:</strong> Individual job failures are
+              logged; batch continues with other jobs
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Features</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Parallel Processing:</strong> Multiple documents processed
+              simultaneously using Laravel batch jobs
+            </li>
+            <li>
+              <strong>Callback Handling:</strong> then(), catch(), and finally()
+              callbacks for comprehensive error handling
+            </li>
+            <li>
+              <strong>Partial Failure Tolerance:</strong>
+              <code>allowFailures()</code> allows batch to complete even if some
+              jobs fail
+            </li>
+            <li>
+              <strong>Status Management:</strong> Process status updated based
+              on batch completion
+            </li>
+            <li>
+              <strong>Queue Processing:</strong> Jobs dispatched on 'shared'
+              queue for load distribution
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 5: Book Policy -->
+      <div class="section">
+        <h2>5️⃣ Step 5: Book Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The final step completes the booking process by updating booking
+          details with commission and payment information, validating
+          prerequisites, and triggering Sage ERP integration for final
+          processing.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 4 (Execute
+              OCR Processing) completed successfully
+            </li>
+            <li>
+              <strong>Update Commission:</strong> Update commission details
+              using
+              <code
+                >ManualCommissionUpdateService::updateCommissionForLeads()</code
+              >
+            </li>
+            <li>
+              <strong>Payment Retrieval:</strong> Get main lead payment from
+              quote
+            </li>
+            <li>
+              <strong>Booking Payload Construction:</strong> Build booking
+              payload with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Invoice date, tax invoice number, commission invoice number
+                </li>
+                <li>Discount value, transaction payment status</li>
+                <li>Broker invoice number</li>
+                <li>Commission VAT details (applicable/not applicable)</li>
+                <li>
+                  Total commission, VAT on commission, commission percentage
+                </li>
+                <li>Payment code, model type, quote ID</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Booking Details Validation:</strong> Validate booking
+              payload using <code>BookPolicyRequest</code> validation rules
+            </li>
+            <li>
+              <strong>Update Booking Details:</strong> Update booking details
+              using <code>CentralService::updateBookingDetails()</code>
+            </li>
+            <li>
+              <strong>Book Policy Validation:</strong> Validate book policy
+              prerequisites using <code>SendBookPolicyRequest</code> validation
+            </li>
+            <li>
+              <strong>Sage Integration:</strong> Trigger Sage ERP integration
+              using <code>SageApiService::postBookPolicyToSage()</code>:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Create request object with quote ID, model type, send policy
+                  type (SAGE)
+                </li>
+                <li>Set <code>is_send_policy = false</code></li>
+                <li>Call Sage API to create booking process</li>
+              </ul>
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store Sage API request and
+              response in <code>PolicyIssuanceLog</code>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = BookPolicy</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>Commission details updated successfully</li>
+            <li>Booking details validation passes</li>
+            <li>Booking details updated in database</li>
+            <li>Book policy prerequisites validated successfully</li>
+            <li>Sage ERP process created successfully</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = BookPolicy</code
+              >)
+            </li>
+            <li>API log is stored with <code>SUCCESS_STATUS</code></li>
+            <li>LoggerService logs successful completion</li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 4 not
+              completed
+            </li>
+            <li>
+              <strong>Commission Update Failure:</strong> Log error but continue
+              (non-blocking)
+            </li>
+            <li>
+              <strong>Validation Failure:</strong> Return error with specific
+              validation errors
+            </li>
+            <li>
+              <strong>Booking Update Failure:</strong> Log error; return error
+              response
+            </li>
+            <li>
+              <strong>Sage Integration Failure:</strong> Log detailed error;
+              update insurer API status to failed; return error
+            </li>
+            <li>
+              <strong>Exception:</strong> Catch and log exception with full
+              context; return error response
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Data Updates</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Payment:</strong> Commission amounts, VAT details, invoice
+              numbers
+            </li>
+            <li>
+              <strong>Quote:</strong> Booking status, transaction payment status
+            </li>
+            <li>
+              <strong>PolicyIssuance:</strong>
+              <code>completed_step = BookPolicy</code>
+            </li>
+            <li>
+              <strong>Sage Process:</strong> Booking process created in Sage ERP
+              system
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- State Management -->
+      <div class="section">
+        <h2>📊 State Management</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The automation system maintains state throughout the process using the
+          <code>PolicyIssuance</code> model. This allows for resumable
+          workflows, error recovery, and progress tracking.
+        </p>
+
+        <div class="step-detail">
+          <h4>Process States</h4>
+          <ul style="margin-left: 30px; margin-top: 10px; line-height: 2">
+            <li>
+              <strong><code>PENDING_STATUS</code>:</strong> Automation scheduled
+              but not yet started
+            </li>
+            <li>
+              <strong><code>PROCESSING_STATUS</code>:</strong> Currently
+              executing automation steps
+            </li>
+            <li>
+              <strong><code>BOOKING_PENDING_STATUS</code>:</strong> OCR
+              processing completed, waiting for booking
+            </li>
+            <li>
+              <strong><code>TIMEOUT_STATUS</code>:</strong> Process timed out,
+              eligible for retry if retry enabled
+            </li>
+            <li>
+              <strong><code>FAILED_STATUS</code>:</strong> Process failed,
+              requires manual intervention
+            </li>
+          </ul>
+
+          <h4 style="margin-top: 30px">Completed Steps</h4>
+          <ul style="margin-left: 30px; margin-top: 10px; line-height: 2">
+            <li>
+              <strong><code>null</code>:</strong> No steps completed
+            </li>
+            <li>
+              <strong><code>UploadDocuments</code>:</strong> Documents uploaded
+              to GIG
+            </li>
+            <li>
+              <strong><code>IssuePolicy</code>:</strong> Policy created with GIG
+            </li>
+            <li>
+              <strong><code>GetAndUploadPolicyDocumentsToIMCRM</code>:</strong>
+              Policy documents retrieved and uploaded
+            </li>
+            <li>
+              <strong><code>ExecuteOCRProcessing</code>:</strong> OCR processing
+              completed
+            </li>
+            <li>
+              <strong><code>BookPolicy</code>:</strong> Booking process
+              completed
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong
+            >GIG Car Insurance Automation - Automation Flow
+            Documentation</strong
+          >
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

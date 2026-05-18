@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
@@ -107,7 +108,7 @@ test('does not trigger workflow when already executed', function () {
 
 test('does not trigger workflow when workflow key missing', function () {
     // Ensure workflow key is absent
-    DB::connection('sqlite')->table('application_storage')->where('key_name', \App\Enums\ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->delete();
+    DB::connection('sqlite')->table('application_storage')->where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->delete();
 
     $advisor = TestDataSeeder::createUser([
         'email' => 'advisor4@example.com',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Facades\Ken;
 use App\Services\DropdownSourceService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class ValuationController extends Controller
@@ -12,7 +13,7 @@ class ValuationController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function __construct()
     {

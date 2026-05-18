@@ -32,6 +32,28 @@ defineProps({
   paymentStatusEnum: Object,
   storageUrl: String,
   paymentGatewayEnum: Array,
+  communicationEventLogs: {
+    type: Array,
+    default: () => [],
+  },
+  emailStatuses: {
+    type: Array,
+    default: () => [],
+  },
+});
+
+const emailStatusTable = reactive({
+  columns: [
+    { text: 'Id', value: 'id' },
+    { text: 'Email Subject', value: 'email_subject' },
+    { text: 'Email Address', value: 'email_address' },
+    { text: 'Status', value: 'email_status' },
+    { text: 'Reason', value: 'reason' },
+    { text: 'Template Id', value: 'template_id' },
+    { text: 'Customer Id', value: 'customer_id' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+  ],
 });
 
 const page = usePage();
@@ -677,6 +699,14 @@ const sendPolicyToClient = () => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.lost_reason }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENGAGEMENT LEVEL</dt>
+            <dd>{{ quote.engagement_level_display ?? '-' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENGAGEMENT LEVEL LAST UPDATED</dt>
+            <dd>{{ quote.engagement_level_updated_at ?? '-' }}</dd>
           </div>
         </dl>
       </div>
@@ -1466,6 +1496,30 @@ const sendPolicyToClient = () => {
         </template>
       </x-modal>
     </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="true">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="emailStatusTable.columns"
+            :items="emailStatuses || []"
+            show-index
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          />
+        </template>
+      </Collapsible>
+    </div>
+
+    <CommunicationEventLog :communication-event-logs="communicationEventLogs" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

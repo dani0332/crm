@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\QuoteTypes;
+use App\Http\Middleware\BasicAuth;
+use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Services\ApiService;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
@@ -8,7 +10,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->withoutMiddleware(\App\Http\Middleware\BasicAuth::class);
+    $this->withoutMiddleware(BasicAuth::class);
 });
 
 afterEach(function () {
@@ -38,7 +40,7 @@ test('successfully sends STP advisor notification for valid health quote', funct
     $mockApiService->shouldReceive('stpAdvisorNotification')
         ->once()
         ->with(Mockery::on(function ($request) use ($quoteUuid) {
-            return $request instanceof \App\Http\Requests\STPAdvisorNotificationRequest
+            return $request instanceof STPAdvisorNotificationRequest
                 && $request->quoteUuid === $quoteUuid
                 && $request->quoteTypeId === QuoteTypes::HEALTH->id();
         }))
@@ -69,7 +71,7 @@ test('returns error when lead not found', function () {
     $mockApiService->shouldReceive('stpAdvisorNotification')
         ->once()
         ->with(Mockery::on(function ($request) use ($nonExistentUuid) {
-            return $request instanceof \App\Http\Requests\STPAdvisorNotificationRequest
+            return $request instanceof STPAdvisorNotificationRequest
                 && $request->quoteUuid === $nonExistentUuid
                 && $request->quoteTypeId === QuoteTypes::HEALTH->id();
         }))

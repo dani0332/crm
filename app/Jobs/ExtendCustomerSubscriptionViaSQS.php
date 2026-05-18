@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\MyAlFredUser;
 use App\Services\Logger\LoggerService;
+use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -70,7 +71,7 @@ class ExtendCustomerSubscriptionViaSQS implements ShouldQueue
         $sqsApiKey = config('constants.SQS_API_KEY');
         $sqsEndpoint = config('constants.SQS_API_ENDPOINT');
 
-        $clientExtendSubscription = new \GuzzleHttp\Client;
+        $clientExtendSubscription = new Client;
 
         try {
             LoggerService::info('SQS Service - extendCustomerSubscriptionViaSQS - Start - Customer ID: '.$this->customer->id, extra: [

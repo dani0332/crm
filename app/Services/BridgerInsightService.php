@@ -14,6 +14,8 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\Cache;
 
 class BridgerInsightService
@@ -48,7 +50,7 @@ class BridgerInsightService
         // Generate new token
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
-        $bridgerClient = new \GuzzleHttp\Client;
+        $bridgerClient = new Client;
         $_return = ['status' => true];
 
         try {
@@ -72,7 +74,7 @@ class BridgerInsightService
 
                 return $_return;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             Cache::forget($cacheKey);
             $_return['status'] = false;
             $responseErrorCode = $e->getResponse()->getStatusCode();
@@ -89,7 +91,7 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteDetails->id;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $bridgerClient = new \GuzzleHttp\Client;
+            $bridgerClient = new Client;
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
             switch ($customerType) {
@@ -296,7 +298,7 @@ class BridgerInsightService
     public function updateDecisionOnLexisNexis($bridgerToken, $request, $decisions)
     {
         $bridgerEndPoint = $this->bridgerEndPoint.'/api/Results/SetRecordState';
-        $bridgerClient = new \GuzzleHttp\Client;
+        $bridgerClient = new Client;
 
         $amlUpdateData = [
             'ClientContext' => [

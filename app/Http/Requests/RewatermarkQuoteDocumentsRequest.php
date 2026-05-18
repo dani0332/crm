@@ -5,6 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Models\BikeQuote;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\CycleQuote;
+use App\Models\EmbeddedTransaction;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
+use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
+use App\Models\TravelQuote;
+use App\Models\YachtQuote;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RewatermarkQuoteDocumentsRequest extends FormRequest
@@ -16,20 +29,20 @@ class RewatermarkQuoteDocumentsRequest extends FormRequest
      * @var array<int, string>
      */
     private const ALLOWED_QUOTE_DOCUMENTABLE_TYPES = [
-        \App\Models\TravelQuote::class,
-        \App\Models\PersonalQuote::class,
-        \App\Models\LifeQuote::class,
-        \App\Models\HomeQuote::class,
-        \App\Models\HealthQuote::class,
-        \App\Models\CarQuote::class,
-        \App\Models\BusinessQuote::class,
-        \App\Models\CycleQuote::class,
-        \App\Models\BikeQuote::class,
-        \App\Models\PetQuote::class,
-        \App\Models\YachtQuote::class,
+        TravelQuote::class,
+        PersonalQuote::class,
+        LifeQuote::class,
+        HomeQuote::class,
+        HealthQuote::class,
+        CarQuote::class,
+        BusinessQuote::class,
+        CycleQuote::class,
+        BikeQuote::class,
+        PetQuote::class,
+        YachtQuote::class,
 
-        \App\Models\SendUpdateLog::class,
-        \App\Models\EmbeddedTransaction::class,
+        SendUpdateLog::class,
+        EmbeddedTransaction::class,
     ];
 
     public function authorize(): bool

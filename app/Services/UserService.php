@@ -15,6 +15,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class UserService extends BaseService
 {
@@ -520,6 +521,78 @@ class UserService extends BaseService
                 ->get()
                 ->toArray();
         });
+    }
+
+    /**
+     * Build a data URI for embedding advisor photos in PDFs. Remote URLs are fetched with the HTTP client so
+     * failures do not throw; local filesystem paths are read when the file exists.
+     *
+     * Security (SSRF): {@see FILTER_VALIDATE_URL} accepts many schemes/hosts; a malicious stored URL could in
+     * theory cause this server to request internal or metadata endpoints. In Blanka, {@see User::$profile_photo_path}
+     * is populated with Google profile photo URLs (e.g. lh3.googleusercontent.com) for advisors—not arbitrary
+     * user-supplied targets—so this risk is treated as mitigated at the data layer. No additional URL allowlist
+     * is applied here by product decision.
+     *
+     * @return string|null A data URI (e.g. data:image/jpeg;base64,...) or null when the image cannot be loaded.
+     */
+    public function profilePhotoDataUriForPdf(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $this->profilePhotoDataUriFromRemoteUrl($path);
+        }
+
+        return $this->profilePhotoDataUriFromLocalFile($path);
+    }
+
+    /**
+     * @return string|null Data URI or null when the remote image cannot be loaded.
+     */
+    private function profilePhotoDataUriFromRemoteUrl(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(8)
+                ->withOptions(['allow_redirects' => true])
+                ->get($url);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $binary = $response->successful() ? $response->body() : '';
+
+        if ($binary === '') {
+            return null;
+        }
+
+        $mime = $response->header('Content-Type') ?? 'image/jpeg';
+        $mime = trim(explode(';', $mime)[0]);
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
+    }
+
+    /**
+     * @return string|null Data URI or null when the path is not a readable file.
+     */
+    private function profilePhotoDataUriFromLocalFile(string $path): ?string
+    {
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $binary = @file_get_contents($path);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        $mime = @mime_content_type($path);
+        if ($mime === false || $mime === '') {
+            $mime = 'image/png';
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
     }
 
 }

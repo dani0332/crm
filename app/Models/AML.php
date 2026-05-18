@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Traits\SpatieActivityLog;
 use Config;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -21,8 +22,8 @@ class AML extends Model implements AuditableContract
      * Scope to exclude RYU decision records (includes NULL records).
      * Use this when you want to filter out RYU but keep records with no decision.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeExcludeRyuDecision($query)
     {
@@ -36,8 +37,8 @@ class AML extends Model implements AuditableContract
      * Scope to exclude RYU decision records (also excludes NULL records).
      * Use this when you want to filter out RYU AND records with no decision.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeExcludeRyuDecisionStrict($query)
     {
@@ -47,8 +48,8 @@ class AML extends Model implements AuditableContract
     /**
      * Scope to exclude insurer AML screening types (AXA, RSA).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeExcludeInsurerScreening($query)
     {
@@ -61,8 +62,8 @@ class AML extends Model implements AuditableContract
     /**
      * Scope to exclude records with screenshot data.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeExcludeScreenshot($query)
     {
@@ -76,8 +77,8 @@ class AML extends Model implements AuditableContract
      * Scope to apply all standard AML screening filters.
      * Combines exclusions for RYU decisions, insurer screening, and screenshots.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeStandardAmlFilters($query)
     {

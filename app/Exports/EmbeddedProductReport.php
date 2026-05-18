@@ -24,9 +24,10 @@ class EmbeddedProductReport
     {
         $this->embeddedProduct = $embeddedProduct;
         $this->filters = $filters;
-        $isECB = $embeddedProduct->short_code === EmbeddedProductEnum::ECB;
-        $isCourier = $embeddedProduct->short_code === EmbeddedProductEnum::COURIER;
-        $isTravel = $embeddedProduct->short_code === EmbeddedProductEnum::TRAVEL;
+        $shortCode = strtoupper((string) $embeddedProduct->short_code);
+        $isECB = $shortCode === strtoupper(EmbeddedProductEnum::ECB);
+        $isCourier = $shortCode === strtoupper(EmbeddedProductEnum::COURIER);
+        $isTravel = $shortCode === strtoupper(EmbeddedProductEnum::TRAVEL);
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
         if ($isTravel) {
             $this->epStrategy = new TravelAnnual;

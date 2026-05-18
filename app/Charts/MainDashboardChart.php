@@ -3,6 +3,7 @@
 namespace App\Charts;
 
 use App\Models\CarQuote;
+use ArielMejiaDev\LarapexCharts\BarChart;
 use ArielMejiaDev\LarapexCharts\LarapexChart;
 use DB;
 
@@ -15,7 +16,7 @@ class MainDashboardChart
         $this->chart = $chart;
     }
 
-    public function build(): \ArielMejiaDev\LarapexCharts\BarChart
+    public function build(): BarChart
     {
         $records = CarQuote::query()
             ->select(

@@ -550,6 +550,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::DEVICE->value,
             QuoteTypes::CYBER->value,
         ]);
     }
@@ -565,6 +566,7 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
             QuoteTypeId::Pet,
             QuoteTypeId::Yacht,
             QuoteTypeId::Savings,
+            QuoteTypeId::Device,
             QuoteTypeId::Home,
             QuoteTypeId::Life,
             QuoteTypeId::Cyber,
@@ -639,6 +641,9 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
         // Remove spaces from the mobile number
         $mobile = str_replace(' ', '', $mobile);
 
+        // Strip leading/trailing quotes (e.g. Excel CSV text markers)
+        $mobile = trim($mobile, "'\"");
+
         // If the number starts with +971, 971,+92, 92, or +91 91, return it as is
         if (preg_match('/^(?:\+?971|971|\+?92|\+?91|92|91)/', $mobile)) {
             return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
@@ -651,6 +656,48 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
 
         // If the number does not match any pattern, add 971 as default
         return '971'.ltrim($mobile, '+');
+    }
+}
+
+if (! function_exists('sanitizeNotesFromEmoji')) {
+    /**
+     * Remove emoji from the string, including compound sequences (ZWJ, variation selectors, skin tones).
+     * Keycap emoji (digit/#/* + optional VS16 + U+20E3) are removed first so grapheme splitting cannot leave a stray base character.
+     * Uses PCRE extended grapheme clusters (\X) so sequences like 👨‍👩‍👧 are removed in full, not leaving U+200D / VS16 behind.
+     * A follow-up pass strips any remaining joiners, presentation selectors, and emoji modifier codepoints.
+     * Only horizontal whitespace (spaces, tabs on the same line) is normalised so gaps left by removed emoji do not stack;
+     * newlines and paragraph breaks are preserved.
+     *
+     * Lone grapheme clusters that match \p{Extended_Pictographic} but are normal text (keycap bases 0–9#*, ©®™, ℹ, ‼, ⁉) are kept.
+     */
+    function sanitizeNotesFromEmoji(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        // Strip emoji keycap sequences on the raw string so split grapheme clusters cannot leave a preserved digit + VS + U+20E3.
+        $value = preg_replace('/[0-9#*]\x{FE0F}?\x{20E3}/u', '', $value) ?? $value;
+
+        $preserveLoneExtendedPictographicText = '/^(?:[0-9#*]|\x{00A9}|\x{00AE}|\x{2122}|\x{2139}|\x{203C}|\x{2049})$/u';
+
+        $sanitized = preg_replace_callback('/\X/u', static function (array $matches) use ($preserveLoneExtendedPictographicText): string {
+            $cluster = $matches[0];
+
+            if (preg_match($preserveLoneExtendedPictographicText, $cluster) === 1) {
+                return $cluster;
+            }
+
+            return preg_match('/\p{Extended_Pictographic}/u', $cluster) === 1 ? '' : $cluster;
+        }, $value);
+
+        $sanitized = $sanitized ?? $value;
+
+        $sanitized = preg_replace('/[\x{200D}\x{FE0E}\x{FE0F}\x{1F3FB}-\x{1F3FF}]/u', '', $sanitized);
+        $sanitized = $sanitized ?? $value;
+        $sanitized = preg_replace('/\h+/u', ' ', $sanitized);
+
+        return trim($sanitized ?? $value);
     }
 }
 
@@ -1464,6 +1511,7 @@ if (! function_exists('getCourierQuote')) {
     function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
+            LoggerService::info("Helper::getCourierQuote - Getting courier quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
             $quoteModel = get_class($quote);
             $model = app($quoteModel);
             $table = $model->getTable();

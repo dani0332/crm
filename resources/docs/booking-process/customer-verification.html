@@ -132,22 +132,22 @@
 public function verifySageCustomer($customerId, $data = null, $logModal = null, $totalSteps = 4, $authUserId = null)
 {
     LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Sage Customer verification process start');
-    
+
     $customer = Customer::find($customerId);
     $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')
         ->where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])
         ->first();
-    
+
     $quoteEntity = $quoteEntityMapping?->entity;
     $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer, $quoteEntity);
-    
+
     $sageCustomerFromDB = ($quoteEntity) ? $quoteEntity?->sage_customer_number : $customer?->sage_customer_number;
     $customerNumber = $sageCustomerFromDB ?? $payLoadOptions['customerNumber'];
-    
+
     // Check if customer exists in Sage
     $urlGetCustomer = SageEnum::END_POINT_AR_CUSTOMER."('".$customerNumber."')";
     $customerResponse = json_decode($this->postToSage300($urlGetCustomer, [], 'GET'), true);
-    
+
     if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
         // Customer exists
         LoggerService::info('Customer already exists on Sage - Customer Code: '.$customerNumber);
@@ -157,7 +157,7 @@ public function verifySageCustomer($customerId, $data = null, $logModal = null, 
         $customerResponse = json_decode($this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']), true);
         $sageCustomerNumber = $customerResponse['CustomerNumber'];
     }
-    
+
     return $sageCustomerNumber;
 }</pre
           >
@@ -197,7 +197,7 @@ public function verifySageCustomer($customerId, $data = null, $logModal = null, 
 public static function createCustomerPayload($customer, $entity)
 {
     $entryType = SageEnum::SCT_STRAIGHT;
-    
+
     if ($entity) {
         // Business Entity
         $payLoad = [
@@ -213,7 +213,7 @@ public static function createCustomerPayload($customer, $entity)
             'GroupCode' => 'PHI',
         ];
     }
-    
+
     return [
         'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
         'payload' => $payLoad,
@@ -611,8 +611,8 @@ $quoteEntity = $quoteEntityMapping?->entity;</pre
         <div class="code-block">
           <pre>
 // Determine existing Sage customer number
-$sageCustomerFromDB = ($quoteEntity) ? 
-    $quoteEntity?->sage_customer_number : 
+$sageCustomerFromDB = ($quoteEntity) ?
+    $quoteEntity?->sage_customer_number :
     $customer?->sage_customer_number;
 
 // Generate customer number if not exists
@@ -657,7 +657,7 @@ $responseError = isset($customerResponse['error']['code']) ? $customerResponse['
 if ($responseError && $responseError == SageEnum::ERROR_RECORD_NOT_FOUND) {
     // Customer not found, create new customer
     $customerResponse = json_decode($this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']), true);
-    
+
     if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
         $sageCustomerNumber = $customerResponse['CustomerNumber'];
     }
@@ -734,7 +734,7 @@ $this->logSageApiCall([
 // Successful customer verification
 LoggerService::info('Customer already exists on Sage - Customer Code: '.$customerNumber);
 
-// Customer creation initiated  
+// Customer creation initiated
 LoggerService::info('Customer not found in Sage - Initiating customer creation API call');
 
 // Successful customer creation

@@ -17,6 +17,7 @@ use App\Models\TmLeadType;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use Auth;
+use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -32,7 +33,7 @@ class TMLeadsImport implements SkipsOnFailure, ToModel, WithChunkReading, WithSt
     private $rows = 0;
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @return Model|null
      */
     public function model(array $row)
     {

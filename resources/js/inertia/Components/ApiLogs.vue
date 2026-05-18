@@ -32,7 +32,7 @@ const notification = useToast();
 const insuranceProviders = computed(() => {
   return page.props.insuranceProviders.map(item => ({
     value: item.value ? item.value : item.id,
-    label: item.label ? item.label : item.text,
+    label: item.label ? item.label : item?.text,
   }));
 });
 
