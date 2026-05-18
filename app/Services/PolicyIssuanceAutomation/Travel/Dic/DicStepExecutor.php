@@ -159,8 +159,8 @@ class DicStepExecutor
         }
 
         try {
-            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule DIC');
-            $this->documentService->attachFromUrl($quote, $taxInvoiceUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Tax Invoice DIC');
+            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE, 'Policy Schedule');
+            $this->documentService->attachFromUrl($quote, $taxInvoiceUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE, 'Tax Invoice');
 
             $taxInvoiceDocumentNumber = $this->apiService->extractTaxInvoiceDocumentNumberFromGetPolicyDocResponse($payload);
             if (is_string($taxInvoiceDocumentNumber) && $taxInvoiceDocumentNumber !== '') {
@@ -285,7 +285,7 @@ class DicStepExecutor
         }
 
         try {
-            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE_RAISE_BY_BUYER, 'Broker Invoice DIC');
+            $this->documentService->attachFromUrl($quote, $documentUrl, QuoteDocumentsEnum::TRAVEL_TAX_INVOICE_RAISE_BY_BUYER, 'Tax Invoice Raise by Buyer');
 
             $invoiceNumber = $this->apiService->extractBrokerInvoiceNumberFromResponse($result['data'] ?? null);
             if (is_string($invoiceNumber) && $invoiceNumber !== '') {
