@@ -9,7 +9,7 @@ class SplitHealthRatesGenderMaritalStatusSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement("
+        /*DB::statement("
          UPDATE health_rates
          SET
              gender = CASE
@@ -17,14 +17,14 @@ class SplitHealthRatesGenderMaritalStatusSeeder extends Seeder
                  WHEN gender IN ('FS', 'FM') THEN 'Female'
                  ELSE NULL
              END,
-     
+
              marital_status = CASE
                  WHEN gender = 'FS' THEN 'Single'
                  WHEN gender = 'FM' THEN 'Married'
                  ELSE NULL
              END
-     
+
          WHERE gender IN ('M', 'FS', 'FM')
-     ");
+     ");*/
     }
 }
