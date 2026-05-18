@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
+use App\Models\HealthRateControl;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -118,7 +119,32 @@ class HealthPlanService extends BaseService
         $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
         $data['code'] = $currentPlan->code; // Keep current code
 
-        return HealthPlan::create($data);
+        $newDraftPlan = HealthPlan::create($data);
+
+        // Link existing draft sheet (if any)
+        $this->linkExistingDraftSheet($currentPlan->id, $newDraftPlan->id);
+
+        return $newDraftPlan;
+    }
+
+    private function linkExistingDraftSheet(int $currentPlanId, int $newDraftPlanId): void
+    {
+        // Fetch existing draft sheet
+        $existingDraftSheet = HealthRateControl::where('health_plan_id', $currentPlanId)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if ($existingDraftSheet) {
+            $existingDraftSheet->health_plan_id = $newDraftPlanId;
+            $existingDraftSheet->save();
+        }
+
+        // Update draft rates plan id
+        DB::table('health_rates')
+            ->where('health_rate_control_id', $existingDraftSheet->id)
+            ->update([
+                'health_plan_id' => $newDraftPlanId,
+            ]);
     }
 
     public function publish(int $id, int $publishedById): void
