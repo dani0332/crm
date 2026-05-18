@@ -31,7 +31,7 @@ it('stores copied PetQuote with renewal source and new lead status from Personal
         'insurance_provider_id' => $insurer->id,
     ]);
 
-    PetQuote::create([
+    PetQuote::factory()->create([
         'personal_quote_id' => $oldPq->id,
         'uuid' => $oldPq->uuid,
         'code' => $oldPq->code,
@@ -84,7 +84,7 @@ it('does not keep old PetQuote source when parent had IMCRM', function () {
         'insurance_provider_id' => $insurer->id,
     ]);
 
-    PetQuote::create([
+    PetQuote::factory()->create([
         'personal_quote_id' => $oldPq->id,
         'uuid' => $oldPq->uuid,
         'code' => $oldPq->code,
@@ -136,7 +136,7 @@ it('stores copied PetQuote renewal_batch_id from new PersonalQuote, not the old 
         'renewal_batch_id' => 100,
     ]);
 
-    PetQuote::create([
+    PetQuote::factory()->create([
         'personal_quote_id' => $oldPq->id,
         'uuid' => $oldPq->uuid,
         'code' => $oldPq->code,

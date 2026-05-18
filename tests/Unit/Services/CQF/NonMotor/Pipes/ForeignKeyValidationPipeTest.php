@@ -25,11 +25,10 @@ beforeEach(function () {
 
 it('passes through when quote is not PersonalQuote', function () {
     $quote = Mockery::mock(Model::class)->shouldIgnoreMissing();
-    $renewalsUploadLeads = RenewalsUploadLeads::create([
+    $renewalsUploadLeads = RenewalsUploadLeads::factory()->create([
         'quote_type' => 'Bike',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'file_path' => null,
         'status' => '1',
     ]);
     $context = new CQFRenewalContext(
@@ -63,11 +62,10 @@ it('passes when PersonalQuote has all required FKs existing', function () {
         'insurance_provider_id' => null,
         'policy_expiry_date' => now()->addMonths(2),
     ]);
-    $renewalsUploadLeads = RenewalsUploadLeads::create([
+    $renewalsUploadLeads = RenewalsUploadLeads::factory()->create([
         'quote_type' => 'Pet',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'file_path' => null,
         'status' => '1',
     ]);
     $context = new CQFRenewalContext(

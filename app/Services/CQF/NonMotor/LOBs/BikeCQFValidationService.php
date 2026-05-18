@@ -16,7 +16,13 @@ class BikeCQFValidationService extends BaseCQFValidationService
     public function isDuplicateQuote(Model $quote): bool
     {
         if ($quote instanceof CarQuote) {
-            return PersonalQuote::where('previous_quote_id', $quote->id)
+            $previousPersonalQuoteId = PersonalQuote::where('uuid', $quote->uuid)->value('id');
+
+            if ($previousPersonalQuoteId === null) {
+                return false;
+            }
+
+            return PersonalQuote::where('previous_quote_id', $previousPersonalQuoteId)
                 ->where('previous_quote_policy_number', $quote->policy_number)
                 ->where('previous_policy_expiry_date', $quote->policy_expiry_date)
                 ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
