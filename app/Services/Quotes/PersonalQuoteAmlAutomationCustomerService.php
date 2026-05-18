@@ -48,7 +48,7 @@ final class PersonalQuoteAmlAutomationCustomerService
     public function checkCustomerPersonalQuoteAmlInfoIsComplete(array $personalQuoteRow): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
+        $requiredProperty = collect(['first_name', 'last_name', 'dob', 'nationality_id']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {

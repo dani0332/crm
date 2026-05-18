@@ -16,22 +16,12 @@ use Tests\Support\Schema\SchemaUtils;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-
-    SchemaUtils::ensureTable('kyc_logs', function (Blueprint $table): void {
-        $table->id();
-        $table->unsignedBigInteger('quote_type_id');
-        $table->unsignedBigInteger('quote_request_id');
-        $table->string('decision')->nullable();
-        $table->string('screening_type')->nullable();
-        $table->text('screenshot')->nullable();
-        $table->text('notes')->nullable();
+    SchemaUtils::addColumnIfMissing('kyc_logs', 'kyc_logs', function (Blueprint $table): void {
+        $table->string('notes')->nullable();
         $table->string('in_adverse_media')->nullable();
         $table->string('is_owner_pep')->nullable();
         $table->string('is_controlling_pep')->nullable();
-        $table->timestamps();
-        $table->softDeletes();
     });
-
     SchemaUtils::addColumnIfMissing('personal_quotes', 'aml_status', function (Blueprint $table): void {
         $table->string('aml_status')->nullable();
     });
