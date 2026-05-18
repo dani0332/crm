@@ -153,11 +153,9 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
             }
@@ -311,11 +309,9 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
                 if ($lob == quoteTypeCode::Health) {
@@ -859,11 +855,9 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, QuoteTypes::CAR->value);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
             }
@@ -910,13 +904,14 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
+                if ($lob == quoteTypeCode::Health) {
+                    $userIds = $this->getUsers($userIds);
+                }
             }
 
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
