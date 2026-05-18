@@ -13,6 +13,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use setasign\Fpdi\Fpdi;
 
 class DicDocumentService
 {
@@ -62,7 +63,8 @@ class DicDocumentService
 
         $fileNameAzure = uniqid('', true).'_'.$quote->uuid.'_'.str_replace(' ', '_', $docName);
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
-        Storage::disk('azureIMPrivate')->put($filePathAzure, $download->body());
+        $fileContent = $this->rewritePdfTitle($download->body(), $docName, $mimeType);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContent);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -78,6 +80,45 @@ class DicDocumentService
             WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)
                 ->delay(now()->addSeconds(10))
                 ->afterCommit();
+        }
+    }
+
+    private function rewritePdfTitle(string $content, string $title, ?string $mimeType): string
+    {
+        if ($mimeType !== 'application/pdf') {
+            return $content;
+        }
+
+        $tempPath = tempnam(sys_get_temp_dir(), 'dic_pdf_');
+
+        try {
+            file_put_contents($tempPath, $content);
+
+            $pdf = new Fpdi;
+            $pdf->SetTitle($title);
+            $pdf->SetAuthor('');
+            $pdf->SetSubject('');
+            $pdf->SetCreator('');
+
+            $pageCount = $pdf->setSourceFile($tempPath);
+
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $tplIdx = $pdf->importPage($i);
+                $size = $pdf->getTemplateSize($tplIdx);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplIdx);
+            }
+
+            return $pdf->Output('S');
+        } catch (\Throwable $e) {
+            LoggerService::warning('DIC Travel: failed to rewrite PDF title, using original', [
+                'title' => $title,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $content;
+        } finally {
+            @unlink($tempPath);
         }
     }
 
