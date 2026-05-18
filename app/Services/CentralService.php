@@ -1730,11 +1730,17 @@ class CentralService extends BaseService
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
+        $emailData->cc_emails = [];
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
             $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
                 $emailData->companyName = $quote->company_name ?? '';
+            }
+
+            if ($quote->source == LeadSourceEnum::CARS24) {
+                $cc = getAppStorageValueByKey(ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS);
+                $emailData->cc_emails = explode(', ', $cc);
             }
         }
 

@@ -1901,6 +1901,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => true,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS],
+            [
+                'value' => 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
     }
 
     private function seedHealthTeamRoutingEnabled()
