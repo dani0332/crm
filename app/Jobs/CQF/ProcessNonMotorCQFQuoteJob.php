@@ -6,19 +6,21 @@ namespace App\Jobs\CQF;
 
 use App\Enums\QuoteTypes;
 use App\Services\CQF\NonMotor\NonMotorCQFRenewalExecutionService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessNonMotorCQFQuoteJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 120;
+    public int $timeout = 80;
 
     public function __construct(
         public int $quoteId,
@@ -41,5 +43,15 @@ class ProcessNonMotorCQFQuoteJob implements ShouldQueue
             $this->renewalsUploadLeadsId,
             $this->renewalDaysThreshold
         );
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        LoggerService::error(self::class.' - Job failed permanently', [
+            'quoteId' => $this->quoteId,
+            'quoteType' => $this->quoteType->value,
+            'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

@@ -633,7 +633,7 @@ class RenewalsUploadController extends Controller
     /**
      * Manually trigger the non-motor CQF renewal process (orchestrator job).
      */
-    public function retriggerNonCQFProcess()
+    public function retriggerNonCQFProcess(): RedirectResponse
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);

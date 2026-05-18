@@ -13,13 +13,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class FinalizeNonMotorCQFLOBJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 120;
+    public int $timeout = 80;
 
     public function __construct(
         public int $renewalsUploadLeadsId
@@ -49,5 +50,13 @@ class FinalizeNonMotorCQFLOBJob implements ShouldQueue
             $mail = new SendFailedNonCQFRenewal($this->renewalsUploadLeadsId);
             $mail->sendViaBird();
         }
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        LoggerService::error(self::class.' - Finalize job failed permanently', [
+            'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

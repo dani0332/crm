@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\CQF\NonMotor\Pipes;
 
 use App\Services\CQF\NonMotor\CQFRenewalContext;

@@ -9,14 +9,16 @@ use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\CQF\NonMotor\NonMotorCQFRenewalExecutionService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
+use Throwable;
 
-class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
+class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -28,7 +30,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal Orchestrator';
 
     public int $tries = 1;
-    public int $timeout = 300;
+    public int $timeout = 80;
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {
@@ -79,5 +81,12 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
         }
 
         LoggerService::info(self::class.' - Non-motor CQF renewal orchestrator finished');
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        LoggerService::error(self::class.' - Orchestrator job failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

@@ -379,10 +379,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function verifyLeadPreChecks(): bool
     {
-        if (! in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) && $this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-            return true;
+        // Block CQF-generated renewal leads from normal advisor allocation — the CQF pipeline manages their assignment.
+        if (in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) && $this->lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 }
