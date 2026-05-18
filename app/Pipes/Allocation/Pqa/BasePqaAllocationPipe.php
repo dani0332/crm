@@ -49,7 +49,13 @@ abstract class BasePqaAllocationPipe extends AllocationService
 
     protected function getPqaQuoteTypeId()
     {
-        return QuoteTypes::BUSINESS->id();
+        $quoteTypeId = QuoteTypes::getId($this->allocationRequest->getQuoteType());
+
+        if ($quoteTypeId === null) {
+            $this->throw('Invalid quote type for Pre Qualification Advisor allocation', self::SERVER_ERROR);
+        }
+
+        return $quoteTypeId;
     }
 
     /**

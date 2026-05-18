@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\BusinessQuote;
@@ -42,7 +41,7 @@ test('pqa allocation assigns pre qualification advisor to group medical lead', f
 
     PqaLeadAllocationConfig::factory()->create([
         'user_id' => $pqaUser->id,
-        'quote_type_id' => QuoteTypes::BUSINESS->id(),
+        'quote_type_id' => QuoteTypeId::Business,
         'allocation_count' => 0,
         'max_capacity' => 100,
         'last_allocated' => null,
@@ -54,7 +53,7 @@ test('pqa allocation assigns pre qualification advisor to group medical lead', f
 
     $response = postPqaAllocation([
         'quoteUUID' => $quote->uuid,
-        'quoteTypeId' => QuoteTypeId::GroupMedical,
+        'quoteTypeId' => QuoteTypeId::Business,
     ]);
 
     $response->assertSuccessful();
@@ -63,7 +62,7 @@ test('pqa allocation assigns pre qualification advisor to group medical lead', f
 
     $config = PqaLeadAllocationConfig::query()
         ->where('user_id', $pqaUser->id)
-        ->where('quote_type_id', QuoteTypes::BUSINESS->id())
+        ->where('quote_type_id', QuoteTypeId::Business)
         ->first();
 
     expect($config)->not->toBeNull()
@@ -80,11 +79,37 @@ test('pqa allocation skips lead that already has a pre qualification advisor', f
 
     $response = postPqaAllocation([
         'quoteUUID' => $quote->uuid,
-        'quoteTypeId' => QuoteTypeId::GroupMedical,
+        'quoteTypeId' => QuoteTypeId::Business,
     ]);
 
     $response->assertSuccessful();
     expect($quote->fresh()->pq_advisor_id)->toBe($existingPqa->id);
+});
+
+test('pqa allocation uses config row matching request quote type id', function () {
+    $pqaUser = TestDataSeeder::createUserWithRole(RolesEnum::PreQualificationAdvisor);
+    $pqaUser->forceFill(['status' => UserStatusEnum::ONLINE])->saveQuietly();
+
+    PqaLeadAllocationConfig::factory()->create([
+        'user_id' => $pqaUser->id,
+        'quote_type_id' => QuoteTypeId::Business,
+        'allocation_count' => 0,
+        'max_capacity' => 100,
+        'last_allocated' => null,
+    ]);
+
+    $quote = BusinessQuote::factory()->groupMedical()->create([
+        'pq_advisor_id' => null,
+    ]);
+
+    $response = postPqaAllocation([
+        'quoteUUID' => $quote->uuid,
+        'quoteTypeId' => QuoteTypeId::Business,
+    ]);
+
+    $response->assertSuccessful();
+    expect($quote->fresh()->pq_advisor_id)->toBeNull();
+    expect($response->json('data.assignedPqaAdvisorId'))->toBe(0);
 });
 
 test('pqa allocation returns not found when no advisor is available', function () {
@@ -94,7 +119,7 @@ test('pqa allocation returns not found when no advisor is available', function (
 
     $response = postPqaAllocation([
         'quoteUUID' => $quote->uuid,
-        'quoteTypeId' => QuoteTypeId::GroupMedical,
+        'quoteTypeId' => QuoteTypeId::Business,
     ]);
 
     $response->assertSuccessful();
@@ -108,7 +133,7 @@ test('pqa allocation accepts reAssignAdvisor alias like assign-quote', function 
 
     PqaLeadAllocationConfig::factory()->create([
         'user_id' => $pqaUser->id,
-        'quote_type_id' => QuoteTypes::BUSINESS->id(),
+        'quote_type_id' => QuoteTypeId::Business,
         'allocation_count' => 0,
         'max_capacity' => 100,
         'last_allocated' => null,
@@ -134,7 +159,7 @@ test('pqa allocation resolves business quote by BUS- code suffix', function () {
 
     PqaLeadAllocationConfig::factory()->create([
         'user_id' => $pqaUser->id,
-        'quote_type_id' => QuoteTypes::BUSINESS->id(),
+        'quote_type_id' => QuoteTypeId::Business,
         'allocation_count' => 0,
         'max_capacity' => 100,
         'last_allocated' => null,

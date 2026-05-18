@@ -33,7 +33,7 @@ class PqaAllocationService
 
         LoggerService::info(self::class.' - PQA allocation started for '.$quoteUuid);
 
-        $responsePayload = $this->executeAllocation($quoteUuid, $reAssignPqaAdvisor);
+        $responsePayload = $this->executeAllocation($quoteUuid, $quoteTypeId, $reAssignPqaAdvisor);
 
         LoggerService::info(self::class.' - PQA allocation ended for '.$quoteUuid);
 
@@ -43,9 +43,9 @@ class PqaAllocationService
     /**
      * @return array{data: array<string, mixed>, message: string}
      */
-    public function executeAllocation(string $quoteUuid, bool $overrideAdvisorId = false): array
+    public function executeAllocation(string $quoteUuid, int $quoteTypeId, bool $overrideAdvisorId = false): array
     {
-        $response = (new PreQualificationAdvisorAllocation($quoteUuid, $overrideAdvisorId))->execute();
+        $response = (new PreQualificationAdvisorAllocation($quoteUuid, $quoteTypeId, $overrideAdvisorId))->execute();
 
         $status = $response['status'] ?? Response::HTTP_INTERNAL_SERVER_ERROR;
         $message = $response['message'] ?? '';
