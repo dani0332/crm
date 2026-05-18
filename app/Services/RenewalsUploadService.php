@@ -934,7 +934,10 @@ class RenewalsUploadService
                 'previous_quote_policy_premium' => $data['premium'],
                 'previous_quote_policy_commission' => $data['previous_commission'] ?? null,
                 'previous_quote_id' => (! empty($data['previous_ref_id']) && $quoteObject)
-                    ? (clone $quoteObject)->where('code', $data['previous_ref_id'])->value('id')
+                    ? (clone $quoteObject)
+                        ->when($isQuotePersonal, fn ($q) => $q->where('quote_type_id', $quoteType->id))
+                        ->where('code', $data['previous_ref_id'])
+                        ->value('id')
                     : null,
             ];
 
