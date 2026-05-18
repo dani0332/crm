@@ -94,6 +94,31 @@ test('sync ep booking returns 403 without embedded product sync ep booking permi
         ->assertForbidden();
 });
 
+test('sync ep booking succeeds when sage scheduling returns message without status key', function () {
+    Mail::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-no-status@example.com']);
+    $fixture = createSyncEpBookingFixture();
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')
+        ->once()
+        ->andReturn(['message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$fixture['transaction']->code]);
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $this->actingAs($user)
+        ->postJson(route('embedded-products.sync-ep-booking'), [
+            'quoteId' => $fixture['carQuote']->id,
+            'modelType' => 'Car',
+            'epTransactionId' => $fixture['transaction']->id,
+            'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+        ])
+        ->assertSuccessful()
+        ->assertJson(['success' => true]);
+
+    Mail::assertNothingSent();
+});
+
 test('sync ep booking succeeds for EP admin when sage scheduling succeeds', function () {
     $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin@example.com']);
     $fixture = createSyncEpBookingFixture();

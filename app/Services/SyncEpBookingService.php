@@ -59,13 +59,12 @@ class SyncEpBookingService extends BaseService
             ];
 
             $result = $this->sageApiEmbeddedProductService->scheduleBookingOfEmbeddedProduct($request);
+            $success = $this->wasEmbeddedProductBookingScheduled($result);
+            $message = (string) ($result['message'] ?? 'Sage booking retry completed.');
 
-            if (! ($result['status'] ?? false)) {
+            if (! $success) {
                 $this->sendEpFailureEmail((int) $resolved['quote']->id, (int) $resolved['quoteTypeId'], (int) $resolved['transaction']->id, $logPrefix, true);
             }
-
-            $success = (bool) ($result['status'] ?? false);
-            $message = (string) ($result['message'] ?? 'Sage booking retry completed.');
         } catch (Throwable $e) {
             LoggerService::error($logPrefix.$e->getMessage(), extra: ['exception' => $e]);
             $this->sendEpFailureEmail((int) $resolved['quote']->id, (int) $resolved['quoteTypeId'], (int) $resolved['transaction']->id, $logPrefix, true);
@@ -168,5 +167,20 @@ class SyncEpBookingService extends BaseService
     {
         return (int) $transaction->quote_type_id !== $quoteTypeId
             || (int) $transaction->quote_request_id !== (int) $quote->id;
+    }
+
+    /**
+     * scheduleBookingOfEmbeddedProduct always includes status today; when absent, match scheduleEPSageBooking
+     * semantics (no exception thrown implies scheduling was attempted successfully).
+     *
+     * @param  array<string, mixed>  $result
+     */
+    private function wasEmbeddedProductBookingScheduled(array $result): bool
+    {
+        if (! array_key_exists('status', $result)) {
+            return true;
+        }
+
+        return (bool) $result['status'];
     }
 }
