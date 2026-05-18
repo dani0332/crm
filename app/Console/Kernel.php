@@ -166,6 +166,8 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('DttLife')->timezone('Asia/Dubai')->dailyAt('09:10')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('DttHome')->timezone('Asia/Dubai')->dailyAt('09:06')->onOneServer()->withoutOverlapping();
+
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
 

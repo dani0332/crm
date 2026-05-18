@@ -73,6 +73,7 @@ use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
+use App\Services\HomeRevivalService;
 use App\Services\InboundEmailsHookService;
 use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
@@ -800,6 +801,8 @@ class ApiController extends Controller
                     QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     QuoteTypes::LIFE => app(LifeRevivalService::class)
                         ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    QuoteTypes::HOME => app(HomeRevivalService::class)
+                        ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     default => null,
                 };
 
@@ -815,6 +818,21 @@ class ApiController extends Controller
                             ['quote_uuid' => $request->quote_uuid]);
                     } catch (\Throwable $exception) {
                         LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                            'quote_uuid' => $request->quote_uuid,
+                            'quote_type_id' => $request->quote_type_id,
+                            'error' => $exception->getMessage(),
+                        ], $exception);
+                    }
+                }
+
+                if ($quoteType === QuoteTypes::HOME) {
+                    try {
+                        QuoteTypes::HOME->allocate(uuid: $request->quote_uuid);
+
+                        LoggerService::info(self::class.' - triggered allocation for home revival lead - Quote UUID: ',
+                            ['quote_uuid' => $request->quote_uuid]);
+                    } catch (\Throwable $exception) {
+                        LoggerService::warning(self::class.' - failed to trigger allocation for home revival lead', [
                             'quote_uuid' => $request->quote_uuid,
                             'quote_type_id' => $request->quote_type_id,
                             'error' => $exception->getMessage(),

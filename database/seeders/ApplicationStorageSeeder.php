@@ -183,6 +183,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
+        $this->seedDttHomeEnabled();
+        $this->seedHomeRevivalWorkflow();
     }
 
     private function livaCarAutomationSeed()
@@ -1922,6 +1924,32 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttHomeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_HOME_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+    }
+
+    private function seedHomeRevivalWorkflow(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_REVIVAL_WORKFLOW],
+            [
+                'value' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
     }

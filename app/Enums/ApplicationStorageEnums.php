@@ -474,4 +474,9 @@ final class ApplicationStorageEnums extends Enum
      * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
      */
     public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
+
+    // Home Revivals
+    public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
+    public const HOME_REVIVAL_WORKFLOW = 'HOME_REVIVAL_WORKFLOW';
+
 }
