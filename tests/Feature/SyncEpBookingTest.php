@@ -129,7 +129,7 @@ test('sync ep booking returns 422 when quote is not policy booked', function () 
             'epTransactionId' => $fixture['transaction']->id,
             'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
         ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJson(['success' => false]);
 });
 
@@ -148,7 +148,7 @@ test('sync ep booking returns 422 when insurance provider does not match embedde
             'epTransactionId' => $fixture['transaction']->id,
             'insuranceProviderId' => 999999,
         ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJson(['success' => false]);
 });
 
@@ -169,7 +169,7 @@ test('sync ep booking returns 422 when concurrent lock is held', function () {
             'epTransactionId' => $fixture['transaction']->id,
             'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
         ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJson(['success' => false]);
 
     Cache::forget('ep-sync-sage-booking-'.$fixture['transaction']->id);
@@ -206,7 +206,7 @@ test('sync ep booking returns 422 when sage scheduling fails', function () {
             'epTransactionId' => $fixture['transaction']->id,
             'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
         ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJson(['success' => false]);
 });
 
@@ -240,6 +240,6 @@ test('sync ep booking is not allowed for courier embedded product', function () 
             'epTransactionId' => $transaction->id,
             'insuranceProviderId' => $ep->insurance_provider_id,
         ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJson(['success' => false]);
 });
