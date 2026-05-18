@@ -174,9 +174,16 @@ class NonMotorCQFRenewalExecutionService
     protected function markQuoteAsCompleted(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['good' => DB::raw('good+1')]);
-        $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
-        $renewalQuoteProcess->status = RenewalProcessStatuses::PROCESSED;
-        $renewalQuoteProcess->save();
+        RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalsUploadLeads->id,
+            'quote_type' => $renewalsUploadLeads->quote_type,
+            'quote_id' => $quote->id,
+            'policy_number' => $quote->policy_number ?? null,
+            'data' => $quote->toArray(),
+            'batch' => null,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::CREATE_LEADS,
+        ]);
         LoggerService::info(self::class.' - Renewal quote process created for quote');
     }
 
@@ -187,34 +194,22 @@ class NonMotorCQFRenewalExecutionService
     protected function markQuoteAsFailed(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, array $validationErrors, $mapper, ?callable $recordFailure = null): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
-        $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
-        $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
-        $renewalQuoteProcess->validation_errors = $validationErrors;
-        if ($mapper !== null) {
-            $renewalQuoteProcess->data = $mapper->mapFailedQuoteData($quote);
-        } else {
-            $renewalQuoteProcess->data = $quote->toArray();
-        }
-        $renewalQuoteProcess->save();
+        RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalsUploadLeads->id,
+            'quote_type' => $renewalsUploadLeads->quote_type,
+            'quote_id' => $quote->id,
+            'policy_number' => $quote->policy_number ?? null,
+            'data' => $mapper !== null ? $mapper->mapFailedQuoteData($quote) : $quote->toArray(),
+            'batch' => null,
+            'status' => RenewalProcessStatuses::BAD_DATA,
+            'validation_errors' => $validationErrors,
+            'type' => RenewalsUploadType::CREATE_LEADS,
+        ]);
 
         if ($recordFailure !== null) {
             $recordFailure($quote->policy_number ?? 'unknown');
         }
         LoggerService::info(self::class.' - Renewal quote process not created for quote (validation failed)');
-    }
-
-    protected function createRenewalQuoteProcess(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): RenewalQuoteProcess
-    {
-        return RenewalQuoteProcess::create([
-            'renewals_upload_lead_id' => $renewalsUploadLeads->id,
-            'quote_type' => $renewalsUploadLeads->quote_type,
-            'quote_id' => $quote->id,
-            'policy_number' => $quote->policy_number ?? null,
-            'data' => $quote->toArray(),
-            'batch' => null,
-            'status' => RenewalProcessStatuses::NEW,
-            'type' => RenewalsUploadType::CREATE_LEADS,
-        ]);
     }
 
     /**
