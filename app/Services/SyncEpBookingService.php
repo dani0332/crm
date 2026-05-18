@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Helpers\SyncEpBookingHelper;
 use App\Models\EmbeddedProduct;
@@ -13,7 +12,6 @@ use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SendsEpFailureEmail;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
 
@@ -114,13 +112,12 @@ class SyncEpBookingService extends BaseService
      */
     private function resolveValidatedContextOrFailure(array $data): array
     {
-        $message = $this->syncEpBookingUnauthorizedMessage();
-        $quote = $message === null ? $this->getQuoteObject($data['modelType'], $data['quoteId']) : null;
-        $transaction = $message === null && ! empty($quote) ? $this->findEmbeddedTransaction((int) $data['epTransactionId']) : null;
+        $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $transaction = ! empty($quote) ? $this->findEmbeddedTransaction((int) $data['epTransactionId']) : null;
         $ep = $transaction?->product?->embeddedProduct;
-        $quoteTypeId = $message === null ? QuoteTypes::getIdFromValue($data['modelType']) : null;
+        $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
 
-        $message ??= $this->validateResolvedContext($data, $quote, $transaction, $ep, $quoteTypeId);
+        $message = $this->validateResolvedContext($data, $quote, $transaction, $ep, $quoteTypeId);
 
         return [
             'message' => $message,
@@ -159,15 +156,6 @@ class SyncEpBookingService extends BaseService
             $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote) => 'Transaction does not match the selected quote.',
             default => null,
         };
-    }
-
-    private function syncEpBookingUnauthorizedMessage(): ?string
-    {
-        if (! Auth::user()?->can(PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING)) {
-            return 'You are not authorized to perform this action.';
-        }
-
-        return null;
     }
 
     private function syncEpBookingInsuranceProviderMismatch(EmbeddedProduct $ep, int $insuranceProviderId): bool
