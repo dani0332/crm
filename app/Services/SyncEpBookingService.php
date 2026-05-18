@@ -87,61 +87,13 @@ class SyncEpBookingService extends BaseService
      */
     private function resolveProcessContextOrFailure(array $data): array
     {
-        $message = $this->syncEpBookingUnauthorizedMessage();
-        $quote = null;
-        $transaction = null;
-        $ep = null;
-        $quoteTypeId = null;
+        $context = $this->resolveValidatedContextOrFailure($data);
 
-        if ($message === null) {
-            $quote = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-            if (empty($quote)) {
-                $message = 'Quote not found';
-            }
+        if ($context['message'] !== null) {
+            return ['ok' => false, 'message' => $context['message']];
         }
 
-        if ($message === null) {
-            $transaction = EmbeddedTransaction::query()
-                ->with('product.embeddedProduct')
-                ->whereKey($data['epTransactionId'])
-                ->first();
-
-            if (! $transaction) {
-                $message = 'Embedded transaction not found';
-            }
-        }
-
-        if ($message === null) {
-            $ep = $transaction->product?->embeddedProduct;
-            if (! $ep) {
-                $message = 'Embedded product not found';
-            }
-        }
-
-        if ($message === null && ! SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
-            $message = 'This embedded product is not eligible for Sage booking retry.';
-        }
-
-        if ($message === null && $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId'])) {
-            $message = 'Insurance provider mismatch.';
-        }
-
-        if ($message === null) {
-            $quoteTypeId = QuoteTypes::getIdFromValue($data['modelType']);
-            if ($quoteTypeId === null) {
-                $message = 'Invalid quote type.';
-            }
-        }
-
-        if ($message === null && $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote)) {
-            $message = 'Transaction does not match the selected quote.';
-        }
-
-        if ($message !== null) {
-            return ['ok' => false, 'message' => $message];
-        }
-
-        $lockKey = 'ep-sync-sage-booking-'.$transaction->id;
+        $lockKey = 'ep-sync-sage-booking-'.$context['transaction']->id;
         if (! Cache::add($lockKey, true, now()->addMinutes(5))) {
             return ['ok' => false, 'message' => 'Sage booking retry is already in progress for this embedded product. Please wait and try again.'];
         }
@@ -149,11 +101,64 @@ class SyncEpBookingService extends BaseService
         return [
             'ok' => true,
             'lockKey' => $lockKey,
-            'quote' => $quote,
-            'transaction' => $transaction,
-            'ep' => $ep,
-            'quoteTypeId' => $quoteTypeId,
+            'quote' => $context['quote'],
+            'transaction' => $context['transaction'],
+            'ep' => $context['ep'],
+            'quoteTypeId' => $context['quoteTypeId'],
         ];
+    }
+
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     * @return array{message: string, quote: null, transaction: null, ep: null, quoteTypeId: null}|array{message: null, quote: object, transaction: EmbeddedTransaction, ep: EmbeddedProduct, quoteTypeId: int}
+     */
+    private function resolveValidatedContextOrFailure(array $data): array
+    {
+        $message = $this->syncEpBookingUnauthorizedMessage();
+        $quote = $message === null ? $this->getQuoteObject($data['modelType'], $data['quoteId']) : null;
+        $transaction = $message === null && ! empty($quote) ? $this->findEmbeddedTransaction((int) $data['epTransactionId']) : null;
+        $ep = $transaction?->product?->embeddedProduct;
+        $quoteTypeId = $message === null ? QuoteTypes::getIdFromValue($data['modelType']) : null;
+
+        $message ??= $this->validateResolvedContext($data, $quote, $transaction, $ep, $quoteTypeId);
+
+        return [
+            'message' => $message,
+            'quote' => $message === null ? $quote : null,
+            'transaction' => $message === null ? $transaction : null,
+            'ep' => $message === null ? $ep : null,
+            'quoteTypeId' => $message === null ? $quoteTypeId : null,
+        ];
+    }
+
+    private function findEmbeddedTransaction(int $epTransactionId): ?EmbeddedTransaction
+    {
+        return EmbeddedTransaction::query()
+            ->with('product.embeddedProduct')
+            ->whereKey($epTransactionId)
+            ->first();
+    }
+
+    /**
+     * @param  array{quoteId: int, modelType: string, epTransactionId: int, insuranceProviderId: int}  $data
+     */
+    private function validateResolvedContext(
+        array $data,
+        mixed $quote,
+        ?EmbeddedTransaction $transaction,
+        ?EmbeddedProduct $ep,
+        ?int $quoteTypeId,
+    ): ?string {
+        return match (true) {
+            empty($quote) => 'Quote not found',
+            ! $transaction => 'Embedded transaction not found',
+            ! $ep => 'Embedded product not found',
+            ! SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep) => 'This embedded product is not eligible for Sage booking retry.',
+            $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId']) => 'Insurance provider mismatch.',
+            $quoteTypeId === null => 'Invalid quote type.',
+            $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote) => 'Transaction does not match the selected quote.',
+            default => null,
+        };
     }
 
     private function syncEpBookingUnauthorizedMessage(): ?string
