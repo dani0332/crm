@@ -58,13 +58,26 @@ trait SendsEpFailureEmail
     }
 
     /**
-     * Send EP failure notification email for ECB and other embedded products
+     * Send EP failure notification email for ECB and other embedded products.
+     *
+     * General purchase/document failures dedupe on {@see EmbeddedTransaction::$failure_email_sent_at}.
+     * Manual Sage booking retry failures dedupe on {@see EmbeddedTransaction::$sage_booking_failure_email_sent_at}
+     * so a prior purchase-flow failure email does not block the Sage-specific notification.
      */
     protected function sendEpFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix, bool $isSageBooking = false): void
     {
-        // Check if email was already sent
         $transaction = EmbeddedTransaction::find($etId);
-        if ($transaction && ! empty($transaction->failure_email_sent_at)) {
+
+        if ($isSageBooking) {
+            if ($transaction && ! empty($transaction->sage_booking_failure_email_sent_at)) {
+                LoggerService::info("{$logPrefix} Sage booking EP failure email already sent, skipping", extra: [
+                    'etId' => $etId,
+                    'sage_booking_failure_email_sent_at' => $transaction->sage_booking_failure_email_sent_at,
+                ]);
+
+                return;
+            }
+        } elseif ($transaction && ! empty($transaction->failure_email_sent_at)) {
             LoggerService::info("{$logPrefix} EP failure email already sent, skipping", extra: [
                 'etId' => $etId,
                 'failure_email_sent_at' => $transaction->failure_email_sent_at,
@@ -76,13 +89,15 @@ trait SendsEpFailureEmail
         try {
             Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId, $isSageBooking));
 
-            // Update failure_email_sent_at after successful send
+            $timestampColumn = $isSageBooking ? 'sage_booking_failure_email_sent_at' : 'failure_email_sent_at';
+
             DB::table('embedded_transactions')
                 ->where('id', $etId)
-                ->update(['failure_email_sent_at' => now()]);
+                ->update([$timestampColumn => now()]);
 
             LoggerService::info("{$logPrefix} Embedded Product failure email sent successfully", extra: [
                 'etId' => $etId,
+                'isSageBooking' => $isSageBooking,
             ]);
         } catch (Throwable $e) {
             LoggerService::error("{$logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage(), extra: [

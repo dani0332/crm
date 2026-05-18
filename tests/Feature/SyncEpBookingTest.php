@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
+use App\Mail\EpFailureNotification;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProduct;
@@ -173,6 +174,65 @@ test('sync ep booking returns 422 when concurrent lock is held', function () {
         ->assertJson(['success' => false]);
 
     Cache::forget('ep-sync-sage-booking-'.$fixture['transaction']->id);
+});
+
+test('sync ep booking failure sends sage failure email even when prior ep failure email was sent', function () {
+    Mail::fake();
+    seedEpFailureEmailApplicationStorage();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-sage-email@example.com']);
+    $fixture = createSyncEpBookingFixture([], [
+        'failure_email_sent_at' => now()->subDay(),
+        'sage_booking_failure_email_sent_at' => null,
+    ]);
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')
+        ->once()
+        ->andReturn(['status' => false, 'message' => 'Sage booking cannot be scheduled']);
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $this->actingAs($user)
+        ->postJson(route('embedded-products.sync-ep-booking'), [
+            'quoteId' => $fixture['carQuote']->id,
+            'modelType' => 'Car',
+            'epTransactionId' => $fixture['transaction']->id,
+            'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+        ])
+        ->assertUnprocessable()
+        ->assertJson(['success' => false]);
+
+    Mail::assertSent(EpFailureNotification::class, 1);
+
+    $refreshed = $fixture['transaction']->fresh();
+    expect($refreshed->sage_booking_failure_email_sent_at)->not->toBeNull();
+    expect($refreshed->failure_email_sent_at)->not->toBeNull();
+});
+
+test('sync ep booking failure does not send duplicate sage failure emails', function () {
+    Mail::fake();
+    seedEpFailureEmailApplicationStorage();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-sage-dedupe@example.com']);
+    $fixture = createSyncEpBookingFixture();
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')
+        ->twice()
+        ->andReturn(['status' => false, 'message' => 'Sage booking cannot be scheduled']);
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $payload = [
+        'quoteId' => $fixture['carQuote']->id,
+        'modelType' => 'Car',
+        'epTransactionId' => $fixture['transaction']->id,
+        'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+    ];
+
+    $this->actingAs($user)->postJson(route('embedded-products.sync-ep-booking'), $payload)->assertUnprocessable();
+    $this->actingAs($user)->postJson(route('embedded-products.sync-ep-booking'), $payload)->assertUnprocessable();
+
+    Mail::assertSent(EpFailureNotification::class, 1);
 });
 
 test('sync ep booking returns 422 when sage scheduling fails', function () {
