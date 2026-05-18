@@ -21,6 +21,7 @@ class SyncEpBookingService extends BaseService
     use SendsEpFailureEmail;
 
     private const string LOG_PREFIX = 'SyncEpBookingService:';
+    private const string UNEXPECTED_ERROR_MESSAGE = 'An unexpected error occurred while retrying Sage booking. Please try again or contact support.';
 
     public function __construct(
         protected SageApiEmbeddedProductService $sageApiEmbeddedProductService
@@ -69,7 +70,7 @@ class SyncEpBookingService extends BaseService
             LoggerService::error($logPrefix.$e->getMessage(), extra: ['exception' => $e]);
             $this->sendEpFailureEmail((int) $resolved['quote']->id, (int) $resolved['quoteTypeId'], (int) $resolved['transaction']->id, $logPrefix, true);
 
-            $message = $e->getMessage();
+            $message = self::UNEXPECTED_ERROR_MESSAGE;
         } finally {
             Cache::forget($resolved['lockKey']);
         }

@@ -270,6 +270,38 @@ test('sync ep booking returns 422 when sage scheduling fails', function () {
         ->assertJson(['success' => false]);
 });
 
+test('sync ep booking does not expose raw exception message when scheduling throws', function () {
+    Mail::fake();
+    seedEpFailureEmailApplicationStorage();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-exception@example.com']);
+    $fixture = createSyncEpBookingFixture();
+
+    $sensitiveExceptionMessage = 'SQLSTATE[HY000]: connection to host db.internal failed';
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')
+        ->once()
+        ->andThrow(new RuntimeException($sensitiveExceptionMessage));
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $this->actingAs($user)
+        ->postJson(route('embedded-products.sync-ep-booking'), [
+            'quoteId' => $fixture['carQuote']->id,
+            'modelType' => 'Car',
+            'epTransactionId' => $fixture['transaction']->id,
+            'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+        ])
+        ->assertUnprocessable()
+        ->assertJson([
+            'success' => false,
+            'message' => 'An unexpected error occurred while retrying Sage booking. Please try again or contact support.',
+        ])
+        ->assertJsonMissing(['message' => $sensitiveExceptionMessage]);
+
+    Mail::assertSent(EpFailureNotification::class, 1);
+});
+
 test('sync ep booking is not allowed for courier embedded product', function () {
     $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-6@example.com']);
     $ep = EmbeddedProduct::factory()->cou()->createOneQuietly();
