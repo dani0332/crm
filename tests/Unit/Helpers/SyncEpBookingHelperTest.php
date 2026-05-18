@@ -5,7 +5,7 @@ use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEmbeddedProductEnum;
-use App\Helpers\SyncEpBookingHelper;
+use App\helpers\SyncEpBookingHelper;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;

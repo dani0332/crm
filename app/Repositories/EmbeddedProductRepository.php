@@ -22,7 +22,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
-use App\Helpers\SyncEpBookingHelper;
+use App\helpers\SyncEpBookingHelper;
 use App\Jobs\EP\CancelEPJob;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpSendDocumentJob;

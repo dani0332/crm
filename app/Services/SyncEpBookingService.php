@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
-use App\Helpers\SyncEpBookingHelper;
+use App\helpers\SyncEpBookingHelper;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
