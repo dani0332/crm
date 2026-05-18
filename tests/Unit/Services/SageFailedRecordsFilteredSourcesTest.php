@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\QuoteTypeId;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Services\SageFailedRecordsService;
 use Carbon\Carbon;
 

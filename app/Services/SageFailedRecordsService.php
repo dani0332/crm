@@ -86,8 +86,10 @@ class SageFailedRecordsService extends BaseService
 
     private function buildFailedSageRecordsQuery(ValidatedInput $request): Builder
     {
-        $oldestFailedLogsCTE = $this->getOldestFailedSageLogsCTE($request);
-        $morphModelClasses = $this->distinctMorphClassesFromOldestFailedLogsCTE($oldestFailedLogsCTE);
+        $pdo = DB::connection()->getPdo();
+        $filteredSources = $this->getFilteredSources($pdo, $request);
+        $oldestFailedLogsCTE = $this->getOldestFailedSageLogsCTE($pdo, $request, $filteredSources);
+        $morphModelClasses = $this->morphModelClassesFromFailedLeadSources($filteredSources);
         $filteredBase = $this->baseFailedSageApiLogsQuery($request, $oldestFailedLogsCTE);
         $embeddedTransactionMorphClass = $pdo->quote(EmbeddedTransaction::class);
 
@@ -112,14 +114,11 @@ class SageFailedRecordsService extends BaseService
             ]);
     }
 
-    private function getOldestFailedSageLogsCTE($request): string
+    private function getOldestFailedSageLogsCTE(\PDO $pdo, ValidatedInput|array $request, array $filteredSources): string
     {
-        $pdo = DB::connection()->getPdo();
-
         $logsTable = (new SageApiLog)->getTable();
         $failStatus = $pdo->quote(SageEnum::STATUS_FAIL);
-
-        $failedLeads = $this->getFailedLeadsUnionSubquery($pdo, $request);
+        $failedLeads = $this->getFailedLeadsUnionSubquery($pdo, $request, $filteredSources);
 
         return "
             SELECT
@@ -137,7 +136,7 @@ class SageFailedRecordsService extends BaseService
         ";
     }
 
-    private function getFailedLeadsUnionSubquery(\PDO $pdo, $request): string
+    private function getFailedLeadsUnionSubquery(\PDO $pdo, ValidatedInput|array $request, array $filteredSources): string
     {
         $queries = [];
         $getFilteredSources = $this->getFilteredSources($pdo, $request);
@@ -152,7 +151,7 @@ class SageFailedRecordsService extends BaseService
         $startDateSql = $pdo->quote($startDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
         $endDateSql = $pdo->quote($endDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
 
-        foreach ($getFilteredSources as $source) {
+        foreach ($filteredSources as $source) {
             $model = $pdo->quote($source['model']);
             $quoteTypeFilterSql = $this->buildPersonalQuoteTypeIdFilterSql($source);
 
@@ -193,21 +192,17 @@ class SageFailedRecordsService extends BaseService
             ->tap(fn (Builder $query) => $this->applyFailedSageRecordsFilters($query, $request));
     }
 
-    private function distinctMorphClassesFromOldestFailedLogsCTE(string $oldestFailedLogsCTE): array
+    private function morphModelClassesFromFailedLeadSources(array $filteredSources): array
     {
-        return DB::query()
-            ->withExpression('oldest_logs', $oldestFailedLogsCTE)
-            ->from('oldest_logs')
-            ->select('model_type')
-            ->distinct()
-            ->pluck('model_type')
+        return collect($filteredSources)
+            ->pluck('model')
             ->filter(fn ($type) => is_string($type) && $type !== '')
             ->unique()
             ->values()
             ->all();
     }
 
-    private function getFilteredSources($pdo, $request): array
+    private function getFilteredSources(\PDO $pdo, ValidatedInput|array $request): array
     {
         $bookingStatuses = implode(',', [
             QuoteStatusEnum::POLICY_BOOKING_QUEUED,
