@@ -4677,6 +4677,7 @@ const validateEmirateOfVisa = () => {
     />
 
     <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
+    <HealthPricingLogs :quoteRequestId="$page.props.quote.id" />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"

@@ -9,6 +9,7 @@ use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
+use App\Models\HealthPricingLog;
 use App\Models\HealthQuote;
 use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
@@ -23,6 +24,7 @@ use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -274,6 +276,30 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load Health Routing Logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadHealthPricingLogs(Request $request): JsonResponse
+    {
+        try {
+            $logs = HealthPricingLog::with('member')
+                ->where('health_quote_request_id', $request->quote_request_id)
+                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'created_at')
+                ->orderBy('sequence_no')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load Health Pricing Logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load Health Pricing Logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

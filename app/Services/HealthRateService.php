@@ -198,11 +198,8 @@ class HealthRateService extends BaseService
                 'health_plan_id' => $draftPlan->id,
             ]);
 
-        DB::table('health_rates')
-            ->where('id', $newRate->id)
-            ->update([
-                'health_plan_id' => $draftPlan->id,
-            ]);
+        $newRate->health_plan_id = $draftPlan->id;
+        $newRate->save();
     }
 
     private function deriveVersion(array $planIds): float
