@@ -18,6 +18,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
+use Throwable;
 
 class ProcessNonMotorCQFLOBJob implements ShouldQueue
 {
@@ -114,5 +115,16 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
             'quoteJobCount' => count($quoteJobs),
         ]);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        LoggerService::error(self::class.' - Job failed, finalizing LOB', [
+            'quoteType' => $this->quoteType->value,
+            'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        FinalizeNonMotorCQFLOBJob::dispatch($this->renewalsUploadLeadsId);
     }
 }
