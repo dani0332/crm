@@ -139,7 +139,6 @@ class SageFailedRecordsService extends BaseService
     private function getFailedLeadsUnionSubquery(\PDO $pdo, ValidatedInput|array $request, array $filteredSources): string
     {
         $queries = [];
-        $getFilteredSources = $this->getFilteredSources($pdo, $request);
         $startDate = $request['date_from']
             ? Carbon::parse($request['date_from'])->startOfDay()
             : Carbon::now()->startOfMonth();
