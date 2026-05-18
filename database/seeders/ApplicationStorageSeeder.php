@@ -1820,6 +1820,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedDisableClaimsModule(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DISABLE_CLAIMS_MODULE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     // region Advisor Payment Notification
 
     private function seedAdvisorPaymentNotificationWorkflowUrl()
@@ -1897,6 +1910,29 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedNonMotorCQFRenewals(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedDttLifeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -1924,39 +1960,4 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedNonMotorCQFRenewals(): void
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
-            [
-                'value' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
-            [
-                'value' => 120,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
-
-    private function seedDisableClaimsModule(): void
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DISABLE_CLAIMS_MODULE],
-            [
-                'value' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
 }
