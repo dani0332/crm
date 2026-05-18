@@ -1740,7 +1740,7 @@ class CentralService extends BaseService
 
             if ($quote->source == LeadSourceEnum::CARS24) {
                 $cc = getAppStorageValueByKey(ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS);
-                $emailData->cc_emails = $cc ? explode(', ', $cc) : [];
+                $emailData->cc_emails = $cc ? array_map('trim', explode(',', $cc)) : [];
             }
         }
 
