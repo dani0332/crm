@@ -81,12 +81,14 @@ class HealthRateService extends BaseService
 
         // If not found, add new draft rate sheet
         if (! $draftRatesSheet) {
-            $newRate = $this->addRate($data, $planIds);
+            return DB::transaction(function () use ($data, $planIds) {
+                $newRate = $this->addRate($data, $planIds);
 
-            // If it's active plan, link rate to existing draft plan it exists
-            $this->linkRateToExistingDraftPlan($data['health_plan_id'], $newRate);
+                // If it's active plan, link rate to existing draft plan it exists
+                $this->linkRateToExistingDraftPlan($data['health_plan_id'], $newRate);
 
-            return $newRate;
+                return $newRate;
+            });
         }
 
         // Else add rate to existing draft rate sheet

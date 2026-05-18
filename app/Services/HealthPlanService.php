@@ -115,16 +115,18 @@ class HealthPlanService extends BaseService
         }
 
         // Otherwise create new draft version
-        $data['version'] = $this->deriveVersion($currentPlan);
-        $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
-        $data['code'] = $currentPlan->code; // Keep current code
+        return DB::transaction(function () use ($data, $currentPlan) {
+            $data['version'] = $this->deriveVersion($currentPlan);
+            $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
+            $data['code'] = $currentPlan->code; // Keep current code
 
-        $newDraftPlan = HealthPlan::create($data);
+            $newDraftPlan = HealthPlan::create($data);
 
-        // Link existing draft sheet (if any)
-        $this->linkExistingDraftSheet($currentPlan->id, $newDraftPlan->id);
+            // Link existing draft sheet (if any)
+            $this->linkExistingDraftSheet($currentPlan->id, $newDraftPlan->id);
 
-        return $newDraftPlan;
+            return $newDraftPlan;
+        });
     }
 
     private function linkExistingDraftSheet(int $currentPlanId, int $newDraftPlanId): void
@@ -137,14 +139,14 @@ class HealthPlanService extends BaseService
         if ($existingDraftSheet) {
             $existingDraftSheet->health_plan_id = $newDraftPlanId;
             $existingDraftSheet->save();
-        }
 
-        // Update draft rates plan id
-        DB::table('health_rates')
-            ->where('health_rate_control_id', $existingDraftSheet->id)
-            ->update([
-                'health_plan_id' => $newDraftPlanId,
-            ]);
+            // Update draft rates plan id
+            DB::table('health_rates')
+                ->where('health_rate_control_id', $existingDraftSheet->id)
+                ->update([
+                    'health_plan_id' => $newDraftPlanId,
+                ]);
+        }
     }
 
     public function publish(int $id, int $publishedById): void
