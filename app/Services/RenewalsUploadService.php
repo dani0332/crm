@@ -945,6 +945,7 @@ class RenewalsUploadService
                 $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
                 if ($previousAdvisor) {
                     $detailData['previous_advisor_id'] = $previousAdvisor->id;
+                    $quoteData['previous_advisor_id'] = $previousAdvisor->id;
                 }
                 $quoteData['quote_type_id'] = $quoteType->id;
             } else {
