@@ -1072,7 +1072,7 @@ class RenewalsUploadService
             if ($quoteType->code == quoteTypeCode::Bike) {
 
                 // unsetting fields as bike_quote_request table doesn't have them
-                unset($quoteData['quote_type_id'], $quoteData['currently_insured_with_id']);
+                unset($quoteData['quote_type_id'], $quoteData['currently_insured_with_id'], $quoteData['transaction_type_id'], $quoteData['insurance_provider_id']);
                 $bikeQuote = $quote->bikeQuote()->create($quoteData);
 
                 unset($detailData['additional_notes'], $detailData['previous_advisor_id']);
