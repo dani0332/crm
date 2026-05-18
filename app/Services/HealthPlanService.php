@@ -115,7 +115,7 @@ class HealthPlanService extends BaseService
         }
 
         // Otherwise create new draft version
-        return DB::transaction(function () use ($data, $currentPlan) {
+        return DB::transaction(function () use ($data, $currentPlan, $id) {
             $data['version'] = $this->deriveVersion($currentPlan);
             $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
             $data['code'] = $currentPlan->code; // Keep current code
