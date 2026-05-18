@@ -9,10 +9,12 @@ const props = defineProps({
   emirates: { type: Array, default: () => [] },
   isEmirateDisabled: { type: Boolean, default: false },
   leadSourceParams: { type: Object, default: () => ({}) },
-  companyTypes: { type: Array, default: () => [] },
+  companyActivityTypes: { type: Array, default: () => [] },
   healthPlanTypes: { type: Array, default: () => [] },
   insuranceProviders: { type: Array, default: () => [] },
-  memberCategories: { type: Array, default: () => [] },
+  healthThirdPartyAdministrators: { type: Array, default: () => [] },
+  groupMedicalNetworks: { type: Array, default: () => [] },
+  groupMedicalCategories: { type: Array, default: () => [] },
 });
 
 const notification = useToast();
@@ -52,50 +54,81 @@ const emptyCategoryRow = () => ({
   number_of_people: null,
 });
 
+const GM_CATEGORY_ROW_FALLBACK_MAX = 26;
+
+function getGmCategoryRowMax() {
+  const count = (props.groupMedicalCategories || []).length;
+  return count > 0 ? count : GM_CATEGORY_ROW_FALLBACK_MAX;
+}
+
 /**
  * Builds initial intake rows: prefers saved JSON; otherwise one empty row (appender).
  */
 function buildInitialCategoryRows(quote) {
+  const rowMax = getGmCategoryRowMax();
   const intake = quote?.gm_category_intake;
   if (Array.isArray(intake) && intake.length > 0) {
-    return intake.map(row => ({ ...emptyCategoryRow(), ...row }));
+    return intake.slice(0, rowMax).map(row => ({ ...emptyCategoryRow(), ...row }));
   }
   const savedN = parseInt(quote?.number_of_categories, 10);
-  const n = Math.min(26, Math.max(1, savedN || 1));
+  const n = Math.min(rowMax, Math.max(1, savedN || 1));
 
   return Array.from({ length: n }, () => emptyCategoryRow());
 }
 
 const initialGmRows = buildInitialCategoryRows(props.quote);
 
-const GM_CATEGORY_ROW_MAX = 26;
+const gmCategoryRowMax = computed(() => getGmCategoryRowMax());
 
-const companyTypeSelectOptions = computed(() =>
-  (props.companyTypes || []).map(item => ({
+const toSelectOptions = items =>
+  (items || []).map(item => ({
     value: item.id,
     label: item.text,
-  })),
+  }));
+
+const companyActivitySelectOptions = computed(() =>
+  toSelectOptions(props.companyActivityTypes),
 );
 
-const healthPlanTypeSelectOptions = computed(() =>
-  (props.healthPlanTypes || []).map(item => ({
-    value: item.id,
-    label: item.text,
-  })),
-);
+function resolvePlanEmirateId(plan) {
+  return plan?.emirates_id ?? plan?.emirate_id ?? null;
+}
+
+function normalizeEmirateId(emirateId) {
+  if (emirateId === null || emirateId === undefined || emirateId === '') {
+    return null;
+  }
+
+  const parsed = Number(emirateId);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function healthPlansForEmirate(emirateId) {
+  const targetEmirateId = normalizeEmirateId(emirateId);
+  if (targetEmirateId === null) {
+    return [];
+  }
+
+  return (props.healthPlanTypes || []).filter(plan => {
+    const planEmirateId = normalizeEmirateId(resolvePlanEmirateId(plan));
+    return planEmirateId !== null && planEmirateId === targetEmirateId;
+  });
+}
 
 const insuranceProviderSelectOptions = computed(() =>
-  (props.insuranceProviders || []).map(item => ({
-    value: item.id,
-    label: item.text,
-  })),
+  toSelectOptions(props.insuranceProviders),
 );
 
-const memberCategorySelectOptions = computed(() =>
-  (props.memberCategories || []).map(item => ({
-    value: item.id,
-    label: item.text,
-  })),
+const healthTpaSelectOptions = computed(() =>
+  toSelectOptions(props.healthThirdPartyAdministrators),
+);
+
+const groupMedicalNetworkSelectOptions = computed(() =>
+  toSelectOptions(props.groupMedicalNetworks),
+);
+
+const groupMedicalCategorySelectOptions = computed(() =>
+  toSelectOptions(props.groupMedicalCategories),
 );
 
 const quoteForm = useForm({
@@ -138,14 +171,55 @@ const quoteForm = useForm({
   gm_category_intake: initialGmRows,
 });
 
+const selectedEmirateId = computed(() =>
+  normalizeEmirateId(quoteForm.emirate_of_registration_id),
+);
+
+const healthPlanTypeSelectOptions = computed(() =>
+  toSelectOptions(healthPlansForEmirate(selectedEmirateId.value)),
+);
+
+const isHealthPlanTypeSelectDisabled = computed(
+  () => selectedEmirateId.value === null,
+);
+
+/**
+ * Group medical category options for one row; disables categories already picked elsewhere.
+ */
+function memberCategoryOptionsForRow(rowIndex) {
+  const selectedElsewhere = new Set(
+    quoteForm.gm_category_intake
+      .map((row, idx) =>
+        idx !== rowIndex && row.member_category_id != null
+          ? Number(row.member_category_id)
+          : null,
+      )
+      .filter(id => id !== null),
+  );
+
+  return groupMedicalCategorySelectOptions.value.map(option => ({
+    ...option,
+    disabled: selectedElsewhere.has(Number(option.value)),
+  }));
+}
+
+const duplicateCategoryMessage = computed(() => {
+  const ids = quoteForm.gm_category_intake
+    .map(row => row.member_category_id)
+    .filter(id => id != null && id !== '');
+  return ids.length !== new Set(ids.map(id => Number(id))).size
+    ? 'Each category can only be selected once.'
+    : null;
+});
+
 function syncNumberOfCategoriesFromIntake() {
   quoteForm.number_of_categories = quoteForm.gm_category_intake.length;
 }
 
 function addCategoryRow() {
-  if (quoteForm.gm_category_intake.length >= GM_CATEGORY_ROW_MAX) {
+  if (quoteForm.gm_category_intake.length >= gmCategoryRowMax.value) {
     notification.warning({
-      title: `You can add at most ${GM_CATEGORY_ROW_MAX} category rows.`,
+      title: `You can add at most ${gmCategoryRowMax.value} category rows.`,
       position: 'top',
     });
     return;
@@ -227,6 +301,22 @@ watch(
   },
 );
 
+watch(selectedEmirateId, (newEmirate, oldEmirate) => {
+  if (newEmirate === oldEmirate) {
+    return;
+  }
+
+  const validPlanIds = healthPlansForEmirate(newEmirate).map(plan =>
+    Number(plan.id),
+  );
+  if (
+    quoteForm.health_plan_type_id != null &&
+    !validPlanIds.includes(Number(quoteForm.health_plan_type_id))
+  ) {
+    quoteForm.health_plan_type_id = null;
+  }
+});
+
 const emirateOfRegistrationFieldError = computed(() => {
   if (quoteForm.errors.emirate_of_registration_id) {
     return quoteForm.errors.emirate_of_registration_id;
@@ -251,6 +341,10 @@ const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
   if (!isValid) return;
+  if (duplicateCategoryMessage.value) {
+    quoteForm.setError('gm_category_intake', duplicateCategoryMessage.value);
+    return;
+  }
   syncNumberOfCategoriesFromIntake();
   const method = isEdit.value ? 'put' : 'post';
   const url = isEdit.value
@@ -416,7 +510,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.emirate_of_registration_id"
           :options="
             (props.emirates || []).map(item => ({
-              value: item.id,
+              value: Number(item.id),
               label: item.text,
             }))
           "
@@ -450,7 +544,7 @@ function onSubmit(isValid) {
 
         <x-select
           v-model="quoteForm.nature_of_company_activity_id"
-          :options="companyTypeSelectOptions"
+          :options="companyActivitySelectOptions"
           class="w-full"
           label="NATURE OF COMPANY'S ACTIVITY"
           placeholder="Select activity"
@@ -472,15 +566,22 @@ function onSubmit(isValid) {
         />
 
         <x-select
+          :key="`health-plan-type-${selectedEmirateId ?? 'none'}`"
           v-model="quoteForm.health_plan_type_id"
           :options="healthPlanTypeSelectOptions"
           class="w-full"
           label="PLAN TYPE"
-          placeholder="Select plan type"
+          :placeholder="
+            isHealthPlanTypeSelectDisabled
+              ? 'Select emirate of registration first'
+              : 'Select plan type'
+          "
           filterable
-          :rules="[isRequired]"
-          required
+          :disabled="isHealthPlanTypeSelectDisabled"
+          :rules="isHealthPlanTypeSelectDisabled ? [] : [isRequired]"
+          :required="!isHealthPlanTypeSelectDisabled"
           :error="quoteForm.errors.health_plan_type_id"
+          tooltip="Plan types are filtered by the selected emirate of registration."
         />
 
         <div
@@ -502,7 +603,7 @@ function onSubmit(isValid) {
                 optional existing insurer / TPA / network, renewal date, and
                 headcount. Use
                 <span class="font-medium text-gray-700">Add row</span>
-                to append lines (max {{ GM_CATEGORY_ROW_MAX }}).
+                to append lines (max {{ gmCategoryRowMax }}).
               </p>
             </div>
             <div
@@ -525,7 +626,7 @@ function onSubmit(isValid) {
                   color="primary"
                   class="whitespace-nowrap"
                   :disabled="
-                    quoteForm.gm_category_intake.length >= GM_CATEGORY_ROW_MAX
+                    quoteForm.gm_category_intake.length >= gmCategoryRowMax
                   "
                   @click.prevent="addCategoryRow"
                 >
@@ -534,7 +635,7 @@ function onSubmit(isValid) {
                 <template #tooltip>
                   <span
                     >Add another category row (up to
-                    {{ GM_CATEGORY_ROW_MAX }}).</span
+                    {{ gmCategoryRowMax }}).</span
                   >
                 </template>
               </x-tooltip>
@@ -616,7 +717,7 @@ function onSubmit(isValid) {
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.member_category_id"
-                      :options="memberCategorySelectOptions"
+                      :options="memberCategoryOptionsForRow(idx)"
                       class="w-full min-w-[11rem]"
                       placeholder="Select category"
                       filterable
@@ -646,7 +747,7 @@ function onSubmit(isValid) {
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.existing_tpa_id"
-                      :options="insuranceProviderSelectOptions"
+                      :options="healthTpaSelectOptions"
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
                       filterable
@@ -660,7 +761,7 @@ function onSubmit(isValid) {
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.existing_network_id"
-                      :options="insuranceProviderSelectOptions"
+                      :options="groupMedicalNetworkSelectOptions"
                       class="w-full min-w-[10rem]"
                       placeholder="Select network"
                       filterable
@@ -724,10 +825,12 @@ function onSubmit(isValid) {
             </table>
           </div>
           <p
-            v-if="quoteForm.errors.gm_category_intake"
+            v-if="duplicateCategoryMessage || quoteForm.errors.gm_category_intake"
             class="mt-3 text-sm text-error"
           >
-            {{ quoteForm.errors.gm_category_intake }}
+            {{
+              duplicateCategoryMessage || quoteForm.errors.gm_category_intake
+            }}
           </p>
         </div>
 

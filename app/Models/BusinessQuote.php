@@ -145,7 +145,7 @@ class BusinessQuote extends Model implements AuditableContract
 
     public function natureOfCompanyActivity(): BelongsTo
     {
-        return $this->belongsTo(Lookup::class, 'nature_of_company_activity_id');
+        return $this->belongsTo(CompanyActivityType::class, 'nature_of_company_activity_id');
     }
 
     public function insuranceProvider()

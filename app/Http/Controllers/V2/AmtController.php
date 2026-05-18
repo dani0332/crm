@@ -29,7 +29,6 @@ use App\Models\HealthPlanType;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
-use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
@@ -46,6 +45,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
 use App\Services\GroupMedicalEcommerceJourneyLinkService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -409,10 +409,7 @@ class AmtController extends Controller
             'quote' => new BusinessQuote,
             'subSources' => $subSources,
             'emirates' => $emirates,
-            'companyTypes' => Lookup::getCompanyTypes(),
-            'healthPlanTypes' => HealthPlanType::query()->select('id', 'text')->orderBy('text')->get(),
-            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id()),
-            'memberCategories' => MemberCategory::active()->sortOrderAsc()->get(['id', 'text']),
+            ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
             'leadSourceParams' => [
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
@@ -461,7 +458,13 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
+        ])->load([
+            'subSource:id,text,description',
+            'subSourceOption:id,text,description',
+            'renewalBatchModel:id,name',
+            'groupMedicalType:id,text,description',
+            'natureOfCompanyActivity:id,text',
+        ]);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */
@@ -477,6 +480,8 @@ class AmtController extends Controller
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
+        $gmCategoryIntakeDisplay = app(GroupMedicalAmtFormDropdownService::class)
+            ->enrichCategoryIntakeForDisplay($record->gm_category_intake);
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasons::getAll();
@@ -612,6 +617,7 @@ class AmtController extends Controller
             'gmEcommerceCopyLink' => [
                 'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
             ],
+            'gmCategoryIntakeDisplay' => $gmCategoryIntakeDisplay,
         ]);
     }
 
@@ -689,10 +695,7 @@ class AmtController extends Controller
             'emirates' => $emirates,
             'isEmirateDisabled' => true,
             'leadSourceParams' => [],
-            'companyTypes' => Lookup::getCompanyTypes(),
-            'healthPlanTypes' => HealthPlanType::query()->select('id', 'text')->orderBy('text')->get(),
-            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id()),
-            'memberCategories' => MemberCategory::active()->sortOrderAsc()->get(['id', 'text']),
+            ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
         ]);
     }
 
@@ -756,24 +759,30 @@ class AmtController extends Controller
     protected function groupMedicalAmtIntakeValidationRules(): array
     {
         return [
-            'nature_of_company_activity_id' => ['required', 'exists:lookups,id'],
+            'nature_of_company_activity_id' => ['required', 'exists:company_activity_type,id'],
             'has_existing_group_health_insurance' => ['required', 'boolean'],
             'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
             'number_of_categories' => ['required', 'integer', 'min:1', 'max:26'],
             'gm_category_intake' => [
                 'required',
                 'array',
+                'max:26',
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $expected = (int) request()->input('number_of_categories', 0);
                     if (! is_array($value) || count($value) !== $expected) {
                         $fail('People per category rows must match the number of categories.');
                     }
+
+                    $categoryIds = array_filter(array_column($value, 'member_category_id'));
+                    if (count($categoryIds) !== count(array_unique($categoryIds))) {
+                        $fail('Each category can only be selected once.');
+                    }
                 },
             ],
-            'gm_category_intake.*.member_category_id' => ['required', 'exists:member_category,id'],
+            'gm_category_intake.*.member_category_id' => ['required', 'integer', 'exists:group_medical_category,id'],
             'gm_category_intake.*.existing_insurance_provider_id' => ['nullable', 'exists:insurance_provider,id'],
-            'gm_category_intake.*.existing_tpa_id' => ['nullable', 'exists:insurance_provider,id'],
-            'gm_category_intake.*.existing_network_id' => ['nullable', 'exists:insurance_provider,id'],
+            'gm_category_intake.*.existing_tpa_id' => ['nullable', 'exists:health_third_party_administrator,id'],
+            'gm_category_intake.*.existing_network_id' => ['nullable', 'exists:group_medical_networks,id'],
             'gm_category_intake.*.existing_policy_renewal_date' => ['nullable', 'date'],
             'gm_category_intake.*.number_of_people' => ['required', 'integer', 'min:1', 'max:2147483645'],
         ];

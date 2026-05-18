@@ -49,6 +49,10 @@ const props = defineProps({
   isFuncsEnabled: Array,
   activities: Array,
   advisors: Array,
+  gmCategoryIntakeDisplay: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -131,53 +135,40 @@ const onCopyGmEcommerceJourneyLink = () => {
     });
 };
 
-const gmMembersForCategoryBreakdown = computed(() =>
-  (props.membersDetails ?? []).filter(m => !m.is_third_party_payer),
+const natureOfCompanyActivityText = computed(
+  () => props.quote?.nature_of_company_activity?.text ?? '—',
 );
 
-const peopleInsuredPerCategoryRows = computed(() => {
-  const members = gmMembersForCategoryBreakdown.value;
-  const groups = new Map();
-  for (const m of members) {
-    const key = m.member_category_id ?? 'uncategorized';
-    if (!groups.has(key)) {
-      groups.set(key, {
-        categoryLabel: m.member_category?.text ?? 'Uncategorized',
-        count: 0,
-      });
-    }
-    groups.get(key).count += 1;
-  }
-  let serial = 0;
-  return Array.from(groups.values()).map(row => ({
-    serial: ++serial,
-    ...row,
-  }));
-});
+const hasExistingGroupHealthInsurancePolicyText = computed(() => {
+  const value = props.quote?.has_existing_group_health_insurance;
 
-const numberOfCategoriesDisplay = computed(() =>
-  peopleInsuredPerCategoryRows.value.length
-    ? String(peopleInsuredPerCategoryRows.value.length)
-    : '0',
-);
-
-const hasExistingGroupHealthInsuranceDisplay = computed(() => {
-  if (
-    props.quote.previous_quote_policy_number ||
-    props.quote.renewal_import_code
-  ) {
+  if (value === true || value === 1 || value === '1') {
     return 'Yes';
   }
 
-  return 'No';
+  if (value === false || value === 0 || value === '0') {
+    return 'No';
+  }
+
+  return '—';
 });
 
-const natureOfCompanyActivityDisplay = computed(
-  () => props.quote.brief_details?.trim() || '—',
-);
+const numberOfCategoriesDisplay = computed(() => {
+  const saved = props.quote?.number_of_categories;
+  if (saved != null && saved !== '') {
+    return String(saved);
+  }
 
-const planTypeSummaryDisplay = computed(
-  () => props.quote.group_medical_type?.text ?? '—',
+  const intake = props.quote?.gm_category_intake;
+  if (Array.isArray(intake) && intake.length > 0) {
+    return String(intake.length);
+  }
+
+  return '0';
+});
+
+const quotePlanTypeDisplay = computed(
+  () => props.quote?.health_plan_type_text ?? '—',
 );
 
 const modals = reactive({
@@ -1290,23 +1281,31 @@ function handleOcrNotification(event) {
                     </thead>
                     <tbody class="bg-white text-gray-900">
                       <tr
-                        v-for="row in peopleInsuredPerCategoryRows"
+                        v-for="row in gmCategoryIntakeDisplay"
                         :key="row.serial"
                         class="border-b border-gray-100 last:border-0"
                       >
                         <td class="px-3 py-3 align-top">{{ row.serial }}</td>
                         <td class="px-3 py-3 align-top font-medium">
-                          {{ row.categoryLabel }}
+                          {{ row.category_label }}
                         </td>
-                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
-                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
-                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
-                        <td class="px-3 py-3 align-top text-gray-700">N/A</td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_insurance_provider }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_tpa }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_network }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_policy_renewal_date }}
+                        </td>
                         <td class="px-3 py-3 align-top text-right tabular-nums">
-                          {{ row.count }}
+                          {{ row.number_of_people }}
                         </td>
                       </tr>
-                      <tr v-if="peopleInsuredPerCategoryRows.length === 0">
+                      <tr v-if="gmCategoryIntakeDisplay.length === 0">
                         <td
                           colspan="7"
                           class="px-3 py-6 text-center text-gray-500"

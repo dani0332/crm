@@ -316,6 +316,9 @@ class BusinessQuoteService extends BaseService
                 $dataArr['advisorId'] = Auth::user()->id;
             }
         }
+
+        $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -323,11 +326,6 @@ class BusinessQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::BUSINESS, $response->quoteUID);
 
-            $createdQuote = BusinessQuote::query()->where('uuid', $response->quoteUID)->first();
-            if ($createdQuote instanceof BusinessQuote) {
-                $this->syncGroupMedicalLeadIntakeFields($createdQuote, $request);
-                $createdQuote->save();
-            }
         }
 
         return $response;
@@ -571,6 +569,104 @@ class BusinessQuoteService extends BaseService
                 return 'bqr';
                 break;
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildGroupMedicalCapiPayload(Request $request): array
+    {
+        if (! $this->isGroupMedicalBusinessRequest($request)) {
+            return [];
+        }
+
+        $payload = [];
+
+        $quoteUid = $request->input('quote_uid') ?? $request->input('quoteUID');
+        if ($quoteUid !== null && $quoteUid !== '') {
+            $payload['quoteUID'] = $quoteUid;
+        }
+
+        $companyActivityTypeId = $request->input('nature_of_company_activity_id')
+            ?? $request->input('companyActivityTypeId');
+        if ($companyActivityTypeId !== null && $companyActivityTypeId !== '') {
+            $payload['companyActivityTypeId'] = (int) $companyActivityTypeId;
+        }
+
+        if ($request->has('has_existing_group_health_insurance') || $request->has('hasExistingGroupPolicy')) {
+            $payload['hasExistingGroupPolicy'] = $request->has('has_existing_group_health_insurance')
+                ? $request->boolean('has_existing_group_health_insurance')
+                : $request->boolean('hasExistingGroupPolicy');
+        }
+
+        $healthPlanTypeId = $request->input('health_plan_type_id') ?? $request->input('healthPlanTypeId');
+        if ($healthPlanTypeId !== null && $healthPlanTypeId !== '') {
+            $payload['healthPlanTypeId'] = (int) $healthPlanTypeId;
+        }
+
+        $numberOfCategories = $request->input('number_of_categories') ?? $request->input('numberOfCategories');
+        if ($numberOfCategories !== null && $numberOfCategories !== '') {
+            $payload['numberOfCategories'] = (int) $numberOfCategories;
+        }
+
+        $categories = $this->resolveGroupMedicalCategoriesForCapi($request);
+        if ($categories !== null && $categories !== []) {
+            $payload['categories'] = $categories;
+        }
+
+        return $payload;
+    }
+
+    protected function isGroupMedicalBusinessRequest(Request $request): bool
+    {
+        $businessTypeId = $request->input('business_type_of_insurance_id')
+            ?? $request->input('businessTypeOfInsuranceId');
+
+        return $businessTypeId !== null
+            && (int) $businessTypeId === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
+    /**
+     * @return list<array<string, int|string|bool|null>>|null
+     */
+    protected function resolveGroupMedicalCategoriesForCapi(Request $request): ?array
+    {
+        if ($request->has('gm_category_intake') && is_array($request->input('gm_category_intake'))) {
+            return array_values(array_map(
+                fn (array $row): array => $this->mapGroupMedicalCategoryRowForCapi($row),
+                $request->input('gm_category_intake'),
+            ));
+        }
+
+        if ($request->has('categories') && is_array($request->input('categories'))) {
+            return array_values(array_map(
+                fn (array $row): array => $this->mapGroupMedicalCategoryRowForCapi($row),
+                $request->input('categories'),
+            ));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, int|string|null>
+     */
+    protected function mapGroupMedicalCategoryRowForCapi(array $row): array
+    {
+        $mapped = [
+            'groupMedicalCategoryId' => $row['member_category_id'] ?? $row['groupMedicalCategoryId'] ?? null,
+            'numberOfPeople' => $row['number_of_people'] ?? $row['numberOfPeople'] ?? null,
+            'insuranceProviderId' => $row['existing_insurance_provider_id'] ?? $row['insuranceProviderId'] ?? null,
+            'healthTpaId' => $row['existing_tpa_id'] ?? $row['healthTpaId'] ?? null,
+            'healthNetworkId' => $row['existing_network_id'] ?? $row['healthNetworkId'] ?? null,
+            'renewalDate' => $row['existing_policy_renewal_date'] ?? $row['renewalDate'] ?? null,
+        ];
+
+        return array_filter(
+            $mapped,
+            fn (mixed $value): bool => $value !== null && $value !== '',
+        );
     }
 
     /**
