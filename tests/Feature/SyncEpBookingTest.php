@@ -2,16 +2,20 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SageEnum;
 use App\Mail\EpFailureNotification;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
+use App\Models\SageProcess;
 use App\Services\SageApiEmbeddedProductService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -34,7 +38,14 @@ afterEach(function () {
  */
 function createSyncEpBookingFixture(array $carQuoteOverrides = [], array $transactionOverrides = []): array
 {
-    $ep = EmbeddedProduct::factory()->mdx()->createOneQuietly();
+    $insuranceProvider = InsuranceProvider::factory()->createOneQuietly([
+        'code' => InsuranceProviderEnum::OIC->value,
+        'text' => 'Sukoon Insurance',
+    ]);
+    $ep = EmbeddedProduct::factory()
+        ->mdx()
+        ->forInsuranceProvider($insuranceProvider->id)
+        ->createOneQuietly();
     $option = EmbeddedProductOption::factory()->createOneQuietly([
         'embedded_product_id' => $ep->id,
     ]);
@@ -176,6 +187,71 @@ test('sync ep booking returns 422 when insurance provider does not match embedde
         ])
         ->assertUnprocessable()
         ->assertJson(['success' => false]);
+});
+
+test('sync ep booking does not send failure email when provider is not enabled for sage booking', function () {
+    Mail::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-provider-not-allowed@example.com']);
+    $fixture = createSyncEpBookingFixture();
+
+    InsuranceProvider::query()
+        ->whereKey($fixture['ep']->insurance_provider_id)
+        ->update(['code' => InsuranceProviderEnum::AXA->value]);
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')->never();
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $this->actingAs($user)
+        ->postJson(route('embedded-products.sync-ep-booking'), [
+            'quoteId' => $fixture['carQuote']->id,
+            'modelType' => 'Car',
+            'epTransactionId' => $fixture['transaction']->id,
+            'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+        ])
+        ->assertUnprocessable()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Insurance provider is not enabled for Sage EP booking.',
+        ]);
+
+    Mail::assertNothingSent();
+    expect($fixture['transaction']->fresh()->sage_booking_failure_email_sent_at)->toBeNull();
+});
+
+test('sync ep booking does not send failure email when booking is already scheduled', function () {
+    Mail::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-existing-sage-process@example.com']);
+    $fixture = createSyncEpBookingFixture();
+
+    SageProcess::query()->create([
+        'insurance_provider_id' => $fixture['ep']->insurance_provider_id,
+        'model_type' => $fixture['transaction']::class,
+        'model_id' => $fixture['transaction']->id,
+        'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+    ]);
+
+    $mock = Mockery::mock(SageApiEmbeddedProductService::class);
+    $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')->never();
+    $this->app->instance(SageApiEmbeddedProductService::class, $mock);
+
+    $this->actingAs($user)
+        ->postJson(route('embedded-products.sync-ep-booking'), [
+            'quoteId' => $fixture['carQuote']->id,
+            'modelType' => 'Car',
+            'epTransactionId' => $fixture['transaction']->id,
+            'insuranceProviderId' => $fixture['ep']->insurance_provider_id,
+        ])
+        ->assertUnprocessable()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$fixture['transaction']->code,
+        ]);
+
+    Mail::assertNothingSent();
+    expect($fixture['transaction']->fresh()->sage_booking_failure_email_sent_at)->toBeNull();
 });
 
 test('sync ep booking returns 422 when concurrent lock is held', function () {

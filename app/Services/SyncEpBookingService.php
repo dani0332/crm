@@ -6,9 +6,11 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\SageEnum;
 use App\helpers\SyncEpBookingHelper;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SendsEpFailureEmail;
@@ -24,7 +26,8 @@ class SyncEpBookingService extends BaseService
     private const string UNEXPECTED_ERROR_MESSAGE = 'An unexpected error occurred while retrying Sage booking. Please try again or contact support.';
 
     public function __construct(
-        protected SageApiEmbeddedProductService $sageApiEmbeddedProductService
+        protected SageApiEmbeddedProductService $sageApiEmbeddedProductService,
+        protected SageApiService $sageApiService,
     ) {
         parent::__construct();
     }
@@ -131,7 +134,7 @@ class SyncEpBookingService extends BaseService
     private function findEmbeddedTransaction(int $epTransactionId): ?EmbeddedTransaction
     {
         return EmbeddedTransaction::query()
-            ->with('product.embeddedProduct')
+            ->with('product.embeddedProduct.insuranceProvider')
             ->whereKey($epTransactionId)
             ->first();
     }
@@ -152,8 +155,10 @@ class SyncEpBookingService extends BaseService
             ! $ep => 'Embedded product not found',
             ! SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep) => 'This embedded product is not eligible for Sage booking retry.',
             $this->syncEpBookingInsuranceProviderMismatch($ep, (int) $data['insuranceProviderId']) => 'Insurance provider mismatch.',
+            $this->syncEpBookingInsuranceProviderNotAllowed($ep) => 'Insurance provider is not enabled for Sage EP booking.',
             $quoteTypeId === null => 'Invalid quote type.',
             $this->embeddedTransactionDoesNotMatchQuote($transaction, $quoteTypeId, $quote) => 'Transaction does not match the selected quote.',
+            $this->embeddedTransactionHasActiveSageProcess($transaction) => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$transaction->code,
             default => null,
         };
     }
@@ -163,10 +168,25 @@ class SyncEpBookingService extends BaseService
         return (int) $ep->insurance_provider_id !== $insuranceProviderId;
     }
 
+    private function syncEpBookingInsuranceProviderNotAllowed(EmbeddedProduct $ep): bool
+    {
+        return ! in_array($ep->insuranceProvider?->code, $this->sageApiService->allowedProviderForSageEPBooking(), true);
+    }
+
     private function embeddedTransactionDoesNotMatchQuote(EmbeddedTransaction $transaction, int $quoteTypeId, mixed $quote): bool
     {
         return (int) $transaction->quote_type_id !== $quoteTypeId
             || (int) $transaction->quote_request_id !== (int) $quote->id;
+    }
+
+    private function embeddedTransactionHasActiveSageProcess(EmbeddedTransaction $transaction): bool
+    {
+        $sageProcess = SageProcess::query()
+            ->where('model_type', $transaction::class)
+            ->where('model_id', $transaction->id)
+            ->first();
+
+        return $sageProcess !== null && $sageProcess->status !== SageEnum::SAGE_PROCESS_FAILED_STATUS;
     }
 
     /**
