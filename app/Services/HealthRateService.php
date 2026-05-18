@@ -81,7 +81,12 @@ class HealthRateService extends BaseService
 
         // If not found, add new draft rate sheet
         if (! $draftRatesSheet) {
-            return $this->addRate($data, $planIds);
+            $newRate = $this->addRate($data, $planIds);
+
+            // If it's active plan, link rate to existing draft plan it exists
+            $this->linkRateToExistingDraftPlan($data['health_plan_id'], $newRate);
+
+            return $newRate;
         }
 
         // Else add rate to existing draft rate sheet
@@ -171,6 +176,31 @@ class HealthRateService extends BaseService
         });
 
         return $healthRate;
+    }
+
+    private function linkRateToExistingDraftPlan(int $currentPlanId, HealthRate $newRate): void
+    {
+        // Check if draft plan exists
+        $draftPlan = HealthPlan::where('parent_id', $currentPlanId)
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if (! $draftPlan) {
+            return;
+        }
+
+        // Link rate sheet and rate to draft plan
+        DB::table('health_rates_control')
+            ->where('id', $newRate->health_rate_control_id)
+            ->update([
+                'health_plan_id' => $draftPlan->id,
+            ]);
+
+        DB::table('health_rates')
+            ->where('id', $newRate->id)
+            ->update([
+                'health_plan_id' => $draftPlan->id,
+            ]);
     }
 
     private function deriveVersion(array $planIds): float
