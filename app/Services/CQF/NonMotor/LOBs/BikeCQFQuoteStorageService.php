@@ -16,6 +16,7 @@ use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
@@ -139,6 +140,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data['personal_quote_id'] = $newQuote->id;
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
+        $data = array_intersect_key($data, array_flip(Schema::getColumnListing((new BikeQuote)->getTable())));
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
@@ -152,7 +154,14 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
      */
     private function remapCarColumnsToBike(array $data): array
     {
-        foreach (['car_make_id' => 'make_id', 'car_model_id' => 'model_id', 'car_value' => 'bike_value'] as $from => $to) {
+        foreach ([
+            'car_make_id' => 'make_id',
+            'car_model_id' => 'model_id',
+            'car_model_detail_id' => 'model_detail_id',
+            'car_value' => 'bike_value',
+            'car_value_tier' => 'bike_value_tier',
+            'car_type_insurance_id' => 'insurance_type_id',
+        ] as $from => $to) {
             if (array_key_exists($from, $data)) {
                 $data[$to] = $data[$from];
                 unset($data[$from]);

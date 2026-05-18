@@ -404,7 +404,7 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(SavingsQuote::class);
     }
 
-    public function businessQuote()
+    public function businessQuote(): BelongsTo
     {
         return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id');
     }

@@ -101,6 +101,13 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
         $renewalsUploadLeadsId = $this->renewalsUploadLeadsId;
         $batchName = $this->lobBatchName();
+
+        LoggerService::info(self::class.' - Dispatched quote batch for LOB', [
+            'quoteType' => $this->quoteType->value,
+            'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
+            'quoteJobCount' => count($quoteJobs),
+        ]);
+
         Bus::batch($quoteJobs)
             ->name($batchName)
             ->finally(function () use ($renewalsUploadLeadsId) {
@@ -109,12 +116,6 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             ->allowFailures()
             ->onQueue('default')
             ->dispatch();
-
-        LoggerService::info(self::class.' - Dispatched quote batch for LOB', [
-            'quoteType' => $this->quoteType->value,
-            'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
-            'quoteJobCount' => count($quoteJobs),
-        ]);
     }
 
     public function failed(Throwable $exception): void
