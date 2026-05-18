@@ -406,7 +406,12 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function businessQuote(): BelongsTo
     {
-        return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypes::BUSINESS->id());
+        return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id')
+            ->whereExists(fn ($q) => $q
+                ->from('personal_quotes')
+                ->whereColumn('personal_quotes.quote_id', 'business_quote_request.id')
+                ->where('personal_quotes.quote_type_id', QuoteTypes::BUSINESS->id())
+            );
     }
 
     public function age(): Attribute
