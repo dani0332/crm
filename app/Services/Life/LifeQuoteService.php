@@ -212,7 +212,7 @@ class LifeQuoteService extends BaseService
                 }
             })
             ->when(
-                request()->input('segment_filter') !== QuoteSegmentEnum::SIC_REVIVAL->value,
+                $this->shouldExcludeRevivalSourcesForSegmentFilter(request()->input('segment_filter')),
                 function ($query): void {
                     $query->where(function ($inner): void {
                         $inner->whereNotIn('personal_quotes.source', LifeRevivalService::REVIVAL_SOURCES)
@@ -1090,5 +1090,13 @@ class LifeQuoteService extends BaseService
             $sendUpdateLogs,
             $sendUpdateEnum,
         ];
+    }
+
+    private function shouldExcludeRevivalSourcesForSegmentFilter(?string $segmentFilter): bool
+    {
+        return ! in_array($segmentFilter, [
+            QuoteSegmentEnum::ALL->value,
+            QuoteSegmentEnum::SIC_REVIVAL->value,
+        ], true);
     }
 }

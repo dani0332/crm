@@ -12,6 +12,7 @@ use App\Http\Controllers\API\V1\QuoteDocumentController;
 use App\Http\Controllers\FtcEmailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\AlfredChatController;
+use App\Http\Controllers\V2\AMLController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +39,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
+    Route::post('/imcrm/quotes/automate-aml-screening', [AMLController::class, 'automateQuoteAmlScreening'])->name('api.imcrm.automate-aml-screening');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
     Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
     Route::post('/imcrm/trigger-conversion-optimization-scheduled-export', [ApiController::class, 'triggerConversionOptimizationScheduledExport'])

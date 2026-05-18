@@ -6,6 +6,7 @@ use App\Models\PersonalQuote;
 use App\Services\HttpRequestService;
 use App\Services\Quotes\SavingsQuoteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Tests\Helpers\Savings\SavingsQuoteMockHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -159,6 +160,31 @@ test('getting plan details extracts eligibility values correctly', function () {
 
     expect($result['data']['minimumInvestment'])->toBe('10000')
         ->and($result['data']['policyTerm'])->toBe('15');
+});
+
+test('getting plan details includes fund details documents from API plan', function () {
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+    $planId = 1;
+    $mockPlan = SavingsQuoteMockHelper::createMockPlanData($planId, [
+        'fundDetails' => [
+            (object) ['id' => 1, 'text' => 'Fund factsheet', 'link' => 'https://example.com/fund.pdf'],
+        ],
+    ]);
+
+    $mockHttpService = Mockery::mock(HttpRequestService::class);
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
+    $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [$mockPlan]);
+    $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
+    $this->app->instance(SavingsQuoteService::class, $mockService);
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->getPlanDetails($quote->uuid, $planId);
+
+    expect($result['error'])->toBeFalse()
+        ->and($result['data']['fundDetails'])->toHaveCount(1)
+        ->and($result['data']['fundDetails'][0]->text)->toBe('Fund factsheet')
+        ->and($result['data']['fundDetails'][0]->link)->toBe('https://example.com/fund.pdf');
 });
 
 test('getting plan details returns 404 for non-existent plan', function () {
@@ -352,4 +378,67 @@ test('handles missing required fields in plan update request', function () {
 
     $response->assertStatus(302)
         ->assertSessionHasErrors(['quote_uuid', 'plan_id', 'provider_name']);
+});
+
+test('fetchSavingsProviderPlan returns KEN JSON on success via KenService', function () {
+    Http::fake([
+        'http://api/fetch-savings-provider-plan' => Http::response(['lumpSumPayout' => 50000], 200),
+    ]);
+
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+
+    $payload = [
+        'quoteUID' => $quote->uuid,
+        'planId' => 1,
+        'providerCode' => 'TEST',
+        'isIndividualLoading' => true,
+        'lang' => 'en',
+        'planData' => [
+            'investmentAmount' => 1000,
+            'currency' => 'AED',
+            'paymentTerm' => 1,
+            'investmentFrequency' => 'Regular',
+        ],
+    ];
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->fetchSavingsProviderPlan($payload);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['data'])->toMatchArray(['lumpSumPayout' => 50000]);
+
+    Http::assertSent(function ($request) {
+        return $request->url() === 'http://api/fetch-savings-provider-plan'
+            && $request->hasHeader('Authorization')
+            && $request->hasHeader('x-api-token');
+    });
+});
+
+test('fetchSavingsProviderPlan maps KEN error response without success', function () {
+    Http::fake([
+        'http://api/fetch-savings-provider-plan' => Http::response(['message' => 'Invalid tenure'], 422),
+    ]);
+
+    $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
+
+    $payload = [
+        'quoteUID' => $quote->uuid,
+        'planId' => 1,
+        'providerCode' => 'TEST',
+        'isIndividualLoading' => true,
+        'lang' => 'en',
+        'planData' => [
+            'investmentAmount' => 1000,
+            'currency' => 'AED',
+            'paymentTerm' => 1,
+            'investmentFrequency' => 'Regular',
+        ],
+    ];
+
+    $service = $this->app->make(SavingsQuoteService::class);
+    $result = $service->fetchSavingsProviderPlan($payload);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['status'])->toBe(422)
+        ->and($result['message'])->toBe('Invalid tenure');
 });

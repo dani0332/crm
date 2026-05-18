@@ -563,4 +563,11 @@ enum QuoteTypes: string
         };
     }
 
+    public static function quoteJourneyOnCustomerDocumentUploadTypes(): array
+    {
+        return [
+            self::SAVINGS,
+        ];
+    }
+
 }

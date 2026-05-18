@@ -253,6 +253,7 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+    public const BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL = 'BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL';
 
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
@@ -344,6 +345,9 @@ final class ApplicationStorageEnums extends Enum
 
     /* Bird EP Workflow URL */
     public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
+
+    /* OCR - Eligible Plan Codes (comma-separated) */
+    public const OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES = 'OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES';
 
     /* EP ECB Policy Configuration */
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';

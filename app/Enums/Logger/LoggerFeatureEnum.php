@@ -12,6 +12,7 @@ enum LoggerFeatureEnum: string
     case OCR = 'ocr';
     case PCP_CLIENT = 'private-client';
     case AML_SCREENING = 'aml-screening';
+    case AML_AUTOMATION_BY_QUOTE_UUID = 'aml-automation-by-quote-uuid';
     case CREATE_PAYMENT = 'create-payment';
     case UPDATE_PAYMENT = 'update-payment';
     case DELETE_PARENT_PAYMENT = 'delete-parent-payment';
