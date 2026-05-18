@@ -34,6 +34,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -796,7 +797,18 @@ class AdvisorConversionReportService extends BaseService
         $lob = $filters['lob'] ?? quoteTypeCode::Car;
 
         if (! userHasProduct($lob)) {
-            return [];
+            $perPage = 10;
+
+            return new LengthAwarePaginator(
+                [],
+                0,
+                $perPage,
+                LengthAwarePaginator::resolveCurrentPage(),
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'query' => request()->query(),
+                ]
+            );
         }
 
         if ($lob === quoteTypeCode::Car) {
@@ -864,8 +876,8 @@ class AdvisorConversionReportService extends BaseService
 
     private function getPersonalQuoteAssignedLeadsQuery($lob)
     {
-        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
-        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+        $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lobFiltered)->first();
 
         $query = PersonalQuote::query()
             ->select(
