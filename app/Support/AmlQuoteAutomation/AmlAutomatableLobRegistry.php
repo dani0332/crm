@@ -39,14 +39,13 @@ final class AmlAutomatableLobRegistry
     /**
      * Savings + OIC: policy issuance API status is not expected before AML automation.
      * For non-OIC insurers, keep the issuance status check in place.
+     *
+     * Callers must ensure {@see PersonalQuote::$insuranceProvider} is loaded when the quote is a {@see PersonalQuote}
+     * (e.g. {@see Model::loadMissing()}), so provider code can be read without an extra query here.
      */
     public static function skipsApiIssuanceStatusCheckForAutomatedAml(QuoteTypes $quoteType, Model $quoteRequest): bool
     {
         if ($quoteType === QuoteTypes::SAVINGS && $quoteRequest instanceof PersonalQuote) {
-            // Provider can be missing in early stages, so we load relation defensively.
-            // Only OIC Savings skips the issuance status precondition for AML automation.
-            $quoteRequest->loadMissing('insuranceProvider');
-
             return $quoteRequest->insuranceProvider?->code === InsuranceProvidersEnum::OIC;
         }
 
