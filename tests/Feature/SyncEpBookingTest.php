@@ -13,7 +13,6 @@ use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Services\SageApiEmbeddedProductService;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Helpers\TestDataSeeder;
@@ -56,7 +55,6 @@ function createSyncEpBookingFixture(array $carQuoteOverrides = [], array $transa
 
 function seedEpFailureEmailApplicationStorage(): void
 {
-    $db = DB::connection('sqlite');
     $rows = [
         [ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM, 'alfred@testnotify.alfred.ae'],
         [ApplicationStorageEnums::EP_FAILURE_EMAIL_TO, 'production.approval.team@yopmail.com'],
@@ -64,7 +62,7 @@ function seedEpFailureEmailApplicationStorage(): void
         [ApplicationStorageEnums::EP_FAILURE_EMAIL_CC, 'diya.lekhwani@myalfred.com'],
     ];
     foreach ($rows as [$key, $value]) {
-        $db->table('application_storage')->updateOrInsert(
+        ApplicationStorage::query()->updateOrInsert(
             ['key_name' => $key],
             [
                 'key_name' => $key,
