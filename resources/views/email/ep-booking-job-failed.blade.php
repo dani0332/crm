@@ -1,7 +1,11 @@
 <strong>Dear Team,</strong>
 <br><br>
 
-We would like to inform you that the sage booking of Embedded Product - {{ $epProductName ?? 'Unknown' }} has failed for RefID: {{ $refId ?? 'Unknown' }}.
+@if($isSageBooking ?? false)
+We would like to inform you that the Sage booking of Embedded Product - {{ $epProductName ?? 'Unknown' }} has failed for RefID: {{ $refId ?? 'Unknown' }}.
+@else
+We would like to inform you that Embedded Product - {{ $epProductName ?? 'Unknown' }} has failed for RefID: {{ $refId ?? 'Unknown' }}.
+@endif
 <br><br>
 
 <strong>Action Required:</strong> Please review the lead and take the necessary steps to resolve the issue.<br>

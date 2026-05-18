@@ -123,6 +123,7 @@ class EpFailureNotification extends Mailable
             'refId' => $refId,
             'imcrmLink' => $this->generateImcrmLink(),
             'epProductName' => $epProductName,
+            'isSageBooking' => $this->isSageBooking,
         ];
     }
 
