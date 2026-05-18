@@ -18,7 +18,7 @@ class QuoteStatusService
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $notes = null)
     {
         info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
-        $AMLService = new AMLService;
+        $AMLService = app(AMLService::class);
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
         $updateQuote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'uuid');
