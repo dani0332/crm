@@ -23,6 +23,7 @@ use App\Exports\AmlCftReportExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\AutomateQuoteAmlScreeningRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
@@ -221,7 +222,7 @@ class AMLController extends Controller
         LoggerService::info('IM AML Screening Process Started');
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
-        $isAutomation = $AMLCheckRequest->is_automation ?? false;
+        $isAutomation = $AMLCheckRequest->isTrustedInternalAutomation();
         $processbyUser = $isAutomation ? $systemUser : FacadesAuth::user();
 
         if ($updateQuote) {
@@ -863,5 +864,24 @@ class AMLController extends Controller
                 'message' => 'Unable to toggle policy issuance automation, Please try again later.',
             ], 500);
         }
+    }
+
+    /**
+     * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
+     */
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+            $validated['quoteUuid'],
+            $request->validatedQuoteType(),
+        );
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'data' => $result['data'] ?? null,
+        ], $result['http_status']);
     }
 }

@@ -24,12 +24,19 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LifeRevivalService
 {
     use GenericQueriesAllLobs;
+
+    public const REVIVAL_SOURCES = [
+        LeadSourceEnum::REVIVAL,
+        LeadSourceEnum::REVIVAL_REPLIED,
+        LeadSourceEnum::REVIVAL_PAID,
+    ];
 
     public function __construct(
         protected CRUDService $crudService,
@@ -38,11 +45,52 @@ class LifeRevivalService
 
     public function getPaginatedRevivalQuotes(): Paginator
     {
-        $request = request();
+        $query = $this->buildRevivalQuotesQuery();
+
+        if (Auth::user()->hasRole(RolesEnum::LifeAdvisor)) {
+            $query->where('personal_quotes.advisor_id', Auth::id());
+        }
+
+        $query->orderBy('personal_quotes.created_at', 'desc');
+
+        return $query->simplePaginate()->withQueryString();
+    }
+
+    public function getExportQuery(array $requestParams = []): Builder
+    {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = PersonalQuote::query()
             ->byQuoteTypeCode(QuoteTypes::LIFE->value)
-            ->where('personal_quotes.source', LeadSourceEnum::REVIVAL)
+            ->whereIn('personal_quotes.source', self::REVIVAL_SOURCES)
+            ->with(['advisor', 'quoteStatus', 'nationality', 'quoteDetail.lostReason', 'customer', 'lifeQuote.sumInsuredCurrency', 'lifeQuote.policySumAssuredCurrency'])
+            ->filter(paginate: false)
+            ->withFakeLeadCriteria();
+
+        $this->applyRevivalRequestFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        if (Auth::check() && Auth::user()->hasRole(RolesEnum::LifeAdvisor)) {
+            $query->where('personal_quotes.advisor_id', Auth::id());
+        }
+
+        return $query->orderBy('personal_quotes.created_at', 'desc');
+    }
+
+    /**
+     * @return Builder<PersonalQuote>
+     */
+    private function buildRevivalQuotesQuery(): Builder
+    {
+        $query = PersonalQuote::query()
+            ->byQuoteTypeCode(QuoteTypes::LIFE->value)
+            ->whereIn('personal_quotes.source', self::REVIVAL_SOURCES)
             ->with([
                 'paymentStatus',
                 'quoteStatus',
@@ -59,6 +107,27 @@ class LifeRevivalService
             ])
             ->filter(false)
             ->withFakeLeadCriteria();
+
+        $this->applyRevivalRequestFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        return $query;
+    }
+
+    private function applyRevivalRequestFilters(Builder $query): void
+    {
+        $request = request();
+
+        if ($request->filled('lead_source')) {
+            $leadSources = array_values(array_intersect(
+                (array) $request->lead_source,
+                self::REVIVAL_SOURCES
+            ));
+
+            if ($leadSources !== []) {
+                $query->whereIn('personal_quotes.source', $leadSources);
+            }
+        }
 
         if ($request->filled('advisors')) {
             $query->whereIn('personal_quotes.advisor_id', (array) $request->advisors);
@@ -206,16 +275,6 @@ class LifeRevivalService
                 $q->whereBetween('personal_quotes.created_at', [$start, $end]);
             }
         );
-
-        $this->adjustQueryByDateFilters($query, 'personal_quotes');
-
-        if (Auth::user()->hasRole(RolesEnum::LifeAdvisor)) {
-            $query->where('personal_quotes.advisor_id', Auth::id());
-        }
-
-        $query->orderBy('personal_quotes.created_at', 'desc');
-
-        return $query->simplePaginate()->withQueryString();
     }
 
     /**
@@ -238,6 +297,10 @@ class LifeRevivalService
             'insuranceTenures' => LifeInsuranceTenure::query()->select(['id', 'text'])->get(),
             'insurerAmlStatuses' => $insurerAmlStatuses,
             'currencies' => CurrencyType::query()->withActive()->select(['id', 'text'])->get(),
+            'leadSources' => collect(self::REVIVAL_SOURCES)->map(fn (string $source) => [
+                'value' => $source,
+                'label' => str_replace('_', ' ', $source),
+            ])->values()->all(),
         ];
     }
 

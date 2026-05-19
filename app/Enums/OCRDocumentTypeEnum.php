@@ -36,6 +36,7 @@ enum OCRDocumentTypeEnum: string
             'MEEID' => self::ID_CARD,
             'MEPP' => self::PASSPORT,
             'MEV' => self::VISA,
+            'PP_SAV' => self::PASSPORT,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
 
             'PS' => self::POLICY_SCHEDULE,
@@ -93,6 +94,7 @@ enum OCRDocumentTypeEnum: string
             ],
             QuoteTypes::SAVINGS => [
                 self::ID_CARD,
+                self::PASSPORT,
             ],
             QuoteTypes::HEALTH => [
                 self::ID_CARD,
@@ -119,6 +121,12 @@ enum OCRDocumentTypeEnum: string
         }
 
         return $result;
+    }
+
+    public static function getPlanValidation()
+    {
+        return [
+        ];
     }
 
 }
