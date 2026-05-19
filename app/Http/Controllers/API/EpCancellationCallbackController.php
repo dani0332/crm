@@ -15,6 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EpCancellationCallbackController extends Controller
 {
+    public function __construct(
+        private readonly SageApiEmbeddedProductService $sageApiEmbeddedProductService,
+    ) {}
+
     public function __invoke(EpCancellationCallbackRequest $request): JsonResponse
     {
         $etId = (int) $request->validated('etId');
@@ -27,7 +31,7 @@ class EpCancellationCallbackController extends Controller
             'quoteTypeId' => $quoteTypeId,
         ]);
 
-        $result = app(SageApiEmbeddedProductService::class)->scheduleReversalOfEmbeddedProduct([
+        $result = $this->sageApiEmbeddedProductService->scheduleReversalOfEmbeddedProduct([
             'etId' => $etId,
             'quoteId' => $quoteId,
             'quoteTypeId' => $quoteTypeId,
