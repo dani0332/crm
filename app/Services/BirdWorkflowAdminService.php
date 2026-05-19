@@ -536,10 +536,12 @@ class BirdWorkflowAdminService extends BaseService
      */
     private function resolveRunError(array $run): ?string
     {
-        return $run['error'] ?? $run['errorMessage'] ?? $run['error_message']
+        $error = $run['error'] ?? null;
+
+        return (is_string($error) ? $error : null)
+            ?? $run['errorMessage'] ?? $run['error_message']
             ?? $run['failure_reason'] ?? $run['failureReason']
-            ?? (isset($run['error']['message']) ? $run['error']['message'] : null)
-            ?? null;
+            ?? (is_array($error) ? ($error['message'] ?? null) : null);
     }
 
     /**
