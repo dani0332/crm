@@ -170,7 +170,6 @@ class AuditableController extends Controller
             // SortDirection enum which cannot be BSON-serialized for Mongo find sort options.
             $query->where('quote_uuid', $quoteUID)
                 ->orderBy('created_at', 'desc');
-
             if ($insuranceProvider) {
                 $query->where('provider_id', $insuranceProvider);
             }
