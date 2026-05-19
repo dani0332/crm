@@ -70,7 +70,10 @@ function getData(id = null) {
         nationalityPoolConfigurations.value?.canonical_nationality_codes;
 
       selectedNationalities.value = canonicalCodes
-        ? canonicalCodes.split(',').map(code => code.trim()).filter(Boolean)
+        ? canonicalCodes
+            .split(',')
+            .map(code => code.trim())
+            .filter(Boolean)
         : [];
     })
     .catch(error => {
@@ -169,7 +172,7 @@ function validateForm() {
     });
     return false;
   }
-  
+
   return true;
 }
 
