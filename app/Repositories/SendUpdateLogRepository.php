@@ -13,11 +13,10 @@ use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -176,7 +175,6 @@ class SendUpdateLogRepository extends BaseRepository
             if (! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER])) {
                 $status = SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS;
                 info('Send Update uuid -> '.$sendUpdate->uuid.' - Status changing to -> '.$status);
-                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS);
             }
 
             $result = $sendUpdate->update([
@@ -506,13 +504,10 @@ class SendUpdateLogRepository extends BaseRepository
         LoggerService::info('fn:fetchCancelSendUpdate - SendUpdateLogRepository');
 
         try {
-            $oldStatus = $sendUpdate->status;
-
             $sendUpdate->update([
                 'cancel_reason' => $cancelReason,
                 'status' => SendUpdateLogStatusEnum::REQUEST_CANCELLED,
             ]);
-            app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $oldStatus, SendUpdateLogStatusEnum::REQUEST_CANCELLED);
 
             LoggerService::info('SendUpdateLog cancelled successfully');
 
@@ -523,7 +518,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $modelClass::where('uuid', $sendUpdate->quote_uuid)->firstOrFail();
                 $previousStatusId = $quote->quote_status_id;
 
-                $leadHistoryLogs = app(CRUDService::class)->getLeadHistoryLogs($sendUpdate->quote_type_id, $quote->id);
+                $leadHistoryLogs = app(QuoteStatusLogService::class)->getQuoteStatusLogs($sendUpdate->quote_type_id, $quote->id);
                 $beforeEndorsementStatus = $leadHistoryLogs->skip(1)->first();
 
                 if (! $beforeEndorsementStatus) {
@@ -533,16 +528,6 @@ class SendUpdateLogRepository extends BaseRepository
                 $beforeEndorsementStatusId = $beforeEndorsementStatus->currentQuoteStatus->id;
 
                 $quote->update(['quote_status_id' => $beforeEndorsementStatusId]);
-
-                QuoteStatusLog::create([
-                    'quote_type_id' => $sendUpdate->quote_type_id,
-                    'quote_request_id' => $quote->id,
-                    'current_quote_status_id' => $beforeEndorsementStatusId,
-                    'previous_quote_status_id' => $previousStatusId,
-                    'created_by' => auth()->user()->id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
 
                 LoggerService::info('Quote status updated successfully', extra: [
                     'quoteUUID' => $quote->uuid,
@@ -570,24 +555,9 @@ class SendUpdateLogRepository extends BaseRepository
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
             if ($quote && $quote?->policy_booking_date) {
-                $previousStatusId = $quote->quote_status_id;
-
                 $quote->update([
                     'quote_status_id' => $quoteStatusId,
                     'quote_status_date' => now(),
-                ]);
-
-                QuoteStatusLog::create([
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quote->id,
-                    'current_quote_status_id' => $quoteStatusId,
-                    'previous_quote_status_id' => $previousStatusId,
-                    'created_by' => auth()->user()->id,
-                ]);
-
-                LoggerService::info('Quote status updated successfully', extra: [
-                    'previousStatusId' => $previousStatusId,
-                    'newStatusId' => $quoteStatusId,
                 ]);
             }
         } catch (\Exception $ex) {

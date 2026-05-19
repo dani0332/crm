@@ -645,6 +645,12 @@ class CustomerVerificationService
                     $this->processMulkiyaVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
                     break;
                 default:
+                    LoggerService::warning('Customer verification no supported document type', extra: [
+                        'quote_type_id' => $this->getQuoteTypeId($quote),
+                        'quote_uuid' => $quote->uuid,
+                        'quote_class' => get_class($quote),
+                        'document_type' => $this->documentTypeCode,
+                    ]);
                     break;
             }
         } else {

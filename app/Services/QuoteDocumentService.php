@@ -343,8 +343,19 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$quoteUUID);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
+            $this->updateQuoteJourney($quote);
+
+            // Dispatch OCR job
+            if (empty($data['source'])) {
+                LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+                $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
+            } else {
+                LoggerService::info(self::class.' - Skipping OCR job - Quote UUID: '.$data['quote_uuid'].' because source is '.$data['source'], [
+                    'source' => ! empty($data['source']) ? $data['source'] : null,
+                    'document_type_code' => $documentType->code,
+                    'doc_uuid' => $docUuid,
+                ]);
+            }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 LoggerService::info('Dispatching WatermarkDocumentsJob');
@@ -1401,6 +1412,50 @@ class QuoteDocumentService extends BaseService
         }
 
         return $grouped;
+    }
+
+    public function updateQuoteJourney($quote): void
+    {
+        try {
+            $quoteType = QuoteTypes::getName($quote->quote_type_id);
+            if ($quoteType === null || ! in_array($quoteType, QuoteTypes::quoteJourneyOnCustomerDocumentUploadTypes(), true)) {
+                return;
+            }
+
+            $requiredDocumentTypes = $this->getQuoteDocumentsToReceive(
+                $quote->quote_type_id,
+                $quote->registration_type ?? null,
+                $quote->vehicle_use ?? null
+            );
+
+            $requiredCodes = $requiredDocumentTypes->pluck('code')->unique()->values()->all();
+            if ($requiredCodes === []) {
+                return;
+            }
+
+            $distinctPresent = (int) $quote->documents()
+                ->whereIn('document_type_code', $requiredCodes)
+                ->selectRaw('COUNT(DISTINCT document_type_code) as journey_distinct_types')
+                ->value('journey_distinct_types');
+
+            LoggerService::info('Updating Quote Journey', [
+                'required_documents' => $distinctPresent !== count($requiredCodes) ? 'not completed' : 'completed',
+            ]);
+
+            if ($distinctPresent !== count($requiredCodes)) {
+                return;
+            }
+
+            app(QuoteJourneyService::class)->advanceAfterRequiredCustomerDocuments($quote->uuid, (int) $quote->quote_type_id);
+        } catch (Throwable $e) {
+            LoggerService::error('QuoteDocumentService - updateQuoteJourney failed', [
+                'quote_uuid' => $quote->uuid ?? null,
+                'quote_type_id' => $quote->quote_type_id ?? null,
+            ], exception: $e);
+
+            // swallow exception to avoid blocking main upload flow (OCR, watermark dispatch)
+            return;
+        }
     }
 
 }

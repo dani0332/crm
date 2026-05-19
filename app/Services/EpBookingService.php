@@ -279,7 +279,7 @@ class EpBookingService extends BaseService
         $sageApiService = (new SageApiService);
 
         if ($this->quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         }
 
         $request = new \stdClass;
@@ -293,7 +293,7 @@ class EpBookingService extends BaseService
         $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->quote);
 
         if (! $createSageProcessResponse['status']) {
-            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
         }
 
         return $createSageProcessResponse;

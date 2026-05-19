@@ -32,7 +32,6 @@ use App\Models\Customer;
 use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
@@ -795,7 +794,7 @@ class SageApiService
 
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
 
-            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, auth()->id());
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked);
 
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
 
@@ -849,7 +848,7 @@ class SageApiService
         $this->createSageProcess($quote, $sageRequest, $request);
 
         if ($quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-            $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
+            $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         }
 
         $this->scheduleSageProcesses($sageRequest->insurerID);
@@ -889,7 +888,6 @@ class SageApiService
     {
         [$sageRequest, $quote, $request] = $sageRequestDataArray;
         $quoteTypeId = $sageRequest->quoteTypeId;
-        $userId = $sageRequest->userId;
 
         $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
 
@@ -1011,7 +1009,7 @@ class SageApiService
         }
 
         LoggerService::info('Marking quote status as Policy Booked');
-        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
+        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked);
 
         LoggerService::info('Quote status updated successfully', extra: [
             'QuoteStatusId' => $quote->quote_status_id,
@@ -1908,9 +1906,12 @@ class SageApiService
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     $dueDate = $bookingDateFormatted;
                 } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1
-                        ? $bookingDateFormatted
-                        : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+
+                    if ($paymentSplit['sr_no'] == 1) {
+                        $dueDate = $bookingDateFormatted;
+                    } else {
+                        $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                    }
                 }
 
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1929,7 +1930,11 @@ class SageApiService
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        if ($paymentSplit['sr_no'] == 1) {
+                            $dueDate = $bookingDateFormatted;
+                        } else {
+                            $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                        }
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -2408,7 +2413,11 @@ class SageApiService
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                 $dueDate = $bookingDateFormatted;
                             } else {
-                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                if ($paymentSplits[$key]['sr_no'] == 1) {
+                                    $dueDate = $bookingDateFormatted;
+                                } else {
+                                    $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplits[$key]['due_date'], $bookingDateFormatted);
+                                }
                             }
 
                             $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
@@ -3305,49 +3314,25 @@ class SageApiService
         LoggerService::info($logFor.': updateSageProcessStatus - ID: '.$sageProcess->id.' - Status: '.$status);
     }
 
-    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId, $userId)
+    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId)
     {
-        $latestQuoteStatusLog = QuoteStatusLog::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ])->latest()->first();
-
         unset($quote->userId);
 
-        $previousQuoteStatusId = $quote->quote_status_id;
-        $newQuoteStatusId = $quoteStatusId;
-
         $quoteData = [
-            'quote_status_id' => $newQuoteStatusId,
+            'quote_status_id' => $quoteStatusId,
             'quote_status_date' => now(),
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
             $quoteData['stale_at'] = null; // TODO:: NGI:: need to ask ali or bilal about stale_at should we pass device here in above in_array condition ?
         }
-        if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
+        if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
             $quoteData['policy_booking_date'] = Carbon::now();
         }
 
         $quote->update($quoteData);
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Status: '.$newQuoteStatusId);
-
-        $quoteLogData = [
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-            'current_quote_status_id' => $newQuoteStatusId,
-            'previous_quote_status_id' => $previousQuoteStatusId,
-            'created_by' => $userId,
-        ];
-
-        $isQuoteLogSameAsBefore = $latestQuoteStatusLog?->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog?->previous_quote_status_id == $previousQuoteStatusId;
-        // check if the last quote log status is same as new status then update the same log
-        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
-            $latestQuoteStatusLog->update($quoteLogData);
-        } else {
-            QuoteStatusLog::create($quoteLogData);
-        }
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Status: '.$quoteStatusId);
 
         if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Start updateStatusesAndAllocate - Quote Status ID: '.$quote->quote_status_id);
@@ -4578,5 +4563,19 @@ class SageApiService
     public function allowedProviderForSageEPBooking()
     {
         return [InsuranceProviderEnum::OIC->value, InsuranceProviderEnum::NGI->value];
+    }
+
+    public function resolveInstallmentDueDateAgainstBookingDate(string|int $rawInstallmentDueDate, string $bookingDate): string
+    {
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $installmentDueDate = date($dateFormat, strtotime((string) $rawInstallmentDueDate));
+        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+        $resolvedBookingDate = Carbon::parse($bookingDate)->startOfDay();
+
+        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+            return $resolvedBookingDate->format($dateFormat);
+        }
+
+        return $resolvedDueDate->format($dateFormat);
     }
 }
