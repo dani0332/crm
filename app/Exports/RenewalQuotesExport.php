@@ -96,6 +96,8 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
 
         if ($this->exportType !== QuoteTypeShortCode::CAR) {
             $relations[] = 'payments';
+        } else {
+            $relations[] = 'previousQuote.payments';
         }
 
         return $this->query->with($relations)->get();
