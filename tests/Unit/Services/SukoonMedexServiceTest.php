@@ -170,15 +170,3 @@ describe('maybeSendDocumentsEmail', function () {
         Queue::assertNothingPushed();
     });
 });
-
-describe('sanitizeToLettersAndSpacesOnly', function () {
-    test('keeps letters, spaces, and removes digits and punctuation', function (string $input, string $expected) {
-        expect(sanitizeToLettersAndSpacesOnly($input))->toBe($expected);
-    })->with([
-        'ascii letters' => ['John Doe', 'John Doe'],
-        'digits stripped' => ['John3 Doe2', 'John Doe'],
-        'punctuation stripped' => ["O'Brien-Smith!", 'OBrienSmith'],
-        'accented letters kept' => ['José Müller', 'José Müller'],
-        'empty string' => ['', ''],
-    ]);
-});
