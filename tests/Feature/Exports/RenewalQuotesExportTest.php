@@ -5,7 +5,9 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -136,4 +138,46 @@ it('places Previous Commission before Previous advisor in headings', function ()
     $advisorIndex = array_search('Previous advisor', $headings);
 
     expect($commissionIndex)->toBeLessThan($advisorIndex);
+});
+
+it('eager loads customer and payments for non-CAR export types', function () {
+    $loadedRelations = [];
+
+    $model = new PersonalQuote;
+
+    $query = mock(Builder::class);
+    $query->shouldReceive('getModel')->andReturn($model);
+    $query->shouldReceive('with')->once()->withArgs(function (array $relations) use (&$loadedRelations) {
+        $loadedRelations = $relations;
+
+        return true;
+    })->andReturnSelf();
+    $query->shouldReceive('get')->andReturn(new Collection);
+
+    (new RenewalQuotesExport($query, 'HEALTH'))->collection();
+
+    expect($loadedRelations)
+        ->toContain('customer')
+        ->toContain('payments');
+});
+
+it('eager loads customer but not payments for CAR export type', function () {
+    $loadedRelations = [];
+
+    $model = new PersonalQuote;
+
+    $query = mock(Builder::class);
+    $query->shouldReceive('getModel')->andReturn($model);
+    $query->shouldReceive('with')->once()->withArgs(function (array $relations) use (&$loadedRelations) {
+        $loadedRelations = $relations;
+
+        return true;
+    })->andReturnSelf();
+    $query->shouldReceive('get')->andReturn(new Collection);
+
+    (new RenewalQuotesExport($query, 'CAR'))->collection();
+
+    expect($loadedRelations)
+        ->toContain('customer')
+        ->not->toContain('payments');
 });

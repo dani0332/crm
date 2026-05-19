@@ -54,10 +54,14 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         $startDate = Carbon::parse($this->startDate);
         $quoteJobs = [];
 
-        $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $startDate)
-            ->where('quote_type_id', $quoteTypeId)
-            ->whereNotIn('quote_status_id', $filter['quote_status'])
-            ->whereIn('payment_status_id', $filter['payment_status']);
+        $personalQuery = NonMotorCQFRegistry::applyPaymentStatusFilter(
+            PersonalQuote::query()
+                ->whereDate('policy_expiry_date', $startDate)
+                ->where('quote_type_id', $quoteTypeId)
+                ->whereNotIn('quote_status_id', $filter['quote_status']),
+            $this->quoteType,
+            $filter
+        );
 
         $personalQuery->chunkById(500, function ($quotes) use (&$quoteJobs): void {
             foreach ($quotes as $quote) {

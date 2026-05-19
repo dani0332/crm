@@ -29,6 +29,8 @@ use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFValidationService;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Registry of LOB-specific CQF services for Non-motor renewals (PersonalQuote-based LOBs).
@@ -149,5 +151,28 @@ class NonMotorCQFRegistry
                 PaymentStatusEnum::CREDIT_APPROVED,
             ],
         ];
+    }
+
+    /**
+     * Apply the correct payment-status eligibility filter for the given LOB.
+     *
+     * For BUSINESS, payment status lives on `business_quote_request` (joined via
+     * `business_quote_request.id = personal_quotes.quote_id`), not on `personal_quotes`.
+     * All other LOBs store payment status directly on `personal_quotes`.
+     *
+     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
+     */
+    public static function applyPaymentStatusFilter(Builder $query, QuoteTypes $quoteType, array $filter): Builder
+    {
+        if ($quoteType === QuoteTypes::BUSINESS) {
+            return $query->whereExists(fn (QueryBuilder $sub) => $sub
+                ->selectRaw('1')
+                ->from('business_quote_request')
+                ->whereColumn('business_quote_request.id', 'personal_quotes.quote_id')
+                ->whereIn('business_quote_request.payment_status_id', $filter['payment_status'])
+            );
+        }
+
+        return $query->whereIn('payment_status_id', $filter['payment_status']);
     }
 }
