@@ -123,7 +123,7 @@ class HomeRevivalFollowUpEmailJob implements ShouldQueue
 
     private function sendFollowUpEmail(object $emailData, PersonalQuote $lead, DttRevival $dttRevival): void
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_REVIVAL_WORKFLOW)->first();
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
             LoggerService::warning(self::class.': HOME_REVIVAL_WORKFLOW URL missing in CMS', [

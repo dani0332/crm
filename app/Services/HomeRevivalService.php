@@ -188,7 +188,7 @@ class HomeRevivalService
             'lob' => QuoteTypes::HOME->id(),
         ];
 
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_REVIVAL_WORKFLOW)->first();
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
         if (! $workflowUrl || ! $workflowUrl->value) {
             LoggerService::warning(self::class.' - Home revival email not sent since workflow URL not found');
 

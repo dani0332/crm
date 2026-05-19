@@ -477,6 +477,4 @@ final class ApplicationStorageEnums extends Enum
 
     // Home Revivals
     public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
-    public const HOME_REVIVAL_WORKFLOW = 'HOME_REVIVAL_WORKFLOW';
-
 }
