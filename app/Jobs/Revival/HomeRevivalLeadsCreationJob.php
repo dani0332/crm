@@ -17,7 +17,6 @@ use App\Services\DTTRevivalService;
 use App\Services\HomeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -92,7 +91,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             ]);
 
             $existingDttRevival = DttRevival::where([
-                'quote_type_id' => (int) QuoteTypes::HOME->id(),
+                'quote_type_id' => QuoteTypes::HOME->id(),
                 'uuid' => $homeRevivalQuoteUUID,
             ])->first();
 
@@ -162,11 +161,27 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 return;
             }
 
+            $existingDtt = DttRevival::where([
+                'quote_type_id' => QuoteTypes::HOME->id(),
+                'uuid' => $homeRevivalQuoteUUID,
+            ])->first();
+
+            if ($existingDtt) {
+                LoggerService::info(self::class.' - DTT revival already exists, marking parent as revived and skipping create', [
+                    'lead_uuid' => $lead->uuid,
+                    'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
+                    'dtt_revival_id' => $existingDtt->id,
+                ]);
+                $lead->update(['is_revived' => true]);
+
+                return;
+            }
+
             $dttRevival = app(DTTRevivalService::class)->create(
                 $homeRevivalQuote->id,
                 $homeRevivalQuoteUUID,
                 $lead->id,
-                (int) QuoteTypes::HOME->id()
+                QuoteTypes::HOME->id()
             );
             LoggerService::info(self::class.' - DTT Revival record created successfully', [
                 'quote_uuid' => $homeRevivalQuoteUUID,

@@ -76,7 +76,7 @@ final class LeadSourceEnum extends Enum
     const INSURANCE_WALLET = 'INSURANCE_WALLET';
     const REVIVAL_REINSTATED = 'REVIVAL_REINSTATED';
 
-    // Home Revivals 
+    // Home Revivals
     const REVIVAL_SHORT = 'Revival_Short';
     const REVIVAL_ANNUAL = 'Revival_Annual';
 }
