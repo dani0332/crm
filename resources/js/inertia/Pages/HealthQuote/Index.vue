@@ -150,7 +150,11 @@ const tableHeader = ref([
     value: 'member_category.text',
     is_active: true,
   },
-  { text: 'PolicyHolder Category', value: 'policy_holder_category.text', is_active: true },
+  {
+    text: 'PolicyHolder Category',
+    value: 'policy_holder_category.text',
+    is_active: true,
+  },
   { text: 'Visa Category', value: 'visa_category.text', is_active: true },
   { text: 'Gender', value: 'gender_lookup.text', is_active: true },
   { text: 'Marital Status', value: 'marital_status.text', is_active: true },
@@ -1426,8 +1430,10 @@ const paymentStatusOptions = computed(() => {
         </p>
       </template>
       <template #item-emirates="item">
-          <span v-if="item.is_migrated && !item.is_policyholder_included"> - </span>
-          <span v-else>{{ item.emirate.text ?? 'N/A' }}</span>
+        <span v-if="item.is_migrated && !item.is_policyholder_included">
+          -
+        </span>
+        <span v-else>{{ item.emirate.text ?? 'N/A' }}</span>
       </template>
       <template #item-health_team_type="item">
         {{ item.health_team_type ?? item.notional_team }}
@@ -1452,19 +1458,41 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-gender_lookup.text="item">
         <p>
-          <span v-if="item.is_entity || !item.is_migrated || (item.is_migrated && !item.is_policyholder_included)">N/A</span>
-          <span v-else>{{ item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A' }}</span>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
+          <span v-else>{{
+            item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A'
+          }}</span>
         </p>
       </template>
       <template #item-marital_status.text="item">
         <p>
-          <span v-if="item.is_entity || !item.is_migrated || (item.is_migrated && !item.is_policyholder_included)">N/A</span>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
           <span v-else>{{ item.marital_status?.text ?? 'N/A' }}</span>
         </p>
       </template>
       <template #item-salary_band.text="item">
         <p>
-          <span v-if="item.is_entity || item.cover_for_id == healthCoverForEnum.DOMESTIC_HELPER">N/A</span>
+          <span
+            v-if="
+              item.is_entity ||
+              item.cover_for_id == healthCoverForEnum.DOMESTIC_HELPER
+            "
+            >N/A</span
+          >
           <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
       </template>

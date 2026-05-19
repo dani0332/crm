@@ -43,11 +43,19 @@ const uboRelationOptions = computed(() => {
 const computedMembers = computed(() => {
   if (props.customerType == page.props.customerTypeEnum.Individual) {
     if (props.isPayerDetails) {
-      const thirdPartyPayerMembers = page.props.membersDetails.filter(x => x.is_third_party_payer);
-      const policyholderMembers = page.props.membersDetails.filter(x => x.is_policy_holder == 1);
-      return thirdPartyPayerMembers.length > 0 ? thirdPartyPayerMembers : policyholderMembers;
+      const thirdPartyPayerMembers = page.props.membersDetails.filter(
+        x => x.is_third_party_payer,
+      );
+      const policyholderMembers = page.props.membersDetails.filter(
+        x => x.is_policy_holder == 1,
+      );
+      return thirdPartyPayerMembers.length > 0
+        ? thirdPartyPayerMembers
+        : policyholderMembers;
     }
-    return page.props.membersDetails.filter(x => !x.is_third_party_payer && x.is_insured == 1);
+    return page.props.membersDetails.filter(
+      x => !x.is_third_party_payer && x.is_insured == 1,
+    );
   } else {
     if (props.isPayerDetails) {
       return page.props.uboDetails.filter(x => x.is_third_party_payer);
@@ -80,14 +88,25 @@ const membersTableHeader = reactive({
       },
     ];
 
-    if(!(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual)) {
+    if (
+      !(
+        page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+        props.customerType == page.props.customerTypeEnum.Individual
+      )
+    ) {
       baseColumns.push({
         text: 'Is this member is payer?',
         value: 'is_payer',
       });
     }
 
-    if (!(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual && !props.isPayerDetails)) {
+    if (
+      !(
+        page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+        props.customerType == page.props.customerTypeEnum.Individual &&
+        !props.isPayerDetails
+      )
+    ) {
       baseColumns.push({
         text: 'Action',
         value: 'action',
@@ -242,17 +261,22 @@ function onEditMember(member) {
   isMemberFormEnabled.value = true;
   isMemberEditEnabled.value = true;
 
-  if(page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual) {
+  if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health &&
+    props.customerType == page.props.customerTypeEnum.Individual
+  ) {
+    // if edit member is policyholder then this will trigger add thirdparty payer api
+    if (
+      memberForm.is_third_party_payer == 1 &&
+      member?.is_third_party_payer == 0
+    ) {
+      isMemberEditEnabled.value = false;
+    }
 
-      // if edit member is policyholder then this will trigger add thirdparty payer api
-      if (memberForm.is_third_party_payer == 1 && member?.is_third_party_payer == 0) {
-        isMemberEditEnabled.value = false;
-      }
-
-      // thirdparty payer will not be insured
-      if(memberForm.is_third_party_payer == 1) {
-        memberForm.is_insured = 0;
-      }
+    // thirdparty payer will not be insured
+    if (memberForm.is_third_party_payer == 1) {
+      memberForm.is_insured = 0;
+    }
   }
 
   memberForm.quote_type = page.props.quoteType.code;
@@ -446,7 +470,10 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
       <x-button
         v-else
         v-if="
-          !(page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && props.customerType == page.props.customerTypeEnum.Individual)
+          !(
+            page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+            props.customerType == page.props.customerTypeEnum.Individual
+          )
         "
         size="sm"
         @click.prevent="memberFormEnableToggle"

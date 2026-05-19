@@ -378,7 +378,11 @@ watch(
               class="border-b border-gray-200 align-top"
             >
               <td class="x-table-cell px-3 py-4 align-middle">
-                {{ member.is_policy_holder == true ? 'Self' : member?.relation?.text ?? '' }}
+                {{
+                  member.is_policy_holder == true
+                    ? 'Self'
+                    : (member?.relation?.text ?? '')
+                }}
               </td>
               <td class="x-table-cell px-3 py-4 align-middle">
                 {{ dateFormat(member.dob) }}

@@ -121,7 +121,8 @@ const computedMembers = computed(() => {
 });
 const isIncludePolicyholder = computed(() => {
   const includePolicyholderMembers = computedMembers.value.filter(
-    x => x.is_insured == 1 && x.is_policy_holder == 1);
+    x => x.is_insured == 1 && x.is_policy_holder == 1,
+  );
   return includePolicyholderMembers.length > 0;
 });
 
@@ -130,8 +131,11 @@ const insuredMembersCount = computed(() => {
 });
 
 const isMigrated = computed(() => {
-  const { INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER } = page.props.healthCoverForEnum;
-  return [INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER].includes(page.props.quote.cover_for_id);
+  const { INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER } =
+    page.props.healthCoverForEnum;
+  return [INDIVIDUAL_AND_FAMILIES, DOMESTIC_HELPER].includes(
+    page.props.quote.cover_for_id,
+  );
 });
 
 const {
@@ -151,15 +155,16 @@ const {
   getInsureCode: () => page.props.quote.insure_code,
   getPolicyHolderCode: () => page.props.quote.policy_holder_code,
   getIsCustomerTypeIndividual: () =>
-    (page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual) ===
+    (page.props.quote?.customer_type ??
+      page.props.customerTypeEnum.Individual) ===
     page.props.customerTypeEnum.Individual,
   getIncludePolicyholder: () => isIncludePolicyholder.value,
 });
 
 const coverForText = computed(() => {
-  let text = page.props.quote.cover_for_id_text
-  if(isIndividualAndFamilies.value) {
-    if(insuredMembersCount.value === 1) {
+  let text = page.props.quote.cover_for_id_text;
+  if (isIndividualAndFamilies.value) {
+    if (insuredMembersCount.value === 1) {
       text = 'Individual';
     } else {
       text = 'Family';
@@ -441,11 +446,11 @@ const salaryBandsOptions = computed(() => {
 
 const visaCategorySelect = computed(() => {
   return page.props.visaCategoryOptions
-  .filter(item => item.health_cover_for_id === page.props.quote.cover_for_id)
-  .map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
+    .filter(item => item.health_cover_for_id === page.props.quote.cover_for_id)
+    .map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
 });
 
 const onTeamAssign = () => {
@@ -1809,7 +1814,9 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
     <Head :title="`Health ${isRevival ? 'Revival' : ''} Detail`" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Health {{ isRevival ? 'Revival' : '' }} Detail</h2>
+        <h2 class="text-xl font-semibold">
+          Health {{ isRevival ? 'Revival' : '' }} Detail
+        </h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -1855,8 +1862,15 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-        <Link :href="route(isRevival ? 'health-revival-quotes-list' : 'health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Health {{ isRevival ? 'Revival' : '' }} List </x-button>
+        <Link
+          :href="
+            route(isRevival ? 'health-revival-quotes-list' : 'health.index')
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Health {{ isRevival ? 'Revival' : '' }} List
+          </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
@@ -2231,17 +2245,41 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </dt>
                 <dd>{{ coverForText }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="enabledCustomerType == page.props.customerTypeEnum.Individual && isIndividualAndFamilies">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  enabledCustomerType ==
+                    page.props.customerTypeEnum.Individual &&
+                  isIndividualAndFamilies
+                "
+              >
                 <dt class="font-medium">
                   WHO WOULD THE CUSTOMER LIKE TO INSURE?
                 </dt>
-                <dd>{{ page.props.insureCodeOptions.find(option => option.code === quote.insure_code)?.text ?? 'N/A' }}</dd>
+                <dd>
+                  {{
+                    page.props.insureCodeOptions.find(
+                      option => option.code === quote.insure_code,
+                    )?.text ?? 'N/A'
+                  }}
+                </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="enabledCustomerType == page.props.customerTypeEnum.Individual && isIndividualAndFamilies">
-                <dt class="font-medium">
-                  WHO WILL BE THE POLICYHOLDER?
-                </dt>
-                <dd>{{ page.props.policyHolderOptions.find(option => option.code === quote.policy_holder_code)?.text ?? 'N/A' }}</dd>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  enabledCustomerType ==
+                    page.props.customerTypeEnum.Individual &&
+                  isIndividualAndFamilies
+                "
+              >
+                <dt class="font-medium">WHO WILL BE THE POLICYHOLDER?</dt>
+                <dd>
+                  {{
+                    page.props.policyHolderOptions.find(
+                      option => option.code === quote.policy_holder_code,
+                    )?.text ?? 'N/A'
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
@@ -2316,11 +2354,15 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER' : '' }} FIRST NAME</dt>
+                  <dt class="font-medium">
+                    {{ isMigrated ? 'POLICYHOLDER' : '' }} FIRST NAME
+                  </dt>
                   <dd>{{ quote.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> {{ isMigrated ? 'POLICYHOLDER' : '' }} LAST NAME</dt>
+                  <dt class="font-medium">
+                    {{ isMigrated ? 'POLICYHOLDER' : '' }} LAST NAME
+                  </dt>
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -2336,7 +2378,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
-                      :placeholder="isMigrated ? 'POLICYHOLDER FIRST NAME' : 'INSURED FIRST NAME'"
+                      :placeholder="
+                        isMigrated
+                          ? 'POLICYHOLDER FIRST NAME'
+                          : 'INSURED FIRST NAME'
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -2355,7 +2401,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
-                      :placeholder="isMigrated ? 'POLICYHOLDER LAST NAME' : 'INSURED LAST NAME'"
+                      :placeholder="
+                        isMigrated
+                          ? 'POLICYHOLDER LAST NAME'
+                          : 'INSURED LAST NAME'
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -2371,11 +2421,23 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.nationality_id_text : '-' }}</dd>
+                  <dd>
+                    {{
+                      !isMigrated || (isMigrated && showAdditionalFields)
+                        ? quote.nationality_id_text
+                        : '-'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
-                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.dob : '-' }}</dd>
+                  <dd>
+                    {{
+                      !isMigrated || (isMigrated && showAdditionalFields)
+                        ? quote.dob
+                        : '-'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
@@ -2412,21 +2474,45 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATE OF VISA</dt>
-                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.emirate_of_your_visa_id_text : '-' }}</dd>
+                  <dd>
+                    {{
+                      !isMigrated || (isMigrated && showAdditionalFields)
+                        ? quote.emirate_of_your_visa_id_text
+                        : '-'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
-                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? genderText(quote.gender).value : '-' }}</dd>
+                  <dd>
+                    {{
+                      !isMigrated || (isMigrated && showAdditionalFields)
+                        ? genderText(quote.gender).value
+                        : '-'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
-                  <dd>{{ !isMigrated || (isMigrated && showAdditionalFields) ? quote.marital_status_id_text : '-' }}</dd>
+                  <dd>
+                    {{
+                      !isMigrated || (isMigrated && showAdditionalFields)
+                        ? quote.marital_status_id_text
+                        : '-'
+                    }}
+                  </dd>
                 </div>
-                <div v-if="!isMigrated || (isMigrated && !isDomesticHelper)" class="grid sm:grid-cols-2">
+                <div
+                  v-if="!isMigrated || (isMigrated && !isDomesticHelper)"
+                  class="grid sm:grid-cols-2"
+                >
                   <dt class="font-medium">SALARY BAND</dt>
                   <dd>{{ quote.salary_band_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="showMemberCategoryField || !isMigrated">
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="showMemberCategoryField || !isMigrated"
+                >
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
                 </div>
@@ -2437,14 +2523,35 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
                 <div class="grid sm:grid-cols-2" v-if="isMigrated">
                   <dt class="font-medium">VISA CATEGORY</dt>
-                  <dd>{{ page.props.visaCategoryOptions.find(option => option.id === quote.visa_category_id)?.text ?? 'N/A' }}</dd>
+                  <dd>
+                    {{
+                      page.props.visaCategoryOptions.find(
+                        option => option.id === quote.visa_category_id,
+                      )?.text ?? 'N/A'
+                    }}
+                  </dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="!showMemberCategoryField && isMigrated">
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="!showMemberCategoryField && isMigrated"
+                >
                   <dt class="font-medium">POLICYHOLDER CATEGORY</dt>
-                  <dd>{{ page.props.policyHolderCategoryOptions.find(option => option.code === quote.policy_holder_category_code)?.text ?? 'N/A' }}</dd>
+                  <dd>
+                    {{
+                      page.props.policyHolderCategoryOptions.find(
+                        option =>
+                          option.code === quote.policy_holder_category_code,
+                      )?.text ?? 'N/A'
+                    }}
+                  </dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="showIncludePolicyholderField && isMigrated">
-                  <dt class="font-medium">IS THE POLICYHOLDER INCLUDED IN THE POLICY?</dt>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="showIncludePolicyholderField && isMigrated"
+                >
+                  <dt class="font-medium">
+                    IS THE POLICYHOLDER INCLUDED IN THE POLICY?
+                  </dt>
                   <dd>{{ isIncludePolicyholder ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2" v-if="isMigrated">
@@ -2672,10 +2779,12 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :emirates="emirates"
       :salaryBands="salaryBandsOptions"
       :genderOptions="genderSelect"
-      :maritalStatusOptions="maritalStatusOptions.map(item => ({
-        value: item.id,
-        label: item.text,
-      }))"
+      :maritalStatusOptions="
+        maritalStatusOptions.map(item => ({
+          value: item.id,
+          label: item.text,
+        }))
+      "
       :visaCategoryOptions="visaCategorySelect"
       :includePolicyHolder="isIncludePolicyholder"
       :coverForId="quote.cover_for_id"
@@ -2688,7 +2797,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :memberCategoryDisplayMap="page.props.memberCategoryDisplayMap"
       :isMigrated="isMigrated"
     />
-    
+
     <UBODetails
       v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -2908,11 +3017,11 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       </x-modal>
 
       <x-modal
-            v-model="modals.contactDeleteConfirm"
-            title="Delete Additional Contact"
-            show-close
-            backdrop
-          >
+        v-model="modals.contactDeleteConfirm"
+        title="Delete Additional Contact"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this?</p>
         <template #actions>
           <div class="text-right space-x-4">

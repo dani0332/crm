@@ -194,7 +194,11 @@ const dateOnly = value => {
 };
 
 const isPolicyholderInsuredMember = computed(() => {
-  return page.props.membersDetails?.find(x => x.is_insured == 1 && x.is_policy_holder == 1) ? true : false;
+  return page.props.membersDetails?.find(
+    x => x.is_insured == 1 && x.is_policy_holder == 1,
+  )
+    ? true
+    : false;
 });
 
 const getScreeningInsuredFirstName = () =>
@@ -211,13 +215,15 @@ const getScreeningInsuredLastName = () =>
 
 const getScreeningNationalityId = () =>
   page.props.insuredDetails?.insured?.nationality_id ??
-  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+  isPolicyholderInsuredMember.value
     ? quoteRequest?.nationality_id
     : null);
 
 const getScreeningDob = () =>
   page.props.insuredDetails?.insured?.dob ??
-  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+  isPolicyholderInsuredMember.value
     ? dateOnly(quoteRequest?.dob)
     : null);
 
@@ -227,7 +233,9 @@ const getScreeningGender = () => {
     [genericRequestEnum.FEMALE_SHORT_VALUE]: genericRequestEnum.FEMALE,
   };
 
-  const isHealthQuote = page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && isPolicyholderInsuredMember.value;
+  const isHealthQuote =
+    page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+    isPolicyholderInsuredMember.value;
 
   return (
     page.props.insuredDetails?.insured?.gender ??
@@ -837,7 +845,10 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
   createReusableTemplate();
 
 const isMigratedHealthQuote = computed(() => {
-  return page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health && quoteRequest.is_migrated;
+  return (
+    page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+    quoteRequest.is_migrated
+  );
 });
 </script>
 <template>
@@ -942,21 +953,43 @@ const isMigratedHealthQuote = computed(() => {
             </x-button>
           </div>
         </template>
-        <x-field :label="isMigratedHealthQuote ? 'Policyholder First Name' : 'Insured First Name'" required>
+        <x-field
+          :label="
+            isMigratedHealthQuote
+              ? 'Policyholder First Name'
+              : 'Insured First Name'
+          "
+          required
+        >
           <x-input
             v-model="screeningFormDetails.insured_first_name"
             :rules="[isRequired, rules.nameCheck]"
-            :placeholder="isMigratedHealthQuote ? 'Policyholder First Name' : 'Insured First Name'"
+            :placeholder="
+              isMigratedHealthQuote
+                ? 'Policyholder First Name'
+                : 'Insured First Name'
+            "
             type="text"
             class="w-full"
             :error="screeningFormDetails.errors.insured_first_name"
           />
         </x-field>
-        <x-field :label="isMigratedHealthQuote ? 'Policyholder Last Name' : 'Insured Last Name'" required>
+        <x-field
+          :label="
+            isMigratedHealthQuote
+              ? 'Policyholder Last Name'
+              : 'Insured Last Name'
+          "
+          required
+        >
           <x-input
             v-model="screeningFormDetails.insured_last_name"
             :rules="[isRequired, rules.nameCheck]"
-            :placeholder="isMigratedHealthQuote ? 'Policyholder Last Name' : 'Insured Last Name'"
+            :placeholder="
+              isMigratedHealthQuote
+                ? 'Policyholder Last Name'
+                : 'Insured Last Name'
+            "
             type="text"
             class="w-full"
             :error="screeningFormDetails.errors.insured_last_name"
