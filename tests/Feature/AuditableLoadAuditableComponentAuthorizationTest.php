@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\PermissionsEnum;
 use App\Http\Middleware\CheckLastLoginMiddleware;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Models\User;
 use Laravel\Telescope\Telescope;
 use Spatie\Permission\Models\Permission;
@@ -19,7 +19,7 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 
     $this->withoutMiddleware([
-        VerifyCsrfToken::class,
+        PreventRequestForgery::class,
         CheckLastLoginMiddleware::class,
     ]);
 });

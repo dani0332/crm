@@ -6,8 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -17,6 +19,7 @@ use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -655,5 +658,46 @@ class CarQuote extends BaseModel
     public function hasCarValue()
     {
         return ! empty($this->car_value) && $this->car_value > 0;
+    }
+
+    public function scopeWhereRevivalIntentEligible(Builder $query): Builder
+    {
+        return $query->whereHas('carQuoteRequestDetail', function ($q) {
+            $q->where(function ($w) {
+                $w->where(function ($h) {
+                    $h->where('engagement_level', MotorRevivalEnum::INTENT_HIGH->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subMinutes(MotorRevivalEnum::ILA_HIGH_INTENT_WAIT_MINUTES));
+                })->orWhere(function ($m) {
+                    $m->where('engagement_level', MotorRevivalEnum::MEDIUM_INTENT->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS));
+                });
+            });
+        });
+    }
+
+    public function scopeWhereRevivalIntentRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL)
+            ->whereNull('advisor_id')
+            ->whereRevivalIntentEligible();
+    }
+
+    public function scopeWhereRevivalReinstatedRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL_REINSTATED)
+            ->whereNull('advisor_id')
+            ->where(function (Builder $eligibilityQuery) {
+                $eligibilityQuery
+                    ->where(function (Builder $nonSicOrAigQuery) {
+                        $nonSicOrAigQuery->sicFlowDisabled()->isNotAIG(QuoteTypes::CAR);
+                    })
+                    ->orWhere(function (Builder $sicOrAigQuery) {
+                        $sicOrAigQuery->where(function (Builder $flowTypeQuery) {
+                            $flowTypeQuery->sicFlowEnabled()->orWhere(fn (Builder $aigQuery) => $aigQuery->isAIG(QuoteTypes::CAR));
+                        })->advisorRequestedOrPaymentAuthorizedOrDeclined();
+                    });
+            });
     }
 }

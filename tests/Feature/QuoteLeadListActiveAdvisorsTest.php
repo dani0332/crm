@@ -58,6 +58,7 @@ beforeEach(function () {
             $table->unsignedBigInteger('subject_id')->nullable();
             $table->string('causer_type')->nullable();
             $table->unsignedBigInteger('causer_id')->nullable();
+            $table->json('attribute_changes')->nullable();
             $table->text('properties')->nullable();
             $table->string('batch_uuid')->nullable();
             $table->string('code')->nullable();

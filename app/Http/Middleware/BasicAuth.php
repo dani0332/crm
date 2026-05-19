@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,17 +15,40 @@ class BasicAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        $AUTH_USER = config('constants.IMCRM_BASIC_AUTH_USER_NAME');
-        $AUTH_PASS = config('constants.IMCRM_BASIC_AUTH_PASSWORD');
-        $has_supplied_credentials = ! (empty($request->getUser()) && empty($request->getPassword()));
-        $is_not_authenticated = (
-            ! $has_supplied_credentials ||
-            $request->getUser() != $AUTH_USER ||
-            $request->getPassword() != $AUTH_PASS
+        $credentialPairs = array_filter(
+            [
+                [
+                    config('constants.IMCRM_BASIC_AUTH_USER_NAME'),
+                    config('constants.IMCRM_BASIC_AUTH_PASSWORD'),
+                ],
+                [
+                    config('constants.IMCRM_API_AUTH_USER_NAME'),
+                    config('constants.IMCRM_API_AUTH_PASSWORD'),
+                ],
+            ],
+            function (array $pair) {
+                [$user, $password] = $pair;
+
+                return $user !== null && $user !== '' && $password !== null && $password !== '';
+            }
         );
-        if ($is_not_authenticated) {
+
+        $hasSuppliedCredentials = ! (empty($request->getUser()) && empty($request->getPassword()));
+        $matchedUserName = null;
+        if ($hasSuppliedCredentials) {
+            foreach ($credentialPairs as [$user, $password]) {
+                if ($request->getUser() === $user && $request->getPassword() === $password) {
+                    $matchedUserName = $user;
+                    break;
+                }
+            }
+        }
+
+        if ($matchedUserName === null) {
             return response()->json(['Authorization Required'], 401);
         }
+
+        LoggerService::info('IMCRM API Basic Auth', ['username' => $matchedUserName]);
 
         return $next($request);
     }

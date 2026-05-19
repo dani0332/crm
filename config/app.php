@@ -12,6 +12,7 @@ use App\Providers\CustomerPortalApiProvider;
 use App\Providers\EventServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\InstantWriterAIAPIServiceProvider;
+use App\Providers\NgiServiceProvider;
 use App\Providers\PostMarkServiceProvider;
 use App\Providers\RepositoryServiceProvider;
 use App\Providers\RouteServiceProvider;
@@ -265,6 +266,7 @@ return [
         EventServiceProvider::class,
         HorizonServiceProvider::class,
         RouteServiceProvider::class,
+        NgiServiceProvider::class,
         AwnicServiceProvider::class,
         PermissionServiceProvider::class,
         AuditingServiceProvider::class,

@@ -4,7 +4,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -16,7 +16,7 @@ beforeEach(function () {
     TestDataSeeder::seedRolePermissions('Admin', [PermissionsEnum::TeamThresholdView]);
 
     $this->actingAs($this->admin);
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     $db = DB::connection('sqlite');
 

@@ -21,12 +21,12 @@ class QuoteTypeRepository extends BaseRepository
         return $this->withActive()->orderBy($orderBy, $order)->get();
     }
 
-    public function fetchAllowedQuoteForAml()
+    public function fetchGetQuoteTypesByLob($orderBy = 'sort_order')
     {
         $notAllowedQuoted = [QuoteTypeId::CompanyCar];
         $notAllowedQuoteTypeCodes = [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::CORPLINE->value];
 
-        return $this->whereNotIn('id', $notAllowedQuoted)->whereNotIn('code', $notAllowedQuoteTypeCodes)->withActive()->orderBy('sort_order')->get();
+        return $this->whereNotIn('id', $notAllowedQuoted)->whereNotIn('code', $notAllowedQuoteTypeCodes)->withActive()->orderBy($orderBy)->get();
     }
 
     public function fetchGetById($quoteTypeId)

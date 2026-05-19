@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Models\Customer;
 use App\Models\CustomerInsured;
 use App\Models\RenewalBatch;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -30,6 +31,25 @@ class UpdateLeadStatusRequest extends FormRequest
     public function authorize()
     {
         return true;
+    }
+
+    /**
+     * Sanitize notes and lost_notes by removing emoji (Extended_Pictographic) before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        if ($this->has('notes') && is_string($this->notes)) {
+            $merge['notes'] = sanitizeNotesFromEmoji($this->notes);
+        }
+        if ($this->has('lost_notes') && is_string($this->lost_notes)) {
+            $merge['lost_notes'] = sanitizeNotesFromEmoji($this->lost_notes);
+        }
+
+        if ($merge !== []) {
+            $this->merge($merge);
+        }
     }
 
     /**
@@ -172,6 +192,10 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (! $isTravelLeadTransactionApproved && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteObject ?: null)) {
+                    $validator->errors()->add('value', PlaceholderPrimaryEmail::message());
+                }
+
                 $customerInsured = CustomerInsured::active()
                     ->forQuote($quoteTypesIds[request()->modelType], request()->leadId)
                     ->where('customer_id', $quoteObject->customer_id)
