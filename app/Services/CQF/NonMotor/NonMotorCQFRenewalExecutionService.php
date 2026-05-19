@@ -243,7 +243,7 @@ class NonMotorCQFRenewalExecutionService
             QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
             QuoteTypes::CYCLE => ['cycleQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
             QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
-            QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
+            QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'businessQuote.payments', 'insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
             default => ['insuranceProvider', 'currentlyInsuredWith', 'advisor', 'payments'],
         };
     }
