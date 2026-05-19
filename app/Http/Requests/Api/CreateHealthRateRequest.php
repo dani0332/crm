@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api;
 use App\Enums\EmirateTypeEnum;
 use App\Enums\GenderEnum;
 use App\Models\HealthPlan;
+use App\Rules\HealthPlanRateScheduledRule;
 use App\Rules\HealthRateCohortValidRule;
 use App\Rules\HealthRateGenderValidRule;
 use App\Rules\HealthRateMaritalStatusValidRule;
@@ -21,7 +22,7 @@ class CreateHealthRateRequest extends FormRequest
         return [
             'effective_from' => ['bail', 'required', 'date', 'after:today'],
             'effective_to' => ['bail', 'required', 'date', 'after:effective_from'],
-            'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id'],
+            'health_plan_id' => ['bail', 'required', 'integer', 'exists:health_plan,id', new HealthPlanRateScheduledRule],
             'health_plan_co_payment_id' => ['bail', 'required', 'integer', 'exists:health_plan_co_payments,id'],
             'emirate_type' => ['bail', 'required', new Enum(EmirateTypeEnum::class)],
             'min_age' => ['bail', 'required', 'integer', 'min:0'],
