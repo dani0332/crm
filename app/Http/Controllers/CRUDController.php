@@ -1362,6 +1362,7 @@ class CRUDController extends Controller
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
                     'branchOptions' => EmirateEnum::getBranchMapping(),
+                    'archivedDocuments' => $archivedDocuments,
                 ]);
             } else {
                 return view('shared.show', compact([
