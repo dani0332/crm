@@ -43,6 +43,10 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
     public function handle(): void
     {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+
         if (! app(NonMotorCQFRegistry::class)->hasLOB($this->quoteType)) {
             LoggerService::info(self::class.' - LOB not supported', ['quoteType' => $this->quoteType->value]);
 
