@@ -201,7 +201,9 @@ class AlfredCoinsWebhookService
 
         $signingInput = $header.'.'.$payload;
 
-        openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        if (openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256) === false) {
+            throw new \RuntimeException('Failed to sign JWT: '.openssl_error_string());
+        }
 
         return $signingInput.'.'.$this->base64UrlEncode($signature);
     }
