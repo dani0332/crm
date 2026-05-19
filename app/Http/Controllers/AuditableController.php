@@ -286,7 +286,7 @@ class AuditableController extends Controller
         try {
             $logs = HealthPricingLog::with('member')
                 ->where('health_quote_request_id', $request->quote_request_id)
-                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'created_at')
+                ->select('id', 'stage', 'criteria', 'result', 'status', 'customer_member_id', 'created_at')
                 ->orderBy('sequence_no')
                 ->get();
 

@@ -21,9 +21,8 @@ const routingLogs = reactive({
     { text: 'Stage', value: 'stage' },
     { text: 'Criteria', value: 'criteria' },
     { text: 'Result', value: 'result' },
-    { text: 'Member', value: 'member.first_name' + '_' + 'member.last_name' },
+    { text: 'Member', value: 'member.name' },
     { text: 'Status', value: 'status' },
-    { text: 'Reason', value: 'reason' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
   ],
@@ -241,8 +240,8 @@ watch(
             <dd>{{ selectedLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Reason:</dt>
-            <dd>{{ selectedLog.reason }}</dd>
+            <dt class="font-medium">Member:</dt>
+            <dd>{{ selectedLog.member.name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At:</dt>
