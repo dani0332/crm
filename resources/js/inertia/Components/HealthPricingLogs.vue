@@ -28,18 +28,7 @@ const routingLogs = reactive({
   ],
 });
 
-const eligibleProviders = computed(
-  () => page.props.eligibleOcrProviders?.providers || {},
-);
-
-const dynamicQuoteTypeNames = computed(
-  () => page.props.eligibleOcrProviders?.quoteTypeNames || {},
-);
-
 const selectedLog = ref({});
-const modals = reactive({
-  ocrLog: false,
-});
 
 const selectLog = item => {
   selectedLog.value = item;
@@ -65,48 +54,6 @@ const onLoadLogData = async () => {
     routingLogs.loading = false;
   }
 };
-
-// Format the providers data for display in the tooltip
-const formattedProviders = computed(() => {
-  const formatted = [];
-
-  // Group providers by name
-  const providerMap = {};
-
-  Object.entries(eligibleProviders.value).forEach(([quoteType, providers]) => {
-    const quoteTypeName = dynamicQuoteTypeNames.value[quoteType] || quoteType;
-
-    providers.forEach(provider => {
-      if (!providerMap[provider.name]) {
-        providerMap[provider.name] = [];
-      }
-
-      if (!providerMap[provider.name].includes(quoteTypeName)) {
-        providerMap[provider.name].push(quoteTypeName);
-      }
-    });
-  });
-
-  // Convert to array format for display
-  Object.entries(providerMap).forEach(([providerName, quoteTypes]) => {
-    // Replace underscores with spaces in provider names
-    const formattedName = providerName.replace(/_/g, ' ');
-
-    formatted.push({
-      name: formattedName,
-      types: quoteTypes.join(', '),
-    });
-  });
-
-  return formatted.sort((a, b) => a.name.localeCompare(b.name));
-});
-
-watch(
-  () => props.teamCategory,
-  () => {
-    onLoadLogData();
-  },
-);
 </script>
 
 <template>
@@ -200,7 +147,7 @@ watch(
             <template #item-created_at="{ created_at }">
               {{ new Date(created_at).toLocaleString() }}
             </template>
-            <template #item-log_data="{ criteria }">
+            <template #item-criteria="{ criteria }">
               {{ JSON.stringify(criteria) }}
             </template>
             <template #item-action="item">
@@ -241,7 +188,7 @@ watch(
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Member:</dt>
-            <dd>{{ selectedLog.member.name }}</dd>
+            <dd>{{ selectedLog.member?.name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At:</dt>
