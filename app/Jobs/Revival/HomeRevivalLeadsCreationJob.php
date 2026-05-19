@@ -6,15 +6,18 @@ namespace App\Jobs\Revival;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
+use App\Models\DttRevival;
 use App\Models\PersonalQuote;
 use App\Services\BirdService;
 use App\Services\DTTRevivalService;
 use App\Services\HomeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -69,24 +72,62 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
         $payload = $homeRevivalService->getRevivalPayload($lead, $homeQuote, $this->revivalSource);
 
-        LoggerService::info(self::class.' - Creating Home Revival Lead', [
-            'lead_uuid' => $lead->uuid,
-            'payload' => $payload,
-        ]);
-        $capiResponse = Capi::request('/api/v2-save-home-quote', 'post', $payload);
+        $existingRevivalQuote = PersonalQuote::select('uuid')
+            ->where([
+                'email' => $lead->email,
+                'mobile_no' => $lead->mobile_no,
+                'quote_type_id' => QuoteTypeId::Home,
+                'source' => $this->revivalSource,
+            ])
+            ->where('created_at', '>=', Carbon::now()->subMonths(11)->toDateString())
+            ->first();
 
-        if (isset($capiResponse->errors)) {
-            LoggerService::warning(self::class.' - Error creating Home Revival Lead from CAPI response', [
+        $homeRevivalQuoteUUID = null;
+        $existingDttRevival = null;
+
+        if ($existingRevivalQuote) {
+            $homeRevivalQuoteUUID = $existingRevivalQuote->uuid;
+            LoggerService::info(self::class.' - Existing revival quote found, skipping CAPI call', [
                 'lead_uuid' => $lead->uuid,
-                'payload' => $payload,
-                'url' => '/api/v2-save-home-quote',
-                'response' => $capiResponse,
+                'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
             ]);
 
-            return;
-        }
+            $existingDttRevival = DttRevival::where([
+                'quote_type_id' => QuoteTypes::HOME->id(),
+                'uuid' => $homeRevivalQuoteUUID,
+            ])->first();
 
-        $homeRevivalQuoteUUID = $capiResponse->quoteUID;
+            if ($existingDttRevival) {
+                LoggerService::info(self::class.' - DTT revival already exists for quote, marking parent as revived and skipping', [
+                    'lead_uuid' => $lead->uuid,
+                    'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
+                    'dtt_revival_id' => $existingDttRevival->id,
+                ]);
+                $lead->update(['is_revived' => true]);
+
+                return;
+            }
+        } else {
+            LoggerService::info(self::class.' - Creating Home Revival Lead', [
+                'lead_uuid' => $lead->uuid,
+                'payload' => $payload,
+            ]);
+
+            $capiResponse = Capi::request('/api/v2-save-home-quote', 'post', $payload);
+
+            if (isset($capiResponse->errors)) {
+                LoggerService::warning(self::class.' - Error creating Home Revival Lead from CAPI response', [
+                    'lead_uuid' => $lead->uuid,
+                    'payload' => $payload,
+                    'url' => '/api/v2-save-home-quote',
+                    'response' => $capiResponse,
+                ]);
+
+                return;
+            }
+
+            $homeRevivalQuoteUUID = $capiResponse->quoteUID;
+        }
 
         $emailPayload = null;
         try {
