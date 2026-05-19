@@ -538,7 +538,6 @@ class SageApiEmbeddedProductService
         }
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
-        $quoteTypeId = $sageRequest->quoteTypeId;
 
         $reversalSageLogOwner->loadMissing('sageApiLogs');
         $sageLogArray = $reversalSageLogOwner->sageApiLogs->keyBy('step')->toArray();
