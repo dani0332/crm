@@ -2527,7 +2527,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     {{
                       page.props.visaCategoryOptions.find(
                         option => option.id === quote.visa_category_id,
-                      )?.text ?? 'N/A'
+                      )?.text ?? '-'
                     }}
                   </dd>
                 </div>

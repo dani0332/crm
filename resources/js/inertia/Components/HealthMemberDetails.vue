@@ -1158,7 +1158,7 @@ defineExpose({
           </template>
 
           <template #item-visa_category_id="{ visa_category_id }">
-            {{ visaCategoryText(visa_category_id).value }}
+            {{ visaCategoryText(visa_category_id).value ?? '-' }}
           </template>
 
           <template #item-marital_status_id="{ marital_status_id }">
