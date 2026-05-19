@@ -222,7 +222,7 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
-                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $paymentSplits, 0);
+                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_REV_INV;
                 $payLoad = $reversePayLoad;
@@ -465,7 +465,7 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
-                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $splitPayments, 0);
+                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
 
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 1);
@@ -1696,7 +1696,7 @@ class SagePayloadFactory
         return $reversePayLoad;
     }
 
-    private static function applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $paymentSplits, $invoiceIndex = 0)
+    private static function applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $invoiceIndex = 0)
     {
         $bookingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
 
