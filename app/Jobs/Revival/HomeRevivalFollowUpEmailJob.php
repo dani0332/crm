@@ -126,13 +126,13 @@ class HomeRevivalFollowUpEmailJob implements ShouldQueue
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
-            LoggerService::warning(self::class.': HOME_REVIVAL_WORKFLOW URL missing in CMS', [
+            LoggerService::warning(self::class.': HOME_RENEWAL_OCB URL missing in CMS', [
                 'flow' => self::LOG_FLOW,
                 'dtt_revival_id' => $dttRevival->id,
                 'child_quote_uuid' => $dttRevival->uuid,
             ]);
 
-            throw new RuntimeException('HOME_REVIVAL_WORKFLOW URL missing in CMS');
+            throw new RuntimeException('HOME_RENEWAL_OCB URL missing in CMS');
         }
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
