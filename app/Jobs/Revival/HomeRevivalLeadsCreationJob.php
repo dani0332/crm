@@ -92,7 +92,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             ]);
 
             $existingDttRevival = DttRevival::where([
-                'quote_type_id' => QuoteTypes::HOME->id(),
+                'quote_type_id' => (int) QuoteTypes::HOME->id(),
                 'uuid' => $homeRevivalQuoteUUID,
             ])->first();
 
@@ -166,7 +166,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 $homeRevivalQuote->id,
                 $homeRevivalQuoteUUID,
                 $lead->id,
-                QuoteTypes::HOME->id()
+                (int) QuoteTypes::HOME->id()
             );
             LoggerService::info(self::class.' - DTT Revival record created successfully', [
                 'quote_uuid' => $homeRevivalQuoteUUID,
