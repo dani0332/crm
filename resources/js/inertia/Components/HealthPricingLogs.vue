@@ -30,6 +30,10 @@ const routingLogs = reactive({
 
 const selectedLog = ref({});
 
+const modals = reactive({
+  log: false,
+});
+
 const selectLog = item => {
   selectedLog.value = item;
   modals.log = true;
