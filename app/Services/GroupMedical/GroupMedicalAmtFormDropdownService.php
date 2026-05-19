@@ -28,7 +28,6 @@ final class GroupMedicalAmtFormDropdownService
             'insuranceProviders' => $this->groupMedicalInsuranceProviders(),
             'groupMedicalCategories' => $this->groupMedicalCategories(),
             'healthThirdPartyAdministrators' => $this->healthThirdPartyAdministrators(),
-            'groupMedicalNetworks' => $this->groupMedicalNetworks(),
         ];
     }
 
@@ -93,10 +92,6 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function groupMedicalCategories(): Collection
     {
-        if (! Schema::hasTable('group_medical_category')) {
-            return collect();
-        }
-
         return GroupMedicalCategory::query()
             ->active()
             ->select('id', 'text')
@@ -109,9 +104,6 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function healthThirdPartyAdministrators(): Collection
     {
-        if (! Schema::hasTable('health_third_party_administrator')) {
-            return collect();
-        }
 
         return HealthThirdPartyAdministrator::query()
             ->active()
@@ -123,17 +115,18 @@ final class GroupMedicalAmtFormDropdownService
     /**
      * @return Collection<int, object>
      */
-    public function groupMedicalNetworks(): Collection
+    public function groupMedicalNetworks(?int $tpaId = null): Collection
     {
-        if (! Schema::hasTable('group_medical_networks')) {
-            return collect();
-        }
-
-        return GroupMedicalNetwork::query()
+        $query = GroupMedicalNetwork::query()
             ->active()
             ->select('id', 'text')
-            ->orderBy('text')
-            ->get();
+            ->orderBy('text');
+
+        if ($tpaId !== null) {
+            $query->where('group_medical_third_party_administrator_id', $tpaId);
+        }
+
+        return $query->get();
     }
 
     /**

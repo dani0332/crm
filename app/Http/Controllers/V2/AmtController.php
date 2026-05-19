@@ -753,6 +753,19 @@ class AmtController extends Controller
         ]);
     }
 
+    public function getNetworksByTpa(Request $request): JsonResponse
+    {
+        $tpaId = $request->integer('tpa_id');
+
+        if (! $tpaId) {
+            return response()->json([]);
+        }
+
+        $networks = app(GroupMedicalAmtFormDropdownService::class)->groupMedicalNetworks($tpaId);
+
+        return response()->json($networks);
+    }
+
     /**
      * @return array<string, mixed>
      */

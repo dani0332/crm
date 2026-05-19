@@ -867,6 +867,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             ->name('amt.ecommerce-copy-link')
             ->middleware('permission:'.PermissionsEnum::GMQuoteCopyLink);
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::get('amt/networks', [V2AmtController::class, 'getNetworksByTpa'])->name('amt.networks');
         Route::resource('amt', V2AmtController::class);
     });
 

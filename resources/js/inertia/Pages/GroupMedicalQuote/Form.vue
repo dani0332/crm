@@ -123,9 +123,32 @@ const healthTpaSelectOptions = computed(() =>
   toSelectOptions(props.healthThirdPartyAdministrators),
 );
 
-const groupMedicalNetworkSelectOptions = computed(() =>
-  toSelectOptions(props.groupMedicalNetworks),
-);
+const networksCache = ref({});
+const networksFetching = ref({});
+
+async function fetchNetworksForTpa(tpaId) {
+  if (!tpaId || networksCache.value[tpaId] !== undefined) return;
+  networksFetching.value[tpaId] = true;
+  try {
+    const { data } = await axios.get(route('amt.networks'), { params: { tpa_id: tpaId } });
+    networksCache.value[tpaId] = data.map(n => ({ value: n.id, label: n.text }));
+  } catch {
+    networksCache.value[tpaId] = [];
+  } finally {
+    networksFetching.value[tpaId] = false;
+  }
+}
+
+function networkOptionsForRow(idx) {
+  const tpaId = quoteForm.gm_category_intake[idx]?.existing_tpa_id;
+  if (!tpaId) return [];
+  return networksCache.value[tpaId] ?? [];
+}
+
+function isNetworkLoadingForRow(idx) {
+  const tpaId = quoteForm.gm_category_intake[idx]?.existing_tpa_id;
+  return !!tpaId && networksFetching.value[tpaId];
+}
 
 const groupMedicalCategorySelectOptions = computed(() =>
   toSelectOptions(props.groupMedicalCategories),
@@ -315,6 +338,32 @@ watch(selectedEmirateId, (newEmirate, oldEmirate) => {
   ) {
     quoteForm.health_plan_type_id = null;
   }
+});
+
+watch(
+  () => quoteForm.gm_category_intake.map(row => row.existing_tpa_id),
+  (newTpaIds, oldTpaIds) => {
+    newTpaIds.forEach((tpaId, idx) => {
+      const oldTpaId = oldTpaIds?.[idx];
+      if (tpaId !== oldTpaId) {
+        quoteForm.gm_category_intake[idx].existing_network_id = null;
+      }
+      if (tpaId) {
+        fetchNetworksForTpa(tpaId);
+      }
+    });
+  },
+);
+
+onMounted(() => {
+  const uniqueTpaIds = [
+    ...new Set(
+      quoteForm.gm_category_intake
+        .map(row => row.existing_tpa_id)
+        .filter(id => !!id),
+    ),
+  ];
+  uniqueTpaIds.forEach(fetchNetworksForTpa);
 });
 
 const emirateOfRegistrationFieldError = computed(() => {
@@ -761,9 +810,16 @@ function onSubmit(isValid) {
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.existing_network_id"
-                      :options="groupMedicalNetworkSelectOptions"
+                      :options="networkOptionsForRow(idx)"
+                      :disabled="!row.existing_tpa_id || isNetworkLoadingForRow(idx)"
+                      :placeholder="
+                        isNetworkLoadingForRow(idx)
+                          ? 'Loading...'
+                          : !row.existing_tpa_id
+                            ? 'Select TPA first'
+                            : 'Select network'
+                      "
                       class="w-full min-w-[10rem]"
-                      placeholder="Select network"
                       filterable
                       :error="
                         quoteForm.errors[
