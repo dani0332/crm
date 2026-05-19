@@ -58,7 +58,7 @@ const onLoadUaePassLogData = async () => {
       console.error(
         'Failed to load UAE PASS Signature Logs:',
         response.data.message,
-      );    
+      );
     }
   } catch (error) {
     console.error('Error loading UAE PASS Signature Logs:', error);
@@ -195,7 +195,7 @@ const formatJson = value => {
             </template>
 
             <template #item-created_at="{ created_at }">
-              {{ created_at}}
+              {{ created_at }}
             </template>
 
             <template #item-action="item">
@@ -229,7 +229,10 @@ const formatJson = value => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Proof Of Presentation ID:</dt>
-            <dd class="truncate max-w-xs" :title="selectedLog.proof_of_presentation_id">
+            <dd
+              class="truncate max-w-xs"
+              :title="selectedLog.proof_of_presentation_id"
+            >
               {{ selectedLog.proof_of_presentation_id }}
             </dd>
             <dt class="font-medium">Ref ID:</dt>
@@ -243,7 +246,7 @@ const formatJson = value => {
             <dd>{{ selectedLog.api_name }}</dd>
           </div>
         </dl>
-        
+
         <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5 mt-2">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Status:</dt>
@@ -285,7 +288,6 @@ const formatJson = value => {
             </div>
           </dl>
         </div>
-
 
         <div v-if="selectedLog.response_payload" class="mt-5">
           <dl class="">
