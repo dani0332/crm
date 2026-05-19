@@ -183,7 +183,8 @@ class SageApiEmbeddedProductService
 
         /** @var EmbeddedTransaction $epTransaction */
         $payment = $this->resolveMainLeadPaymentForSageReversalQuote($quote);
-        $result = (! $payment || $payment->paymentSplits->isEmpty())
+
+        return (! $payment || $payment->paymentSplits->isEmpty())
             ? ['status' => false, 'message' => 'Main lead payment or splits not found for Sage payload']
             : $this->finalizeScheduleReversalOfEmbeddedProduct(
                 $modelType,
@@ -193,8 +194,6 @@ class SageApiEmbeddedProductService
                 $quoteTypeId,
                 $payment,
             );
-
-        return $result;
     }
 
     /**
@@ -551,46 +550,43 @@ class SageApiEmbeddedProductService
             return $notBookedOutcome;
         }
 
-        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
+        $result = $this->applySageCustomerIdFromEpBookingForReversal($sageRequest, $embeddedProductTransaction);
 
-        $customerOutcome = $this->applySageCustomerIdFromEpBookingForReversal($sageRequest, $embeddedProductTransaction);
-        if ($customerOutcome !== null) {
-            if ($updateEmbeddedTransactionStatusOnFailure) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+        if ($result === null) {
+            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
+            $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+
+            $reversalSageLogOwner->loadMissing('sageApiLogs');
+            $sageLogArray = $reversalSageLogOwner->sageApiLogs->keyBy('step')->toArray();
+            $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
+
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true);
+            if (! $createARInvoicePremAndComm['status']) {
+                $result = $createARInvoicePremAndComm;
+            } else {
+                $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true);
+                if (! $createAPInvoicePrem['status']) {
+                    $result = $createAPInvoicePrem;
+                }
             }
-
-            return $customerOutcome;
         }
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+        if ($result === null) {
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_CANCELLED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
-        $reversalSageLogOwner->loadMissing('sageApiLogs');
-        $sageLogArray = $reversalSageLogOwner->sageApiLogs->keyBy('step')->toArray();
-        // Create AR Commission and Premium Invoice
-        $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal([$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray], true);
-        if (! $createARInvoicePremAndComm['status']) {
-            if ($updateEmbeddedTransactionStatusOnFailure) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-            }
+            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Reversal of Embedded Product Booking Process Completed for EP Code: '.$embeddedProductTransaction->code);
 
-            return $createARInvoicePremAndComm;
+            return [
+                'status' => true,
+                'message' => 'Reversal of Embedded Product is Booked for EP Code (log target): '.$reversalSageLogOwner->code.' and EP Code: '.$embeddedProductTransaction->code,
+            ];
         }
 
-        // Create AP Premium Invoice
-        $createAPInvoicePrem = $this->createAPPremInvoiceReversal([$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray], true);
-        if (! $createAPInvoicePrem['status']) {
-            if ($updateEmbeddedTransactionStatusOnFailure) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-            }
-
-            return $createAPInvoicePrem;
+        if ($updateEmbeddedTransactionStatusOnFailure) {
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
         }
 
-        $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_CANCELLED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Reversal of Embedded Product Booking Process Completed for EP Code: '.$embeddedProductTransaction->code);
-
-        return ['status' => true, 'message' => 'Reversal of Embedded Product is Booked for EP Code (log target): '.$reversalSageLogOwner->code.' and EP Code: '.$embeddedProductTransaction->code];
+        return $result;
     }
 
     /**
