@@ -10,7 +10,7 @@ const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref([]);
 const loading = ref(false);
 const gbpNationalities = ref([]);
-const selectedNationalities = ref();
+const selectedNationalities = ref([]);
 const individualNationalities = ref([]);
 const scheduledConfigurationsRef = ref(null);
 const auditLogsRef = ref(null);
@@ -57,14 +57,21 @@ function getData(id = null) {
         checkEffectiveDate(nationalityPoolConfigurations.value?.effective_from);
       }
 
-      selectedNationalityGroups.value =
-        nationalityPoolConfigurations.value?.health_nationality_group_ids
-          ?.split(',')
-          .map(Number) || [];
-      selectedNationalities.value =
-        nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(
-          ',',
-        ) || [];
+      const groupIds =
+        nationalityPoolConfigurations.value?.health_nationality_group_ids;
+      selectedNationalityGroups.value = groupIds
+        ? groupIds
+            .split(',')
+            .map(id => Number(id.trim()))
+            .filter(id => Number.isFinite(id) && id > 0)
+        : [];
+
+      const canonicalCodes =
+        nationalityPoolConfigurations.value?.canonical_nationality_codes;
+
+      selectedNationalities.value = canonicalCodes
+        ? canonicalCodes.split(',').map(code => code.trim()).filter(Boolean)
+        : [];
     })
     .catch(error => {
       notification.error({
@@ -163,13 +170,13 @@ function validateForm() {
     return false;
   }
 
-  if (selectedNationalities.value.length === 0) {
-    notification.error({
-      title: 'GBP Nationality is required',
-      position: 'top',
-    });
-    return false;
-  }
+  // if (selectedNationalities.value.length === 0) {
+  //   notification.error({
+  //     title: 'GBP Nationality is required',
+  //     position: 'top',
+  //   });
+  //   return false;
+  // }
 
   return true;
 }
