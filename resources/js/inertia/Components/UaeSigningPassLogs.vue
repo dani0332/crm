@@ -55,7 +55,10 @@ const onLoadUaePassLogData = async () => {
     if (response.data.success) {
       uaePassLogs.data = response.data.data;
     } else {
-      console.error('Failed to load UAE Signing Pass logs:', response.data.message);
+      console.error(
+        'Failed to load UAE Signing Pass logs:',
+        response.data.message,
+      );    
     }
   } catch (error) {
     console.error('Error loading UAE Signing Pass logs:', error);
@@ -95,8 +98,9 @@ const formatJson = value => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">UAE Signing Pass Logs</h3>
-
+          <h3 class="font-semibold text-primary-800 text-lg">
+            UAE Signing Pass Logs
+          </h3>
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
             v-if="uaePassLogs.data !== null"
