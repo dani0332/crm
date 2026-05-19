@@ -114,8 +114,16 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 'quote_uuid' => $homeRevivalQuoteUUID,
             ]);
 
+            if ($homeRevivalQuote === null) {
+                LoggerService::warning(self::class.' - Home revival quote not found in database', [
+                    'quote_uuid' => $homeRevivalQuoteUUID,
+                ]);
+
+                return;
+            }
+
             $dttRevival = app(DTTRevivalService::class)->create(
-                $homeRevivalQuote?->id ?? 0,
+                $homeRevivalQuote->id,
                 $homeRevivalQuoteUUID,
                 $lead->id,
                 QuoteTypes::HOME->id()
