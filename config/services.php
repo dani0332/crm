@@ -70,9 +70,8 @@ return [
     */
     'alfred_coins' => [
         'insurancemarket_webhook' => [
-            'url' => env('ALFRED_COINS_INSURANCEMARKET_WEBHOOK_URL', 'https://api-stage-alfredcoins.myalfred.me/webhook/upload/insurancemarket'),
-            'api_key' => env('ALFRED_COINS_INSURANCEMARKET_API_KEY'),
-            'api_key_header' => env('ALFRED_COINS_INSURANCEMARKET_API_KEY_HEADER', 'X-API-Key'),
+            'url' => env('ALFRED_COINS_INSURANCEMARKET_WEBHOOK_URL', 'https://api-stage-alfredcoins.myalfred.me/webhook/upload/imcrm'),
+            'private_key' => env('ALFRED_COINS_INSURANCEMARKET_PRIVATE_KEY'),
             'timeout' => (int) env('ALFRED_COINS_INSURANCEMARKET_TIMEOUT', 15),
         ],
     ],
