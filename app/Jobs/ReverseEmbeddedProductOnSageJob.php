@@ -91,7 +91,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
             return;
         }
 
-        (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
+        app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
 
         $isLastAttempt = $this->attempts() >= $this->tries;
 
