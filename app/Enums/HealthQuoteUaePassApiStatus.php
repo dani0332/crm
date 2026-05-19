@@ -48,10 +48,10 @@ enum HealthQuoteUaePassApiStatus: string
         };
     }
 
-    public static function displayLabel(?string $value): string
+    public static function displayLabel(?string $value): ?string
     {
         if ($value === null || $value === '') {
-            return '—';
+            return null;
         }
 
         $case = self::tryFrom($value);
