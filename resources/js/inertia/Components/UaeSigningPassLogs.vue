@@ -231,6 +231,7 @@ const formatJson = value => {
             <dt class="font-medium">Proof Of Presentation ID:</dt>
             <dd class="truncate max-w-xs" :title="selectedLog.proof_of_presentation_id">
               {{ selectedLog.proof_of_presentation_id }}
+            </dd>
             <dt class="font-medium">Ref ID:</dt>
             <dd>
               {{ `${quoteTypeShortCode}-${quoteUuid || 'N/A'}` }}
