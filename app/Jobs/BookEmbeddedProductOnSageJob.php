@@ -3,9 +3,11 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Models\EmbeddedTransaction;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiEmbeddedProductService;
@@ -55,7 +57,34 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         LoggerService::info('--------------------------------Sage Embedded Product Booking Job execution started--------------------------------');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
+        $this->epTransaction = EmbeddedTransaction::query()->findOrFail($this->epTransaction->id);
         $quote = $this->getQuoteObjectBy($this->request->modelType, $this->request->quoteId);
+
+        if ((int) $this->epTransaction->payment_status_id === PaymentStatusEnum::REFUNDED) {
+            $message = 'Embedded product payment is refunded — Sage booking aborted';
+            LoggerService::info($message, extra: ['EPCode' => $this->epTransaction->code]);
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
+            (new SageApiEmbeddedProductService)->updateAndLogEPBookingStatus(
+                $this->epTransaction,
+                SageEmbeddedProductEnum::BOOKING_CANCELLED->id(),
+                $this->logFor,
+            );
+            (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+
+            return;
+        }
+
+        $decodedSageProcessRequest = json_decode($this->sageProcess->request ?? '', true);
+        $sageProcessRequestType = $decodedSageProcessRequest['sagePayload']['sageProcessRequestType'] ?? null;
+        if ($sageProcessRequestType !== SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST) {
+            LoggerService::info('Embedded product Sage booking skipped — process is not a book request', extra: [
+                'EPCode' => $this->epTransaction->code,
+                'SageProcessRequestType' => $sageProcessRequestType,
+            ]);
+            (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+
+            return;
+        }
 
         $quoteTypeId = QuoteTypes::getIdFromValue($this->request->modelType);
         $ePTransaction = (new SageApiService)->getEPTransactions($quote, $quoteTypeId);

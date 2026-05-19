@@ -230,11 +230,20 @@ class SageApiEmbeddedProductService
     }
 
     /**
+     * Skip scheduling only when Sage booking cannot complete or already failed/cancelled.
+     * {@see SageEmbeddedProductEnum::BOOKING_QUEUED} must not skip — a pending book job may still complete.
+     *
      * @return array<string, mixed>|null
      */
     private function reversalScheduleResultWhenSageNotBookedSoSkip(EmbeddedTransaction $epTransaction): ?array
     {
-        if ((int) $epTransaction->sage_status_id === SageEmbeddedProductEnum::BOOKING_COMPLETED->id() || (int) $epTransaction->sage_status_id === SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id()) {
+        $sageStatusId = (int) $epTransaction->sage_status_id;
+
+        if (
+            $sageStatusId === SageEmbeddedProductEnum::BOOKING_COMPLETED->id()
+            || $sageStatusId === SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id()
+            || $sageStatusId === SageEmbeddedProductEnum::BOOKING_QUEUED->id()
+        ) {
             return null;
         }
 
@@ -254,6 +263,17 @@ class SageApiEmbeddedProductService
             'message' => 'No Sage reversal required (EP is not booked on Sage)',
             'reversal_skipped' => true,
         ];
+    }
+
+    /**
+     * Whether the embedded transaction has a completed Sage AR premium booking log.
+     */
+    private function embeddedProductHasSageArPremiumBookingLog(EmbeddedTransaction $embeddedProductTransaction): bool
+    {
+        $embeddedProductTransaction->loadMissing('sageApiLogs');
+
+        return $embeddedProductTransaction->sageApiLogs
+            ->contains('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV);
     }
 
     /**
@@ -526,6 +546,11 @@ class SageApiEmbeddedProductService
         LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Embedded Product Booking Reversal started for EP Code: '.$embeddedProductTransaction->code);
 
+        $notBookedOutcome = $this->resolveImcrmRefundReversalWhenNotBookedOnSage($embeddedProductTransaction);
+        if ($notBookedOutcome !== null) {
+            return $notBookedOutcome;
+        }
+
         $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
 
         $customerOutcome = $this->applySageCustomerIdFromEpBookingForReversal($sageRequest, $embeddedProductTransaction);
@@ -566,6 +591,46 @@ class SageApiEmbeddedProductService
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Reversal of Embedded Product Booking Process Completed for EP Code: '.$embeddedProductTransaction->code);
 
         return ['status' => true, 'message' => 'Reversal of Embedded Product is Booked for EP Code (log target): '.$reversalSageLogOwner->code.' and EP Code: '.$embeddedProductTransaction->code];
+    }
+
+    /**
+     * IMCRM refund reversal when booking never reached Sage (queued/failed without AR logs).
+     *
+     * @return array{status: true, message: string}|null
+     */
+    private function resolveImcrmRefundReversalWhenNotBookedOnSage(EmbeddedTransaction $embeddedProductTransaction): ?array
+    {
+        if ((int) $embeddedProductTransaction->sage_status_id === SageEmbeddedProductEnum::BOOKING_COMPLETED->id()) {
+            return null;
+        }
+
+        if ($this->embeddedProductHasSageArPremiumBookingLog($embeddedProductTransaction)) {
+            return null;
+        }
+
+        $this->updateAndLogEPBookingStatus(
+            $embeddedProductTransaction,
+            SageEmbeddedProductEnum::BOOKING_CANCELLED->id(),
+            self::CLASSNAME.' fn: resolveImcrmRefundReversalWhenNotBookedOnSage',
+        );
+
+        EpLog::create([
+            'embedded_transaction_id' => $embeddedProductTransaction->id,
+            'event' => 'sage_reversal_not_required',
+            'values' => json_encode([
+                'reason' => 'No Sage AR booking exists to reverse',
+                'sage_status_id' => $embeddedProductTransaction->sage_status_id,
+            ]),
+            'loggable_id' => $embeddedProductTransaction->id,
+            'loggable_type' => $embeddedProductTransaction->getMorphClass(),
+        ]);
+
+        LoggerService::info(self::CLASSNAME.' fn: resolveImcrmRefundReversalWhenNotBookedOnSage - No Sage booking to reverse for EP Code: '.$embeddedProductTransaction->code);
+
+        return [
+            'status' => true,
+            'message' => 'No Sage booking to reverse for EP Code: '.$embeddedProductTransaction->code,
+        ];
     }
 
     public function bookEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
