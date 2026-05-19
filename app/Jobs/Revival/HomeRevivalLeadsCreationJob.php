@@ -77,9 +77,8 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 'email' => $lead->email,
                 'mobile_no' => $lead->mobile_no,
                 'quote_type_id' => QuoteTypeId::Home,
-                'source' => $this->revivalSource,
             ])
-            ->where('created_at', '>=', Carbon::now()->subMonths(11)->toDateString())
+            ->whereIn('source', HomeRevivalService::REVIVAL_SOURCES)
             ->first();
 
         $homeRevivalQuoteUUID = null;
