@@ -170,31 +170,31 @@ class SageApiEmbeddedProductService
             ->with(['product.embeddedProduct', 'payments'])
             ->first();
 
-        $guardOutcome = $this->reversalScheduleResultWhenTransactionInvalid($epTransaction, $quote);
-        if ($guardOutcome === null && $epTransaction instanceof EmbeddedTransaction) {
-            $guardOutcome = $this->reversalScheduleResultWhenPaymentNotRefunded($epTransaction)
+        $result = $this->reversalScheduleResultWhenTransactionInvalid($epTransaction, $quote);
+        if ($result === null && $epTransaction instanceof EmbeddedTransaction) {
+            $result = $this->reversalScheduleResultWhenPaymentNotRefunded($epTransaction)
                 ?? $this->reversalScheduleResultWhenSageNotBookedSoSkip($epTransaction)
                 ?? $this->reversalScheduleResultWhenInsurerNotAllowed($epTransaction);
         }
 
-        if ($guardOutcome !== null) {
-            return $guardOutcome;
+        if ($result !== null) {
+            return $result;
         }
 
         /** @var EmbeddedTransaction $epTransaction */
         $payment = $this->resolveMainLeadPaymentForSageReversalQuote($quote);
-        if (! $payment || $payment->paymentSplits->isEmpty()) {
-            return ['status' => false, 'message' => 'Main lead payment or splits not found for Sage payload'];
-        }
+        $result = (! $payment || $payment->paymentSplits->isEmpty())
+            ? ['status' => false, 'message' => 'Main lead payment or splits not found for Sage payload']
+            : $this->finalizeScheduleReversalOfEmbeddedProduct(
+                $modelType,
+                $quote,
+                $epTransaction,
+                $quoteId,
+                $quoteTypeId,
+                $payment,
+            );
 
-        return $this->finalizeScheduleReversalOfEmbeddedProduct(
-            $modelType,
-            $quote,
-            $epTransaction,
-            $quoteId,
-            $quoteTypeId,
-            $payment,
-        );
+        return $result;
     }
 
     /**
