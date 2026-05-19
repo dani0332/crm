@@ -87,34 +87,6 @@ describe('SagePayloadFactory reversal payment schedule transformations', functio
 
         expect($result->Invoices[0]->InvoicePaymentSchedules[0]->DueDate)->toBe($expected);
     });
-
-    test('applyReversalTransformationsWithSplitPayments sets all payment schedule due dates to booking date', function () {
-        $payload = makeReversalPayloadWithSchedules(3);
-        $request = makeReversalRequest('2026-05-18');
-        $expected = Carbon::parse('2026-05-18')->format(config('constants.SAGE_300_API_DATE_FORMAT'));
-
-        $method = new ReflectionMethod(SagePayloadFactory::class, 'applyReversalTransformationsWithSplitPayments');
-        // Pass empty splits — amounts are preserved from existing payload, only dates should change
-        $result = $method->invoke(null, $payload, $request, 0);
-
-        foreach ($result->Invoices[0]->InvoicePaymentSchedules as $schedule) {
-            expect($schedule->DueDate)->toBe($expected);
-        }
-    });
-
-    test('applyReversalTransformationsWithSplitPayments with fewer splits than schedules still updates all dates', function () {
-        $payload = makeReversalPayloadWithSchedules(3);
-        $request = makeReversalRequest('2026-05-18');
-        $expected = Carbon::parse('2026-05-18')->format(config('constants.SAGE_300_API_DATE_FORMAT'));
-
-        $method = new ReflectionMethod(SagePayloadFactory::class, 'applyReversalTransformationsWithSplitPayments');
-        $result = $method->invoke(null, $payload, $request, 0);
-
-        expect($result->Invoices[0]->InvoicePaymentSchedules)->toHaveCount(3);
-        foreach ($result->Invoices[0]->InvoicePaymentSchedules as $schedule) {
-            expect($schedule->DueDate)->toBe($expected);
-        }
-    });
 });
 
 describe('SagePayloadFactory::createPaymentSchedules', function () {

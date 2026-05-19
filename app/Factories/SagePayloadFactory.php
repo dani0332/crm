@@ -222,7 +222,7 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
-                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, 0);
+                $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_REV_INV;
                 $payLoad = $reversePayLoad;
@@ -465,7 +465,7 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
-                $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, 0);
+                $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
 
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 1);
@@ -1688,26 +1688,6 @@ class SagePayloadFactory
         $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $bookingDate;
 
         if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules)) {
-            foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $schedule) {
-                $schedule->DueDate = $bookingDate;
-            }
-        }
-
-        return $reversePayLoad;
-    }
-
-    private static function applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $invoiceIndex = 0)
-    {
-        $bookingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
-
-        $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber = $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber.'-REV';
-        $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription = $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription.' - REVERSAL';
-        $reversePayLoad->Invoices[$invoiceIndex]->DocumentDate = $bookingDate;
-        $reversePayLoad->Invoices[$invoiceIndex]->PostingDate = $bookingDate;
-        $reversePayLoad->Invoices[$invoiceIndex]->DueDate = $bookingDate;
-        $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $bookingDate;
-
-        if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules) && is_array($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules)) {
             foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $schedule) {
                 $schedule->DueDate = $bookingDate;
             }
