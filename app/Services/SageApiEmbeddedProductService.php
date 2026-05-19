@@ -475,19 +475,15 @@ class SageApiEmbeddedProductService
     public function bookReversalOfEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
     {
         [$quote, $sendUpdateLog, $sageRequest, $embeddedProductTransaction] = $sageRequestDataArray;
-        $sendUpdateLog->loadMissing('sageApiLogs');
 
         LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - SendUpdate Code: '.$sendUpdateLog->code.' - Embedded Product Booking Reversal started for EP Code: '.$embeddedProductTransaction->code);
 
         $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
 
-        $customerOutcome = $this->applySageCustomerIdFromEpBookingForReversal($sageRequest, $embeddedProductTransaction);
-        if ($customerOutcome !== null) {
-            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-            return $customerOutcome;
-        }
+        $createARInvoiceForEPLog = $embeddedProductTransaction?->sageApiLogs?->where('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)->first();
+        $createEPARPayload = json_decode($createARInvoiceForEPLog->sage_payload, true);
+        $sageRequest->customerId = $createEPARPayload['Invoices'][0]['CustomerNumber'];
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
         $quoteTypeId = $sageRequest->quoteTypeId;
