@@ -40,6 +40,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -105,7 +106,9 @@ class SendUpdateLogController extends Controller
         if (! empty($childLeadResponse)) {
             if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
-                    return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                    $quoteTypeSlug = strtolower(quoteTypeCode::resolveQuoteType($quoteType->code));
+
+                    return redirect('/personal-quotes/'.$quoteTypeSlug.'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
                 } else {
                     $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
@@ -182,7 +185,9 @@ class SendUpdateLogController extends Controller
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
-            if ($quoteType == QuoteTypes::CYBER->value) {
+            if ($quoteType == quoteTypeCode::Device) {
+                $realQuote = app(DeviceQuoteService::class)->getOne($quote->uuid);
+            } elseif ($quoteType == QuoteTypes::CYBER->value) {
                 $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
             } else {
                 $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -252,10 +257,20 @@ class SendUpdateLogController extends Controller
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $realQuote, $sendUpdatePayments[0] ?? null, isTapEnabled(), $sendUpdateLog);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
+        $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
+            ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
+            : null;
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
+            $sendUpdateLog->quote_type_id,
+            $quoteType,
+            $deviceType
+        );
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
+            'quoteTypeDisplayLabel' => $quoteTypeDisplayLabel,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,

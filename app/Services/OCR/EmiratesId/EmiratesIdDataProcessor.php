@@ -14,6 +14,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -81,9 +82,13 @@ class EmiratesIdDataProcessor
                 $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
-                // Update insured fields in customer table
-                $this->updateCustomerTableInsuredFields($insured);
+                // Update insured details in personal quote and customer
+                $this->updatePersonalQuoteInsuredId($insured);
+                $this->updateInsuredDataInCustomer($insured);
             }
+
+            // Update insured fields in customer table
+            $this->updateCustomerTableInsuredFields($insured);
 
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
@@ -112,7 +117,6 @@ class EmiratesIdDataProcessor
     private function updateVehicleDriverDetail($quote): bool
     {
         try {
-
             $fieldsToUpdate = $this->getCleanData([
                 'driver_gender' => $this->extractedData['sex'],
             ]);
@@ -363,6 +367,56 @@ class EmiratesIdDataProcessor
         }
     }
 
+    private function updatePersonalQuoteInsuredId(Insured $insured): void
+    {
+        try {
+            $quoteType = get_class($this->quote);
+            $affectedRow = PersonalQuote::where('uuid', $this->quote->uuid)
+                ->update(['insured_id' => $insured->id]);
+
+            if ($affectedRow > 0) {
+                LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
+                    'insured_id' => $insured->id,
+                    'quote_type' => $quoteType,
+                ]);
+            } else {
+                LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid, [
+                    'quote_type' => $quoteType,
+                ]);
+            }
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update personal quote insured ID', exception: $e);
+        }
+    }
+
+    private function updateInsuredDataInCustomer(Insured $insured): void
+    {
+        try {
+            $quoteType = get_class($this->quote);
+            $customer = $this->quote->customer;
+
+            if (! $customer) {
+                LoggerService::warning('Customer record not found for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+
+                return;
+            }
+
+            $dataToUpdate = $this->getFieldsToUpdate([
+                'nationality_id' => $insured->nationality_id,
+                'dob' => $insured->dob,
+                'insured_first_name' => $insured->first_name,
+                'insured_last_name' => $insured->last_name,
+            ]);
+
+            if (! empty($dataToUpdate)) {
+                $customer->update($dataToUpdate);
+                LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+            }
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update insured details in customer record', exception: $e);
+        }
+    }
+
     private function getNationalityName(?int $nationalityId): ?string
     {
         if (empty($nationalityId)) {
@@ -418,13 +472,13 @@ class EmiratesIdDataProcessor
         try {
             $quoteTypeId = $this->getQuoteTypeId($this->quote);
 
-            $existingLink = CustomerInsured::active()
-                ->where([
-                    'customer_id' => $this->quote->customer_id,
-                    'insured_id' => $insured->id,
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $this->quote->id,
-                ])
+            $existingLink = CustomerInsured::active()->where([
+                'customer_id' => $this->quote->customer_id,
+                'insured_id' => $insured->id,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $this->quote->id,
+            ])
+                ->latest('updated_at')
                 ->first();
 
             if (! $existingLink) {

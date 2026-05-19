@@ -33,8 +33,10 @@ use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\ReTriggerLifeRevivalRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SendZeroPlanEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
@@ -49,6 +51,7 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPCQualifiedJob;
@@ -59,6 +62,7 @@ use App\Models\HealthQuotePlan;
 use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
+use App\Services\Allocation\AllocationCreationService;
 use App\Services\ApiService;
 use App\Services\ApplicationStorageService;
 use App\Services\BirdService;
@@ -70,6 +74,7 @@ use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\OutboundEmailsHookService;
@@ -87,6 +92,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -96,6 +102,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ApiController extends Controller
 {
     private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+    private const LIFE_REVIVAL_JOB_DELAY_SECONDS = 30;
 
     use GenericQueriesAllLobs, PrivateClient;
 
@@ -441,10 +448,10 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
-            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
+            $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                 // reason for adding this check on process involved is because we not triggering the payment capture failure for car AXA
-                $processInvolved = $isCyberLob ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
+                $processInvolved = $shouldUpdateAPIIssuanceAndInsurerStatus ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, $processInvolved);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -763,8 +770,13 @@ class ApiController extends Controller
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
+        LoggerService::info(self::class.' - update customer replied status request received',
+            ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject]);
+
         try {
-            $result = DB::transaction(function () use ($request) {
+            $quoteType = QuoteTypes::getName($request->quote_type_id);
+
+            $result = DB::transaction(function () use ($request, $quoteType) {
 
                 $emailStatusService = app(EmailStatusService::class);
 
@@ -775,13 +787,19 @@ class ApiController extends Controller
                 );
 
                 if (! $result->success) {
+                    LoggerService::warning(self::class.' - error updating customer replied status',
+                        ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'error' => $result->message]);
+
                     return $result;
                 }
 
-                $quoteType = QuoteTypes::getName($request->quote_type_id);
+                LoggerService::info(self::class.' - updating source for revival leads after customer replied',
+                    ['quote_uuid' => $request->quote_uuid, 'quote_type_id' => $request->quote_type_id, 'email_subject' => $request->email_subject, 'quote_type' => $quoteType]);
 
                 match ($quoteType) {
                     QuoteTypes::CAR => app(CarRevivalService::class)->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
+                    QuoteTypes::LIFE => app(LifeRevivalService::class)
+                        ->updateSource($request->quote_uuid, LeadSourceEnum::REVIVAL_REPLIED),
                     default => null,
                 };
 
@@ -789,6 +807,21 @@ class ApiController extends Controller
             });
 
             if ($result->success) {
+                if ($quoteType === QuoteTypes::LIFE) {
+                    try {
+                        QuoteTypes::LIFE->allocate(uuid: $request->quote_uuid);
+
+                        LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
+                            ['quote_uuid' => $request->quote_uuid]);
+                    } catch (\Throwable $exception) {
+                        LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                            'quote_uuid' => $request->quote_uuid,
+                            'quote_type_id' => $request->quote_type_id,
+                            'error' => $exception->getMessage(),
+                        ], $exception);
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => $result->message,
@@ -939,6 +972,21 @@ class ApiController extends Controller
         return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
     }
 
+    public function sendZeroPlansEmail(SendZeroPlanEmailRequest $request)
+    {
+        $response = app(ApiService::class)->sendZeroPlansEmail($request);
+        if ($response['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $response['message'],
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => $response['message'],
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(
@@ -1203,5 +1251,91 @@ class ApiController extends Controller
             ->count();
         dd($records);
 
+    }
+
+    public function reTriggerLifeRevival(ReTriggerLifeRevivalRequest $request): JsonResponse
+    {
+        Log::withContext(['feature' => 're-trigger-life-revival']);
+
+        $validated = $request->validated();
+
+        $allocationCreationService = app(AllocationCreationService::class);
+
+        if ($request->boolean('debug')) {
+            $leads = $allocationCreationService->executeLifeRevivalAllocation();
+            if (! empty($validated['limit'])) {
+                $leads = $leads->take((int) $validated['limit']);
+            }
+
+            return apiResponse([
+                'count' => $leads->count(),
+                'leads' => $leads->values(),
+            ], Response::HTTP_OK, 'Life revival leads (debug)');
+        }
+
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_LIFE_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.' - reTriggerLifeRevival - DTT Life Revival is not enabled from cms');
+
+            return apiResponse(false, Response::HTTP_OK, 'DTT Life Revival is not enabled from cms');
+        }
+
+        if (! $request->boolean('all')) {
+            return apiResponse(false, Response::HTTP_BAD_REQUEST, 'Invalid request');
+        }
+
+        $leads = $allocationCreationService->executeLifeRevivalAllocation();
+
+        if (! empty($validated['limit'])) {
+            $leads = $leads->take((int) $validated['limit']);
+        }
+
+        if ($leads->isEmpty()) {
+            LoggerService::info(self::class.' - reTriggerLifeRevival - no life revival leads to process');
+
+            return apiResponse(true, Response::HTTP_OK, 'No life revival leads to process');
+        }
+
+        $this->dispatchLifeRevivalLeadJobs($leads);
+
+        LoggerService::info(self::class.' - reTriggerLifeRevival - life revival batch dispatched', [
+            'lead_count' => $leads->count(),
+        ]);
+
+        return apiResponse(true, Response::HTTP_OK, 'Life revival jobs dispatched successfully');
+    }
+
+    private function dispatchLifeRevivalLeadJobs($leads): void
+    {
+        $leadsList = $leads->values()->all();
+
+        if ($leadsList === [] || count($leadsList) === 0) {
+            return;
+        }
+
+        $logPrefix = self::class.' - dispatchLifeRevivalLeadJobs - ';
+        $jobs = [];
+        $delayCounter = 0;
+
+        foreach ($leadsList as $lead) {
+            $jobs[] = (new LifeRevivalLeadsCreationJob($lead->id))->delay(now()->addSeconds(self::LIFE_REVIVAL_JOB_DELAY_SECONDS + $delayCounter));
+            $delayCounter += self::LIFE_REVIVAL_JOB_DELAY_SECONDS;
+        }
+
+        Bus::batch($jobs)
+            ->then(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} all life revival batch jobs completed successfully");
+            })
+            ->catch(function () use ($logPrefix) {
+                LoggerService::warning("{$logPrefix} one of life revival batch jobs failed.");
+            })
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} life revival batch finished");
+            })
+            ->allowFailures()
+            ->name('Life DTT Batch Jobs (API)')
+            ->dispatch();
+
+        LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
     }
 }

@@ -4,9 +4,9 @@
 
 This test suite validates the functionality of the `togglePolicyIssuanceAutomation` endpoint in the AMLController. This endpoint allows enabling or disabling policy issuance automation for Car quotes.
 
-**Test File**: `tests/Feature/TogglePolicyIssuanceAutomationTest.php`  
-**Controller**: `app/Http/Controllers/V2/AMLController.php`  
-**Service**: `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php`  
+**Test File**: `tests/Feature/TogglePolicyIssuanceAutomationTest.php`
+**Controller**: `app/Http/Controllers/V2/AMLController.php`
+**Service**: `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php`
 **Route**: `POST /toggle-policy-issuance-automation`
 
 ---
@@ -56,8 +56,8 @@ doppler run -- php artisan test tests/Feature/TogglePolicyIssuanceAutomationTest
 
 ### Request Format
 
-**Method**: POST  
-**Route**: `/toggle-policy-issuance-automation`  
+**Method**: POST
+**Route**: `/toggle-policy-issuance-automation`
 **Content-Type**: `application/json`
 
 ```json
@@ -419,7 +419,6 @@ $quoteCode = $carQuote->code;
 
 ```php
 // Test Setup (beforeEach)
-TestSchemaCreator::createMinimalSchema();
 $this->insuranceProvider = InsuranceProvider::factory()->rsa()->createOneQuietly();
 $this->carPlan = CarPlan::factory()->forInsuranceProvider($this->insuranceProvider->id)->createOneQuietly();
 
@@ -591,7 +590,6 @@ Duration: ~15-20s
 
 ### Tests failing with database errors
 
-- Ensure `TestSchemaCreator::createMinimalSchema()` is called in `beforeEach`
 - Verify all database operations use `DB::connection('sqlite')`
 - Check that required tables and columns are defined in schema
 

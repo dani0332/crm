@@ -32,6 +32,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
@@ -41,7 +42,6 @@ use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
-use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
@@ -79,6 +79,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -110,6 +111,7 @@ class CentralService extends BaseService
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
             quoteTypeCode::SAVINGS,
+            quoteTypeCode::Device,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -264,7 +266,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::CYBER];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::CYBER, quoteTypeCode::Device];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -377,6 +379,8 @@ class CentralService extends BaseService
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             case quoteTypeCode::SAVINGS:
                 return app(SavingsQuoteService::class)->getAvailablePlans($id);
+            case quoteTypeCode::Device:
+                return app(DeviceQuoteService::class)->getAvailablePlans($id);
             case quoteTypeCode::CYBER:
                 return app(CyberQuoteService::class)->getAvailablePlans($id);
             default:
@@ -683,6 +687,16 @@ class CentralService extends BaseService
                     'planId' => intval($data->plan_id),
                     'quoteUID' => $uuid,
                     'quoteTypeId' => QuoteTypeId::Savings,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::DEVICE->value:
+                $endpoint = '/device/process-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypeId::Device,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
@@ -1231,25 +1245,6 @@ class CentralService extends BaseService
         return $quoteStatuses;
     }
 
-    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
-    {
-        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
-
-        SendUpdateStatusLog::updateOrCreate([
-            'send_update_log_id' => $sendUpdateLogId,
-            'previous_status' => $previousStatus,
-            'current_status' => $currentStatus,
-        ], [
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        LoggerService::info('SendUpdateLog status changed', extra: [
-            'previousStatus' => $previousStatus,
-            'current_status' => $currentStatus,
-        ]);
-    }
-
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
         LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
@@ -1374,7 +1369,6 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {
@@ -1594,6 +1588,97 @@ class CentralService extends BaseService
         return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
     }
 
+    /**
+     * Process document URLs and extensions for email data
+     *
+     * @param  object  $emailData  - The email data object to update
+     * @param  object  $sendUpdateEmailData  - Email data containing documents
+     */
+    private function processDocumentUrlsForEmailData(object &$emailData, object $sendUpdateEmailData): void
+    {
+        // Define document types to process (generates properties like documentSUPC, documentSUPS, documentTAX_INVOICE)
+        $documentTypes = [
+            'SUPC' => WatermarkDocTypesEnum::SUPC,
+            'SUPS' => WatermarkDocTypesEnum::SUPS,
+            'TAX_INVOICE' => WatermarkDocTypesEnum::SUTAXINV,
+        ];
+
+        $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents ?? []);
+
+        // Initialize all document properties to empty strings to prevent email provider crashes
+        foreach ($documentTypes as $documentCode) {
+            $urlProperty = 'document'.$documentCode;
+            $extProperty = 'document'.$documentCode.'Ext';
+            $emailData->{$urlProperty} = '';
+            $emailData->{$extProperty} = '';
+        }
+
+        // Process each document directly and update properties only for existing documents
+        foreach ($sendUpdateEmailDocs as $document) {
+            $documentTypeCode = $document['document_type_code'];
+
+            // Only process documents that are in our defined types
+            if (! in_array($documentTypeCode, $documentTypes)) {
+                continue;
+            }
+
+            $documentUrl = $document['watermarked_doc_url'] ?? $document['doc_url'] ?? '';
+
+            // Generate property names dynamically using document type code directly
+            $urlProperty = 'document'.$documentTypeCode;
+            $extProperty = 'document'.$documentTypeCode.'Ext';
+
+            if (! empty($documentUrl)) {
+                // Generate presigned URL instead of direct storage URL
+                $emailData->{$urlProperty} = app(QuoteDocumentService::class)->getDocumentUrl($documentUrl, 'azureIMPrivate', 60); // 60 minutes expiry
+                $emailData->{$extProperty} = ! empty($emailData->{$urlProperty})
+                    ? app(QuoteDocumentService::class)->getDocumentExtension($emailData->{$urlProperty})
+                    : '';
+            }
+        }
+    }
+
+    /**
+     * Prepare email data specifically for Device update emails to Bird
+     * Combines Bird's standard data structure with update-specific fields
+     *
+     * @param  $quote  - The quote object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $sendUpdateEmailData  - Email data from sendUpdateToCustomerEmailData
+     * @return object - Prepared email data for Bird
+     */
+    public function prepareDeviceUpdateBirdData($quote, $quoteTypeId, $sendUpdateEmailData)
+    {
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Start preparing Device update email data for Bird', extra: [
+            'uuid' => $quote->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'emailData' => json_encode($sendUpdateEmailData),
+        ]);
+
+        // Start with standard Bird data structure
+        $workflowType = WorkflowTypeEnum::DEVICE_UPDATE_POLICY;
+        $emailData = $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $sendUpdateEmailData);
+
+        // Process document URLs and extensions
+        $this->processDocumentUrlsForEmailData($emailData, $sendUpdateEmailData);
+
+        // Preserve the reason/notes the user provided so Bird emails explain the update
+        if (is_array($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData['reason'] ?? '';
+        } elseif (is_object($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData->reason ?? '';
+        } else {
+            $emailData->reason = '';
+        }
+
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [
+            'uuid' => $quote->uuid,
+            'emailData' => json_encode($emailData),
+        ]);
+
+        return $emailData;
+    }
+
     public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
     {
         $emailData = (object) [
@@ -1603,6 +1688,7 @@ class CentralService extends BaseService
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
             'refID' => $quote->code,
             'code' => $quote->code,
+            'reason' => $existingEmailData->reason ?? '',
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
@@ -1639,17 +1725,21 @@ class CentralService extends BaseService
         $quote->load('latestInsured');
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
+        $emailData->cc_emails = [];
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
             $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
                 $emailData->companyName = $quote->company_name ?? '';
+            }
+
+            if ($emailData->advisorEmail) {
+                $emailData->cc_emails[] = $emailData->advisorEmail;
             }
         }
 
@@ -1709,7 +1799,16 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
-        if ($quoteTypeId == QuoteTypeId::Cyber) {
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
+            $insuranceProviderCompanyText = $quote?->insuranceProvider?->text ?? '';
+            $insuranceProviderCompanyCode = $quote?->insuranceProvider?->code ?? '';
+            if (! empty($insuranceProviderCompanyText) && ! empty($insuranceProviderCompanyCode)) {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText.' ('.$insuranceProviderCompanyCode.')';
+            } else {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText;
+            }
+        } elseif ($quoteTypeId == QuoteTypeId::Cyber) {
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
                 ? number_format($quote->cyberPlanDetail->coverage)
                 : '-';
@@ -1725,7 +1824,6 @@ class CentralService extends BaseService
                 ? app(QuoteDocumentService::class)->getDocumentUrl($taxInvoicePath, 'azureIMPrivate', 60) ?? ''
                 : '';
         }
-
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1751,10 +1849,14 @@ class CentralService extends BaseService
                 }
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
-                })->first()?->doc_url ?? '';
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
+                })->first();
 
-                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                $policyHandBook = ! empty($policyHandBook?->watermarked_doc_url)
+                    ? $policyHandBook->watermarked_doc_url
+                    : ($policyHandBook?->doc_url ?? '');
+
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Device])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
@@ -1776,18 +1878,22 @@ class CentralService extends BaseService
         if (! empty($quoteDocuments)) {
             $quoteDocuments = collect($quoteDocuments);
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Device])) {
                 $emailData->policyCertificate = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
                         DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
+                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE, DocumentTypeCode::TCOMP_PC,
                     ]);
-                })->first()?->doc_url ?? '';
+                })->first();
 
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policyCertificate, 'azureIMPrivate') ?? '';
+                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url')) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicyCertificate(), true)
+                        ? (data_get($emailData->policyCertificate, 'watermarked_doc_url') ?? '')
+                        : (data_get($emailData->policyCertificate, 'doc_url') ?? '');
+                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($certificatePath, 'azureIMPrivate') ?? '';
                     $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo(parse_url($emailData->policyCertificate, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
@@ -1800,7 +1906,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Health) {
                 $emailData->signedMedicalApplicationForm = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->signedMedicalApplicationForm = ! empty($emailData?->signedMedicalApplicationForm?->watermarked_doc_url)
+                    ? $emailData->signedMedicalApplicationForm->watermarked_doc_url
+                    : ($emailData?->signedMedicalApplicationForm?->doc_url ?? '');
 
                 if (empty($emailData->signedMedicalApplicationForm)) {
                     LoggerService::info('Signed Medical Application Form not found.');
@@ -1820,7 +1930,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->eCard = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->eCard = ! empty($emailData?->eCard?->watermarked_doc_url)
+                    ? $emailData->eCard->watermarked_doc_url
+                    : ($emailData?->eCard?->doc_url ?? '');
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
@@ -1838,7 +1952,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->networkList = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->networkList = ! empty($emailData?->networkList?->watermarked_doc_url)
+                    ? $emailData->networkList->watermarked_doc_url
+                    : ($emailData?->networkList?->doc_url ?? '');
 
                 if (empty($emailData->networkList)) {
                     LoggerService::info('Network List not found.');
@@ -1851,7 +1969,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Life) {
                 $emailData->applicationCopy = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->applicationCopy = ! empty($emailData?->applicationCopy?->watermarked_doc_url)
+                    ? $emailData->applicationCopy->watermarked_doc_url
+                    : ($emailData?->applicationCopy?->doc_url ?? '');
 
                 if (empty($emailData->applicationCopy)) {
                     LoggerService::info('Application Copy not found.');
@@ -1862,16 +1984,18 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [
+                $scheduleDocumentTypeCodes = [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
-                ]);
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic,
+                    DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS, DocumentTypeCode::TCOMP_PS,
+                ];
+
+                return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && $quoteTypeId == QuoteTypeId::Cyber
-                ? $emailData->policySchedule->watermarked_doc_url ?? ''
-                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+                ? ($emailData->policySchedule->watermarked_doc_url ?? '')
+                : ($emailData?->policySchedule?->doc_url ?? '');
 
             LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 
@@ -1921,6 +2045,55 @@ class CentralService extends BaseService
     }
 
     /**
+     * Send Device update email to customer via Bird
+     * Similar to sendInslyEmailToCustomer but specifically for update emails
+     *
+     * @param  $quote  - The quote object
+     * @param  $emailData  - Prepared email data object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $emailType  - Type of email (e.g., 'Update Email')
+     * @return int|null - HTTP status code or null
+     */
+    public function sendUpdateToCustomerEmail($quote, $emailData, $quoteTypeId, $emailType = 'Update Email')
+    {
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} update email for {$emailType} uuid: ".$quote->uuid.' | Time: '.now());
+
+            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            $response = null;
+
+            if ($birdUrl) {
+                LoggerService::info("Bird workflow URL retrieved: {$birdUrl->value} for uuid: {$quote->uuid}");
+
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl->value, $emailData);
+
+                LoggerService::info("{$quoteType} update email response: ".json_encode($response)." | {$emailType} uuid: {$quote->uuid} | Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($quote, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                    LoggerService::info("Quote flow details created for {$emailType} uuid: {$quote->uuid}");
+                }
+            } else {
+                LoggerService::warning("{$birdUrlKey} not found in ApplicationStorage for uuid: {$quote->uuid}");
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending update workflow for {$emailType}: uuid: {$quote->uuid} | Time: ".now();
+            LoggerService::error($errorMessage, extra: [
+                'exception' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+                'trace' => $ex->getTraceAsString(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Send automation email to Bird
      *
      * @param  $emailData  | should be object
@@ -1930,10 +2103,9 @@ class CentralService extends BaseService
     {
         LoggerService::startQuoteLogging($lead);
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-
+        $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
         try {
             LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
-            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {

@@ -113,6 +113,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canBypassPlanLock: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -166,6 +170,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.Device,
   quoteTypeCodeEnum.CYBER,
 ]; //Ecommerce LOBs
 
@@ -291,6 +296,8 @@ if (
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Device) {
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
@@ -301,7 +308,7 @@ if (
 ) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
-  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -545,6 +552,7 @@ const addPaymentModal = async () => {
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
     quoteTypeCodeEnum.SAVINGS,
+    quoteTypeCodeEnum.Device,
   ];
 
   if (
@@ -901,6 +909,8 @@ const setPaymentInitialPrice = () => {
 const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == quoteTypeCodeEnum.Device) {
+    initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
@@ -1163,6 +1173,7 @@ watch(
           :quoteDocuments="quoteDocuments"
           :totalPrice="totalPrice"
           :planDetail="planDetail"
+          :canBypassPlanLock="canBypassPlanLock"
           @add-payment-modal="addPaymentModal"
         />
 

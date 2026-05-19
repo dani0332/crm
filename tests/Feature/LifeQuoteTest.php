@@ -6,10 +6,8 @@ use App\Services\OCR\OCRService;
 use Tests\Helpers\LifeQuoteMockHelper;
 use Tests\Helpers\LifeQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedLifeQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
 

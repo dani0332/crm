@@ -29,6 +29,12 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+
+        $this->createEndorsementFinancialDevice();
+        $this->createEndorsementNonFinancialDevice();
+        $this->createCIRDevice();
+        $this->createCIDevice();
+
         $this->createClaimTypes();
         $this->createClaimRequestTypes();
         $this->createClaimServiceTypes();
@@ -315,6 +321,115 @@ class LookupSeeder extends Seeder
         ]);
     }
 
+    private function createEndorsementFinancialDevice(): void
+    {
+        $ef = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'midterm-policy-cancellation',
+            'code' => 'MPC',
+            'text' => 'Midterm policy cancellation',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'correction-and-amendments-with-financial-effect',
+            'code' => 'CAAFE',
+            'text' => 'Correction and Amendments (with Financial Effect)',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-invoice-booking',
+            'code' => 'ATIB',
+            'text' => 'Additional tax invoice booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-booking',
+            'code' => 'ATCRNB',
+            'text' => 'Additional tax credit note booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-commission-booking',
+            'code' => 'ACB',
+            'text' => 'Additional tax invoice raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-raised-by-buyer-booking',
+            'code' => 'ATCRNB_RBB',
+            'text' => 'Additional tax credit note raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-invoice-commission-booking',
+            'code' => 'ATICB',
+            'text' => 'Additional tax invoice and tax invoice raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-and-tax-credit-note-raised-by-buyer-booking',
+            'code' => 'ATCRN_CRNRBB',
+            'text' => 'Additional tax credit note and tax credit note raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function createClaimTypes(): void
     {
         Lookup::firstOrCreate([
@@ -396,6 +511,112 @@ class LookupSeeder extends Seeder
             'description' => 'Claims specifically for windscreen damage or replacement.',
             'is_active' => 1,
             'sort_order' => 6,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createEndorsementNonFinancialDevice(): void
+    {
+        $en = Lookup::where('code', SendUpdateLogStatusEnum::EN)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'correction-amendments',
+            'code' => 'CAA',
+            'text' => 'Correction and amendments',
+        ], [
+            'parent_id' => $en->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createCIRDevice(): void
+    {
+        $cir = Lookup::where('code', SendUpdateLogStatusEnum::CIR)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-inception-date',
+            'code' => 'CIID',
+            'text' => 'Change in inception date',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-expiry-extension',
+            'code' => 'CIED_EOP',
+            'text' => 'Change in expiry date / Extension of policy',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-insurer',
+            'code' => 'CII',
+            'text' => 'Change in insurer',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-cover',
+            'code' => 'CIC',
+            'text' => 'Change in cover',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createCIDevice(): void
+    {
+        $ci = Lookup::where('code', SendUpdateLogStatusEnum::CI)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'delays-unhappy-insurer',
+            'code' => 'DWI',
+            'text' => 'Delays/Unhappy with insurer',
+        ], [
+            'parent_id' => $ci->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'unhappy-our-service',
+            'code' => 'UWOS',
+            'text' => 'Unhappy with our service',
+        ], [
+            'parent_id' => $ci->id,
+            'description' => '',
+            'is_active' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -508,6 +729,7 @@ class LookupSeeder extends Seeder
             ]);
         }
     }
+
     private function createClaimRequestAccessTypes(): void
     {
         $claimRequestType = [
@@ -598,6 +820,7 @@ class LookupSeeder extends Seeder
                 ]);
             }
         }
+
     }
 
     private function createRmCategories(): void

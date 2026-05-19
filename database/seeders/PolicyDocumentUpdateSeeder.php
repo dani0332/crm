@@ -141,6 +141,16 @@ class PolicyDocumentUpdateSeeder extends Seeder
             'category' => DocumentTypeCategory::ISSUING_DOCUMENTS,
             'is_required_for_send_policy' => 1,
         ],
+        [
+            'quote_type_id' => QuoteTypeId::Device,
+            'document_codes' => [
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK,
+            ],
+            'category' => DocumentTypeCategory::ISSUING_DOCUMENTS,
+            'is_required_for_send_policy' => 1,
+        ],
     ];
     /**
      * Run the database seeds.

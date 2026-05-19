@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuditableController;
 use App\Services\BaseService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Http\Request;
@@ -21,7 +22,9 @@ test('loadAuditableComponent returns JSON from baseService audits when jsonData 
         ->with(42, 'App\\Models\\CarQuote')
         ->andReturn($auditsPayload);
 
-    $controller = new AuditableController($baseService);
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+
+    $controller = new AuditableController($baseService, $policyIssuanceService);
 
     $request = Request::create('/auditable', 'POST', [
         'auditableId' => 42,
@@ -58,7 +61,9 @@ test('loadAuditableComponent returns auditable view and does not call audits whe
     $baseService = Mockery::mock(BaseService::class);
     $baseService->shouldNotReceive('audits');
 
-    $controller = new AuditableController($baseService);
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+
+    $controller = new AuditableController($baseService, $policyIssuanceService);
 
     $request = Request::create('/auditable', 'POST', [
         'auditableId' => 99,

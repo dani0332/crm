@@ -315,6 +315,7 @@ class EpEcbService extends EpBookingService
                     'payment_reference_number' => 'required',
                     'sales_info.policy_sold_date' => $policySoldDateRules,
                     'customer_info.customer_fname' => 'required',
+                    // required rejects ''; company + private company_name split assumes multi-word names (business-confirmed).
                     'customer_info.customer_lname' => 'required',
                     'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
                     'customer_info.customer_id_no' => 'required',
@@ -343,6 +344,7 @@ class EpEcbService extends EpBookingService
                     'product_info.policy_coverage_type' => "required|in:{$this->policyProduct}",
                     'product_info.policy_plan_type' => "required|in:{$this->policyProduct}-STANDARD",
                     'customer_info.customer_fname' => 'required',
+                    // required rejects ''; company + private company_name split assumes multi-word names (business-confirmed).
                     'customer_info.customer_lname' => 'required',
                     'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
                     'customer_info.customer_id_no' => 'required',
@@ -927,6 +929,7 @@ class EpEcbService extends EpBookingService
             'doc_uuid' => $docUuid,
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
+            'document_type_id' => $documentType->id,
             'doc_mime_type' => 'application/pdf',
             'created_by_id' => null,
             'watermarked_doc_name' => null,
@@ -1127,6 +1130,29 @@ class EpEcbService extends EpBookingService
         $latestInsuredData = $this->quote?->latestInsured;
         $firstName = ($latestInsuredData?->first_name ?? $this->quote->customer?->insured_first_name) ?? '';
         $lastName = ($latestInsuredData?->last_name ?? $this->quote->customer?->insured_last_name) ?? '';
+
+        // Company car + private use: the ECB payload must carry both customer_fname and customer_lname
+        // from company_name (first token + remainder after the first space), not a mix of insured
+        // profile fields and company text. If either insured first or last name is missing, we set
+        // both from company_name so the pair is always consistent for this registration type.
+        //
+        // That is why the condition uses OR: partial insured names are not authoritative here; we
+        // replace both once any piece is missing. Non-empty insured names only apply when both are
+        // present (then this block is skipped).
+        //
+        // company_name must contain a space so customer_lname is non-empty and passes
+        // getValidationRules() (e.g. STEP_CREATE_POLICY_FROM_QUOTE: customer_lname => required).
+        // If company_name were a single token, customer_lname would be '' and validation would fail.
+        // Business has confirmed company_name for this flow always includes at least one space.
+        $isCompanyPrivate = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE;
+
+        if ($isCompanyPrivate && ($firstName === '' || $lastName === '')) {
+            $companyName = trim($latestInsuredData?->company_name ?? $this->quote?->company_name ?? '');
+            $spacePos = strpos($companyName, ' ');
+            $firstName = $spacePos !== false ? substr($companyName, 0, $spacePos) : $companyName;
+            $lastName = $spacePos !== false ? substr($companyName, $spacePos + 1) : '';
+        }
 
         $customerDetails = [
             ...$customerTypeInfo,
