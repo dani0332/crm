@@ -169,15 +169,7 @@ function validateForm() {
     });
     return false;
   }
-
-  // if (selectedNationalities.value.length === 0) {
-  //   notification.error({
-  //     title: 'GBP Nationality is required',
-  //     position: 'top',
-  //   });
-  //   return false;
-  // }
-
+  
   return true;
 }
 
