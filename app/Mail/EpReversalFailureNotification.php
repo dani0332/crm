@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Exceptions\EpReversalFailureEmailConfigNotFoundException;
 use App\Models\ApplicationStorage;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -84,7 +85,7 @@ class EpReversalFailureNotification extends Mailable
 
         $missing = array_diff($keys, $records->pluck('key_name')->toArray());
         if ($missing !== []) {
-            throw new \RuntimeException('EP failure email configuration not found for Sage reversal notification');
+            throw new EpReversalFailureEmailConfigNotFoundException(array_values($missing));
         }
 
         $this->epFailureEmailConfigs = $records->pluck('value', 'key_name')->toArray();

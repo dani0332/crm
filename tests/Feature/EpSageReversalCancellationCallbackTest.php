@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Exceptions\EpSageReversalRetryableException;
 use App\Http\Middleware\BasicAuth;
 use App\Jobs\BookEmbeddedProductOnSageJob;
 use App\Jobs\ReverseEmbeddedProductOnSageJob;
@@ -320,7 +321,7 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
 
         $job = new ReverseEmbeddedProductOnSageJob($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
 
-        expect(fn () => $job->handle())->toThrow(RuntimeException::class, 'transient sage failure');
+        expect(fn () => $job->handle())->toThrow(EpSageReversalRetryableException::class, 'transient sage failure');
 
         expect(
             EpLog::query()

@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Exceptions\EpSageReversalRetryableException;
 use App\Models\EmbeddedTransaction;
 use App\Models\EpLog;
 use App\Models\SageProcess;
@@ -21,7 +22,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Carbon;
-use RuntimeException;
 use Throwable;
 
 class ReverseEmbeddedProductOnSageJob implements ShouldQueue
@@ -147,7 +147,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
                 'attempt' => $this->attempts(),
             ]);
             app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
-            throw new RuntimeException($message);
+            throw new EpSageReversalRetryableException($message);
         }
 
         app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, $this->logFor);
