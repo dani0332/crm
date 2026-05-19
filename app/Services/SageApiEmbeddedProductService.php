@@ -156,6 +156,10 @@ class SageApiEmbeddedProductService
         $modelType = $quoteTypeEnum->value;
         $quote = $this->getQuoteObjectBy($modelType, $quoteId);
 
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
         $epTransaction = EmbeddedTransaction::query()
             ->whereKey($etId)
             ->where('quote_type_id', $quoteTypeId)
@@ -170,8 +174,7 @@ class SageApiEmbeddedProductService
         if ($guardOutcome === null && $epTransaction instanceof EmbeddedTransaction) {
             $guardOutcome = $this->reversalScheduleResultWhenPaymentNotRefunded($epTransaction)
                 ?? $this->reversalScheduleResultWhenSageNotBookedSoSkip($epTransaction)
-                ?? $this->reversalScheduleResultWhenInsurerNotAllowed($epTransaction)
-                ?? $this->reversalScheduleResultWhenMissingArPremiumBookingLog($epTransaction);
+                ?? $this->reversalScheduleResultWhenInsurerNotAllowed($epTransaction);
         }
 
         if ($guardOutcome !== null) {
@@ -266,27 +269,6 @@ class SageApiEmbeddedProductService
         }
 
         return ['status' => false, 'message' => 'Sage reversal cannot be scheduled because current insurer is '.$insuranceProvider?->text];
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function reversalScheduleResultWhenMissingArPremiumBookingLog(EmbeddedTransaction $epTransaction): ?array
-    {
-        $arBookingLog = $epTransaction->sageApiLogs()
-            ->where('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)
-            ->first();
-        if (! $arBookingLog) {
-            return ['status' => false, 'message' => 'No Sage AR premium booking log found for this EP; reversal cannot run'];
-        }
-        $arBookingLog = $epTransaction->sageApiLogs()
-            ->where('sage_request_type', SageEnum::EP_SRT_CREATE_AP_PREM_INV)
-            ->first();
-        if (! $arBookingLog) {
-            return ['status' => false, 'message' => 'No Sage AP premium booking log found for this EP; reversal cannot run'];
-        }
-
-        return null;
     }
 
     private function resolveMainLeadPaymentForSageReversalQuote(object $quote): ?Payment
