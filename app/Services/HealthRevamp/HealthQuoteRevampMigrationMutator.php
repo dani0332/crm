@@ -413,7 +413,7 @@ final class HealthQuoteRevampMigrationMutator
             $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
             $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
             $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
-            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 12 => VisaCategoryEnum::NEWBORN_BORN_IN_UAE->value,
+            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 18 * 12 => null,
             $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
             default => $hqr->visa_category_id,
         };

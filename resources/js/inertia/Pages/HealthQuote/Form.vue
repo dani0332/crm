@@ -48,6 +48,7 @@ const healthInsureEnum = page.props.healthInsureEnum;
 const healthPolicyHolderEnum = page.props.healthPolicyHolderEnum;
 const healthCoverForEnum = page.props.healthCoverForEnum;
 const memberCategoryEnum = page.props.memberCategoryEnum;
+const visaCategoryEnum = page.props.visaCategoryEnum;
 const customerType = computed(() => {
   return page.props.quote?.customer_type || customerTypeEnum.Individual;
 });
@@ -960,7 +961,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   v-if='isCustomerTypeIndividual && showMemberCategoryField'
                   v-model="quoteForm.member_category_id"
                   :rules="[isRequired]"
-                  :options="memberCategoriesOptions"
+                  :options="memberCategoriesOptions.filter(item => item.value !== memberCategoryEnum.NEWBORN)"
                   class="w-full"
                   label="MEMBER CATEGORY"
                   required
@@ -972,7 +973,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                   :rules="[isRequired]"
                   :options="
                     props.dropdownSource.visa_category
-                    .filter(item => item.health_cover_for_id === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES)
+                    .filter(item => (item.health_cover_for_id === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES && item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE))
                     .map(item => ({
                       value: item.id,
                       label: item.text,

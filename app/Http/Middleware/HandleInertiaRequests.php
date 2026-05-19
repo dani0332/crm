@@ -50,6 +50,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\VisaCategoryEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -183,6 +184,7 @@ class HandleInertiaRequests extends Middleware
             'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
             'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
             'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
+            'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
         ];
     }
 

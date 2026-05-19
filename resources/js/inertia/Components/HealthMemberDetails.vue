@@ -120,6 +120,8 @@ const page = usePage();
 const notification = useToast();
 const relationCodeEnum = page.props.relationCodeEnum;
 const salaryBandEnum = page.props.salaryBandEnum;
+const visaCategoryEnum = page.props.visaCategoryEnum;
+const memberCategoryEnum = page.props.memberCategoryEnum;
 
 const {
   isDomesticHelper,
@@ -1228,7 +1230,7 @@ defineExpose({
               v-model="memberForm.member_category_id"
               label="Member Category"
               required
-              :options="memberCategories"
+              :options="memberCategories.filter(item => !(memberForm.is_policy_holder == 1 && item.value === memberCategoryEnum.NEWBORN))"
               :rules="[isRequired]"
               placeholder="Select Member Category"
               class="w-full"
@@ -1248,7 +1250,7 @@ defineExpose({
               required
               v-model="memberForm.visa_category_id"
               label="Visa Category"
-              :options="visaCategoryOptions"
+              :options="visaCategoryOptions.filter(item => !(memberForm.is_policy_holder == 1 && item.value === visaCategoryEnum.NEWBORN_BORN_IN_UAE))"
               placeholder="Select Visa Category"
               class="w-full"
               :rules="[isRequired]"
