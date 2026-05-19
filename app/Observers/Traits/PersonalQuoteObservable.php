@@ -28,6 +28,7 @@ use App\Services\BirdService;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteJourneyService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
@@ -214,6 +215,14 @@ trait PersonalQuoteObservable
     {
         $payment = $personalQuote->payments()->mainLeadPayment()->first();
         (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($personalQuote, $payment, QuoteTypes::PERSONAL->value);
+        try {
+            app(QuoteJourneyService::class)->completePolicyIssuanceEntry($personalQuote->uuid, $personalQuote->quote_type_id);
+        } catch (Exception $e) {
+            LoggerService::error('PersonalQuoteObserver - completePolicyIssuanceEntry failed', [
+                'uuid' => $personalQuote->uuid,
+                'quote_type_id' => $personalQuote->quote_type_id,
+            ], exception: $e);
+        }
     }
 
     private function handlePolicyBookedOrSentToCustomer(PersonalQuote $personalQuote): void
