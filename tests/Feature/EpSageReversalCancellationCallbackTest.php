@@ -165,4 +165,53 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
                 ->exists()
         )->toBeTrue();
     });
+
+    test('does not schedule sage processes when reversal fails before final attempt', function (): void {
+        config(['constants.EP_SAGE_REVERSAL_MAX_TRIES' => 3]);
+
+        $data = RetargetingEpReminderTestDataHelper::setupTestData();
+        $data['insuranceProvider']->update(['code' => InsuranceProviderEnum::OIC->value]);
+
+        $this->mock(SageApiEmbeddedProductService::class, function ($mock): void {
+            $mock->shouldReceive('bookReversalOfEmbeddedProductOnSageAfterImcrmRefund')
+                ->once()
+                ->withArgs(fn (array $args, ?string $epShortCode, bool $updateStatusOnFailure): bool => $updateStatusOnFailure === false)
+                ->andReturn(['status' => false, 'message' => 'transient sage failure']);
+            $mock->shouldReceive('updateAndLogEPBookingStatus')->zeroOrMoreTimes();
+        });
+        $this->mock(SageApiService::class, function ($mock): void {
+            $mock->shouldReceive('updateSageProcessStatus')->zeroOrMoreTimes();
+            $mock->shouldReceive('scheduleSageProcesses')->never();
+        });
+
+        $sageRequest = (object) [
+            'insurerID' => $data['insuranceProvider']->id,
+            'epShortCode' => 'MDX',
+        ];
+        $request = (object) [
+            'modelType' => 'Car',
+            'quoteId' => $data['carQuote']->id,
+            'quoteTypeId' => QuoteTypeId::Car,
+        ];
+
+        $sageProcess = SageProcess::query()->create([
+            'user_id' => null,
+            'insurance_provider_id' => $data['insuranceProvider']->id,
+            'model_type' => EmbeddedTransaction::class,
+            'model_id' => $data['epMDXTransaction']->id,
+            'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ]);
+
+        $job = new ReverseEmbeddedProductOnSageJob($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
+
+        expect(fn () => $job->handle())->toThrow(RuntimeException::class, 'transient sage failure');
+
+        expect(
+            EpLog::query()
+                ->where('embedded_transaction_id', $data['epMDXTransaction']->id)
+                ->where('event', 'sage_reversal_attempt')
+                ->exists()
+        )->toBeTrue();
+    });
 });

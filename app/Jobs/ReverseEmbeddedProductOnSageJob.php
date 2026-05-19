@@ -147,7 +147,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
                 'attempt' => $this->attempts(),
             ]);
             app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
-            app(SageApiService::class)->scheduleSageProcesses($this->sageRequest->insurerID);
             throw new RuntimeException($message);
         }
 
