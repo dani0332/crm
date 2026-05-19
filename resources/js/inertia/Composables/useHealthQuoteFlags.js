@@ -19,17 +19,55 @@ export function useHealthQuoteFlags({
   getIsCustomerTypeIndividual,
   getIncludePolicyholder,
 }) {
-  const { healthCoverForEnum, healthInsureEnum, healthPolicyHolderEnum } = usePage().props;
+  const { healthCoverForEnum, healthInsureEnum, healthPolicyHolderEnum } =
+    usePage().props;
 
-  const isIndividualAndFamilies = computed(() => getCoverForId() === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES);
-  const isDomesticHelper = computed(() => getCoverForId() === healthCoverForEnum.DOMESTIC_HELPER);
+  const isIndividualAndFamilies = computed(
+    () => getCoverForId() === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES,
+  );
+  const isDomesticHelper = computed(
+    () => getCoverForId() === healthCoverForEnum.DOMESTIC_HELPER,
+  );
 
-  const isSelf_Me = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.ONLY_MYSELF && getPolicyHolderCode() === healthPolicyHolderEnum.ME);
-  const isSelf_Other = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.ONLY_MYSELF && getPolicyHolderCode() === healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER);
-  const isFamily_Me = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.ONLY_MY_FAMILY_MEMBERS && getPolicyHolderCode() === healthPolicyHolderEnum.ME);
-  const isFamily_Other = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.ONLY_MY_FAMILY_MEMBERS && getPolicyHolderCode() === healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER);
-  const isSelfAndFamily_Me = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.MYSELF_AND_MY_FAMILY_MEMBERS && getPolicyHolderCode() === healthPolicyHolderEnum.ME);
-  const isSelfAndFamily_Other = computed(() => isIndividualAndFamilies.value && getInsureCode() === healthInsureEnum.MYSELF_AND_MY_FAMILY_MEMBERS && getPolicyHolderCode() === healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER);
+  const isSelf_Me = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.ONLY_MYSELF &&
+      getPolicyHolderCode() === healthPolicyHolderEnum.ME,
+  );
+  const isSelf_Other = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.ONLY_MYSELF &&
+      getPolicyHolderCode() ===
+        healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER,
+  );
+  const isFamily_Me = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.ONLY_MY_FAMILY_MEMBERS &&
+      getPolicyHolderCode() === healthPolicyHolderEnum.ME,
+  );
+  const isFamily_Other = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.ONLY_MY_FAMILY_MEMBERS &&
+      getPolicyHolderCode() ===
+        healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER,
+  );
+  const isSelfAndFamily_Me = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.MYSELF_AND_MY_FAMILY_MEMBERS &&
+      getPolicyHolderCode() === healthPolicyHolderEnum.ME,
+  );
+  const isSelfAndFamily_Other = computed(
+    () =>
+      isIndividualAndFamilies.value &&
+      getInsureCode() === healthInsureEnum.MYSELF_AND_MY_FAMILY_MEMBERS &&
+      getPolicyHolderCode() ===
+        healthPolicyHolderEnum.OTHER_ADULT_FAMILY_MEMBER,
+  );
 
   const isCustomerTypeIndividualResolved = computed(() => {
     if (typeof getIsCustomerTypeIndividual !== 'function') {
@@ -53,7 +91,9 @@ export function useHealthQuoteFlags({
   );
 
   const showIncludePolicyholderField = computed(
-    () => isCustomerTypeIndividualResolved.value && showIncludePolicyholderFieldBase.value,
+    () =>
+      isCustomerTypeIndividualResolved.value &&
+      showIncludePolicyholderFieldBase.value,
   );
 
   const showAdditionalFields = computed(
@@ -61,7 +101,8 @@ export function useHealthQuoteFlags({
       isCustomerTypeIndividualResolved.value &&
       (isSelf_Me.value ||
         isSelfAndFamily_Me.value ||
-        (includePolicyholderResolved.value && showIncludePolicyholderFieldBase.value)),
+        (includePolicyholderResolved.value &&
+          showIncludePolicyholderFieldBase.value)),
   );
 
   const showMemberCategoryField = computed(

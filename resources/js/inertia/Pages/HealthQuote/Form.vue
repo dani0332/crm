@@ -155,7 +155,6 @@ const initialMobile = parseMobileNoForInitial(
   isEdit.value ? props.quote?.mobile_no : null,
 );
 
-
 const isMobileNationalPartLength = v => {
   if (v == null || v === '') {
     return true;
@@ -171,20 +170,21 @@ const isMobileNationalPartLength = v => {
 };
 
 const computedMembers = computed(() => {
-  const membersArray = Array.isArray(props.membersDetail) 
-    ? props.membersDetail 
+  const membersArray = Array.isArray(props.membersDetail)
+    ? props.membersDetail
     : Object.values(props.membersDetail || {});
   return membersArray.filter(x => x.is_third_party_payer != 1) || [];
 });
 
 const policyHolderInsuredMember = computed(() => {
   return computedMembers.value?.find(
-    x => x.is_insured == 1 && x.is_policy_holder == 1
+    x => x.is_insured == 1 && x.is_policy_holder == 1,
   );
 });
 
-const isIncludePolicyholder = computed(() => Boolean(policyHolderInsuredMember.value));
-
+const isIncludePolicyholder = computed(() =>
+  Boolean(policyHolderInsuredMember.value),
+);
 
 const pecValue =
   policyHolderInsuredMember.value?.is_pec_marked == 1
@@ -207,7 +207,8 @@ const quoteForm = useForm({
   preference: props.quote?.preference || '',
   details: props.quote?.details || '',
   marital_status_id: props.quote?.marital_status_id || null,
-  cover_for_id: props.quote?.cover_for_id || healthCoverForEnum.INDIVIDUAL_AND_FAMILIES,
+  cover_for_id:
+    props.quote?.cover_for_id || healthCoverForEnum.INDIVIDUAL_AND_FAMILIES,
   nationality_id: props.quote?.nationality_id || null,
   lead_type_id: props.quote?.lead_type_id || null,
   emirate_of_your_visa_id: props.quote?.emirate_of_your_visa_id || null,
@@ -248,7 +249,6 @@ const quoteForm = useForm({
   customer_type: customerType.value,
 });
 
-
 const {
   isIndividualAndFamilies,
   isDomesticHelper,
@@ -271,18 +271,24 @@ const {
 
 const converageInfo = computed(() => {
   let info = '';
-  if(isSelf_Me.value) {
-    info = 'The customer will get health insurance coverage just for themselves. As the policyholder, they will manage and pay for the policy.';
-  } else if(isSelf_Other.value) {
-    info = 'The customer will get health insurance coverage just for themselves. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
-  } else if(isFamily_Me.value) {
-    info = 'The customer’s family members will get health insurance coverage, but the customer will not be included. As the policyholder, the customer will manage and pay for the policy.';
-  } else if(isFamily_Other.value) {
-    info = 'The customer’s family members will get health insurance coverage, but the customer will not be included. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
-  } else if(isSelfAndFamily_Me.value) {
-    info = 'The customer and their family members will get health insurance coverage together. As the policyholder, the customer will manage and pay for the policy';
-  } else if(isSelfAndFamily_Other.value) {
-    info = 'The customer and their family members will get health insurance coverage together. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
+  if (isSelf_Me.value) {
+    info =
+      'The customer will get health insurance coverage just for themselves. As the policyholder, they will manage and pay for the policy.';
+  } else if (isSelf_Other.value) {
+    info =
+      'The customer will get health insurance coverage just for themselves. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
+  } else if (isFamily_Me.value) {
+    info =
+      'The customer’s family members will get health insurance coverage, but the customer will not be included. As the policyholder, the customer will manage and pay for the policy.';
+  } else if (isFamily_Other.value) {
+    info =
+      'The customer’s family members will get health insurance coverage, but the customer will not be included. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
+  } else if (isSelfAndFamily_Me.value) {
+    info =
+      'The customer and their family members will get health insurance coverage together. As the policyholder, the customer will manage and pay for the policy';
+  } else if (isSelfAndFamily_Other.value) {
+    info =
+      'The customer and their family members will get health insurance coverage together. The family member chosen by the customer as the policyholder will manage and pay for the policy.';
   }
 
   return info;
@@ -324,10 +330,18 @@ function deriveMemberCategoryIdWhenHidden() {
   const emi = quoteForm.emirate_of_your_visa_id;
   const natNum = nat != null && nat !== '' ? Number(nat) : null;
 
-  if (natNum !== null && !Number.isNaN(natNum) && emiratiNationalityIds.value.has(natNum)) {
+  if (
+    natNum !== null &&
+    !Number.isNaN(natNum) &&
+    emiratiNationalityIds.value.has(natNum)
+  ) {
     return memberCategoryEnum.UAE_NATIONAL;
   }
-  if (natNum !== null && !Number.isNaN(natNum) && gccNationalityIds.value.has(natNum)) {
+  if (
+    natNum !== null &&
+    !Number.isNaN(natNum) &&
+    gccNationalityIds.value.has(natNum)
+  ) {
     return memberCategoryEnum.GCC_NATIONAL;
   }
   if (emi === props.emirateEnum.DUBAI) {
@@ -342,7 +356,7 @@ function applyDerivedMemberCategoryIfHidden() {
     return;
   }
 
-  if(quoteForm.nationality_id || quoteForm.emirate_of_your_visa_id) {
+  if (quoteForm.nationality_id || quoteForm.emirate_of_your_visa_id) {
     quoteForm.member_category_id = deriveMemberCategoryIdWhenHidden();
   }
 }
@@ -359,20 +373,20 @@ watch(
 
 const coverForOptions = computed(() => {
   return props.dropdownSource.cover_for_id
-  .filter(item => item.id !== healthCoverForEnum.MY_COMPANY)
-  .map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
+    .filter(item => item.id !== healthCoverForEnum.MY_COMPANY)
+    .map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
 });
 
 const visaCategoryOptions = computed(() => {
   return props.dropdownSource.visa_category
-  .filter(item => item.health_cover_for_id === quoteForm.cover_for_id)
-  .map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
+    .filter(item => item.health_cover_for_id === quoteForm.cover_for_id)
+    .map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
 });
 
 const memberRelations = computed(() => {
@@ -435,7 +449,6 @@ watch(
 );
 
 function validateMembers() {
-
   if (!isCustomerTypeIndividual.value) {
     return true;
   }
@@ -453,7 +466,7 @@ function validateMembers() {
 
   let isValid = true;
   membersToValidate.forEach(member => {
-    if(!member.visa_category_id) {
+    if (!member.visa_category_id) {
       notification.error({
         title: 'Please Fill the Visa Category for all members',
         position: 'top',
@@ -476,73 +489,77 @@ function validateMembers() {
 }
 
 function preprocessFormData() {
-
-  if(isDomesticHelper.value) {
+  if (isDomesticHelper.value) {
     quoteForm.health_insure_code = null;
     quoteForm.policy_holder_code = null;
   }
 
-  if(isDomesticHelper.value ||
+  if (
+    isDomesticHelper.value ||
     isSelf_Other.value ||
     isFamily_Me.value ||
-    (quoteForm.include_policyholder != 1 && (isFamily_Other.value || isSelfAndFamily_Other.value))) {
-      
-      // if policy holder is not insured then add/update it to members array
-      if (isCustomerTypeIndividual.value) {
-          // add first member to members array
-        const index = quoteForm.members.findIndex(
-          m => m.is_insured === 0 && m.is_policy_holder === 1 && m.is_principal === 0
-        );
-        if (index === -1) {
-          quoteForm.members.push({
-            first_name: quoteForm.first_name,
-            last_name: quoteForm.last_name,
-            salary_band_id: quoteForm.salary_band_id,
-            member_category_id: null,
-            pec: quoteForm.pec,
-            visa_category_id: quoteForm.visa_category_id,
+    (quoteForm.include_policyholder != 1 &&
+      (isFamily_Other.value || isSelfAndFamily_Other.value))
+  ) {
+    // if policy holder is not insured then add/update it to members array
+    if (isCustomerTypeIndividual.value) {
+      // add first member to members array
+      const index = quoteForm.members.findIndex(
+        m =>
+          m.is_insured === 0 &&
+          m.is_policy_holder === 1 &&
+          m.is_principal === 0,
+      );
+      if (index === -1) {
+        quoteForm.members.push({
+          first_name: quoteForm.first_name,
+          last_name: quoteForm.last_name,
+          salary_band_id: quoteForm.salary_band_id,
+          member_category_id: null,
+          pec: quoteForm.pec,
+          visa_category_id: quoteForm.visa_category_id,
 
-            // additional fields
-            dob: quoteForm.dob,
-            gender: null,
-            marital_status_id: null,
-            nationality_id: quoteForm.nationality_id,
-            emirate_of_your_visa_id: null,
+          // additional fields
+          dob: quoteForm.dob,
+          gender: null,
+          marital_status_id: null,
+          nationality_id: quoteForm.nationality_id,
+          emirate_of_your_visa_id: null,
 
-            is_insured: 0,
-            is_policy_holder: 1,
-            is_principal: 0,
-            relation_code: null,
-          });
-        } else {
-          quoteForm.members[index] = {
-            ...quoteForm.members[index],
-            first_name: quoteForm.first_name,
-            last_name: quoteForm.last_name,
-            salary_band_id: quoteForm.salary_band_id,
-            pec: quoteForm.pec,
-            visa_category_id: quoteForm.visa_category_id,
-          };
-        }
-
-        quoteForm.member_category_id = null;
+          is_insured: 0,
+          is_policy_holder: 1,
+          is_principal: 0,
+          relation_code: null,
+        });
+      } else {
+        quoteForm.members[index] = {
+          ...quoteForm.members[index],
+          first_name: quoteForm.first_name,
+          last_name: quoteForm.last_name,
+          salary_band_id: quoteForm.salary_band_id,
+          pec: quoteForm.pec,
+          visa_category_id: quoteForm.visa_category_id,
+        };
       }
+
+      quoteForm.member_category_id = null;
+    }
   }
 }
 
 function onSubmit(isValid) {
-
   quoteForm.members = isCustomerTypeIndividual.value
-    ? (healthMemberDetailsRef?.value?.localMembers || [])
+    ? healthMemberDetailsRef?.value?.localMembers || []
     : [];
   isEmptyField.value = false;
   pecValidationError.value = '';
 
   // Only validate PEC field on create page, not on edit page
-  if (isCustomerTypeIndividual.value &&
-  quoteForm.include_policyholder == 1 &&
-  (quoteForm.pec == null || quoteForm.pec == undefined)) {
-    
+  if (
+    isCustomerTypeIndividual.value &&
+    quoteForm.include_policyholder == 1 &&
+    (quoteForm.pec == null || quoteForm.pec == undefined)
+  ) {
     pecValidationError.value = pecErrorMessage.value;
 
     // Scroll to PEC field if validation fails
@@ -554,9 +571,15 @@ function onSubmit(isValid) {
     });
     return;
   }
-  
+
   const isValidMembers = validateMembers();
-  if (!isValid || isEmptyField.value || pecValidationError.value || !isValidMembers) return;
+  if (
+    !isValid ||
+    isEmptyField.value ||
+    pecValidationError.value ||
+    !isValidMembers
+  )
+    return;
 
   quoteForm.clearErrors();
 
@@ -648,7 +671,7 @@ function requestQuoteCategoryFieldUpdate(field, newValue) {
   if (categoryFieldValuesEqual(quoteForm[field], newValue)) {
     return;
   }
-  
+
   if (hasNonPolicyholderInsuredMembers()) {
     categoryChangePending.value = { field, value: newValue };
     categoryChangeConfirmOpen.value = true;
@@ -679,7 +702,6 @@ watch(categoryChangeConfirmOpen, isOpen => {
     categoryChangePending.value = null;
   }
 });
-
 </script>
 
 <template>
@@ -697,466 +719,503 @@ watch(categoryChangeConfirmOpen, isOpen => {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-
       <x-alert
-          v-if="quoteForm.errors.length > 0"
-          color="error"
-          class="sm:col-span-2"
-        >
-          <ul class="list-disc list-inside">
-            <li v-for="error in quoteForm.errors" :key="error">
-              {{ error }}
-            </li>
-          </ul>
-        </x-alert>
+        v-if="quoteForm.errors.length > 0"
+        color="error"
+        class="sm:col-span-2"
+      >
+        <ul class="list-disc list-inside">
+          <li v-for="error in quoteForm.errors" :key="error">
+            {{ error }}
+          </li>
+        </ul>
+      </x-alert>
 
       <x-accordion show-icon>
-          <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Details
-            </h3>
-            <template #content>
-              <x-divider class="mb-4 mt-1" />
+        <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
+          <h3 class="font-semibold text-primary-800 text-lg">Lead Details</h3>
+          <template #content>
+            <x-divider class="mb-4 mt-1" />
 
-              <div class="grid sm:grid-cols-2 gap-4">
-                <!-- Sub-source fields (conditional display based on referral type) -->
-                <x-select
-                  v-if="isReferralType"
-                  label="IMCRM SUB-SOURCE"
-                  v-model="quoteForm.sub_source_id"
-                  :options="subSourceOptions"
-                  class="w-full"
-                  placeholder="Select IMCRM SUB-SOURCE"
-                  filterable
-                  filterPlaceholder="Filter IMCRM SUB-SOURCE...."
-                  :disabled="!canEditSubSourceFields"
-                  :rules="[isRequired]"
-                  required
-                  :error="quoteForm.errors.sub_source_id"
-                  tooltip="Manually created lead in IMCRM"
-                >
-                  <template #suffix="{ item }">
-                    <x-tooltip v-if="item.suffix" placement="right">
-                      <x-icon icon="info" color="error" />
-                      <template #tooltip>
-                        {{ item.suffix }}
-                      </template>
-                    </x-tooltip>
-                  </template>
-                </x-select>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <!-- Sub-source fields (conditional display based on referral type) -->
+              <x-select
+                v-if="isReferralType"
+                label="IMCRM SUB-SOURCE"
+                v-model="quoteForm.sub_source_id"
+                :options="subSourceOptions"
+                class="w-full"
+                placeholder="Select IMCRM SUB-SOURCE"
+                filterable
+                filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+                :disabled="!canEditSubSourceFields"
+                :rules="[isRequired]"
+                required
+                :error="quoteForm.errors.sub_source_id"
+                tooltip="Manually created lead in IMCRM"
+              >
+                <template #suffix="{ item }">
+                  <x-tooltip v-if="item.suffix" placement="right">
+                    <x-icon icon="info" color="error" />
+                    <template #tooltip>
+                      {{ item.suffix }}
+                    </template>
+                  </x-tooltip>
+                </template>
+              </x-select>
 
-                <x-select
-                  v-if="isReferralType && quoteForm.sub_source_id"
-                  label="SUB SOURCE OPTIONS"
-                  v-model="quoteForm.sub_source_options_id"
-                  :options="subSourceOptionOptions"
-                  class="w-full"
-                  placeholder="Select Sub Source Option"
-                  filterable
-                  filterPlaceholder="Filter Sub Source Option...."
-                  :disabled="!canEditSubSourceFields"
-                  :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
-                  :required="subSourceOptionOptions.length > 0"
-                  :error="quoteForm.errors.sub_source_options_id"
-                  tooltip="Type of referral lead"
-                >
-                  <template #suffix="{ item }">
-                    <x-tooltip v-if="item.suffix" placement="right">
-                      <x-icon icon="info" color="error" />
-                      <template #tooltip>
-                        {{ item.suffix }}
-                      </template>
-                    </x-tooltip>
-                  </template>
-                </x-select>
+              <x-select
+                v-if="isReferralType && quoteForm.sub_source_id"
+                label="SUB SOURCE OPTIONS"
+                v-model="quoteForm.sub_source_options_id"
+                :options="subSourceOptionOptions"
+                class="w-full"
+                placeholder="Select Sub Source Option"
+                filterable
+                filterPlaceholder="Filter Sub Source Option...."
+                :disabled="!canEditSubSourceFields"
+                :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+                :required="subSourceOptionOptions.length > 0"
+                :error="quoteForm.errors.sub_source_options_id"
+                tooltip="Type of referral lead"
+              >
+                <template #suffix="{ item }">
+                  <x-tooltip v-if="item.suffix" placement="right">
+                    <x-icon icon="info" color="error" />
+                    <template #tooltip>
+                      {{ item.suffix }}
+                    </template>
+                  </x-tooltip>
+                </template>
+              </x-select>
 
-                <x-select
-                  v-model="quoteForm.lead_type_id"
-                  :options="
-                    dropdownSource.lead_type_id.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
+              <x-select
+                v-model="quoteForm.lead_type_id"
+                :options="
+                  dropdownSource.lead_type_id.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                label="LEAD TYPE"
+              />
+
+              <x-select
+                required
+                v-model="quoteForm.plan_type_id"
+                :options="
+                  dropdownSource.plan_type_id.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                placeholder="Select plan type"
+                :rules="[isRequired]"
+                label="TYPE OF PLAN"
+              />
+
+              <x-select
+                v-if="!isEdit"
+                v-model="quoteForm.currently_insured_with_id"
+                :options="
+                  dropdownSource.currently_insured_with_id.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                label="CURRENTLY INSURED WITH"
+              />
+
+              <x-input
+                v-model="quoteForm.policy_number"
+                class="w-full"
+                label="POLICY NUMBER"
+              />
+
+              <x-input
+                v-model="quoteForm.details"
+                class="w-full"
+                label="DETAILS"
+              />
+
+              <x-input
+                v-model="quoteForm.preference"
+                class="w-full"
+                label="PREFERENCE"
+              />
+
+              <div class="grid grid-cols-2 gap-2">
+                <x-checkbox
+                  v-model="quoteForm.is_ebp_renewal"
+                  label="IS EBP RENEWAL"
+                  color="primary"
                   class="w-full"
-                  label="LEAD TYPE"
                 />
 
-                <x-select
-                  required
-                  v-model="quoteForm.plan_type_id"
-                  :options="
-                    dropdownSource.plan_type_id.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  placeholder="Select plan type"
-                  :rules="[isRequired]"
-                  label="TYPE OF PLAN"
+                <x-checkbox
+                  v-model="quoteForm.has_dental"
+                  label="DENTAL"
+                  color="primary"
                 />
 
-                <x-select
-                  v-if="!isEdit"
-                  v-model="quoteForm.currently_insured_with_id"
-                  :options="
-                    dropdownSource.currently_insured_with_id.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  label="CURRENTLY INSURED WITH"
+                <x-checkbox
+                  v-model="quoteForm.has_worldwide_cover"
+                  label="WORLDWIDE COVER"
+                  color="primary"
                 />
 
-                <x-input
-                  v-model="quoteForm.policy_number"
-                  class="w-full"
-                  label="POLICY NUMBER"
+                <x-checkbox
+                  v-model="quoteForm.has_home"
+                  label="HOME COUNTRY COVER"
+                  color="primary"
                 />
-
-                <x-input v-model="quoteForm.details" class="w-full" label="DETAILS" />
-
-                <x-input
-                  v-model="quoteForm.preference"
-                  class="w-full"
-                  label="PREFERENCE"
-                />
-
-                <div class="grid grid-cols-2 gap-2">
-                  <x-checkbox
-                    v-model="quoteForm.is_ebp_renewal"
-                    label="IS EBP RENEWAL"
-                    color="primary"
-                    class="w-full"
-                  />
-
-                  <x-checkbox
-                    v-model="quoteForm.has_dental"
-                    label="DENTAL"
-                    color="primary"
-                  />
-
-                  <x-checkbox
-                    v-model="quoteForm.has_worldwide_cover"
-                    label="WORLDWIDE COVER"
-                    color="primary"
-                  />
-
-                  <x-checkbox
-                    v-model="quoteForm.has_home"
-                    label="HOME COUNTRY COVER"
-                    color="primary"
-                  />
-                </div>
-
-                <x-textarea
-                  v-model="quoteForm.additional_notes"
-                  label="ADDITIONAL NOTES"
-                  :error="quoteForm.errors.additional_notes"
-                  :disabled="!canEditSubSourceFields"
-                  class="w-full"
-                  rows="3"
-                />
-
-                <x-select
-                  :model-value="quoteForm.cover_for_id"
-                  :rules="[isRequired]"
-                  :options="coverForOptions"
-                  class="w-full"
-                  label="SELECT WHO THE HEALTH INSURANCE COVERAGE IS FOR?"
-                  required
-                  @update:model-value="requestQuoteCategoryFieldUpdate('cover_for_id', $event)"
-                />
-
-                <x-select
-                  v-if='isIndividualAndFamilies && isCustomerTypeIndividual'
-                  :model-value="quoteForm.health_insure_code"
-                  :rules="[isRequired]"
-                  :options="
-                    dropdownSource.health_insure_options.map(item => ({
-                      value: item.code,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  label="WHO WOULD THE CUSTOMER LIKE TO INSURE?"
-                  required
-                  tooltip="Select the individual(s) the customer wishes to cover under the health insurance policy (e.g., customer, spouse, child, or other eligible family members)."
-                  @update:model-value="requestQuoteCategoryFieldUpdate('health_insure_code', $event)"
-                />
-
-                <x-select
-                  v-if='isIndividualAndFamilies && isCustomerTypeIndividual'
-                  :model-value="quoteForm.policy_holder_code"
-                  :rules="[isRequired]"
-                  :options="
-                    dropdownSource.policy_holder_options.map(item => ({
-                      value: item.code,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  label="WHO WILL BE THE POLICYHOLDER?"
-                  required
-                  tooltip="The policyholder is the adult responsible for owning and managing the policy and paying the premium. The policyholder may or may not be an insured member."
-                  @update:model-value="requestQuoteCategoryFieldUpdate('policy_holder_code', $event)"
-                /> 
               </div>
-              <div v-if="isCustomerTypeIndividual && isIndividualAndFamilies && converageInfo" class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2">
-                  <div> <b>Please note:</b> {{ converageInfo }} </div>
-              </div>
-              
-            </template>
+
+              <x-textarea
+                v-model="quoteForm.additional_notes"
+                label="ADDITIONAL NOTES"
+                :error="quoteForm.errors.additional_notes"
+                :disabled="!canEditSubSourceFields"
+                class="w-full"
+                rows="3"
+              />
+
+              <x-select
+                :model-value="quoteForm.cover_for_id"
+                :rules="[isRequired]"
+                :options="coverForOptions"
+                class="w-full"
+                label="SELECT WHO THE HEALTH INSURANCE COVERAGE IS FOR?"
+                required
+                @update:model-value="
+                  requestQuoteCategoryFieldUpdate('cover_for_id', $event)
+                "
+              />
+
+              <x-select
+                v-if="isIndividualAndFamilies && isCustomerTypeIndividual"
+                :model-value="quoteForm.health_insure_code"
+                :rules="[isRequired]"
+                :options="
+                  dropdownSource.health_insure_options.map(item => ({
+                    value: item.code,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                label="WHO WOULD THE CUSTOMER LIKE TO INSURE?"
+                required
+                tooltip="Select the individual(s) the customer wishes to cover under the health insurance policy (e.g., customer, spouse, child, or other eligible family members)."
+                @update:model-value="
+                  requestQuoteCategoryFieldUpdate('health_insure_code', $event)
+                "
+              />
+
+              <x-select
+                v-if="isIndividualAndFamilies && isCustomerTypeIndividual"
+                :model-value="quoteForm.policy_holder_code"
+                :rules="[isRequired]"
+                :options="
+                  dropdownSource.policy_holder_options.map(item => ({
+                    value: item.code,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                label="WHO WILL BE THE POLICYHOLDER?"
+                required
+                tooltip="The policyholder is the adult responsible for owning and managing the policy and paying the premium. The policyholder may or may not be an insured member."
+                @update:model-value="
+                  requestQuoteCategoryFieldUpdate('policy_holder_code', $event)
+                "
+              />
+            </div>
+            <div
+              v-if="
+                isCustomerTypeIndividual &&
+                isIndividualAndFamilies &&
+                converageInfo
+              "
+              class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2"
+            >
+              <div><b>Please note:</b> {{ converageInfo }}</div>
+            </div>
+          </template>
         </x-accordion-item>
       </x-accordion>
 
       <x-accordion show-icon>
-          <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Policyholder Details ({{ isCustomerTypeIndividual ? customerTypeEnum.Individual : customerTypeEnum.Entity }})
-            </h3>
-            <template #content>
-              <x-divider class="mb-4 mt-1" />
+        <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Policyholder Details ({{
+              isCustomerTypeIndividual
+                ? customerTypeEnum.Individual
+                : customerTypeEnum.Entity
+            }})
+          </h3>
+          <template #content>
+            <x-divider class="mb-4 mt-1" />
 
-              <div class="grid sm:grid-cols-2 gap-4">
-                
-                <x-input
-                  v-model="quoteForm.first_name"
-                  :rules="[isRequired]"
-                  class="w-full"
-                  maxLength="20"
-                  :error="quoteForm.errors.first_name"
-                  label="POLICYHOLDER FIRST NAME"
-                  required
-                />
+            <div class="grid sm:grid-cols-2 gap-4">
+              <x-input
+                v-model="quoteForm.first_name"
+                :rules="[isRequired]"
+                class="w-full"
+                maxLength="20"
+                :error="quoteForm.errors.first_name"
+                label="POLICYHOLDER FIRST NAME"
+                required
+              />
 
-                <x-input
-                  v-model="quoteForm.last_name"
-                  :rules="[isRequired]"
-                  class="w-full"
-                  maxLength="50"
-                  :error="quoteForm.errors.last_name"
-                  label="POLICYHOLDER LAST NAME"
-                  required
-                />
+              <x-input
+                v-model="quoteForm.last_name"
+                :rules="[isRequired]"
+                class="w-full"
+                maxLength="50"
+                :error="quoteForm.errors.last_name"
+                label="POLICYHOLDER LAST NAME"
+                required
+              />
 
-                <x-select
-                  v-if='isCustomerTypeIndividual && !showMemberCategoryField'
-                  v-model="quoteForm.policy_holder_category_code"
-                  :rules="[isRequired]"
-                  :options="
-                    dropdownSource.policy_holder_category.map(item => ({
-                      value: item.code,
-                      label: item.text,
-                    }))
-                  "
-                  class="w-full"
-                  label="POLICYHOLDER CATEGORY"
-                  required
-                />
+              <x-select
+                v-if="isCustomerTypeIndividual && !showMemberCategoryField"
+                v-model="quoteForm.policy_holder_category_code"
+                :rules="[isRequired]"
+                :options="
+                  dropdownSource.policy_holder_category.map(item => ({
+                    value: item.code,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                label="POLICYHOLDER CATEGORY"
+                required
+              />
 
-                <x-select
-                  v-if='isCustomerTypeIndividual && showMemberCategoryField'
-                  v-model="quoteForm.member_category_id"
-                  :rules="[isRequired]"
-                  :options="memberCategoriesOptions.filter(item => item.value !== memberCategoryEnum.NEWBORN)"
-                  class="w-full"
-                  label="MEMBER CATEGORY"
-                  required
-                />
+              <x-select
+                v-if="isCustomerTypeIndividual && showMemberCategoryField"
+                v-model="quoteForm.member_category_id"
+                :rules="[isRequired]"
+                :options="
+                  memberCategoriesOptions.filter(
+                    item => item.value !== memberCategoryEnum.NEWBORN,
+                  )
+                "
+                class="w-full"
+                label="MEMBER CATEGORY"
+                required
+              />
 
-                <x-select
-                  v-if='isCustomerTypeIndividual'
-                  v-model="quoteForm.visa_category_id"
-                  :rules="[isRequired]"
-                  :options="
-                    props.dropdownSource.visa_category
-                    .filter(item => (item.health_cover_for_id === healthCoverForEnum.INDIVIDUAL_AND_FAMILIES && item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE))
+              <x-select
+                v-if="isCustomerTypeIndividual"
+                v-model="quoteForm.visa_category_id"
+                :rules="[isRequired]"
+                :options="
+                  props.dropdownSource.visa_category
+                    .filter(
+                      item =>
+                        item.health_cover_for_id ===
+                          healthCoverForEnum.INDIVIDUAL_AND_FAMILIES &&
+                        item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE,
+                    )
                     .map(item => ({
                       value: item.id,
                       label: item.text,
-                      }))
-                  "
+                    }))
+                "
+                class="w-full"
+                label="VISA CATEGORY"
+                required
+              />
+
+              <x-select
+                v-if="isCustomerTypeIndividual && !isDomesticHelper"
+                v-model="quoteForm.salary_band_id"
+                :options="salaryBandsOptions"
+                class="w-full"
+                label="SALARY"
+                required
+                :rules="[isRequired]"
+              />
+
+              <x-input
+                v-model="quoteForm.email"
+                type="email"
+                :rules="[isRequired, isEmail]"
+                class="w-full"
+                :disabled="isEdit"
+                :error="quoteForm.errors.email"
+                label="EMAIL"
+                required
+              />
+
+              <div class="w-full">
+                <div
+                  class="flex flex-row flex-nowrap items-stretch gap-3 w-full min-w-0"
+                >
+                  <x-select
+                    v-model="quoteForm.mobile_dial_code"
+                    :options="mobileDialCodeOptions"
+                    class="w-36 sm:w-44 shrink-0 min-w-0"
+                    label="COUNTRY CODE"
+                    :disabled="isEdit"
+                    filterable
+                    filterPlaceholder="Search code"
+                  />
+                  <x-input
+                    v-model="quoteForm.mobile_national_no"
+                    type="text"
+                    maxLength="10"
+                    :rules="[isRequired, isNumber, isMobileNationalPartLength]"
+                    class="flex-1 min-w-0"
+                    :disabled="isEdit"
+                    :error="quoteForm.errors.mobile_national_no"
+                    label="PHONE NUMBER"
+                    required
+                  />
+                </div>
+              </div>
+
+              <DatePicker
+                v-if="!isEdit"
+                v-model="quoteForm.policy_start_date"
+                :min-date="new Date()"
+                class="w-full"
+                label="POLICY START DATE"
+                required
+              />
+
+              <x-form-group
+                v-if="showIncludePolicyholderField"
+                v-model="quoteForm.include_policyholder"
+                :rules="[isRequired]"
+                label="DO YOU WANT TO INCLUDE THE POLICYHOLDER IN THIS POLICY FOR HEALTH COVER?"
+                required
+                class="w-full sm:col-span-2"
+              >
+                <x-radio value="1" label="Yes" />
+                <x-radio value="0" label="No" />
+              </x-form-group>
+
+              <div
+                v-if="showAdditionalFields"
+                class="grid sm:grid-cols-2 gap-4 w-full col-span-2"
+              >
+                <DatePicker
+                  :model-value="quoteForm.dob"
+                  :rules="[isRequired, minAge(18)]"
+                  :max-date="maxPolicyholderDobDate"
+                  :start-date="maxPolicyholderDobDate"
                   class="w-full"
-                  label="VISA CATEGORY"
+                  label="DATE OF BIRTH"
+                  required
+                  @update:modelValue="
+                    v =>
+                      (quoteForm.dob = v
+                        ? new Date(v).toISOString().slice(0, 10)
+                        : null)
+                  "
+                />
+
+                <x-select
+                  v-model="quoteForm.gender"
+                  :rules="[isRequired]"
+                  :options="genderSelect"
+                  class="w-full"
+                  label="GENDER"
                   required
                 />
 
                 <x-select
-                  v-if='isCustomerTypeIndividual && !isDomesticHelper'
-                  v-model="quoteForm.salary_band_id"
-                  :options="salaryBandsOptions"
+                  v-model="quoteForm.marital_status_id"
+                  :options="maritalStatusOptions"
                   class="w-full"
-                  label="SALARY"
+                  label="MARITAL STATUS"
                   required
                   :rules="[isRequired]"
                 />
 
-                <x-input
-                  v-model="quoteForm.email"
-                  type="email"
-                  :rules="[isRequired, isEmail]"
+                <x-select
+                  v-model="quoteForm.nationality_id"
+                  :options="nationalityOptions"
+                  :rules="[isRequired]"
                   class="w-full"
-                  :disabled="isEdit"
-                  :error="quoteForm.errors.email"
-                  label="EMAIL"
+                  label="NATIONALITY"
                   required
-                /> 
-
-                <div class="w-full">
-                  <div
-                    class="flex flex-row flex-nowrap items-stretch gap-3 w-full min-w-0"
-                  >
-                    <x-select
-                      v-model="quoteForm.mobile_dial_code"
-                      :options="mobileDialCodeOptions"
-                      class="w-36 sm:w-44 shrink-0 min-w-0"
-                      label="COUNTRY CODE"
-                      :disabled="isEdit"
-                      filterable
-                      filterPlaceholder="Search code"
-                    />
-                    <x-input
-                      v-model="quoteForm.mobile_national_no"
-                      type="text"
-                      maxLength="10"
-                      :rules="[isRequired, isNumber, isMobileNationalPartLength]"
-                      class="flex-1 min-w-0"
-                      :disabled="isEdit"
-                      :error="quoteForm.errors.mobile_national_no"
-                      label="PHONE NUMBER"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <DatePicker
-                  v-if="!isEdit"
-                  v-model="quoteForm.policy_start_date"
-                  :min-date="new Date()"
-                  class="w-full"
-                  label="POLICY START DATE"
-                  required
+                  filterable
+                  filter-placeholder="Search by nationality"
                 />
 
-                <x-form-group
-                  v-if="showIncludePolicyholderField"
-                  v-model="quoteForm.include_policyholder"
+                <x-select
+                  v-model="quoteForm.emirate_of_your_visa_id"
                   :rules="[isRequired]"
-                  label="DO YOU WANT TO INCLUDE THE POLICYHOLDER IN THIS POLICY FOR HEALTH COVER?"
+                  :options="emiratesOptions"
+                  class="w-full"
+                  label="EMIRATE OF YOUR VISA"
                   required
-                  class="w-full sm:col-span-2"
-                >
-                  <x-radio value="1" label="Yes" />
-                  <x-radio value="0" label="No" />
-                </x-form-group>
+                  tooltip="Emirates where your family residency visa is issued"
+                />
 
-                <div v-if="showAdditionalFields" class="grid sm:grid-cols-2 gap-4 w-full col-span-2">
-                  <DatePicker
-                    :model-value="quoteForm.dob"
-                    :rules="[isRequired, minAge(18)]"
-                    :max-date="maxPolicyholderDobDate"
-                    :start-date="maxPolicyholderDobDate"
-                    class="w-full"
-                    label="DATE OF BIRTH"
-                    required
-                    @update:modelValue="v => quoteForm.dob = v ? new Date(v).toISOString().slice(0, 10) : null"
-                  />
-
-                  <x-select
-                    v-model="quoteForm.gender"
-                    :rules="[isRequired]"
-                    :options="genderSelect"
-                    class="w-full"
-                    label="GENDER"
-                    required
-                  />
-
-                  <x-select
-                    v-model="quoteForm.marital_status_id"
-                    :options="maritalStatusOptions"
-                    class="w-full"
-                    label="MARITAL STATUS"
-                    required
-                    :rules="[isRequired]"
-                  />
-
-                  <x-select
-                    v-model="quoteForm.nationality_id"
-                    :options="nationalityOptions"
-                    :rules="[isRequired]"
-                    class="w-full"
-                    label="NATIONALITY"
-                    required
-                    filterable
-                    filter-placeholder="Search by nationality"
-                  />
-
-                  <x-select
-                    v-model="quoteForm.emirate_of_your_visa_id"
-                    :rules="[isRequired]"
-                    :options="emiratesOptions"
-                    class="w-full"
-                    label="EMIRATE OF YOUR VISA"
-                    required
-                    tooltip="Emirates where your family residency visa is issued"
-                  />
-
-                  <div data-pec-field>
-                    <div class="mb-3">
-                      <ToolTip
-                        title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
-                        tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
-                        class="w-full"
-                      />
+                <div data-pec-field>
+                  <div class="mb-3">
+                    <ToolTip
+                      title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
+                      tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
+                      class="w-full"
+                    />
+                  </div>
+                  <div>
+                    <x-form-group v-model="quoteForm.pec">
+                      <x-radio :value="HEALTH_PEC_YES" label="Yes" />
+                      <x-radio :value="HEALTH_PEC_NO" label="No" />
+                    </x-form-group>
+                    <div
+                      v-if="quoteForm.pec === HEALTH_PEC_YES"
+                      class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2"
+                    >
+                      <b>Please note:</b> Declaring a health condition doesn't
+                      mean it's automatically covered. It helps us assess
+                      eligibility. Premiums shown next are indicative. Your
+                      advisor will confirm coverage details for any pre-existing
+                      conditions.
                     </div>
-                    <div>
-                      <x-form-group v-model="quoteForm.pec">
-                        <x-radio :value="HEALTH_PEC_YES" label="Yes" />
-                        <x-radio :value="HEALTH_PEC_NO" label="No" />
-                      </x-form-group>
-                      <div
-                        v-if="quoteForm.pec === HEALTH_PEC_YES"
-                        class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2"
-                      >
-                        <b>Please note:</b> Declaring a health condition doesn't mean it's automatically covered. It helps us assess eligibility. Premiums shown next are indicative. Your advisor will confirm coverage details for any pre-existing conditions.
-                      </div>
-                      <div
-                        v-if="pecValidationError"
-                        class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
-                      >
-                        {{ pecValidationError }}
-                      </div>
+                    <div
+                      v-if="pecValidationError"
+                      class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
+                    >
+                      {{ pecValidationError }}
                     </div>
                   </div>
                 </div>
-                
               </div>
-            </template>
+            </div>
+          </template>
         </x-accordion-item>
       </x-accordion>
 
-      <HealthMemberDetails 
-      v-if="isCustomerTypeIndividual"
-      ref="healthMemberDetailsRef"
-      class="mt-4" 
-      :membersDetail="membersDetail"
-      :quote="quote"
-      :nationalities="nationalityOptions"
-      :memberCategories="memberCategoriesOptions"
-      :memberRelations="memberRelations"
-      :emirates="emiratesOptions"
-      :salaryBands="salaryBandsOptions"
-      :genderOptions="genderSelect"
-      :maritalStatusOptions="maritalStatusOptions"
-      :visaCategoryOptions="visaCategoryOptions"
-      :quoteForm="quoteForm"
-      :includePolicyHolder="quoteForm.include_policyholder"
-      :coverForId="quoteForm.cover_for_id"
-      :healthInsureCode="quoteForm.health_insure_code"
-      :policyHolderCode="quoteForm.policy_holder_code" />
+      <HealthMemberDetails
+        v-if="isCustomerTypeIndividual"
+        ref="healthMemberDetailsRef"
+        class="mt-4"
+        :membersDetail="membersDetail"
+        :quote="quote"
+        :nationalities="nationalityOptions"
+        :memberCategories="memberCategoriesOptions"
+        :memberRelations="memberRelations"
+        :emirates="emiratesOptions"
+        :salaryBands="salaryBandsOptions"
+        :genderOptions="genderSelect"
+        :maritalStatusOptions="maritalStatusOptions"
+        :visaCategoryOptions="visaCategoryOptions"
+        :quoteForm="quoteForm"
+        :includePolicyHolder="quoteForm.include_policyholder"
+        :coverForId="quoteForm.cover_for_id"
+        :healthInsureCode="quoteForm.health_insure_code"
+        :policyHolderCode="quoteForm.policy_holder_code"
+      />
 
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
@@ -1184,7 +1243,12 @@ watch(categoryChangeConfirmOpen, isOpen => {
       </p>
       <template #actions>
         <div class="flex justify-end gap-3 flex-wrap">
-          <x-button size="sm" ghost tabindex="-1" @click.prevent="cancelQuoteCategoryChange">
+          <x-button
+            size="sm"
+            ghost
+            tabindex="-1"
+            @click.prevent="cancelQuoteCategoryChange"
+          >
             Cancel
           </x-button>
           <x-button

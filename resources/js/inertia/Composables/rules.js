@@ -272,9 +272,9 @@ export const useRules = () => {
   const minAge = minYears => {
     return value => {
       if (!value) return true; // Allow empty values (required rule handles that)
-      
+
       let birthDate;
-      
+
       // Handle dd/mm/yyyy format
       if (typeof value === 'string' && value.includes('/')) {
         const [day, month, year] = value.split('/');
@@ -283,18 +283,21 @@ export const useRules = () => {
         // Handle ISO format or Date object
         birthDate = new Date(value);
       }
-      
+
       if (Number.isNaN(birthDate.getTime())) return 'Invalid date';
-      
+
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       // Adjust age if birthday hasn't occurred yet this year
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
         age--;
       }
-      
+
       return age >= minYears || `Minimum age must be ${minYears} years`;
     };
   };

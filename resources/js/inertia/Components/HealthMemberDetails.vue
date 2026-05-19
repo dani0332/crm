@@ -29,35 +29,35 @@ const props = defineProps({
   },
   nationalities: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   memberCategories: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   memberRelations: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   emirates: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   salaryBands: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   genderOptions: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   maritalStatusOptions: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   visaCategoryOptions: {
     type: Array,
-    default: () => ([]),
+    default: () => [],
   },
   includePolicyHolder: {
     type: Boolean,
@@ -167,7 +167,7 @@ const loadLocalMembers = () => {
 };
 
 onMounted(() => {
-  if(!isCreate.value) {
+  if (!isCreate.value) {
     loadLocalMembers();
   }
 });
@@ -175,30 +175,38 @@ onMounted(() => {
 // Watch for changes in membersDetail prop and update localMembers
 watch(
   () => props.membersDetail,
-  (newMembers) => {
+  newMembers => {
     if (isView.value) {
       loadLocalMembers();
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 const genderText = gender =>
   computed(() => {
-    return props.genderDisplayMap[gender] ?? props.genderOptions.find(option => option.value === gender)?.label;
+    return (
+      props.genderDisplayMap[gender] ??
+      props.genderOptions.find(option => option.value === gender)?.label
+    );
   });
 
 const relationText = relationCode =>
   computed(() => {
-    return props.memberRelationDisplayMap[relationCode]
-      ?? props.memberRelations.find(relation => relation.value === relationCode)?.label;
+    return (
+      props.memberRelationDisplayMap[relationCode] ??
+      props.memberRelations.find(relation => relation.value === relationCode)
+        ?.label
+    );
   });
 
 const nationalityText = nationalityId =>
   computed(() => {
-    return props.nationalities.find(nationality => nationality.value === nationalityId)?.label;
+    return props.nationalities.find(
+      nationality => nationality.value === nationalityId,
+    )?.label;
   });
-  
+
 const emirateText = emirateId =>
   computed(() => {
     return props.emirates.find(emirate => emirate.value === emirateId)?.label;
@@ -206,23 +214,32 @@ const emirateText = emirateId =>
 
 const memberCategoryText = memberCategoryId =>
   computed(() => {
-    return props.memberCategoryDisplayMap[memberCategoryId]
-      ?? props.memberCategories.find(category => category.value === memberCategoryId)?.label;
+    return (
+      props.memberCategoryDisplayMap[memberCategoryId] ??
+      props.memberCategories.find(
+        category => category.value === memberCategoryId,
+      )?.label
+    );
   });
 
 const visaCategoryText = visaCategoryId =>
   computed(() => {
-    return props.visaCategoryOptions.find(option => option.value === visaCategoryId)?.label;
+    return props.visaCategoryOptions.find(
+      option => option.value === visaCategoryId,
+    )?.label;
   });
 
 const maritalStatusText = maritalStatusId =>
   computed(() => {
-    return props.maritalStatusOptions.find(option => option.value === maritalStatusId)?.label;
+    return props.maritalStatusOptions.find(
+      option => option.value === maritalStatusId,
+    )?.label;
   });
 
 const salaryBandText = salaryBandId =>
   computed(() => {
-    return props.salaryBands.find(option => option.value === salaryBandId)?.label;
+    return props.salaryBands.find(option => option.value === salaryBandId)
+      ?.label;
   });
 
 const dateFormat = date => {
@@ -250,7 +267,11 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
 const [PrincipalMemberButtonTemplate, PrincipalMemberButtonReuseTemplate] =
   createReusableTemplate();
 
-const MIGRATED_ONLY_COLUMNS = new Set(['visa_category_id', 'marital_status_id', 'salary_band_id']);
+const MIGRATED_ONLY_COLUMNS = new Set([
+  'visa_category_id',
+  'marital_status_id',
+  'salary_band_id',
+]);
 
 const memberDetailsTable = reactive({
   isLoading: false,
@@ -269,7 +290,9 @@ const memberDetailsTable = reactive({
       { text: 'Salary', value: 'salary_band_id' },
       { text: 'Action', value: 'action' },
     ];
-    return props.isMigrated ? all : all.filter(col => !MIGRATED_ONLY_COLUMNS.has(col.value));
+    return props.isMigrated
+      ? all
+      : all.filter(col => !MIGRATED_ONLY_COLUMNS.has(col.value));
   },
 });
 
@@ -311,7 +334,12 @@ const memberPecErrorMessage = computed(() => {
   return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
 });
 
-const submitForm = (form, method, url, { successTitle, onSuccess, onFinish } = {}) => {
+const submitForm = (
+  form,
+  method,
+  url,
+  { successTitle, onSuccess, onFinish } = {},
+) => {
   form[method](url, {
     preserveScroll: true,
     onSuccess: response => {
@@ -334,11 +362,11 @@ const submitForm = (form, method, url, { successTitle, onSuccess, onFinish } = {
 };
 
 const getPrincipalEmirateOfYourVisaId = () => {
-  return localMembers.value.find(m => m.is_principal === 1)?.emirate_of_your_visa_id;
+  return localMembers.value.find(m => m.is_principal === 1)
+    ?.emirate_of_your_visa_id;
 };
 
 function updateMemberForm(data) {
-
   memberForm.id = data.id;
   memberForm.gender = data.gender;
   memberForm.dob = data.dob;
@@ -376,7 +404,7 @@ const onAddMemberModal = () => {
   memberForm.emirate_of_your_visa_id = getPrincipalEmirateOfYourVisaId();
   memberForm.relation_code = null;
 
-  if(isDomesticHelper.value) {
+  if (isDomesticHelper.value) {
     memberForm.salary_band_id = salaryBandEnum.BELOW_OR_EQ_4000;
     memberForm.relation_code = relationCodeEnum.DOMESTIC_WORKER;
   }
@@ -389,8 +417,13 @@ function onEditMember(data) {
 }
 
 function syncPrincipalToQuoteForm(member) {
-  if (member.is_principal === 1 && (isSelf_Other.value || isFamily_Me.value ||
-    (props.includePolicyHolder == 0 && (isFamily_Other.value || isSelfAndFamily_Other.value)))) {
+  if (
+    member.is_principal === 1 &&
+    (isSelf_Other.value ||
+      isFamily_Me.value ||
+      (props.includePolicyHolder == 0 &&
+        (isFamily_Other.value || isSelfAndFamily_Other.value)))
+  ) {
     props.quoteForm.dob = member.dob;
     props.quoteForm.gender = member.gender;
     props.quoteForm.marital_status_id = member.marital_status_id;
@@ -425,9 +458,7 @@ const onMemberSubmit = isValid => {
     memberPecValidationError.value = memberPecErrorMessage.value;
   }
 
-  if (
-    memberPecValidationError.value
-  ) {
+  if (memberPecValidationError.value) {
     notification.error({
       title: 'Please fill all required fields',
       position: 'top',
@@ -443,17 +474,27 @@ const onMemberSubmit = isValid => {
       const index = localMembers.value.findIndex(m => m.id === memberForm.id);
       if (index !== -1) {
         const allOthersUnder18 = localMembersFiltered.value.every(
-          m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+          m =>
+            m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
         );
-        const editedMemberIsAdult = member.dob && calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+        const editedMemberIsAdult =
+          member.dob &&
+          calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
 
-        if (localMembersFiltered.value.length > 0 && allOthersUnder18 && editedMemberIsAdult) {
+        if (
+          localMembersFiltered.value.length > 0 &&
+          allOthersUnder18 &&
+          editedMemberIsAdult
+        ) {
           member.is_principal = 1;
-          localMembers.value = localMembers.value.map(m => ({ ...m, is_principal: 0 }));
+          localMembers.value = localMembers.value.map(m => ({
+            ...m,
+            is_principal: 0,
+          }));
         }
 
         localMembers.value[index] = member;
-        
+
         syncPolicyHolderToQuoteForm(member);
         syncPrincipalToQuoteForm(member);
       }
@@ -465,17 +506,26 @@ const onMemberSubmit = isValid => {
       const allExistingUnder18 = localMembersFiltered.value.every(
         m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
       );
-      const newMemberIsAdult = member.dob && calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+      const newMemberIsAdult =
+        member.dob &&
+        calculateAge(member.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
 
-      if (localMembersFiltered.value.length > 0 && allExistingUnder18 && newMemberIsAdult) {
+      if (
+        localMembersFiltered.value.length > 0 &&
+        allExistingUnder18 &&
+        newMemberIsAdult
+      ) {
         member.is_principal = 1;
-        localMembers.value = localMembers.value.map(m => ({ ...m, is_principal: 0 }));
+        localMembers.value = localMembers.value.map(m => ({
+          ...m,
+          is_principal: 0,
+        }));
       }
 
       localMembers.value.push(member);
-      
+
       syncPrincipalToQuoteForm(member);
-      
+
       notification.success({
         title: 'Member Added',
         position: 'top',
@@ -486,12 +536,14 @@ const onMemberSubmit = isValid => {
     return;
   }
 
-  
-
-  const allExistingUnder18 = localMembersFiltered.value.length > 0 && localMembersFiltered.value.every(
-    m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
-  );
-  const memberIsAdult = memberForm.dob && calculateAge(memberForm.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
+  const allExistingUnder18 =
+    localMembersFiltered.value.length > 0 &&
+    localMembersFiltered.value.every(
+      m => m.dob && calculateAge(m.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION,
+    );
+  const memberIsAdult =
+    memberForm.dob &&
+    calculateAge(memberForm.dob) >= MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION;
 
   if (allExistingUnder18 && memberIsAdult) {
     memberForm.is_principal = 1;
@@ -549,7 +601,7 @@ const memberDeleteConfirmed = () => {
 const memberPrincipal = data => {
   updateMemberForm(data);
   memberForm.is_principal = 1;
-  if(makeActionName.value === 'policyholder') {
+  if (makeActionName.value === 'policyholder') {
     memberForm.is_policy_holder = 1;
     memberForm.relation_code = relationCodeEnum.SELF;
   } else {
@@ -582,25 +634,32 @@ const applyPolicyHolderRelationCodes = (members, newPolicyHolderId) => {
 
   return members.map(m => {
     if (m.is_insured != 1) return m;
-    const updatedRelation = m.id === newPolicyHolderId
-      ? relationCodeEnum?.SELF
-      : (mapping[m.relation_code] ?? m.relation_code);
+    const updatedRelation =
+      m.id === newPolicyHolderId
+        ? relationCodeEnum?.SELF
+        : (mapping[m.relation_code] ?? m.relation_code);
     return { ...m, relation_code: updatedRelation };
   });
 };
 
 const memberPrincipalConfirmed = () => {
   if (isCreate.value || isEdit.value) {
-
     const targetId = confirmPrincipalData.member;
     let updated = localMembers.value.map(m => {
       const principalWhenInsured = m.id === targetId ? 1 : 0;
-      const isPrincipal = m.is_insured == 1 ? principalWhenInsured : m.is_principal;
+      const isPrincipal =
+        m.is_insured == 1 ? principalWhenInsured : m.is_principal;
 
-      const policyHolderWhenInsured = m.id === targetId && makeActionName.value === 'policyholder' ? 1 : 0;
-      const isPolicyHolder = m.is_insured == 1 ? policyHolderWhenInsured : m.is_policy_holder;
+      const policyHolderWhenInsured =
+        m.id === targetId && makeActionName.value === 'policyholder' ? 1 : 0;
+      const isPolicyHolder =
+        m.is_insured == 1 ? policyHolderWhenInsured : m.is_policy_holder;
 
-      return { ...m, is_principal: isPrincipal, is_policy_holder: isPolicyHolder };
+      return {
+        ...m,
+        is_principal: isPrincipal,
+        is_policy_holder: isPolicyHolder,
+      };
     });
 
     if (makeActionName.value === 'policyholder') {
@@ -608,10 +667,9 @@ const memberPrincipalConfirmed = () => {
     }
 
     localMembers.value = updated;
-    
+
     const newPrincipalMember = localMembers.value.find(m => m.id === targetId);
     if (newPrincipalMember) {
-
       if (makeActionName.value === 'policyholder') {
         syncPolicyHolderToQuoteForm(newPrincipalMember);
         syncPrincipalToQuoteForm(newPrincipalMember);
@@ -619,7 +677,7 @@ const memberPrincipalConfirmed = () => {
         syncPrincipalToQuoteForm(newPrincipalMember);
       }
     }
-    
+
     notification.success({
       title: `${memberForm.first_name} ${memberForm.last_name} has been made ${makeActionName.value === 'policyholder' ? 'Policyholder' : 'Principal'}`,
       position: 'top',
@@ -632,7 +690,10 @@ const memberPrincipalConfirmed = () => {
 
   if (makeActionName.value === 'policyholder') {
     const targetId = confirmPrincipalData.member;
-    const updatedMembers = applyPolicyHolderRelationCodes(localMembers.value, targetId);
+    const updatedMembers = applyPolicyHolderRelationCodes(
+      localMembers.value,
+      targetId,
+    );
 
     form = useForm({
       quoteId: props.quote?.uuid,
@@ -676,10 +737,10 @@ const memberPrincipalConfirmed = () => {
   });
 };
 
-const modalTitle = (action) => {
+const modalTitle = action => {
   let title = `${action ? 'Edit' : 'Add'} Member`;
 
-  if(localMembers.value.length === 0) {
+  if (localMembers.value.length === 0) {
     title += ' (Principal)';
   }
 
@@ -687,27 +748,48 @@ const modalTitle = (action) => {
 };
 
 const makeActionName = computed(() => {
-  return isSelf_Me.value || isSelfAndFamily_Me.value ||
-    (props.includePolicyHolder == 1 && (isFamily_Other.value || isSelfAndFamily_Other.value)) ? 'policyholder' : 'principal';
+  return isSelf_Me.value ||
+    isSelfAndFamily_Me.value ||
+    (props.includePolicyHolder == 1 &&
+      (isFamily_Other.value || isSelfAndFamily_Other.value))
+    ? 'policyholder'
+    : 'principal';
 });
 
 /**
  * Whether the "Make Policyholder / Principal" button should be visible for a given member.
  */
 function canMakePrincipal(item) {
-  if (item.is_principal) { return false; }
-  if (calculateAge(item.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION) { return false; }
-  if (makeActionName.value === 'policyholder' && [relationCodeEnum.SIBLING, relationCodeEnum.RELATIVES].includes(item.relation_code)) { return false; }
+  if (item.is_principal) {
+    return false;
+  }
+  if (calculateAge(item.dob) < MIN_AGE_YEARS_FOR_PRINCIPAL_ACTION) {
+    return false;
+  }
+  if (
+    makeActionName.value === 'policyholder' &&
+    [relationCodeEnum.SIBLING, relationCodeEnum.RELATIVES].includes(
+      item.relation_code,
+    )
+  ) {
+    return false;
+  }
 
   return true;
 }
 
 const localMembersFiltered = computed(() => {
-  return localMembers.value.filter(m => !((m.is_policy_holder == 1 && m.is_insured == 0) || (m.is_third_party_payer == 1)));
+  return localMembers.value.filter(
+    m =>
+      !(
+        (m.is_policy_holder == 1 && m.is_insured == 0) ||
+        m.is_third_party_payer == 1
+      ),
+  );
 });
 
 const ADD_MEMBER_VIEW_MODE_TOOLTIP =
-  'To add more members, go to Edit and update the details under \'Who would the customer like to insure?\' and \'Who will be the policyholder?\'';
+  "To add more members, go to Edit and update the details under 'Who would the customer like to insure?' and 'Who will be the policyholder?'";
 
 /**
  * @param {boolean|undefined} isDisabledFromTemplate True when ReuseTemplate passes :isDisabled (e.g. locked member details).
@@ -716,17 +798,19 @@ function isHealthAddMemberButtonDisabled(isDisabledFromTemplate) {
   const filteredCount = localMembersFiltered.value.length;
 
   return Boolean(
-    isDisabledFromTemplate
-    || props.isLocked
-    || isSelf_Me.value
-    || (isSelf_Other.value && filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
-    || (isDomesticHelper.value && filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER)
-    || filteredCount >= MAX_ALLOWED_INSURED_MEMBERS
-    || (
-      !isView.value
-      && !isDomesticHelper.value
-      && (!props.coverForId || !props.healthInsureCode || !props.policyHolderCode)
-    )
+    isDisabledFromTemplate ||
+      props.isLocked ||
+      isSelf_Me.value ||
+      (isSelf_Other.value &&
+        filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER) ||
+      (isDomesticHelper.value &&
+        filteredCount === MAX_INSURED_FOR_SELF_OTHER_OR_DOMESTIC_HELPER) ||
+      filteredCount >= MAX_ALLOWED_INSURED_MEMBERS ||
+      (!isView.value &&
+        !isDomesticHelper.value &&
+        (!props.coverForId ||
+          !props.healthInsureCode ||
+          !props.policyHolderCode)),
   );
 }
 
@@ -867,11 +951,17 @@ watch(
     props.quoteForm.pec,
   ],
   () => {
-    if ((isCreate.value || isEdit.value) && localMembers.value.length > 0
-      && (isSelf_Me.value || isSelfAndFamily_Me.value ||
-        (props.includePolicyHolder == 1 && (isFamily_Other.value || isSelfAndFamily_Other.value)))
+    if (
+      (isCreate.value || isEdit.value) &&
+      localMembers.value.length > 0 &&
+      (isSelf_Me.value ||
+        isSelfAndFamily_Me.value ||
+        (props.includePolicyHolder == 1 &&
+          (isFamily_Other.value || isSelfAndFamily_Other.value)))
     ) {
-      const principalMember = localMembers.value.find(m => m.is_principal === 1);
+      const principalMember = localMembers.value.find(
+        m => m.is_principal === 1,
+      );
       if (principalMember && principalMember.is_policy_holder === 1) {
         principalMember.first_name = props.quoteForm.first_name || null;
         principalMember.last_name = props.quoteForm.last_name || null;
@@ -879,16 +969,20 @@ watch(
         principalMember.dob = props.quoteForm.dob || null;
         principalMember.nationality_id = props.quoteForm.nationality_id || null;
         principalMember.salary_band_id = props.quoteForm.salary_band_id || null;
-        principalMember.emirate_of_your_visa_id = props.quoteForm.emirate_of_your_visa_id || null;
-        principalMember.member_category_id = props.quoteForm.member_category_id || null;
-        principalMember.marital_status_id = props.quoteForm.marital_status_id || null;
-        principalMember.visa_category_id = props.quoteForm.visa_category_id || null;
+        principalMember.emirate_of_your_visa_id =
+          props.quoteForm.emirate_of_your_visa_id || null;
+        principalMember.member_category_id =
+          props.quoteForm.member_category_id || null;
+        principalMember.marital_status_id =
+          props.quoteForm.marital_status_id || null;
+        principalMember.visa_category_id =
+          props.quoteForm.visa_category_id || null;
         principalMember.is_pec_marked = props.quoteForm.pec === HEALTH_PEC_YES;
         principalMember.pec = props.quoteForm.pec || null;
       }
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 // Expose localMembers so parent component can access it
@@ -942,9 +1036,9 @@ defineExpose({
           >
             <AddMemButtonReuseTemplate :isDisabled="true" />
             <template #tooltip>
-              This lead is now locked as the policy has been booked. If
-              changes are needed such midterm addition of member, go to 'Send
-              Update', select 'Add Update', and choose 'Endorsement Financial'
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
             </template>
           </x-tooltip>
           <x-tooltip
@@ -964,7 +1058,11 @@ defineExpose({
             color="primary"
             outlined
             @click.prevent="onEditMember(item)"
-            :disabled="isDisabled || isLocked || (!isView && (isSelf_Me || item.is_policy_holder === 1))"
+            :disabled="
+              isDisabled ||
+              isLocked ||
+              (!isView && (isSelf_Me || item.is_policy_holder === 1))
+            "
             v-if="readOnlyMode.isDisable === true"
           >
             Edit
@@ -991,7 +1089,10 @@ defineExpose({
             v-if="canMakePrincipal(item)"
             :disabled="isLocked"
           >
-            Make {{ makeActionName === 'policyholder' ? 'Policyholder' : 'Principal' }}
+            Make
+            {{
+              makeActionName === 'policyholder' ? 'Policyholder' : 'Principal'
+            }}
           </x-button>
         </PrincipalMemberButtonTemplate>
         <DataTable
@@ -1002,9 +1103,22 @@ defineExpose({
           hide-rows-per-page
           hide-footer
         >
-          <template #item-first_name="{ first_name, last_name, is_principal, is_policy_holder }">
+          <template
+            #item-first_name="{
+              first_name,
+              last_name,
+              is_principal,
+              is_policy_holder,
+            }"
+          >
             {{ (first_name ?? '') + ' ' + (last_name ?? '') }}
-            {{ is_policy_holder === 1 ? '(Policyholder)' : is_principal === 1 ? '(Principal)' : '' }}
+            {{
+              is_policy_holder === 1
+                ? '(Policyholder)'
+                : is_principal === 1
+                  ? '(Principal)'
+                  : ''
+            }}
           </template>
 
           <template #item-is_pec_marked="{ is_pec_marked }">
@@ -1024,7 +1138,11 @@ defineExpose({
           </template>
 
           <template #item-relation="{ is_policy_holder, relation_code }">
-            {{ is_policy_holder === 1 ? relationCodeEnum.SELF : relationText(relation_code).value }}
+            {{
+              is_policy_holder === 1
+                ? relationCodeEnum.SELF
+                : relationText(relation_code).value
+            }}
           </template>
 
           <template #item-nationality="{ nationality_id }">
@@ -1164,7 +1282,7 @@ defineExpose({
               placeholder="Insured First Name"
               :rules="[isRequired]"
             />
-            
+
             <x-input
               required
               maxLength="60"
@@ -1180,7 +1298,12 @@ defineExpose({
               label="Date of Birth"
               :max-date="new Date()"
               :rules="[isRequired]"
-              @update:modelValue="v => memberForm.dob = v ? new Date(v).toISOString().slice(0, 10) : null"
+              @update:modelValue="
+                v =>
+                  (memberForm.dob = v
+                    ? new Date(v).toISOString().slice(0, 10)
+                    : null)
+              "
             />
 
             <x-select
@@ -1230,7 +1353,15 @@ defineExpose({
               v-model="memberForm.member_category_id"
               label="Member Category"
               required
-              :options="memberCategories.filter(item => !(memberForm.is_policy_holder == 1 && item.value === memberCategoryEnum.NEWBORN))"
+              :options="
+                memberCategories.filter(
+                  item =>
+                    !(
+                      memberForm.is_policy_holder == 1 &&
+                      item.value === memberCategoryEnum.NEWBORN
+                    ),
+                )
+              "
               :rules="[isRequired]"
               placeholder="Select Member Category"
               class="w-full"
@@ -1250,7 +1381,15 @@ defineExpose({
               required
               v-model="memberForm.visa_category_id"
               label="Visa Category"
-              :options="visaCategoryOptions.filter(item => !(memberForm.is_policy_holder == 1 && item.value === visaCategoryEnum.NEWBORN_BORN_IN_UAE))"
+              :options="
+                visaCategoryOptions.filter(
+                  item =>
+                    !(
+                      memberForm.is_policy_holder == 1 &&
+                      item.value === visaCategoryEnum.NEWBORN_BORN_IN_UAE
+                    ),
+                )
+              "
               placeholder="Select Visa Category"
               class="w-full"
               :rules="[isRequired]"
@@ -1266,7 +1405,6 @@ defineExpose({
               :rules="[isRequired]"
               required
             />
-            
           </div>
 
           <div class="md:col-span-2" data-member-pec-field>
@@ -1286,7 +1424,10 @@ defineExpose({
                 v-if="memberForm.pec === HEALTH_PEC_YES"
                 class="mt-2 text-sm text-orange-600 border border-orange-200 bg-orange-50 rounded-md p-2"
               >
-                <b>Please note:</b> Declaring a health condition doesn't mean it's automatically covered. It helps us assess eligibility. Premiums shown next are indicative. Your advisor will confirm coverage details for any pre-existing conditions.
+                <b>Please note:</b> Declaring a health condition doesn't mean
+                it's automatically covered. It helps us assess eligibility.
+                Premiums shown next are indicative. Your advisor will confirm
+                coverage details for any pre-existing conditions.
               </div>
               <div
                 v-if="memberPecValidationError"
@@ -1405,7 +1546,12 @@ defineExpose({
               </div>
             </div>
           </div>
-          <p>Are you sure you want to make this member {{ makeActionName === 'policyholder' ? 'Policyholder' : 'Principal' }}?</p>
+          <p>
+            Are you sure you want to make this member
+            {{
+              makeActionName === 'policyholder' ? 'Policyholder' : 'Principal'
+            }}?
+          </p>
           <template #actions>
             <div class="text-right space-x-4">
               <x-button
