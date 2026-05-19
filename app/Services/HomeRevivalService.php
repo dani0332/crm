@@ -144,6 +144,7 @@ class HomeRevivalService
             'buildingValue' => $homeQuote->building_aed,
             'hasBuilding' => $homeQuote->has_building !== null ? (bool) $homeQuote->has_building : null,
             'hasContents' => $homeQuote->has_contents !== null ? (bool) $homeQuote->has_contents : null,
+            'hasClaimedLosses' => $homeQuote->has_claimed_losses !== null ? (bool) $homeQuote->has_claimed_losses : null,
             'contentsValueId' => $homeQuote->contents_aed,
             'hasPersonalBelongings' => $homeQuote->has_personal_belongings !== null ? (bool) $homeQuote->has_personal_belongings : null,
             'personalBelongingsValueId' => $homeQuote->personal_belongings_aed,
@@ -156,6 +157,8 @@ class HomeRevivalService
             'nationalityId' => $lead->nationality_id,
             'gender' => $lead->gender,
             'dob' => $lead->dob,
+            'companyName' => $lead->company_name,
+            'companyAddress' => $lead->company_address,
         ];
     }
 
