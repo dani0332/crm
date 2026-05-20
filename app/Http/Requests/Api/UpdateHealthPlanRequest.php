@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\HealthBusinessTypeEnum;
 use App\Rules\HealthPlanGenderValidRule;
+use App\Rules\HealthPlanUpdateRateExistsRule;
 use App\Rules\HealthPlanUpdateStatusValidRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,7 +21,12 @@ class UpdateHealthPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['integer', 'exists:health_plan,id', new HealthPlanUpdateStatusValidRule('Scheduled plans cannot be updated')],
+            'id' => [
+                'integer',
+                'exists:health_plan,id',
+                new HealthPlanUpdateStatusValidRule('Scheduled plans cannot be updated'),
+                new HealthPlanUpdateRateExistsRule,
+            ],
             'text' => 'required',
             'text_ar' => 'nullable',
             'health_business_type' => ['required', new Enum(HealthBusinessTypeEnum::class)],
@@ -40,7 +46,7 @@ class UpdateHealthPlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id.exists' => 'Plan does not exist',
+            'id.exists' => 'Plan not found',
             'required' => ':attribute is required',
             'unique' => ':attribute already exists',
             'health_business_type.required' => 'Health business type is required',
