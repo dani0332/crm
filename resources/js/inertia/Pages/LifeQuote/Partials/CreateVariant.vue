@@ -28,7 +28,6 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
-
 /** computes is the plan is API or rate calculator*/
 const isApiOrRc = computed(() => {
   return props?.plan?.isApi || props?.plan?.isRateCalculator;
@@ -204,7 +203,9 @@ const filteredPaymentTerms = computed(() => {
 
   // When isRateCalculator is NOT true, remove Single Payment
   if (!props?.plan?.isRateCalculator) {
-    terms = terms.filter(term => term.value !== props.paymentTermEnum.SINGLE_PAYMENT);
+    terms = terms.filter(
+      term => term.value !== props.paymentTermEnum.SINGLE_PAYMENT,
+    );
   }
 
   // If providerId is 180, filter out values 4 and 2
@@ -829,7 +830,7 @@ const isMetLife = computed(() => {
         </div>
       </div>
 
-      <div class="mt-6" v-if="(isMetLife || isApiOrRc)">
+      <div class="mt-6" v-if="isMetLife || isApiOrRc">
         <div class="bg-gray-100 rounded-lg p-4">
           <p class="text-primary-700 text-sm text-center">
             Once the variant is saved, you can add optional riders by navigating
@@ -856,9 +857,6 @@ const isMetLife = computed(() => {
             v-model="createForm.sumAssured"
             disabled
           />
-
-
-
 
           <x-toggle
             color="emerald"
