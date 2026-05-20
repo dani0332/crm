@@ -230,7 +230,7 @@ class HealthRateService extends BaseService
         $existingRates = $existingRates->get();
 
         // Prepare fields for duplicate check
-        $matchingFields = [];
+        $matchingFields = ['health_plan_co_payment_id'];
 
         if ($plan->gender_enabled) {
             $matchingFields[] = 'gender';

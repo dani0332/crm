@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\HealthPlanRateSheetStatusEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,13 @@ class HealthRateControl extends Model
         'status' => HealthPlanRateSheetStatusEnum::DRAFT,
         'version' => 1.0,
     ];
+
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => ucfirst(strtolower($value)),
+        );
+    }
 
     public function user(): BelongsTo
     {

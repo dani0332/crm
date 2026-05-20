@@ -200,16 +200,41 @@ class RateCoverageUploadService
         return $coverages;
     }
 
+    private function removeEmptyRows(array $rows): array
+    {
+        $filteredRows = [];
+        foreach ($rows as $index => $row) {
+            // Consider non-empty if at least one cell is not null/empty string/empty after trim
+            $hasValue = false;
+            foreach ($row as $cell) {
+                if (! is_null($cell) && trim($cell) !== '') {
+                    $hasValue = true;
+                    break;
+                }
+            }
+            // Always include header row (index 0), and any non-empty rows
+            if ($index === 0 || $hasValue) {
+                $filteredRows[] = $row;
+            }
+        }
+
+        return $filteredRows;
+    }
+
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
         $seenCombinations = [];
         $excelRecords = [];
+
         if ($data && isset($data['file_name']) && file_exists($data['file_name'])) {
             $excelRecords = Excel::toArray([], $data['file_name']);
 
             // Assuming first sheet, and first row is header
             $rows = $excelRecords[0] ?? [];
+
+            // Remove empty rows (skip header for now, so keep index 0)
+            $rows = $this->removeEmptyRows($rows);
             $rowCount = count($rows);
             $plan = null;
 
@@ -333,7 +358,7 @@ class RateCoverageUploadService
                     }
 
                     // Apply unique combination
-                    $combinationKey = "{$gender}|{$maritalStatus}|{$cohort}";
+                    $combinationKey = "{$copaymentCode}|{$gender}|{$maritalStatus}|{$cohort}";
 
                     // Initialize storage for combinations if not already
                     if (! isset($seenCombinations)) {
@@ -348,7 +373,7 @@ class RateCoverageUploadService
                             if (
                                 ($minAge <= $seenAgeRange['max_age'] && $maxAge >= $seenAgeRange['min_age'])
                             ) {
-                                throw new \Exception('Duplicate row detected');
+                                throw new \Exception('Duplicate row detected at row '.($i + 1));
                             }
                         }
                         // If no overlap, add the new age range to the combination
