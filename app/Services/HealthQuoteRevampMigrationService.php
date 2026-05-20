@@ -22,6 +22,55 @@ use Exception;
  */
 class HealthQuoteRevampMigrationService
 {
+    public const MIGRATION_STATUSES = [
+        QuoteStatusEnum::Draft,
+        QuoteStatusEnum::Quoted,
+        QuoteStatusEnum::AMLScreeningCleared,
+        QuoteStatusEnum::AMLScreeningFailed,
+        QuoteStatusEnum::NewLead,
+        QuoteStatusEnum::Fake,
+        QuoteStatusEnum::FTCSent,
+        QuoteStatusEnum::FTCAccepted,
+        QuoteStatusEnum::FTCResubmitted,
+        QuoteStatusEnum::Lost,
+        QuoteStatusEnum::KYCCleared,
+        QuoteStatusEnum::FTCPending,
+        QuoteStatusEnum::FollowedUp,
+        QuoteStatusEnum::InNegotiation,
+        QuoteStatusEnum::ApplicationPending,
+        QuoteStatusEnum::PaymentPending,
+        QuoteStatusEnum::QualificationPending,
+        QuoteStatusEnum::Qualified,
+        QuoteStatusEnum::TransactionDeclined,
+        QuoteStatusEnum::ApplicationSubmitted,
+        QuoteStatusEnum::Duplicate,
+        QuoteStatusEnum::PriceTooHigh,
+        QuoteStatusEnum::NotContactablePe,
+        QuoteStatusEnum::FollowupCall,
+        QuoteStatusEnum::Interested,
+        QuoteStatusEnum::NoAnswer,
+        QuoteStatusEnum::NotInterested,
+        QuoteStatusEnum::NotEligibleForInsurance,
+        QuoteStatusEnum::IMRenewal,
+        QuoteStatusEnum::PendingQuote,
+        QuoteStatusEnum::Uncontactable,
+        QuoteStatusEnum::Stale,
+        QuoteStatusEnum::Allocated,
+        QuoteStatusEnum::RenewalTermsReceived,
+        QuoteStatusEnum::PendingRenewalInformation,
+        QuoteStatusEnum::AdditionalInformationRequested,
+        QuoteStatusEnum::QuoteRequested,
+        QuoteStatusEnum::FinalizingTerms,
+        QuoteStatusEnum::SentForTransactionApproval,
+        QuoteStatusEnum::RenewalTermsSent,
+        QuoteStatusEnum::EarlyRenewal,
+        QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+        QuoteStatusEnum::PaymentLinkInprogress,
+        QuoteStatusEnum::PaymentLinkSentToCustomer,
+        QuoteStatusEnum::PaymentInitiated,
+        QuoteStatusEnum::PendingBorRequest,
+    ];
+
     private HealthQuoteRevampMigrationStateLogger $stateLogger;
     private HealthQuoteRevampMigrationMutator $mutator;
     private HealthQuoteRevampMigrationContext $context;
@@ -36,56 +85,9 @@ class HealthQuoteRevampMigrationService
         $this->context = $context ?? app(HealthQuoteRevampMigrationContext::class);
     }
 
-    public function getMirationStatuses(): array
+    public function getMigrationStatuses(): array
     {
-        return [
-            QuoteStatusEnum::Draft,
-            QuoteStatusEnum::Quoted,
-            QuoteStatusEnum::AMLScreeningCleared,
-            QuoteStatusEnum::AMLScreeningFailed,
-            QuoteStatusEnum::NewLead,
-            QuoteStatusEnum::Fake,
-            QuoteStatusEnum::FTCSent,
-            QuoteStatusEnum::FTCAccepted,
-            QuoteStatusEnum::FTCResubmitted,
-            QuoteStatusEnum::Lost,
-            QuoteStatusEnum::KYCCleared,
-            QuoteStatusEnum::FTCPending,
-            QuoteStatusEnum::FollowedUp,
-            QuoteStatusEnum::InNegotiation,
-            QuoteStatusEnum::ApplicationPending,
-            QuoteStatusEnum::PaymentPending,
-            QuoteStatusEnum::QualificationPending,
-            QuoteStatusEnum::Qualified,
-            QuoteStatusEnum::TransactionDeclined,
-            QuoteStatusEnum::ApplicationSubmitted,
-            QuoteStatusEnum::Duplicate,
-            QuoteStatusEnum::PriceTooHigh,
-            QuoteStatusEnum::NotContactablePe,
-            QuoteStatusEnum::FollowupCall,
-            QuoteStatusEnum::Interested,
-            QuoteStatusEnum::NoAnswer,
-            QuoteStatusEnum::NotInterested,
-            QuoteStatusEnum::NotEligibleForInsurance,
-            QuoteStatusEnum::IMRenewal,
-            QuoteStatusEnum::PendingQuote,
-            QuoteStatusEnum::Uncontactable,
-            QuoteStatusEnum::Stale,
-            QuoteStatusEnum::Allocated,
-            QuoteStatusEnum::RenewalTermsReceived,
-            QuoteStatusEnum::PendingRenewalInformation,
-            QuoteStatusEnum::AdditionalInformationRequested,
-            QuoteStatusEnum::QuoteRequested,
-            QuoteStatusEnum::FinalizingTerms,
-            QuoteStatusEnum::SentForTransactionApproval,
-            QuoteStatusEnum::RenewalTermsSent,
-            QuoteStatusEnum::EarlyRenewal,
-            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
-            QuoteStatusEnum::PaymentLinkInprogress,
-            QuoteStatusEnum::PaymentLinkSentToCustomer,
-            QuoteStatusEnum::PaymentInitiated,
-            QuoteStatusEnum::PendingBorRequest,
-        ];
+        return self::MIGRATION_STATUSES;
     }
 
     /**
@@ -94,7 +96,7 @@ class HealthQuoteRevampMigrationService
      */
     public function dispatchForLockedLead(int $healthQuoteId, mixed $leadStatus): void
     {
-        if (! in_array($leadStatus, $this->getMirationStatuses())) {
+        if (! in_array($leadStatus, $this->getMigrationStatuses())) {
             return;
         }
 
@@ -115,7 +117,7 @@ class HealthQuoteRevampMigrationService
             return;
         }
 
-        if (in_array($quoteStatusId, $this->getMirationStatuses())) {
+        if (in_array($quoteStatusId, $this->getMigrationStatuses())) {
             HealthQuoteMigration::dispatch($healthQuoteId);
         }
     }

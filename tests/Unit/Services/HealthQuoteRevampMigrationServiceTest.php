@@ -18,10 +18,10 @@ beforeEach(function () {
     TestSchemaCreator::ensureMinimalSchema();
 });
 
-describe('getMirationStatuses', function () {
+describe('getMigrationStatuses', function () {
     it('includes draft, pending bor request, and excludes policy issued', function () {
         $service = new HealthQuoteRevampMigrationService;
-        $statuses = $service->getMirationStatuses();
+        $statuses = $service->getMigrationStatuses();
 
         expect($statuses)->toContain(QuoteStatusEnum::Draft)
             ->and($statuses)->toContain(QuoteStatusEnum::PendingBorRequest)
