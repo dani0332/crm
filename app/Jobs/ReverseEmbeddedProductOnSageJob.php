@@ -21,7 +21,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Carbon;
 use Throwable;
 
 class ReverseEmbeddedProductOnSageJob implements ShouldQueue
@@ -36,7 +35,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
     private EmbeddedTransaction $epTransaction;
     private mixed $request;
     private SageProcess $sageProcess;
-    private string $lockPostfix;
     private string $logFor = '';
 
     public function __construct($sageRequest, EmbeddedTransaction $epTransaction, $request, SageProcess $sageProcess)
@@ -46,7 +44,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
         $this->epTransaction = $epTransaction;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
     }
 
     /**
@@ -217,6 +214,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [(new WithoutOverlapping($this->epTransaction->code.'-reverse-'.$this->lockPostfix))->dontRelease()];
+        return [(new WithoutOverlapping($this->epTransaction->code.'-reverse'))->dontRelease()];
     }
 }
