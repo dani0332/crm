@@ -233,7 +233,7 @@ enum QuoteTypes: string
     {
         return match ($this) {
             self::CAR, self::CAR_REVIVAL, self::CAR_BIKE => 'CAR-',
-            self::HOME => 'HOM-',
+            self::HOME, self::HOME_REVIVAL => 'HOM-',
             self::HEALTH => 'HEA-',
             self::LIFE, self::LIFE_REVIVAL => 'LIF-',
             self::BUSINESS, self::GROUP_MEDICAL, self::CORPLINE, self::AMT => 'BUS-',
