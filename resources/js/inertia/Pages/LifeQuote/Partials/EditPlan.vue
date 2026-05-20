@@ -533,7 +533,7 @@ const hidePlan = () => {
   toggleVisiblity();
 };
 
-const submitType = isApiOrRC ? ref('getQuote') : ref('onSubmit');
+const submitType = isApiOrRC.value ? ref('getQuote') : ref('onSubmit');
 
 const riderOptions = ref([]);
 

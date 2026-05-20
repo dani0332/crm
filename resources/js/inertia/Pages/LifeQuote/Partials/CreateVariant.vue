@@ -39,7 +39,7 @@ const getCurrencyId = currencyCode => {
 };
 
 const validateSumAssured = value => {
-  if (!props.plan.isApi) return true;
+  if (!isApiOrRc.value) return true;
 
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
@@ -73,7 +73,7 @@ const currencyRanges = ref([]);
 
 // Function to get currency coverages from API
 const getCurrencyCoverages = async planId => {
-  if (!props.plan.isApi) return;
+  if (!isApiOrRc.value) return;
 
   const res = await axios.get(
     `/personal-quotes/life/currency-coverages/${planId}`,
