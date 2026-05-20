@@ -87,10 +87,7 @@ class SendUpdateLogController extends Controller
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
 
                 if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
-                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead(
-                        $childLeadResponse['id'],
-                        $response->code,
-                    );
+                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead($childLeadResponse['id']);
                 }
             }
 

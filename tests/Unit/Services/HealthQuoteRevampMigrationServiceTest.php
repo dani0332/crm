@@ -151,16 +151,6 @@ describe('dispatchForNewChildLead', function () {
         Event::assertDispatched(HealthQuoteMigration::class, fn ($e) => $e->healthQuoteId === $quote->id);
     });
 
-    it('does not dispatch and logs warning when health quote is not found', function () {
-        Event::fake();
-
-        $service = new HealthQuoteRevampMigrationService;
-
-        $service->dispatchForNewChildLead(999999, 'SUL-001');
-
-        Event::assertNotDispatched(HealthQuoteMigration::class);
-    });
-
     it('does not dispatch when id is null', function () {
         Event::fake();
 

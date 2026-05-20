@@ -126,18 +126,9 @@ class HealthQuoteRevampMigrationService
      * Dispatches migration for a newly created child health lead (CIR flow).
      * Used by SendUpdateLogController after child lead creation.
      */
-    public function dispatchForNewChildLead(?int $healthQuoteId, ?string $sendUpdateLogCode = null): void
+    public function dispatchForNewChildLead(?int $healthQuoteId): void
     {
         if ($healthQuoteId === null) {
-            return;
-        }
-
-        if (! HealthQuote::find($healthQuoteId)) {
-            LoggerService::warning('HealthQuoteMigration skipped: HealthQuote not found for child lead id', extra: [
-                'health_quote_id' => $healthQuoteId,
-                'send_update_log_code' => $sendUpdateLogCode,
-            ]);
-
             return;
         }
 
