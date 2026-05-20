@@ -187,11 +187,11 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
-        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
-
         if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
 
         return redirect()->back();
     }
@@ -205,11 +205,11 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
-        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
-
         if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
 
         return redirect()->back();
     }
@@ -218,11 +218,11 @@ class HealthQuoteController extends Controller
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 
-        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
-
         if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
 
         return redirect()->back();
     }
