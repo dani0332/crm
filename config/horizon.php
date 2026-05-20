@@ -86,6 +86,7 @@ return [
     'waits' => [
         'redis:default' => 60,
         'redis:ocr_dedicated' => 180,
+        'redis_policy_issuance:policy-issuance-automation' => 60,
     ],
 
     /*
@@ -169,12 +170,21 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-policy-issuance-prod' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
             ],
             'supervisor-prod-shared' => [
                 'connection' => 'redis',
@@ -196,12 +206,21 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-policy-issuance-uat' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
             ],
             'supervisor-uat-shared' => [
                 'connection' => 'redis',
@@ -225,23 +244,41 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 2,
                 'tries' => 3,
                 'timeout' => 60,
             ],
+            'supervisor-policy-issuance-stg' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 2,
+                'tries' => 1,
+                'timeout' => 200,
+            ],
         ],
         'dev01' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-policy-issuance-dev' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
             ],
             'supervisor-dev-shared' => [
                 'connection' => 'redis',
@@ -263,12 +300,21 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-policy-issuance-test' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
             ],
             'supervisor-test-shared' => [
                 'connection' => 'redis',
@@ -290,7 +336,7 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -305,6 +351,16 @@ return [
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'memory' => 512,
+            ],
+            'supervisor-policy-issuance-local' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 5000,
+                'memory' => 3072,
             ],
             'supervisor-local-ocr-dedicated' => [
                 'connection' => 'redis',
