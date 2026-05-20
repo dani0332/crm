@@ -12,10 +12,10 @@ class HealthPlanUpdateRateExistsRule implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $plan = HealthPlan::findOrFail($value);
+        $plan = HealthPlan::find($value);
 
         // Skip if its not draft
-        if ($plan->status != HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if (! $plan || $plan->status != HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return;
         }
 
