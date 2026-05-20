@@ -10,8 +10,8 @@ class NationalityPoolAuditResource extends JsonResource
 {
     public function toArray($request)
     {
-        $canonicalNationalities = app()->make(CanonicalNationalityService::class)
-            ->getByCodes($this->canonical_nationality_codes);
+        $canonicalNationalities = ! empty($this->canonical_nationality_codes) ? app()->make(CanonicalNationalityService::class)
+            ->getByCodes($this->canonical_nationality_codes) : [];
 
         return [
             'id' => $this->id,
