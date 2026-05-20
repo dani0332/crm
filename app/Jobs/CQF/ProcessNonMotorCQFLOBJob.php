@@ -73,7 +73,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             foreach ($quotes as $quote) {
                 $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
                     $quote->id,
-                    QuoteTypes::PERSONAL,
+                    QuoteTypes::PERSONAL->value,
                     $this->quoteType,
                     $this->renewalsUploadLeadsId,
                     $this->renewalDaysThreshold
@@ -90,7 +90,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                     foreach ($quotes as $quote) {
                         $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
                             $quote->id,
-                            QuoteTypes::CAR,
+                            QuoteTypes::CAR->value,
                             $this->quoteType,
                             $this->renewalsUploadLeadsId,
                             $this->renewalDaysThreshold
@@ -129,7 +129,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        LoggerService::error(self::class.' - Job failed, finalizing LOB', [
+        LoggerService::error(self::class.' - Job failed', [
             'quoteType' => $this->quoteType->value,
             'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
             'error' => $exception->getMessage(),
