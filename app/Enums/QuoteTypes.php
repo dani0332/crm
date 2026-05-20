@@ -74,6 +74,7 @@ enum QuoteTypes: string
     case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
     case LIFE_REVIVAL = 'LifeRevival';
+    case HOME_REVIVAL = 'HomeRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case DEVICE = 'Device';
