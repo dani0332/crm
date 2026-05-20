@@ -130,25 +130,10 @@ final class HealthQuoteRevampMigrationMutator
             return;
         }
 
-        $code = 'IND-'.$hqr->customer_id.'-'.$this->queries->nextIndividualCodeSuffix($hqr->customer_id);
-
-        CustomerMembers::query()->create([
-            'quote_type' => HealthQuoteRevampMigrationQueries::QUOTE_MORPH,
-            'quote_id' => $hqr->id,
-            'customer_entity_id' => $hqr->customer_id,
-            'code' => $code,
-            'customer_type' => CustomerTypeEnum::Individual,
-            'first_name' => $hqr->first_name,
-            'last_name' => $hqr->last_name,
-            'salary_band_id' => $hqr->salary_band_id,
-            'is_pec_marked' => false,
-            'visa_category_id' => $hqr->visa_category_id,
-            'dob' => $hqr->dob ? Carbon::parse($hqr->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
-            'nationality_id' => $hqr->nationality_id,
+        $this->createIndividualMember($hqr, [
             'is_insured' => false,
             'is_policy_holder' => true,
             'is_principal' => false,
-            'is_third_party_payer' => false,
         ]);
     }
 
@@ -185,25 +170,10 @@ final class HealthQuoteRevampMigrationMutator
             return;
         }
 
-        $code = 'IND-'.$hqr->customer_id.'-'.$this->queries->nextIndividualCodeSuffix($hqr->customer_id);
-
-        CustomerMembers::query()->create([
-            'quote_type' => HealthQuoteRevampMigrationQueries::QUOTE_MORPH,
-            'quote_id' => $hqr->id,
-            'customer_entity_id' => $hqr->customer_id,
-            'code' => $code,
-            'customer_type' => CustomerTypeEnum::Individual,
-            'first_name' => $hqr->first_name,
-            'last_name' => $hqr->last_name,
-            'salary_band_id' => $hqr->salary_band_id,
-            'is_pec_marked' => false,
-            'visa_category_id' => $hqr->visa_category_id,
-            'dob' => $hqr->dob ? Carbon::parse($hqr->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
-            'nationality_id' => $hqr->nationality_id,
+        $this->createIndividualMember($hqr, [
             'is_insured' => true,
             'is_policy_holder' => true,
             'is_principal' => true,
-            'is_third_party_payer' => false,
         ]);
     }
 
@@ -228,26 +198,47 @@ final class HealthQuoteRevampMigrationMutator
             return;
         }
 
-        $code = 'IND-'.$hqr->customer_id.'-'.$this->queries->nextIndividualCodeSuffix($hqr->customer_id);
-
-        CustomerMembers::query()->create([
-            'quote_type' => HealthQuoteRevampMigrationQueries::QUOTE_MORPH,
-            'quote_id' => $hqr->id,
-            'customer_entity_id' => $hqr->customer_id,
-            'code' => $code,
-            'customer_type' => CustomerTypeEnum::Individual,
-            'first_name' => $hqr->first_name,
-            'last_name' => $hqr->last_name,
-            'salary_band_id' => $hqr->salary_band_id,
-            'is_pec_marked' => false,
-            'visa_category_id' => $hqr->visa_category_id,
-            'dob' => $hqr->dob ? Carbon::parse($hqr->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
-            'nationality_id' => $hqr->nationality_id,
+        $this->createIndividualMember($hqr, [
             'is_insured' => true,
             'is_policy_holder' => true,
             'is_principal' => true,
-            'is_third_party_payer' => false,
         ]);
+    }
+
+    /**
+     * Inserts an Individual CustomerMembers row with a unique IND-{customerId}-{n} code.
+     * The count and insert run inside a single transaction with a pessimistic lock on the
+     * count query, preventing concurrent migrations for the same customer from generating
+     * duplicate codes.
+     *
+     * @param  array{is_insured: bool, is_policy_holder: bool, is_principal: bool}  $flags
+     */
+    private function createIndividualMember(HealthQuote $hqr, array $flags): void
+    {
+        DB::transaction(function () use ($hqr, $flags) {
+            $suffix = 1 + CustomerMembers::query()
+                ->where('customer_entity_id', $hqr->customer_id)
+                ->where('customer_type', CustomerTypeEnum::Individual)
+                ->whereNull('deleted_at')
+                ->lockForUpdate()
+                ->count();
+
+            CustomerMembers::query()->create(array_merge([
+                'quote_type' => HealthQuoteRevampMigrationQueries::QUOTE_MORPH,
+                'quote_id' => $hqr->id,
+                'customer_entity_id' => $hqr->customer_id,
+                'code' => 'IND-'.$hqr->customer_id.'-'.$suffix,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'first_name' => $hqr->first_name,
+                'last_name' => $hqr->last_name,
+                'salary_band_id' => $hqr->salary_band_id,
+                'is_pec_marked' => false,
+                'visa_category_id' => $hqr->visa_category_id,
+                'dob' => $hqr->dob ? Carbon::parse($hqr->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
+                'nationality_id' => $hqr->nationality_id,
+                'is_third_party_payer' => false,
+            ], $flags));
+        });
     }
 
     /**

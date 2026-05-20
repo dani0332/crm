@@ -85,16 +85,4 @@ final class HealthQuoteRevampMigrationQueries
             ->first();
     }
 
-    /**
-     * Returns the next available numeric suffix for generating an IND-{customerId}-{n} member code.
-     * Counts all existing non-deleted Individual members for the customer across all quotes.
-     */
-    public function nextIndividualCodeSuffix(int $customerEntityId): int
-    {
-        return 1 + CustomerMembers::query()
-            ->where('customer_entity_id', $customerEntityId)
-            ->where('customer_type', CustomerTypeEnum::Individual)
-            ->whereNull('deleted_at')
-            ->count();
-    }
 }
