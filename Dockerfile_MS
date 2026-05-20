@@ -59,10 +59,7 @@ RUN --mount=type=cache,target=/root/.composer/cache \
     composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
 COPY . .
-RUN --mount=type=cache,target=/root/.composer/cache \
-    if [ ! -f .env ]; then cp .env.example .env; fi \
-    && php artisan key:generate --force --no-interaction \
-    && composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
 # -----------------------------------------------------------------------------
 # Runtime image
