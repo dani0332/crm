@@ -159,6 +159,8 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     private function preconditionsMet(): bool
     {
+        $this->quoteRequest->loadMissing('insuranceProvider');
+
         $skipApiIssuanceYes = AmlAutomatableLobRegistry::skipsApiIssuanceStatusCheckForAutomatedAml($this->quoteType, $this->quoteRequest);
         $isApiIssuanceStatusYes = $skipApiIssuanceYes
             || $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;

@@ -17,7 +17,7 @@ class SendAmlAutomationOutcomeNotifications
 {
     use GenericQueriesAllLobs;
 
-    public function handleSucceeded(AmlAutomationScreeningSucceeded $event): void
+    public function handle(AmlAutomationScreeningSucceeded $event): void
     {
         if (! AmlAutomatableLobRegistry::allows($event->quoteType)) {
             return;
@@ -34,6 +34,7 @@ class SendAmlAutomationOutcomeNotifications
         }
 
         $ken = app(KenService::class);
+        // IMCRM outcome mail uses only the payment_link returned here (not a broader submit-docs workflow).
         $kenResult = $ken->submitSukoonDocuments($event->quoteUuid, 'imcrm');
         $paymentLink = $kenResult['payment_link'] ?? null;
 
