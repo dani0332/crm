@@ -77,8 +77,8 @@ return [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => 90,
-            'block_for' => null,
+            'retry_after' => 150, // raised from 90 — must exceed the highest supervisor timeout (120s for ocr_dedicated), otherwise jobs can be re-queued before the worker finishes and processed twice
+            'block_for' => 5,    // changed from null — workers block-wait up to 5s for a job instead of polling continuously, reducing idle CPU usage
             'after_commit' => false,
         ],
 
