@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
     AuditTransformLookupCache::flush();
 });
 
@@ -49,7 +49,7 @@ function makeModel(int $is_policy_holder = 0, int $is_principal = 0, string $fir
 
 describe('AuditTransformLookupCache', function () {
     test('flush clears both lookup stores', function () {
-        $ref = new \ReflectionClass(AuditTransformLookupCache::class);
+        $ref = new ReflectionClass(AuditTransformLookupCache::class);
         $auditable = $ref->getProperty('auditableByKey');
         $auditable->setAccessible(true);
         $related = $ref->getProperty('relatedByKey');
@@ -65,7 +65,7 @@ describe('AuditTransformLookupCache', function () {
     });
 
     test('flushAuditTransformLookupCaches on model delegates to unified cache', function () {
-        $ref = new \ReflectionClass(AuditTransformLookupCache::class);
+        $ref = new ReflectionClass(AuditTransformLookupCache::class);
         $auditable = $ref->getProperty('auditableByKey');
         $auditable->setAccessible(true);
         $auditable->setValue(null, ['delegated' => null]);
@@ -476,7 +476,7 @@ describe('performAuditTransformation – relational FK resolution', function () 
 
         $result = (new CustomerMembers)->transformAuditables($data);
 
-        expect($result['transformedOld']['nationality'])->toBeNull();
+        expect($result['transformedOld'])->not->toHaveKey('nationality');
         expect($result['transformedNew']['nationality'])->toBe('German');
     });
 });

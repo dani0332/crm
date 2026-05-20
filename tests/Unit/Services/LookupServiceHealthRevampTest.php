@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
     Cache::flush();
     $this->lookupService = app(LookupService::class);
 });

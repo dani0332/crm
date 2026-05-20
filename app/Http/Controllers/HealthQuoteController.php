@@ -187,7 +187,7 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
-        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
 
@@ -205,7 +205,7 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
-        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
 
@@ -218,7 +218,7 @@ class HealthQuoteController extends Controller
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 
-        if (isset($response['code']) && ! in_array($response['code'], [200, 201])) {
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
             return redirect()->back()->with('error', 'Request not processed.');
         }
 

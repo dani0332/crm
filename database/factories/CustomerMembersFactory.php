@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
+use App\Models\HealthQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CustomerMembers>
+ * @extends Factory<CustomerMembers>
  */
 class CustomerMembersFactory extends Factory
 {
@@ -17,7 +20,10 @@ class CustomerMembersFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->numberBetween(1, 1000),
+            'quote_type' => HealthQuote::class,
+            'quote_id' => 1,
+            'customer_type' => CustomerTypeEnum::Individual,
+            'is_third_party_payer' => false,
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'dob' => $this->faker->date('Y-m-d', '-20 years'),
@@ -32,7 +38,6 @@ class CustomerMembersFactory extends Factory
             'is_insured' => 1,
             'is_policy_holder' => 0,
             'is_principal' => 0,
-            'pec' => 0,
             'is_pec_marked' => 0,
         ];
     }
@@ -69,6 +74,6 @@ class CustomerMembersFactory extends Factory
     /** Member with pec marked. */
     public function pecMarked(): static
     {
-        return $this->state(['is_pec_marked' => 1, 'pec' => 1]);
+        return $this->state(['is_pec_marked' => 1]);
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
 });
 
 test('health revamp gender seeding does not overwrite an existing row with the same key and code', function () {
@@ -23,7 +23,7 @@ test('health revamp gender seeding does not overwrite an existing row with the s
     ]);
 
     $seeder = new LookupSeeder;
-    $method = new \ReflectionMethod(LookupSeeder::class, 'gender');
+    $method = new ReflectionMethod(LookupSeeder::class, 'gender');
     $method->setAccessible(true);
     $method->invoke($seeder);
 

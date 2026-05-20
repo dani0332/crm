@@ -10,7 +10,7 @@ use App\Enums\LookupsEnum;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
 });
 
 describe('HealthInsureEnum', function () {

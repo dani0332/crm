@@ -6,24 +6,24 @@ use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
 use App\Models\MartialStatus;
 use App\Models\VisaCategory;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
 });
 
 describe('CustomerMembers - new relationships', function () {
     test('has maritalStatus belongsTo relationship', function () {
         $member = new CustomerMembers;
 
-        expect($member->maritalStatus())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+        expect($member->maritalStatus())->toBeInstanceOf(BelongsTo::class);
     });
 
     test('has visaCategory belongsTo relationship', function () {
         $member = new CustomerMembers;
 
-        expect($member->visaCategory())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+        expect($member->visaCategory())->toBeInstanceOf(BelongsTo::class);
     });
 
     test('visaCategory relationship points to VisaCategory model', function () {
@@ -56,22 +56,13 @@ describe('CustomerMembers - new relationships', function () {
     });
 
     test('has is_policy_holder and is_insured stored in database', function () {
-        $db = DB::connection();
-        $id = DB::table('customer_members')->insertGetId([
-            'quote_type' => 'App\Models\HealthQuote',
-            'quote_id' => 1,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
+        $member = CustomerMembers::factory()->create([
             'is_policy_holder' => true,
             'is_insured' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
-        $row = DB::table('customer_members')->find($id);
-
-        expect((bool) $row->is_policy_holder)->toBeTrue()
-            ->and((bool) $row->is_insured)->toBeFalse();
+        expect((bool) $member->is_policy_holder)->toBeTrue()
+            ->and((bool) $member->is_insured)->toBeFalse();
     });
 });
 
@@ -258,22 +249,14 @@ describe('CustomerMembers::customizeAuditTransformation - updated event', functi
 });
 
 describe('CustomerMembers scopes', function () {
-    function insertMember(array $attributes = []): int
+    function makeMember(array $attributes = []): CustomerMembers
     {
-        return DB::table('customer_members')->insertGetId(array_merge([
-            'quote_type' => 'App\Models\HealthQuote',
-            'quote_id' => 1,
-            'customer_type' => CustomerTypeEnum::Individual,
-            'is_policy_holder' => false,
-            'is_third_party_payer' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ], $attributes));
+        return CustomerMembers::factory()->create($attributes);
     }
 
     test('individual scope returns only Individual customer_type rows', function () {
-        insertMember(['customer_type' => CustomerTypeEnum::Individual]);
-        insertMember(['customer_type' => CustomerTypeEnum::Entity]);
+        makeMember(['customer_type' => CustomerTypeEnum::Individual]);
+        makeMember(['customer_type' => CustomerTypeEnum::Entity]);
 
         $results = CustomerMembers::individual()->get();
 
@@ -282,8 +265,8 @@ describe('CustomerMembers scopes', function () {
     });
 
     test('notThirdPartyPayer scope excludes third-party-payer rows', function () {
-        insertMember(['is_third_party_payer' => false]);
-        insertMember(['is_third_party_payer' => true]);
+        makeMember(['is_third_party_payer' => false]);
+        makeMember(['is_third_party_payer' => true]);
 
         $results = CustomerMembers::notThirdPartyPayer()->get();
 
@@ -292,8 +275,8 @@ describe('CustomerMembers scopes', function () {
     });
 
     test('policyHolder scope returns only policy-holder rows', function () {
-        insertMember(['is_policy_holder' => true]);
-        insertMember(['is_policy_holder' => false]);
+        makeMember(['is_policy_holder' => true]);
+        makeMember(['is_policy_holder' => false]);
 
         $results = CustomerMembers::policyHolder()->get();
 
@@ -302,22 +285,22 @@ describe('CustomerMembers scopes', function () {
     });
 
     test('scopes can be chained together', function () {
-        insertMember([
+        makeMember([
             'customer_type' => CustomerTypeEnum::Individual,
             'is_policy_holder' => true,
             'is_third_party_payer' => false,
         ]);
-        insertMember([
+        makeMember([
             'customer_type' => CustomerTypeEnum::Entity,
             'is_policy_holder' => true,
             'is_third_party_payer' => false,
         ]);
-        insertMember([
+        makeMember([
             'customer_type' => CustomerTypeEnum::Individual,
             'is_policy_holder' => false,
             'is_third_party_payer' => false,
         ]);
-        insertMember([
+        makeMember([
             'customer_type' => CustomerTypeEnum::Individual,
             'is_policy_holder' => true,
             'is_third_party_payer' => true,
@@ -346,38 +329,28 @@ describe('VisaCategory model', function () {
     });
 
     test('active scope filters by is_active', function () {
-        $db = DB::connection();
-        $db->table('visa_categories')->insert([
-            ['code' => 'VC1', 'text' => 'Visit Visa', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'VC2', 'text' => 'Work Permit', 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        VisaCategory::factory()->create(['is_active' => true]);
+        VisaCategory::factory()->inactive()->create();
 
-        // The active scope uses status=1 (as defined), but is_active column is used in LookupService
-        // Direct DB check for the new columns
-        $activeCount = $db->table('visa_categories')->where('is_active', 1)->count();
-        $inactiveCount = $db->table('visa_categories')->where('is_active', 0)->count();
+        $activeCount = VisaCategory::where('is_active', 1)->count();
+        $inactiveCount = VisaCategory::where('is_active', 0)->count();
 
         expect($activeCount)->toBe(1)
             ->and($inactiveCount)->toBe(1);
     });
 
     test('can be created with all fillable attributes', function () {
-        $db = DB::connection();
-        $id = $db->table('visa_categories')->insertGetId([
+        $visa = VisaCategory::factory()->create([
             'code' => 'VISIT',
             'text' => 'Visit Visa',
-            'is_active' => 1,
+            'is_active' => true,
             'sort_order' => 1,
             'health_cover_for_id' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
-        $row = $db->table('visa_categories')->find($id);
-
-        expect($row->code)->toBe('VISIT')
-            ->and($row->text)->toBe('Visit Visa')
-            ->and((bool) $row->is_active)->toBeTrue()
-            ->and($row->sort_order)->toBe(1);
+        expect($visa->code)->toBe('VISIT')
+            ->and($visa->text)->toBe('Visit Visa')
+            ->and((bool) $visa->is_active)->toBeTrue()
+            ->and($visa->sort_order)->toBe(1);
     });
 });

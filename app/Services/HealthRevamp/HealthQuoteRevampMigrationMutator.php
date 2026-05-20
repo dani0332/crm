@@ -361,10 +361,10 @@ final class HealthQuoteRevampMigrationMutator
     private function applyPolicyHolderCategoryCode(HealthQuote $hqr): void
     {
         $nid = (int) $hqr->nationality_id;
-        if (in_array($nid, $this->gccNationalityIds, true)) {
-            $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::GCC_CITIZEN->value;
-        } elseif (in_array($nid, $this->uaeNationalityIds, true)) {
+        if (in_array($nid, $this->uaeNationalityIds, true)) {
             $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::UAE_CITIZEN->value;
+        } elseif (in_array($nid, $this->gccNationalityIds, true)) {
+            $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::GCC_CITIZEN->value;
         } else {
             $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::RESIDENT->value;
         }

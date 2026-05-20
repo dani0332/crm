@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\HealthCoverForEnum;
+use App\Enums\PolicyHolderCategoryCodeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Events\HealthQuoteMigration;
 use App\Models\CustomerInsured;
@@ -10,6 +11,9 @@ use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationContext;
+use App\Services\HealthRevamp\HealthQuoteRevampMigrationMutator;
+use App\Services\HealthRevamp\HealthQuoteRevampMigrationQueries;
+use App\Services\Life\NationalityService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Tests\Helpers\TestSchemaCreator;
@@ -261,5 +265,69 @@ describe('dobToDateString', function () {
         $context = new HealthQuoteRevampMigrationContext;
 
         expect($context->dobToDateString('2000-01-15'))->toBe('2000-01-15');
+    });
+});
+
+describe('applyPolicyHolderCategoryCode - nationality priority', function () {
+    function makeMutatorWithNationalities(array $uaeIds, array $gccIds): HealthQuoteRevampMigrationMutator
+    {
+        $nationalityService = Mockery::mock(NationalityService::class);
+        $nationalityService->shouldReceive('getUAENationalityIds')->andReturn($uaeIds);
+        $nationalityService->shouldReceive('getGCCNationalityIds')->andReturn($gccIds);
+
+        return new HealthQuoteRevampMigrationMutator(
+            app(HealthQuoteRevampMigrationQueries::class),
+            app(HealthQuoteRevampMigrationContext::class),
+            $nationalityService,
+        );
+    }
+
+    afterEach(fn () => Mockery::close());
+
+    it('assigns UAE_CITIZEN when nationality is in the UAE list', function () {
+        $uaeNationalityId = 42;
+        $mutator = makeMutatorWithNationalities([$uaeNationalityId], [10, 11]);
+
+        $quote = HealthQuote::factory()->create([
+            'nationality_id' => $uaeNationalityId,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->policy_holder_category_code)
+            ->toBe(PolicyHolderCategoryCodeEnum::UAE_CITIZEN->value);
+    });
+
+    it('assigns GCC_CITIZEN when nationality is in the GCC list but not UAE list', function () {
+        $gccNationalityId = 10;
+        $mutator = makeMutatorWithNationalities([], [$gccNationalityId]);
+
+        $quote = HealthQuote::factory()->create([
+            'nationality_id' => $gccNationalityId,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->policy_holder_category_code)
+            ->toBe(PolicyHolderCategoryCodeEnum::GCC_CITIZEN->value);
+    });
+
+    it('assigns RESIDENT when nationality is in neither list', function () {
+        $mutator = makeMutatorWithNationalities([1], [2]);
+
+        $quote = HealthQuote::factory()->create([
+            'nationality_id' => 99,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->policy_holder_category_code)
+            ->toBe(PolicyHolderCategoryCodeEnum::RESIDENT->value);
     });
 });

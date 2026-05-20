@@ -333,6 +333,7 @@ class CoreSchema
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('insurer_aml_status')->nullable();
+                $table->string('gender')->nullable();
                 $table->timestamps();
             },
             'personal_quote_details' => function (Blueprint $table) {
@@ -1257,6 +1258,7 @@ class CoreSchema
                 $table->unsignedBigInteger('customer_entity_id')->nullable();
                 $table->unsignedBigInteger('marital_status_id')->nullable();
                 $table->unsignedBigInteger('visa_category_id')->nullable();
+                $table->boolean('is_pec_marked')->default(0);
                 $table->timestamps();
                 $table->softDeletes();
             },

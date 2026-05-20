@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
 });
 
 test('getGenderOptions for health returns code to text map from gender lookups', function () {

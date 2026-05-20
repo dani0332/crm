@@ -5,16 +5,19 @@ declare(strict_types=1);
 use App\Facades\Ken;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
+use App\Models\Lookup;
 use App\Models\VisaCategory;
 use App\Services\CapiRequestService;
 use App\Services\HealthQuoteService;
+use App\Services\SLA\SLAService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::ensureMinimalSchema();
     $this->lookups = TestDataSeeder::seedHealthQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
@@ -307,14 +310,13 @@ describe('HealthQuoteService saveHealthQuote – health revamp new fields', func
     test('saveHealthQuote disables OCB email for strategic-partners-referrals sub-source', function () {
         $captured = null;
 
-        $subSourceId = DB::table('lookups')->insertGetId([
+        $subSource = Lookup::factory()->create([
             'key' => 'sub-source',
             'code' => 'strategic-partners-referrals',
             'text' => 'Strategic Partners',
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'is_active' => true,
         ]);
+        $subSourceId = (int) $subSource->getKey();
 
         $mock = Mockery::mock('alias:'.CapiRequestService::class);
         $mock->shouldReceive('sendCAPIRequest')
@@ -456,7 +458,7 @@ describe('HealthQuoteService updateHealthQuote return value', function () {
             ->once()
             ->andReturn((object) ['data' => (object) ['id' => 99, 'uuid' => $quote->uuid]]);
 
-        $this->mock(\App\Services\SLA\SLAService::class, function ($mock) {
+        $this->mock(SLAService::class, function ($mock) {
             $mock->shouldReceive('meetSLAOnEdit')->once()->andReturnNull();
         });
 
@@ -475,6 +477,6 @@ describe('HealthQuoteService updateHealthQuote return value', function () {
         $request = makeUpdateRequest($quote);
         $result = app(HealthQuoteService::class)->updateHealthQuote($request, $quote->uuid);
 
-        expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+        expect($result)->toBeInstanceOf(RedirectResponse::class);
     });
 });
