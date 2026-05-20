@@ -535,7 +535,7 @@ class SageApiEmbeddedProductService
      * IMCRM refund path only: same Sage reversal sequence as {@see bookReversalOfEmbeddedProductOnSage} with step logs on the embedded transaction and {@see SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED} when a terminal failure status update is requested.
      *
      * @param  array{0: object, 1: object, 2: object, 3: EmbeddedTransaction}  $sageRequestDataArray  Same shape as {@see buildSageRequestDataArrayForBookReversalOfEmbeddedProductOnSage}: quote, sage log owner (embedded transaction), sage request, embedded transaction
-     * @param  bool  $updateEmbeddedTransactionStatusOnFailure  When false, leaves sage_status unchanged on API failure so the job can retry before the final attempt.
+     * @param  bool  $updateEmbeddedTransactionStatusOnFailure  When false, leaves sage_status unchanged on API failure so the job can retry before the final attempt. Conflict responses never update sage_status because the job resets the Sage process for another attempt.
      * @return array{status: bool, message?: string|null, error?: mixed}
      */
     public function bookReversalOfEmbeddedProductOnSageAfterImcrmRefund($sageRequestDataArray, $epShortCode = null, bool $updateEmbeddedTransactionStatusOnFailure = true): array
@@ -582,7 +582,8 @@ class SageApiEmbeddedProductService
             ];
         }
 
-        if ($updateEmbeddedTransactionStatusOnFailure) {
+        if ($updateEmbeddedTransactionStatusOnFailure
+            && (string) ($result['message'] ?? '') !== SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
             $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
         }
 
