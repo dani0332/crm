@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class AlfredCoinsWebhookService
 {
@@ -202,7 +203,7 @@ class AlfredCoinsWebhookService
         $signingInput = $header.'.'.$payload;
 
         if (openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256) === false) {
-            throw new \RuntimeException('Failed to sign JWT: '.openssl_error_string());
+            throw new RuntimeException('Failed to sign JWT: '.openssl_error_string());
         }
 
         return $signingInput.'.'.$this->base64UrlEncode($signature);
