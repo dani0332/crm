@@ -113,6 +113,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canBypassPlanLock: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -1169,6 +1173,7 @@ watch(
           :quoteDocuments="quoteDocuments"
           :totalPrice="totalPrice"
           :planDetail="planDetail"
+          :canBypassPlanLock="canBypassPlanLock"
           @add-payment-modal="addPaymentModal"
         />
 

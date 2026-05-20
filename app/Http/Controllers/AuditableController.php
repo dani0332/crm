@@ -19,6 +19,8 @@ use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
 use App\Models\OcrLog;
+use App\Models\SavingsInsurerRequestResponse;
+use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -219,6 +221,9 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')->whereNotIn('call_type', ['oAuth', 'login']);
+            case SavingsQuote::class:
+                return SavingsInsurerRequestResponse::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }

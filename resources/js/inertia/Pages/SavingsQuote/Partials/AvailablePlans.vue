@@ -1,7 +1,10 @@
 <script setup>
 import SavingsCalculator from '@/inertia/Components/SavingsCalculator.vue';
 import SelectPlan from '@/inertia/Components/SelectPlan.vue';
-import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import {
+  isSukoonPurpleInvestmentPlan,
+  useSavingsPlans,
+} from '@/inertia/Composables/useSavingsPlans';
 import { router } from '@inertiajs/vue3';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
@@ -255,6 +258,18 @@ const copyPlanURL = item => {
       position: 'top',
     });
 };
+
+// Sukoon Purple Investment (instant policy) - same logic as MetLife for Life, without questionnaire
+const quoteStatusEnum = page.props.quoteStatusEnum;
+
+const isSukoonPurpleInvestment = item =>
+  isSukoonPurpleInvestmentPlan(item, page.props.insuranceProviderCodeEnum);
+
+const canSelectSukoonPurplePlan = computed(() => {
+  const q = props.quote;
+  if (!q) return false;
+  return q.quote_status_id === quoteStatusEnum?.ApplicationPending;
+});
 
 // Open Savings Calculator
 const openSavingsCalculator = () => {
@@ -639,7 +654,7 @@ onMounted(() => {
                 <template #tooltip>Expected return on investment</template>
               </x-tooltip>
             </template>
-            <template #header-lumpsumAmount>
+            <template #header-lumpSumPayout>
               <x-tooltip placement="bottom">
                 <span class="underline decoration-dotted decoration-primary-700"
                   >Lumpsum Amount</span
@@ -758,8 +773,12 @@ onMounted(() => {
                 item.expectedRor ? `${item.expectedRor}%` : 'N/A'
               }}</span>
             </template>
-            <template #item-lumpsumAmount="item">
-              <span>{{ item.lumpsumAmount || 'N/A' }}</span>
+            <template #item-lumpSumPayout="item">
+              <span>{{
+                item.lumpSumPayout != null && item.lumpSumPayout !== ''
+                  ? fmt(item.lumpSumPayout)
+                  : 'N/A'
+              }}</span>
             </template>
             <template #item-totalAnnualPrice="item">
               <span>{{
@@ -785,6 +804,7 @@ onMounted(() => {
                   View
                 </x-button>
                 <x-button
+                  v-if="!isSukoonPurpleInvestment(item)"
                   size="xs"
                   color="emerald"
                   outlined
@@ -793,8 +813,29 @@ onMounted(() => {
                   Copy
                 </x-button>
                 <span>
-                  <SelectPlan
+                  <x-tooltip
                     v-if="
+                      isSukoonPurpleInvestment(item) &&
+                      !canSelectSukoonPurplePlan
+                    "
+                    placement="top"
+                  >
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      :disabled="true"
+                    >
+                      Select
+                    </x-button>
+                    <template #tooltip>
+                      This plan cannot be manually selected. To proceed, you can
+                      guide the client to click 'Buy Now'.
+                    </template>
+                  </x-tooltip>
+
+                  <SelectPlan
+                    v-else-if="
                       !selectedProviderPlan?.id ||
                       String(selectedProviderPlan.id) !== String(item.id)
                     "

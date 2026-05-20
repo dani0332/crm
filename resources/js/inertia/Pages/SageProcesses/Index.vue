@@ -132,13 +132,38 @@ const tableHeader = computed(() => [
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
 
+function formatLocalYmd(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function serializeFilterDate(value) {
+  if (value === null || value === undefined || value === '') {
+    return value;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatLocalYmd(value);
+  }
+  return value;
+}
+
+const today = new Date();
+const defaultDateFrom = formatLocalYmd(
+  new Date(today.getFullYear(), today.getMonth(), 1),
+);
+const defaultDateTo = formatLocalYmd(
+  new Date(today.getFullYear(), today.getMonth() + 1, 0),
+);
+
 // Available filters
 const availableFilters = reactive({
   insurance_provider_id: props.filters?.insurance_provider_id || [],
   quote_type_id: props.filters?.quote_type_id || [],
   option: props.filters?.option || '',
-  date_from: props.filters?.date_from || '',
-  date_to: props.filters?.date_to || '',
+  date_from: props.filters?.date_from || defaultDateFrom,
+  date_to: props.filters?.date_to || defaultDateTo,
   page: props.failedProcesses?.current_page || 1,
 });
 
@@ -214,6 +239,8 @@ function onSubmit() {
     method: 'get',
     data: {
       ...availableFilters,
+      date_from: serializeFilterDate(availableFilters.date_from),
+      date_to: serializeFilterDate(availableFilters.date_to),
     },
     preserveState: true,
     preserveScroll: true,
@@ -244,6 +271,8 @@ async function exportExcel() {
     const response = await axios.get(exportURL, {
       params: {
         ...availableFilters,
+        date_from: serializeFilterDate(availableFilters.date_from),
+        date_to: serializeFilterDate(availableFilters.date_to),
       },
       responseType: 'blob',
     });
