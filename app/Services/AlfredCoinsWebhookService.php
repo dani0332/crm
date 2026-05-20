@@ -13,6 +13,8 @@ use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 class AlfredCoinsWebhookService
 {
@@ -40,12 +42,11 @@ class AlfredCoinsWebhookService
     {
         $config = config('services.alfred_coins.insurancemarket_webhook', []);
         $url = $config['url'] ?? null;
-        $apiKey = $config['api_key'] ?? null;
-        $headerName = $config['api_key_header'] ?? 'X-API-Key';
+        $privateKey = $config['private_key'] ?? null;
         $timeout = $config['timeout'] ?? 15;
 
-        if (empty($url) || empty($apiKey)) {
-            LoggerService::info('AlfredCoinsWebhookService - Skipping webhook (missing url or api_key)', [], [
+        if (empty($url) || empty($privateKey)) {
+            LoggerService::info('AlfredCoinsWebhookService - Skipping webhook (missing url or private_key)', [], [
                 'quoteUID' => $quoteUID,
                 'quoteTypeId' => $quoteTypeId,
             ]);
@@ -85,7 +86,7 @@ class AlfredCoinsWebhookService
         try {
             $response = Http::timeout((int) $timeout)
                 ->withHeaders([
-                    $headerName => $apiKey,
+                    'x-webhook-token' => $this->generateJwt($payload, $privateKey),
                 ])
                 ->post($url, $payload);
 
@@ -167,11 +168,50 @@ class AlfredCoinsWebhookService
         return [
             'email' => $quote->getAttribute('email'),
             'eventName' => $eventName,
+            'occurredAt' => now()->toISOString(),
             'source' => self::PAYLOAD_SOURCE,
             'reason' => self::REASON,
             'uniqueId' => $quote->getAttribute('code'),
             'amount' => (float) $amount,
             'currency' => self::CURRENCY,
         ];
+    }
+
+    private function generateJwt(array $data, string $privateKey): string
+    {
+        $now = time();
+
+        if (! str_contains($privateKey, '-----BEGIN')) {
+            $privateKey = "-----BEGIN PRIVATE KEY-----\n"
+                .wordwrap(str_replace(["\r", "\n", ' '], '', $privateKey), 64, "\n", true)
+                ."\n-----END PRIVATE KEY-----";
+        }
+
+        $header = $this->base64UrlEncode(json_encode([
+            'alg' => 'RS256',
+            'typ' => 'JWT',
+            'kid' => 'imcrm-v1',
+        ], JSON_THROW_ON_ERROR));
+
+        $payload = $this->base64UrlEncode(json_encode([
+            'iss' => 'imcrm',
+            'iat' => $now,
+            'exp' => $now + 300,
+            'jti' => (string) Str::uuid(),
+            'data' => $data,
+        ], JSON_THROW_ON_ERROR));
+
+        $signingInput = $header.'.'.$payload;
+
+        if (openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256) === false) {
+            throw new RuntimeException('Failed to sign JWT: '.openssl_error_string());
+        }
+
+        return $signingInput.'.'.$this->base64UrlEncode($signature);
+    }
+
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 }

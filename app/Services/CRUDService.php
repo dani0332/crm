@@ -1192,39 +1192,22 @@ class CRUDService extends BaseService
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
     {
-        return $this->isLegacyPolicy($record)
-            || $this->hasAllowedSendUpdateStatus($record);
-    }
-
-    private function isLegacyPolicy($record): bool
-    {
-        return $record?->insly_migrated
-            || $record?->insly_id
-            || (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id);
-    }
-
-    private function hasAllowedSendUpdateStatus($record): bool
-    {
-        if (! isset($record->quote_status_id)) {
-            return false;
+        if (
+            isset($record->quote_status_id) && in_array($record->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::CancellationPending,
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+            ]) ||
+            $record?->insly_migrated || $record?->insly_id ||
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id)
+        ) {
+            return true;
         }
 
-        $baseStatuses = [
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ];
-
-        $lifeOnlyStatuses = [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-        ];
-
-        $isLifeLob = isset($record->quote_type_id) && $record->quote_type_id === QuoteTypeId::Life;
-        $allowedStatuses = $isLifeLob ? [...$baseStatuses, ...$lifeOnlyStatuses] : $baseStatuses;
-
-        return in_array($record->quote_status_id, $allowedStatuses);
+        return false;
     }
 
     public function getInquiryLogs($modelType, $uuid)
