@@ -400,12 +400,20 @@ class SageApiEmbeddedProductService
         if ($sageProcess) {
             $decoded = json_decode($sageProcess->request ?? '', true);
             $existingType = $decoded['sagePayload']['sageProcessRequestType'] ?? null;
-            if (
-                in_array($sageProcess->status, [SageEnum::SAGE_PROCESS_PENDING_STATUS, SageEnum::SAGE_PROCESS_PROCESSING_STATUS], true)
-                && $existingType === SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST
-            ) {
+            $isActiveSageProcess = in_array(
+                $sageProcess->status,
+                [SageEnum::SAGE_PROCESS_PENDING_STATUS, SageEnum::SAGE_PROCESS_PROCESSING_STATUS],
+                true,
+            );
+
+            if ($isActiveSageProcess && $existingType === SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST) {
                 return ['status' => false, 'message' => 'Sage EP reversal is already pending or processing for EP Code: '.$epTransaction->code];
             }
+
+            if ($isActiveSageProcess && $existingType === SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST) {
+                return ['status' => false, 'message' => 'Sage EP booking is still pending or processing for EP Code: '.$epTransaction->code];
+            }
+
             $sageProcess->update($sageProcessData);
         } else {
             $sageProcessData['model_type'] = $epTransaction::class;
