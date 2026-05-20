@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
+use App\Services\Reports\ConversionOptimizationReportService;
 use BenSampo\Enum\Enum;
+use Database\Seeders\ApplicationStorageSeeder;
 
 /**
  * @method static static OptionOne()
@@ -69,6 +72,7 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
+    public const DTT_LIFE_ENABLED = 'DTT_LIFE_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -188,6 +192,10 @@ final class ApplicationStorageEnums extends Enum
     public const PROCESS_CC_PAYMENTS_ENABLED = 'PROCESS_CC_PAYMENTS_ENABLED';
     public const TRAVEL_RENEWALS_SWITCH = 'TRAVEL_RENEWALS_SWITCH';
 
+    /* Policy Issuance Global Contacts */
+    public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
+    public const CHIEF_DEPUTY_OFFICER_EMAIL_ID = 'CHIEF_DEPUTY_OFFICER_EMAIL_ID';
+
     /* Policy Issuance Automation */
     public const ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
@@ -245,6 +253,7 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+    public const BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL = 'BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL';
 
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
@@ -265,6 +274,11 @@ final class ApplicationStorageEnums extends Enum
 
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
+    public const DEVICE_BOOK_POLICY_TEMPLATE = 'DEVICE_BOOK_POLICY_TEMPLATE';
+
+    /* Device/Smartphone Email Templates */
+    public const DEVICE_UPDATE_POLICY_TEMPLATE = 'DEVICE_UPDATE_POLICY_TEMPLATE';
+    public const DEVICE_PAYMENT_AUTHORIZED_TEMPLATE = 'DEVICE_PAYMENT_AUTHORIZED_TEMPLATE';
 
     /* Savings Send Policy Template */
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
@@ -332,6 +346,9 @@ final class ApplicationStorageEnums extends Enum
     /* Bird EP Workflow URL */
     public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
 
+    /* OCR - Eligible Plan Codes (comma-separated) */
+    public const OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES = 'OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES';
+
     /* EP ECB Policy Configuration */
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
@@ -352,6 +369,21 @@ final class ApplicationStorageEnums extends Enum
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
 
+    /* NGI Smartphone Policy Issuance Automation */
+    public const ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE = 'ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE';
+    public const NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT = 'NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT';
+
+    /* Device/Smartphone Failure Email Configuration */
+    public const DEVICE_FAILURE_EMAIL_TO = 'DEVICE_FAILURE_EMAIL_TO';
+    public const DEVICE_FAILURE_EMAIL_CC = 'DEVICE_FAILURE_EMAIL_CC';
+    public const DEVICE_FAILURE_EMAIL_ESCALATION_LINK = 'DEVICE_FAILURE_EMAIL_ESCALATION_LINK';
+    public const DEVICE_FAILURE_EMAIL_REPLY_TO = 'DEVICE_FAILURE_EMAIL_REPLY_TO';
+    public const IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL = 'IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL';
+    public const IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL = 'IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL';
+    public const IMCRM_DOC_UPLOAD_FAILURE_EMAIL = 'IMCRM_DOC_UPLOAD_FAILURE_EMAIL';
+    public const IMCRM_BOOK_POLICY_FAILURE_EMAIL = 'IMCRM_BOOK_POLICY_FAILURE_EMAIL';
+
     // Claim Intro Email
     public const CLAIM_INTRO_EMAIL_SWITCH = 'CLAIM_INTRO_EMAIL_SWITCH';
     public const CLAIM_INTRO_EMAIL_WORKFLOW = 'CLAIM_INTRO_EMAIL_WORKFLOW';
@@ -366,6 +398,13 @@ final class ApplicationStorageEnums extends Enum
 
     // Health STP Advisor Notification
     public const BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW = 'BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW';
+
+    // Device Allocation
+    public const SMART_PHONE_ADVISORS = 'SMART_PHONE_ADVISORS';
+    public const SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL = 'SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL';
+    public const BIRD_DEVICE_OCB_INTRO_EMAIL = 'BIRD_DEVICE_OCB_INTRO_EMAIL';
+    public const BIRD_DEVICE_AUTOMATED_FOLLOWUPS = 'BIRD_DEVICE_AUTOMATED_FOLLOWUPS';
+    public const BIRD_DEVICE_ZERO_PLANS_EMAIL = 'BIRD_DEVICE_ZERO_PLANS_EMAIL';
 
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
@@ -413,12 +452,26 @@ final class ApplicationStorageEnums extends Enum
     public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
 
-    // Chief Deputy Officer Mobile Number
-    public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
-
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
+    // Car CAT A Revival Allocation Lookback Days
+    public const CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS = 'CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS';
+
+    // Motor Revival OCB Workflow
+    public const MOTOR_REVIVAL_WORKFLOW = 'MOTOR_REVIVAL_WORKFLOW';
+
+    /**
+     * {@see application_storage.value} JSON shape:
+     * {"to_email":"","cc_emails":[],"batch":{"start":"Y-m-d","end":"Y-m-d"},"filters":{...optional...}}
+     * `filters` is merged (whitelist only) over {@see ConversionOptimizationReportService::getDefaultFilters()}.
+     * Required `batch`: {"start":"Y-m-d","end":"Y-m-d"} — quote_batches whose start_date/end_date overlap that range
+     * become the `batches` filter (ids passed to the export).
+     * Default key for {@see ReportsConversionOptimizationScheduledExportCommand}.
+     * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
+     */
+    public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
 }

@@ -1,3 +1,5 @@
+import { calculateAge } from '@/inertia/Composables/utilities.js';
+
 export const usePayment = () => {
   const page = usePage();
   const paymentStatusEnum = page.props.paymentStatusEnum;
@@ -155,6 +157,44 @@ export const usePayment = () => {
     };
   };
 
+  const isMemberPaymentCancelled = member => {
+    const payments = page.props.payments;
+    const paymentCancelledStatuses = new Set([
+      paymentStatusEnum.CANCELLED,
+      paymentStatusEnum.FAILED,
+      paymentStatusEnum.DECLINED,
+    ]);
+
+    if (!Array.isArray(payments) || payments.length === 0) {
+      return false;
+    }
+
+    const rawAge = calculateAge(member.dob);
+    const memberAge = Number.isFinite(rawAge) ? rawAge : 0;
+
+    const subset = paymentsRelevantToTravelMember(payments, memberAge);
+
+    return subset.some(p => paymentCancelledStatuses.has(p.payment_status_id));
+  };
+
+  const paymentsRelevantToTravelMember = (payments, memberAge) => {
+    const TRAVEL_MEMBER_SENIOR_AGE = 65;
+    const memberIsSenior = memberAge >= TRAVEL_MEMBER_SENIOR_AGE;
+
+    return payments.filter(p => {
+      return memberIsSenior
+        ? isSeniorMemberPayment(p.code)
+        : !isSeniorMemberPayment(p.code);
+    });
+  };
+
+  const isSeniorMemberPayment = code => {
+    if (code === null || code === undefined) {
+      return false;
+    }
+    return String(code).trim().endsWith('-1');
+  };
+
   return {
     formatDate,
     formatAmount,
@@ -166,5 +206,6 @@ export const usePayment = () => {
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
     hasAuthorizedSplit,
+    isMemberPaymentCancelled,
   };
 };

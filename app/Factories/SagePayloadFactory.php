@@ -19,6 +19,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Services\SageApiService;
 use Carbon\Carbon;
 use stdClass;
 
@@ -400,7 +401,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -508,9 +509,10 @@ class SagePayloadFactory
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $bookingDate;
             } else {
-                $dueDate = date('Y-m-d', strtotime($item->due_date));
                 if ($item->sr_no == 1) {
                     $dueDate = $bookingDate;
+                } else {
+                    $dueDate = app(SageApiService::class)->resolveInstallmentDueDateAgainstBookingDate($item->due_date, $bookingDate);
                 }
             }
 

@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
+use App\Models\DeviceInsurerRequestResponses;
+use App\Models\DeviceQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
@@ -17,11 +20,15 @@ use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
 use App\Models\OcrLog;
+use App\Models\SavingsInsurerRequestResponse;
+use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,8 +38,10 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct(private BaseService $baseService)
-    {
+    public function __construct(
+        private BaseService $baseService,
+        private PolicyIssuanceService $policyIssuanceService,
+    ) {
         $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
     }
 
@@ -95,7 +104,7 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value];
 
         if (empty($quote) || empty($quoteType) || ! in_array($quoteType, $allowedQuoteTypes)) {
             return response()->json([
@@ -110,11 +119,20 @@ class AuditableController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
+        $policyIssuance = $quote->policyIssuance;
+        $reTriggerPolicyAutomationEligible = false;
+        if ($policyIssuance) {
+            $policyIssuance->loadMissing('insuranceProvider');
+            $reTriggerPolicyAutomationEligible = $this->policyIssuanceService
+                ->shouldOfferReTriggerPolicyAutomation($policyIssuance);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
-            'policyIssuance' => $quote->policyIssuance ?? null,
+            'policyIssuance' => $policyIssuance ?? null,
+            'reTriggerPolicyAutomationEligible' => $reTriggerPolicyAutomationEligible,
         ]);
     }
 
@@ -148,8 +166,10 @@ class AuditableController extends Controller
 
             $query = $this->getQueryBuilderForAuditableType($auditableType);
 
+            // Use string direction so MongoDB\Laravel\Query\Builder maps to -1/1; orderByDesc() passes
+            // SortDirection enum which cannot be BSON-serialized for Mongo find sort options.
             $query->where('quote_uuid', $quoteUID)
-                ->orderByDesc('created_at');
+                ->orderBy('created_at', 'desc');
 
             if ($insuranceProvider) {
                 $query->where('provider_id', $insuranceProvider);
@@ -179,6 +199,48 @@ class AuditableController extends Controller
      */
     public function getQuoteAudits(Request $request)
     {
+        $user = $request->user();
+        $quoteType = $request->input('quote_type');
+        $quoteTypeString = is_string($quoteType) && $quoteType !== '' ? $quoteType : null;
+
+        $primaryAuditableType = null;
+        if ($quoteTypeString !== null) {
+            try {
+                $primaryAuditableType = AuditRepository::primaryAuditableTypeForQuoteType($quoteTypeString);
+            } catch (\Throwable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if ($primaryAuditableType === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        $requiresSelfAuditableId = $primaryAuditableType === User::class;
+
+        $forbidden = $requiresSelfAuditableId
+            ? (
+                ! $user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])
+                && (
+                    (int) $user->id !== (int) $request->input('auditable_id')
+                    || ! $user->hasAnyPermission([PermissionsEnum::Auditable])
+                )
+            )
+            : ! $user->hasAnyPermission([PermissionsEnum::Auditable]);
+
+        if ($forbidden) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to view audit logs.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $audits = AuditRepository::getQuoteAudits();
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
@@ -198,8 +260,14 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case CyberQuote::class:
                 return CyberInsurerRequestResponses::with('insuranceProvider');
+            case DeviceQuote::class:
+                return DeviceInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')->whereNotIn('call_type', ['oAuth', 'login']);
+            case SavingsQuote::class:
+                return SavingsInsurerRequestResponse::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }

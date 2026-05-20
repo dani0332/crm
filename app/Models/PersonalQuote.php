@@ -459,7 +459,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function insuranceProviderPlan()
     {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'code', 'text', 'provider_id', 'sub_type_id']);
     }
 
     public function quoteCustomerPlan()
@@ -519,6 +519,16 @@ class PersonalQuote extends Model implements AuditableContract
 
         // Return true only if both statuses exist in history
         return $hasPaymentLinkSent && $hasPaymentInitiated;
+    }
+
+    /**
+     * Get all related passport/visa detail records via the quoteable polymorphic relation.
+     *
+     * @return MorphMany
+     */
+    public function passportVisaDetails(): MorphOne
+    {
+        return $this->morphOne(PassportVisaDetail::class, 'quoteable')->latest('updated_at');
     }
 
     /**
@@ -586,6 +596,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id')->with('deviceMake', 'deviceModel');
+    }
+
     // *********************** Cyber Quote ***********************
 
     public function cyberQuote()
@@ -630,7 +645,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+        return in_array($this->insurer_api_status_id, app(abstract: PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     /**
@@ -682,4 +697,5 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
+
 }

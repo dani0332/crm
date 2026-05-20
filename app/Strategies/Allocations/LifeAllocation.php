@@ -13,6 +13,10 @@ class LifeAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
+        $parentLeadAdvisorId = $this->getParentLeadAdvisorId();
+        LoggerService::info(self::class.'::fetchAdvisor - Parent lead advisor ID', [
+            'parent_lead_advisor_id' => $parentLeadAdvisorId,
+        ]);
         LoggerService::info(self::class.'::fetchAdvisor - Starting advisor fetch for Life allocation', [
             'online_status' => $onlineStatus,
         ]);
@@ -27,6 +31,10 @@ class LifeAllocation extends BaseAllocation
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::LifeAdvisor])
             ->whereIn('users.email', $emails)
+            ->when(
+                $parentLeadAdvisorId !== null,
+                fn ($query) => $query->where('users.id', '!=', $parentLeadAdvisorId)
+            )
             ->logRawSql()
             ->first();
     }

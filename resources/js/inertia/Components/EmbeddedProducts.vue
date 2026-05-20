@@ -53,6 +53,7 @@ const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
   addDocument: false,
+  updateDocument: false,
   voidPayment: false,
 });
 
@@ -107,6 +108,18 @@ const addDocumentForm = useForm({
   type: null,
   title: null,
   file: null,
+});
+
+const updateDocumentForm = reactive({
+  epId: null,
+  quoteId: null,
+  modelType: null,
+  documentId: null,
+  documentType: null,
+  documentNumber: null,
+  file: null,
+  remarks: null,
+  processing: false,
 });
 
 const syncDocument = id => {
@@ -513,6 +526,92 @@ const onVoidSubmit = isValid => {
     });
 };
 
+const updateDocumentLoader = ref(false);
+
+const openUpdateDocument = item => {
+  updateDocumentForm.epId = documentsReactive.value.ep.id;
+  updateDocumentForm.quoteId = props.quote.id;
+  updateDocumentForm.modelType = props.modelType;
+  updateDocumentForm.documentId = item.id;
+  updateDocumentForm.documentType = item.document_type;
+  updateDocumentForm.documentNumber = item.document_number;
+  updateDocumentForm.file = null;
+  updateDocumentForm.remarks = null;
+  modals.viewDocuments = false;
+  modals.updateDocument = true;
+};
+
+const resetUpdateForm = () => {
+  updateDocumentForm.epId = null;
+  updateDocumentForm.quoteId = null;
+  updateDocumentForm.modelType = null;
+  updateDocumentForm.documentId = null;
+  updateDocumentForm.documentType = null;
+  updateDocumentForm.documentNumber = null;
+  updateDocumentForm.file = null;
+  updateDocumentForm.remarks = null;
+};
+
+const cancelUpdateDocument = () => {
+  modals.updateDocument = false;
+  resetUpdateForm();
+  modals.viewDocuments = true;
+};
+
+const uploadUpdateEpDocument = event => {
+  updateDocumentForm.file = event.files?.[0]?.file ?? null;
+};
+
+const onUpdateDocumentSubmit = event => {
+  if (
+    !updateDocumentForm.documentNumber ||
+    !updateDocumentForm.remarks ||
+    !updateDocumentForm.file
+  ) {
+    notification.error({
+      title: 'Please fill in all required fields and attach a PDF file.',
+      position: 'top',
+    });
+    return;
+  }
+
+  const epId = updateDocumentForm.epId;
+  const formData = new FormData();
+  formData.append('epId', updateDocumentForm.epId);
+  formData.append('quoteId', updateDocumentForm.quoteId);
+  formData.append('modelType', updateDocumentForm.modelType);
+  formData.append('documentId', updateDocumentForm.documentId);
+  formData.append('documentNumber', updateDocumentForm.documentNumber);
+  formData.append('file', updateDocumentForm.file);
+  formData.append('remarks', updateDocumentForm.remarks);
+
+  updateDocumentLoader.value = true;
+  updateDocumentForm.processing = true;
+
+  axios
+    .post('/embedded-products/update-ep-document', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then(() => {
+      notification.success({
+        title: 'Document updated successfully.',
+        position: 'top',
+      });
+      modals.updateDocument = false;
+      resetUpdateForm();
+      modals.viewDocuments = true;
+      viewDocument(epId);
+    })
+    .catch(err => {
+      const message = err.response?.data?.message ?? 'Document update failed.';
+      notification.error({ title: message, position: 'top' });
+    })
+    .finally(() => {
+      updateDocumentLoader.value = false;
+      updateDocumentForm.processing = false;
+    });
+};
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -911,10 +1010,15 @@ const onAddDocumentSubmit = event => {
           >
             <template #item-document_type="item">
               <div
-                class="flex flex-row gap-3"
+                class="flex flex-row gap-3 items-center"
                 :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
               >
                 {{ item.document_type }}
+                <span
+                  v-if="item.is_manual_override"
+                  class="text-xs bg-amber-100 text-amber-700 rounded px-1 ml-1"
+                  >Manual Override</span
+                >
               </div>
             </template>
 
@@ -947,6 +1051,18 @@ const onAddDocumentSubmit = event => {
                   @click.prevent="downloadFile(item)"
                 >
                   Download
+                </x-button>
+                <x-button
+                  v-if="
+                    !item.is_policy_wordings &&
+                    can(permissionsEnum.EP_DOCUMENT_MANUAL_OVERRIDE)
+                  "
+                  size="xs"
+                  color="warning"
+                  outlined
+                  @click.prevent="openUpdateDocument(item)"
+                >
+                  Update
                 </x-button>
               </div>
             </template>
@@ -1023,6 +1139,92 @@ const onAddDocumentSubmit = event => {
               :loading="addDocumentLoader"
             >
               Save
+            </x-button>
+          </template>
+        </x-modal>
+
+        <x-modal
+          v-model="modals.updateDocument"
+          size="lg"
+          show-close
+          backdrop
+          is-form
+          persistent
+          @submit="onUpdateDocumentSubmit"
+        >
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">Update Document</div>
+          </template>
+
+          <!-- min-w-0: flex/scroll children default to min-width:auto and overflow the modal; constrain to modal width -->
+          <div class="w-full min-w-0 max-w-full box-border overflow-x-hidden">
+            <div class="grid gap-4 w-full min-w-0">
+              <x-input
+                :model-value="updateDocumentForm.documentType"
+                label="Document Type"
+                class="w-full min-w-0"
+                disabled
+              />
+
+              <x-input
+                v-model="updateDocumentForm.documentNumber"
+                label="Document Number"
+                class="w-full min-w-0"
+              />
+
+              <div
+                v-if="updateDocumentForm.file"
+                class="relative w-full min-w-0 max-w-full bg-primary-50 rounded-md flex flex-col gap-4 items-stretch border border-primary-300 ease-linear transition-all duration-150 p-4"
+              >
+                <div
+                  class="w-full min-w-0 max-w-full text-left text-sm leading-snug break-words break-all px-1"
+                  :title="updateDocumentForm.file.name"
+                >
+                  {{ updateDocumentForm.file.name }}
+                </div>
+                <x-button
+                  class="self-center shrink-0"
+                  size="xs"
+                  color="error"
+                  @click="updateDocumentForm.file = null"
+                >
+                  Remove
+                </x-button>
+              </div>
+
+              <Dropzone
+                v-else
+                class="min-w-0"
+                @change="uploadUpdateEpDocument($event)"
+                accept=".pdf"
+              />
+
+              <x-textarea
+                v-model="updateDocumentForm.remarks"
+                label="Remarks"
+                class="w-full min-w-0"
+                rows="3"
+              />
+            </div>
+          </div>
+
+          <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="cancelUpdateDocument()"
+              :disabled="updateDocumentForm.processing"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              color="primary"
+              type="submit"
+              :loading="updateDocumentLoader"
+            >
+              Update
             </x-button>
           </template>
         </x-modal>

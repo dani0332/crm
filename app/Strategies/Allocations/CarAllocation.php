@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
+use App\Pipes\Allocation\Car\DeferLowerPriorityCatARevivalLeadPipe;
 use App\Pipes\Allocation\Car\EvaluateCatAEligibleAdvisorPipe;
 use App\Pipes\Allocation\Car\EvaluateTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
@@ -70,9 +71,10 @@ class CarAllocation implements Allocation
             EvaluateTierPipe::class,
         ];
 
-        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
+        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A) && ! $lead->isRevivalCommsIntentHighOrMedium()) {
             return [
                 ...$basePipes,
+                DeferLowerPriorityCatARevivalLeadPipe::class,
                 EvaluateCatAEligibleAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
