@@ -166,9 +166,7 @@ class HealthQuoteRevampMigrationService
                 $beforeSnapshots['customer_members'],
             );
         } catch (Exception $e) {
-            LoggerService::error('Error migrating health quote', ['error' => $e->getMessage()]);
-
-            return;
+            LoggerService::error('Error migrating health quote', exception: $e);
         } finally {
             LoggerService::endLogging();
         }
