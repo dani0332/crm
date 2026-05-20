@@ -82,6 +82,15 @@ return [
             'after_commit' => false,
         ],
 
+        'redis_policy_issuance' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'policy-issuance-automation',
+            'retry_after' => 300,
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
     ],
 
     /*

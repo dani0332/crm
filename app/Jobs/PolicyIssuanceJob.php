@@ -23,7 +23,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 180;
-    public $uniqueFor = 185;
+    public $failOnTimeout = true;
+    public $uniqueFor = 305;
     public $tries = 1;
 
     private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out', 'has been attempted too many times'];
@@ -45,7 +46,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'process_id' => $processId,
             ]);
         }
-        $this->onQueue('policy-issuance-automation');
+        $this->onConnection('redis_policy_issuance')->onQueue('policy-issuance-automation');
     }
 
     public function handle(): void
