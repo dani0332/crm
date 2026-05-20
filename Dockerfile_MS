@@ -168,6 +168,7 @@ RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /e
     && chown -R www:www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler /var/lib/nginx
 
 ENV HOME=/home/www
+ENV USER=www
 
 USER www
 
