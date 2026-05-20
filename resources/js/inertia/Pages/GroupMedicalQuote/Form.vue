@@ -46,12 +46,12 @@ const yesNoOptions = [
 ];
 
 const emptyCategoryRow = () => ({
-  member_category_id: null,
-  existing_insurance_provider_id: null,
-  existing_tpa_id: null,
-  existing_network_id: null,
-  existing_policy_renewal_date: null,
-  number_of_people: null,
+  groupMedicalCategoryId: null,
+  insuranceProviderId: null,
+  healthTpaId: null,
+  groupMedicalNetworkId: null,
+  renewalDate: null,
+  numberOfPeople: null,
 });
 
 const GM_CATEGORY_ROW_FALLBACK_MAX = 26;
@@ -66,7 +66,7 @@ function getGmCategoryRowMax() {
  */
 function buildInitialCategoryRows(quote) {
   const rowMax = getGmCategoryRowMax();
-  const intake = quote?.gm_category_intake;
+  const intake = quote?.categories;
   if (Array.isArray(intake) && intake.length > 0) {
     return intake.slice(0, rowMax).map(row => ({ ...emptyCategoryRow(), ...row }));
   }
@@ -140,13 +140,13 @@ async function fetchNetworksForTpa(tpaId) {
 }
 
 function networkOptionsForRow(idx) {
-  const tpaId = quoteForm.gm_category_intake[idx]?.existing_tpa_id;
+  const tpaId = quoteForm.categories[idx]?.healthTpaId;
   if (!tpaId) return [];
   return networksCache.value[tpaId] ?? [];
 }
 
 function isNetworkLoadingForRow(idx) {
-  const tpaId = quoteForm.gm_category_intake[idx]?.existing_tpa_id;
+  const tpaId = quoteForm.categories[idx]?.healthTpaId;
   return !!tpaId && networksFetching.value[tpaId];
 }
 
@@ -191,7 +191,7 @@ const quoteForm = useForm({
         : 0,
   health_plan_type_id: props.quote?.health_plan_type_id ?? null,
   number_of_categories: initialGmRows.length,
-  gm_category_intake: initialGmRows,
+  categories: initialGmRows,
 });
 
 const selectedEmirateId = computed(() =>
@@ -211,10 +211,10 @@ const isHealthPlanTypeSelectDisabled = computed(
  */
 function memberCategoryOptionsForRow(rowIndex) {
   const selectedElsewhere = new Set(
-    quoteForm.gm_category_intake
+    quoteForm.categories
       .map((row, idx) =>
-        idx !== rowIndex && row.member_category_id != null
-          ? Number(row.member_category_id)
+        idx !== rowIndex && row.groupMedicalCategoryId != null
+          ? Number(row.groupMedicalCategoryId)
           : null,
       )
       .filter(id => id !== null),
@@ -227,8 +227,8 @@ function memberCategoryOptionsForRow(rowIndex) {
 }
 
 const duplicateCategoryMessage = computed(() => {
-  const ids = quoteForm.gm_category_intake
-    .map(row => row.member_category_id)
+  const ids = quoteForm.categories
+    .map(row => row.groupMedicalCategoryId)
     .filter(id => id != null && id !== '');
   return ids.length !== new Set(ids.map(id => Number(id))).size
     ? 'Each category can only be selected once.'
@@ -236,26 +236,26 @@ const duplicateCategoryMessage = computed(() => {
 });
 
 function syncNumberOfCategoriesFromIntake() {
-  quoteForm.number_of_categories = quoteForm.gm_category_intake.length;
+  quoteForm.number_of_categories = quoteForm.categories.length;
 }
 
 function addCategoryRow() {
-  if (quoteForm.gm_category_intake.length >= gmCategoryRowMax.value) {
+  if (quoteForm.categories.length >= gmCategoryRowMax.value) {
     notification.warning({
       title: `You can add at most ${gmCategoryRowMax.value} category rows.`,
       position: 'top',
     });
     return;
   }
-  quoteForm.gm_category_intake.push(emptyCategoryRow());
+  quoteForm.categories.push(emptyCategoryRow());
   syncNumberOfCategoriesFromIntake();
 }
 
 function removeCategoryRow(idx) {
-  if (quoteForm.gm_category_intake.length <= 1) {
+  if (quoteForm.categories.length <= 1) {
     return;
   }
-  quoteForm.gm_category_intake.splice(idx, 1);
+  quoteForm.categories.splice(idx, 1);
   syncNumberOfCategoriesFromIntake();
 }
 
@@ -341,12 +341,12 @@ watch(selectedEmirateId, (newEmirate, oldEmirate) => {
 });
 
 watch(
-  () => quoteForm.gm_category_intake.map(row => row.existing_tpa_id),
+  () => quoteForm.categories.map(row => row.healthTpaId),
   (newTpaIds, oldTpaIds) => {
     newTpaIds.forEach((tpaId, idx) => {
       const oldTpaId = oldTpaIds?.[idx];
       if (tpaId !== oldTpaId) {
-        quoteForm.gm_category_intake[idx].existing_network_id = null;
+        quoteForm.categories[idx].groupMedicalNetworkId = null;
       }
       if (tpaId) {
         fetchNetworksForTpa(tpaId);
@@ -358,8 +358,8 @@ watch(
 onMounted(() => {
   const uniqueTpaIds = [
     ...new Set(
-      quoteForm.gm_category_intake
-        .map(row => row.existing_tpa_id)
+      quoteForm.categories
+        .map(row => row.healthTpaId)
         .filter(id => !!id),
     ),
   ];
@@ -391,7 +391,7 @@ const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (!isValid) return;
   if (duplicateCategoryMessage.value) {
-    quoteForm.setError('gm_category_intake', duplicateCategoryMessage.value);
+    quoteForm.setError('categories', duplicateCategoryMessage.value);
     return;
   }
   syncNumberOfCategoriesFromIntake();
@@ -661,9 +661,9 @@ function onSubmit(isValid) {
               <span
                 class="inline-flex items-center justify-center rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-800"
               >
-                {{ quoteForm.gm_category_intake.length }}
+                {{ quoteForm.categories.length }}
                 {{
-                  quoteForm.gm_category_intake.length === 1
+                  quoteForm.categories.length === 1
                     ? 'category row'
                     : 'category rows'
                 }}
@@ -675,7 +675,7 @@ function onSubmit(isValid) {
                   color="primary"
                   class="whitespace-nowrap"
                   :disabled="
-                    quoteForm.gm_category_intake.length >= gmCategoryRowMax
+                    quoteForm.categories.length >= gmCategoryRowMax
                   "
                   @click.prevent="addCategoryRow"
                 >
@@ -754,8 +754,8 @@ function onSubmit(isValid) {
               </thead>
               <tbody class="divide-y divide-gray-100 bg-white text-gray-900">
                 <tr
-                  v-for="(row, idx) in quoteForm.gm_category_intake"
-                  :key="`gm-cat-${idx}-${row.member_category_id ?? 'row'}`"
+                  v-for="(row, idx) in quoteForm.categories"
+                  :key="`gm-cat-${idx}-${row.groupMedicalCategoryId ?? 'row'}`"
                   class="align-top transition-colors even:bg-slate-50/70 hover:bg-primary-50/40"
                 >
                   <td
@@ -765,7 +765,7 @@ function onSubmit(isValid) {
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.member_category_id"
+                      v-model="row.groupMedicalCategoryId"
                       :options="memberCategoryOptionsForRow(idx)"
                       class="w-full min-w-[11rem]"
                       placeholder="Select category"
@@ -774,48 +774,48 @@ function onSubmit(isValid) {
                       required
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.member_category_id`
+                          `categories.${idx}.groupMedicalCategoryId`
                         ]
                       "
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.existing_insurance_provider_id"
+                      v-model="row.insuranceProviderId"
                       :options="insuranceProviderSelectOptions"
                       class="w-full min-w-[10rem]"
                       placeholder="Select provider"
                       filterable
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.existing_insurance_provider_id`
+                          `categories.${idx}.insuranceProviderId`
                         ]
                       "
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.existing_tpa_id"
+                      v-model="row.healthTpaId"
                       :options="healthTpaSelectOptions"
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
                       filterable
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.existing_tpa_id`
+                          `categories.${idx}.healthTpaId`
                         ]
                       "
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.existing_network_id"
+                      v-model="row.groupMedicalNetworkId"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="!row.existing_tpa_id || isNetworkLoadingForRow(idx)"
+                      :disabled="!row.healthTpaId || isNetworkLoadingForRow(idx)"
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
-                          : !row.existing_tpa_id
+                          : !row.healthTpaId
                             ? 'Select TPA first'
                             : 'Select network'
                       "
@@ -823,20 +823,20 @@ function onSubmit(isValid) {
                       filterable
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.existing_network_id`
+                          `categories.${idx}.groupMedicalNetworkId`
                         ]
                       "
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-input
-                      v-model="row.existing_policy_renewal_date"
+                      v-model="row.renewalDate"
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.existing_policy_renewal_date`
+                          `categories.${idx}.renewalDate`
                         ]
                       "
                     />
@@ -845,14 +845,14 @@ function onSubmit(isValid) {
                     class="border-r border-gray-100 px-3 py-3 text-right align-middle"
                   >
                     <x-input
-                      v-model="row.number_of_people"
+                      v-model="row.numberOfPeople"
                       type="number"
                       class="w-full min-w-[7.5rem]"
                       size="sm"
                       :rules="[isRequired, isNumber, maxValidation(2147483645)]"
                       :error="
                         quoteForm.errors[
-                          `gm_category_intake.${idx}.number_of_people`
+                          `categories.${idx}.numberOfPeople`
                         ]
                       "
                       :min="1"
@@ -865,7 +865,7 @@ function onSubmit(isValid) {
                         size="sm"
                         color="error"
                         class="!min-h-[2.25rem] !min-w-[2.25rem] !px-2"
-                        :disabled="quoteForm.gm_category_intake.length <= 1"
+                        :disabled="quoteForm.categories.length <= 1"
                         :aria-label="`Remove category row ${idx + 1}`"
                         @click.prevent="removeCategoryRow(idx)"
                       >
@@ -881,11 +881,11 @@ function onSubmit(isValid) {
             </table>
           </div>
           <p
-            v-if="duplicateCategoryMessage || quoteForm.errors.gm_category_intake"
+            v-if="duplicateCategoryMessage || quoteForm.errors.categories"
             class="mt-3 text-sm text-error"
           >
             {{
-              duplicateCategoryMessage || quoteForm.errors.gm_category_intake
+              duplicateCategoryMessage || quoteForm.errors.categories
             }}
           </p>
         </div>

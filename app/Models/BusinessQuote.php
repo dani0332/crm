@@ -402,4 +402,11 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
+
+    public function groupMedicalCategories()
+    {
+
+        return $this->hasMany(GroupMedicalQuoteCategory::class, 'business_quote_request_id', 'id')
+            ->orderBy('sort_order');
+    }
 }

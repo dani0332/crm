@@ -130,14 +130,14 @@ final class GroupMedicalAmtFormDropdownService
     }
 
     /**
-     * Resolve stored intake row IDs to display labels for the Group Medical show page.
+     * Resolve group_medical_quote_category DB rows to display labels for the Show page.
      *
-     * @param  array<int, array<string, mixed>>|null  $intake
+     * @param  \Illuminate\Database\Eloquent\Collection|Collection  $quoteCategories
      * @return array<int, array<string, mixed>>
      */
-    public function enrichCategoryIntakeForDisplay(?array $intake): array
+    public function enrichCategoryIntakeForDisplay(Collection $quoteCategories): array
     {
-        if ($intake === null || $intake === []) {
+        if ($quoteCategories->isEmpty()) {
             return [];
         }
 
@@ -148,16 +148,14 @@ final class GroupMedicalAmtFormDropdownService
 
         $rows = [];
 
-        foreach ($intake as $index => $row) {
-            if (! is_array($row)) {
-                continue;
-            }
+        foreach ($quoteCategories as $index => $row) {
+            $row = is_array($row) ? $row : $row->toArray();
 
-            $categoryId = $row['member_category_id'] ?? null;
-            $providerId = $row['existing_insurance_provider_id'] ?? null;
-            $tpaId = $row['existing_tpa_id'] ?? null;
-            $networkId = $row['existing_network_id'] ?? null;
-            $renewalDate = $row['existing_policy_renewal_date'] ?? null;
+            $categoryId = $row['group_medical_category_id'] ?? null;
+            $providerId = $row['insurance_provider_id'] ?? null;
+            $tpaId = $row['group_medical_third_party_administrator_id'] ?? null;
+            $networkId = $row['group_medical_network_id'] ?? null;
+            $renewalDate = $row['renewal_date'] ?? null;
 
             $rows[] = [
                 'serial' => $index + 1,

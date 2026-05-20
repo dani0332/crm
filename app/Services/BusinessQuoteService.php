@@ -582,11 +582,6 @@ class BusinessQuoteService extends BaseService
 
         $payload = [];
 
-        $quoteUid = $request->input('quote_uid') ?? $request->input('quoteUID');
-        if ($quoteUid !== null && $quoteUid !== '') {
-            $payload['quoteUID'] = $quoteUid;
-        }
-
         $companyActivityTypeId = $request->input('nature_of_company_activity_id')
             ?? $request->input('companyActivityTypeId');
         if ($companyActivityTypeId !== null && $companyActivityTypeId !== '') {
@@ -602,11 +597,6 @@ class BusinessQuoteService extends BaseService
         $healthPlanTypeId = $request->input('health_plan_type_id') ?? $request->input('healthPlanTypeId');
         if ($healthPlanTypeId !== null && $healthPlanTypeId !== '') {
             $payload['healthPlanTypeId'] = (int) $healthPlanTypeId;
-        }
-
-        $numberOfCategories = $request->input('number_of_categories') ?? $request->input('numberOfCategories');
-        if ($numberOfCategories !== null && $numberOfCategories !== '') {
-            $payload['numberOfCategories'] = (int) $numberOfCategories;
         }
 
         $categories = $this->resolveGroupMedicalCategoriesForCapi($request);

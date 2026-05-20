@@ -436,6 +436,7 @@ class AmtController extends Controller
             'brief_details' => 'required',
             'emirate_of_registration_id' => 'required|exists:emirates,id',
         ], $this->groupMedicalAmtIntakeValidationRules()));
+
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
@@ -464,9 +465,9 @@ class AmtController extends Controller
             'renewalBatchModel:id,name',
             'groupMedicalType:id,text,description',
             'natureOfCompanyActivity:id,text',
+            'groupMedicalCategories',
         ]);
         abort_if(! $record, 404);
-
         /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
         /* End - Temporarily adding for correcting historic data */
@@ -481,7 +482,7 @@ class AmtController extends Controller
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
         $gmCategoryIntakeDisplay = app(GroupMedicalAmtFormDropdownService::class)
-            ->enrichCategoryIntakeForDisplay($record->gm_category_intake);
+            ->enrichCategoryIntakeForDisplay($record->groupMedicalCategories);
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasons::getAll();
@@ -775,8 +776,7 @@ class AmtController extends Controller
             'nature_of_company_activity_id' => ['required', 'exists:company_activity_type,id'],
             'has_existing_group_health_insurance' => ['required', 'boolean'],
             'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
-            'number_of_categories' => ['required', 'integer', 'min:1', 'max:26'],
-            'gm_category_intake' => [
+            'categories' => [
                 'required',
                 'array',
                 'max:26',
@@ -786,18 +786,18 @@ class AmtController extends Controller
                         $fail('People per category rows must match the number of categories.');
                     }
 
-                    $categoryIds = array_filter(array_column($value, 'member_category_id'));
+                    $categoryIds = array_filter(array_column($value, 'groupMedicalCategoryId'));
                     if (count($categoryIds) !== count(array_unique($categoryIds))) {
                         $fail('Each category can only be selected once.');
                     }
                 },
             ],
-            'gm_category_intake.*.member_category_id' => ['required', 'integer', 'exists:group_medical_category,id'],
-            'gm_category_intake.*.existing_insurance_provider_id' => ['nullable', 'exists:insurance_provider,id'],
-            'gm_category_intake.*.existing_tpa_id' => ['nullable', 'exists:health_third_party_administrator,id'],
-            'gm_category_intake.*.existing_network_id' => ['nullable', 'exists:group_medical_networks,id'],
-            'gm_category_intake.*.existing_policy_renewal_date' => ['nullable', 'date'],
-            'gm_category_intake.*.number_of_people' => ['required', 'integer', 'min:1', 'max:2147483645'],
+            'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
+            'categories.*.insuranceProviderId' => ['nullable', 'exists:insurance_provider,id'],
+            'categories.*.healthTpaId' => ['nullable', 'exists:group_medical_third_party_administrator,id'],
+            'categories.*.groupMedicalNetworkId' => ['nullable', 'exists:group_medical_networks,id'],
+            'categories.*.renewalDate' => ['nullable', 'date'],
+            'categories.*.numberOfPeople' => ['required', 'integer', 'min:1', 'max:2147483645'],
         ];
     }
 }
