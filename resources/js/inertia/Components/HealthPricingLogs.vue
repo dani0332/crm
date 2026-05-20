@@ -204,7 +204,7 @@ const onLoadLogData = async () => {
         <!-- Criteria -->
         <div>
           <dl class="">
-            <dt class="font-medium mb-2">Creteria:</dt>
+            <dt class="font-medium mb-2">Criteria:</dt>
             <div
               class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
             >
