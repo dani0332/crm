@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Services\CQF\NonMotor\LOBs\BusinessCQFQuoteStorageService;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -41,7 +42,7 @@ it('stores renewal quote with correct source, status, and no advisor on Business
     $newQuote->shouldReceive('getAttribute')->with('uuid')->andReturn($newUuid);
     $newQuote->shouldReceive('getAttribute')->with('code')->andReturn($newCode);
     $newQuote->shouldReceive('businessQuote')->andReturn(
-        Mockery::mock()->shouldReceive('associate')->andReturnNull()->getMock()
+        Mockery::mock(BelongsTo::class)->shouldIgnoreMissing()
     );
     $newQuote->shouldReceive('save')->andReturnNull();
 
@@ -87,7 +88,7 @@ it('does not copy old source when old BusinessQuote had a different source', fun
     $newQuote->shouldReceive('getAttribute')->with('uuid')->andReturn($newUuid);
     $newQuote->shouldReceive('getAttribute')->with('code')->andReturn($newCode);
     $newQuote->shouldReceive('businessQuote')->andReturn(
-        Mockery::mock()->shouldReceive('associate')->andReturnNull()->getMock()
+        Mockery::mock(BelongsTo::class)->shouldIgnoreMissing()
     );
     $newQuote->shouldReceive('save')->andReturnNull();
 

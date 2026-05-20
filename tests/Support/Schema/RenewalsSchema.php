@@ -115,6 +115,14 @@ class RenewalsSchema
         ];
 
         SchemaUtils::ensureColumns([
+            'renewals_upload_leads' => [
+                'is_deleted' => function (Blueprint $table) {
+                    $table->boolean('is_deleted')->default(0);
+                },
+                'created_by_id' => function (Blueprint $table) {
+                    $table->unsignedBigInteger('created_by_id')->nullable();
+                },
+            ],
             'renewal_quote_processes' => [
                 'email_sent' => function (Blueprint $table) {
                     $table->boolean('email_sent')->default(false);
