@@ -39,7 +39,20 @@ class HealthRate extends Model
         return Attribute::make(
             set: fn ($value) => $value === null ? null : strtoupper($value),
         );
+    }
 
+    protected function gender(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => $value === null ? null : strtoupper($value),
+        );
+    }
+
+    protected function maritalStatus(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => $value === null ? null : strtoupper($value),
+        );
     }
 
     public function healthPlan(): BelongsTo

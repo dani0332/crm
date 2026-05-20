@@ -64,6 +64,7 @@ class DatabaseSeeder extends Seeder
             HealthGroupNationalitySeeder::class,*/
             HealthPlanRatesStatusVersionSeeder::class,
             SplitHealthRatesGenderMaritalStatusSeeder::class,
+            MakeGenderMaritalStatusUppercase::class,
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
         ]);
