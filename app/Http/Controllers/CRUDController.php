@@ -1360,7 +1360,6 @@ class CRUDController extends Controller
                     'isNewPaymentStructure' => $isNewPaymentStructure,
                     'linkedQuoteDetails' => $linkedQuoteDetails,
                     'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
-                    'clientInquiryLogs' => $clientInquiryLogs,
                     'paymentDocument' => $paymentDocument,
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
