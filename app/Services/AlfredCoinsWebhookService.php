@@ -168,6 +168,7 @@ class AlfredCoinsWebhookService
         return [
             'email' => $quote->getAttribute('email'),
             'eventName' => $eventName,
+            'occurredAt' => now()->toISOString(),
             'source' => self::PAYLOAD_SOURCE,
             'reason' => self::REASON,
             'uniqueId' => $quote->getAttribute('code'),
@@ -186,19 +187,19 @@ class AlfredCoinsWebhookService
                 ."\n-----END PRIVATE KEY-----";
         }
 
-        $header = $this->base64UrlEncode((string) json_encode([
+        $header = $this->base64UrlEncode(json_encode([
             'alg' => 'RS256',
             'typ' => 'JWT',
             'kid' => 'imcrm-v1',
-        ]));
+        ], JSON_THROW_ON_ERROR));
 
-        $payload = $this->base64UrlEncode((string) json_encode([
+        $payload = $this->base64UrlEncode(json_encode([
             'iss' => 'imcrm',
             'iat' => $now,
             'exp' => $now + 300,
             'jti' => (string) Str::uuid(),
             'data' => $data,
-        ]));
+        ], JSON_THROW_ON_ERROR));
 
         $signingInput = $header.'.'.$payload;
 
