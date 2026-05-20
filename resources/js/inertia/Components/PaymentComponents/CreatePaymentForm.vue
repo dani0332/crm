@@ -338,7 +338,8 @@ const rules = {
   },
   /** Collection date, split due dates — today or future (local day). Uses moment so DD/MM/YYYY from the picker is not parsed as US MM/DD. */
   dateOnOrAfterToday: v => {
-    if (!v) {
+    const { quote_status_id } = props.quoteRequest;
+    if (!v || quote_status_id === page.props.quoteStatusEnum?.PolicyBooked) {
       return true;
     }
     const raw = typeof v === 'string' ? v.trim() : v;

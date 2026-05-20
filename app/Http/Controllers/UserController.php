@@ -43,7 +43,7 @@ class UserController extends Controller
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->userService = $userService;
-        $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'show', 'store']]);
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users-edit', ['only' => ['edit', 'update', 'updateActiveState']]);
         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
