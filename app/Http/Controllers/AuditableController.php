@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Http\Requests\HealthPricingLogsRequest;
 use App\Http\Requests\LogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
@@ -281,7 +282,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadHealthPricingLogs(Request $request): JsonResponse
+    public function loadHealthPricingLogs(HealthPricingLogsRequest $request): JsonResponse
     {
         try {
             $logs = HealthPricingLog::with('member')
