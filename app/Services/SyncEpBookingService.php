@@ -22,6 +22,7 @@ class SyncEpBookingService extends BaseService
     use GenericQueriesAllLobs;
     use SendsEpFailureEmail;
 
+    public const string LOCK_KEY_PREFIX = 'ep-sync-sage-booking-';
     private const string LOG_PREFIX = 'SyncEpBookingService:';
     private const string UNEXPECTED_ERROR_MESSAGE = 'An unexpected error occurred while retrying Sage booking. Please try again or contact support.';
 
@@ -94,7 +95,7 @@ class SyncEpBookingService extends BaseService
             return ['ok' => false, 'message' => $context['message']];
         }
 
-        $lockKey = 'ep-sync-sage-booking-'.$context['transaction']->id;
+        $lockKey = self::LOCK_KEY_PREFIX.$context['transaction']->id;
         if (! Cache::add($lockKey, true, now()->addMinutes(5))) {
             return ['ok' => false, 'message' => 'Sage booking retry is already in progress for this embedded product. Please wait and try again.'];
         }

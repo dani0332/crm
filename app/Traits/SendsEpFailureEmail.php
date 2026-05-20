@@ -6,7 +6,6 @@ use App\Mail\EpFailureNotification;
 use App\Mail\SukoonMedexEPFailureNotification;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -89,11 +88,11 @@ trait SendsEpFailureEmail
 
             Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId, $isSageBooking));
 
-            $timestampColumn = $isSageBooking ? 'sage_booking_failure_email_sent_at' : 'failure_email_sent_at';
-
-            DB::table('embedded_transactions')
-                ->where('id', $etId)
-                ->update([$timestampColumn => now()]);
+            if ($isSageBooking) {
+                EmbeddedTransaction::whereKey($etId)->update(['sage_booking_failure_email_sent_at' => now()]);
+            } else {
+                EmbeddedTransaction::whereKey($etId)->update(['failure_email_sent_at' => now()]);
+            }
 
             LoggerService::info("{$logPrefix} Embedded Product failure email sent successfully", extra: [
                 'etId' => $etId,

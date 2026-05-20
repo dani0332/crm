@@ -17,6 +17,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\InsuranceProvider;
 use App\Models\SageProcess;
 use App\Services\SageApiEmbeddedProductService;
+use App\Services\SyncEpBookingService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\PermissionRegistrar;
@@ -67,24 +68,7 @@ function createSyncEpBookingFixture(array $carQuoteOverrides = [], array $transa
 
 function seedEpFailureEmailApplicationStorage(): void
 {
-    $rows = [
-        [ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM, 'alfred@testnotify.alfred.ae'],
-        [ApplicationStorageEnums::EP_FAILURE_EMAIL_TO, 'production.approval.team@yopmail.com'],
-        [ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO, 'test.emails@insurancemarket.ae'],
-        [ApplicationStorageEnums::EP_FAILURE_EMAIL_CC, 'diya.lekhwani@myalfred.com'],
-    ];
-    foreach ($rows as [$key, $value]) {
-        ApplicationStorage::query()->updateOrInsert(
-            ['key_name' => $key],
-            [
-                'key_name' => $key,
-                'value' => $value,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
-    }
+    ApplicationStorage::factory()->createEpFailureEmailConfig();
 }
 
 test('sync ep booking returns 403 without embedded product sync ep booking permission', function () {
@@ -258,7 +242,7 @@ test('sync ep booking returns 422 when concurrent lock is held', function () {
     $user = TestDataSeeder::createUserWithRole(RolesEnum::EpAdmin, ['email' => 'ep-admin-4@example.com']);
     $fixture = createSyncEpBookingFixture();
 
-    Cache::put('ep-sync-sage-booking-'.$fixture['transaction']->id, true, now()->addMinutes(5));
+    Cache::put(SyncEpBookingService::LOCK_KEY_PREFIX.$fixture['transaction']->id, true, now()->addMinutes(5));
 
     $mock = Mockery::mock(SageApiEmbeddedProductService::class);
     $mock->shouldReceive('scheduleBookingOfEmbeddedProduct')->never();
@@ -274,7 +258,7 @@ test('sync ep booking returns 422 when concurrent lock is held', function () {
         ->assertUnprocessable()
         ->assertJson(['success' => false]);
 
-    Cache::forget('ep-sync-sage-booking-'.$fixture['transaction']->id);
+    Cache::forget(SyncEpBookingService::LOCK_KEY_PREFIX.$fixture['transaction']->id);
 });
 
 test('sync ep booking failure sends sage failure email even when prior ep failure email was sent', function () {
