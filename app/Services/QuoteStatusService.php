@@ -61,10 +61,17 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
-                    if (request('workflow_type') === QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label()) {
-                        $updateQuote->quote_status_id = $this->resolveLifeRevivalQuotedTargetStatusId();
-                        break;
+                    if (in_array(request('workflow_type'), [
+                        QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label(),
+                        QuoteFlowType::HOME_REVIVAL_FOLLOWUP->label(),
+                    ], true)) {
+                        $updateQuote->quote_status_id = match (request('workflow_transition')) {
+                            'lost' => QuoteStatusEnum::Lost,
+                            'followed_up' => QuoteStatusEnum::FollowedUp,
+                            default => QuoteStatusEnum::FollowedUp,
+                        };
                     }
+
                     if (in_array(request('workflow_type'), [
                         QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label(),
                         QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label(),
@@ -109,18 +116,5 @@ class QuoteStatusService
             ->select('id')
             ->limit(1)
             ->exists();
-    }
-
-    private function resolveLifeRevivalQuotedTargetStatusId(): int
-    {
-        $explicit = request('life_revival_transition');
-        if ($explicit === 'lost') {
-            return QuoteStatusEnum::Lost;
-        }
-        if ($explicit === 'followed_up') {
-            return QuoteStatusEnum::FollowedUp;
-        }
-
-        return QuoteStatusEnum::FollowedUp;
     }
 }
