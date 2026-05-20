@@ -84,6 +84,7 @@ class HomeRevivalService
             ->whereIn('personal_quotes.source', self::REVIVAL_SOURCES)
             ->with([
                 'advisor.primaryBranch',
+                'branch',
                 'quoteStatus',
                 'quoteDetail',
                 'homeQuote.homeQuoteRequestDetail.lostReason',
