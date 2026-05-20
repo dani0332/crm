@@ -62,6 +62,7 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     $keyResource = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+    expect($keyResource)->not->toBeFalse('openssl_pkey_new() failed — check OpenSSL config');
     openssl_pkey_export($keyResource, $this->testPrivateKey);
 });
 
