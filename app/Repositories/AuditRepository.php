@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\Payment;
+use App\Models\User;
 use App\Traits\AuditTransformLookupCache;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
@@ -23,9 +24,12 @@ class AuditRepository extends BaseRepository
         return Audit::class;
     }
 
-    public function fetchGetQuoteAudits()
+    /**
+     * @return array<int, string>
+     */
+    public static function quoteAuditLobTypeTokens(): array
     {
-        $lobs = [
+        return [
             quoteTypeCode::Health,
             quoteTypeCode::Car,
             quoteTypeCode::Travel,
@@ -42,7 +46,47 @@ class AuditRepository extends BaseRepository
             quoteTypeCode::Device,
             quoteTypeCode::CYBER,
         ];
-        $quoteObject = (in_array(ucfirst(strtolower(request()->quote_type)), $lobs)) ? app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote') : app('\\App\\Models\\'.request()->quote_type);
+    }
+
+    /**
+     * Resolve the model instance used for quote audit configuration (must match fetchGetQuoteAudits).
+     */
+    public static function resolveQuoteObjectForAuditRequest(string $quoteType): object
+    {
+        $lobs = self::quoteAuditLobTypeTokens();
+
+        return (in_array(ucfirst(strtolower($quoteType)), $lobs, true))
+            ? app('\\App\\Models\\'.ucfirst(strtolower($quoteType)).'Quote')
+            : app('\\App\\Models\\'.$quoteType);
+    }
+
+    /**
+     * Primary auditable_type from getAuditables() for the given quote_type.
+     *
+     * Returns null only when $quoteType is null or empty. Otherwise callers must treat
+     * a null return or any thrown exception as an unresolved type (fail closed).
+     *
+     * @throws \Throwable when the quote model cannot be resolved or getAuditables() fails
+     */
+    public static function primaryAuditableTypeForQuoteType(?string $quoteType): ?string
+    {
+        if ($quoteType === null || $quoteType === '') {
+            return null;
+        }
+
+        $auditables = self::resolveQuoteObjectForAuditRequest($quoteType)->getAuditables();
+
+        return $auditables['auditable_type'] ?? null;
+    }
+
+    public function fetchGetQuoteAudits()
+    {
+        $quoteTypeInput = request()->quote_type;
+        if (! is_string($quoteTypeInput) || $quoteTypeInput === '') {
+            return collect();
+        }
+
+        $quoteObject = self::resolveQuoteObjectForAuditRequest($quoteTypeInput);
 
         $auditables = $quoteObject->getAuditables();
         $auditableId = request()->has('auditable_id') && request()->auditable_id ? request()->input('auditable_id') : null;
@@ -127,9 +171,10 @@ class AuditRepository extends BaseRepository
         }
         $results = $query->orderBy('created_at', 'desc')->get();
 
+        $userHiddenAttributeKeys = (new User)->getHidden();
         $auditTransformCacheActive = false;
 
-        $results->transform(function ($audit) use ($quoteObject, &$auditTransformCacheActive) {
+        $results->transform(function ($audit) use ($quoteObject, $userHiddenAttributeKeys, $auditTransformCacheActive) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -200,6 +245,11 @@ class AuditRepository extends BaseRepository
                 }
             }
             $transformedOld = $extractProfiles($transformedOld);
+
+            // Do not return sensitive fields in the API payload (omit keys entirely).
+            foreach ($userHiddenAttributeKeys as $key) {
+                unset($transformedNew[$key], $transformedOld[$key]);
+            }
 
             $modelClass = self::API_MODEL_MAP[$audit->auditable_type] ?? $audit->auditable_type;
             $model = class_exists($modelClass) ? app($modelClass) : $quoteObject;
