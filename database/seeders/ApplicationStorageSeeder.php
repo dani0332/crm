@@ -1918,7 +1918,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
             [
-                'value' => null,
+                'value' => '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
