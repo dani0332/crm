@@ -1069,7 +1069,7 @@ class RenewalsUploadService
                 $homeQuote->homeQuoteRequestDetail()->create($detailData);
             }
 
-            // As Bike is a personal Quote, creating entry for BikeQuote and BikeQuoteDetail
+            // Bike renewals bypass the LOB storage service, so sub-records must be created directly here
             if ($quoteType->code == quoteTypeCode::Bike) {
 
                 // unsetting fields as bike_quote_request table doesn't have them

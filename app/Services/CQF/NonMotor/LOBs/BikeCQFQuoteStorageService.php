@@ -20,10 +20,17 @@ use Illuminate\Support\Facades\Schema;
 
 class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
+    private static ?array $bikeQuoteColumns = null;
+
     public function __construct(
         BikeCQFQuoteMappingService $mappingService
     ) {
         parent::__construct($mappingService);
+    }
+
+    private function getBikeQuoteColumns(): array
+    {
+        return self::$bikeQuoteColumns ??= Schema::getColumnListing((new BikeQuote)->getTable());
     }
 
     public function storeRenewalQuote(
@@ -140,7 +147,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data['personal_quote_id'] = $newQuote->id;
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
-        $data = array_intersect_key($data, array_flip(Schema::getColumnListing((new BikeQuote)->getTable())));
+        $data = array_intersect_key($data, array_flip($this->getBikeQuoteColumns()));
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
