@@ -2,13 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentFrequency;
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Services\AlfredCoinsWebhookService;
@@ -28,16 +23,11 @@ use Tests\Support\Schema\SchemaUtils;
 function createAlfredCoinsTestPayment(PersonalQuote $quote, float $priceVatApplicable): void
 {
     Payment::withoutEvents(function () use ($quote, $priceVatApplicable): void {
-        $quote->payments()->create([
+        Payment::factory()->create([
             'code' => $quote->code,
             'price_vat_applicable' => $priceVatApplicable,
-            'payment_status_id' => PaymentStatusEnum::NEW,
-            'payment_methods_code' => PaymentMethodsEnum::InsurerPayment,
-            'collection_type' => CollectionTypeEnum::INSURER,
-            'frequency' => PaymentFrequency::UPFRONT,
-            'total_payments' => 1,
-            'discount_value' => 0,
-            'captured_amount' => 0,
+            'paymentable_id' => $quote->id,
+            'paymentable_type' => PersonalQuote::class,
         ]);
     });
 }
@@ -75,14 +65,9 @@ test('sends insurance_purchased webhook with x-webhook-token JWT containing expe
         $webhookUrl => Http::response(['ok' => true], 200),
     ]);
 
-    $customer = Customer::factory()->create();
-    $quote = PersonalQuote::query()->create([
-        'uuid' => 'CAR-WEBHOOK-UUID',
-        'code' => 'CAR-WEBHOOK-CODE',
+    $quote = PersonalQuote::factory()->createForSqlite([
         'quote_type_id' => QuoteTypeId::Car,
-        'customer_id' => $customer->id,
         'source' => LeadSourceEnum::WEB,
-        'email' => 'customer@example.com',
         'premium' => 4000.50,
     ]);
 
@@ -105,13 +90,15 @@ test('sends insurance_purchased webhook with x-webhook-token JWT containing expe
         return $token !== null
             && ($jwtData['eventName'] ?? null) === 'insurance_purchased'
             && ($jwtData['source'] ?? null) === 'insurancemarket'
-            && ($jwtData['email'] ?? null) === 'customer@example.com'
+            && ($jwtData['email'] ?? null) === $quote->email
             && ($jwtData['uniqueId'] ?? null) === $quote->code
             && (float) ($jwtData['amount'] ?? 0) === 4000.5
             && ($jwtData['currency'] ?? null) === 'AED'
             && ($jwtData['reason'] ?? null) === 'Policy purchased from InsuranceMarket.ae'
-            && ($body['email'] ?? null) === 'customer@example.com'
-            && (float) ($body['amount'] ?? 0) === 4000.5;
+            && ! empty($jwtData['occurredAt'])
+            && ($body['email'] ?? null) === $quote->email
+            && (float) ($body['amount'] ?? 0) === 4000.5
+            && ! empty($body['occurredAt']);
     });
 });
 
@@ -124,14 +111,9 @@ test('JWT token contains correct RS256 claims structure', function () {
         $webhookUrl => Http::response(['ok' => true], 200),
     ]);
 
-    $customer = Customer::factory()->create();
-    $quote = PersonalQuote::query()->create([
-        'uuid' => 'CAR-JWT-CLAIMS-UUID',
-        'code' => 'CAR-JWT-CLAIMS-CODE',
+    $quote = PersonalQuote::factory()->createForSqlite([
         'quote_type_id' => QuoteTypeId::Car,
-        'customer_id' => $customer->id,
         'source' => LeadSourceEnum::WEB,
-        'email' => 'jwt@example.com',
         'premium' => 1000.00,
     ]);
 
@@ -181,14 +163,9 @@ test('logs webhook dispatch metadata without exposing payload in log context', f
         $webhookUrl => Http::response(['ok' => true], 200),
     ]);
 
-    $customer = Customer::factory()->create();
-    $quote = PersonalQuote::query()->create([
-        'uuid' => 'CAR-LOG-PAYLOAD-UUID',
-        'code' => 'CAR-LOG-PAYLOAD-CODE',
+    $quote = PersonalQuote::factory()->createForSqlite([
         'quote_type_id' => QuoteTypeId::Car,
-        'customer_id' => $customer->id,
         'source' => LeadSourceEnum::WEB,
-        'email' => 'logged@example.com',
         'premium' => 2500.00,
     ]);
 
@@ -212,7 +189,7 @@ test('logs webhook dispatch metadata without exposing payload in log context', f
         $data = $request->data();
 
         return ($data['eventName'] ?? null) === 'insurance_purchased'
-            && ($data['email'] ?? null) === 'logged@example.com'
+            && ($data['email'] ?? null) === $quote->email
             && ($data['uniqueId'] ?? null) === $quote->code
             && (float) ($data['amount'] ?? 0) === 2500.0;
     });
@@ -227,14 +204,9 @@ test('sends insurance_renewed event when lead source is renewal upload and keeps
         $webhookUrl => Http::response(['ok' => true], 200),
     ]);
 
-    $customer = Customer::factory()->create();
-    $quote = PersonalQuote::query()->create([
-        'uuid' => 'CAR-RENEW-UUID',
-        'code' => 'CAR-RENEW-CODE',
+    $quote = PersonalQuote::factory()->createForSqlite([
         'quote_type_id' => QuoteTypeId::Car,
-        'customer_id' => $customer->id,
         'source' => LeadSourceEnum::RENEWAL_UPLOAD,
-        'email' => 'renew@example.com',
         'premium' => 100,
     ]);
 
@@ -252,7 +224,9 @@ test('sends insurance_renewed event when lead source is renewal upload and keeps
 
         return ($jwtData['eventName'] ?? null) === 'insurance_renewed'
             && ($jwtData['source'] ?? null) === 'insurancemarket'
-            && ($body['eventName'] ?? null) === 'insurance_renewed';
+            && ! empty($jwtData['occurredAt'])
+            && ($body['eventName'] ?? null) === 'insurance_renewed'
+            && ! empty($body['occurredAt']);
     });
 });
 
