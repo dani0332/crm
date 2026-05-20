@@ -46,11 +46,13 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Queue\MyAlfredSqsConnector;
 use App\Services\BranchAssignmentService;
 use App\Services\CsvExportService;
 use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -82,6 +84,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Queue::extend('sqs_myalfred', fn () => new MyAlfredSqsConnector);
+
         CarQuote::observe(CarQuoteObserver::class);
         HealthQuote::observe(HealthQuoteObserver::class);
         LifeQuote::observe(LifeQuoteObserver::class);
