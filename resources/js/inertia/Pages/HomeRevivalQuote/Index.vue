@@ -25,7 +25,6 @@ const tableHeader = [
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'PREMIUM', value: 'premium' },
-  { text: 'ACTIONS', value: 'actions' },
 ];
 
 const loader = reactive({
@@ -609,22 +608,6 @@ const fixedValue = numberString => {
       </template>
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
-      </template>
-      <template #item-actions="{ uuid }">
-        <div class="flex gap-2">
-          <Link
-            :href="route('home-revival-quotes-show', uuid)"
-            class="text-primary-500 hover:underline text-sm"
-          >
-            View
-          </Link>
-          <Link
-            :href="route('home-revival-quotes-edit', uuid)"
-            class="text-primary-500 hover:underline text-sm"
-          >
-            Edit
-          </Link>
-        </div>
       </template>
     </DataTable>
 
