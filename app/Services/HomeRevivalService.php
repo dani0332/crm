@@ -82,7 +82,15 @@ class HomeRevivalService
         $query = PersonalQuote::query()
             ->byQuoteTypeCode(QuoteTypes::HOME->value)
             ->whereIn('personal_quotes.source', self::REVIVAL_SOURCES)
-            ->with(['advisor', 'quoteStatus', 'quoteDetail.lostReason', 'homeQuote'])
+            ->with([
+                'advisor.primaryBranch',
+                'branch',
+                'quoteStatus',
+                'quoteDetail',
+                'homeQuote.homeQuoteRequestDetail.lostReason',
+                'customer',
+                'subSource',
+            ])
             ->filter(paginate: false)
             ->withFakeLeadCriteria();
 
