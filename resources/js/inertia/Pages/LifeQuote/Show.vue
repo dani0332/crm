@@ -437,11 +437,11 @@ const getTotalAnnualPremium = item => {
 
   let value;
 
-  if(item.isRateCalculator && mapping[paymentTermTitle] < 0){
+  if (item.isRateCalculator && mapping[paymentTermTitle] < 0) {
     /* separate handling for RC because it is mapped to -1 and mapping[paymentTermTitle] cant be used multiply correctly */
     value = price;
-  }else{
-    value =  (price * mapping[paymentTermTitle]);
+  } else {
+    value = price * mapping[paymentTermTitle];
   }
   return numberFormat(value);
 };
@@ -464,14 +464,13 @@ const getTotalAnnualPremiumAED = item => {
           : item.totalPrice * planExchangeRate.value * 100,
       ) / 100;
 
-
     let totalAnnualPremiumAED;
 
-    if(item.isRateCalculator && mapping[paymentTermTitle] < 0){
+    if (item.isRateCalculator && mapping[paymentTermTitle] < 0) {
       /* separate handling for RC because it is mapped to -1 and mapping[paymentTermTitle] cant be used multiply correctly */
       totalAnnualPremiumAED = premiumInAED;
-    }else{
-      totalAnnualPremiumAED =  (premiumInAED * mapping[paymentTermTitle]);
+    } else {
+      totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
     }
 
     return numberFormat(totalAnnualPremiumAED);
@@ -1362,7 +1361,7 @@ const getDisplayPriceInAED = item => {
     return numberFormat(actualPremium + ridersPrice);
   }
 
-  if(item.isRateCalculator){
+  if (item.isRateCalculator) {
     return item.totalPrice != null ? numberFormat(item.totalPrice) : 'N/A';
   }
   // zurich & manual plan
