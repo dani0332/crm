@@ -28,7 +28,14 @@ class ProcessNonMotorCQFQuoteJob implements ShouldQueue
         public QuoteTypes $quoteType,
         public int $renewalsUploadLeadsId,
         public int $renewalDaysThreshold
-    ) {}
+    ) {
+        $this->onQueue('default');
+    }
+
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {

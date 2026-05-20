@@ -15,6 +15,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use App\Services\CQF\NonMotor\Pipes\DuplicateCheckPipe;
 use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\InslyCheckPipe;
@@ -29,7 +30,13 @@ use Illuminate\Support\Facades\DB;
 class NonMotorCQFRenewalExecutionService
 {
     public function __construct(
-        protected NonMotorCQFRegistry $registry
+        protected NonMotorCQFRegistry $registry,
+        protected LOBValidationPipe $lobValidationPipe,
+        protected DuplicateCheckPipe $duplicateCheckPipe,
+        protected InslyCheckPipe $inslyCheckPipe,
+        protected ForeignKeyValidationPipe $foreignKeyValidationPipe,
+        protected StoragePipe $storagePipe,
+        protected RenewalsUploadService $renewalsUploadService,
     ) {}
 
     /**
@@ -97,11 +104,11 @@ class NonMotorCQFRenewalExecutionService
         $storage = $this->registry->getStorage($quoteType);
 
         $pipes = [
-            app(LOBValidationPipe::class),
-            app(DuplicateCheckPipe::class),
-            app(InslyCheckPipe::class),
-            app(ForeignKeyValidationPipe::class),
-            app(StoragePipe::class),
+            $this->lobValidationPipe,
+            $this->duplicateCheckPipe,
+            $this->inslyCheckPipe,
+            $this->foreignKeyValidationPipe,
+            $this->storagePipe,
         ];
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NON_MOTOR_CQF_RENEWALS);
@@ -156,7 +163,7 @@ class NonMotorCQFRenewalExecutionService
     protected function createRenewalsUploadLeads(string $quoteTypeShortCode, ?int $totalRecords = null): RenewalsUploadLeads
     {
         $uploadLeadData = [
-            'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
+            'renewal_import_code' => $this->renewalsUploadService->generateRandomString(),
             'quote_type' => $quoteTypeShortCode,
             'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.uniqid().'_'.now()->format('Y-m-d_H-i-s').'.xlsx',
             'file_path' => null,
@@ -192,7 +199,7 @@ class NonMotorCQFRenewalExecutionService
      * @param  array<string, string>  $validationErrors
      * @param  callable(string): void|null  $recordFailure  When set (job path), called with policy number instead of updating instance state
      */
-    protected function markQuoteAsFailed(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, array $validationErrors, $mapper, ?callable $recordFailure = null): void
+    protected function markQuoteAsFailed(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, array $validationErrors, ?CQFQuoteMappingInterface $mapper, ?callable $recordFailure = null): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
         RenewalQuoteProcess::create([

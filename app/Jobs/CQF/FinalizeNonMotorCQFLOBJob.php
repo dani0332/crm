@@ -26,6 +26,11 @@ class FinalizeNonMotorCQFLOBJob implements ShouldQueue
         public int $renewalsUploadLeadsId
     ) {}
 
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
+
     public function handle(): void
     {
         $lead = RenewalsUploadLeads::find($this->renewalsUploadLeadsId);

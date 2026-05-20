@@ -34,7 +34,9 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         public QuoteTypes $quoteType,
         public string $startDate,
         public int $renewalDaysThreshold
-    ) {}
+    ) {
+        $this->onQueue('default');
+    }
 
     protected function lobBatchName(): string
     {
@@ -71,7 +73,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             foreach ($quotes as $quote) {
                 $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
                     $quote->id,
-                    QuoteTypes::PERSONAL->value,
+                    QuoteTypes::PERSONAL,
                     $this->quoteType,
                     $this->renewalsUploadLeadsId,
                     $this->renewalDaysThreshold
@@ -88,7 +90,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                     foreach ($quotes as $quote) {
                         $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
                             $quote->id,
-                            QuoteTypes::CAR->value,
+                            QuoteTypes::CAR,
                             $this->quoteType,
                             $this->renewalsUploadLeadsId,
                             $this->renewalDaysThreshold
@@ -122,7 +124,6 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                 FinalizeNonMotorCQFLOBJob::dispatch($renewalsUploadLeadsId);
             })
             ->allowFailures()
-            ->onQueue('default')
             ->dispatch();
     }
 
@@ -133,7 +134,5 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
             'error' => $exception->getMessage(),
         ]);
-
-        FinalizeNonMotorCQFLOBJob::dispatch($this->renewalsUploadLeadsId);
     }
 }

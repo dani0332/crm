@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail\NonCQF;
 
 use App\Enums\ApplicationStorageEnums;
@@ -24,7 +26,7 @@ class SendFailedNonCQFRenewal extends Mailable
         public int $renewalsUploadLeadsId
     ) {}
 
-    public function build()
+    public function build(): self
     {
         return $this->subject('Non-motor CQF renewals errors')
             ->view('email.non-cqf.send-failed-non-cqf-renewal')
