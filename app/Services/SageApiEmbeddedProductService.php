@@ -527,25 +527,20 @@ class SageApiEmbeddedProductService
         $sageLogArray = $reversalSageLogOwner->sageApiLogs->keyBy('step')->toArray();
 
         if (! $this->embeddedProductHasSageArPremiumBookingLog($reversalSageLogOwner)) {
-            $noArLogMessage = 'No Sage AR premium booking log found for EP Code: '.$embeddedProductTransaction->code;
-            if ($updateEmbeddedTransactionStatusOnFailure) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-            }
-
-            return ['status' => false, 'message' => $noArLogMessage];
-        }
-
-        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
-        $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
-
-        $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true);
-        if (! $createARInvoicePremAndComm['status']) {
-            $result = $createARInvoicePremAndComm;
+            $result = ['status' => false, 'message' => 'No Sage AR premium booking log found for EP Code: '.$embeddedProductTransaction->code];
         } else {
-            $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true);
-            if (! $createAPInvoicePrem['status']) {
-                $result = $createAPInvoicePrem;
+            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
+            $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+            $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
+
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true);
+            if (! $createARInvoicePremAndComm['status']) {
+                $result = $createARInvoicePremAndComm;
+            } else {
+                $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true);
+                if (! $createAPInvoicePrem['status']) {
+                    $result = $createAPInvoicePrem;
+                }
             }
         }
 
