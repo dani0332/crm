@@ -16,10 +16,12 @@ use App\Models\CarQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
 use App\Services\RenewalsAddonServices;
+use App\Traits\ResolvesCommission;
 use Illuminate\Support\Carbon;
 
 class CarCQFQuoteMappingService
 {
+    use ResolvesCommission;
     public function mapCarCQFRenewalQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
         $quote->loadMissing('payments');
@@ -161,23 +163,6 @@ class CarCQFQuoteMappingService
         }
 
         return null;
-    }
-
-    private function resolveTotalCommission(?object $payment): ?float
-    {
-        if ($payment === null) {
-            return null;
-        }
-
-        $vatApplicable = $payment->commission_vat_applicable;
-        $vatNotApplicable = $payment->commission_vat_not_applicable;
-        $vatOnCommission = $payment->commission_vat;
-
-        if ($vatApplicable !== null || $vatNotApplicable !== null || $vatOnCommission !== null) {
-            return (float) ($vatApplicable ?? 0) + (float) ($vatNotApplicable ?? 0) + (float) ($vatOnCommission ?? 0);
-        }
-
-        return $payment->commission !== null ? (float) $payment->commission : null;
     }
 
     public function getNextUAELicenseHeldForId(CarQuote $quote)
