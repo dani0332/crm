@@ -29,7 +29,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
     use GenericQueriesAllLobs;
     use SendsEpFailureEmail;
 
-    public int $tries;
+    public int $tries = 3;
     public int $timeout = 60;
     public bool $failOnTimeout = true;
     private mixed $sageRequest;
@@ -40,7 +40,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
 
     public function __construct($sageRequest, EmbeddedTransaction $epTransaction, $request, SageProcess $sageProcess)
     {
-        $this->tries = max(1, (int) config('constants.EP_SAGE_REVERSAL_MAX_TRIES', 3));
         $this->sageRequest = $sageRequest;
         $this->epTransaction = $epTransaction;
         $this->request = $request;
@@ -52,7 +51,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
      */
     public function backoff(): array
     {
-        $seconds = max(60, (int) config('constants.EP_SAGE_REVERSAL_BACKOFF_SECONDS', 300));
+        $seconds = 300;
 
         return [$seconds, $seconds * 2];
     }
