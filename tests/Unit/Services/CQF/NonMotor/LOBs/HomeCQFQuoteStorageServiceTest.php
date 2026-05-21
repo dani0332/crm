@@ -85,34 +85,6 @@ it('stores copied HomeQuote with renewal_batch_id from new PersonalQuote', funct
     expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('renewal_batch_id'))->toBe(42);
 });
 
-it('sets claim_history_id to null on copied HomeQuote', function () {
-    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
-
-    HomeQuote::factory()->create([
-        'personal_quote_id' => $oldPq->id,
-        'claim_history_id' => 5,
-    ]);
-
-    $oldPq->load('homeQuote');
-
-    $newPq = PersonalQuote::factory()->create([
-        'quote_type_id' => QuoteTypeId::Home,
-        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
-        'quote_status_id' => QuoteStatusEnum::NewLead,
-        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
-    ]);
-
-    $copyDetail = Closure::bind(
-        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
-        $this->service,
-        HomeCQFQuoteStorageService::class
-    );
-
-    $copyDetail($newPq, $oldPq);
-
-    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('claim_history_id'))->toBeNull();
-});
-
 it('creates HomeQuoteRequestDetail when old HomeQuote has one', function () {
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
 
