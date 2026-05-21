@@ -60,11 +60,13 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         $startDate = Carbon::parse($this->startDate);
         $quoteJobs = [];
 
+        $expiryRange = [$startDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+
         $personalQuery = NonMotorCQFRegistry::applyPaymentStatusFilter(
             PersonalQuote::query()
-                ->whereDate('policy_expiry_date', $startDate)
+                ->whereBetween('policy_expiry_date', $expiryRange)
                 ->where('quote_type_id', $quoteTypeId)
-                ->whereNotIn('quote_status_id', $filter['quote_status']),
+                ->whereIn('quote_status_id', $filter['quote_status']),
             $this->quoteType,
             $filter
         );
@@ -82,9 +84,9 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         });
 
         if ($this->quoteType === QuoteTypes::BIKE) {
-            CarQuote::whereDate('policy_expiry_date', $startDate)
+            CarQuote::whereBetween('policy_expiry_date', $expiryRange)
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
-                ->whereNotIn('quote_status_id', $filter['quote_status'])
+                ->whereIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])
                 ->chunkById(500, function ($quotes) use (&$quoteJobs): void {
                     foreach ($quotes as $quote) {

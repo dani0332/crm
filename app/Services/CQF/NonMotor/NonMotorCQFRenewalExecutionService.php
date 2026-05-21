@@ -50,17 +50,19 @@ class NonMotorCQFRenewalExecutionService
         $filter = NonMotorCQFRegistry::eligibilityFilter();
         $quoteTypeId = (int) $quoteType->id();
 
+        $expiryRange = [$startDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+
         $baseQuery = PersonalQuote::query()
-            ->whereDate('policy_expiry_date', $startDate)
+            ->whereBetween('policy_expiry_date', $expiryRange)
             ->where('quote_type_id', $quoteTypeId)
-            ->whereNotIn('quote_status_id', $filter['quote_status']);
+            ->whereIn('quote_status_id', $filter['quote_status']);
 
         $count = NonMotorCQFRegistry::applyPaymentStatusFilter($baseQuery, $quoteType, $filter)->count();
 
         if ($quoteType === QuoteTypes::BIKE) {
-            $count += CarQuote::whereDate('policy_expiry_date', $startDate)
+            $count += CarQuote::whereBetween('policy_expiry_date', $expiryRange)
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
-                ->whereNotIn('quote_status_id', $filter['quote_status'])
+                ->whereIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])
                 ->count();
         }

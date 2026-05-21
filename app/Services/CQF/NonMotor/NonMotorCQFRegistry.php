@@ -30,7 +30,6 @@ use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\YachtCQFValidationService;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Registry of LOB-specific CQF services for Non-motor renewals (PersonalQuote-based LOBs).
@@ -165,11 +164,7 @@ class NonMotorCQFRegistry
     public static function applyPaymentStatusFilter(Builder $query, QuoteTypes $quoteType, array $filter): Builder
     {
         if ($quoteType === QuoteTypes::BUSINESS) {
-            return $query->whereExists(fn (QueryBuilder $sub) => $sub
-                ->selectRaw('1')
-                ->from('business_quote_request')
-                ->whereColumn('business_quote_request.id', 'personal_quotes.quote_id')
-                ->whereIn('business_quote_request.payment_status_id', $filter['payment_status'])
+            return $query->whereHas('businessQuote', fn (Builder $sub) => $sub->whereIn('payment_status_id', $filter['payment_status'])
             );
         }
 

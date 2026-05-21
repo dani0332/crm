@@ -6,23 +6,20 @@ use App\Jobs\CQF\ProcessNonMotorCQFOrchestratorJob;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Log;
 
-test('has correct job configuration', function () {
-    $job = new ProcessNonMotorCQFOrchestratorJob;
+$job = new ProcessNonMotorCQFOrchestratorJob;
 
+test('has correct job configuration', function () use ($job) {
     expect($job->tries)->toBe(1)
         ->and($job->timeout)->toBe(80);
 });
 
-test('implements ShouldBeUnique', function () {
-    $job = new ProcessNonMotorCQFOrchestratorJob;
-
+test('implements ShouldBeUnique', function () use ($job) {
     expect($job)->toBeInstanceOf(ShouldBeUnique::class);
 });
 
-test('failed() logs error', function () {
+test('failed() logs error', function () use ($job) {
     Log::spy();
 
-    $job = new ProcessNonMotorCQFOrchestratorJob;
     $job->failed(new RuntimeException('test error'));
 
     Log::shouldHaveReceived('error')
