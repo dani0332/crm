@@ -285,11 +285,24 @@ class AuditableController extends Controller
     public function loadHealthPricingLogs(HealthPricingLogsRequest $request): JsonResponse
     {
         try {
+            // First, get logs without 'pricing-lookup'
             $logs = HealthPricingLog::with('member')
                 ->where('health_quote_request_id', $request->quote_request_id)
+                ->where('stage', '!=', 'pricing-lookup')
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
-                ->orderByDesc('id')
+                ->orderByDesc('customer_member_id')
                 ->get();
+
+            // Then, get 'pricing-lookup' logs only
+            $pricingLookupLogs = HealthPricingLog::with('member')
+                ->where('health_quote_request_id', $request->quote_request_id)
+                ->where('stage', 'pricing-lookup')
+                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
+                ->orderByDesc('customer_member_id')
+                ->get();
+
+            // Merge with pricing-lookup logs at the end
+            $logs = $logs->concat($pricingLookupLogs)->values();
 
             return response()->json([
                 'success' => true,
