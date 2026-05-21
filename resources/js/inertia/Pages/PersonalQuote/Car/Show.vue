@@ -3742,17 +3742,16 @@ const { openTempUrl } = useDocumentTempUrl();
                     </x-tag>
 
                     <template #tooltip>
-                        <span
-                          class="font-medium"
-                          v-if="puaType == puaTypeEnum.PPUA"
-                        >
-                          {{ puaTypeEnum.PPUA_TOOLTIP }}
-                        </span>
+                      <span
+                        class="font-medium"
+                        v-if="puaType == puaTypeEnum.PPUA"
+                      >
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
                       <span class="font-medium" v-else>
-                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                        </span>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                      </span>
                     </template>
-
                   </x-tooltip>
 
                   <x-tag
