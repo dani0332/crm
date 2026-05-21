@@ -87,6 +87,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
             'IMCRM SUB-SOURCE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -139,6 +141,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
+            $quote->ea_model ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 
