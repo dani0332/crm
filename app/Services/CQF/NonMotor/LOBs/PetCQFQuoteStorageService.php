@@ -76,6 +76,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $nextId = Lookup::where('key', LookupsEnum::PET_AGES->value)
+            ->where('is_active', 1)
             ->where('id', '>', $currentId)
             ->orderBy('id')
             ->value('id');

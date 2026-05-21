@@ -158,17 +158,20 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     }
 
     /**
-     * Return the next active UAE license held-for ID (one step up the ordered list).
-     * Caps at the highest active entry ("5 years and above") — returns current ID when already at the top.
+     * Return the next license held-for ID (one step up the ordered list).
+     * UAE caps at ID 7 ("5 years and above"); back-home caps at ID 22 ("20 years+").
      */
-    private function incrementLicenseHeldForId(?int $currentId): ?int
+    private function incrementLicenseHeldForId(?int $currentId, bool $backHome = false): ?int
     {
         if ($currentId === null) {
             return null;
         }
 
-        $nextId = UAELicenseHeldFor::withActive()
-            ->where('id', '>', $currentId)
+        $query = $backHome
+            ? UAELicenseHeldFor::isBackHomeActive()
+            : UAELicenseHeldFor::withActive();
+
+        $nextId = $query->where('id', '>', $currentId)
             ->orderBy('id')
             ->value('id');
 
@@ -216,7 +219,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data['claim_history_id'] = null;
         $data['has_ncd_supporting_documents'] = null;
         $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->uae_license_held_for_id);
-        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->back_home_license_held_for_id);
+        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->back_home_license_held_for_id, backHome: true);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
