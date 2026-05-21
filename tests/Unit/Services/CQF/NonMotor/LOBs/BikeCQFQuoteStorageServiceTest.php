@@ -2,8 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\BikeQuote;
+use App\Models\PersonalQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService;
+use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -58,4 +64,173 @@ it('returns null when incrementing a null uae_license_held_for_id', function () 
     );
 
     expect($increment(null))->toBeNull();
+});
+
+it('stores copied BikeQuote with renewal source and new lead status from PersonalQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'source' => 'direct',
+        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => 99,
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'advisor_id' => null,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = BikeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created)->not->toBeNull()
+        ->and($created->source)->toBe(LeadSourceEnum::RENEWAL_UPLOAD)
+        ->and($created->quote_status_id)->toBe(QuoteStatusEnum::NewLead)
+        ->and($created->advisor_id)->toBeNull();
+});
+
+it('sets previous_quote_id to the old BikeQuote id on copy', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    $oldBikeQuote = BikeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('previous_quote_id'))
+        ->toBe($oldBikeQuote->id);
+});
+
+it('leaves bike_value, claim_history_id, and premium null on copied BikeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = BikeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->bike_value)->toBeNull()
+        ->and($created->claim_history_id)->toBeNull()
+        ->and($created->has_ncd_supporting_documents)->toBeNull()
+        ->and($created->premium)->toBeNull();
+});
+
+it('carries insurance_type_id from old BikeQuote on renewal copy', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'insurance_type_id' => 2,
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('insurance_type_id'))->toBe(2);
+});
+
+it('carries bike make, model, and chassis from old BikeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'chassis_number' => 'ABC123',
+        'year_of_manufacture' => 2020,
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = BikeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->chassis_number)->toBe('ABC123')
+        ->and($created->year_of_manufacture)->toBe('2020');
+});
+
+it('skips copying when old PersonalQuote has no BikeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+    $newPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    $countBefore = BikeQuote::count();
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::count())->toBe($countBefore);
 });

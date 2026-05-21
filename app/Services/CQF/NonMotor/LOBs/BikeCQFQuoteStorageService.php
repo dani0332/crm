@@ -228,19 +228,68 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return;
         }
 
-        $data = $this->copyableAttributes($oldBikeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldBikeQuote);
-        $data['bike_value'] = null;
-        $data['claim_history_id'] = null;
-        $data['has_ncd_supporting_documents'] = null;
-        $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->uae_license_held_for_id);
-        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->back_home_license_held_for_id, backHome: true);
-        $newBikeQuote = BikeQuote::create($data);
+        $newBikeQuote = BikeQuote::create($this->mapLobRenewalDetail($oldBikeQuote, $newQuote));
 
         if ($oldBikeQuote->bikeQuoteRequestDetail) {
             BikeQuoteRequestDetail::create(['bike_quote_request_id' => $newBikeQuote->id]);
         }
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function mapLobRenewalDetail(BikeQuote $oldLob, PersonalQuote $newQuote): array
+    {
+        return [
+            // --- from new PersonalQuote ---
+            'personal_quote_id' => $newQuote->id,
+            'uuid' => $newQuote->uuid,
+            'code' => $newQuote->code,
+            'source' => $newQuote->source,
+            'quote_status_id' => $newQuote->quote_status_id,
+            'advisor_id' => $newQuote->advisor_id,
+            'assignment_type' => $newQuote->assignment_type,
+            'renewal_batch_id' => $newQuote->renewal_batch_id,
+            'previous_quote_policy_number' => $newQuote->previous_quote_policy_number,
+            'previous_quote_policy_premium' => $newQuote->previous_quote_policy_premium,
+            'previous_quote_policy_commission' => $newQuote->previous_quote_policy_commission,
+            'previous_advisor_id' => $newQuote->previous_advisor_id,
+            'previous_policy_start_date' => $this->formatPolicyDate($newQuote->previous_policy_start_date),
+            'previous_policy_expiry_date' => $this->formatPolicyDate($newQuote->previous_policy_expiry_date),
+            'transaction_approved_at' => $newQuote->transaction_approved_at,
+            'currently_insured_with' => $newQuote->currentlyInsuredWith?->text,
+            // --- from old BikeQuote ---
+            'previous_quote_id' => $oldLob->id,
+            'first_name' => $oldLob->first_name,
+            'last_name' => $oldLob->last_name,
+            'email' => $oldLob->email,
+            'mobile_no' => $oldLob->mobile_no,
+            'gender' => $oldLob->gender,
+            'dob' => $oldLob->dob,
+            'lang' => $oldLob->lang,
+            'customer_id' => $oldLob->customer_id,
+            'nationality_id' => $oldLob->nationality_id,
+            'bike_company_to_insure' => $oldLob->bike_company_to_insure,
+            'year_of_manufacture' => $oldLob->year_of_manufacture,
+            'make_id' => $oldLob->make_id,
+            'model_id' => $oldLob->model_id,
+            'model_detail_id' => $oldLob->model_detail_id,
+            'cubic_capacity' => $oldLob->cubic_capacity,
+            'emirate_of_registration_id' => $oldLob->emirate_of_registration_id,
+            'bike_value_tier' => $oldLob->bike_value_tier,
+            'chassis_number' => $oldLob->chassis_number,
+            'vehicle_type_id' => $oldLob->vehicle_type_id,
+            'seat_capacity' => $oldLob->seat_capacity,
+            'bike_type_insurance_id' => $oldLob->bike_type_insurance_id,
+            'uae_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->uae_license_held_for_id),
+            'back_home_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->back_home_license_held_for_id, backHome: true),
+            // --- reset on renewal ---
+            'bike_value' => null,
+            'claim_history_id' => null,
+            'has_ncd_supporting_documents' => null,
+            'insurance_type_id' => $oldLob->insurance_type_id,
+        ];
     }
 }
