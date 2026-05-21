@@ -434,6 +434,7 @@ final class PermissionsEnum extends Enum
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const NATIONALITY_POOL_CONFIG = 'nationality-pool-config';
+    public const NATIONALITY_POOL_CONFIG_EDIT = 'nationality-pool-config-edit';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';

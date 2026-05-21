@@ -54,6 +54,7 @@ class PermissionSeeder extends Seeder
         $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
         $this->addTeamAllocationThresholdEditPermission();
+        $this->addNationalityPoolConfigEditPermission();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -194,6 +195,17 @@ class PermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addNationalityPoolConfigEditPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_POOL_CONFIG_EDIT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
