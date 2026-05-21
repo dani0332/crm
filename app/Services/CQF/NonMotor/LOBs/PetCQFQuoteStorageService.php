@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\LOBs;
 
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
@@ -49,6 +51,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
         $data = $this->copyableAttributes($oldPetQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldPetQuote);
+        $data['pet_age_id'] = $this->incrementPetAgeId($oldPetQuote->pet_age_id);
 
         $newPetQuote = PetQuote::create($data);
 
@@ -60,5 +63,23 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         LoggerService::info(self::class.' - Pet quote detail copied for renewal quote');
+    }
+
+    /**
+     * Return the next pet-age lookup ID (one step up the ordered list).
+     * Caps at the oldest entry ("10 Year old") — returns current ID when already at the top.
+     */
+    private function incrementPetAgeId(?int $currentId): ?int
+    {
+        if ($currentId === null) {
+            return null;
+        }
+
+        $nextId = Lookup::where('key', LookupsEnum::PET_AGES->value)
+            ->where('id', '>', $currentId)
+            ->orderBy('id')
+            ->value('id');
+
+        return $nextId ?? $currentId;
     }
 }

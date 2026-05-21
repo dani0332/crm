@@ -266,6 +266,8 @@ class CoreSchema
             'uae_license_held_for' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->boolean('is_back_home_license_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();
             },
@@ -834,6 +836,14 @@ class CoreSchema
 
         SchemaUtils::addColumnIfMissing('pet_quote_request', 'renewal_batch_id', function (Blueprint $table) {
             $table->unsignedBigInteger('renewal_batch_id')->nullable();
+        });
+
+        SchemaUtils::addColumnIfMissing('pet_quote_request', 'pet_age_id', function (Blueprint $table) {
+            $table->unsignedBigInteger('pet_age_id')->nullable();
+        });
+
+        SchemaUtils::addColumnIfMissing('uae_license_held_for', 'is_active', function (Blueprint $table) {
+            $table->boolean('is_active')->default(1);
         });
     }
 

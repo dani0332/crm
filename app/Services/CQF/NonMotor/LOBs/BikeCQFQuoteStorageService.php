@@ -11,6 +11,7 @@ use App\Models\BikeQuote;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
+use App\Models\UAELicenseHeldFor;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
@@ -147,10 +148,31 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data['personal_quote_id'] = $newQuote->id;
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
+        $data['bike_value'] = null;
+        $data['claim_history_id'] = null;
+        $data['has_ncd_supporting_documents'] = null;
         $data = array_intersect_key($data, array_flip($this->getBikeQuoteColumns()));
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
+    }
+
+    /**
+     * Return the next active UAE license held-for ID (one step up the ordered list).
+     * Caps at the highest active entry ("5 years and above") — returns current ID when already at the top.
+     */
+    private function incrementLicenseHeldForId(?int $currentId): ?int
+    {
+        if ($currentId === null) {
+            return null;
+        }
+
+        $nextId = UAELicenseHeldFor::withActive()
+            ->where('id', '>', $currentId)
+            ->orderBy('id')
+            ->value('id');
+
+        return $nextId ?? $currentId;
     }
 
     /**
@@ -190,6 +212,11 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
         $data = $this->copyableAttributes($oldBikeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldBikeQuote);
+        $data['bike_value'] = null;
+        $data['claim_history_id'] = null;
+        $data['has_ncd_supporting_documents'] = null;
+        $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->uae_license_held_for_id);
+        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->back_home_license_held_for_id);
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
