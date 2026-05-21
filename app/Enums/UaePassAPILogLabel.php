@@ -5,7 +5,8 @@ namespace App\Enums;
 enum UaePassAPILogLabel: string
 {
     // MySQL API Names
-    case USER_INFO_API = 'User Info API';
+    case USER_INFO_API = 'userInfoAPI';
+    case USER_SIGN_OUT = 'signout';
 
     // Mongo API Names
     case AUTHENTICATION_API = 'Authentication API';
