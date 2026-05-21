@@ -732,7 +732,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction, isSendEmail: true);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }

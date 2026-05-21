@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Requests\LogsRequest;
 use App\Http\Requests\UaeSigningPassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
@@ -24,6 +25,7 @@ use App\Models\SavingsInsurerRequestResponse;
 use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -198,6 +200,48 @@ class AuditableController extends Controller
      */
     public function getQuoteAudits(Request $request)
     {
+        $user = $request->user();
+        $quoteType = $request->input('quote_type');
+        $quoteTypeString = is_string($quoteType) && $quoteType !== '' ? $quoteType : null;
+
+        $primaryAuditableType = null;
+        if ($quoteTypeString !== null) {
+            try {
+                $primaryAuditableType = AuditRepository::primaryAuditableTypeForQuoteType($quoteTypeString);
+            } catch (\Throwable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if ($primaryAuditableType === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        $requiresSelfAuditableId = $primaryAuditableType === User::class;
+
+        $forbidden = $requiresSelfAuditableId
+            ? (
+                ! $user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])
+                && (
+                    (int) $user->id !== (int) $request->input('auditable_id')
+                    || ! $user->hasAnyPermission([PermissionsEnum::Auditable])
+                )
+            )
+            : ! $user->hasAnyPermission([PermissionsEnum::Auditable]);
+
+        if ($forbidden) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to view audit logs.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $audits = AuditRepository::getQuoteAudits();
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
