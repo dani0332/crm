@@ -30,7 +30,8 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
     use SendsEpFailureEmail;
 
     public int $tries;
-    public int $timeout = 120;
+    public int $timeout = 60;
+    public bool $failOnTimeout = true;
     private mixed $sageRequest;
     private EmbeddedTransaction $epTransaction;
     private mixed $request;
