@@ -250,9 +250,16 @@ class RateCoverageUploadService
                     throw new \Exception('Plan code is required.');
                 }
 
-                $plan = $this->healthPlanService->getPlanByCode($rowAssoc['plan_code']);
-                if (! $plan) {
+                $plans = $this->healthPlanService->getPlanByCode($rowAssoc['plan_code']);
+                if ($plans->isEmpty()) {
                     throw new \Exception('Plan not found.');
+                }
+
+                // Filter draft plan if exists
+                $plan = $plans->firstWhere('status', HealthPlanRateSheetStatusEnum::DRAFT->value);
+                // If draft does not exist, then take first plan (active)
+                if (! $plan) {
+                    $plan = $plans->first();
                 }
 
                 // Iterate through rows to get values
@@ -412,11 +419,11 @@ class RateCoverageUploadService
         int $planId,
         int $totalRecords): array
     {
-        // Check if any draft version exists against plan
-        $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, HealthPlanRateSheetStatusEnum::DRAFT);
+        // Check if any draft/scheduled version exists against plan
+        $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value]);
 
         if ($draftVersion) {
-            throw new \Exception('Draft version already exists for this plan.');
+            throw new \Exception('Draft or Scheduled rate sheet already exists for this plan.');
         }
 
         // Derive plan versiob

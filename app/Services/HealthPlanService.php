@@ -13,10 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class HealthPlanService extends BaseService
 {
-    public function getPlanByCode(string $code): ?HealthPlan
+    public function getPlanByCode(string $code): Collection
     {
-        return HealthPlan::select('id', 'code', 'cohort_enabled', 'gender_enabled', 'marital_status_enabled')
-            ->firstWhere('code', $code);
+        return HealthPlan::select('id', 'code', 'status', 'cohort_enabled', 'gender_enabled', 'marital_status_enabled')
+            ->where('code', $code)
+            ->get();
     }
 
     public function getRelatedPlanIds(int $planId): array

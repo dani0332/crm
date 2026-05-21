@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class HealthRateControlService extends BaseService
 {
-    public function getByPlanIdAndStatus(int $planId, HealthPlanRateSheetStatusEnum $status): ?HealthRateControl
+    public function getByPlanIdAndStatus(int $planId, array $statuses): ?HealthRateControl
     {
         return HealthRateControl::where('health_plan_id', $planId)
-            ->where('status', $status)
+            ->whereIn('status', $statuses)
             ->first();
     }
 
