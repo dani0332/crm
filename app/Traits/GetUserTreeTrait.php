@@ -68,6 +68,7 @@ trait GetUserTreeTrait
             RolesEnum::SmartPhoneManager,
         ];
         if ($user && $user->hasAnyRole($rolesArray) || $user->hasAnyPermission($allowedPermissions)) {
+            /** get all members of user's assigned team */
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)

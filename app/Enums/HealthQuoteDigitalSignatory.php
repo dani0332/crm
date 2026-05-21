@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Enums;
+
+/**
+ * UAE PASS digital signature: Emirates ID match vs policyholder / members.
+ *
+ * Persisted on health_quote_request.digital_signatory.
+ */
+enum HealthQuoteDigitalSignatory: string
+{
+    case PolicyHolder = 'policy_holder';
+    case InsuredMember = 'insured_member';
+    case SomeoneElse = 'someone_else';
+
+    /**
+     * IMCRM filter / dropdown options (includes "All" — not persisted).
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function filterDropdown(): array
+    {
+        return [
+            ['value' => GenericRequestEnum::ALL, 'label' => 'All'],
+            ['value' => self::PolicyHolder->value, 'label' => 'Policyholder'],
+            ['value' => self::InsuredMember->value, 'label' => 'Insured Member'],
+            ['value' => self::SomeoneElse->value, 'label' => 'Someone Else'],
+        ];
+    }
+
+    public static function displayLabel(?string $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        $case = self::tryFrom($value);
+
+        if ($case === null) {
+            return $value;
+        }
+
+        return match ($case) {
+            self::PolicyHolder => 'Policyholder',
+            self::InsuredMember => 'Insured Member',
+            self::SomeoneElse => 'Someone Else',
+        };
+    }
+
+    public static function isStoredValue(?string $value): bool
+    {
+        if ($value === null || $value === '' || $value === GenericRequestEnum::ALL) {
+            return false;
+        }
+
+        return self::tryFrom($value) !== null;
+    }
+}
