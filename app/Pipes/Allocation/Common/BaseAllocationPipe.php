@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Common;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -134,7 +135,7 @@ abstract class BaseAllocationPipe extends AllocationService
     protected function getLeadBaseQuery()
     {
         $isEACollaborate = $this->lead?->source === LeadSourceEnum::EA_IMCRM
-            && $this->lead?->ea_model === 'collaborate';
+            && $this->lead?->ea_model === EaModelEnum::Collaborate;
 
         return $this->allocationRequest->model()
             ->where('uuid', $this->lead->uuid)
@@ -214,7 +215,7 @@ abstract class BaseAllocationPipe extends AllocationService
             )
             ->when($this->allocationRequest->isReassignmentJob() && $this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('users.id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()))
             ->when(
-                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === 'collaborate',
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Collaborate,
                 fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
             );
     }
@@ -302,7 +303,7 @@ abstract class BaseAllocationPipe extends AllocationService
         $isReAssignment = ! empty($previousAdvisorId);
 
         $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
-            && $this->lead->ea_model === 'collaborate';
+            && $this->lead->ea_model === EaModelEnum::Collaborate;
 
         if ($isEACollaborate) {
             $this->lead->expert_advisor_id = $advisor->id;
@@ -376,7 +377,7 @@ abstract class BaseAllocationPipe extends AllocationService
             $previousAdvisorAssignedDate = $this->updateQuoteDetail();
 
             $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
-                && $this->lead->ea_model === 'collaborate';
+                && $this->lead->ea_model === EaModelEnum::Collaborate;
 
             if ($this->lead->source != LeadSourceEnum::REFERRAL && ! $isEACollaborate) {
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');

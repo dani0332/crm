@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EaModelEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
@@ -64,7 +65,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $continueAssignment = false;
 
         // Check base conditions first
-        if ($lead->source === LeadSourceEnum::EA_IMCRM && $lead->ea_model === 'collaborate' && empty($lead->expert_advisor_id)) {
+        if ($lead->source === LeadSourceEnum::EA_IMCRM && $lead->ea_model === EaModelEnum::Collaborate && empty($lead->expert_advisor_id)) {
             LoggerService::info(self::class.' - EA collaborate lead without expert advisor, proceeding with expert advisor allocation');
             $continueAssignment = true;
         } elseif (! $this->allocationRequest->isOverrideAdvisorRequest() && ! empty($lead->advisor_id) && ! $isCHSAdvisor) {

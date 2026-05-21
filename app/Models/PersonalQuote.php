@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EaModelEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -35,6 +36,9 @@ class PersonalQuote extends Model implements AuditableContract
     use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait, SpatieActivityLog;
 
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelEnum::class,
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,

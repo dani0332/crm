@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -65,7 +66,7 @@ it('creates a referral EA lead with correct source and lead_generator_id', funct
     $lead = CarQuote::where('email', 'jane@example.com')->first();
     expect($lead)->not->toBeNull();
     expect($lead->source)->toBe(LeadSourceEnum::EA_IMCRM);
-    expect($lead->ea_model)->toBe('referral');
+    expect($lead->ea_model)->toBe(EaModelEnum::Referral);
     expect($lead->lead_generator_id)->toBe($user->id);
     expect($lead->advisor_id)->toBeNull();
 
@@ -95,7 +96,7 @@ it('creates a collaborate lead with advisor_id set to creating user', function (
 
     $lead = PersonalQuote::where('email', 'bob@example.com')->first();
     expect($lead)->not->toBeNull();
-    expect($lead->ea_model)->toBe('collaborate');
+    expect($lead->ea_model)->toBe(EaModelEnum::Collaborate);
     expect($lead->advisor_id)->toBe($user->id);
 });
 
@@ -163,7 +164,7 @@ it('forces referral model for EA manager role even if collaborate submitted', fu
     $response->assertOk();
 
     $lead = PersonalQuote::where('email', 'manager.lead@example.com')->first();
-    expect($lead->ea_model)->toBe('referral');
+    expect($lead->ea_model)->toBe(EaModelEnum::Referral);
 });
 
 it('returns 422 with duplicate info when lead already exists within 60 days', function () {

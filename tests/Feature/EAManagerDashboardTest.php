@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
@@ -165,7 +166,7 @@ it('change model swaps fields correctly: collaborate to referral', function () {
     $response->assertOk()->assertJsonPath('success', true);
 
     $lead->refresh();
-    expect($lead->ea_model)->toBe('referral');
+    expect($lead->ea_model)->toBe(EaModelEnum::Referral);
     expect($lead->advisor_id)->toBe($expertAdvisor->id);
     expect($lead->lead_generator_id)->toBe($advisor->id);
     expect($lead->expert_advisor_id)->toBeNull();

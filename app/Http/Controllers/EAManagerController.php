@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Jobs\SendEAManagerDecisionEmailJob;
@@ -66,14 +67,15 @@ class EAManagerController extends Controller
         $request->validate(['ea_model' => 'required|in:referral,collaborate']);
 
         $quote = $this->resolveQuote($quoteType, $quoteId);
+        $esModel = EaModelEnum::from($request->ea_model);
 
-        if ($request->ea_model === 'referral' && $quote->ea_model === 'collaborate') {
+        if ($esModel === EaModelEnum::Referral && $quote->ea_model === EaModelEnum::Collaborate) {
             // Convert collaborate → referral:
             // expert advisor becomes assigned advisor; old assigned becomes lead generator
             $quote->lead_generator_id = $quote->advisor_id;
             $quote->advisor_id = $quote->expert_advisor_id;
             $quote->expert_advisor_id = null;
-            $quote->ea_model = 'referral';
+            $quote->ea_model = EaModelEnum::Referral;
             $quote->ea_assigned_advisor_approved_at = null;
             $quote->ea_expert_advisor_approved_at = null;
             $quote->ea_assigned_advisor_rejected_at = null;

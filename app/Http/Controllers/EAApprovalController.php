@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EaModelEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\SendEACollaborateRejectedEmailJob;
 use App\Models\CarQuote;
@@ -78,8 +80,8 @@ class EAApprovalController extends Controller
 
     private function isCollaborateEALead(Model $quote): bool
     {
-        return $quote->source === 'EA_IMCRM'
-            && $quote->ea_model === 'collaborate'
+        return $quote->source === LeadSourceEnum::EA_IMCRM
+            && $quote->ea_model === EaModelEnum::Collaborate
             && $quote->quote_status_id === QuoteStatusEnum::PolicyIssued;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EaModelEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
@@ -36,6 +37,9 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
+    protected $casts = [
+        'ea_model' => EaModelEnum::class,
+    ];
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
         'pc_qualified_formatted', 'has_pec_tag',
