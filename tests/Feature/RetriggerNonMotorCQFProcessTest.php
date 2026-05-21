@@ -26,6 +26,12 @@ it('redirects with error when the non-motor CQF renewals switch is disabled', fu
         ->assertSessionHas('error');
 });
 
+it('returns forbidden for a user without the retrigger permission', function () {
+    $this->actingAs(TestDataSeeder::createUser(['email' => 'unauthorized@example.com']))
+        ->post(route('renewals-non-motor-retrigger'))
+        ->assertForbidden();
+});
+
 it('dispatches orchestrator job and redirects with success when switch is enabled', function () {
     Queue::fake();
 

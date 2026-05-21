@@ -54,7 +54,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
             $lead->status = ProcessStatusCode::COMPLETED;
             $lead->save();
         } else {
-            $lead->is_deleted = 1;
+            $lead->is_deleted = true;
             $lead->save();
         }
 
