@@ -136,20 +136,20 @@ class DttHome extends Command
         $delayCounter = 0;
 
         foreach ($leads as $lead) {
-            LoggerService::info(self::class.' - Queuing Home Revival Lead Job for lead '.$lead->uuid);
+            LoggerService::info(self::class.' - Queuing Home Revival Lead Job for lead '.$lead->uuid.' with source '.$source.' in batch: '.$batchName);
             $jobs[] = (new HomeRevivalLeadsCreationJob($lead->id, $source))->delay(now()->addSeconds(self::DELAY_IN_SECONDS + $delayCounter));
             $delayCounter += self::DELAY_IN_SECONDS;
         }
 
         Bus::batch($jobs)
             ->then(function () use ($batchName): void {
-                info(self::class.' - all jobs completed successfully for batch: '.$batchName);
+                LoggerService::info(self::class.' - all jobs completed successfully for batch: '.$batchName);
             })
             ->catch(function () use ($batchName): void {
-                info(self::class.' - one of batch is failed for batch: '.$batchName);
+                LoggerService::warning(self::class.' - one or more jobs failed for batch: '.$batchName);
             })
             ->finally(function () use ($batchName): void {
-                info(self::class.' - everything done for batch: '.$batchName);
+                LoggerService::info(self::class.' - batch finished: '.$batchName);
             })
             ->allowFailures()
             ->name($batchName)

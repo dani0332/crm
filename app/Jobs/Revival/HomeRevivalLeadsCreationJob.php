@@ -50,7 +50,10 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         }
 
         LoggerService::startFeatureLogging(LoggerFeatureEnum::HOME_REVIVAL);
-        LoggerService::info(self::class.' - handle - starting home revival job');
+        LoggerService::info(self::class.' - handle - starting home revival job', [
+            'personal_quote_id' => $this->personalQuoteId,
+            'revival_source' => $this->revivalSource,
+        ]);
 
         $this->lead = PersonalQuote::query()
             ->with('homeQuote')
@@ -62,6 +65,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         if ($lead === null || $lead->homeQuote === null) {
             LoggerService::info(self::class.' - lead or home quote not found', [
                 'personal_quote_id' => $this->personalQuoteId,
+                'revival_source' => $this->revivalSource,
             ]);
 
             return;
@@ -109,6 +113,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             LoggerService::info(self::class.' - Creating Home Revival Lead', [
                 'lead_uuid' => $lead->uuid,
                 'payload' => $payload,
+                'revival_source' => $this->revivalSource,
             ]);
 
             $capiResponse = Capi::request('/api/v2-save-home-quote', 'post', $payload);
@@ -141,6 +146,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         LoggerService::info(self::class.' - New Home Revival Lead created successfully', [
             'quote_uuid' => $homeRevivalQuoteUUID,
             'parent_lead_uuid' => $lead->uuid,
+            'revival_source' => $this->revivalSource,
         ]);
 
         $dttRevival = null;
@@ -191,6 +197,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             $lead->update(['is_revived' => true]);
             LoggerService::info(self::class.' - Home quote marked as revived', [
                 'lead_uuid' => $lead->uuid,
+                'revival_source' => $this->revivalSource,
             ]);
         });
 
@@ -199,6 +206,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 LoggerService::info(self::class.' - follow-up already executed', [
                     'dtt_revival_id' => $dttRevival->id,
                     'child_quote_uuid' => $homeRevivalQuoteUUID,
+                    'revival_source' => $this->revivalSource,
                 ]);
             } else {
                 $emailPayload->workflowType = WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP;
@@ -208,6 +216,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                     'dtt_revival_id' => $dttRevival->id,
                     'parent_lead_uuid' => $lead->uuid,
                     'child_quote_uuid' => $homeRevivalQuoteUUID,
+                    'revival_source' => $this->revivalSource,
                 ]);
             }
         }
@@ -215,8 +224,6 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
     public function middleware(): array
     {
-        LoggerService::info(self::class.' - middleware - adding middleware');
-
         return [(new WithoutOverlapping($this->personalQuoteId))->dontRelease()];
     }
 
