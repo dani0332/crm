@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\PersonalQuote;
 use App\Services\CQF\BaseCQFValidationService;
 use Illuminate\Database\Eloquent\Model;
+use Tests\Helpers\TestSchemaCreator;
+use Tests\Support\Schema\SchemaUtils;
 
 beforeEach(function () {
     $this->service = new BaseCQFValidationService;
@@ -69,6 +74,36 @@ it('returns false for isDuplicateQuote by default', function () {
     $quote = Mockery::mock(Model::class)->makePartial();
 
     expect($this->service->isDuplicateQuote($quote))->toBeFalse();
+});
+
+describe('isDuplicateQuote with database', function () {
+    beforeEach(function () {
+        TestSchemaCreator::createMinimalSchema();
+        config(['constants.DATE_FORMAT' => 'd/m/Y']);
+
+        SchemaUtils::addColumnIfMissing('personal_quotes', 'previous_quote_id', fn ($t) => $t->unsignedBigInteger('previous_quote_id')->nullable());
+        SchemaUtils::addColumnIfMissing('personal_quotes', 'previous_quote_policy_number', fn ($t) => $t->string('previous_quote_policy_number')->nullable());
+        SchemaUtils::addColumnIfMissing('personal_quotes', 'previous_policy_expiry_date', fn ($t) => $t->date('previous_policy_expiry_date')->nullable());
+    });
+
+    it('returns true when a renewal copy already exists for the quote', function () {
+        $expiryDate = now()->addYear()->toDateString();
+
+        $original = PersonalQuote::factory()->create([
+            'quote_type_id' => QuoteTypeId::Cycle,
+            'policy_expiry_date' => $expiryDate,
+        ]);
+
+        PersonalQuote::factory()->create([
+            'quote_type_id' => QuoteTypeId::Cycle,
+            'previous_quote_id' => $original->id,
+            'previous_quote_policy_number' => $original->policy_number,
+            'previous_policy_expiry_date' => $expiryDate,
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        ]);
+
+        expect($this->service->isDuplicateQuote($original))->toBeTrue();
+    });
 });
 
 afterEach(function () {

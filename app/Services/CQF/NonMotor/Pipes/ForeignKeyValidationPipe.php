@@ -9,9 +9,7 @@ use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
-use App\Models\RenewalBatch;
 use App\Repositories\LookupRepository;
-use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\CQFRenewalContext;
 use Closure;
 
@@ -89,12 +87,6 @@ class ForeignKeyValidationPipe
         if ($quote->transaction_type_id !== null &&
             ! LookupRepository::where('id', $quote->transaction_type_id)->exists()) {
             $errors['transaction_type_id'] = "Transaction type with id {$quote->transaction_type_id} does not exist.";
-        }
-
-        // renewal_batch_id (derived)
-        $renewalBatchId = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($quote->policy_expiry_date);
-        if ($renewalBatchId !== null && ! RenewalBatch::where('id', $renewalBatchId)->exists()) {
-            $errors['renewal_batch_id'] = "Renewal batch with id {$renewalBatchId} does not exist.";
         }
 
         return $errors;

@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Schema;
 
 class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
-    private static ?array $bikeQuoteColumns = null;
+    private ?array $bikeQuoteColumns = null;
 
     public function __construct(
         BikeCQFQuoteMappingService $mappingService
@@ -31,7 +31,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
     private function getBikeQuoteColumns(): array
     {
-        return self::$bikeQuoteColumns ??= Schema::getColumnListing((new BikeQuote)->getTable());
+        return $this->bikeQuoteColumns ??= Schema::getColumnListing((new BikeQuote)->getTable());
     }
 
     public function storeRenewalQuote(

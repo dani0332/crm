@@ -66,7 +66,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             PersonalQuote::query()
                 ->whereBetween('policy_expiry_date', $expiryRange)
                 ->where('quote_type_id', $quoteTypeId)
-                ->whereIn('quote_status_id', $filter['quote_status']),
+                ->whereNotIn('quote_status_id', $filter['excluded_quote_status']),
             $this->quoteType,
             $filter
         );
@@ -86,7 +86,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         if ($this->quoteType === QuoteTypes::BIKE) {
             CarQuote::whereBetween('policy_expiry_date', $expiryRange)
                 ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
-                ->whereIn('quote_status_id', $filter['quote_status'])
+                ->whereNotIn('quote_status_id', $filter['excluded_quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])
                 ->chunkById(500, function ($quotes) use (&$quoteJobs): void {
                     foreach ($quotes as $quote) {

@@ -31,6 +31,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
 
     public int $tries = 1;
     public int $timeout = 80;
+    public int $uniqueFor = 300;
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {

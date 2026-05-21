@@ -132,12 +132,12 @@ class NonMotorCQFRegistry
      * Excludes cancelled/pending-cancellation quotes; requires a paid/captured/credit payment status.
      * Used by both the orchestrator count query and the per-LOB quote dispatch query.
      *
-     * @return array{quote_status: array<int>, payment_status: array<int>}
+     * @return array{excluded_quote_status: array<int>, payment_status: array<int>}
      */
     public static function eligibilityFilter(): array
     {
         return [
-            'quote_status' => [
+            'excluded_quote_status' => [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
                 QuoteStatusEnum::CancellationPending,

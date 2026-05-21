@@ -9,22 +9,29 @@ use App\Mail\NonCQF\SendFailedNonCQFRenewal;
 use App\Models\RenewalsUploadLeads;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class FinalizeNonMotorCQFLOBJob implements ShouldQueue
+class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
     public int $timeout = 80;
+    public int $uniqueFor = 300;
 
     public function __construct(
         public int $renewalsUploadLeadsId
     ) {}
+
+    public function uniqueId(): string
+    {
+        return (string) $this->renewalsUploadLeadsId;
+    }
 
     public function backoff(): array
     {

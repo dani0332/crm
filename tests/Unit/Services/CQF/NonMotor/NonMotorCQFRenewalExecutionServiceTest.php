@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -97,6 +98,36 @@ test('marks quote as failed and increments cannot_upload count', function () {
     expect($process)->not->toBeNull()
         ->and($process->status)->toBe(RenewalProcessStatuses::BAD_DATA)
         ->and($process->type)->toBe(RenewalsUploadType::CREATE_LEADS);
+});
+
+test('processQuoteForJob increments good and records PROCESSED status on pipeline success', function () {
+    $lead = RenewalsUploadLeads::factory()->create(['good' => 0]);
+    $quote = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Cycle]);
+
+    $newQuote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
+    $passThrough = fn ($ctx, $next) => $next($ctx);
+
+    $service = new class(registry: Mockery::mock(NonMotorCQFRegistry::class)->shouldIgnoreMissing(), lobValidationPipe: tap(Mockery::mock(LOBValidationPipe::class), fn ($m) => $m->shouldReceive('handle')->andReturnUsing($passThrough)), duplicateCheckPipe: tap(Mockery::mock(DuplicateCheckPipe::class), fn ($m) => $m->shouldReceive('handle')->andReturnUsing($passThrough)), inslyCheckPipe: tap(Mockery::mock(InslyCheckPipe::class), fn ($m) => $m->shouldReceive('handle')->andReturnUsing($passThrough)), foreignKeyValidationPipe: tap(Mockery::mock(ForeignKeyValidationPipe::class), fn ($m) => $m->shouldReceive('handle')->andReturnUsing($passThrough)), storagePipe: tap(Mockery::mock(StoragePipe::class), fn ($m) => $m->shouldReceive('handle')->andReturnUsing(function ($ctx, $next) use ($newQuote) {
+        $ctx->newQuote = $newQuote;
+
+        return $next($ctx);
+    })),
+        renewalsUploadService: Mockery::mock(RenewalsUploadService::class)->shouldIgnoreMissing(),
+    ) extends NonMotorCQFRenewalExecutionService {
+        protected function getEagerLoadRelationsForLOB(QuoteTypes $quoteType, string $source = ''): array
+        {
+            return [];
+        }
+    };
+
+    $service->processQuoteForJob($quote->id, QuoteTypes::PERSONAL->value, QuoteTypes::CYCLE, $lead->id, 120);
+
+    $lead->refresh();
+    expect((int) $lead->good)->toBe(1);
+
+    $process = RenewalQuoteProcess::where('renewals_upload_lead_id', $lead->id)->first();
+    expect($process)->not->toBeNull()
+        ->and($process->status)->toBe(RenewalProcessStatuses::PROCESSED);
 });
 
 afterEach(function () {

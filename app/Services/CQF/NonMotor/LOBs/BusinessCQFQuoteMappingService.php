@@ -6,7 +6,6 @@ namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
 
@@ -31,10 +30,7 @@ class BusinessCQFQuoteMappingService extends BaseCQFQuoteMappingService
     {
         $quote->loadMissing('businessQuote.payments');
 
-        $businessQuote = $quote->businessQuote
-            ?? BusinessQuote::where('uuid', $quote->uuid)->with('payments')->first();
-
-        return $businessQuote?->payments->first();
+        return $quote->businessQuote?->payments->first();
     }
 
     /**
