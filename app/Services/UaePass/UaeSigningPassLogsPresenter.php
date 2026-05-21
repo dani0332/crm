@@ -18,7 +18,7 @@ final class UaeSigningPassLogsPresenter
      */
     public static function mysqlApiNames(): array
     {
-        return [UaePassAPILogLabel::USER_INFO_API->value, UaePassAPILogLabel::USER_INFO_API->value];
+        return [UaePassAPILogLabel::USER_INFO_API->value, UaePassAPILogLabel::USER_SIGN_OUT->value];
     }
 
     /**
