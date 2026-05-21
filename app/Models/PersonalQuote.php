@@ -698,4 +698,9 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 
+    public function dttRevivalsAsParent(): HasMany
+    {
+        return $this->hasMany(DttRevival::class, 'previous_quote_id');
+    }
+
 }
