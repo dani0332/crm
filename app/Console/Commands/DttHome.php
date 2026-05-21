@@ -112,10 +112,7 @@ class DttHome extends Command
                 $query->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
                     ->orWhereNull('payment_status_id');
             })
-            ->whereDoesntHave('dttRevivalsAsParent', function ($query): void {
-                $query->join('personal_quotes as revival_child', 'revival_child.id', '=', 'dtt_revivals.quote_id')
-                    ->where('revival_child.quote_status_id', QuoteStatusEnum::PolicyBooked);
-            })
+            ->whereShortRevivalNotConverted()
             ->get();
 
         LoggerService::info(self::class.' - Short revival leads count: '.$shortRevivalLeads->count());
