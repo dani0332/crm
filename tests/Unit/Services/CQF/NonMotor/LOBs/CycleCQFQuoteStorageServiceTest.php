@@ -74,6 +74,63 @@ it('copies cycle_make and cycle_model from old CycleQuote', function () {
         ->and($created->cycle_model)->toBe('YZF-R1');
 });
 
+it('takes quote_status_id from the new PersonalQuote, not the old CycleQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Cycle]);
+
+    CycleQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+    ]);
+
+    $oldPq->load('cycleQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Cycle,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'CYC-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyCycleQuoteDetail($nq, $oq),
+        $this->service,
+        CycleCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(CycleQuote::where('personal_quote_id', $newPq->id)->value('quote_status_id'))
+        ->toBe(QuoteStatusEnum::NewLead);
+});
+
+it('leaves premium and policy_number null on copied CycleQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Cycle]);
+
+    CycleQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('cycleQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Cycle,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'CYC-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyCycleQuoteDetail($nq, $oq),
+        $this->service,
+        CycleCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = CycleQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->quote_batch_id)->toBeNull()
+        ->and($created->risk_score)->toBeNull();
+});
+
 it('skips copying when old PersonalQuote has no CycleQuote', function () {
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Cycle]);
     $newPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Cycle]);

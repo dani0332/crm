@@ -6,11 +6,14 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\InsuranceProvider;
+use App\Models\Insured;
 use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
@@ -263,6 +266,187 @@ it('keeps pet_age_id at cap when already at the highest pet-ages entry', functio
     $copyDetail($newPq, $oldPq);
 
     expect(PetQuote::where('personal_quote_id', $newPq->id)->value('pet_age_id'))->toBe($cap->id);
+});
+
+it('copies customer_insured record from old quote to renewal quote', function () {
+    $customer = Customer::factory()->create();
+    $insured = Insured::create(['customer_type' => 'Individual', 'first_name' => 'Test', 'last_name' => 'User']);
+
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
+    $newPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
+
+    CustomerInsured::create([
+        'quote_type_id' => 9,
+        'quote_request_id' => $oldPq->id,
+        'insured_id' => $insured->id,
+        'customer_id' => $customer->id,
+        'is_active' => true,
+    ]);
+
+    $copyFn = Closure::bind(
+        fn ($old, $new) => $this->copyCustomerInsured($old, $new),
+        $this->service,
+        BaseCQFQuoteStorageService::class
+    );
+
+    $copyFn($oldPq, $newPq);
+
+    $newRecord = CustomerInsured::where('quote_request_id', $newPq->id)->where('is_active', true)->first();
+
+    expect($newRecord)->not->toBeNull()
+        ->and($newRecord->insured_id)->toBe($insured->id)
+        ->and($newRecord->customer_id)->toBe($customer->id)
+        ->and($newRecord->quote_type_id)->toBe(9);
+});
+
+it('skips customer_insured copy when old quote has no customer_insured record', function () {
+    $customer = Customer::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
+    $newPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
+
+    $copyFn = Closure::bind(
+        fn ($old, $new) => $this->copyCustomerInsured($old, $new),
+        $this->service,
+        BaseCQFQuoteStorageService::class
+    );
+
+    $copyFn($oldPq, $newPq);
+
+    expect(CustomerInsured::where('quote_request_id', $newPq->id)->count())->toBe(0);
+});
+
+it('sets previous_quote_id to the old PetQuote id on copy', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+    ]);
+
+    $oldPetQuote = PetQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'uuid' => $oldPq->uuid,
+        'code' => $oldPq->code,
+        'email' => 'pet-prev-'.Str::random(8).'@example.com',
+    ]);
+
+    $oldPq->load('petQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'PET-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyPetQuoteDetail($nq, $oq),
+        $this->service,
+        PetCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(PetQuote::where('personal_quote_id', $newPq->id)->value('previous_quote_id'))
+        ->toBe($oldPetQuote->id);
+});
+
+it('leaves premium and policy_number null on copied PetQuote', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+    ]);
+
+    PetQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'uuid' => $oldPq->uuid,
+        'code' => $oldPq->code,
+        'email' => 'pet-null-'.Str::random(8).'@example.com',
+    ]);
+
+    $oldPq->load('petQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'PET-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyPetQuoteDetail($nq, $oq),
+        $this->service,
+        PetCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = PetQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->premium)->toBeNull()
+        ->and($created->policy_number)->toBeNull()
+        ->and($created->insurance_provider_id)->toBeNull();
+});
+
+it('carries personal detail fields from old PetQuote', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+    ]);
+
+    PetQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'uuid' => $oldPq->uuid,
+        'code' => $oldPq->code,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'email' => 'pet-carry-'.Str::random(8).'@example.com',
+        'mobile_no' => '0501234567',
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+    ]);
+
+    $oldPq->load('petQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Pet,
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'PET-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyPetQuoteDetail($nq, $oq),
+        $this->service,
+        PetCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = PetQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->first_name)->toBe('Jane')
+        ->and($created->last_name)->toBe('Doe')
+        ->and($created->mobile_no)->toBe('0501234567')
+        ->and($created->customer_id)->toBe($customer->id)
+        ->and($created->nationality_id)->toBe($nationality->id);
 });
 
 it('skips copying when old quote has no PetQuote detail', function () {

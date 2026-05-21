@@ -14,6 +14,8 @@ class CycleQuote extends Model
     protected $table = 'cycle_quote_request';
     protected $fillable = [
         'personal_quote_id',
+        'quote_status_id',
+        'transaction_approved_at',
         'cycle_make',
         'cycle_model',
         'year_of_manufacture_id',

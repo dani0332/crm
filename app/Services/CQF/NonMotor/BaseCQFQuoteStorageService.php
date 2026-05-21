@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor;
 
 use App\Enums\AMLStatusCode;
+use App\Models\CustomerInsured;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
@@ -48,6 +49,7 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
+            $this->copyCustomerInsured($quote, $newQuote);
             $this->copyLobQuoteDetail($newQuote, $quote);
             $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
@@ -83,6 +85,32 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
      */
     protected function collectEmbeddedProductCodes(Model $oldQuote, PersonalQuote $newQuote, array &$epCodes): void {}
     /**
+     * Copy the active customer_insured record from the old quote to the new renewal quote.
+     * Without this, latest_insured is null on the renewal quote and the customer profile section won't render.
+     */
+    protected function copyCustomerInsured(PersonalQuote $oldQuote, PersonalQuote $newQuote): void
+    {
+        $oldQuote->loadMissing('customerInsured');
+        $oldCustomerInsured = $oldQuote->customerInsured;
+
+        if ($oldCustomerInsured === null) {
+            LoggerService::info(self::class.' - No customer_insured record found on old quote, skipping copy');
+
+            return;
+        }
+
+        CustomerInsured::createOrUpdateActive(
+            [
+                'quote_type_id' => $oldCustomerInsured->quote_type_id,
+                'quote_request_id' => $newQuote->id,
+                'insured_id' => $oldCustomerInsured->insured_id,
+            ],
+            ['customer_id' => $oldCustomerInsured->customer_id],
+            true
+        );
+    }
+
+    /**
      * Default copyable attributes for LOB quote tables (id, personal_quote_id, timestamps, uuid, code replaced).
      * Override in subclasses if different (e.g. Business uses quote_id; Life unsets quote_id).
      *
@@ -104,6 +132,11 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         $attributes['code'] = $newQuoteCode;
 
         return $attributes;
+    }
+
+    protected function formatPolicyDate(?string $date): ?string
+    {
+        return $date ? Carbon::parse($date)->format(config('constants.DATE_FORMAT_ONLY')) : null;
     }
 
     /**

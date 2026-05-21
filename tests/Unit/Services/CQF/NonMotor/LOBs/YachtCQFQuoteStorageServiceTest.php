@@ -141,6 +141,97 @@ it('skips YachtQuoteRequestDetail creation when old YachtQuote has none', functi
     expect(YachtQuoteRequestDetail::count())->toBe($countBefore);
 });
 
+it('sets previous_quote_id to the old YachtQuote id on copy', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Yacht]);
+
+    $oldYachtQuote = YachtQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('yachtQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Yacht,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'YCH-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyYachtQuoteDetail($nq, $oq),
+        $this->service,
+        YachtCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(YachtQuote::where('personal_quote_id', $newPq->id)->value('previous_quote_id'))
+        ->toBe($oldYachtQuote->id);
+});
+
+it('leaves premium and policy_number null on copied YachtQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Yacht]);
+
+    YachtQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('yachtQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Yacht,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'YCH-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyYachtQuoteDetail($nq, $oq),
+        $this->service,
+        YachtCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = YachtQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->premium)->toBeNull()
+        ->and($created->policy_number)->toBeNull()
+        ->and($created->insurance_provider_id)->toBeNull();
+});
+
+it('carries vessel detail fields from old YachtQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Yacht]);
+
+    YachtQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'first_name' => 'Bob',
+        'last_name' => 'Sailor',
+        'sum_insured_value' => 250000,
+        'operator_experience' => 5,
+    ]);
+
+    $oldPq->load('yachtQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Yacht,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'YCH-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyYachtQuoteDetail($nq, $oq),
+        $this->service,
+        YachtCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = YachtQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->first_name)->toBe('Bob')
+        ->and($created->last_name)->toBe('Sailor')
+        ->and($created->sum_insured_value)->toBe(250000)
+        ->and($created->operator_experience)->toBe(5);
+});
+
 it('skips copying when old PersonalQuote has no YachtQuote', function () {
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Yacht]);
     $newPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Yacht]);

@@ -49,10 +49,26 @@ class CycleCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return;
         }
 
-        $data = $this->copyableAttributes($oldCycleQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldCycleQuote);
-        CycleQuote::create($data);
+        CycleQuote::create($this->mapLobRenewalDetail($oldCycleQuote, $newQuote));
 
         LoggerService::info(self::class.' - Cycle quote detail copied for renewal quote');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function mapLobRenewalDetail(CycleQuote $oldLob, PersonalQuote $newQuote): array
+    {
+        return [
+            'personal_quote_id' => $newQuote->id,
+            'quote_status_id' => $newQuote->quote_status_id,
+            'transaction_approved_at' => $newQuote->transaction_approved_at,
+            'cycle_make' => $oldLob->cycle_make,
+            'cycle_model' => $oldLob->cycle_model,
+            'year_of_manufacture_id' => $oldLob->year_of_manufacture_id,
+            'accessories' => $oldLob->accessories,
+            'has_accident' => $oldLob->has_accident,
+            'has_good_condition' => $oldLob->has_good_condition,
+        ];
     }
 }

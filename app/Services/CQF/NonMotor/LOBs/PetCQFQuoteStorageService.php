@@ -51,17 +51,56 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return;
         }
 
-        $data = $this->copyableAttributes($oldPetQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldPetQuote);
-        $data['pet_age_id'] = $this->incrementPetAgeId($oldPetQuote->pet_age_id);
-
-        $newPetQuote = PetQuote::create($data);
+        $newPetQuote = PetQuote::create($this->mapLobRenewalDetail($oldPetQuote, $newQuote));
 
         if ($oldPetQuote->petQuoteRequestDetail) {
             PetQuoteRequestDetail::create(['pet_quote_request_id' => $newPetQuote->id]);
         }
 
         LoggerService::info(self::class.' - Pet quote detail copied for renewal quote');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function mapLobRenewalDetail(PetQuote $oldLob, PersonalQuote $newQuote): array
+    {
+        return [
+            'personal_quote_id' => $newQuote->id,
+            'uuid' => $newQuote->uuid,
+            'code' => $newQuote->code,
+            'source' => $newQuote->source,
+            'quote_status_id' => $newQuote->quote_status_id,
+            'advisor_id' => $newQuote->advisor_id,
+            'renewal_batch_id' => $newQuote->renewal_batch_id,
+            'previous_quote_policy_number' => $newQuote->previous_quote_policy_number,
+            'previous_quote_policy_premium' => $newQuote->previous_quote_policy_premium,
+            'previous_quote_policy_commission' => $newQuote->previous_quote_policy_commission,
+            'previous_policy_start_date' => $this->formatPolicyDate($newQuote->previous_policy_start_date),
+            'previous_policy_expiry_date' => $this->formatPolicyDate($newQuote->previous_policy_expiry_date),
+            'previous_quote_id' => $oldLob->id,
+            'first_name' => $oldLob->first_name,
+            'last_name' => $oldLob->last_name,
+            'email' => $oldLob->email,
+            'mobile_no' => $oldLob->mobile_no,
+            'gender' => $oldLob->gender,
+            'dob' => $oldLob->dob,
+            'lang' => $oldLob->lang,
+            'customer_id' => $oldLob->customer_id,
+            'nationality_id' => $oldLob->nationality_id,
+            'no_of_pets_to_insure' => $oldLob->no_of_pets_to_insure,
+            'type_of_pet1' => $oldLob->type_of_pet1,
+            'breed_of_pet1' => $oldLob->breed_of_pet1,
+            'ilivein_accommodation_type_id' => $oldLob->ilivein_accommodation_type_id,
+            'iam_possesion_type_id' => $oldLob->iam_possesion_type_id,
+            'is_microchipped' => $oldLob->is_microchipped,
+            'microchip_no' => $oldLob->microchip_no,
+            'is_neutered' => $oldLob->is_neutered,
+            'is_mixed_breed' => $oldLob->is_mixed_breed,
+            'has_injury' => $oldLob->has_injury,
+            'pet_type_id' => $oldLob->pet_type_id,
+            'pet_age_id' => $this->incrementPetAgeId($oldLob->pet_age_id),
+        ];
     }
 
     /**

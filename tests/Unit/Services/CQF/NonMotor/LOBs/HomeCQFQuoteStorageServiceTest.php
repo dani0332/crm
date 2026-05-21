@@ -141,6 +141,99 @@ it('skips HomeQuoteRequestDetail creation when old HomeQuote has none', function
     expect(HomeQuoteRequestDetail::count())->toBe($countBefore);
 });
 
+it('sets previous_quote_id to the old HomeQuote id on copy', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    $oldHomeQuote = HomeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('previous_quote_id'))
+        ->toBe($oldHomeQuote->id);
+});
+
+it('leaves premium and policy_number null on copied HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = HomeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->premium)->toBeNull()
+        ->and($created->policy_number)->toBeNull()
+        ->and($created->insurance_provider_id)->toBeNull();
+});
+
+it('carries property and personal detail fields from old HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'first_name' => 'Alice',
+        'last_name' => 'Smith',
+        'building_value' => 500000,
+        'has_building' => true,
+        'has_contents' => false,
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = HomeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->first_name)->toBe('Alice')
+        ->and($created->last_name)->toBe('Smith')
+        ->and($created->building_value)->toBe(500000)
+        ->and((bool) $created->has_building)->toBeTrue()
+        ->and((bool) $created->has_contents)->toBeFalse();
+});
+
 it('skips copying when old PersonalQuote has no HomeQuote', function () {
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
     $newPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
