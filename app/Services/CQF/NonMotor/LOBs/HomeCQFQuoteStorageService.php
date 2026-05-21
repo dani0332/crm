@@ -55,10 +55,7 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $newHomeQuote = HomeQuote::create($data);
 
         if ($oldHomeQuote->homeQuoteRequestDetail) {
-            $detailAttrs = $oldHomeQuote->homeQuoteRequestDetail->getAttributes();
-            unset($detailAttrs['id'], $detailAttrs['home_quote_request_id'], $detailAttrs['created_at'], $detailAttrs['updated_at']);
-            $detailAttrs['home_quote_request_id'] = $newHomeQuote->id;
-            HomeQuoteRequestDetail::create($detailAttrs);
+            HomeQuoteRequestDetail::create(['home_quote_request_id' => $newHomeQuote->id]);
         }
 
         LoggerService::info(self::class.' - Home quote detail copied for renewal quote');

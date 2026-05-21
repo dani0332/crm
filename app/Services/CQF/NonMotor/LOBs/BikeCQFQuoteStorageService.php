@@ -8,6 +8,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
+use App\Models\BikeQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
@@ -232,7 +233,11 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data['has_ncd_supporting_documents'] = null;
         $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->uae_license_held_for_id);
         $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($oldBikeQuote->back_home_license_held_for_id, backHome: true);
-        BikeQuote::create($data);
+        $newBikeQuote = BikeQuote::create($data);
+
+        if ($oldBikeQuote->bikeQuoteRequestDetail) {
+            BikeQuoteRequestDetail::create(['bike_quote_request_id' => $newBikeQuote->id]);
+        }
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
     }

@@ -6,6 +6,7 @@ namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\PersonalQuote;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
@@ -54,6 +55,10 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $businessQuote = BusinessQuote::create($data);
         $newQuote->businessQuote()->associate($businessQuote);
         $newQuote->save();
+
+        if ($oldBusinessQuote->businessQuoteRequestDetail) {
+            BusinessQuoteRequestDetail::create(['business_quote_request_id' => $businessQuote->id]);
+        }
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
     }

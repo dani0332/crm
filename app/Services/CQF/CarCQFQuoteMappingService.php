@@ -23,7 +23,6 @@ class CarCQFQuoteMappingService
     public function mapCarCQFRenewalQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
         $quote->loadMissing('payments');
-        $payment = $quote->payments->first();
 
         $car_type_insurance_id = $this->getCarTypeInsuranceId($quote) ?? null;
         $current_insurance_status = match ((int) $car_type_insurance_id) {
@@ -53,7 +52,7 @@ class CarCQFQuoteMappingService
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium,
-            'previous_quote_policy_commission' => $this->resolveTotalCommission($payment),
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
             'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'car_make_id' => $quote->car_make_id,
@@ -92,6 +91,8 @@ class CarCQFQuoteMappingService
 
     public function mapFailedQuoteData(CarQuote $quote): array
     {
+        $quote->loadMissing('payments');
+
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -110,6 +111,8 @@ class CarCQFQuoteMappingService
             'year' => $quote->year_of_manufacture ?? null,
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
+            'previous_ref_id' => $quote->code ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
             'plan_name' => null,

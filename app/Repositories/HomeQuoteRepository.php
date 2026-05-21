@@ -80,6 +80,7 @@ class HomeQuoteRepository extends BaseRepository
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
+            'previous_policy_expiry_date_start',
         ];
 
         if (! Auth::check()) {

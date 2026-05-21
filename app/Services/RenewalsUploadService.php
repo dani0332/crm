@@ -3267,7 +3267,10 @@ class RenewalsUploadService
             } else {
                 $quoteType = QuoteTypes::getName($product);
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-                $quotes = $repository::getData()->withQueryString();
+                $result = $repository::getData();
+                $quotes = ($result instanceof Builder)
+                    ? $result->simplePaginate()->withQueryString()
+                    : $result->withQueryString();
                 $quotes->load('customer');
             }
         } catch (\Exception $e) {

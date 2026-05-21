@@ -53,10 +53,7 @@ class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $newYachtQuote = YachtQuote::create($data);
 
         if ($oldYachtQuote->yachtQuoteRequestDetail) {
-            $detailAttrs = $oldYachtQuote->yachtQuoteRequestDetail->getAttributes();
-            unset($detailAttrs['id'], $detailAttrs['yacht_quote_request_id'], $detailAttrs['created_at'], $detailAttrs['updated_at']);
-            $detailAttrs['yacht_quote_request_id'] = $newYachtQuote->id;
-            YachtQuoteRequestDetail::create($detailAttrs);
+            YachtQuoteRequestDetail::create(['yacht_quote_request_id' => $newYachtQuote->id]);
         }
 
         LoggerService::info(self::class.' - Yacht quote detail copied for renewal quote');

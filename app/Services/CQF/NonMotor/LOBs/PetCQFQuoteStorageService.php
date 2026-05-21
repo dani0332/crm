@@ -56,10 +56,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $newPetQuote = PetQuote::create($data);
 
         if ($oldPetQuote->petQuoteRequestDetail) {
-            $detailAttrs = $oldPetQuote->petQuoteRequestDetail->getAttributes();
-            unset($detailAttrs['id'], $detailAttrs['pet_quote_request_id'], $detailAttrs['created_at'], $detailAttrs['updated_at']);
-            $detailAttrs['pet_quote_request_id'] = $newPetQuote->id;
-            PetQuoteRequestDetail::create($detailAttrs);
+            PetQuoteRequestDetail::create(['pet_quote_request_id' => $newPetQuote->id]);
         }
 
         LoggerService::info(self::class.' - Pet quote detail copied for renewal quote');
