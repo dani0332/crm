@@ -47,6 +47,7 @@ use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\EAManagerService;
 use App\Services\LeadsCountService;
 use App\Services\OCR\OCRService;
 use App\Services\SplitPaymentService;
@@ -138,6 +139,9 @@ class HandleInertiaRequests extends Middleware
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
+            'eaPendingRejectionsCount' => fn () => auth()->user()?->hasRole(RolesEnum::EAManager)
+                ? app(EAManagerService::class)->pendingRejectionsCount()
+                : 0,
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),

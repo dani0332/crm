@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class EALeadCreateRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        if ($this->user()->hasRole([RolesEnum::EAReferral, RolesEnum::EAManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return true;
+        }
+
+        return $this->user()->permissions()->where('name', 'ea-collaborate')->exists()
+            || $this->user()->roles()->whereHas('permissions', fn ($q) => $q->where('name', 'ea-collaborate'))->exists();
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        $isCollaborate = $this->input('ea_model') === 'collaborate';
+        $quoteTypeId = (int) $this->input('quote_type_id');
+
+        $collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health];
+
+        return [
+            'ea_model' => ['required', Rule::in(['referral', 'collaborate'])],
+            'quote_type_id' => [
+                'required',
+                'integer',
+                'exists:quote_type,id',
+                function ($attribute, $value, $fail) use ($isCollaborate, $collaborateForbiddenLobs) {
+                    if ($isCollaborate && in_array((int) $value, $collaborateForbiddenLobs)) {
+                        $fail('The collaborate model is not available for the selected LOB.');
+                    }
+                },
+            ],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:150'],
+            'mobile_no' => ['required', 'string', 'max:20'],
+            'business_type_of_insurance_id' => [
+                Rule::requiredIf($quoteTypeId === QuoteTypeId::Corpline),
+                'nullable',
+                'integer',
+                'exists:business_type_of_insurance,id',
+            ],
+            'health_plan_type_id' => [
+                Rule::requiredIf($quoteTypeId === QuoteTypeId::Health),
+                'nullable',
+                'integer',
+                'exists:health_plan_type,id',
+            ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'ea_model.required' => 'Please select an EA model (Referral or Collaborate).',
+            'quote_type_id.required' => 'Please select a line of business.',
+            'business_type_of_insurance_id.required' => 'Business type is required for Corpline leads.',
+            'health_plan_type_id.required' => 'Plan type is required for Health leads.',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Manager role can only create Referral model leads
+        if ($this->user()->hasRole(RolesEnum::EAManager) && ! $this->user()->hasRole([RolesEnum::Admin, RolesEnum::Engineering])) {
+            $this->merge(['ea_model' => 'referral']);
+        }
+
+        // Collaborate requires ea-collaborate permission
+        $hasCollaboratePermission = $this->user()->permissions()->where('name', 'ea-collaborate')->exists()
+            || $this->user()->roles()->whereHas('permissions', fn ($q) => $q->where('name', 'ea-collaborate'))->exists();
+
+        if ($this->input('ea_model') === 'collaborate' && ! $hasCollaboratePermission) {
+            $this->merge(['ea_model' => 'referral']);
+        }
+    }
+}
