@@ -286,6 +286,7 @@ class HealthRateService extends BaseService
     public function update(int $id, array $data): HealthRate
     {
         $rate = HealthRate::with('healthPlan')->find($id);
+        $plan = $rate->healthPlan;
 
         // If draft, update same version
         if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
@@ -327,28 +328,30 @@ class HealthRateService extends BaseService
             );
         }
 
-        // Else (active)
-        // Get active rate sheet against plan id and exclude current rate id
-        $activeRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
+        // Else (active/archive)
+        // Get existing rate sheet against plan id and exclude current rate id
+        $existingRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
             ->where('id', '!=', $id)
-            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
+            ->where('status', $rate->status)
             ->get();
 
         // Get draft version of rate sheet
-        // Since we need to append existing active rates to draft rate sheet
-        $draftRateSheet = HealthRateControl::where('health_plan_id', $rate->health_plan_id)
+        // Since we need to append existing active/archived rates to draft rate sheet
+        $draftRateSheet = HealthRateControl::whereIn('health_plan_id', [$rate->health_plan_id, $plan->parent_id])
             ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
             ->first();
 
         // Validate duplicate between existing active rates and draft rates
         // Since we are copying exting active rates into draft rates
-        if ($draftRateSheet and $activeRates) {
-            foreach ($activeRates as $activeRate) {
+        if ($draftRateSheet and $existingRates) {
+            foreach ($existingRates as $activeRate) {
                 $this->checkDuplicateRates($draftRateSheet->id, $activeRate->toArray(), $rate->healthPlan);
             }
         }
 
-        return $this->addRate($data, [$rate->health_plan_id], $draftRateSheet, $activeRates);
+        $data['health_plan_id'] = $rate->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
+
+        return $this->addRate($data, [$rate->health_plan_id, $plan->parent_id], $draftRateSheet, $existingRates);
     }
 
     public function publishRateControl(int $rateControlId, int $publishedById): void
