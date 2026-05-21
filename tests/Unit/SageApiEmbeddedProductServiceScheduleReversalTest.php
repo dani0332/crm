@@ -49,8 +49,7 @@ test('scheduleReversalOfEmbeddedProduct does not overwrite sage process while bo
         'requestPayload' => ['modelType' => 'Car', 'quoteId' => $data['carQuote']->id],
     ]);
 
-    $sageProcess = SageProcess::query()->create([
-        'user_id' => null,
+    $sageProcess = SageProcess::factory()->create([
         'insurance_provider_id' => $data['insuranceProvider']->id,
         'model_type' => EmbeddedTransaction::class,
         'model_id' => $data['epMDXTransaction']->id,
@@ -99,8 +98,7 @@ test('scheduleReversalOfEmbeddedProduct can replace completed book sage process 
         'sageProcessRequestType' => SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST,
     ];
 
-    $sageProcess = SageProcess::query()->create([
-        'user_id' => null,
+    $sageProcess = SageProcess::factory()->create([
         'insurance_provider_id' => $data['insuranceProvider']->id,
         'model_type' => EmbeddedTransaction::class,
         'model_id' => $data['epMDXTransaction']->id,

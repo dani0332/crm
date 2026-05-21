@@ -165,13 +165,17 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
+        // failed() only receives Throwable; app() is the only way to resolve services here.
+        $sageApiService = app(SageApiService::class);
+        $sageApiEmbeddedProductService = app(SageApiEmbeddedProductService::class);
+
         $message = $exception->getMessage();
         $code = $exception->getCode();
 
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
-            app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+            $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
         } else {
-            app(SageApiService::class)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+            $sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
         LoggerService::error('ReverseEmbeddedProductOnSageJob exhausted or timed out', extra: [
@@ -181,7 +185,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
         ]);
 
-        app(SageApiEmbeddedProductService::class)->updateAndLogEPBookingStatus(
+        $sageApiEmbeddedProductService->updateAndLogEPBookingStatus(
             $this->epTransaction,
             SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(),
             $this->logFor
@@ -206,7 +210,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
             $message
         );
 
-        app(SageApiService::class)->scheduleSageProcesses($this->sageRequest->insurerID);
+        $sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
     }
 
     /**

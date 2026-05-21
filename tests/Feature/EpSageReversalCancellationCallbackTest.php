@@ -6,7 +6,6 @@ use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEmbeddedProductEnum;
-use App\Enums\SageEnum;
 use App\Exceptions\EpSageReversalRetryableException;
 use App\Http\Middleware\BasicAuth;
 use App\Jobs\ReverseEmbeddedProductOnSageJob;
@@ -15,7 +14,6 @@ use App\Models\EpLog;
 use App\Models\SageProcess;
 use App\Services\SageApiEmbeddedProductService;
 use App\Services\SageApiService;
-use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -32,7 +30,7 @@ describe('POST /api/ep/cancellation-callback', function (): void {
     test('returns 422 when validation fails', function (): void {
         $response = $this->postJson(route('api.ep-cancellation-callback'), []);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['etId', 'quoteId', 'quoteTypeId']);
     });
 
@@ -43,7 +41,7 @@ describe('POST /api/ep/cancellation-callback', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ]);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['etId']);
     });
 
@@ -60,7 +58,7 @@ describe('POST /api/ep/cancellation-callback', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ]);
 
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        $response->assertNotFound();
     });
 
     test('returns 422 when payment is not refunded', function (): void {
@@ -72,7 +70,7 @@ describe('POST /api/ep/cancellation-callback', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ]);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertUnprocessable();
         $response->assertJsonPath('message', 'Embedded transaction payment is not in refunded status');
     });
 
@@ -181,13 +179,11 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ];
 
-        $sageProcess = SageProcess::query()->create([
-            'user_id' => null,
+        $sageProcess = SageProcess::factory()->create([
             'insurance_provider_id' => $data['insuranceProvider']->id,
             'model_type' => EmbeddedTransaction::class,
             'model_id' => $data['epMDXTransaction']->id,
             'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
         ]);
 
         ReverseEmbeddedProductOnSageJob::dispatchSync($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
@@ -225,13 +221,11 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ];
 
-        $sageProcess = SageProcess::query()->create([
-            'user_id' => null,
+        $sageProcess = SageProcess::factory()->create([
             'insurance_provider_id' => $data['insuranceProvider']->id,
             'model_type' => EmbeddedTransaction::class,
             'model_id' => $data['epMDXTransaction']->id,
             'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
         ]);
 
         ReverseEmbeddedProductOnSageJob::dispatchSync($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
@@ -272,13 +266,11 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
             'quoteTypeId' => QuoteTypeId::Car,
         ];
 
-        $sageProcess = SageProcess::query()->create([
-            'user_id' => null,
+        $sageProcess = SageProcess::factory()->create([
             'insurance_provider_id' => $data['insuranceProvider']->id,
             'model_type' => EmbeddedTransaction::class,
             'model_id' => $data['epMDXTransaction']->id,
             'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
         ]);
 
         $job = new ReverseEmbeddedProductOnSageJob($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
