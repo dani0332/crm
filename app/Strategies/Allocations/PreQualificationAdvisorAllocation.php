@@ -32,7 +32,7 @@ class PreQualificationAdvisorAllocation implements Allocation
         ]);
 
         $allocationRequest = new AllocationRequest(
-            quoteType: QuoteTypes::GROUP_MEDICAL,
+            quoteType: QuoteTypes::BUSINESS,
             quoteUUID: $this->uuid,
             overrideAdvisorId: $this->overrideAdvisorId,
         );
