@@ -12,6 +12,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -33,6 +34,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -151,11 +153,9 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
             }
@@ -309,11 +309,9 @@ class AdvisorConversionReportService extends BaseService
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
                     ->pluck('user_id')
                     ->toArray();
                 if ($lob == quoteTypeCode::Health) {
@@ -793,6 +791,22 @@ class AdvisorConversionReportService extends BaseService
     public function getAdvisorsAssignedLeads($filters)
     {
         $lob = $filters['lob'] ?? quoteTypeCode::Car;
+
+        if (! userHasProduct($lob)) {
+            $perPage = 10;
+
+            return new LengthAwarePaginator(
+                [],
+                0,
+                $perPage,
+                LengthAwarePaginator::resolveCurrentPage(),
+                [
+                    'path' => LengthAwarePaginator::resolveCurrentPath(),
+                    'query' => request()->query(),
+                ]
+            );
+        }
+
         if ($lob === quoteTypeCode::Car) {
             $query = $this->getCarQuoteAssignedLeadsQuery();
             $query = $this->applyFiltersForCar($query, $filters, true);
@@ -801,12 +815,14 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->applyFilters($query, $filters, true);
         }
 
+        LoggerService::sql('Advisors Assigned Leads ', $query);
+
         return $query->paginate(10);
     }
 
     private function getCarQuoteAssignedLeadsQuery()
     {
-        return CarQuote::query()
+        $query = CarQuote::query()
             ->select(
                 DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
                 'car_quote_request.code as cdbId',
@@ -826,14 +842,38 @@ class AdvisorConversionReportService extends BaseService
             ->leftJoin('customer as c', 'car_quote_request.customer_id', 'c.id')
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc')
             ->where('users.is_active', true);
+
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
+        ) {
+            $userIds = $this->walkTree(auth()->user()->id, QuoteTypes::CAR->value);
+            if (auth()->user()->isManagerORDeputy()) {
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
+                    ->pluck('user_id')
+                    ->toArray();
+            }
+
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 
     private function getPersonalQuoteAssignedLeadsQuery($lob)
     {
-        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
-        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+        $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lobFiltered)->first();
 
-        return PersonalQuote::query()
+        $query = PersonalQuote::query()
             ->select(
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as fullName"),
                 'personal_quotes.code as cdbId',
@@ -851,5 +891,32 @@ class AdvisorConversionReportService extends BaseService
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
+
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
+        ) {
+            $userIds = $this->walkTree(auth()->user()->id, $lob);
+            if (auth()->user()->isManagerORDeputy()) {
+                $userIds = UserManager::query()
+                    ->where('manager_id', auth()->user()->id)
+                    ->whereIn('user_id', $userIds)
+                    ->pluck('user_id')
+                    ->toArray();
+                if ($lob == quoteTypeCode::Health) {
+                    $userIds = $this->getUsers($userIds);
+                }
+            }
+
+            $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 }
