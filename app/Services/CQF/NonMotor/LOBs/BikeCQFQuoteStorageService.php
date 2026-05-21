@@ -167,13 +167,25 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return null;
         }
 
+        $current = UAELicenseHeldFor::find($currentId);
+
+        if ($current === null) {
+            return $currentId;
+        }
+
         $query = $backHome
             ? UAELicenseHeldFor::isBackHomeActive()
             : UAELicenseHeldFor::withActive();
 
-        $nextId = $query->where('id', '>', $currentId)
-            ->orderBy('id')
-            ->value('id');
+        if ($current->sort_order !== null) {
+            $nextId = $query->where('sort_order', '>', $current->sort_order)
+                ->orderBy('sort_order')
+                ->value('id');
+        } else {
+            $nextId = $query->where('id', '>', $currentId)
+                ->orderBy('id')
+                ->value('id');
+        }
 
         return $nextId ?? $currentId;
     }
