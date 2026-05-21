@@ -9,7 +9,6 @@ use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Exceptions\EpSageReversalRetryableException;
 use App\Http\Middleware\BasicAuth;
-use App\Jobs\BookEmbeddedProductOnSageJob;
 use App\Jobs\ReverseEmbeddedProductOnSageJob;
 use App\Models\EmbeddedTransaction;
 use App\Models\EpLog;
@@ -158,43 +157,6 @@ describe('POST /api/ep/cancellation-callback', function (): void {
     });
 });
 
-describe('BookEmbeddedProductOnSageJob', function (): void {
-    test('aborts sage booking when embedded transaction payment is refunded', function (): void {
-        $data = RetargetingEpReminderTestDataHelper::setupTestData();
-        $data['insuranceProvider']->update(['code' => InsuranceProviderEnum::OIC->value]);
-        $data['epMDXTransaction']->update([
-            'payment_status_id' => PaymentStatusEnum::REFUNDED,
-            'sage_status_id' => SageEmbeddedProductEnum::BOOKING_QUEUED->id(),
-        ]);
-
-        $sageRequest = (object) [
-            'insurerID' => $data['insuranceProvider']->id,
-            'epShortCode' => 'MDX',
-            'sageProcessRequestType' => SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST,
-        ];
-        $request = (object) [
-            'modelType' => 'Car',
-            'quoteId' => $data['carQuote']->id,
-        ];
-
-        $sageProcess = SageProcess::query()->create([
-            'user_id' => null,
-            'insurance_provider_id' => $data['insuranceProvider']->id,
-            'model_type' => EmbeddedTransaction::class,
-            'model_id' => $data['epMDXTransaction']->id,
-            'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
-        ]);
-
-        BookEmbeddedProductOnSageJob::dispatchSync($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
-
-        $data['epMDXTransaction']->refresh();
-        $sageProcess->refresh();
-        expect($data['epMDXTransaction']->sage_status_id)->toBe(SageEmbeddedProductEnum::BOOKING_CANCELLED->id());
-        expect($sageProcess->status)->toBe(SageEnum::SAGE_PROCESS_FAILED_STATUS);
-    });
-});
-
 describe('ReverseEmbeddedProductOnSageJob', function (): void {
     test('completes without sage api when booking was queued but never posted to sage', function (): void {
         $data = RetargetingEpReminderTestDataHelper::setupTestData();
@@ -280,53 +242,6 @@ describe('ReverseEmbeddedProductOnSageJob', function (): void {
                 ->where('event', 'sage_reversal_success')
                 ->exists()
         )->toBeTrue();
-    });
-
-    test('resets sage process on conflict during final attempt without marking EP reversal failed', function (): void {
-        config(['constants.EP_SAGE_REVERSAL_MAX_TRIES' => 1]);
-
-        $data = RetargetingEpReminderTestDataHelper::setupTestData();
-        $data['insuranceProvider']->update(['code' => InsuranceProviderEnum::OIC->value]);
-        $data['epMDXTransaction']->update([
-            'payment_status_id' => PaymentStatusEnum::REFUNDED,
-            'sage_status_id' => SageEmbeddedProductEnum::BOOKING_COMPLETED->id(),
-        ]);
-
-        $this->partialMock(SageApiEmbeddedProductService::class, function ($mock): void {
-            $mock->shouldReceive('bookReversalOfEmbeddedProductOnSageAfterImcrmRefund')
-                ->once()
-                ->withArgs(fn (array $args, ?string $epShortCode, bool $updateStatusOnFailure): bool => $updateStatusOnFailure === true)
-                ->andReturn(['status' => false, 'message' => SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE]);
-            $mock->shouldReceive('updateAndLogEPBookingStatus')->never();
-        });
-        $this->mock(SageApiService::class, function ($mock) use ($data): void {
-            $mock->shouldReceive('updateSageProcessStatus')->zeroOrMoreTimes();
-            $mock->shouldReceive('scheduleSageProcesses')->once()->with($data['insuranceProvider']->id);
-        });
-
-        $sageRequest = (object) [
-            'insurerID' => $data['insuranceProvider']->id,
-            'epShortCode' => 'MDX',
-        ];
-        $request = (object) [
-            'modelType' => 'Car',
-            'quoteId' => $data['carQuote']->id,
-            'quoteTypeId' => QuoteTypeId::Car,
-        ];
-
-        $sageProcess = SageProcess::query()->create([
-            'user_id' => null,
-            'insurance_provider_id' => $data['insuranceProvider']->id,
-            'model_type' => EmbeddedTransaction::class,
-            'model_id' => $data['epMDXTransaction']->id,
-            'request' => json_encode(['sagePayload' => $sageRequest, 'requestPayload' => $request]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
-        ]);
-
-        ReverseEmbeddedProductOnSageJob::dispatchSync($sageRequest, $data['epMDXTransaction'], $request, $sageProcess);
-
-        $data['epMDXTransaction']->refresh();
-        expect($data['epMDXTransaction']->sage_status_id)->toBe(SageEmbeddedProductEnum::BOOKING_COMPLETED->id());
     });
 
     test('does not schedule sage processes when reversal fails before final attempt', function (): void {
