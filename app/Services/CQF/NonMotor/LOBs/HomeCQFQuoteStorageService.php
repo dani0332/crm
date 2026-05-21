@@ -50,6 +50,8 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
         $data = $this->copyableAttributes($oldHomeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldHomeQuote);
+        $data['claim_history_id'] = null;
+        $data['location_area'] = null;
         $newHomeQuote = HomeQuote::create($data);
 
         if ($oldHomeQuote->homeQuoteRequestDetail) {

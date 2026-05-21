@@ -154,6 +154,10 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             $data['aml_status'] = AMLStatusCode::AMLPending;
         }
 
+        if (array_key_exists('currently_insured_with', $data)) {
+            $data['currently_insured_with'] = $newQuote->currentlyInsuredWith?->text ?? null;
+        }
+
         // previous_quote_id references the old LOB row's own table, not PersonalQuote.
         if (array_key_exists('previous_quote_id', $data)) {
             $data['previous_quote_id'] = $oldLobQuote?->id;

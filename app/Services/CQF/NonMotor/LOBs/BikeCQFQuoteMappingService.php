@@ -105,7 +105,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'previous_quote_id' => PersonalQuote::where('uuid', $quote->uuid)->value('id'),
             'quote_type_id' => QuoteTypeId::Bike,
             'nationality_id' => $quote->nationality_id ?? null,
-            'currently_insured_with_id' => is_numeric($quote->currently_insured_with ?? null) ? (int) $quote->currently_insured_with : null,
+            'currently_insured_with_id' => $quote->insurance_provider_id ?? null,
             'insurance_provider_id' => null,
         ];
 
