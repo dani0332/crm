@@ -69,6 +69,7 @@ class DatabaseSeeder extends Seeder
             InsuranceProviderTransitionsSeeder::class,
             BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
             ConverILAGroupMedicalConfigurationBranchWise::class,
+            EAModelRolePermissionSeeder::class
         ]);
     }
 }
