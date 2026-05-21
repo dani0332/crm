@@ -373,6 +373,16 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'previous_advisor_id')->select(['id', 'email', 'name']);
     }
 
+    public function leadGenerator()
+    {
+        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
+    }
+
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');

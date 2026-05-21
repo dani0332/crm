@@ -324,6 +324,16 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'previous_advisor_id');
     }
 
+    public function leadGenerator()
+    {
+        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
+    }
+
     public function dependentMembers()
     {
         return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id', 'id')
