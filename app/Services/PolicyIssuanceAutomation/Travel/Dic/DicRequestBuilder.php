@@ -10,11 +10,13 @@ class DicRequestBuilder
     {
         $payment = $quote->payments()->mainLeadPayment()->first();
         $transactionId = $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id;
+        $authCode = $payment?->paymentSplits?->first()?->cc_payment_id;
 
         return [
             'policy_id' => $quote->insurer_quote_number,
             'payment_details' => [
-                'Transaction_id' => $transactionId,
+                'transaction_id' => $transactionId,
+                'authCode' => $authCode,
             ],
         ];
     }
