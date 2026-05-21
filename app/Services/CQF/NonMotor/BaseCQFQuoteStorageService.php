@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\DB;
 abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
     public function __construct(
-        protected BaseCQFQuoteMappingService $mappingService
+        protected BaseCQFQuoteMappingService $mappingService,
+        protected EmbeddedProductRepository $embeddedProductRepository
     ) {}
 
     public function storeRenewalQuote(
@@ -48,7 +49,7 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyLobQuoteDetail($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
+            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
             LoggerService::info(self::class.' - '.ucfirst($this->getLobName()).' CQF renewal quote created successfully', [

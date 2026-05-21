@@ -25,9 +25,10 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     private ?array $bikeQuoteColumns = null;
 
     public function __construct(
-        BikeCQFQuoteMappingService $mappingService
+        BikeCQFQuoteMappingService $mappingService,
+        EmbeddedProductRepository $embeddedProductRepository
     ) {
-        parent::__construct($mappingService);
+        parent::__construct($mappingService, $embeddedProductRepository);
     }
 
     private function getBikeQuoteColumns(): array
@@ -122,12 +123,13 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
+        $quoteData['previous_quote_id'] = PersonalQuote::where('uuid', $quote->uuid)->value('id');
 
         return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
+            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
             LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [

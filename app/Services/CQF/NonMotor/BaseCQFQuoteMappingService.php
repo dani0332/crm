@@ -14,6 +14,7 @@ use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
 use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
+use App\Traits\ResolvesCommission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -23,6 +24,10 @@ use Illuminate\Support\Carbon;
  */
 abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
 {
+    use ResolvesCommission;
+
+    public function __construct(protected CapiRequestService $capiRequestService) {}
+
     /**
      * Resolve renewal batch ID for a given date (ISO week/year, same logic as RenewalsUploadService::validateBatch).
      */
@@ -74,9 +79,9 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         $quoteType = $this->getQuoteType();
 
         if (checkPersonalQuotes($quoteType->value)) {
-            $response = app(CapiRequestService::class)->getPersonalQuoteUUID($quoteType->id());
+            $response = $this->capiRequestService->getPersonalQuoteUUID($quoteType->id());
         } else {
-            $response = app(CapiRequestService::class)->getUUID($quoteType->id());
+            $response = $this->capiRequestService->getUUID($quoteType->id());
         }
 
         return $response?->uuid ?? null;
@@ -201,25 +206,4 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         return null;
     }
 
-    /**
-     * Mirrors the Vue BookingDetails calculateCommission formula:
-     * total_commission = commission_vat_not_applicable + commission_vat_applicable + commission_vat
-     * Falls back to the stored commission column if breakdown fields are absent.
-     */
-    protected function resolveTotalCommission(?object $payment): ?float
-    {
-        if ($payment === null) {
-            return null;
-        }
-
-        $vatApplicable = $payment->commission_vat_applicable;
-        $vatNotApplicable = $payment->commission_vat_not_applicable;
-        $vatOnCommission = $payment->commission_vat;
-
-        if ($vatApplicable !== null || $vatNotApplicable !== null || $vatOnCommission !== null) {
-            return (float) ($vatApplicable ?? 0) + (float) ($vatNotApplicable ?? 0) + (float) ($vatOnCommission ?? 0);
-        }
-
-        return $payment->commission !== null ? (float) $payment->commission : null;
-    }
 }

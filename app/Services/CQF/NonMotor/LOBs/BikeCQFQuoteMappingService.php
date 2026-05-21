@@ -102,7 +102,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
             'previous_advisor_id' => $quote->advisor_id ?? null,
-            'previous_quote_id' => PersonalQuote::where('uuid', $quote->uuid)->value('id'),
+            'previous_quote_id' => null,
             'quote_type_id' => QuoteTypeId::Bike,
             'nationality_id' => $quote->nationality_id ?? null,
             'currently_insured_with_id' => $quote->insurance_provider_id ?? null,

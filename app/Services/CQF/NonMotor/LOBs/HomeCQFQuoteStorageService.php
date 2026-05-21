@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -15,9 +16,10 @@ use Illuminate\Database\Eloquent\Model;
 class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     public function __construct(
-        HomeCQFQuoteMappingService $mappingService
+        HomeCQFQuoteMappingService $mappingService,
+        EmbeddedProductRepository $embeddedProductRepository
     ) {
-        parent::__construct($mappingService);
+        parent::__construct($mappingService, $embeddedProductRepository);
     }
 
     protected function getLobName(): string

@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -15,9 +16,10 @@ use Illuminate\Database\Eloquent\Model;
 class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     public function __construct(
-        YachtCQFQuoteMappingService $mappingService
+        YachtCQFQuoteMappingService $mappingService,
+        EmbeddedProductRepository $embeddedProductRepository
     ) {
-        parent::__construct($mappingService);
+        parent::__construct($mappingService, $embeddedProductRepository);
     }
 
     protected function getLobName(): string

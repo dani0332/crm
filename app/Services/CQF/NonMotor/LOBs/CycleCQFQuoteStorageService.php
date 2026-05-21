@@ -7,6 +7,7 @@ namespace App\Services\CQF\NonMotor\LOBs;
 use App\Enums\QuoteTypeId;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -14,9 +15,10 @@ use Illuminate\Database\Eloquent\Model;
 class CycleCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     public function __construct(
-        CycleCQFQuoteMappingService $mappingService
+        CycleCQFQuoteMappingService $mappingService,
+        EmbeddedProductRepository $embeddedProductRepository
     ) {
-        parent::__construct($mappingService);
+        parent::__construct($mappingService, $embeddedProductRepository);
     }
 
     protected function getLobName(): string
