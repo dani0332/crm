@@ -77,5 +77,5 @@ final class LeadSourceEnum extends Enum
     const REVIVAL_REINSTATED = 'REVIVAL_REINSTATED';
     
     // second source for car 24 leads
-    const CARS_24 = 'cars24';
+    const CARS24 = 'cars24';
 }
