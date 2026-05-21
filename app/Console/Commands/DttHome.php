@@ -91,7 +91,7 @@ class DttHome extends Command
             ->where('quote_type_id', QuoteTypeId::Home)
             ->whereHas('homeQuote')
             ->whereDate('created_at', now()->subMonths(10)->toDateString())
-            ->where('is_revived', false)
+            ->where('is_annual_revived', false)
             ->whereNotIn('source', [
                 LeadSourceEnum::REVIVAL_SHORT,
                 LeadSourceEnum::REVIVAL_ANNUAL,
@@ -136,7 +136,7 @@ class DttHome extends Command
         $delayCounter = 0;
 
         foreach ($leads as $lead) {
-            LoggerService::info(self::class.' - Queuing Home Revival Lead Job for lead '.$lead->uuid.' with source '.$source.' in batch: '.$batchName);
+            LoggerService::info(self::class.' - Queuing Home Revival Lead Job for lead '.$lead->uuid.'with source '.$source.' in batch: '.$batchName);
             $jobs[] = (new HomeRevivalLeadsCreationJob($lead->id, $source))->delay(now()->addSeconds(self::DELAY_IN_SECONDS + $delayCounter));
             $delayCounter += self::DELAY_IN_SECONDS;
         }

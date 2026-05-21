@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Revival;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
@@ -57,7 +58,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
         $this->lead = PersonalQuote::query()
             ->with('homeQuote')
-            ->where('is_revived', false)
+            ->where($this->revivedFlagKey(), false)
             ->find($this->personalQuoteId);
 
         $lead = $this->lead;
@@ -105,7 +106,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                     'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
                     'dtt_revival_id' => $existingDttRevival->id,
                 ]);
-                $lead->update(['is_revived' => true]);
+                $lead->update([$this->revivedFlagKey() => true]);
 
                 return;
             }
@@ -178,7 +179,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                     'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
                     'dtt_revival_id' => $existingDtt->id,
                 ]);
-                $lead->update(['is_revived' => true]);
+                $lead->update([$this->revivedFlagKey() => true]);
 
                 return;
             }
@@ -194,7 +195,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 'parent_lead_uuid' => $lead->uuid,
             ]);
 
-            $lead->update(['is_revived' => true]);
+            $lead->update([$this->revivedFlagKey() => true]);
             LoggerService::info(self::class.' - Home quote marked as revived', [
                 'lead_uuid' => $lead->uuid,
                 'revival_source' => $this->revivalSource,
@@ -232,5 +233,10 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         LoggerService::warning(self::class.' - job failed', [
             'personal_quote_id' => $this->personalQuoteId,
         ], $exception);
+    }
+
+    private function revivedFlagKey(): string
+    {
+        return $this->revivalSource === LeadSourceEnum::REVIVAL_ANNUAL ? 'is_annual_revived' : 'is_revived';
     }
 }
