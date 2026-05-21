@@ -22,6 +22,9 @@ class CarCQFQuoteMappingService
 {
     public function mapCarCQFRenewalQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
+        $quote->loadMissing('payments');
+        $payment = $quote->payments->first();
+
         $car_type_insurance_id = $this->getCarTypeInsuranceId($quote) ?? null;
         $current_insurance_status = match ((int) $car_type_insurance_id) {
             CarTypeOfInsuranceIdEnum::Comprehensive => 'ACTIVE_COMP',
@@ -50,6 +53,7 @@ class CarCQFQuoteMappingService
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($payment),
             'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'car_make_id' => $quote->car_make_id,
@@ -154,6 +158,23 @@ class CarCQFQuoteMappingService
         }
 
         return null;
+    }
+
+    private function resolveTotalCommission(?object $payment): ?float
+    {
+        if ($payment === null) {
+            return null;
+        }
+
+        $vatApplicable = $payment->commission_vat_applicable;
+        $vatNotApplicable = $payment->commission_vat_not_applicable;
+        $vatOnCommission = $payment->commission_vat;
+
+        if ($vatApplicable !== null || $vatNotApplicable !== null || $vatOnCommission !== null) {
+            return (float) ($vatApplicable ?? 0) + (float) ($vatNotApplicable ?? 0) + (float) ($vatOnCommission ?? 0);
+        }
+
+        return $payment->commission !== null ? (float) $payment->commission : null;
     }
 
     public function getNextUAELicenseHeldForId(CarQuote $quote)
