@@ -25,8 +25,8 @@ it('activates a scheduled control whose effective_from is today', function () {
     (new ActivateScheduledHealthPlansJob)->handle();
 
     expect($plan->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
-    expect($rate->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    expect($rate->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
 });
 
 it('does not activate a scheduled control whose effective_from is in the past', function () {
@@ -36,7 +36,7 @@ it('does not activate a scheduled control whose effective_from is in the past', 
     (new ActivateScheduledHealthPlansJob)->handle();
 
     expect($plan->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
 });
 
 it('does not activate a scheduled control whose effective_from is in the future', function () {
@@ -46,7 +46,7 @@ it('does not activate a scheduled control whose effective_from is in the future'
     (new ActivateScheduledHealthPlansJob)->handle();
 
     expect($plan->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value);
 });
 
 it('bumps the plan version from the rate control version when the plan is in scheduled status', function () {
@@ -97,8 +97,8 @@ it('archives the active control of the sibling plan when activating', function (
 
     (new ActivateScheduledHealthPlansJob)->handle();
 
-    expect($oldControl->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
-    expect($newControl->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    expect($oldControl->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
+    expect($newControl->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
 });
 
 it('skips a rate control with no associated plan', function () {
@@ -123,8 +123,8 @@ it('archives controls and their plan when effective_to has passed', function () 
     (new ActivateScheduledHealthPlansJob)->handle();
 
     expect($plan->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
-    expect($rate->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
+    expect($rate->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ARCHIVED->value);
 });
 
 it('does not archive a control whose effective_to is today', function () {
@@ -137,7 +137,7 @@ it('does not archive a control whose effective_to is today', function () {
 
     (new ActivateScheduledHealthPlansJob)->handle();
 
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
 });
 
 it('does nothing when there are no scheduled or expired controls', function () {
@@ -151,5 +151,5 @@ it('does nothing when there are no scheduled or expired controls', function () {
     (new ActivateScheduledHealthPlansJob)->handle();
 
     expect($plan->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
-    expect($control->fresh()->status)->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
+    expect($control->fresh()->getRawOriginal('status'))->toBe(HealthPlanRateSheetStatusEnum::ACTIVE->value);
 });
