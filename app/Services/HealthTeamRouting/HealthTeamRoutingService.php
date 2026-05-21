@@ -217,7 +217,7 @@ class HealthTeamRoutingService
         $canonicalNationality = $this->canonicalNationalityService->getByNationalityId($lead->nationality_id);
         $nationalityPoolCodes = $this->nationalityPoolService->getNationalityCodes();
 
-        if (! $nationalityPoolCodes || ! $canonicalNationality) {
+        if (! $nationalityPoolCodes || empty($nationalityPoolCodes->canonical_nationality_codes) || ! $canonicalNationality) {
             return false;
         }
 
