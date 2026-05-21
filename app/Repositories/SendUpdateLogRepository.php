@@ -122,12 +122,24 @@ class SendUpdateLogRepository extends BaseRepository
         return $this->where('id', $id)->firstOrFail();
     }
 
-    public function fetchUpdateLog($id, $data)
+    public function fetchUpdateLog($id, $data): mixed
     {
         LoggerService::info('fn:fetchUpdateLog - Start - SendUpdateLogRepository');
 
         try {
-            $sendUpdate = $this->find($id)->update([
+            $sendUpdate = $this->find($id);
+
+            if (
+                isset($data['option_id'])
+                && (int) $data['option_id'] !== (int) $sendUpdate->option_id
+                && $sendUpdate->payments()->exists()
+            ) {
+                return (object) [
+                    'message' => 'Endorsement subtype cannot be changed because payment has already been added in Manage Payments Section. Please cancel the current request and create new endorsement if you need to change the subtype.',
+                ];
+            }
+
+            $sendUpdate->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
                 // 'car_addons' => $data['car_addons'] ?? null,

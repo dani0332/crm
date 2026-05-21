@@ -63,7 +63,7 @@ return [
         ],
 
         'sqs_myalfred' => [
-            'driver' => 'sqs',
+            'driver' => 'sqs_myalfred',
             'key' => env('SQS_AWS_ACCESS_KEY_ID'),
             'secret' => env('SQS_AWS_SECRET_ACCESS_KEY'),
             'region' => env('SQS_AWS_DEFAULT_REGION', 'us-east-1'),
