@@ -1,4 +1,7 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -21,11 +24,35 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
 const { isRequired } = useRules();
+const page = usePage();
+
+const authRoles = computed(() => page.props.auth?.roles ?? []);
+const authPermissions = computed(() => page.props.auth?.permissions ?? []);
+
+const isEAManager = computed(() => authRoles.value.includes('EA_MANAGER'));
+const canCollaborate = computed(() => authPermissions.value.includes('ea-collaborate'));
+const hasEAReferralAccess = computed(
+  () =>
+    authRoles.value.includes('EA_REFERRAL') ||
+    authRoles.value.includes('EA_MANAGER') ||
+    authRoles.value.includes('ADMIN') ||
+    authRoles.value.includes('ENGINEERING') ||
+    canCollaborate.value,
+);
 
 const leadForm = useForm({
   type: '',
   sub_source_id: null,
   sub_source_options_id: null,
+  // EA model fields
+  ea_model: null,
+  quote_type_id: null,
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  business_type_of_insurance_id: null,
+  health_plan_type_id: null,
 });
 
 const isModalOpen = computed({
@@ -33,8 +60,40 @@ const isModalOpen = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const onConfirmCreateLead = isValid => {
+const duplicateInfo = ref(null);
+const isSubmittingEA = ref(false);
+
+// Collaborate-excluded LOBs by quote_type_id
+const collaborateExcludedLobs = [1, 3, 8]; // Car, Health, Travel
+
+const allLobOptions = computed(() => {
+  const types = page.props.quoteTypes ?? [];
+  return types.map(qt => ({ value: qt.id, label: qt.name }));
+});
+
+const lobOptions = computed(() => {
+  if (leadForm.ea_model !== 'collaborate') return allLobOptions.value;
+  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.includes(opt.value));
+});
+
+const isCorpline = computed(() => leadForm.quote_type_id === 101);
+const isHealthLob = computed(() => leadForm.quote_type_id === 3);
+
+const eaModelOptions = computed(() => {
+  const options = [{ value: 'referral', label: 'Referral' }];
+  if (canCollaborate.value && !isEAManager.value) {
+    options.push({ value: 'collaborate', label: 'Collaborate' });
+  }
+  return options;
+});
+
+const onConfirmCreateLead = async isValid => {
   if (!isValid) return;
+
+  if (leadForm.type === 'expert_advisor_model') {
+    await submitEALead();
+    return;
+  }
 
   const leadData = {
     type: leadForm.type,
@@ -51,6 +110,35 @@ const onConfirmCreateLead = isValid => {
   resetForm();
 };
 
+const submitEALead = async () => {
+  isSubmittingEA.value = true;
+  duplicateInfo.value = null;
+
+  try {
+    await axios.post(route('ea-leads.store'), {
+      ea_model: leadForm.ea_model,
+      quote_type_id: leadForm.quote_type_id,
+      first_name: leadForm.first_name,
+      last_name: leadForm.last_name,
+      email: leadForm.email,
+      mobile_no: leadForm.mobile_no,
+      business_type_of_insurance_id: leadForm.business_type_of_insurance_id,
+      health_plan_type_id: leadForm.health_plan_type_id,
+    });
+
+    emit('confirmed', { type: 'expert_advisor_model' });
+    isModalOpen.value = false;
+    resetForm();
+  } catch (err) {
+    const data = err?.response?.data;
+    if (data?.duplicate) {
+      duplicateInfo.value = data;
+    }
+  } finally {
+    isSubmittingEA.value = false;
+  }
+};
+
 const onCancel = () => {
   isModalOpen.value = false;
   resetForm();
@@ -60,15 +148,23 @@ const resetForm = () => {
   leadForm.type = '';
   leadForm.sub_source_id = null;
   leadForm.sub_source_options_id = null;
+  leadForm.ea_model = null;
+  leadForm.quote_type_id = null;
+  leadForm.first_name = '';
+  leadForm.last_name = '';
+  leadForm.email = '';
+  leadForm.mobile_no = '';
+  leadForm.business_type_of_insurance_id = null;
+  leadForm.health_plan_type_id = null;
+  duplicateInfo.value = null;
   if (typeof leadForm.reset === 'function') leadForm.reset();
 };
 
-// Computed properties for dropdown options
 const subSourceOptions = computed(() => {
   const options = props.subSources?.map(source => ({
     value: source.id,
     label: source.text,
-    suffix: source.description || null, // Use suffix for tooltip data
+    suffix: source.description || null,
   }));
   return options;
 });
@@ -86,35 +182,56 @@ const subSourceChildOptions = computed(() => {
     value: child.id,
     label: child.text,
     code: child.code,
-    suffix: child.description || null, // Add tooltip support
+    suffix: child.description || null,
     disabled:
       !props.isPcpAllowed && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
-// Overall validity handled by x-form via :rules and submit callback
-
-// Watch for modal close to reset form
 watch(isModalOpen, newValue => {
   if (!newValue) {
     resetForm();
   }
 });
 
-// Watch for type change to reset dependent fields
 watch(
   () => leadForm.type,
   () => {
     leadForm.sub_source_id = null;
     leadForm.sub_source_options_id = null;
+    leadForm.ea_model = null;
+    leadForm.quote_type_id = null;
+    duplicateInfo.value = null;
   },
 );
 
-// Watch for subSource change to reset subSourceOption
 watch(
   () => leadForm.sub_source_id,
   () => {
     leadForm.sub_source_options_id = null;
+  },
+);
+
+watch(
+  () => leadForm.ea_model,
+  () => {
+    leadForm.quote_type_id = null;
+    leadForm.first_name = '';
+    leadForm.last_name = '';
+    leadForm.email = '';
+    leadForm.mobile_no = '';
+    leadForm.business_type_of_insurance_id = null;
+    leadForm.health_plan_type_id = null;
+    duplicateInfo.value = null;
+  },
+);
+
+watch(
+  () => leadForm.quote_type_id,
+  () => {
+    leadForm.business_type_of_insurance_id = null;
+    leadForm.health_plan_type_id = null;
+    duplicateInfo.value = null;
   },
 );
 </script>
@@ -143,6 +260,11 @@ watch(
           <x-radio value="referral" label="Referral" />
           <x-radio value="early_renewal" label="Early Renewal" />
           <x-radio value="payment_status" label="Payment Status" />
+          <x-radio
+            v-if="hasEAReferralAccess"
+            value="expert_advisor_model"
+            label="Expert Advisor Model"
+          />
         </x-form-group>
 
         <!-- Conditional dropdowns for referral option -->
@@ -192,6 +314,113 @@ watch(
             </template>
           </x-select>
         </div>
+
+        <!-- Expert Advisor Model section -->
+        <div
+          v-if="leadForm.type === 'expert_advisor_model'"
+          class="flex flex-col gap-4"
+        >
+          <!-- EA Model selector (Referral / Collaborate) -->
+          <x-select
+            v-model="leadForm.ea_model"
+            label="EA MODEL"
+            name="eaModel"
+            :options="eaModelOptions"
+            placeholder="Select EA Model"
+            class="w-full"
+            :rules="[isRequired]"
+            :required="true"
+          />
+
+          <!-- LOB selector -->
+          <x-select
+            v-if="leadForm.ea_model"
+            v-model="leadForm.quote_type_id"
+            label="LINE OF BUSINESS"
+            name="quoteTypeId"
+            :options="lobOptions"
+            placeholder="Select Line of Business"
+            class="w-full"
+            filterable
+            :rules="[isRequired]"
+            :required="true"
+          />
+
+          <!-- Generic lead fields -->
+          <template v-if="leadForm.quote_type_id">
+            <div class="grid grid-cols-2 gap-4">
+              <x-input
+                v-model="leadForm.first_name"
+                label="FIRST NAME"
+                name="firstName"
+                :rules="[isRequired]"
+                :required="true"
+              />
+              <x-input
+                v-model="leadForm.last_name"
+                label="LAST NAME"
+                name="lastName"
+                :rules="[isRequired]"
+                :required="true"
+              />
+            </div>
+
+            <x-input
+              v-model="leadForm.email"
+              label="EMAIL ADDRESS"
+              name="email"
+              type="email"
+              :rules="[isRequired]"
+              :required="true"
+            />
+
+            <x-input
+              v-model="leadForm.mobile_no"
+              label="PHONE NUMBER"
+              name="mobileNo"
+              :rules="[isRequired]"
+              :required="true"
+            />
+
+            <!-- Corpline: Business Type of Insurance -->
+            <x-select
+              v-if="isCorpline"
+              v-model="leadForm.business_type_of_insurance_id"
+              label="BUSINESS TYPE OF INSURANCE"
+              name="businessTypeOfInsuranceId"
+              :options="[]"
+              placeholder="Select Business Type"
+              class="w-full"
+              :rules="[isRequired]"
+              :required="true"
+            />
+
+            <!-- Health: Plan Type -->
+            <x-select
+              v-if="isHealthLob"
+              v-model="leadForm.health_plan_type_id"
+              label="PLAN TYPE"
+              name="healthPlanTypeId"
+              :options="[]"
+              placeholder="Select Plan Type"
+              class="w-full"
+              :rules="[isRequired]"
+              :required="true"
+            />
+          </template>
+
+          <!-- Duplicate warning popup -->
+          <div
+            v-if="duplicateInfo"
+            class="mt-2 p-4 rounded-lg border border-yellow-400 bg-yellow-50 text-yellow-800"
+          >
+            <p class="font-semibold">Duplicate Lead Found</p>
+            <p class="text-sm mt-1">{{ duplicateInfo.message }}</p>
+            <p v-if="duplicateInfo.existing_advisor" class="text-sm mt-1">
+              Existing Advisor: <strong>{{ duplicateInfo.existing_advisor }}</strong>
+            </p>
+          </div>
+        </div>
       </div>
     </x-form>
 
@@ -205,7 +434,13 @@ watch(
       >
         Cancel
       </x-button>
-      <x-button size="md" color="emerald" type="submit" form="createLeadForm">
+      <x-button
+        size="md"
+        color="emerald"
+        type="submit"
+        form="createLeadForm"
+        :loading="isSubmittingEA"
+      >
         Confirm
       </x-button>
     </template>

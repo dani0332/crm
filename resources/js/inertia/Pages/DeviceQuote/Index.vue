@@ -58,6 +58,8 @@ let availableFilters = {
   renewal_batch_id: [],
   assignment_type: '',
   private_client: '',
+  source: '',
+  ea_model: '',
   page: 1,
 };
 
@@ -96,6 +98,8 @@ const tableHeader = ref([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'LEAD SOURCE', value: 'source', is_active: true },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator.name', is_active: true },
   { text: 'PLAN NAME', value: 'insurance_provider_plan.text', is_active: true },
   { text: 'COVERAGE UP TO', value: 'coverage_up_to', is_active: true },
   { text: 'TOTAL PRICE', value: 'premium', is_active: true },
