@@ -36,6 +36,7 @@ function getData(id = null) {
     .then(response => {
       nationalityPoolConfigurations.value =
         response.data.nationalityPoolConfigurations;
+   
       effectiveFromDates.value = response.data.effectiveFromDates;
 
       // Assign only forst time, avoid reassigning on edit
@@ -61,10 +62,9 @@ function getData(id = null) {
         nationalityPoolConfigurations.value?.health_nationality_group_ids
           ?.split(',')
           .map(Number) || [];
-      selectedNationalities.value =
-        nationalityPoolConfigurations.value?.canonical_nationality_codes?.split(
-          ',',
-        ) || [];
+      const codes = nationalityPoolConfigurations.value?.canonical_nationality_codes;
+      selectedNationalities.value = codes === '' ? null : codes?.split(',') || [];
+   
     })
     .catch(error => {
       notification.error({
@@ -158,14 +158,6 @@ function validateForm() {
   if (!fromDate.value) {
     notification.error({
       title: 'From date is required',
-      position: 'top',
-    });
-    return false;
-  }
-
-  if (selectedNationalities.value.length === 0) {
-    notification.error({
-      title: 'GBP Nationality is required',
       position: 'top',
     });
     return false;
