@@ -17,6 +17,12 @@ const auditLogsRef = ref(null);
 const isInitializing = ref(true);
 const buttonLabel = ref('Create');
 const notification = useToast();
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const canEditNationalityPool = computed(() =>
+  useCan(page.props.permissionsEnum?.NATIONALITY_POOL_CONFIG_EDIT ?? ''),
+);
 
 // Custom functions
 function getData(id = null) {
@@ -191,7 +197,8 @@ watch(selectedNationalityGroups, newVal => {
     >
   </div>
   <x-divider class="my-4" />
-  <x-form @submit="onSubmit" :auto-focus="false">
+  <x-form @submit="onSubmit" :auto-focus="false" :disabled="!canEditNationalityPool">
+
     <!-- Loader -->
     <div
       v-if="loading"
@@ -202,7 +209,7 @@ watch(selectedNationalityGroups, newVal => {
       ></div>
     </div>
 
-    <div class="mb-4">
+    <div class="mb-4" :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }">
       <x-field label="Effective Date">
         <div class="grid sm:grid-cols-2 gap-4">
           <DatePicker
@@ -211,6 +218,7 @@ watch(selectedNationalityGroups, newVal => {
             v-model="fromDate"
             :min-date="new Date()"
             @update:modelValue="checkEffectiveDate"
+            :disabled="!canEditNationalityPool"
           />
           <DatePicker name="to" label="To" v-model="toDate" disabled />
         </div>
@@ -235,7 +243,7 @@ watch(selectedNationalityGroups, newVal => {
         </div>
       </x-field>
     </div>
-    <div class="">
+    <div class="" :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }">
       <x-field label="GBP Nationality">
         <x-select
           :options="gbpNationalities"
@@ -245,6 +253,7 @@ watch(selectedNationalityGroups, newVal => {
           multiple
           v-model="selectedNationalities"
           @update:modelValue="addNationality"
+          :disabled="!canEditNationalityPool"
         />
       </x-field>
     </div>
@@ -254,11 +263,12 @@ watch(selectedNationalityGroups, newVal => {
         color="#ff5e00"
         type="submit"
         :loading="isSearching"
-        :disabled="isSearching"
+        :disabled="isSearching || !canEditNationalityPool"
       >
         {{ buttonLabel }}
       </x-button>
     </div>
+
   </x-form>
 
   <NationalityPoolScheduledConfigurations
