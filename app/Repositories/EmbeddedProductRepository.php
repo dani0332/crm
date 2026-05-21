@@ -483,7 +483,11 @@ class EmbeddedProductRepository extends BaseRepository
             return false;
         }
 
-        return SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep);
+        if (! SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep)) {
+            return false;
+        }
+
+        return $transaction !== null && ! SyncEpBookingHelper::hasActiveSageProcess($transaction);
     }
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)

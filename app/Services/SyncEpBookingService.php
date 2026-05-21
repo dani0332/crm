@@ -6,11 +6,9 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\SageEnum;
 use App\helpers\SyncEpBookingHelper;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
-use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SendsEpFailureEmail;
@@ -182,12 +180,7 @@ class SyncEpBookingService extends BaseService
 
     private function embeddedTransactionHasActiveSageProcess(EmbeddedTransaction $transaction): bool
     {
-        $sageProcess = SageProcess::query()
-            ->where('model_type', $transaction::class)
-            ->where('model_id', $transaction->id)
-            ->first();
-
-        return $sageProcess !== null && $sageProcess->status !== SageEnum::SAGE_PROCESS_FAILED_STATUS;
+        return SyncEpBookingHelper::hasActiveSageProcess($transaction);
     }
 
     /**

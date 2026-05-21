@@ -9,8 +9,10 @@ use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEmbeddedProductEnum;
+use App\Enums\SageEnum;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\SageProcess;
 
 class SyncEpBookingHelper
 {
@@ -31,5 +33,15 @@ class SyncEpBookingHelper
         $isNotEligible = $isInvalidTransaction || $isCourierEp || ! $isPolicyBooked || ! $isReadyForSage || ! $isPaymentCaptured || $isBookingQueued || $isSageBookingCompleted || $isSageBookingCancelled;
 
         return ! $isNotEligible;
+    }
+
+    public static function hasActiveSageProcess(EmbeddedTransaction $transaction): bool
+    {
+        $sageProcess = SageProcess::query()
+            ->where('model_type', $transaction::class)
+            ->where('model_id', $transaction->id)
+            ->first();
+
+        return $sageProcess !== null && $sageProcess->status !== SageEnum::SAGE_PROCESS_FAILED_STATUS;
     }
 }
