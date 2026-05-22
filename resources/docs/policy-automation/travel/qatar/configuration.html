@@ -297,9 +297,7 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/qatar/index.html"
-          >Qatar</a
-        >
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
         <span>></span>
         <span>Configuration</span>
       </div>
@@ -332,8 +330,8 @@
       <div class="section">
         <h2>🌍 Environment Configuration</h2>
         <p>
-          Qatar Travel automation requires several environment variables to
-          be configured. These are typically stored in your
+          Qatar Travel automation requires several environment variables to be
+          configured. These are typically stored in your
           <code class="code-inline">.env</code> file and accessed via Laravel's
           configuration system.
         </p>
@@ -398,8 +396,8 @@
       <div class="section">
         <h2>🎛️ Feature Toggles</h2>
         <p>
-          Feature toggles allow you to enable or disable Qatar Travel
-          automation at runtime without code changes. These are stored in the
+          Feature toggles allow you to enable or disable Qatar Travel automation
+          at runtime without code changes. These are stored in the
           <code class="code-inline">application_storage</code> table and
           accessed via
           <code class="code-inline">ApplicationStorageService</code>.
@@ -418,17 +416,13 @@
           <tbody>
             <tr>
               <td><code>ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE</code></td>
-              <td>
-                Master toggle to enable/disable Qatar Travel automation
-              </td>
+              <td>Master toggle to enable/disable Qatar Travel automation</td>
               <td><code>false</code></td>
               <td>boolean</td>
             </tr>
             <tr>
               <td>
-                <code
-                  >ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE</code
-                >
+                <code>ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE</code>
               </td>
               <td>Enable retry mechanism for timeout errors</td>
               <td><code>false</code></td>
@@ -455,9 +449,7 @@
         <div class="warning-box">
           <strong>⚠️ Important</strong>
           When
-          <code class="code-inline"
-            >ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE</code
-          >
+          <code class="code-inline">ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE</code>
           is disabled, the automation will not execute, but it will log that
           automation is disabled. This allows you to safely disable automation
           without breaking the system.
@@ -827,8 +819,7 @@
               <td>Automation not running</td>
               <td>Feature toggle disabled</td>
               <td>
-                Check ApplicationStorage for
-                ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE
+                Check ApplicationStorage for ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE
               </td>
             </tr>
             <tr>
