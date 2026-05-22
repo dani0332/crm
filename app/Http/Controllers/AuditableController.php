@@ -291,6 +291,7 @@ class AuditableController extends Controller
                 ->where('stage', '!=', 'pricing-lookup')
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
                 ->orderByDesc('customer_member_id')
+                ->orderBy('created_at')
                 ->get();
 
             // Then, get 'pricing-lookup' logs only
