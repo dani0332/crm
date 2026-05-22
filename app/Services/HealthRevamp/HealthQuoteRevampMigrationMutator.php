@@ -323,14 +323,6 @@ final class HealthQuoteRevampMigrationMutator
             ->whereIn('gender', [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE])
             ->update(['gender' => GenericRequestEnum::FEMALE_SHORT_VALUE]);
 
-        $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE])
-            ->update(['gender' => GenericRequestEnum::MALE_SINGLE_VALUE]);
-
-        $this->queries->healthMembersQuery($hqr)
-            ->whereIn('gender', [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE])
-            ->update(['gender' => GenericRequestEnum::FEMALE_SHORT_VALUE]);
-
         $maleGenders = [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE];
         $femaleGenders = [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE];
 
@@ -425,7 +417,7 @@ final class HealthQuoteRevampMigrationMutator
                 return;
             }
 
-            if ($hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
+            if ($hqr->member_category_id == MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
                 $cm->relation_code = RelationCodeEnum::DOMESTIC_WORKER->value;
                 $cm->salary_band_id = $hqr->salary_band_id;
                 $cm->visa_category_id = VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value;
