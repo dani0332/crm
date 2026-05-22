@@ -2266,8 +2266,8 @@ function handleOcrNotification(event) {
               <template #item-discountPremiumPrice="item">
                 <span class="text-primary-600" v-if="item.isDiscountApplied">
                   {{
-                    item.discountPremium + item.vat
-                      ? parseFloat(item.discountPremium + item.vat).toFixed(2)
+                    item.discountPremium
+                      ? parseFloat(item.discountPremium).toFixed(2)
                       : '0.00'
                   }}
                 </span>
