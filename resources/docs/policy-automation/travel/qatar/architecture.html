@@ -303,9 +303,7 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/qatar/index.html"
-          >Qatar</a
-        >
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
         <span>></span>
         <span>Architecture</span>
       </div>
@@ -313,8 +311,8 @@
       <div class="header">
         <h1>🏗️ System Architecture</h1>
         <p>
-          Complete Technical Architecture Documentation for Qatar Travel
-          Policy Issuance Automation
+          Complete Technical Architecture Documentation for Qatar Travel Policy
+          Issuance Automation
         </p>
       </div>
 
@@ -338,11 +336,11 @@
       <div class="section">
         <h2>📋 Overview</h2>
         <p>
-          The Qatar Travel Policy Issuance Automation system is a
-          comprehensive, modular architecture designed to automate the complete
-          policy issuance workflow with Qatar Insurance Company. It provides
-          a standardized interface for integrating with Qatar's travel
-          insurance APIs across different travel types (Inbound and Outbound).
+          The Qatar Travel Policy Issuance Automation system is a comprehensive,
+          modular architecture designed to automate the complete policy issuance
+          workflow with Qatar Insurance Company. It provides a standardized
+          interface for integrating with Qatar's travel insurance APIs across
+          different travel types (Inbound and Outbound).
         </p>
 
         <h3>Core Purpose</h3>
@@ -409,16 +407,16 @@
           provider services must implement.
         </p>
         <p>
-          <strong>Implementation:</strong> QatarInsuranceService implements
-          this interface for Travel LOB.
+          <strong>Implementation:</strong> QatarInsuranceService implements this
+          interface for Travel LOB.
         </p>
 
         <h3>2. Service Layer Architecture</h3>
         <div class="architecture-diagram">
           PolicyIssuanceAutomation/ ├── PolicyIssuanceService # Core
-          orchestration service └── Travel/ └── Qatar/ └──
-          QatarInsuranceService # Main orchestrator (implements Interface)
-          ├── issuePolicyAndFillPolicyDetails() ├── policyPurchase() ├──
+          orchestration service └── Travel/ └── Qatar/ └── QatarInsuranceService
+          # Main orchestrator (implements Interface) ├──
+          issuePolicyAndFillPolicyDetails() ├── policyPurchase() ├──
           fetchAndUploadDocument() ├──
           uploadBuyerTaxInvoiceAndFillBookingDetails() ├──
           triggerBookPolicyProcess() ├── qatarHttpCall() ├──
@@ -861,12 +859,12 @@
         <ul>
           <li><code class="code-inline">null</code> - No steps completed</li>
           <li>
-            <code class="code-inline">QATAR_TRAVEL_ISSUE_POLICY</code> - Step
-            1 completed
+            <code class="code-inline">QATAR_TRAVEL_ISSUE_POLICY</code> - Step 1
+            completed
           </li>
           <li>
-            <code class="code-inline">QATAR_TRAVEL_PURCHASE_POLICY</code> -
-            Step 2 completed
+            <code class="code-inline">QATAR_TRAVEL_PURCHASE_POLICY</code> - Step
+            2 completed
           </li>
           <li>
             <code class="code-inline"
@@ -881,8 +879,8 @@
             - Step 4 completed
           </li>
           <li>
-            <code class="code-inline">QATAR_TRAVEL_BOOK_POLICY</code> - Step
-            5 completed
+            <code class="code-inline">QATAR_TRAVEL_BOOK_POLICY</code> - Step 5
+            completed
           </li>
         </ul>
 
