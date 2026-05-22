@@ -32,7 +32,6 @@ class AlfredCoinsWebhookController extends Controller
             $quoteTypeId = (int) $quote[0];
             $quoteUuid = $quote[1];
 
-            dd($quoteTypeId, $quoteUuid);
             LoggerService::info('AlfredCoinsWebhookController - Re-triggering Alfred Coins webhook via route', [], [
                 'quoteUuid' => $quoteUuid,
                 'quoteTypeId' => $quoteTypeId,
