@@ -95,6 +95,7 @@ class HealthTeamRoutingService
                         'message' => 'Now checking for Health Plan type Entry Level or Good',
                         'step' => 'Health Plan type check',
                         'health_plan_type_id' => $lead->health_plan_type_id,
+                        'health_plan_type (intent)' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
                         'source' => $this->source,
                     ],
                     $lead->id,
@@ -111,6 +112,7 @@ class HealthTeamRoutingService
                         'message' => 'Now checking for GBP qualification If Health Plan type is Best',
                         'step' => 'GBP qualification check',
                         'health_plan_type_id' => $lead->health_plan_type_id,
+                        'health_plan_type (intent)' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
                         'source' => $this->source,
                     ],
                     $lead->id,
@@ -301,13 +303,14 @@ class HealthTeamRoutingService
 
                 $lead->health_team_type = TeamNameEnum::PEC;
                 $lead->save();
-                LoggerService::info('Entry Level or Good team assigned, assigned Non AUH PEC team', ['source' => $this->source]);
+                LoggerService::info('Entry Level or Good intent identified, assigned Non AUH PEC team', ['source' => $this->source]);
                 $this->healthTeamRoutingLogService->log(
                     HealthRoutingLogTypeEnum::ROUTING,
                     [
-                        'message' => 'Entry Level or Good team assigned, assigned Non AUH PEC team',
+                        'message' => 'Entry Level or Good ntry Level or Good intent identified, assigned Non AUH PEC teamntry Level or Good team assigned, assigned Non AUH PEC team assigned, assigned Non AUH PEC team',
                         'step' => 'Health Plan type check',
                         'health_plan_type_id' => $lead->health_plan_type_id,
+                        'health_plan_type (intent)' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
                         'source' => $this->source,
                     ],
                     $lead->id,
@@ -325,6 +328,7 @@ class HealthTeamRoutingService
                         'message' => 'Now checking for GBP qualification If Health Plan type is Best',
                         'step' => 'GBP qualification check',
                         'health_plan_type_id' => $lead->health_plan_type_id,
+                        'health_plan_type (intent)' => HealthPlanTypeEnum::typeText($lead->health_plan_type_id),
                         'source' => $this->source,
                     ],
                     $lead->id,
