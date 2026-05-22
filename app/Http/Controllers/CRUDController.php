@@ -19,6 +19,8 @@ use App\Enums\EmirateEnum;
 use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -364,6 +366,8 @@ class CRUDController extends Controller
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
                 'dropdownSource' => $dropdownSource,
+                'healthSignatoryFilterOptions' => HealthQuoteDigitalSignatory::filterDropdown(),
+                'healthUaePassApiStatusFilterOptions' => HealthQuoteUaePassApiStatus::filterDropdown(),
             ]);
         }
 
@@ -1273,6 +1277,11 @@ class CRUDController extends Controller
                 $record->previous_quote = $record->previous_quote_id
                     ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
                     : null;
+                $archivedDocuments = $this->quoteDocumentService->getArchivedDocuments($quoteType, $record->id);
+
+                // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
+                $record->signatory_text = HealthQuoteDigitalSignatory::displayLabel($record->digital_signatory ?? null);
+                $record->uae_pass_api_status_text = HealthQuoteUaePassApiStatus::displayLabel($record->uae_pass_api_status ?? null);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1357,6 +1366,7 @@ class CRUDController extends Controller
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
                     'branchOptions' => EmirateEnum::getBranchMapping(),
+                    'archivedDocuments' => $archivedDocuments,
                 ]);
             } else {
                 return view('shared.show', compact([

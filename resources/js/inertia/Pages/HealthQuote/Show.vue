@@ -7,6 +7,7 @@ import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import UaeSigningPassLogs from '@/inertia/Components/UaeSigningPassLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -77,6 +78,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  archivedDocuments: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -2459,6 +2461,14 @@ const validateEmirateOfVisa = () => {
                 <dt class="font-medium">IS STP Case</dt>
                 <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SIGNATORY</dt>
+                <dd>{{ quote.signatory_text ?? '—' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE PASS API STATUS</dt>
+                <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2754,6 +2764,14 @@ const validateEmirateOfVisa = () => {
                       filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SIGNATORY</dt>
+                  <dd>{{ quote.signatory_text ?? '—' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UAE PASS API STATUS</dt>
+                  <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -4583,6 +4601,13 @@ const validateEmirateOfVisa = () => {
       :expanded="sectionExpanded"
       :quoteId="page.props.quote.id"
       :quoteTypeId="page.props.quoteTypeId"
+    />
+
+    <UaeSigningPassLogs
+      v-if="quote.uae_pass_api_status_text"
+      :quoteUuid="quote.uuid"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :expanded="sectionExpanded"
     />
 
     <ClientInquiryLogs
