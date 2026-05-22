@@ -104,7 +104,6 @@ use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
-use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
@@ -2038,13 +2037,19 @@ class CRUDController extends Controller
             }
         }
 
-        $result = $this->crudService->updateQuoteStatus($request);
-        $entity = $result['entity'];
+        try {
+            $result = $this->crudService->updateQuoteStatus($request);
+        } catch (Exception $e) {
+            $result['error'] = $e->getMessage();
+        }
 
+        $quoteUuid = $result['entity']?->uuid ?? $request->quote_uuid;
         // Check for error in result
         if (isset($result['error'])) {
-            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('error', $result['error']);
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$quoteUuid)->with('error', $result['error']);
         }
+
+        $entity = $result['entity'];
 
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
@@ -2059,13 +2064,6 @@ class CRUDController extends Controller
         if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
             (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
-        }
-
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-            app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
-                $request->leadId,
-                $request->leadStatus,
-            );
         }
 
         // courtesy email

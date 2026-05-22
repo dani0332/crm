@@ -20,6 +20,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Services\Life\NationalityService;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class HealthQuoteRevampMigrationMutator
@@ -37,27 +38,32 @@ final class HealthQuoteRevampMigrationMutator
     }
 
     /**
-     * Entry point — runs all migration steps in dependency order.
-     * Pre-transaction steps insert missing members/principals that later steps rely on.
-     * The transaction wraps all field-level updates so they commit or roll back atomically.
+     * Entry point — runs all migration steps in dependency order inside a single transaction.
+     * Members are loaded once before the transaction and kept in sync in-memory as each pre-step
+     * inserts or updates rows, so the field-update steps never re-query the database.
      */
     public function applyAll(HealthQuote $hqr): void
     {
-        $this->fillMissingPrincipals($hqr);
-        $this->updatePolicyHoldersFromNameMatch($hqr);
-        $this->insertIndividualPolicyHolderWhenNoNameMatch($hqr);
-        $this->insertMembersWhenNoneAndNoActiveInsured($hqr);
-        $this->insertMembersWhenNoneAndInsuredIndividual($hqr);
-        DB::transaction(function () use ($hqr) {
+        $members = $this->queries->healthMembersQuery($hqr)
+            ->select(['id', 'is_policy_holder', 'is_insured', 'is_principal', 'member_category_id', 'dob', 'first_name', 'last_name', 'gender', 'marital_status_id', 'relation_code', 'salary_band_id', 'visa_category_id', 'nationality_id', 'emirate_of_your_visa_id'])
+            ->get();
+
+        DB::transaction(function () use ($hqr, $members) {
+            $this->fillMissingPrincipals($hqr, $members);
+            $this->updatePolicyHoldersFromNameMatch($hqr, $members);
+            $this->insertIndividualPolicyHolderWhenNoNameMatch($hqr, $members);
+            $this->insertMembersWhenNoneAndNoActiveInsured($hqr, $members);
+            $this->insertMembersWhenNoneAndInsuredIndividual($hqr, $members);
+
             $this->applyCoverForIdUpdates($hqr);
-            $this->applyInsureAndPolicyHolderCodes($hqr);
-            $this->applyMaritalStatusUpdates($hqr);
-            $this->normalizeGenderValues($hqr);
+            $this->applyInsureAndPolicyHolderCodes($hqr, $members);
+            $this->applyMaritalStatusUpdates($hqr, $members);
+            $this->normalizeGenderValues($hqr, $members);
             $this->applyPolicyHolderCategoryCode($hqr);
             $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr);
-            $this->applyMemberRelationSalaryAndVisa($hqr);
+            $this->applyMemberRelationSalaryAndVisa($hqr, $members);
             $this->applyHealthQuoteMemberCategoryRemap($hqr);
-            $this->applyCustomerMemberCategoryRemap($hqr);
+            $this->applyCustomerMemberCategoryRemap($hqr, $members);
         });
     }
 
@@ -66,22 +72,16 @@ final class HealthQuoteRevampMigrationMutator
      * Prefers the member whose name matches the quote holder; falls back to the first member by id.
      * No-ops when a principal already exists or there are no eligible members.
      */
-    private function fillMissingPrincipals(HealthQuote $hqr): void
+    private function fillMissingPrincipals(HealthQuote $hqr, Collection $members): void
     {
-        $members = $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_principal', 'first_name', 'last_name'])
-            ->orderBy('id')
-            ->get();
-
         if ($members->isEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_principal)) {
             return;
         }
 
-        $nameMatch = $members->first(function (CustomerMembers $m) use ($hqr) {
-            return $m->first_name === $hqr->first_name && $m->last_name === $hqr->last_name;
-        });
+        $sorted = $members->sortBy('id');
+        $toUpdate = $sorted->first(fn (CustomerMembers $m) => $m->first_name === $hqr->first_name && $m->last_name === $hqr->last_name)
+            ?? $sorted->first();
 
-        $toUpdate = $nameMatch ?? $members->first();
         if ($toUpdate) {
             $toUpdate->is_principal = true;
             $toUpdate->save();
@@ -93,26 +93,21 @@ final class HealthQuoteRevampMigrationMutator
      * Among candidates, prefers the principal; ties are broken by id ascending.
      * No-ops when a policy holder already exists or no adult name match is found.
      */
-    private function updatePolicyHoldersFromNameMatch(HealthQuote $hqr): void
+    private function updatePolicyHoldersFromNameMatch(HealthQuote $hqr, Collection $members): void
     {
-        $members = $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_principal', 'is_policy_holder', 'first_name', 'last_name', 'dob'])
-            ->get();
-
         if ($members->isEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
             return;
         }
 
-        $nameMatches = $members->filter(function (CustomerMembers $m) use ($hqr) {
+        $chosen = $members->filter(function (CustomerMembers $m) use ($hqr) {
             return $m->first_name === $hqr->first_name
                 && $m->last_name === $hqr->last_name
                 && $this->context->memberIsAtLeastYearsOld($m->dob, 18);
         })->sortBy([
             ['is_principal', 'desc'],
             ['id', 'asc'],
-        ]);
+        ])->first();
 
-        $chosen = $nameMatches->first();
         if ($chosen) {
             $chosen->is_policy_holder = true;
             $chosen->save();
@@ -124,31 +119,21 @@ final class HealthQuoteRevampMigrationMutator
      * when members exist but none qualify as an adult name-match policy holder.
      * Covers the case where the quote holder is the payer but not the insured.
      */
-    private function insertIndividualPolicyHolderWhenNoNameMatch(HealthQuote $hqr): void
+    private function insertIndividualPolicyHolderWhenNoNameMatch(HealthQuote $hqr, Collection $members): void
     {
-        if (! $this->shouldInsertIndividualPolicyHolderWhenNoNameMatch($hqr)) {
+        if ($hqr->customer_id === null || $members->isEmpty()) {
             return;
         }
 
-        $this->createIndividualMember($hqr, [
+        if ($members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
+            return;
+        }
+
+        $members->push($this->createIndividualMember($hqr, [
             'is_insured' => false,
             'is_policy_holder' => true,
             'is_principal' => false,
-        ]);
-    }
-
-    /**
-     * Guard for insertIndividualPolicyHolderWhenNoNameMatch:
-     * insert only when there are existing members but no adult name-match policy holder among them.
-     */
-    private function shouldInsertIndividualPolicyHolderWhenNoNameMatch(HealthQuote $hqr): bool
-    {
-        if ($hqr->customer_id === null) {
-            return false;
-        }
-
-        return $this->queries->hasIndividualMembers($hqr)
-            && ! $this->queries->hasAdultNameMatchPolicyHolder($hqr);
+        ]));
     }
 
     /**
@@ -156,13 +141,13 @@ final class HealthQuoteRevampMigrationMutator
      * has no members and no active customer_insured link.
      * Handles leads where no insured data was ever captured through the normal flow.
      */
-    private function insertMembersWhenNoneAndNoActiveInsured(HealthQuote $hqr): void
+    private function insertMembersWhenNoneAndNoActiveInsured(HealthQuote $hqr, Collection $members): void
     {
         if ($hqr->customer_id === null) {
             return;
         }
 
-        if ($this->queries->hasIndividualMembers($hqr)) {
+        if ($members->isNotEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
             return;
         }
 
@@ -170,11 +155,11 @@ final class HealthQuoteRevampMigrationMutator
             return;
         }
 
-        $this->createIndividualMember($hqr, [
+        $members->push($this->createIndividualMember($hqr, [
             'is_insured' => true,
             'is_policy_holder' => true,
             'is_principal' => true,
-        ]);
+        ]));
     }
 
     /**
@@ -182,13 +167,13 @@ final class HealthQuoteRevampMigrationMutator
      * has no members but does have an active Individual customer_insured row.
      * Bridges the gap between legacy insured-only data and the revamp member structure.
      */
-    private function insertMembersWhenNoneAndInsuredIndividual(HealthQuote $hqr): void
+    private function insertMembersWhenNoneAndInsuredIndividual(HealthQuote $hqr, Collection $members): void
     {
         if ($hqr->customer_id === null) {
             return;
         }
 
-        if ($this->queries->hasIndividualMembers($hqr)) {
+        if ($members->isNotEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
             return;
         }
 
@@ -198,11 +183,11 @@ final class HealthQuoteRevampMigrationMutator
             return;
         }
 
-        $this->createIndividualMember($hqr, [
+        $members->push($this->createIndividualMember($hqr, [
             'is_insured' => true,
             'is_policy_holder' => true,
             'is_principal' => true,
-        ]);
+        ]));
     }
 
     /**
@@ -213,9 +198,9 @@ final class HealthQuoteRevampMigrationMutator
      *
      * @param  array{is_insured: bool, is_policy_holder: bool, is_principal: bool}  $flags
      */
-    private function createIndividualMember(HealthQuote $hqr, array $flags): void
+    private function createIndividualMember(HealthQuote $hqr, array $flags): CustomerMembers
     {
-        DB::transaction(function () use ($hqr, $flags) {
+        return DB::transaction(function () use ($hqr, $flags): CustomerMembers {
             $suffix = 1 + CustomerMembers::query()
                 ->where('customer_entity_id', $hqr->customer_id)
                 ->where('customer_type', CustomerTypeEnum::Individual)
@@ -223,7 +208,7 @@ final class HealthQuoteRevampMigrationMutator
                 ->lockForUpdate()
                 ->count();
 
-            CustomerMembers::query()->create(array_merge([
+            return CustomerMembers::query()->create(array_merge([
                 'quote_type' => HealthQuoteRevampMigrationQueries::QUOTE_MORPH,
                 'quote_id' => $hqr->id,
                 'customer_entity_id' => $hqr->customer_id,
@@ -264,12 +249,8 @@ final class HealthQuoteRevampMigrationMutator
      * and policy_holder_code (ME vs OTHER_ADULT_FAMILY_MEMBER) from whether the policy holder
      * is also an insured. Both codes are required by the revamp schema.
      */
-    private function applyInsureAndPolicyHolderCodes(HealthQuote $hqr): void
+    private function applyInsureAndPolicyHolderCodes(HealthQuote $hqr, Collection $members): void
     {
-        $members = $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_policy_holder', 'is_insured'])
-            ->get();
-
         if ($members->isEmpty()) {
             return;
         }
@@ -288,7 +269,7 @@ final class HealthQuoteRevampMigrationMutator
      * M/F/FS/Female/Male → SINGLE; FM → MARRIED; UNMARRIED_PARTNER → SINGLE.
      * Principal members inherit the quote's resolved status; others derive from their own gender.
      */
-    private function applyMaritalStatusUpdates(HealthQuote $hqr): void
+    private function applyMaritalStatusUpdates(HealthQuote $hqr, Collection $members): void
     {
         $g = $hqr->gender;
         $msId = $hqr->marital_status_id;
@@ -303,27 +284,24 @@ final class HealthQuoteRevampMigrationMutator
 
         $hqr->save();
 
-        $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_principal', 'gender', 'marital_status_id'])
-            ->get()
-            ->each(function (CustomerMembers $cm) use ($hqr) {
-                $g = $cm->gender;
-                if ($cm->is_principal) {
-                    $cm->marital_status_id = $hqr->marital_status_id;
-                } elseif (! $cm->is_principal && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
-                    $cm->marital_status_id = MaritalStatusEnum::SINGLE->value;
-                } elseif (! $cm->is_principal && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
-                    $cm->marital_status_id = MaritalStatusEnum::MARRIED->value;
-                }
-                $cm->save();
-            });
+        $members->each(function (CustomerMembers $cm) use ($hqr) {
+            $g = $cm->gender;
+            if ($cm->is_principal) {
+                $cm->marital_status_id = $hqr->marital_status_id;
+            } elseif (! $cm->is_principal && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
+                $cm->marital_status_id = MaritalStatusEnum::SINGLE->value;
+            } elseif (! $cm->is_principal && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
+                $cm->marital_status_id = MaritalStatusEnum::MARRIED->value;
+            }
+            $cm->save();
+        });
     }
 
     /**
      * Collapses legacy multi-value gender codes to the canonical M/F values expected by the revamp.
      * Applied to the health_quote, personal_quote, and all Individual customer_members rows.
      */
-    private function normalizeGenderValues(HealthQuote $hqr): void
+    private function normalizeGenderValues(HealthQuote $hqr, Collection $members): void
     {
         $g = $hqr->gender;
         if (in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE], true)) {
@@ -352,6 +330,19 @@ final class HealthQuoteRevampMigrationMutator
         $this->queries->healthMembersQuery($hqr)
             ->whereIn('gender', [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE])
             ->update(['gender' => GenericRequestEnum::FEMALE_SHORT_VALUE]);
+
+        $maleGenders = [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE];
+        $femaleGenders = [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE];
+
+        $members->each(function (CustomerMembers $cm) use ($maleGenders, $femaleGenders) {
+            if (in_array($cm->gender, $maleGenders, true)) {
+                $cm->gender = GenericRequestEnum::MALE_SINGLE_VALUE;
+            } elseif (in_array($cm->gender, $femaleGenders, true)) {
+                $cm->gender = GenericRequestEnum::FEMALE_SHORT_VALUE;
+            }
+
+            $cm->save();
+        });
     }
 
     /**
@@ -419,72 +410,69 @@ final class HealthQuoteRevampMigrationMutator
      * from their member_category_id. Policy holders inherit salary/visa from the quote and
      * have their relation_code cleared. All other members derive values via category-based rules.
      */
-    private function applyMemberRelationSalaryAndVisa(HealthQuote $hqr): void
+    private function applyMemberRelationSalaryAndVisa(HealthQuote $hqr, Collection $members): void
     {
-        $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_policy_holder', 'member_category_id', 'dob', 'relation_code', 'salary_band_id', 'visa_category_id'])
-            ->get()
-            ->each(function (CustomerMembers $cm) use ($hqr) {
-                $mc = (int) $cm->member_category_id;
-                $months = $this->context->monthsSinceDob($this->context->dobToDateString($cm->dob));
+        $members->each(function (CustomerMembers $cm) use ($hqr) {
+            $mc = (int) $cm->member_category_id;
+            $months = $this->context->monthsSinceDob($this->context->dobToDateString($cm->dob));
 
-                if ($cm->is_policy_holder) {
-                    $cm->relation_code = RelationCodeEnum::SELF->value;
-                    $cm->salary_band_id = $hqr->salary_band_id;
-                    $cm->visa_category_id = $hqr->visa_category_id;
-                    $cm->save();
-
-                    return;
-                }
-
-                if ($hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
-                    $cm->relation_code = RelationCodeEnum::DOMESTIC_WORKER->value;
-                    $cm->salary_band_id = $hqr->salary_band_id;
-                    $cm->visa_category_id = VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value;
-                    $cm->save();
-
-                    return;
-                }
-
-                $relation = match (true) {
-                    $mc === MemberCategoryEnum::DOMESTIC_WORKER->value => RelationCodeEnum::DOMESTIC_WORKER->value,
-                    in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value, MemberCategoryEnum::INVESTOR_PARTNER->value, MemberCategoryEnum::GOLDEN_VISA->value], true) => null,
-                    $mc === MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value => RelationCodeEnum::RELATIVES->value,
-                    $mc === MemberCategoryEnum::DEPENDENT_PARENT->value => RelationCodeEnum::PARENT->value,
-                    $mc === MemberCategoryEnum::DEPENDENT_SPOUSE->value => RelationCodeEnum::SPOUSE->value,
-                    $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => RelationCodeEnum::CHILD->value,
-                    default => $cm->relation_code,
-                };
-
-                $salary = match ($mc) {
-                    MemberCategoryEnum::DOMESTIC_WORKER->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
-                    MemberCategoryEnum::EMPLOYEE_2->value => SalaryBandEnum::BETWEEN_4001_AND_12000->value,
-                    MemberCategoryEnum::EMPLOYEE_1->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
-                    MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
-                    MemberCategoryEnum::INVESTOR_PARTNER->value,
-                    MemberCategoryEnum::GOLDEN_VISA->value => SalaryBandEnum::ABOVE_12000->value,
-                    MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
-                    MemberCategoryEnum::DEPENDENT_PARENT->value,
-                    MemberCategoryEnum::DEPENDENT_CHILD->value,
-                    MemberCategoryEnum::DEPENDENT_SPOUSE->value => SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value,
-                    default => $cm->salary_band_id,
-                };
-
-                $visa = match (true) {
-                    in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
-                    $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
-                    $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
-                    $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
-                    $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 12 => VisaCategoryEnum::NEWBORN_BORN_IN_UAE->value,
-                    $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
-                    default => $cm->visa_category_id,
-                };
-
-                $cm->relation_code = $relation;
-                $cm->salary_band_id = $salary;
-                $cm->visa_category_id = $visa;
+            if ($cm->is_policy_holder) {
+                $cm->relation_code = RelationCodeEnum::SELF->value;
+                $cm->salary_band_id = $hqr->salary_band_id;
+                $cm->visa_category_id = $hqr->visa_category_id;
                 $cm->save();
-            });
+
+                return;
+            }
+
+            if ($hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
+                $cm->relation_code = RelationCodeEnum::DOMESTIC_WORKER->value;
+                $cm->salary_band_id = $hqr->salary_band_id;
+                $cm->visa_category_id = VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value;
+                $cm->save();
+
+                return;
+            }
+
+            $relation = match (true) {
+                $mc === MemberCategoryEnum::DOMESTIC_WORKER->value => RelationCodeEnum::DOMESTIC_WORKER->value,
+                in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value, MemberCategoryEnum::INVESTOR_PARTNER->value, MemberCategoryEnum::GOLDEN_VISA->value], true) => null,
+                $mc === MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value => RelationCodeEnum::RELATIVES->value,
+                $mc === MemberCategoryEnum::DEPENDENT_PARENT->value => RelationCodeEnum::PARENT->value,
+                $mc === MemberCategoryEnum::DEPENDENT_SPOUSE->value => RelationCodeEnum::SPOUSE->value,
+                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => RelationCodeEnum::CHILD->value,
+                default => $cm->relation_code,
+            };
+
+            $salary = match ($mc) {
+                MemberCategoryEnum::DOMESTIC_WORKER->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
+                MemberCategoryEnum::EMPLOYEE_2->value => SalaryBandEnum::BETWEEN_4001_AND_12000->value,
+                MemberCategoryEnum::EMPLOYEE_1->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
+                MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
+                MemberCategoryEnum::INVESTOR_PARTNER->value,
+                MemberCategoryEnum::GOLDEN_VISA->value => SalaryBandEnum::ABOVE_12000->value,
+                MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
+                MemberCategoryEnum::DEPENDENT_PARENT->value,
+                MemberCategoryEnum::DEPENDENT_CHILD->value,
+                MemberCategoryEnum::DEPENDENT_SPOUSE->value => SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value,
+                default => $cm->salary_band_id,
+            };
+
+            $visa = match (true) {
+                in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+                $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
+                $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
+                $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
+                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 12 => VisaCategoryEnum::NEWBORN_BORN_IN_UAE->value,
+                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+                default => $cm->visa_category_id,
+            };
+
+            $cm->relation_code = $relation;
+            $cm->salary_band_id = $salary;
+            $cm->visa_category_id = $visa;
+            $cm->save();
+        });
     }
 
     /**
@@ -516,35 +504,32 @@ final class HealthQuoteRevampMigrationMutator
      * applyHealthQuoteMemberCategoryRemap. The principal member inherits the quote's already-remapped
      * value; all others are evaluated independently from their own dob, nationality, and emirate.
      */
-    private function applyCustomerMemberCategoryRemap(HealthQuote $hqr): void
+    private function applyCustomerMemberCategoryRemap(HealthQuote $hqr, Collection $members): void
     {
-        $this->queries->healthMembersQuery($hqr)
-            ->select(['id', 'is_principal', 'member_category_id', 'dob', 'nationality_id', 'emirate_of_your_visa_id'])
-            ->get()
-            ->each(function (CustomerMembers $cm) use ($hqr) {
-                if ($cm->is_principal) {
-                    $cm->member_category_id = $hqr->member_category_id;
-                    $cm->save();
-
-                    return;
-                }
-
-                $dobStr = $this->context->dobToDateString($cm->dob);
-                $months = $this->context->monthsSinceDob($dobStr);
-                $nid = (int) $cm->nationality_id;
-                $eid = $cm->emirate_of_your_visa_id;
-
-                $newMc = match (true) {
-                    $dobStr && $months !== null && $months <= 12 => MemberCategoryEnum::NEWBORN->value,
-                    in_array($nid, $this->uaeNationalityIds, true) => MemberCategoryEnum::UAE_NATIONAL->value,
-                    in_array($nid, $this->gccNationalityIds, true) => MemberCategoryEnum::GCC_NATIONAL->value,
-                    $eid !== null && (int) $eid === EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_DUBAI_VISA->value,
-                    $eid !== null && (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
-                    default => $cm->member_category_id,
-                };
-
-                $cm->member_category_id = $newMc;
+        $members->each(function (CustomerMembers $cm) use ($hqr) {
+            if ($cm->is_principal) {
+                $cm->member_category_id = $hqr->member_category_id;
                 $cm->save();
-            });
+
+                return;
+            }
+
+            $dobStr = $this->context->dobToDateString($cm->dob);
+            $months = $this->context->monthsSinceDob($dobStr);
+            $nid = (int) $cm->nationality_id;
+            $eid = $cm->emirate_of_your_visa_id;
+
+            $newMc = match (true) {
+                $dobStr && $months !== null && $months <= 12 => MemberCategoryEnum::NEWBORN->value,
+                in_array($nid, $this->uaeNationalityIds, true) => MemberCategoryEnum::UAE_NATIONAL->value,
+                in_array($nid, $this->gccNationalityIds, true) => MemberCategoryEnum::GCC_NATIONAL->value,
+                $eid !== null && (int) $eid === EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_DUBAI_VISA->value,
+                $eid !== null && (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
+                default => $cm->member_category_id,
+            };
+
+            $cm->member_category_id = $newMc;
+            $cm->save();
+        });
     }
 }

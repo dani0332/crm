@@ -14,7 +14,7 @@ use App\Services\Logger\LoggerService;
 use Exception;
 
 /**
- * Applies health revamp data migration logic (health-revamp-3-migrationScript.sql) to a single lead.
+ * Applies health revamp data migration logic to a single lead.
  * Intentionally omits filters on is_quote_locked and quote_status_id so locked / any status can be migrated.
  *
  * Skips entirely when the lead matches “entity health lead” semantics (active health customer_insured
@@ -167,6 +167,7 @@ class HealthQuoteRevampMigrationService
             );
         } catch (Exception $e) {
             LoggerService::error('Error migrating health quote', exception: $e);
+            throw new Exception('Unable to migrate health quote data.');
         } finally {
             LoggerService::endLogging();
         }

@@ -386,6 +386,13 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
+                    $request->leadId,
+                    $request->leadStatus,
+                );
+            }
+
             return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }

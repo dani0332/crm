@@ -1241,6 +1241,7 @@ class CoreSchema
                 $table->id();
                 $table->string('quote_type'); // Polymorphic: model class name
                 $table->unsignedBigInteger('quote_id'); // Polymorphic: model ID
+                $table->string('code', 200)->nullable();
                 $table->string('customer_type')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();

@@ -2,11 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Enums\EmirateEnum;
 use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
+use App\Enums\MaritalStatusEnum;
+use App\Enums\MemberCategoryEnum;
 use App\Enums\PolicyHolderCategoryCodeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RelationCodeEnum;
 use App\Events\HealthQuoteMigration;
 use App\Models\CustomerInsured;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Services\HealthQuoteRevampMigrationService;
@@ -329,5 +336,326 @@ describe('applyPolicyHolderCategoryCode - nationality priority', function () {
 
         expect($quote->fresh()->policy_holder_category_code)
             ->toBe(PolicyHolderCategoryCodeEnum::RESIDENT->value);
+    });
+});
+
+// ============================================================================
+// SECTION: member insertion
+// ============================================================================
+
+describe('member insertion', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('inserts a principal member when quote has no members and no active insured', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => 99,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        $member = CustomerMembers::where('quote_id', $quote->id)->first();
+        expect($member)->not->toBeNull()
+            ->and((bool) $member->is_principal)->toBeTrue()
+            ->and((bool) $member->is_policy_holder)->toBeTrue()
+            ->and((bool) $member->is_insured)->toBeTrue()
+            ->and($member->code)->toStartWith('IND-');
+    });
+
+    it('inserts a member when quote has no members but has an active individual insured', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => 99,
+        ]);
+
+        $insured = Insured::factory()->create();
+        CustomerInsured::factory()->forActiveHealthLink($quote, $insured)->create();
+
+        $mutator->applyAll($quote);
+
+        expect(CustomerMembers::where('quote_id', $quote->id)->count())->toBe(1);
+    });
+});
+
+// ============================================================================
+// SECTION: domestic worker migration
+// ============================================================================
+
+describe('domestic worker migration', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('sets cover_for_id to DOMESTIC_HELPER and relation_code to DOMESTIC_WORKER on a principal non-policy-holder', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'member_category_id' => MemberCategoryEnum::DOMESTIC_WORKER->value,
+            'first_name' => 'Employer',
+            'last_name' => 'Test',
+            'customer_id' => null,
+        ]);
+
+        $member = CustomerMembers::factory()->create([
+            'quote_id' => $quote->id,
+            'first_name' => 'Worker',
+            'last_name' => 'Person',
+            'is_principal' => true,
+            'is_policy_holder' => false,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect((int) $quote->fresh()->cover_for_id)->toBe(HealthCoverForEnum::DOMESTIC_HELPER->value)
+            ->and($member->fresh()->relation_code)->toBe(RelationCodeEnum::DOMESTIC_WORKER->value);
+    });
+});
+
+// ============================================================================
+// SECTION: gender normalization
+// ============================================================================
+
+describe('gender normalization', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('normalizes Male to M', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'gender' => 'Male',
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->gender)->toBe('M');
+    });
+
+    it('normalizes FM (married female) to F', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'gender' => 'FM',
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->gender)->toBe('F');
+    });
+});
+
+// ============================================================================
+// SECTION: marital status derivation
+// ============================================================================
+
+describe('marital status derivation from gender', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('sets MARRIED when gender is FM and marital_status_id is null', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'gender' => 'FM',
+            'marital_status_id' => null,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusEnum::MARRIED->value);
+    });
+
+    it('sets SINGLE when gender is M and marital_status_id is null', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'gender' => 'M',
+            'marital_status_id' => null,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusEnum::SINGLE->value);
+    });
+});
+
+// ============================================================================
+// SECTION: insure_code and policy_holder_code derivation
+// ============================================================================
+
+describe('insure_code and policy_holder_code derivation', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('sets ONLY_MYSELF and ME when there is exactly one insured policy-holder', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        CustomerMembers::factory()->create([
+            'quote_id' => $quote->id,
+            'is_insured' => true,
+            'is_policy_holder' => true,
+            'is_principal' => true,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->insure_code)->toBe(HealthInsureEnum::ONLY_MYSELF->value)
+            ->and($quote->fresh()->policy_holder_code)->toBe(HealthPolicyHolderEnum::ME->value);
+    });
+
+    it('sets MYSELF_AND_MY_FAMILY_MEMBERS when there are multiple insured members', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        CustomerMembers::factory()->create([
+            'quote_id' => $quote->id,
+            'is_insured' => true,
+            'is_policy_holder' => true,
+            'is_principal' => true,
+        ]);
+
+        CustomerMembers::factory()->create([
+            'quote_id' => $quote->id,
+            'is_insured' => true,
+            'is_policy_holder' => false,
+            'is_principal' => false,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->insure_code)->toBe(HealthInsureEnum::MYSELF_AND_MY_FAMILY_MEMBERS->value);
+    });
+});
+
+// ============================================================================
+// SECTION: member category remap
+// ============================================================================
+
+describe('member category remap', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('remaps to NEWBORN when quote DOB is within 12 months', function () {
+        Carbon::setTestNow(Carbon::parse('2026-05-20'));
+
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'dob' => '2026-01-01',
+            'nationality_id' => 999,
+            'emirate_of_your_visa_id' => null,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->member_category_id)->toBe(MemberCategoryEnum::NEWBORN->value);
+
+        Carbon::setTestNow();
+    });
+
+    it('remaps to UAE_NATIONAL when nationality is in the UAE list', function () {
+        $uaeNationalityId = 42;
+        $mutator = makeMutatorWithNationalities([$uaeNationalityId], []);
+
+        $quote = HealthQuote::factory()->create([
+            'dob' => '1990-01-01',
+            'nationality_id' => $uaeNationalityId,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->member_category_id)->toBe(MemberCategoryEnum::UAE_NATIONAL->value);
+    });
+
+    it('remaps to EXPAT_DUBAI_VISA when emirate is Dubai and nationality is not UAE/GCC', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'dob' => '1990-01-01',
+            'nationality_id' => 999,
+            'emirate_of_your_visa_id' => EmirateEnum::DUBAI,
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect($quote->fresh()->member_category_id)->toBe(MemberCategoryEnum::EXPAT_DUBAI_VISA->value);
+    });
+});
+
+// ============================================================================
+// SECTION: idempotency
+// ============================================================================
+
+describe('idempotency', function () {
+    it('migrateLead is a no-op on an already-migrated quote', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        $stateAfterFirst = $quote->fresh()->only(['cover_for_id', 'policy_holder_category_code']);
+
+        $service = new HealthQuoteRevampMigrationService;
+        $service->migrateLead($quote->id);
+
+        expect($quote->fresh()->only(['cover_for_id', 'policy_holder_category_code']))->toBe($stateAfterFirst);
+    });
+});
+
+// ============================================================================
+// SECTION: policy holder name-match assignment
+// ============================================================================
+
+describe('policy holder name-match assignment', function () {
+    afterEach(fn () => Mockery::close());
+
+    it('promotes an adult name-matched member to policy holder when none exists', function () {
+        $mutator = makeMutatorWithNationalities([], []);
+
+        $quote = HealthQuote::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'cover_for_id' => HealthCoverForEnum::INDIVIDUAL->value,
+            'customer_id' => null,
+        ]);
+
+        $member = CustomerMembers::factory()->create([
+            'quote_id' => $quote->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'dob' => '1990-01-01',
+            'is_policy_holder' => false,
+            'is_principal' => true,
+        ]);
+
+        $mutator->applyAll($quote);
+
+        expect((bool) $member->fresh()->is_policy_holder)->toBeTrue();
     });
 });
