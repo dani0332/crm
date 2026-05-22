@@ -68,11 +68,11 @@ test('sage document number postfix increments between duplicate retries', functi
     ],
     'second duplicate retry' => [
         '108-32/1',
-        '108-32/2',
+        '108-32/1',
     ],
     'later duplicate retry' => [
         '108-32/9',
-        '108-32/10',
+        '108-32/9',
     ],
     'empty document number' => [
         '',

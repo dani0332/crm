@@ -430,24 +430,13 @@ class EpBookingService extends BaseService
         }
     }
 
-    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote): bool
+    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote, string $duplicateNumber): bool
     {
-        $return = true;
         $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
         if (! $insuranceProvider) {
             LoggerService::warning(self::class." - Insurance provider not found: {$quote->code}");
-            $return = false;
-        }
 
-        if ($quote->sage_invoice_no_update_at != null) {
-            LoggerService::warning(self::class.' - Sage invoice number already updated for EP Sage booking', extra: [
-                'ep_code' => $quote->code,
-            ]);
-            $return = false;
-        }
-
-        if (! $return) {
-            return $return;
+            return false;
         }
 
         $quoteUuid = Str::afterLast($quote->code, '-');
@@ -464,7 +453,7 @@ class EpBookingService extends BaseService
             return false;
         }
 
-        return self::updateSageBookingInvoiceNumbers($quote, $quoteUuid, $insuranceProvider, $insurerRequestResponse);
+        return self::updateSageBookingInvoiceNumbers($quote, $quoteUuid, $insuranceProvider, $insurerRequestResponse, $duplicateNumber);
     }
 
     private static function getLatestPassedEcbInsurerRequestResponse(string $quoteUuid, int $providerId): ?InsurerRequestResponse
@@ -478,7 +467,7 @@ class EpBookingService extends BaseService
         ])->latest()->first();
     }
 
-    private static function updateSageBookingInvoiceNumbers(EmbeddedTransaction $quote, string $quoteUuid, InsuranceProvider $insuranceProvider, InsurerRequestResponse $insurerRequestResponse): bool
+    private static function updateSageBookingInvoiceNumbers(EmbeddedTransaction $quote, string $quoteUuid, InsuranceProvider $insuranceProvider, InsurerRequestResponse $insurerRequestResponse, string $duplicateNumber): bool
     {
         $response = json_decode((string) $insurerRequestResponse->response, true);
         if (! is_array($response)) {
@@ -493,7 +482,7 @@ class EpBookingService extends BaseService
             return false;
         }
 
-        $isResponseUpdated = self::prepareSageBookingInvoiceNumberUpdates($response, $quote, $quoteUuid, $insuranceProvider->id);
+        $isResponseUpdated = self::prepareSageBookingInvoiceNumberUpdates($response, $quote, $quoteUuid, $insuranceProvider->id, $duplicateNumber);
 
         if (! $isResponseUpdated) {
             LoggerService::info(self::class.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
@@ -508,11 +497,11 @@ class EpBookingService extends BaseService
         return self::persistSageBookingInvoiceNumberUpdates($insurerRequestResponse, $quote, $response, $quoteUuid, $insuranceProvider->id);
     }
 
-    private static function prepareSageBookingInvoiceNumberUpdates(array &$response, EmbeddedTransaction $quote, string $quoteUuid, int $providerId): bool
+    private static function prepareSageBookingInvoiceNumberUpdates(array &$response, EmbeddedTransaction $quote, string $quoteUuid, int $providerId, string $duplicateNumber): bool
     {
         $isResponseUpdated = false;
 
-        if (array_key_exists('premium_inv_no', $response) && $response['premium_inv_no'] !== null) {
+        if (array_key_exists('premium_inv_no', $response) && $response['premium_inv_no'] !== null && $response['premium_inv_no'] === $duplicateNumber) {
             $previousPremiumInvoiceNo = $response['premium_inv_no'];
             $updatedPremiumInvoiceNo = self::withSageDocumentNumberPostfix($previousPremiumInvoiceNo);
 
@@ -527,10 +516,17 @@ class EpBookingService extends BaseService
                     'previous_premium_inv_no' => $previousPremiumInvoiceNo,
                     'updated_premium_inv_no' => $updatedPremiumInvoiceNo,
                 ]);
+            } else {
+                LoggerService::info(self::class.' - Premium invoice number already includes Sage postfix, no update needed', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'premium_inv_no' => $response['premium_inv_no'],
+                ]);
             }
         }
 
-        if (array_key_exists('commision_inv_no', $response) && $response['commision_inv_no'] !== null) {
+        if (array_key_exists('commision_inv_no', $response) && $response['commision_inv_no'] !== null && $response['commision_inv_no'] === $duplicateNumber) {
             $previousCommissionInvoiceNo = $response['commision_inv_no'];
             $updatedCommissionInvoiceNo = self::withSageDocumentNumberPostfix($previousCommissionInvoiceNo);
 
@@ -544,6 +540,13 @@ class EpBookingService extends BaseService
                     'provider_id' => $providerId,
                     'previous_commission_inv_no' => $previousCommissionInvoiceNo,
                     'updated_commission_inv_no' => $updatedCommissionInvoiceNo,
+                ]);
+            } else {
+                LoggerService::info(self::class.' - Commission invoice number already includes Sage postfix, no update needed', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'commission_inv_no' => $response['commision_inv_no'],
                 ]);
             }
         }
@@ -610,13 +613,9 @@ class EpBookingService extends BaseService
             return $documentNumber;
         }
 
-        // The regex below checks if the document number ends with a slash followed by digits (e.g., "INV123/4").
-        // If so, it increments the trailing number and returns, e.g., "INV123/4" becomes "INV123/5".
-        // If the document number does NOT have a trailing slash and number (e.g., "TIVCMDP" or "4927529"),
-        // then it appends "/1" to the document number (so "TIVCMDP" becomes "TIVCMDP/1", "4927529" becomes "4927529/1").
-
-        if (preg_match('/^(.*)\/(\d+)$/', $documentNumber, $matches)) {
-            return $matches[1].'/'.((int) $matches[2] + 1);
+        // If the document number already ends with /digits, return it unchanged
+        if (preg_match('/^(.*)\/(\d+)$/', $documentNumber)) {
+            return $documentNumber;
         }
 
         return $documentNumber.'/1';
