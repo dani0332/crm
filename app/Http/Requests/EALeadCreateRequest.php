@@ -20,13 +20,13 @@ class EALeadCreateRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $isCollaborate = $this->input('ea_model') === 'collaborate';
+        $isCollaborate = $this->getEaModel() === EaModelEnum::Collaborate;
         $quoteTypeId = (int) $this->input('quote_type_id');
 
         $collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health];
 
         return [
-            'ea_model' => ['required', Rule::in(['referral', 'collaborate'])],
+            'ea_model' => ['required', Rule::enum(EaModelEnum::class)],
             'quote_type_id' => [
                 'required',
                 'integer',
