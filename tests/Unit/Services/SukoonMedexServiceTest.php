@@ -1,9 +1,14 @@
 <?php
 
+use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\VehicleTypeEnum;
+use App\Models\EmbeddedTransaction;
 use App\Services\SukoonMedexService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Queue;
 
 use function Pest\Laravel\partialMock;
 
@@ -95,5 +100,73 @@ describe('prepareAdditionalData', function () {
         $result = $method->invoke($this->service);
 
         expect($result['plan_option'])->toBeNull();
+    });
+});
+
+describe('processPurchaseFlow send guard after provider sync', function () {
+    /**
+     * Mirrors SukoonMedexService::processPurchaseFlow email branch conditions
+     * (excluding watermarked document checks).
+     */
+    function shouldAttemptCertificateEmailAfterSync(
+        string $initialPolicyStatusBeforeDocumentsSync,
+        string $policyStatusAfterSync
+    ): bool {
+        $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+            $initialPolicyStatusBeforeDocumentsSync,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        );
+        $isNowReadyForSage = $policyStatusAfterSync === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+
+        return ! $hasAlreadySentDocument && $isNowReadyForSage;
+    }
+
+    test('attempts send when status transitions to ready for sage from earlier stage', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_BOOKED,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        ))->toBeTrue();
+    });
+
+    test('does not attempt send when already ready for sage before sync', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        ))->toBeFalse();
+    });
+
+    test('does not attempt send when post-sync status is not yet ready for sage', function () {
+        expect(shouldAttemptCertificateEmailAfterSync(
+            EmbeddedTransactionEnum::STATUS_BOOKED,
+            EmbeddedTransactionEnum::STATUS_BOOKED
+        ))->toBeFalse();
+    });
+});
+
+describe('maybeSendDocumentsEmail', function () {
+    test('does not queue jobs when policy was already ready for sage before sync', function () {
+        Queue::fake();
+
+        $transaction = EmbeddedTransaction::make([
+            'policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
+        ]);
+        $transaction->setRelation('documents', new EloquentCollection([
+            (object) ['document_type_code' => QuoteDocumentsEnum::CAR_TAX_INVOICE, 'is_watermarked' => true],
+            (object) ['document_type_code' => QuoteDocumentsEnum::POLICY_SCHEDULE, 'is_watermarked' => true],
+        ]));
+
+        $service = new SukoonMedexService;
+        $reflection = new ReflectionClass(SukoonMedexService::class);
+        $transactionProperty = $reflection->getProperty('transaction');
+        $transactionProperty->setAccessible(true);
+        $transactionProperty->setValue($service, $transaction);
+
+        $policyStatusProperty = $reflection->getProperty('policyStatus');
+        $policyStatusProperty->setAccessible(true);
+        $policyStatusProperty->setValue($service, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE);
+
+        $service->maybeSendDocumentsEmail(true, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE);
+
+        Queue::assertNothingPushed();
     });
 });

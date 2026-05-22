@@ -28,12 +28,17 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+/** computes is the plan is API or rate calculator*/
+const isApiOrRc = computed(() => {
+  return props?.plan?.isApi || props?.plan?.isRateCalculator;
+});
+
 const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
 };
 
 const validateSumAssured = value => {
-  if (!props.plan.isApi) return true;
+  if (!isApiOrRc.value) return true;
 
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
@@ -67,7 +72,7 @@ const currencyRanges = ref([]);
 
 // Function to get currency coverages from API
 const getCurrencyCoverages = async planId => {
-  if (!props.plan.isApi) return;
+  if (!isApiOrRc.value) return;
 
   const res = await axios.get(
     `/personal-quotes/life/currency-coverages/${planId}`,
@@ -94,7 +99,7 @@ watch(
         : null;
       createForm.paymentTerm = props.plan.paymentTerm;
       createForm.actualPremium = null;
-      if (!props.plan.isApi) {
+      if (!isApiOrRc.value) {
         createForm.actualPremium = props.plan.actualPremium
           ? Math.max(0, Number(props.plan.actualPremium))
           : null;
@@ -130,7 +135,7 @@ watch(
 
       getRiderDetails(props.plan.planId);
       getCurrencyCoverages(props.plan.planId);
-      submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
+      submitType.value = isApiOrRc.value ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
 
       quoteFetched.value = false;
@@ -190,12 +195,25 @@ const paymentTerms = [
   { value: props.paymentTermEnum.QUARTERLY, label: 'Quarterly' },
   { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
   { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
+  { value: props.paymentTermEnum.SINGLE_PAYMENT, label: 'Single Payment' },
 ];
 
 const filteredPaymentTerms = computed(() => {
-  return createForm.providerId === 180
-    ? paymentTerms.filter(term => ![4, 2].includes(term.value))
-    : paymentTerms;
+  let terms = paymentTerms;
+
+  // When isRateCalculator is NOT true, remove Single Payment
+  if (!props?.plan?.isRateCalculator) {
+    terms = terms.filter(
+      term => term.value !== props.paymentTermEnum.SINGLE_PAYMENT,
+    );
+  }
+
+  // If providerId is 180, filter out values 4 and 2
+  if (createForm.providerId === 180) {
+    terms = terms.filter(term => ![4, 2].includes(term.value));
+  }
+
+  return terms;
 });
 
 const availableInsuranceProviders = computed(() => {
@@ -279,7 +297,7 @@ watch(
         : null;
       createForm.paymentTerm = props.plan?.paymentTerm;
       createForm.actualPremium = null;
-      if (!props.plan?.isApi) {
+      if (!isApiOrRc.value) {
         createForm.actualPremium = props.plan?.actualPremium
           ? Math.max(0, Number(props.plan.actualPremium))
           : null;
@@ -373,7 +391,7 @@ const getQuote = () => {
     });
 };
 
-const submitType = props?.plan?.isApi ? ref('getQuote') : ref('onSubmit');
+const submitType = isApiOrRc.value ? ref('getQuote') : ref('onSubmit');
 
 const quoteFetched = ref(false);
 
@@ -386,7 +404,7 @@ watch(
   ],
   () => {
     if (
-      props.plan?.isApi &&
+      isApiOrRc.value &&
       quoteFetched.value &&
       submitType.value === 'onSubmit'
     ) {
@@ -401,7 +419,7 @@ watch(
   () => ridersData.value,
   () => {
     if (
-      props.plan?.isApi &&
+      isApiOrRc.value &&
       quoteFetched.value &&
       submitType.value === 'onSubmit'
     ) {
@@ -619,15 +637,18 @@ const totalPrice = computed({
   get() {
     const discountPremium =
       cleanFormattedValueToFloat(formattedDiscountPremium.value) || 0;
-    return props.plan.isApi &&
+    const useDiscountPremiumBranch =
+      isApiOrRc.value &&
       createForm.isInstantPolicy &&
-      createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+      createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY;
+
+    return useDiscountPremiumBranch
       ? discountPremium
       : formattedActualPremium.value;
   },
   set(value) {
     if (
-      props.plan.isApi &&
+      isApiOrRc.value &&
       createForm.isInstantPolicy &&
       createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
     ) {
@@ -789,7 +810,7 @@ const isMetLife = computed(() => {
             type="text"
             step="any"
             @keydown="e => preventInvalidInputs(e, true, true)"
-            :disabled="plan.isApi"
+            :disabled="isApiOrRc"
           />
         </div>
 
@@ -804,12 +825,12 @@ const isMetLife = computed(() => {
             placeholder="Enter Insurer Quote Number"
             class="w-full"
             id="insurerQuoteNo"
-            :disabled="plan.isApi"
+            :disabled="isApiOrRc"
           />
         </div>
       </div>
 
-      <div class="mt-6" v-if="isMetLife">
+      <div class="mt-6" v-if="isMetLife || isApiOrRc">
         <div class="bg-gray-100 rounded-lg p-4">
           <p class="text-primary-700 text-sm text-center">
             Once the variant is saved, you can add optional riders by navigating
@@ -819,7 +840,7 @@ const isMetLife = computed(() => {
         </div>
       </div>
 
-      <div class="mt-6" v-if="!isMetLife">
+      <div class="mt-6" v-if="!(isMetLife || isApiOrRc)">
         <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">
           RIDERS
         </h3>
@@ -912,7 +933,7 @@ const isMetLife = computed(() => {
           <x-button class="mr-2" @click="shown = false"> Cancel </x-button>
           <x-button
             type="submit"
-            v-if="plan.isApi && submitType === 'getQuote'"
+            v-if="isApiOrRc && submitType === 'getQuote'"
             color="emerald"
             :loading="createForm.getQuoteLoading"
           >
@@ -920,7 +941,7 @@ const isMetLife = computed(() => {
           </x-button>
 
           <x-button
-            v-else-if="!plan.isApi || submitType === 'onSubmit'"
+            v-else-if="!isApiOrRc || submitType === 'onSubmit'"
             type="submit"
             color="emerald"
             :loading="createForm.loading"

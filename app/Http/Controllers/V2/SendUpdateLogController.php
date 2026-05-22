@@ -302,6 +302,7 @@ class SendUpdateLogController extends Controller
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
+            'hasEndorsementPayments' => $sendUpdateLog->payments()->exists(),
         ]);
     }
 
