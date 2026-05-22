@@ -109,7 +109,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isAllianceProvider: {
+  isQatarProvider: {
     type: Boolean,
     default: false,
   },
@@ -1213,7 +1213,7 @@ watch(
                     :sendUpdate="sendUpdate"
                     :quoteType="quoteType"
                     :isCapBtnEnabled="isCapBtnEnabled"
-                    :isAllianceProvider="isAllianceProvider"
+                    :isQatarProvider="isQatarProvider"
                     :isEditPaymentEnabled="isEditPaymentEnabled"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
