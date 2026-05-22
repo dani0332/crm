@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EaModelEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,12 +13,8 @@ class EALeadCreateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        if ($this->user()->hasRole([RolesEnum::EAReferral, RolesEnum::EAManager, RolesEnum::Admin, RolesEnum::Engineering])) {
-            return true;
-        }
-
-        return $this->user()->permissions()->where('name', 'ea-collaborate')->exists()
-            || $this->user()->roles()->whereHas('permissions', fn ($q) => $q->where('name', 'ea-collaborate'))->exists();
+        return $this->user()->hasAnyRole([RolesEnum::EAReferral, RolesEnum::EAManager, RolesEnum::Admin, RolesEnum::Engineering])
+            || $this->user()->hasAnyPermission([PermissionsEnum::EaCollaborate]);
     }
 
     /** @return array<string, mixed> */
@@ -77,11 +75,15 @@ class EALeadCreateRequest extends FormRequest
         }
 
         // Collaborate requires ea-collaborate permission
-        $hasCollaboratePermission = $this->user()->permissions()->where('name', 'ea-collaborate')->exists()
-            || $this->user()->roles()->whereHas('permissions', fn ($q) => $q->where('name', 'ea-collaborate'))->exists();
+        $hasCollaboratePermission = $this->user()->hasAnyPermission([PermissionsEnum::EaCollaborate]);
 
-        if ($this->input('ea_model') === 'collaborate' && ! $hasCollaboratePermission) {
+        if ($this->getEaModel() === EaModelEnum::Collaborate && ! $hasCollaboratePermission) {
             $this->merge(['ea_model' => 'referral']);
         }
+    }
+
+    public function getEaModel()
+    {
+        return $this->enum($this->input('ea_model'), EaModelEnum::class);
     }
 }
