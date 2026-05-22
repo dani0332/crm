@@ -159,7 +159,7 @@ class NonMotorCQFRegistry
      * `business_quote_request.id = personal_quotes.quote_id`), not on `personal_quotes`.
      * All other LOBs store payment status directly on `personal_quotes`.
      *
-     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
+     * @param  array{excluded_quote_status: array<int>, payment_status: array<int>}  $filter
      */
     public static function applyPaymentStatusFilter(Builder $query, QuoteTypes $quoteType, array $filter): Builder
     {
