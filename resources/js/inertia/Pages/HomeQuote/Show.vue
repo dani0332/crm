@@ -558,6 +558,10 @@ const availablePlansTable = reactive({
       value: 'actualPremium',
     },
     {
+      text: 'Discounted Price',
+      value: 'discountPremiumPrice',
+    },
+    {
       text: 'Total Price',
       value: 'discountPremium',
     },
@@ -2255,6 +2259,15 @@ function handleOcrNotification(event) {
                   {{
                     item.actualPremium
                       ? parseFloat(item.actualPremium).toFixed(2)
+                      : '0.00'
+                  }}
+                </span>
+              </template>
+              <template #item-discountPremiumPrice="item">
+                <span class="text-primary-600" v-if="item.isDiscountApplied">
+                  {{
+                    item.discountPremium + item.vat
+                      ? parseFloat(item.discountPremium + item.vat).toFixed(2)
                       : '0.00'
                   }}
                 </span>
