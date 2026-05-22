@@ -197,6 +197,7 @@ class HomeRevivalService
             'refID' => $quote->code,
             'tag' => 'home-revival-email',
             'lob' => QuoteTypes::HOME->id(),
+            'isShort' => $quote->source === LeadSourceEnum::REVIVAL_SHORT ? true : false,
         ];
 
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
