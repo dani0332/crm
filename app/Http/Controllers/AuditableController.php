@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\LogsRequest;
+use App\Http\Requests\UaeSigningPassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
 use App\Models\DeviceInsurerRequestResponses;
@@ -29,6 +30,7 @@ use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\UaePass\UaeSigningPassLogsPresenter;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -170,7 +172,6 @@ class AuditableController extends Controller
             // SortDirection enum which cannot be BSON-serialized for Mongo find sort options.
             $query->where('quote_uuid', $quoteUID)
                 ->orderBy('created_at', 'desc');
-
             if ($insuranceProvider) {
                 $query->where('provider_id', $insuranceProvider);
             }
@@ -379,6 +380,41 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load EP logs',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadUaeSigningPassLogs(UaeSigningPassLogsRequest $request)
+    {
+        try {
+            $quoteUuid = $request->input('quote_uuid');
+            $quoteTypeId = (int) $request->input('quote_type_id');
+
+            LoggerService::info('Loading UAE Pass logs', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            $logs = app(UaeSigningPassLogsPresenter::class)->mergedRows($quoteUuid, $quoteTypeId);
+
+            LoggerService::info('UAE Pass logs loaded successfully', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load UAE Pass logs', [], $e, [
+                'quote_uuid' => $request->input('quote_uuid'),
+                'quote_type_id' => $request->input('quote_type_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load UAE Pass logs',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
