@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Revival;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteFlowType;
@@ -11,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
+use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\PersonalQuote;
 use App\Services\BirdService;
@@ -22,7 +24,6 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class HomeRevivalLeadsCreationJob implements ShouldQueue
@@ -41,12 +42,18 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         $this->onQueue('renewals');
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(HomeRevivalService $homeRevivalService): void
     {
         if ($this->batch()?->cancelled()) {
+            return;
+        }
+
+        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_HOME_ENABLED)->value('value');
+        if ($dttEnabled == 0) {
+            LoggerService::info(self::class.': DTT Home disabled in CMS', [
+                'personal_quote_id' => $this->personalQuoteId,
+            ]);
+
             return;
         }
 
@@ -58,7 +65,6 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
         $this->lead = PersonalQuote::query()
             ->with('homeQuote')
-            ->where($this->revivedFlagKey(), false)
             ->find($this->personalQuoteId);
 
         $lead = $this->lead;
@@ -72,17 +78,26 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             return;
         }
 
-        $homeQuote = $lead->homeQuote;
+        $lead->refresh();
+        if ($lead->{$this->revivedFlagKey()}) {
+            LoggerService::info(self::class.' - lead already revived', [
+                'lead_uuid' => $lead->uuid,
+                'revival_source' => $this->revivalSource,
+            ]);
 
+            return;
+        }
+
+        $homeQuote = $lead->homeQuote;
         $payload = $homeRevivalService->getRevivalPayload($lead, $homeQuote, $this->revivalSource);
 
-        $existingRevivalQuote = PersonalQuote::select('uuid')
+        $existingRevivalQuote = PersonalQuote::select('uuid', 'id')
             ->where([
                 'email' => $lead->email,
                 'mobile_no' => $lead->mobile_no,
                 'quote_type_id' => QuoteTypeId::Home,
+                'source' => $this->revivalSource,
             ])
-            ->whereIn('source', HomeRevivalService::REVIVAL_SOURCES)
             ->first();
 
         $homeRevivalQuoteUUID = null;
@@ -90,10 +105,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
         if ($existingRevivalQuote) {
             $homeRevivalQuoteUUID = $existingRevivalQuote->uuid;
-            LoggerService::info(self::class.' - Existing revival quote found, skipping CAPI call', [
-                'lead_uuid' => $lead->uuid,
-                'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
-            ]);
+            LoggerService::info(self::class.' - '.$lead->uuid.' - childLeadFound - '.$homeRevivalQuoteUUID);
 
             $existingDttRevival = DttRevival::where([
                 'quote_type_id' => QuoteTypes::HOME->id(),
@@ -113,16 +125,14 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         } else {
             LoggerService::info(self::class.' - Creating Home Revival Lead', [
                 'lead_uuid' => $lead->uuid,
-                'payload' => $payload,
                 'revival_source' => $this->revivalSource,
             ]);
 
             $capiResponse = Capi::request('/api/v2-save-home-quote', 'post', $payload);
 
-            if (isset($capiResponse->errors)) {
+            if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
                 LoggerService::warning(self::class.' - Error creating Home Revival Lead from CAPI response', [
                     'lead_uuid' => $lead->uuid,
-                    'payload' => $payload,
                     'url' => '/api/v2-save-home-quote',
                     'response' => $capiResponse,
                 ]);
@@ -131,55 +141,29 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             }
 
             $homeRevivalQuoteUUID = $capiResponse->quoteUID;
+            LoggerService::info(self::class.' - '.$lead->uuid.' - childLeadCreated - '.$homeRevivalQuoteUUID);
         }
 
-        $emailPayload = null;
-        try {
-            $emailPayload = $homeRevivalService->sendHomeRevivalEmail($homeRevivalQuoteUUID);
-        } catch (Throwable $e) {
-            LoggerService::warning(self::class.' - Error sending home revival email', [
-                'quote_uuid' => $homeRevivalQuoteUUID,
-                'lead_uuid' => $lead->uuid,
-                'personal_quote_id' => $this->personalQuoteId,
-            ], $e);
-        }
+        $lead->refresh();
 
-        LoggerService::info(self::class.' - New Home Revival Lead created successfully', [
-            'quote_uuid' => $homeRevivalQuoteUUID,
-            'parent_lead_uuid' => $lead->uuid,
-            'revival_source' => $this->revivalSource,
-        ]);
+        if ($homeRevivalQuoteUUID && ! $existingDttRevival) {
+            $emailPayload = null;
+            try {
+                $emailPayload = $homeRevivalService->sendHomeRevivalEmail($homeRevivalQuoteUUID);
+            } catch (Throwable $e) {
+                LoggerService::warning(self::class.' - Error sending home revival email', [
+                    'quote_uuid' => $homeRevivalQuoteUUID,
+                    'lead_uuid' => $lead->uuid,
+                    'personal_quote_id' => $this->personalQuoteId,
+                ], $e);
+            }
 
-        $dttRevival = null;
-        $homeRevivalQuote = null;
-
-        DB::transaction(function () use ($homeRevivalQuoteUUID, $lead, &$dttRevival, &$homeRevivalQuote): void {
             $homeRevivalQuote = PersonalQuote::where('uuid', $homeRevivalQuoteUUID)->first();
-            LoggerService::info(self::class.' - Home revival child quote resolved', [
-                'home_revival_quote_id' => $homeRevivalQuote?->id,
-                'quote_uuid' => $homeRevivalQuoteUUID,
-            ]);
 
             if ($homeRevivalQuote === null) {
                 LoggerService::warning(self::class.' - Home revival quote not found in database', [
                     'quote_uuid' => $homeRevivalQuoteUUID,
                 ]);
-
-                return;
-            }
-
-            $existingDtt = DttRevival::where([
-                'quote_type_id' => QuoteTypes::HOME->id(),
-                'uuid' => $homeRevivalQuoteUUID,
-            ])->first();
-
-            if ($existingDtt) {
-                LoggerService::info(self::class.' - DTT revival already exists, marking parent as revived and skipping create', [
-                    'lead_uuid' => $lead->uuid,
-                    'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
-                    'dtt_revival_id' => $existingDtt->id,
-                ]);
-                $lead->update([$this->revivedFlagKey() => true]);
 
                 return;
             }
@@ -190,35 +174,33 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                 $lead->id,
                 QuoteTypes::HOME->id()
             );
-            LoggerService::info(self::class.' - DTT Revival record created successfully', [
-                'quote_uuid' => $homeRevivalQuoteUUID,
-                'parent_lead_uuid' => $lead->uuid,
-            ]);
 
             $lead->update([$this->revivedFlagKey() => true]);
-            LoggerService::info(self::class.' - Home quote marked as revived', [
-                'lead_uuid' => $lead->uuid,
+
+            LoggerService::info(self::class.' - New Home Revival Lead created successfully', [
+                'quote_uuid' => $homeRevivalQuoteUUID,
+                'parent_lead_uuid' => $lead->uuid,
                 'revival_source' => $this->revivalSource,
             ]);
-        });
 
-        if ($emailPayload !== null && $dttRevival !== null && $homeRevivalQuote !== null) {
-            if (app(BirdService::class)->isFollowupExecuted($homeRevivalQuoteUUID, (int) QuoteTypes::HOME->id(), QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value)) {
-                LoggerService::info(self::class.' - follow-up already executed', [
-                    'dtt_revival_id' => $dttRevival->id,
-                    'child_quote_uuid' => $homeRevivalQuoteUUID,
-                    'revival_source' => $this->revivalSource,
-                ]);
-            } else {
-                $emailPayload->workflowType = WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP;
-                HomeRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailPayload);
+            if ($emailPayload !== null) {
+                if (app(BirdService::class)->isFollowupExecuted($homeRevivalQuoteUUID, (int) QuoteTypes::HOME->id(), QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value)) {
+                    LoggerService::info(self::class.' - follow-up already executed', [
+                        'dtt_revival_id' => $dttRevival->id,
+                        'child_quote_uuid' => $homeRevivalQuoteUUID,
+                        'revival_source' => $this->revivalSource,
+                    ]);
+                } else {
+                    $emailPayload->workflowType = WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP;
+                    HomeRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailPayload);
 
-                LoggerService::info(self::class.' - OCB done — dtt + parent updated + follow-up job queued', [
-                    'dtt_revival_id' => $dttRevival->id,
-                    'parent_lead_uuid' => $lead->uuid,
-                    'child_quote_uuid' => $homeRevivalQuoteUUID,
-                    'revival_source' => $this->revivalSource,
-                ]);
+                    LoggerService::info(self::class.' - OCB done — dtt + parent updated + follow-up job queued', [
+                        'dtt_revival_id' => $dttRevival->id,
+                        'parent_lead_uuid' => $lead->uuid,
+                        'child_quote_uuid' => $homeRevivalQuoteUUID,
+                        'revival_source' => $this->revivalSource,
+                    ]);
+                }
             }
         }
     }
