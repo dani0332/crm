@@ -145,6 +145,31 @@ class RenewalsSchema
                 $table->text('reason')->nullable();
                 $table->timestamps();
             },
+            'customer_addresses' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('type')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->string('office_number')->nullable();
+                $table->string('floor_number')->nullable();
+                $table->string('building_name')->nullable();
+                $table->string('street')->nullable();
+                $table->string('area')->nullable();
+                $table->string('city')->nullable();
+                $table->string('landmark')->nullable();
+                $table->boolean('is_default')->default(0);
+                $table->boolean('is_courier_address')->default(0);
+                $table->timestamps();
+            },
+            'quote_request_entity_mapping' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->unsignedBigInteger('quote_request_id')->nullable();
+                $table->unsignedBigInteger('entity_id')->nullable();
+                $table->string('entity_type_code')->nullable();
+                $table->timestamps();
+            },
         ]);
 
         $this->ensureColumns();
@@ -212,6 +237,8 @@ class RenewalsSchema
                 'currently_insured_with' => function (Blueprint $table) {
                     $table->string('currently_insured_with')->nullable();
                 },
+                'uae_license_held_for_id' => fn (Blueprint $t) => $t->unsignedBigInteger('uae_license_held_for_id')->nullable(),
+                'back_home_license_held_for_id' => fn (Blueprint $t) => $t->unsignedBigInteger('back_home_license_held_for_id')->nullable(),
             ], $commonRenewalColumns),
             'cycle_quote_request' => [
                 'uuid' => fn (Blueprint $t) => $t->string('uuid')->nullable(),
@@ -251,6 +278,8 @@ class RenewalsSchema
                 'contents_aed' => fn (Blueprint $t) => $t->decimal('contents_aed', 15, 2)->nullable(),
                 'personal_belongings_aed' => fn (Blueprint $t) => $t->decimal('personal_belongings_aed', 15, 2)->nullable(),
                 'building_aed' => fn (Blueprint $t) => $t->decimal('building_aed', 15, 2)->nullable(),
+                'address' => fn (Blueprint $t) => $t->string('address')->nullable(),
+                'possession_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('possession_type_id')->nullable(),
                 'company_name' => fn (Blueprint $t) => $t->string('company_name')->nullable(),
                 'company_address' => fn (Blueprint $t) => $t->string('company_address')->nullable(),
             ]),
@@ -284,6 +313,14 @@ class RenewalsSchema
                 'company_activity_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('company_activity_type_id')->nullable(),
                 'emirates_id' => fn (Blueprint $t) => $t->string('emirates_id')->nullable(),
             ]),
+            'personal_quotes' => [
+                'asset_value' => fn (Blueprint $t) => $t->decimal('asset_value', 15, 2)->nullable(),
+                'company_name' => fn (Blueprint $t) => $t->string('company_name')->nullable(),
+                'company_address' => fn (Blueprint $t) => $t->string('company_address')->nullable(),
+            ],
+            'car_quote_request_detail' => [
+                'chassis_number' => fn (Blueprint $t) => $t->string('chassis_number')->nullable(),
+            ],
         ]);
     }
 }

@@ -7,7 +7,9 @@ namespace App\Services\CQF\NonMotor\LOBs;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
+use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
+use Illuminate\Database\Eloquent\Model;
 
 class YachtCQFQuoteMappingService extends BaseCQFQuoteMappingService
 {
@@ -24,6 +26,16 @@ class YachtCQFQuoteMappingService extends BaseCQFQuoteMappingService
     protected function getProductName(): string
     {
         return 'Yacht insurance';
+    }
+
+    public function mapRenewalQuote(Model $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
+    {
+        $data = parent::mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
+        if ($data && $quote instanceof PersonalQuote) {
+            $data['asset_value'] = $quote->asset_value;
+        }
+
+        return $data;
     }
 
     /**

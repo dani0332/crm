@@ -8,7 +8,9 @@ use App\Enums\AMLStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\CustomerMembers;
 use App\Models\PersonalQuote;
+use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
@@ -59,7 +61,35 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
             BusinessQuoteRequestDetail::create(['business_quote_request_id' => $businessQuote->id]);
         }
 
+        $this->copyEntityMapping($oldBusinessQuote, $businessQuote);
+        $this->copyCustomerMembers($oldBusinessQuote, $businessQuote);
+
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
+    }
+
+    private function copyEntityMapping(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
+    {
+        $oldMapping = $oldQuote->quoteRequestEntityMapping;
+        if ($oldMapping === null) {
+            return;
+        }
+
+        QuoteRequestEntityMapping::create([
+            'quote_type_id' => QuoteTypeId::Business,
+            'quote_request_id' => $newQuote->id,
+            'entity_id' => $oldMapping->entity_id,
+            'entity_type_code' => $oldMapping->entity_type_code,
+        ]);
+    }
+
+    private function copyCustomerMembers(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
+    {
+        $oldQuote->customerMembers->each(function (CustomerMembers $member) use ($newQuote) {
+            $attrs = $member->getAttributes();
+            unset($attrs['id'], $attrs['created_at'], $attrs['updated_at'], $attrs['deleted_at']);
+            $attrs['quote_id'] = $newQuote->id;
+            CustomerMembers::create($attrs);
+        });
     }
 
     /**

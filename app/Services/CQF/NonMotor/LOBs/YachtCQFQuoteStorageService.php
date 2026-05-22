@@ -92,7 +92,7 @@ class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'boat_details' => $oldLob->boat_details,
             'engine_details' => $oldLob->engine_details,
             'claim_experience' => $oldLob->claim_experience,
-            'sum_insured_value' => $oldLob->sum_insured_value,
+            'sum_insured_value' => $newQuote->asset_value,
             'use' => $oldLob->use,
             'operator_experience' => $oldLob->operator_experience,
         ];

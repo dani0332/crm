@@ -871,6 +871,7 @@ class HomeQuoteRepository extends BaseRepository
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'currentlyInsuredWith:id,text',
             ])
             ->select([
                 $this->getTable().'.*',

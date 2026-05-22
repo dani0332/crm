@@ -1277,7 +1277,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+                <dd>{{ quote?.insurance_provider?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1625,7 +1625,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-                <dd>{{ quote.currently_insured_with_id_text }}</dd>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>

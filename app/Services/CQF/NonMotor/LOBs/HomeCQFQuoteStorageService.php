@@ -6,6 +6,7 @@ namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Models\CustomerAddress;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\PersonalQuote;
@@ -57,7 +58,25 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             HomeQuoteRequestDetail::create(['home_quote_request_id' => $newHomeQuote->id]);
         }
 
+        $this->copyCustomerAddress($oldQuote, $newQuote);
+
         LoggerService::info(self::class.' - Home quote detail copied for renewal quote');
+    }
+
+    private function copyCustomerAddress(PersonalQuote $oldQuote, PersonalQuote $newQuote): void
+    {
+        $customerAddress = CustomerAddress::where('customer_id', $oldQuote->customer_id)
+            ->where('quote_uuid', $oldQuote->uuid)
+            ->first();
+
+        if ($customerAddress === null) {
+            return;
+        }
+
+        $attrs = $customerAddress->getAttributes();
+        unset($attrs['id'], $attrs['created_at'], $attrs['updated_at']);
+        $attrs['quote_uuid'] = $newQuote->uuid;
+        CustomerAddress::create($attrs);
     }
 
     /**
@@ -95,6 +114,7 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'nationality_id' => $oldLob->nationality_id,
             'ilivein_accommodation_type_id' => $oldLob->ilivein_accommodation_type_id,
             'iam_possesion_type_id' => $oldLob->iam_possesion_type_id,
+            'possession_type_id' => $oldLob->possession_type_id,
             'owner_occupancy_type_id' => $oldLob->owner_occupancy_type_id,
             'coverage_type_id' => $oldLob->coverage_type_id,
             'building_value' => $oldLob->building_value,
@@ -111,8 +131,8 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'contents_aed' => $oldLob->contents_aed,
             'personal_belongings_aed' => $oldLob->personal_belongings_aed,
             'building_aed' => $oldLob->building_aed,
-            'company_name' => $oldLob->company_name,
-            'company_address' => $oldLob->company_address,
+            'company_name' => $newQuote->company_name,
+            'company_address' => $newQuote->company_address,
         ];
     }
 }

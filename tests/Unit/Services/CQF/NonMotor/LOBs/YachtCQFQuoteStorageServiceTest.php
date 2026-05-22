@@ -203,7 +203,6 @@ it('carries vessel detail fields from old YachtQuote', function () {
         'personal_quote_id' => $oldPq->id,
         'first_name' => 'Bob',
         'last_name' => 'Sailor',
-        'sum_insured_value' => 250000,
         'operator_experience' => 5,
     ]);
 
@@ -213,6 +212,7 @@ it('carries vessel detail fields from old YachtQuote', function () {
         'quote_type_id' => QuoteTypeId::Yacht,
         'source' => LeadSourceEnum::RENEWAL_UPLOAD,
         'quote_status_id' => QuoteStatusEnum::NewLead,
+        'asset_value' => 250000,
         'code' => 'YCH-NEW-'.Str::upper(Str::random(4)),
     ]);
 
@@ -228,7 +228,7 @@ it('carries vessel detail fields from old YachtQuote', function () {
 
     expect($created->first_name)->toBe('Bob')
         ->and($created->last_name)->toBe('Sailor')
-        ->and($created->sum_insured_value)->toBe(250000)
+        ->and((float) $created->sum_insured_value)->toBe(250000.0)
         ->and($created->operator_experience)->toBe(5);
 });
 
@@ -247,4 +247,37 @@ it('skips copying when old PersonalQuote has no YachtQuote', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(YachtQuote::count())->toBe($countBefore);
+});
+
+it('sets sum_insured_value from new PersonalQuote asset_value, not from old YachtQuote', function () {
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Yacht,
+        'asset_value' => 100000,
+    ]);
+
+    YachtQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'sum_insured_value' => 99999,
+    ]);
+
+    $oldPq->load('yachtQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Yacht,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'asset_value' => 200000,
+        'code' => 'YCH-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyYachtQuoteDetail($nq, $oq),
+        $this->service,
+        YachtCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect((float) YachtQuote::where('personal_quote_id', $newPq->id)->value('sum_insured_value'))
+        ->toBe(200000.0);
 });

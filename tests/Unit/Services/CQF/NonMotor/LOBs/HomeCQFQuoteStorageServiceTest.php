@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\CustomerAddress;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\PersonalQuote;
@@ -249,4 +250,142 @@ it('skips copying when old PersonalQuote has no HomeQuote', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(HomeQuote::count())->toBe($countBefore);
+});
+
+it('copies address from old HomeQuote to new HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'address' => '123 Main St',
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('address'))->toBe('123 Main St');
+});
+
+it('sets company_name and company_address from new PersonalQuote, not old HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'company_name' => 'Old Corp',
+        'company_address' => 'Old Addr',
+    ]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'company_name' => 'Old Corp',
+        'company_address' => 'Old Addr',
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'company_name' => 'New Corp',
+        'company_address' => 'New Addr',
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $created = HomeQuote::where('personal_quote_id', $newPq->id)->first();
+
+    expect($created->company_name)->toBe('New Corp')
+        ->and($created->company_address)->toBe('New Addr');
+});
+
+it('copies CustomerAddress for the new quote uuid', function () {
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'customer_id' => 99,
+    ]);
+
+    HomeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+    $oldPq->load('homeQuote');
+
+    CustomerAddress::create([
+        'customer_id' => 99,
+        'quote_uuid' => $oldPq->uuid,
+        'floor_number' => '5',
+        'building_name' => 'Tower A',
+        'street' => 'Sheikh Zayed Rd',
+    ]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'customer_id' => 99,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    $newAddress = CustomerAddress::where('quote_uuid', $newPq->uuid)->first();
+
+    expect($newAddress)->not->toBeNull()
+        ->and($newAddress->floor_number)->toBe('5')
+        ->and($newAddress->building_name)->toBe('Tower A')
+        ->and($newAddress->street)->toBe('Sheikh Zayed Rd')
+        ->and($newAddress->customer_id)->toBe(99);
+});
+
+it('skips CustomerAddress copy when old quote has no CustomerAddress', function () {
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'customer_id' => 77,
+    ]);
+
+    HomeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'customer_id' => 77,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $countBefore = CustomerAddress::count();
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(CustomerAddress::count())->toBe($countBefore);
 });

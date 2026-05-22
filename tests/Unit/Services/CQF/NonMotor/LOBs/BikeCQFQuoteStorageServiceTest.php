@@ -6,6 +6,8 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\PersonalQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService;
@@ -233,4 +235,126 @@ it('skips copying when old PersonalQuote has no BikeQuote', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(BikeQuote::count())->toBe($countBefore);
+});
+
+it('decrements uae_license_held_for_id to the previous active entry', function () {
+    $prev = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
+    $current = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
+
+    $decrement = Closure::bind(
+        fn ($id) => $this->decrementLicenseHeldForId($id),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($decrement($current->id))->toBe($prev->id);
+});
+
+it('keeps uae_license_held_for_id unchanged when already at the lowest active entry', function () {
+    $lowest = UAELicenseHeldFor::factory()->create(['text' => 'Less than 1 year']);
+
+    $decrement = Closure::bind(
+        fn ($id) => $this->decrementLicenseHeldForId($id),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($decrement($lowest->id))->toBe($lowest->id);
+});
+
+it('returns null when decrementing a null uae_license_held_for_id', function () {
+    $decrement = Closure::bind(
+        fn ($id) => $this->decrementLicenseHeldForId($id),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($decrement(null))->toBeNull();
+});
+
+it('decrements uae_license_held_for_id on Bike-to-Bike renewal', function () {
+    $prev = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
+    $current = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
+
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'uae_license_held_for_id' => $current->id,
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('uae_license_held_for_id'))
+        ->toBe($prev->id);
+});
+
+it('increments uae_license_held_for_id on Car-to-Bike renewal', function () {
+    $current = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
+    $next = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
+
+    $carQuote = CarQuote::factory()->create([
+        'uae_license_held_for_id' => $current->id,
+    ]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyCarToBike = Closure::bind(
+        fn ($nq, $cq) => $this->copyCarQuoteToBikeQuoteDetail($nq, $cq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyCarToBike($newPq, $carQuote);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('uae_license_held_for_id'))
+        ->toBe($next->id);
+});
+
+it('copies chassis_number from car_quote_request_detail on Car-to-Bike renewal', function () {
+    $carQuote = CarQuote::factory()->create();
+
+    CarQuoteRequestDetail::factory()->forCarQuote($carQuote)->create([
+        'chassis_number' => 'VIN123456789',
+    ]);
+
+    $carQuote->load('carQuoteRequestDetail');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyCarToBike = Closure::bind(
+        fn ($nq, $cq) => $this->copyCarQuoteToBikeQuoteDetail($nq, $cq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyCarToBike($newPq, $carQuote);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('chassis_number'))
+        ->toBe('VIN123456789');
 });

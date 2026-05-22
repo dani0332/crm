@@ -148,12 +148,14 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     protected function copyCarQuoteToBikeQuoteDetail(PersonalQuote $newQuote, CarQuote $carQuote): void
     {
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data['personal_quote_id'] = $newQuote->id;
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
         $data['bike_value'] = null;
         $data['claim_history_id'] = null;
         $data['has_ncd_supporting_documents'] = null;
+        $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($data['uae_license_held_for_id'] ?? null);
+        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($data['back_home_license_held_for_id'] ?? null, backHome: true);
+        $data['chassis_number'] = $carQuote->carQuoteRequestDetail?->chassis_number;
         $data = array_intersect_key($data, array_flip($this->getBikeQuoteColumns()));
         BikeQuote::create($data);
 
@@ -180,15 +182,9 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             ? UAELicenseHeldFor::isBackHomeActive()
             : UAELicenseHeldFor::withActive();
 
-        if ($current->sort_order !== null) {
-            $nextId = $query->where('sort_order', '>', $current->sort_order)
-                ->orderBy('sort_order')
-                ->value('id');
-        } else {
-            $nextId = $query->where('id', '>', $currentId)
-                ->orderBy('id')
-                ->value('id');
-        }
+        $nextId = $query->where('id', '>', $currentId)
+            ->orderBy('id')
+            ->value('id');
 
         return $nextId ?? $currentId;
     }
