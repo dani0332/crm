@@ -197,7 +197,7 @@ const showLackingPayment = () => {
 const getInitalAmountForLifeLOB = () => {
   if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
-      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+      props.quoteRequest.premium * (props.quoteRequest?.life_quote?.payment_term < 0 ? 1 : props.quoteRequest?.life_quote?.payment_term )
     );
   }
 
