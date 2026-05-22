@@ -25,7 +25,8 @@ class PqaAllocationService
         $quoteUuid = (string) $request->input('quoteUUID');
         $reAssignPqaAdvisor = (bool) $request->input('reAssignPqaAdvisor', false);
 
-        $lead = QuoteTypes::getName($quoteTypeId)?->model()?->where('uuid', $quoteUuid)?->first();
+        $quoteType = QuoteTypes::getName($quoteTypeId) ?? QuoteTypes::BUSINESS;
+        $lead = $quoteType->model()?->where('uuid', $quoteUuid)?->first();
 
         if ($lead instanceof BusinessQuote) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
@@ -33,7 +34,7 @@ class PqaAllocationService
 
         LoggerService::info(self::class.' - PQA allocation started for '.$quoteUuid);
 
-        $responsePayload = $this->executeAllocation($quoteUuid, $reAssignPqaAdvisor);
+        $responsePayload = $this->executeAllocation($quoteUuid, $reAssignPqaAdvisor, $quoteType);
 
         LoggerService::info(self::class.' - PQA allocation ended for '.$quoteUuid);
 
@@ -43,9 +44,9 @@ class PqaAllocationService
     /**
      * @return array{data: array<string, mixed>, message: string}
      */
-    public function executeAllocation(string $quoteUuid, bool $overrideAdvisorId = false): array
+    public function executeAllocation(string $quoteUuid, bool $overrideAdvisorId = false, ?QuoteTypes $quoteType = null): array
     {
-        $response = (new PreQualificationAdvisorAllocation($quoteUuid, $overrideAdvisorId))->execute();
+        $response = (new PreQualificationAdvisorAllocation($quoteUuid, $overrideAdvisorId, $quoteType ?? QuoteTypes::BUSINESS))->execute();
 
         $status = $response['status'] ?? Response::HTTP_INTERNAL_SERVER_ERROR;
         $message = $response['message'] ?? '';

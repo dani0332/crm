@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Pipes\Allocation\Pqa;
 
 use App\Enums\QuoteStatusEnum;
-use App\Models\BusinessQuote;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
@@ -16,9 +15,11 @@ class FetchLeadPipe extends BasePqaAllocationPipe
     {
         $this->setRequest($request, true);
 
-        $lead = BusinessQuote::query()
-            ->with('quoteDetail')
-            ->where('uuid', $this->allocationRequest->getQuoteUUID())
+        $quoteUuid = $this->allocationRequest->getQuoteUUID();
+        $refId = $this->allocationRequest->getRefID();
+
+        $lead = $this->allocationRequest->model()
+            ->where(fn ($query) => $query->where('uuid', $quoteUuid)->orWhere('code', $refId))
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::Fake,
                 QuoteStatusEnum::Duplicate,

@@ -40,6 +40,8 @@ class PqaAllocationRequest extends FormRequest
                 Rule::in([
                     QuoteTypeId::GroupMedical,
                     QuoteTypeId::Business,
+                    QuoteTypeId::Corpline,
+                    QuoteTypeId::Health,
                 ]),
             ],
             'reAssignPqaAdvisor' => ['sometimes', 'boolean'],

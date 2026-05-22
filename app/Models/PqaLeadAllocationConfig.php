@@ -22,6 +22,7 @@ class PqaLeadAllocationConfig extends Model implements AuditableContract
     protected $fillable = [
         'user_id',
         'quote_type_id',
+        'quote_type',
         'max_capacity',
         'allocation_count',
         'auto_assignment_count',

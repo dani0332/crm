@@ -20,8 +20,14 @@ class PqaLeadAllocationService
      */
     public function syncPqaAllocationConfig(int $userId, object $data): bool
     {
+        $allowedLobs = [
+            QuoteTypes::BUSINESS->id(),
+            QuoteTypes::HEALTH->id(),
+            QuoteTypes::GROUP_MEDICAL->id(),
+            QuoteTypes::CORPLINE->id(),
+        ];
 
-        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && $data->quoteTypeId == QuoteTypes::BUSINESS->id()) {
+        if (isset($data->quoteTypeId) && ! empty($data->quoteTypeId) && in_array($data->quoteTypeId, $allowedLobs)) {
             $existing = PqaLeadAllocationConfig::query()
                 ->where('user_id', $userId)
                 ->where('quote_type_id', $data->quoteTypeId)
@@ -36,6 +42,7 @@ class PqaLeadAllocationService
             PqaLeadAllocationConfig::query()->create([
                 'user_id' => $userId,
                 'quote_type_id' => $data->quoteTypeId,
+                'quote_type' => $data->quote_type ?? '',
                 'max_capacity' => 100,
                 'allocation_count' => 0,
                 'auto_assignment_count' => 0,

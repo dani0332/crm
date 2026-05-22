@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Pipes\Allocation\Pqa;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
-use App\Models\BusinessQuote;
 use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 
 abstract class BasePqaAllocationPipe extends AllocationService
@@ -24,7 +23,7 @@ abstract class BasePqaAllocationPipe extends AllocationService
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $allocationRequest;
-    protected ?BusinessQuote $lead = null;
+    protected ?Model $lead = null;
 
     protected function setRequest(AllocationRequest $allocationRequest, bool $startLogging = true): void
     {
@@ -47,9 +46,9 @@ abstract class BasePqaAllocationPipe extends AllocationService
         throw new AllocationException($message, $code);
     }
 
-    protected function getPqaQuoteTypeId()
+    protected function getPqaQuoteTypeId(): int
     {
-        return QuoteTypes::BUSINESS->id();
+        return (int) $this->allocationRequest->getQuoteType()->id();
     }
 
     /**

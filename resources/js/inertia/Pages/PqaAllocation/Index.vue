@@ -42,6 +42,30 @@ const notification = useToast();
 
 const statusModal = getStatusModal();
 
+const selectedLob = ref('');
+
+const lobFilterOptions = computed(() => {
+  const codes = [...new Set(props.data.map(item => item.quoteTypeCode))].sort();
+  return [{ value: '', label: 'All' }, ...codes.map(code => ({ value: code, label: code }))];
+});
+
+const filteredData = computed(() => {
+  if (!selectedLob.value) return props.data;
+  return props.data.filter(item => item.quoteTypeCode === selectedLob.value);
+});
+
+const filteredTotalAssigned = computed(() =>
+  filteredData.value.reduce((sum, item) => sum + (item.allocationCount || 0), 0),
+);
+
+const filteredAvailableUsers = computed(
+  () => filteredData.value.filter(item => item.isAvailable == 1).length,
+);
+
+const filteredUnavailableUsers = computed(
+  () => filteredData.value.filter(item => item.isAvailable != 1).length,
+);
+
 const loaders = reactive({
   submit: false,
   table: false,
@@ -280,7 +304,15 @@ onMounted(() => {
 
     <Head :title="'Pre Qualification Advisor (ILA)'" />
     <div class="flex justify-between items-center">
-      <div></div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium text-gray-600">Line of Business:</span>
+        <x-select
+          v-model="selectedLob"
+          :options="lobFilterOptions"
+          placeholder="All"
+          class="w-40"
+        />
+      </div>
       <div
         class="flex gap-1"
         v-if="
@@ -304,15 +336,15 @@ onMounted(() => {
       </div>
       <div class="labox border-primary-500">
         <h3>Assigned Lead Count</h3>
-        <p>{{ props.totalAssignedLeadCount }}</p>
+        <p>{{ filteredTotalAssigned }}</p>
       </div>
       <div class="labox border-purple-500">
         <h3>Available / UnAvailable</h3>
-        <p>{{ props.availableUsers }} / {{ props.unAvailableUsers }}</p>
+        <p>{{ filteredAvailableUsers }} / {{ filteredUnavailableUsers }}</p>
       </div>
       <div class="labox border-yellow-500">
         <h3>Total Advisors</h3>
-        <p>{{ data.length }}</p>
+        <p>{{ filteredData.length }}</p>
       </div>
       <div class="labox border-red-500">
         <h3>Unassigned Leads Count (today)</h3>
@@ -343,7 +375,7 @@ onMounted(() => {
     <DataTable
       table-class-name="compact"
       :headers="tableHeader"
-      :items="props.data || []"
+      :items="filteredData"
       :sort-by="'userName'"
       :sort-type="'asc'"
       :rows-per-page="999"

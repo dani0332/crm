@@ -22,6 +22,7 @@ class PreQualificationAdvisorAllocation implements Allocation
     public function __construct(
         protected string $uuid,
         protected bool $overrideAdvisorId = false,
+        protected QuoteTypes $quoteType = QuoteTypes::BUSINESS,
     ) {}
 
     public function execute(): array
@@ -29,10 +30,11 @@ class PreQualificationAdvisorAllocation implements Allocation
         LoggerService::info(self::class.' - starting PQA allocation', extra: [
             'uuid' => $this->uuid,
             'overrideAdvisorId' => $this->overrideAdvisorId,
+            'quoteType' => $this->quoteType->value,
         ]);
 
         $allocationRequest = new AllocationRequest(
-            quoteType: QuoteTypes::BUSINESS,
+            quoteType: $this->quoteType,
             quoteUUID: $this->uuid,
             overrideAdvisorId: $this->overrideAdvisorId,
         );
