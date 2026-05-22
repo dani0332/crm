@@ -335,9 +335,21 @@ class HealthRateService extends BaseService
             ->where('status', $rate->status)
             ->get();
 
+        // Get Draft plan if exists
+        $draftPlan = HealthPlan::whereIn('parent_id', [$rate->health_plan_id, $plan->parent_id])
+            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
+            ->first();
+
+        if ($draftPlan) {
+            $planId = $draftPlan->id;
+        } else {
+            // Get active plan in case of active/archive
+            $planId = $rate->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
+        }
+
         // Get draft version of rate sheet
         // Since we need to append existing active/archived rates to draft rate sheet
-        $draftRateSheet = HealthRateControl::whereIn('health_plan_id', [$rate->health_plan_id, $plan->parent_id])
+        $draftRateSheet = HealthRateControl::where('health_plan_id', $planId)
             ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
             ->first();
 
@@ -349,7 +361,7 @@ class HealthRateService extends BaseService
             }
         }
 
-        $data['health_plan_id'] = $rate->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
+        $data['health_plan_id'] = $planId;
 
         return $this->addRate($data, [$rate->health_plan_id, $plan->parent_id], $draftRateSheet, $existingRates);
     }
