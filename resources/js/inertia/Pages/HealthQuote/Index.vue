@@ -27,11 +27,40 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  healthSignatoryFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
+  healthUaePassApiStatusFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
   genderDisplayMap: Object,
 });
 
 const page = usePage();
 const teamNamesEnum = page.props.teamNamesEnum;
+
+const signatoryFilterOptions = computed(() => {
+  const fromServer = page.props.healthSignatoryFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [
+    { value: 'All', label: 'All' },
+    { value: 'policyholder', label: 'Policyholder' },
+    { value: 'insured_member', label: 'Insured Member' },
+    { value: 'someone_else', label: 'Someone Else' },
+  ];
+});
+
+const uaePassApiStatusFilterOptions = computed(() => {
+  const fromServer = page.props.healthUaePassApiStatusFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [{ value: 'All', label: 'All' }];
+});
 const notification = useToast();
 const healthCoverForEnum = page.props.healthCoverForEnum;
 
@@ -187,6 +216,12 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
+  { text: 'SIGNATORY', value: 'signatory_text', is_active: true },
+  {
+    text: 'UAE PASS API STATUS',
+    value: 'uae_pass_api_status_text',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -237,6 +272,8 @@ const filters = reactive({
   private_client: 'all',
   emirate_of_your_visa_id: [],
   pec_flag: 'all',
+  signatory: 'ALL',
+  uae_pass_api_status: 'ALL',
   authorize_date: '',
   captured_date: '',
   payment_status_id: [],
@@ -1243,6 +1280,22 @@ const paymentStatusOptions = computed(() => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.signatory"
+          label="Signatory"
+          placeholder="UAE PASS signature match"
+          :options="signatoryFilterOptions"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.uae_pass_api_status"
+          label="UAE PASS API Status"
+          placeholder="Latest UAE PASS API status"
+          :options="uaePassApiStatusFilterOptions"
           class="w-full"
           :single="true"
         />

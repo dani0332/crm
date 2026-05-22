@@ -431,7 +431,13 @@ class AmtController extends Controller
      */
     public function show($id)
     {
+
         $crudService = app(CRUDService::class);
+
+        if (! $this->checkUserHasGroupMedicalAccess('show')) {
+            abort(403, 'Unauthorized access');
+        }
+
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
@@ -585,7 +591,32 @@ class AmtController extends Controller
             'advisors' => $advisors,
         ]);
     }
+    public function checkUserHasGroupMedicalAccess($method)
+    {
 
+        $permissions = [
+            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate, PermissionsEnum::GMQuotesList],
+            'edit' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
+            'create' => [PermissionsEnum::GMQuotesCreate],
+            'list' => [PermissionsEnum::GMQuotesList],
+        ];
+        $roles = [
+            'show' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'edit' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'create' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'list' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+        ];
+        if (
+            auth()->user()->canAny($permissions[$method])
+            || auth()->user()->hasAnyRole(...$roles[$method])
+            || auth()->user()->hasAnyRole(RolesEnum::Engineering, RolesEnum::Admin)
+            || auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
     /**
      * Show the form for editing the specified resource.
      *

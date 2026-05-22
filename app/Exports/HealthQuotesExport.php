@@ -5,6 +5,8 @@ namespace App\Exports;
 use App\Contracts\CsvExportableInterface;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
 use App\Services\HealthQuoteService;
@@ -90,6 +92,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
             'IMCRM SUB-SOURCE',
+            'Signatory',
+            'UAE PASS API Status',
         ];
     }
 
@@ -145,6 +149,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
+            HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
+            HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
         ];
     }
 

@@ -8,6 +8,8 @@ use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
@@ -43,7 +45,7 @@ class HealthQuote extends Model implements AuditableContract
 
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
-        'pc_qualified_formatted', 'has_pec_tag', 'is_migrated',
+        'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text', 'is_migrated',
     ];
     protected $table = 'health_quote_request';
     protected $fillable = [];
@@ -646,6 +648,20 @@ class HealthQuote extends Model implements AuditableContract
             get: function () {
                 return ! empty($this->pec_marked_at);
             }
+        );
+    }
+
+    public function signatoryText(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => HealthQuoteDigitalSignatory::displayLabel($this->digital_signatory),
+        );
+    }
+
+    public function uaePassApiStatusText(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => HealthQuoteUaePassApiStatus::displayLabel($this->uae_pass_api_status),
         );
     }
 

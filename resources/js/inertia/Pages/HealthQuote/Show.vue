@@ -6,6 +6,7 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import UaeSigningPassLogs from '@/inertia/Components/UaeSigningPassLogs.vue';
 import HealthMemberDetails from '../../Components/HealthMemberDetails.vue';
 import { useHealthQuoteFlags } from '../../Composables/useHealthQuoteFlags';
 
@@ -82,6 +83,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  archivedDocuments: Array,
   visaCategoryOptions: Array,
   policyHolderCategoryOptions: Array,
   insureCodeOptions: Array,
@@ -2229,6 +2231,14 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <dt class="font-medium">IS STP Case</dt>
                 <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SIGNATORY</dt>
+                <dd>{{ quote.signatory_text ?? '—' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE PASS API STATUS</dt>
+                <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2659,6 +2669,14 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                       filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SIGNATORY</dt>
+                  <dd>{{ quote.signatory_text ?? '—' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UAE PASS API STATUS</dt>
+                  <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -4071,6 +4089,13 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :expanded="sectionExpanded"
       :quoteId="page.props.quote.id"
       :quoteTypeId="page.props.quoteTypeId"
+    />
+
+    <UaeSigningPassLogs
+      v-if="quote.uae_pass_api_status_text"
+      :quoteUuid="quote.uuid"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :expanded="sectionExpanded"
     />
 
     <ClientInquiryLogs

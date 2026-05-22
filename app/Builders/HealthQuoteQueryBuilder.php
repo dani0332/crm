@@ -3,6 +3,9 @@
 namespace App\Builders;
 
 use App\Enums\DefaultAdvisorEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
@@ -74,6 +77,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'gender',
             'emirate_of_your_visa_id',
             'pec_marked_at',
+            'digital_signatory',
+            'uae_pass_api_status',
             'branch_id',
             'is_branch_applicable',
             'health_plan_type_id',
@@ -262,6 +267,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         if ($this->hasFilterValue('support_user_id', $requestParams) && is_array($this->getFilterValue('support_user_id', $requestParams))) {
             $ids = $this->getFilterValue('support_user_id', $requestParams);
             $query->whereIn('support_user_id', $ids);
+        }
+
+        $signatory = $this->getFilterValue('signatory', $requestParams);
+        if ($signatory && $signatory != GenericRequestEnum::ALL && HealthQuoteDigitalSignatory::isStoredValue($signatory)) {
+            $query->where('digital_signatory', $signatory);
+        }
+
+        $uaePassApiStatus = $this->getFilterValue('uae_pass_api_status', $requestParams);
+        if ($uaePassApiStatus && $uaePassApiStatus != GenericRequestEnum::ALL && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
+            $query->where('uae_pass_api_status', $uaePassApiStatus);
         }
     }
 
