@@ -17,7 +17,7 @@ class NationalityPoolConfigurationRequest extends FormRequest
                 'date',
                 new CheckFutureEffectiveDateNationalityPool,
             ],
-            'canonical_nationality_codes' => 'required|array',
+            'canonical_nationality_codes' => 'nullable|array',
             'health_nationality_group_ids' => 'nullable|array',
         ];
     }

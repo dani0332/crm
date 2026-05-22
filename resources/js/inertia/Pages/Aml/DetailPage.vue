@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ScreeningModel from './Partials/ScreeningModel.vue';
+import { useGmQuoteEmirateCrossTabListen } from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
 const props = defineProps({
   quoteType: Object,
   quoteRequest: Object,
@@ -29,6 +30,7 @@ const props = defineProps({
   screeningType: String,
   gigInsurerDefaultEmail: String,
   permissionsEnum: Object,
+  isEmirateOfRegistrationLocked: Boolean,
   // RTA Configuration (only available for Car quotes)
   rta_transaction_types: {
     type: Object,
@@ -53,6 +55,12 @@ const IsComplianceCommentsEnable = ref(false);
 const screeningModel = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
+
+useGmQuoteEmirateCrossTabListen({
+  quoteUuid: computed(() => props.quoteRequest?.uuid),
+  quoteId: computed(() => props.quoteRequest?.id),
+  enabled: computed(() => props.quoteType?.code === quoteTypeCodeEnum.Business),
+});
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -720,6 +728,7 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
     :rta_field_configurations="rta_field_configurations"
     :rta_validation_summaries="rta_validation_summaries"
     :isAddionalFieldsEnabled="props.isAddionalFieldsEnabled"
+    :isEmirateOfRegistrationLocked="props.isEmirateOfRegistrationLocked"
   />
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

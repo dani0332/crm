@@ -26,6 +26,7 @@ use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteJourneyService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -39,8 +40,16 @@ class TravelQuoteObserver
 
     public function updating(TravelQuote $quote): void
     {
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+        if ($quote->isDirty('quote_status_id')) {
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                QuoteTypeId::Travel,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
+
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 
@@ -214,6 +223,12 @@ class TravelQuoteObserver
                 LoggerService::error('TravelQuoteObserver - capture embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
             }
         }
+
+        // For debugging
+        LoggerService::info('TravelQuoteObserver - reached inside policy booked check', [
+            'uuid' => $travelQuote->uuid,
+            'hasPolicyBookedStatusChange' => $hasPolicyBookedStatusChange,
+        ]);
 
         if ($hasPolicyBookedStatusChange) {
             try {

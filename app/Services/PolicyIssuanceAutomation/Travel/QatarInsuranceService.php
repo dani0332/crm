@@ -683,6 +683,7 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($newDocument->exists) {

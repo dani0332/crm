@@ -2,7 +2,7 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Services\UserService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -19,7 +19,7 @@ beforeEach(function () {
 
     $this->actingAs($this->admin);
     // Keep full route middleware (auth/last_login_check/check_route_access) enabled; skip CSRF only.
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     $this->workflowUrl = 'https://example.test/bird/manager-deactivation-workflow';
     $this->itSupportEmail = 'it-support-'.uniqid().'@example.test';

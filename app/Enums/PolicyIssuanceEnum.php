@@ -22,6 +22,9 @@ final class PolicyIssuanceEnum extends Enum
     const BOOKING_PENDING_STATUS = 'booking_pending';
     const BOOKING_PROCESSING_STATUS = 'booking_processing';
 
+    /** Reserved status — excluded from IMCRM policy automation manual re-trigger allowlist */
+    const ON_HOLD_STATUS = 'on_hold';
+
     // Policy Issuance Automation Statuses IDs
     const PIA_POLICY_AUTOMATION_STATUS_YES_ID = 1;
     const PIA_POLICY_AUTOMATION_STATUS_NO_ID = 2;

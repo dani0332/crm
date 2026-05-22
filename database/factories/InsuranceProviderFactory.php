@@ -62,11 +62,22 @@ class InsuranceProviderFactory extends Factory
     /**
      * Indicate that the insurance provider is AXA.
      */
-    public function axa()
+    public function axa(): static
     {
         return $this->state(fn (array $attributes) => [
             'code' => InsuranceProvidersEnum::AXA,
             'text' => 'AXA Insurance',
+        ]);
+    }
+
+    /**
+     * Indicate that the insurance provider is TM (Phoenix).
+     */
+    public function tm(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'code' => InsuranceProvidersEnum::TM,
+            'text' => 'TM Insurance',
         ]);
     }
 }

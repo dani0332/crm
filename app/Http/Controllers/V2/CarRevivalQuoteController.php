@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -20,9 +21,11 @@ use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CarQuoteService;
+use App\Services\CommunicationEventLogService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -137,8 +140,18 @@ class CarRevivalQuoteController extends Controller
         $storageUrl = storageUrl();
         $paymentStatusEnum = PaymentStatusEnum::asArray();
 
+        if (is_object($record)) {
+            $engagementLabel = MotorRevivalEnum::getEngagementLevelLabel($record->engagement_level ?? null);
+            $record->engagement_level_display = $engagementLabel === '' ? null : $engagementLabel;
+        }
+
+        $communicationEventLogs = app(CommunicationEventLogService::class)->getLogsForQuoteUuid($record->uuid);
+
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus($quoteTypeId, $record->id);
+
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,
+            'quoteTypeId' => $quoteTypeId,
             'leadStatuses' => array_values($leadStatuses->toArray()),
             'advisors' => $advisors,
             'documentTypes' => $documentTypes,
@@ -165,6 +178,8 @@ class CarRevivalQuoteController extends Controller
             'paymentStatusEnum' => $paymentStatusEnum,
             'paymentTooltipEnum' => $paymentTooltipEnum,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'communicationEventLogs' => $communicationEventLogs,
+            'emailStatuses' => $emailStatuses,
         ]);
     }
 

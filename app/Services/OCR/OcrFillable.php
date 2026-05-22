@@ -348,6 +348,7 @@ trait OcrFillable
                 OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $documentTypeCode),
+                OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),

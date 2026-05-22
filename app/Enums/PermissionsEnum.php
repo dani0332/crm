@@ -228,6 +228,9 @@ final class PermissionsEnum extends Enum
     public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
     public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
     public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
+    public const LIFE_REVIVAL_QUOTES_LIST = 'life-revival-quotes-list';
+    public const LIFE_REVIVAL_QUOTES_EDIT = 'life-revival-quotes-edit';
+    public const LIFE_REVIVAL_QUOTES_SHOW = 'life-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -284,6 +287,7 @@ final class PermissionsEnum extends Enum
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
+    public const EDIT_PLAN_AFTER_TRANSACTION_APPROVAL = 'edit-plan-after-transaction-approval';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
     public const SAVE_QUOTE_NOTES = 'save-quote-notes';
     public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
@@ -337,6 +341,7 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
     public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const CONVERSION_OPTIMIZATION_ENGINE_REPORT_VIEW = 'conversion-optimization-engine-report-view';
     public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
     public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
     public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
@@ -439,6 +444,7 @@ final class PermissionsEnum extends Enum
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
     public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
+    public const COMPLIANCE_DOCUMENT_UPLOAD = 'compliance-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
@@ -483,6 +489,12 @@ final class PermissionsEnum extends Enum
     public const DELETE_ADDITIONAL_CONTACT = 'delete-additional-contact';
     public const COMPANY_PRIVATE_CAR_DRIVER_UPDATES = 'company-private-car-driver-updates';
 
+    // Smart Phone Permissions
+    public const DEVICE_QUOTES_LIST = 'device-quotes-list';
+    public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
+    public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
+    public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
+
     // Cyber Permissions
     public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
     public const CYBER_QUOTES_CREATE = 'cyber-quotes-create';
@@ -495,7 +507,45 @@ final class PermissionsEnum extends Enum
     public const CYBER_AS_AT_REPORT_MANAGER = 'cyber-as-at-report-manager';
     public const CYBER_LEADPOOL = 'cyber-leadpool';
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
+
     // End of Cyber Permissions
+    public const DEVICE_LEAD_ALLOCATION_DASHBOARD = 'device-lead-allocation-dashboard';
+    public const DEVICE_LEADPOOL = 'device-leadpool';
+    public const DEVICE_CONVERSION_REPORT = 'device-conversion-report';
+    public const DEVICE_DISTRIBUTION_REPORT = 'device-distribution-report';
+
+    /**
+     * IMCRM: re-trigger device policy automation (e.g. NGI document sync after repeated failures).
+     */
+    public const RE_TRIGGER_POLICY_AUTOMATION_DEVICE = 're-trigger-policy-automation-device';
+
+    // Lead allocation dashboards (view-only access for managers)
+    public const CAR_LEAD_ALLOCATION_VIEW_ONLY = 'car-lead-allocation-view-only';
+    public const HEALTH_LEAD_ALLOCATION_VIEW_ONLY = 'health-lead-allocation-view-only';
+    public const CORPLINE_LEAD_ALLOCATION_VIEW_ONLY = 'corpline-lead-allocation-view-only';
+    public const CYBER_LEAD_ALLOCATION_VIEW_ONLY = 'cyber-lead-allocation-view-only';
+    public const CYCLE_LEAD_ALLOCATION_VIEW_ONLY = 'cycle-lead-allocation-view-only';
+    public const DEVICE_LEAD_ALLOCATION_VIEW_ONLY = 'device-lead-allocation-view-only';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_VIEW_ONLY = 'group-medical-lead-allocation-view-only';
+    public const TRAVEL_LEAD_ALLOCATION_VIEW_ONLY = 'travel-lead-allocation-view-only';
+    public const LIFE_LEAD_ALLOCATION_VIEW_ONLY = 'life-lead-allocation-view-only';
+    public const PET_LEAD_ALLOCATION_VIEW_ONLY = 'pet-lead-allocation-view-only';
+    public const YACHT_LEAD_ALLOCATION_VIEW_ONLY = 'yacht-lead-allocation-view-only';
+    public const SAVINGS_LEAD_ALLOCATION_VIEW_ONLY = 'savings-lead-allocation-view-only';
+    public const HOME_LEAD_ALLOCATION_VIEW_ONLY = 'home-lead-allocation-view-only';
+    public const CAR_LEAD_ALLOCATION_EDIT = 'car-lead-allocation-edit';
+    public const HEALTH_LEAD_ALLOCATION_EDIT = 'health-lead-allocation-edit';
+    public const CORPLINE_LEAD_ALLOCATION_EDIT = 'corpline-lead-allocation-edit';
+    public const CYBER_LEAD_ALLOCATION_EDIT = 'cyber-lead-allocation-edit';
+    public const CYCLE_LEAD_ALLOCATION_EDIT = 'cycle-lead-allocation-edit';
+    public const DEVICE_LEAD_ALLOCATION_EDIT = 'device-lead-allocation-edit';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_EDIT = 'group-medical-lead-allocation-edit';
+    public const TRAVEL_LEAD_ALLOCATION_EDIT = 'travel-lead-allocation-edit';
+    public const LIFE_LEAD_ALLOCATION_EDIT = 'life-lead-allocation-edit';
+    public const PET_LEAD_ALLOCATION_EDIT = 'pet-lead-allocation-edit';
+    public const YACHT_LEAD_ALLOCATION_EDIT = 'yacht-lead-allocation-edit';
+    public const SAVINGS_LEAD_ALLOCATION_EDIT = 'savings-lead-allocation-edit';
+    public const HOME_LEAD_ALLOCATION_EDIT = 'home-lead-allocation-edit';
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
