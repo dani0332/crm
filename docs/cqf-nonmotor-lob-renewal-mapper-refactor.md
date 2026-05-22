@@ -49,6 +49,7 @@ protected function formatPolicyDate(?string $date): ?string
 Each LOB storage service gains one protected method. The `copyXxxQuoteDetail()` method replaces the three-step chain with a single call:
 
 **Before:**
+
 ```php
 $data = $this->copyableAttributes($oldLob->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
 $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote, $oldLob);
@@ -57,6 +58,7 @@ LobModel::create($data);
 ```
 
 **After:**
+
 ```php
 LobModel::create($this->mapLobRenewalDetail($oldLob, $newQuote));
 ```
@@ -66,6 +68,7 @@ LobModel::create($this->mapLobRenewalDetail($oldLob, $newQuote));
 ## Mapper Field Lists Per LOB
 
 ### Cycle (`mapLobRenewalDetail(CycleQuote $oldLob, PersonalQuote $newQuote): array`)
+
 `cycle_quote_request` has only 16 columns — very minimal LOB table.
 
 ```
@@ -222,6 +225,7 @@ Null (omitted):         premium*, price_*, policy_*, payment_*, insurer_*,
 ## Test Strategy
 
 For each LOB, update the existing `copyXxxQuoteDetail` test to:
+
 1. Verify fields in the "carry from old" list are present on the created record
 2. Verify fields in the "null" list (premium, policy_number, insurance_provider_id, etc.) are null
 3. Verify lead fields (source, quote_status_id, advisor_id) come from the new PersonalQuote, not the old
