@@ -430,7 +430,7 @@ class EpBookingService extends BaseService
         }
     }
 
-    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote, string $duplicateNumber): bool
+    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote, ?string $duplicateNumber): bool
     {
         $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
         if (! $insuranceProvider) {
@@ -467,7 +467,7 @@ class EpBookingService extends BaseService
         ])->latest()->first();
     }
 
-    private static function updateSageBookingInvoiceNumbers(EmbeddedTransaction $quote, string $quoteUuid, InsuranceProvider $insuranceProvider, InsurerRequestResponse $insurerRequestResponse, string $duplicateNumber): bool
+    private static function updateSageBookingInvoiceNumbers(EmbeddedTransaction $quote, string $quoteUuid, InsuranceProvider $insuranceProvider, InsurerRequestResponse $insurerRequestResponse, ?string $duplicateNumber): bool
     {
         $response = json_decode((string) $insurerRequestResponse->response, true);
         if (! is_array($response)) {
@@ -497,7 +497,7 @@ class EpBookingService extends BaseService
         return self::persistSageBookingInvoiceNumberUpdates($insurerRequestResponse, $quote, $response, $quoteUuid, $insuranceProvider->id);
     }
 
-    private static function prepareSageBookingInvoiceNumberUpdates(array &$response, EmbeddedTransaction $quote, string $quoteUuid, int $providerId, string $duplicateNumber): bool
+    private static function prepareSageBookingInvoiceNumberUpdates(array &$response, EmbeddedTransaction $quote, string $quoteUuid, int $providerId, ?string $duplicateNumber): bool
     {
         $isResponseUpdated = false;
 
