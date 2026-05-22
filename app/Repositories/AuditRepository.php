@@ -174,7 +174,7 @@ class AuditRepository extends BaseRepository
         $userHiddenAttributeKeys = (new User)->getHidden();
         $auditTransformCacheActive = false;
 
-        $results->transform(function ($audit) use ($quoteObject, $userHiddenAttributeKeys, $auditTransformCacheActive) {
+        $results->transform(function ($audit) use ($quoteObject, $userHiddenAttributeKeys, &$auditTransformCacheActive) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
