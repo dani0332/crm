@@ -17,6 +17,7 @@ class HealthPlanService extends BaseService
     {
         return HealthPlan::select('id', 'code', 'status', 'cohort_enabled', 'gender_enabled', 'marital_status_enabled')
             ->where('code', $code)
+            ->whereIn('status', [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::ACTIVE->value])
             ->get();
     }
 

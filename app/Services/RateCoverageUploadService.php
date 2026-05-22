@@ -400,7 +400,7 @@ class RateCoverageUploadService
                 // Upload file and rates in a transaction
                 DB::transaction(function () use ($uploadedFile, $plan, $rows, $rowCount, $data) {
                     // Upload file (health rate control)
-                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $rowCount - 1);
+                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $plan->code, $rowCount - 1);
 
                     // Upload rates
                     $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
@@ -417,13 +417,14 @@ class RateCoverageUploadService
         $effectiveFrom,
         $effectiveTo,
         int $planId,
+        $planCode,
         int $totalRecords): array
     {
         // Check if any draft/scheduled version exists against plan
         $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value]);
 
         if ($draftVersion) {
-            throw new \Exception('Draft or Scheduled rate sheet already exists for this plan.');
+            throw new \Exception("Upload rejected. A pending rate sheet already exists for plan {$planCode}. Please delete the existing Draft/Scheduled rate sheet before uploading a new one");
         }
 
         // Derive plan versiob
