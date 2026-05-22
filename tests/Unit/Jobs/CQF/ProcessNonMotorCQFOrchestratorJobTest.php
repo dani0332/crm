@@ -10,7 +10,7 @@ $job = new ProcessNonMotorCQFOrchestratorJob;
 
 test('has correct job configuration', function () use ($job) {
     expect($job->tries)->toBe(1)
-        ->and($job->timeout)->toBe(180);
+        ->and($job->timeout)->toBe(60);
 });
 
 test('implements ShouldBeUnique', function () use ($job) {

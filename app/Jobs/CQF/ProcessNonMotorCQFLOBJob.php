@@ -12,6 +12,7 @@ use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,12 +21,13 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Throwable;
 
-class ProcessNonMotorCQFLOBJob implements ShouldQueue
+class ProcessNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
     public int $timeout = 80;
+    public int $uniqueFor = 300;
 
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal';
 
@@ -36,6 +38,11 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         public int $renewalDaysThreshold
     ) {
         $this->onQueue('default');
+    }
+
+    public function uniqueId(): string
+    {
+        return (string) $this->renewalsUploadLeadsId.'-'.$this->quoteType->value;
     }
 
     protected function lobBatchName(): string
