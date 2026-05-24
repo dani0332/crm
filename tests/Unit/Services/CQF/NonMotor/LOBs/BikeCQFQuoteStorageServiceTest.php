@@ -237,44 +237,9 @@ it('skips copying when old PersonalQuote has no BikeQuote', function () {
     expect(BikeQuote::count())->toBe($countBefore);
 });
 
-it('decrements uae_license_held_for_id to the previous active entry', function () {
-    $prev = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
-    $current = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
-
-    $decrement = Closure::bind(
-        fn ($id) => $this->decrementLicenseHeldForId($id),
-        $this->service,
-        BikeCQFQuoteStorageService::class
-    );
-
-    expect($decrement($current->id))->toBe($prev->id);
-});
-
-it('keeps uae_license_held_for_id unchanged when already at the lowest active entry', function () {
-    $lowest = UAELicenseHeldFor::factory()->create(['text' => 'Less than 1 year']);
-
-    $decrement = Closure::bind(
-        fn ($id) => $this->decrementLicenseHeldForId($id),
-        $this->service,
-        BikeCQFQuoteStorageService::class
-    );
-
-    expect($decrement($lowest->id))->toBe($lowest->id);
-});
-
-it('returns null when decrementing a null uae_license_held_for_id', function () {
-    $decrement = Closure::bind(
-        fn ($id) => $this->decrementLicenseHeldForId($id),
-        $this->service,
-        BikeCQFQuoteStorageService::class
-    );
-
-    expect($decrement(null))->toBeNull();
-});
-
-it('decrements uae_license_held_for_id on Bike-to-Bike renewal', function () {
-    $prev = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
-    $current = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
+it('increments uae_license_held_for_id on Bike-to-Bike renewal', function () {
+    $current = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
+    $next = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
 
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
 
@@ -301,7 +266,7 @@ it('decrements uae_license_held_for_id on Bike-to-Bike renewal', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('uae_license_held_for_id'))
-        ->toBe($prev->id);
+        ->toBe($next->id);
 });
 
 it('increments uae_license_held_for_id on Car-to-Bike renewal', function () {

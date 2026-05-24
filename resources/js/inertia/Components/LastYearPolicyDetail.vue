@@ -80,7 +80,7 @@ function extractPreviousLeadMeta(quote, previousQuoteProp) {
 /**
  * CRM show URL for the previous lead, based on LOB (matches Ziggy route names / legacy car path).
  */
-function resolvePreviousLeadUrl(modelType, uuid, pageProps) {
+function resolvePreviousLeadUrl(modelType, uuid, label, pageProps) {
   const typeCode = pageProps?.typeCode;
   if (typeCode === 'Group Medical' && typeof route === 'function') {
     try {
@@ -92,6 +92,10 @@ function resolvePreviousLeadUrl(modelType, uuid, pageProps) {
 
   const mt = String(modelType || '');
   if (mt === 'Car' || mt === 'car') {
+    return `/quotes/car/${uuid}`;
+  }
+
+  if(mt=== 'Bike' || mt === 'bike' && String(label).includes('CAR')) {
     return `/quotes/car/${uuid}`;
   }
 
@@ -131,6 +135,7 @@ const previousLeadLink = computed(() => {
   const href = resolvePreviousLeadUrl(
     modelTypeLabel.value,
     meta.uuid,
+    meta.label,
     page.props,
   );
 

@@ -113,6 +113,7 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'customer_id' => $oldLob->customer_id,
             'nationality_id' => $oldLob->nationality_id,
             'ilivein_accommodation_type_id' => $oldLob->ilivein_accommodation_type_id,
+            'accommodation_type_id' => $oldLob->accommodation_type_id,
             'iam_possesion_type_id' => $oldLob->iam_possesion_type_id,
             'possession_type_id' => $oldLob->possession_type_id,
             'owner_occupancy_type_id' => $oldLob->owner_occupancy_type_id,
@@ -131,6 +132,7 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'contents_aed' => $oldLob->contents_aed,
             'personal_belongings_aed' => $oldLob->personal_belongings_aed,
             'building_aed' => $oldLob->building_aed,
+            'address' => $oldLob->address,
             'company_name' => $newQuote->company_name,
             'company_address' => $newQuote->company_address,
         ];

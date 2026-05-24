@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
@@ -62,6 +64,7 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $this->copyEntityMapping($oldBusinessQuote, $businessQuote);
+        $this->copyBusinessCustomerInsured($oldBusinessQuote, $businessQuote);
         $this->copyCustomerMembers($oldBusinessQuote, $businessQuote);
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
@@ -82,6 +85,22 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         ]);
     }
 
+    private function copyBusinessCustomerInsured(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
+    {
+        $oldInsured = $oldQuote->customerInsured;
+        if ($oldInsured === null) {
+            return;
+        }
+
+        CustomerInsured::create([
+            'quote_type_id' => QuoteTypeId::Business,
+            'quote_request_id' => $newQuote->id,
+            'insured_id' => $oldInsured->insured_id,
+            'customer_id' => $oldInsured->customer_id,
+            'is_active' => true,
+        ]);
+    }
+
     private function copyCustomerMembers(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
     {
         $oldQuote->customerMembers->each(function (CustomerMembers $member) use ($newQuote) {
@@ -97,7 +116,7 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
      */
     protected function mapLobRenewalDetail(BusinessQuote $oldLob, PersonalQuote $newQuote): array
     {
-        return [
+        $data = [
             'personal_quote_id' => $newQuote->id,
             'uuid' => $newQuote->uuid,
             'code' => $newQuote->code,
@@ -155,5 +174,13 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'company_activity_type_id' => $oldLob->company_activity_type_id,
             'emirates_id' => $oldLob->emirates_id,
         ];
+
+        if ($oldLob->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            $data['company_address'] = $oldLob->company_address;
+            $data['premium'] = $oldLob->premium;
+            $data['policy_number'] = $oldLob->policy_number;
+        }
+
+        return $data;
     }
 }

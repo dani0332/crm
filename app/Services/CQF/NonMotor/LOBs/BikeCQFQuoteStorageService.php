@@ -151,6 +151,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
         $data['bike_value'] = null;
+        $data['bike_value_tier'] = null;
         $data['claim_history_id'] = null;
         $data['has_ncd_supporting_documents'] = null;
         $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($data['uae_license_held_for_id'] ?? null);
@@ -274,16 +275,17 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'model_detail_id' => $oldLob->model_detail_id,
             'cubic_capacity' => $oldLob->cubic_capacity,
             'emirate_of_registration_id' => $oldLob->emirate_of_registration_id,
-            'bike_value_tier' => $oldLob->bike_value_tier,
             'chassis_number' => $oldLob->chassis_number,
             'vehicle_type_id' => $oldLob->vehicle_type_id,
             'seat_capacity' => $oldLob->seat_capacity,
+            'year_of_first_registration' => $oldLob->year_of_first_registration,
             'bike_type_insurance_id' => $oldLob->bike_type_insurance_id,
             'uae_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->uae_license_held_for_id),
             'back_home_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->back_home_license_held_for_id, backHome: true),
             // --- reset on renewal ---
             'bike_value' => null,
             'claim_history_id' => null,
+            'bike_value_tier' => null,
             'has_ncd_supporting_documents' => null,
             'insurance_type_id' => $oldLob->insurance_type_id,
         ];

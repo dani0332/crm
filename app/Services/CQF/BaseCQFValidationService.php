@@ -113,7 +113,7 @@ class BaseCQFValidationService implements CQFValidationInterface
         $policyPeriodExtension = false;
         $isUpdateBooked = false;
 
-        if ($quote->source === LeadSourceEnum::INSLY && ! empty($sendUpdateLogs)) {
+        if (! empty($sendUpdateLogs)) {
             foreach ($sendUpdateLogs as $log) {
                 if ($log->isEndorsementFinancial()) {
                     $endorsementFinancial = true;

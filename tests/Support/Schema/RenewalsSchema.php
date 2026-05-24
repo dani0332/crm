@@ -53,6 +53,7 @@ class RenewalsSchema
                 $table->string('chassis_number')->nullable();
                 $table->unsignedBigInteger('vehicle_type_id')->nullable();
                 $table->integer('seat_capacity')->nullable();
+                $table->string('year_of_first_registration')->nullable();
                 $table->unsignedBigInteger('bike_type_insurance_id')->nullable();
                 $table->unsignedBigInteger('uae_license_held_for_id')->nullable();
                 $table->unsignedBigInteger('back_home_license_held_for_id')->nullable();
@@ -257,10 +258,13 @@ class RenewalsSchema
                 'is_mixed_breed' => fn (Blueprint $t) => $t->boolean('is_mixed_breed')->nullable(),
                 'has_injury' => fn (Blueprint $t) => $t->boolean('has_injury')->nullable(),
                 'pet_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('pet_type_id')->nullable(),
+                'accomodation_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('accomodation_type_id')->nullable(),
+                'pet_age_id' => fn (Blueprint $t) => $t->unsignedBigInteger('pet_age_id')->nullable(),
             ]),
             'home_quote_request' => array_merge($lobRenewalColumns, [
                 'transaction_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('transaction_type_id')->nullable(),
                 'ilivein_accommodation_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('ilivein_accommodation_type_id')->nullable(),
+                'accommodation_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('accommodation_type_id')->nullable(),
                 'iam_possesion_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('iam_possesion_type_id')->nullable(),
                 'owner_occupancy_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('owner_occupancy_type_id')->nullable(),
                 'coverage_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('coverage_type_id')->nullable(),
