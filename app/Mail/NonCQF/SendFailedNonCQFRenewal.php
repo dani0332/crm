@@ -106,7 +106,7 @@ class SendFailedNonCQFRenewal extends Mailable
             ->values()
             ->all();
 
-        $date = now()->format('Y-m-d');
+        $date = now()->format(config('constants.DATE_FORMAT_ONLY'));
         $safeLobForFile = preg_replace('/[^a-zA-Z0-9_-]/', '-', $lob);
 
         return (object) [

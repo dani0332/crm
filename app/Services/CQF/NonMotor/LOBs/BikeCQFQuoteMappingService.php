@@ -16,6 +16,7 @@ use App\Repositories\LookupRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
 {
@@ -109,9 +110,13 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'insurance_provider_id' => null,
         ];
 
-        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
-            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
-            ->first();
+        $lookup = Cache::remember(
+            'cqf_transaction_type_renewal',
+            now()->addHour(),
+            fn () => LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+                ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
+                ->first()
+        );
 
         if ($lookup) {
             $quoteData['transaction_type_id'] = $lookup->id;

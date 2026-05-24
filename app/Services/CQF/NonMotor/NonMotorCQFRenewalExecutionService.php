@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 
 class NonMotorCQFRenewalExecutionService
 {
+    private const FILE_DATETIME_FORMAT = 'Y-m-d_H-i-s';
     public function __construct(
         protected NonMotorCQFRegistry $registry,
         protected LOBValidationPipe $lobValidationPipe,
@@ -168,7 +169,7 @@ class NonMotorCQFRenewalExecutionService
         $uploadLeadData = [
             'renewal_import_code' => $this->renewalsUploadService->generateRandomString(),
             'quote_type' => $quoteTypeShortCode,
-            'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.uniqid().'_'.now()->format('Y-m-d_H-i-s').'.xlsx',
+            'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.uniqid().'_'.now()->format(self::FILE_DATETIME_FORMAT).'.xlsx',
             'file_path' => null,
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,

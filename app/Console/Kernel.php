@@ -174,7 +174,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
         $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('leads:process-non-motor-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('04:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('leads:process-non-motor-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('04:00')->onOneServer()->withoutOverlapping(60);
         $this->scheduleWithEnvironment(
             $schedule,
             'policy-issuance-automation:run',

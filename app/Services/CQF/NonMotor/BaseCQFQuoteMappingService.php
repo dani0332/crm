@@ -17,6 +17,7 @@ use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use App\Traits\ResolvesCommission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Base mapping service for Non-motor CQF renewal quotes (PersonalQuote-based LOBs).
@@ -150,9 +151,13 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'insurance_provider_id' => null,
         ];
 
-        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
-            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
-            ->first();
+        $lookup = Cache::remember(
+            'cqf_transaction_type_renewal',
+            now()->addHour(),
+            fn () => LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+                ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
+                ->first()
+        );
 
         if ($lookup) {
             $quoteData['transaction_type_id'] = $lookup->id;
