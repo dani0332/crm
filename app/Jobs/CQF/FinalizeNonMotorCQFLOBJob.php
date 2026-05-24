@@ -49,16 +49,20 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 
         $totalProcessed = (int) $lead->good + (int) $lead->cannot_upload;
 
-        if ($totalProcessed > 0) {
-            $lead->total_records = $totalProcessed;
-            $lead->status = ProcessStatusCode::COMPLETED;
-            $lead->save();
-        } else {
-            $lead->is_deleted = true;
-            $lead->save();
+        // Only write DB state on the first attempt; on retries the lead is
+        // already COMPLETED/deleted, so we skip straight to the Bird call.
+        if ($lead->status !== ProcessStatusCode::COMPLETED && ! $lead->is_deleted) {
+            if ($totalProcessed > 0) {
+                $lead->total_records = $totalProcessed;
+                $lead->status = ProcessStatusCode::COMPLETED;
+                $lead->save();
+            } else {
+                $lead->is_deleted = true;
+                $lead->save();
+            }
         }
 
-        if ($lead->cannot_upload > 0) {
+        if ($lead->cannot_upload > 0 && $lead->status === ProcessStatusCode::COMPLETED) {
             $mail = new SendFailedNonCQFRenewal($this->renewalsUploadLeadsId);
             $mail->sendViaBird();
         }

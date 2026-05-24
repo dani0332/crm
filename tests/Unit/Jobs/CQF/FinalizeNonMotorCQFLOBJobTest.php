@@ -47,3 +47,19 @@ test('still marks lead as completed when cannot_upload is greater than zero', fu
     expect($lead->status)->toBe(ProcessStatusCode::COMPLETED)
         ->and((int) $lead->total_records)->toBe(3);
 });
+
+test('does not overwrite DB state when lead is already completed on retry', function () {
+    $lead = RenewalsUploadLeads::factory()->create([
+        'good' => 3,
+        'cannot_upload' => 0,
+        'status' => ProcessStatusCode::COMPLETED,
+        'total_records' => 3,
+    ]);
+
+    // Simulate a retry: handle() must not reset total_records or status
+    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle();
+
+    $lead->refresh();
+    expect($lead->status)->toBe(ProcessStatusCode::COMPLETED)
+        ->and((int) $lead->total_records)->toBe(3);
+});
