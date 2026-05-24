@@ -38,7 +38,7 @@ class SendFailedNonCQFRenewal extends Mailable
     /**
      * Send failed non-motor CQF renewal notification via Bird (same pattern as BorRequestMail).
      */
-    public function sendViaBird(): bool
+    public function sendViaBird(BirdService $birdService): bool
     {
         $workflowUrl = $this->getBirdWorkflowUrl();
 
@@ -52,7 +52,7 @@ class SendFailedNonCQFRenewal extends Mailable
 
         try {
             $birdData = $this->buildBirdEmailData();
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $birdData);
+            $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
 
             LoggerService::info(self::class.' - Non-motor CQF renewals errors sent via Bird', [
                 'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,

@@ -19,6 +19,10 @@ use Illuminate\Support\Facades\Validator;
  */
 class BaseCQFValidationService implements CQFValidationInterface
 {
+    public function __construct(
+        protected CRUDService $crudService,
+    ) {}
+
     /**
      * Base validation rules (common to Motor and Non-motor).
      *
@@ -101,7 +105,7 @@ class BaseCQFValidationService implements CQFValidationInterface
         if ($quote->source !== LeadSourceEnum::INSLY) {
             return true; // Only apply Insly renewal criteria for quotes from Insly
         }
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quote);
 
         if (! $hasPolicyIssuedStatus) {
             return false;

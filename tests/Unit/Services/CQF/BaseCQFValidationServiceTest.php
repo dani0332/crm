@@ -6,12 +6,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Services\CQF\BaseCQFValidationService;
+use App\Services\CRUDService;
 use Illuminate\Database\Eloquent\Model;
 use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\Schema\SchemaUtils;
 
 beforeEach(function () {
-    $this->service = new BaseCQFValidationService;
+    $this->service = new BaseCQFValidationService(Mockery::mock(CRUDService::class));
 });
 
 it('validates quote successfully when all base fields are present', function () {

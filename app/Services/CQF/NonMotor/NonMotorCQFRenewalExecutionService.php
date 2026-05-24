@@ -37,6 +37,7 @@ class NonMotorCQFRenewalExecutionService
         protected ForeignKeyValidationPipe $foreignKeyValidationPipe,
         protected StoragePipe $storagePipe,
         protected RenewalsUploadService $renewalsUploadService,
+        protected Pipeline $pipeline,
     ) {}
 
     /**
@@ -132,7 +133,7 @@ class NonMotorCQFRenewalExecutionService
                 storage: $storage
             );
 
-            $context = app(Pipeline::class)
+            $context = $this->pipeline
                 ->send($context)
                 ->through($pipes)
                 ->thenReturn();
