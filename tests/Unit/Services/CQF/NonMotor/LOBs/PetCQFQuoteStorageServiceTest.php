@@ -270,12 +270,12 @@ it('keeps pet_age_id at cap when already at the highest pet-ages entry', functio
 
 it('copies customer_insured record from old quote to renewal quote', function () {
     $customer = Customer::factory()->create();
-    $insured = Insured::create(['customer_type' => 'Individual', 'first_name' => 'Test', 'last_name' => 'User']);
+    $insured = Insured::factory()->create(['customer_type' => 'Individual', 'first_name' => 'Test', 'last_name' => 'User']);
 
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
     $newPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
 
-    CustomerInsured::create([
+    CustomerInsured::factory()->create([
         'quote_type_id' => 9,
         'quote_request_id' => $oldPq->id,
         'insured_id' => $insured->id,

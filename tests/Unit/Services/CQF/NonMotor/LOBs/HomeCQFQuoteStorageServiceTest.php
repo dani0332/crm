@@ -327,7 +327,7 @@ it('copies CustomerAddress for the new quote uuid', function () {
     HomeQuote::factory()->create(['personal_quote_id' => $oldPq->id]);
     $oldPq->load('homeQuote');
 
-    CustomerAddress::create([
+    CustomerAddress::factory()->create([
         'customer_id' => 99,
         'quote_uuid' => $oldPq->uuid,
         'floor_number' => '5',

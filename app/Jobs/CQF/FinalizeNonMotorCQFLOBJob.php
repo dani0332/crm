@@ -22,7 +22,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 80;
+    public int $timeout = 60;
     public int $uniqueFor = 300;
 
     public function __construct(

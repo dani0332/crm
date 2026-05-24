@@ -20,7 +20,7 @@ class ProcessNonMotorCQFQuoteJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 80;
+    public int $timeout = 60;
 
     public function __construct(
         public int $quoteId,

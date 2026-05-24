@@ -257,7 +257,7 @@ it('copies QuoteRequestEntityMapping to the new BusinessQuote on Corpline renewa
         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
     ]);
 
-    QuoteRequestEntityMapping::create([
+    QuoteRequestEntityMapping::factory()->create([
         'quote_type_id' => QuoteTypeId::Business,
         'quote_request_id' => $oldBusinessQuote->id,
         'entity_id' => 10,
@@ -304,7 +304,7 @@ it('copies CustomerMembers (UBO) to the new BusinessQuote on Corpline renewal', 
         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
     ]);
 
-    CustomerMembers::create([
+    CustomerMembers::factory()->create([
         'quote_type' => BusinessQuote::class,
         'quote_id' => $oldBusinessQuote->id,
         'first_name' => 'John',
@@ -356,7 +356,7 @@ it('copies CustomerInsured to the new BusinessQuote on renewal so latest_insured
         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
     ]);
 
-    CustomerInsured::create([
+    CustomerInsured::factory()->create([
         'quote_type_id' => QuoteTypeId::Business,
         'quote_request_id' => $oldBusinessQuote->id,
         'insured_id' => 4524,
