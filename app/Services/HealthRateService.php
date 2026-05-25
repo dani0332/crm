@@ -38,6 +38,8 @@ class HealthRateService extends BaseService
         }
 
         // Else add rate to existing draft rate sheet
+        $data['health_plan_id'] = $draftRatesSheet->health_plan_id;
+
         return $this->addRate($data, $planIds, $draftRatesSheet);
     }
 
