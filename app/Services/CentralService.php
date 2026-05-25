@@ -556,9 +556,9 @@ class CentralService extends BaseService
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
         $isNormalPlan = $data['planType'] == 'normalPlans';
         $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
-        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+        $isQICProvider = $data['provider_code'] == InsuranceProviderEnum::QIC->value;
 
-        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isQICProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
             $customerMembers = CustomerMembers::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
@@ -2184,7 +2184,6 @@ class CentralService extends BaseService
             InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
             InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
             InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
-            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
             InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 

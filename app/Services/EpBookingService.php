@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -12,6 +14,8 @@ use App\Jobs\EpSendDocumentJob;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
@@ -19,7 +23,9 @@ use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -27,7 +33,6 @@ class EpBookingService extends BaseService
 {
     use ChecksAzureFileExistence, GenericQueriesAllLobs;
 
-    protected string $className = 'EpBookingService:';
     protected string $logPrefix = '';
     protected array $logExtra = [];
     public int $providerId = 0;
@@ -35,6 +40,9 @@ class EpBookingService extends BaseService
     public ?EmbeddedTransaction $embeddedTransaction = null;
     public array $reqDocTypeCodes = [];
     public array $watermarkableDocTypeCodes = [];
+
+    public const STEP_GET_POLICY_DOCUMENTS = 'GetPolicyDocuments';
+    public const CALL_TYPE_EP_ECB = 'EpEcb';
 
     /**
      * Create a new class instance.
@@ -76,7 +84,7 @@ class EpBookingService extends BaseService
         $documentTypes = DocumentType::whereIn('code', $watermarkableDocTypeCodes)
             ->where(['quote_type_id' => $this->context->quoteTypeId, 'is_active' => 1])->get();
 
-        LoggerService::info("{$this->className} Starting processWatermarkDocuments", extra: [
+        LoggerService::info(self::class.' Starting processWatermarkDocuments', extra: [
             'documentTypeCodes' => $documentTypes->pluck('code')->toArray(),
             'documentItems' => $documents->select('is_watermarked', 'document_type_code')->toArray(),
         ]);
@@ -127,7 +135,7 @@ class EpBookingService extends BaseService
             }
         }
 
-        LoggerService::info("{$this->className} Completed processWatermarkDocuments: ", extra: [...$extraLog, 'watermarked_status' => $watermarkedStatus]);
+        LoggerService::info(self::class.' Completed processWatermarkDocuments: ', extra: [...$extraLog, 'watermarked_status' => $watermarkedStatus]);
 
         return $watermarkedDocuments;
     }
@@ -184,7 +192,7 @@ class EpBookingService extends BaseService
 
         } catch (\Exception $e) {
             if ($this->isTransientFileExistenceFailure($e)) {
-                LoggerService::warning("{$this->className} Transient file existence failure: {$e->getMessage()}", extra: [
+                LoggerService::warning(self::class." Transient file existence failure: {$e->getMessage()}", extra: [
                     'exception_class' => $e::class,
                     'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
                     'previous_exception_message' => $e->getPrevious()?->getMessage(),
@@ -378,7 +386,7 @@ class EpBookingService extends BaseService
         try {
             return $this->checkAzureFileExistsWithRetry($path);
         } catch (Throwable $e) {
-            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage(), extra: [
+            LoggerService::error(self::class." Error checking file existence: {$path}. Error: ".$e->getMessage(), extra: [
                 'exception_class' => $e::class,
                 'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
                 'previous_exception_message' => $e->getPrevious()?->getMessage(),
@@ -420,5 +428,196 @@ class EpBookingService extends BaseService
                 'error' => 'UploadDocument: '.$e->getMessage(),
             ];
         }
+    }
+
+    public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote, ?string $duplicateNumber): bool
+    {
+        $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->first();
+        if (! $insuranceProvider) {
+            LoggerService::warning(self::class." - Insurance provider not found: {$quote->code}");
+
+            return false;
+        }
+
+        $quoteUuid = Str::afterLast($quote->code, '-');
+        $insurerRequestResponse = self::getLatestPassedEcbInsurerRequestResponse($quoteUuid, $insuranceProvider->id);
+
+        if (! $insurerRequestResponse) {
+            LoggerService::warning(self::class.' - Insurer request response not found for Sage document update', extra: [
+                'quote_uuid' => $quoteUuid,
+                'quote_code' => $quote->code,
+                'ep_code' => $quote->code,
+                'provider_id' => $insuranceProvider->id,
+            ]);
+
+            return false;
+        }
+
+        return self::updateSageBookingInvoiceNumbers($quote, $quoteUuid, $insuranceProvider, $insurerRequestResponse, $duplicateNumber);
+    }
+
+    private static function getLatestPassedEcbInsurerRequestResponse(string $quoteUuid, int $providerId): ?InsurerRequestResponse
+    {
+        return InsurerRequestResponse::where([
+            'quote_uuid' => $quoteUuid,
+            'provider_id' => $providerId,
+            'execution_method' => self::STEP_GET_POLICY_DOCUMENTS,
+            'call_type' => self::CALL_TYPE_EP_ECB,
+            'status' => GenericRequestEnum::PASSED,
+        ])->latest()->first();
+    }
+
+    private static function updateSageBookingInvoiceNumbers(EmbeddedTransaction $quote, string $quoteUuid, InsuranceProvider $insuranceProvider, InsurerRequestResponse $insurerRequestResponse, ?string $duplicateNumber): bool
+    {
+        $response = json_decode((string) $insurerRequestResponse->response, true);
+        if (! is_array($response)) {
+            LoggerService::warning(self::class.' - Unable to decode insurer request response for Sage document update', extra: [
+                'ep_code' => $quote->code,
+                'quote_uuid' => $quoteUuid,
+                'insurer_request_response_id' => $insurerRequestResponse->id,
+                'json_error_code' => json_last_error(),
+                'json_error_message' => json_last_error_msg(),
+            ]);
+
+            return false;
+        }
+
+        $isResponseUpdated = self::prepareSageBookingInvoiceNumberUpdates($response, $quote, $quoteUuid, $insuranceProvider->id, $duplicateNumber);
+
+        if (! $isResponseUpdated) {
+            LoggerService::info(self::class.' - Insurer request response invoice numbers missing, null, or already include Sage postfix', extra: [
+                'quote_uuid' => $quoteUuid,
+                'ep_code' => $quote->code,
+                'provider_id' => $insuranceProvider->id,
+            ]);
+
+            return false;
+        }
+
+        return self::persistSageBookingInvoiceNumberUpdates($insurerRequestResponse, $quote, $response, $quoteUuid, $insuranceProvider->id);
+    }
+
+    private static function prepareSageBookingInvoiceNumberUpdates(array &$response, EmbeddedTransaction $quote, string $quoteUuid, int $providerId, ?string $duplicateNumber): bool
+    {
+        $isResponseUpdated = false;
+
+        if (array_key_exists('premium_inv_no', $response) && $response['premium_inv_no'] !== null && $response['premium_inv_no'] === $duplicateNumber) {
+            $previousPremiumInvoiceNo = $response['premium_inv_no'];
+            $updatedPremiumInvoiceNo = self::withSageDocumentNumberPostfix($previousPremiumInvoiceNo);
+
+            if ($updatedPremiumInvoiceNo !== $previousPremiumInvoiceNo) {
+                $isResponseUpdated = true;
+                $response['premium_inv_no'] = $updatedPremiumInvoiceNo;
+
+                LoggerService::info(self::class.' - Prepared Tax Invoice number update in insurer request response for EP Sage booking', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'previous_premium_inv_no' => $previousPremiumInvoiceNo,
+                    'updated_premium_inv_no' => $updatedPremiumInvoiceNo,
+                ]);
+            } else {
+                LoggerService::info(self::class.' - Premium invoice number already includes Sage postfix, no update needed', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'premium_inv_no' => $response['premium_inv_no'],
+                ]);
+            }
+        }
+
+        if (array_key_exists('commision_inv_no', $response) && $response['commision_inv_no'] !== null && $response['commision_inv_no'] === $duplicateNumber) {
+            $previousCommissionInvoiceNo = $response['commision_inv_no'];
+            $updatedCommissionInvoiceNo = self::withSageDocumentNumberPostfix($previousCommissionInvoiceNo);
+
+            if ($updatedCommissionInvoiceNo !== $previousCommissionInvoiceNo) {
+                $isResponseUpdated = true;
+                $response['commision_inv_no'] = $updatedCommissionInvoiceNo;
+
+                LoggerService::info(self::class.' - Prepared Commission Invoice number update in insurer request response for EP Sage booking', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'previous_commission_inv_no' => $previousCommissionInvoiceNo,
+                    'updated_commission_inv_no' => $updatedCommissionInvoiceNo,
+                ]);
+            } else {
+                LoggerService::info(self::class.' - Commission invoice number already includes Sage postfix, no update needed', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'commission_inv_no' => $response['commision_inv_no'],
+                ]);
+            }
+        }
+
+        return $isResponseUpdated;
+    }
+
+    private static function persistSageBookingInvoiceNumberUpdates(InsurerRequestResponse $insurerRequestResponse, EmbeddedTransaction $quote, array $response, string $quoteUuid, int $providerId): bool
+    {
+        $isPersisted = false;
+
+        try {
+            $encodedResponse = json_encode($response, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+            DB::beginTransaction();
+
+            $insurerRequestResponseUpdated = $insurerRequestResponse->update([
+                'response' => $encodedResponse,
+            ]);
+
+            $quoteUpdated = $quote->update(['sage_invoice_no_update_at' => now()]);
+
+            if ($insurerRequestResponseUpdated && $quoteUpdated) {
+                DB::commit();
+                $isPersisted = true;
+            } else {
+                DB::rollBack();
+
+                LoggerService::warning(self::class.' - Failed to save updated EP Sage booking invoice number', extra: [
+                    'quote_uuid' => $quoteUuid,
+                    'ep_code' => $quote->code,
+                    'provider_id' => $providerId,
+                    'insurer_request_response_updated' => $insurerRequestResponseUpdated,
+                    'quote_updated' => $quoteUpdated,
+                ]);
+            }
+        } catch (Throwable $exception) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            LoggerService::warning(self::class.' - Failed to update insurer request response for EP Sage booking', extra: [
+                'quote_uuid' => $quoteUuid,
+                'ep_code' => $quote->code,
+                'provider_id' => $providerId,
+                'error' => $exception->getMessage(),
+            ], exception: $exception);
+        }
+
+        if ($isPersisted) {
+            LoggerService::info(self::class.' - Updated insurer request response for EP Sage booking', extra: [
+                'quote_uuid' => $quoteUuid,
+                'ep_code' => $quote->code,
+                'provider_id' => $providerId,
+            ]);
+        }
+
+        return $isPersisted;
+    }
+
+    protected static function withSageDocumentNumberPostfix(mixed $documentNumber): mixed
+    {
+        if (! is_string($documentNumber) || $documentNumber === '') {
+            return $documentNumber;
+        }
+
+        // If the document number already ends with /digits, return it unchanged
+        if (preg_match('/^(.*)\/(\d+)$/', $documentNumber)) {
+            return $documentNumber;
+        }
+
+        return $documentNumber.'/1';
     }
 }
