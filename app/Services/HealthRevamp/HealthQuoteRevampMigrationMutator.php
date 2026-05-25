@@ -418,12 +418,20 @@ final class HealthQuoteRevampMigrationMutator
             };
 
             $visa = match (true) {
-                in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+                in_array($mc, [
+                    MemberCategoryEnum::EMPLOYEE_2->value,
+                    MemberCategoryEnum::EMPLOYEE_1->value,
+                ], true) => VisaCategoryEnum::EMPLOYMENT->value,
+                in_array($mc, [
+                    MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
+                    MemberCategoryEnum::DEPENDENT_PARENT->value,
+                    MemberCategoryEnum::DEPENDENT_SPOUSE->value,
+                ], true) => VisaCategoryEnum::DEPENDENT_FAMILY->value,
                 $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
                 $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
                 $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
                 $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 12 => VisaCategoryEnum::NEWBORN_BORN_IN_UAE->value,
-                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::DEPENDENT_FAMILY->value,
                 default => $cm->visa_category_id,
             };
 
@@ -566,12 +574,21 @@ final class HealthQuoteRevampMigrationMutator
         $mc = (int) $hqr->member_category_id;
         $months = $this->context->monthsSinceDob($this->context->dobToDateString($hqr->dob));
         $visa = match (true) {
-            in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+            in_array($mc, [
+                MemberCategoryEnum::DOMESTIC_WORKER->value,
+                MemberCategoryEnum::EMPLOYEE_2->value,
+                MemberCategoryEnum::EMPLOYEE_1->value,
+            ], true) => VisaCategoryEnum::EMPLOYMENT->value,
+            in_array($mc, [
+                MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
+                MemberCategoryEnum::DEPENDENT_PARENT->value,
+                MemberCategoryEnum::DEPENDENT_SPOUSE->value,
+            ], true) => VisaCategoryEnum::DEPENDENT_FAMILY->value,
             $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
             $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
             $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
             $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 18 * 12 => null,
-            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::DEPENDENT_FAMILY->value,
             default => $hqr->visa_category_id,
         };
 
