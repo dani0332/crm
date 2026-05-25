@@ -135,6 +135,7 @@ class YachtQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with([
                 'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'yachtQuote',
                 'advisor',
                 'advisor.primaryBranch',

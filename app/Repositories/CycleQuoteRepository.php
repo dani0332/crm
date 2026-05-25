@@ -294,6 +294,7 @@ class CycleQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with([
                 'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'cycleQuote',
                 'cycleQuote.yearOfManufacture',
                 'advisor',
