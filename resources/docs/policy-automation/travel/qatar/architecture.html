@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alliance Travel - System Architecture Documentation</title>
+    <title>Qatar Travel - System Architecture Documentation</title>
     <link rel="stylesheet" href="/docs/styles/styles.css" />
     <style>
       * {
@@ -303,9 +303,7 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
-          >Alliance</a
-        >
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
         <span>></span>
         <span>Architecture</span>
       </div>
@@ -313,23 +311,23 @@
       <div class="header">
         <h1>🏗️ System Architecture</h1>
         <p>
-          Complete Technical Architecture Documentation for Alliance Travel
-          Policy Issuance Automation
+          Complete Technical Architecture Documentation for Qatar Travel Policy
+          Issuance Automation
         </p>
       </div>
 
       <div class="nav-links">
         <h3>📚 Navigation</h3>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
+        <a href="/docs/policy-automation/travel/qatar/index.html"
           >← Back to Overview</a
         >
-        <a href="/docs/policy-automation/travel/alliance/automation-flow.html"
+        <a href="/docs/policy-automation/travel/qatar/automation-flow.html"
           >Automation Flow →</a
         >
-        <a href="/docs/policy-automation/travel/alliance/api-integration.html"
+        <a href="/docs/policy-automation/travel/qatar/api-integration.html"
           >API Integration →</a
         >
-        <a href="/docs/policy-automation/travel/alliance/configuration.html"
+        <a href="/docs/policy-automation/travel/qatar/configuration.html"
           >Configuration →</a
         >
       </div>
@@ -338,11 +336,11 @@
       <div class="section">
         <h2>📋 Overview</h2>
         <p>
-          The Alliance Travel Policy Issuance Automation system is a
-          comprehensive, modular architecture designed to automate the complete
-          policy issuance workflow with Alliance Insurance Company. It provides
-          a standardized interface for integrating with Alliance's travel
-          insurance APIs across different travel types (Inbound and Outbound).
+          The Qatar Travel Policy Issuance Automation system is a comprehensive,
+          modular architecture designed to automate the complete policy issuance
+          workflow with Qatar Insurance Company. It provides a standardized
+          interface for integrating with Qatar's travel insurance APIs across
+          different travel types (Inbound and Outbound).
         </p>
 
         <h3>Core Purpose</h3>
@@ -355,7 +353,7 @@
             Provide consistent error handling, logging, and retry mechanisms
           </li>
           <li>
-            Enable seamless integration with Alliance Insurance through a common
+            Enable seamless integration with Qatar Insurance through a common
             interface
           </li>
           <li>
@@ -409,19 +407,19 @@
           provider services must implement.
         </p>
         <p>
-          <strong>Implementation:</strong> AllianceInsuranceService implements
-          this interface for Travel LOB.
+          <strong>Implementation:</strong> QatarInsuranceService implements this
+          interface for Travel LOB.
         </p>
 
         <h3>2. Service Layer Architecture</h3>
         <div class="architecture-diagram">
           PolicyIssuanceAutomation/ ├── PolicyIssuanceService # Core
-          orchestration service └── Travel/ └── Alliance/ └──
-          AllianceInsuranceService # Main orchestrator (implements Interface)
-          ├── issuePolicyAndFillPolicyDetails() ├── policyPurchase() ├──
+          orchestration service └── Travel/ └── Qatar/ └── QatarInsuranceService
+          # Main orchestrator (implements Interface) ├──
+          issuePolicyAndFillPolicyDetails() ├── policyPurchase() ├──
           fetchAndUploadDocument() ├──
           uploadBuyerTaxInvoiceAndFillBookingDetails() ├──
-          triggerBookPolicyProcess() ├── allianceHttpCall() ├──
+          triggerBookPolicyProcess() ├── qatarHttpCall() ├──
           uploadAndAttachToQuoteDocuments() └── getNextStep()
         </div>
       </div>
@@ -430,10 +428,10 @@
       <div class="section">
         <h2>🔧 Core Components</h2>
 
-        <!-- Service: AllianceInsuranceService -->
+        <!-- Service: QatarInsuranceService -->
         <div class="service-card">
           <h4>
-            AllianceInsuranceService
+            QatarInsuranceService
             <span class="pattern-badge">Main Orchestrator</span>
           </h4>
           <div class="responsibility">
@@ -513,7 +511,7 @@
           <div class="responsibility">
             <strong>Responsibility:</strong>
             <ul>
-              <li>Manages HTTP communication with Alliance API</li>
+              <li>Manages HTTP communication with Qatar API</li>
               <li>Configures authentication via agency_id and agency_code</li>
               <li>Provides consistent error handling for HTTP errors</li>
               <li>Centralizes API configuration</li>
@@ -539,7 +537,7 @@
           <h4>Method:</h4>
           <div class="code-block">
             <code
-              >private function allianceHttpCall($endPoint, $param) { $headers =
+              >private function qatarHttpCall($endPoint, $param) { $headers =
               ['Content-Type' => 'application/json']; $payload =
               array_merge($this->authParam, $param); $url = $this->baseUrl .
               $endPoint; return
@@ -558,9 +556,9 @@
           <div class="responsibility">
             <strong>Responsibility:</strong>
             <ul>
-              <li>Downloads documents from Alliance API</li>
+              <li>Downloads documents from Qatar API</li>
               <li>Uploads documents to Azure Storage</li>
-              <li>Maps Alliance document names to IMCRM document codes</li>
+              <li>Maps Qatar document names to IMCRM document codes</li>
               <li>Handles MIME type detection</li>
               <li>Triggers watermarking jobs</li>
             </ul>
@@ -577,7 +575,7 @@
             </li>
             <li>
               <code class="code-inline">getTravelDocumentMapping()</code> - Map
-              Alliance document names to IMCRM codes
+              Qatar document names to IMCRM codes
             </li>
           </ul>
           <h4>Document Mapping:</h4>
@@ -690,7 +688,7 @@
 
         <h3>1. Strategy Pattern</h3>
         <p>
-          AllianceInsuranceService implements PolicyIssuanceInterface with
+          QatarInsuranceService implements PolicyIssuanceInterface with
           provider-specific strategy for Travel insurance.
         </p>
 
@@ -710,7 +708,7 @@
           <code
             >$maxRetries = 5; $retryDelay = 10; // seconds $retryCount = 0; do {
             sleep($retryDelay); // 10 seconds $policyDocuments =
-            $this->allianceHttpCall($endPoint, $payload); if
+            $this->qatarHttpCall($endPoint, $payload); if
             ($policyDocuments->failed() && str_contains($response->errors[0],
             'Policy documents are still generating')) { $retryCount++; } else {
             break; } } while ($retryCount < $maxRetries); // Max 5 retries</code
@@ -818,7 +816,7 @@
           </li>
           <li>
             <code class="code-inline"
-              >SendTravelAllianceFailedAllocationEmailJob</code
+              >SendTravelQatarFailedAllocationEmailJob</code
             >
             - Failure notification emails
           </li>
@@ -861,28 +859,28 @@
         <ul>
           <li><code class="code-inline">null</code> - No steps completed</li>
           <li>
-            <code class="code-inline">ALLIANCE_TRAVEL_ISSUE_POLICY</code> - Step
-            1 completed
+            <code class="code-inline">QATAR_TRAVEL_ISSUE_POLICY</code> - Step 1
+            completed
           </li>
           <li>
-            <code class="code-inline">ALLIANCE_TRAVEL_PURCHASE_POLICY</code> -
-            Step 2 completed
+            <code class="code-inline">QATAR_TRAVEL_PURCHASE_POLICY</code> - Step
+            2 completed
           </li>
           <li>
             <code class="code-inline"
-              >ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+              >QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
             >
             - Step 3 completed
           </li>
           <li>
             <code class="code-inline"
-              >ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+              >QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
             >
             - Step 4 completed
           </li>
           <li>
-            <code class="code-inline">ALLIANCE_TRAVEL_BOOK_POLICY</code> - Step
-            5 completed
+            <code class="code-inline">QATAR_TRAVEL_BOOK_POLICY</code> - Step 5
+            completed
           </li>
         </ul>
 
@@ -891,7 +889,7 @@
           <code
             >public function getNextStep($completedStep = null): ?string {
             $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(
-            InsuranceProviderEnum::ALNC->value, self::TYPE ); if
+            InsuranceProviderEnum::QIC->value, self::TYPE ); if
             (!$completedStep) { return $allSteps[0]; // First step }
             $completedStepIndex = array_search($completedStep, $allSteps); if
             ($completedStepIndex === false || $completedStepIndex ===
@@ -938,7 +936,7 @@
       <div class="footer">
         <p>
           <strong
-            >Alliance Travel Insurance Automation - System Architecture
+            >Qatar Travel Insurance Automation - System Architecture
             Documentation</strong
           >
         </p>
