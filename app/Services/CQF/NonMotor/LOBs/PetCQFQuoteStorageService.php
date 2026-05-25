@@ -99,7 +99,6 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'is_mixed_breed' => $oldLob->is_mixed_breed,
             'has_injury' => $oldLob->has_injury,
             'pet_type_id' => $oldLob->pet_type_id,
-            'accomodation_type_id' => $oldLob->accomodation_type_id,
             'pet_age_id' => $this->incrementPetAgeId($oldLob->pet_age_id),
         ];
     }

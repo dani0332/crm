@@ -18,6 +18,7 @@ use App\Services\CQF\NonMotor\Pipes\InslyCheckPipe;
 use App\Services\CQF\NonMotor\Pipes\LOBValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\StoragePipe;
 use App\Services\RenewalsUploadService;
+use Illuminate\Pipeline\Pipeline;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -34,6 +35,7 @@ beforeEach(function () {
         foreignKeyValidationPipe: Mockery::mock(ForeignKeyValidationPipe::class)->shouldIgnoreMissing(),
         storagePipe: Mockery::mock(StoragePipe::class)->shouldIgnoreMissing(),
         renewalsUploadService: $renewalsUploadService,
+        pipeline: Mockery::mock(Pipeline::class)->shouldIgnoreMissing(),
     );
 });
 
@@ -113,6 +115,7 @@ test('processQuoteForJob increments good and records PROCESSED status on pipelin
         return $next($ctx);
     })),
         renewalsUploadService: Mockery::mock(RenewalsUploadService::class)->shouldIgnoreMissing(),
+        pipeline: app(Pipeline::class),
     ) extends NonMotorCQFRenewalExecutionService {
         protected function getEagerLoadRelationsForLOB(QuoteTypes $quoteType, string $source = ''): array
         {
