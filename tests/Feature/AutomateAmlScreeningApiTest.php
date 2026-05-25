@@ -297,7 +297,8 @@ test('returns 422 when aml automation row blocks re-dispatch', function (string 
     [AmlAutomationStatus::Queue->value, 'AML automation already queued'],
 ]);
 
-test('aml automatable lob registry allows savings only', function () {
+test('aml automatable lob registry allows savings and device', function () {
     expect(AmlAutomatableLobRegistry::allows(QuoteTypes::SAVINGS))->toBeTrue();
+    expect(AmlAutomatableLobRegistry::allows(QuoteTypes::DEVICE))->toBeTrue();
     expect(AmlAutomatableLobRegistry::allows(QuoteTypes::CAR))->toBeFalse();
 });
