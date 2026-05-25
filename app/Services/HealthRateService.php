@@ -309,9 +309,7 @@ class HealthRateService extends BaseService
 
         // Get draft version of rate sheet
         // Since we need to append existing active/archived rates to draft rate sheet
-        $draftRateSheet = HealthRateControl::where('health_plan_id', $planId)
-            ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
-            ->first();
+        $draftRateSheet = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::DRAFT->value]);
 
         // Validate duplicate between existing active rates and draft rates
         // Since we are copying exting active rates into draft rates
