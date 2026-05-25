@@ -8,66 +8,12 @@ use App\Models\HealthPlan;
 use App\Models\HealthRate;
 use App\Models\HealthRateControl;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class HealthRateService extends BaseService
 {
     public function __construct(private HealthPlanService $healthPlanService) {}
-    public function getList(Request $request): LengthAwarePaginator
-    {
-        $query = HealthRate::with('healthPlan', 'healthPlanCoPayment')
-            ->select(
-                'id',
-                'health_plan_id',
-                'health_plan_co_payment_id',
-                'text',
-                'text_ar',
-                'emirate_type',
-                'cohort', 'gender',
-                'marital_status',
-                'min_age',
-                'max_age',
-                'premium',
-                'status',
-                'version',
-                'created_at',
-                'updated_at',
-            )
-            ->where('health_plan_id', $request->id)
-            ->where('status', strtolower($request->status ?? HealthPlanRateSheetStatusEnum::ACTIVE->value))
-            ->orderByDesc('id');
-
-        $perPage = (int) $request->input('per_page', 10);
-
-        return $query->paginate($perPage);
-    }
-
-    public function getRateById(int $id): ?HealthRate
-    {
-        return HealthRate::with('healthPlan', 'healthPlanCoPayment')
-            ->select(
-                'id',
-                'health_plan_id',
-                'health_plan_co_payment_id',
-                'text',
-                'text_ar',
-                'emirate_type',
-                'cohort', 'gender',
-                'marital_status',
-                'min_age',
-                'max_age',
-                'premium',
-                'status',
-                'version',
-                'created_at',
-                'updated_at',
-            )
-            ->firstWhere('id', $id);
-    }
-
     public function create(array $data)
     {
         // Fetch related plan ids (if exists)
