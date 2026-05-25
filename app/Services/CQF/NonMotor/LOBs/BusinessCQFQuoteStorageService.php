@@ -9,7 +9,6 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
-use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
@@ -64,7 +63,6 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $this->copyEntityMapping($oldBusinessQuote, $businessQuote);
-        $this->copyBusinessCustomerInsured($oldBusinessQuote, $businessQuote);
         $this->copyCustomerMembers($oldBusinessQuote, $businessQuote);
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
@@ -82,22 +80,6 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'quote_request_id' => $newQuote->id,
             'entity_id' => $oldMapping->entity_id,
             'entity_type_code' => $oldMapping->entity_type_code,
-        ]);
-    }
-
-    private function copyBusinessCustomerInsured(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
-    {
-        $oldInsured = $oldQuote->customerInsured;
-        if ($oldInsured === null) {
-            return;
-        }
-
-        CustomerInsured::create([
-            'quote_type_id' => QuoteTypeId::Business,
-            'quote_request_id' => $newQuote->id,
-            'insured_id' => $oldInsured->insured_id,
-            'customer_id' => $oldInsured->customer_id,
-            'is_active' => true,
         ]);
     }
 

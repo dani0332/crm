@@ -7,7 +7,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
-use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
@@ -348,98 +347,6 @@ it('copies CustomerMembers (UBO) to the new BusinessQuote on Corpline renewal', 
     expect($copiedMember)->not->toBeNull()
         ->and($copiedMember->first_name)->toBe('John')
         ->and($copiedMember->last_name)->toBe('Doe');
-});
-
-it('copies CustomerInsured to the new BusinessQuote on renewal so latest_insured resolves correctly', function () {
-    $oldBusinessQuote = BusinessQuote::factory()->groupMedical()->create([
-        'source' => 'IMCRM',
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-    ]);
-
-    CustomerInsured::factory()->create([
-        'quote_type_id' => QuoteTypeId::Business,
-        'quote_request_id' => $oldBusinessQuote->id,
-        'insured_id' => 4524,
-        'customer_id' => 69866,
-        'is_active' => true,
-    ]);
-
-    $newUuid = Str::uuid()->toString();
-    $newCode = 'BUS-'.strtoupper(substr($newUuid, 0, 8));
-
-    $oldQuote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
-    $oldQuote->shouldReceive('getAttribute')->with('businessQuote')->andReturn($oldBusinessQuote);
-    $oldQuote->shouldReceive('getRelationValue')->with('businessQuote')->andReturn($oldBusinessQuote);
-
-    $newQuote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
-    $newQuote->shouldReceive('getAttribute')->with('source')->andReturn(LeadSourceEnum::RENEWAL_UPLOAD);
-    $newQuote->shouldReceive('getAttribute')->with('quote_status_id')->andReturn(QuoteStatusEnum::NewLead);
-    $newQuote->shouldReceive('getAttribute')->with('advisor_id')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('assignment_type')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('renewal_batch_id')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('uuid')->andReturn($newUuid);
-    $newQuote->shouldReceive('getAttribute')->with('code')->andReturn($newCode);
-    $newQuote->shouldReceive('businessQuote')->andReturn(
-        Mockery::mock(BelongsTo::class)->shouldIgnoreMissing()
-    );
-    $newQuote->shouldReceive('save')->andReturnNull();
-
-    $copyDetail = Closure::bind(
-        fn ($nq, $oq) => $this->copyBusinessQuoteDetail($nq, $oq),
-        $this->service,
-        BusinessCQFQuoteStorageService::class
-    );
-
-    $copyDetail($newQuote, $oldQuote);
-
-    $newBusinessQuote = BusinessQuote::where('uuid', $newUuid)->first();
-    $copiedInsured = CustomerInsured::where('quote_request_id', $newBusinessQuote->id)
-        ->where('quote_type_id', QuoteTypeId::Business)
-        ->where('is_active', true)
-        ->first();
-
-    expect($copiedInsured)->not->toBeNull()
-        ->and($copiedInsured->insured_id)->toBe(4524)
-        ->and($copiedInsured->customer_id)->toBe(69866);
-});
-
-it('skips CustomerInsured copy when old BusinessQuote has no customer insured', function () {
-    $oldBusinessQuote = BusinessQuote::factory()->create([
-        'source' => 'IMCRM',
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-    ]);
-
-    $newUuid = Str::uuid()->toString();
-    $newCode = 'BUS-'.strtoupper(substr($newUuid, 0, 8));
-
-    $oldQuote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
-    $oldQuote->shouldReceive('getAttribute')->with('businessQuote')->andReturn($oldBusinessQuote);
-    $oldQuote->shouldReceive('getRelationValue')->with('businessQuote')->andReturn($oldBusinessQuote);
-
-    $newQuote = Mockery::mock(PersonalQuote::class)->shouldIgnoreMissing();
-    $newQuote->shouldReceive('getAttribute')->with('source')->andReturn(LeadSourceEnum::RENEWAL_UPLOAD);
-    $newQuote->shouldReceive('getAttribute')->with('quote_status_id')->andReturn(QuoteStatusEnum::NewLead);
-    $newQuote->shouldReceive('getAttribute')->with('advisor_id')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('assignment_type')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('renewal_batch_id')->andReturn(null);
-    $newQuote->shouldReceive('getAttribute')->with('uuid')->andReturn($newUuid);
-    $newQuote->shouldReceive('getAttribute')->with('code')->andReturn($newCode);
-    $newQuote->shouldReceive('businessQuote')->andReturn(
-        Mockery::mock(BelongsTo::class)->shouldIgnoreMissing()
-    );
-    $newQuote->shouldReceive('save')->andReturnNull();
-
-    $countBefore = CustomerInsured::count();
-
-    $copyDetail = Closure::bind(
-        fn ($nq, $oq) => $this->copyBusinessQuoteDetail($nq, $oq),
-        $this->service,
-        BusinessCQFQuoteStorageService::class
-    );
-
-    $copyDetail($newQuote, $oldQuote);
-
-    expect(CustomerInsured::count())->toBe($countBefore);
 });
 
 it('skips QuoteRequestEntityMapping copy when old BusinessQuote has no entity mapping', function () {
