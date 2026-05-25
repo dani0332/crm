@@ -425,6 +425,10 @@ class AmtController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'number_of_employees' => collect($request->input('categories', []))->sum(fn ($row) => (int) ($row['numberOfPeople'] ?? 0)),
+        ]);
+
         $this->validate($request, array_merge([
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
@@ -432,7 +436,7 @@ class AmtController extends Controller
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required|numeric|max:2147483645',
+            'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
             'emirate_of_registration_id' => 'required|exists:emirates,id',
         ], $this->groupMedicalAmtIntakeValidationRules()));
@@ -708,12 +712,16 @@ class AmtController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $request->merge([
+            'number_of_employees' => collect($request->input('categories', []))->sum(fn ($row) => (int) ($row['numberOfPeople'] ?? 0)),
+        ]);
+
         $this->validate($request, array_merge([
             'first_name' => 'required|max:150',
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required|numeric|max:2147483645',
+            'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',

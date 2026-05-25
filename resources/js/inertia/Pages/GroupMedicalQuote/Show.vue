@@ -965,7 +965,7 @@ function handleOcrNotification(event) {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
+                <dt class="font-medium">NUMBER OF PEOPLE TO BE INSURED</dt>
                 <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
               </div>
 

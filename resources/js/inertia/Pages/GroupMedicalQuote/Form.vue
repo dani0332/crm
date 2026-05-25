@@ -206,6 +206,17 @@ const isHealthPlanTypeSelectDisabled = computed(
   () => selectedEmirateId.value === null,
 );
 
+const totalPeopleToBeInsured = computed(() =>
+  quoteForm.categories.reduce((sum, row) => {
+    const n = parseInt(row.numberOfPeople) || 0;
+    return sum + n;
+  }, 0),
+);
+
+watch(totalPeopleToBeInsured, val => {
+  quoteForm.number_of_employees = val > 0 ? val : null;
+}, { immediate: true });
+
 /**
  * Group medical category options for one row; disables categories already picked elsewhere.
  */
@@ -531,13 +542,12 @@ function onSubmit(isValid) {
         />
 
         <x-input
-          v-model="quoteForm.number_of_employees"
+          :model-value="totalPeopleToBeInsured"
           type="number"
-          :rules="[isRequired, isNumber, maxValidation(2147483645)]"
           class="w-full"
           :error="quoteForm.errors.number_of_employees"
-          label="NUMBER OF EMPLOYEES"
-          required
+          label="NUMBER OF PEOPLE TO BE INSURED"
+          disabled
         />
 
         <x-select
