@@ -292,7 +292,12 @@ class AuditableController extends Controller
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
                 ->orderByDesc('customer_member_id')
                 ->orderBy('created_at')
-                ->get();
+                ->get()
+                ->filter(function ($log) {
+                    // Exclude if related member is null (i.e., deleted)
+                    return $log->member !== null;
+                })
+                ->values();
 
             // Then, get 'pricing-lookup' logs only
             $pricingLookupLogs = HealthPricingLog::with('member')
@@ -300,7 +305,10 @@ class AuditableController extends Controller
                 ->where('stage', 'pricing-lookup')
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
                 ->orderByDesc('customer_member_id')
-                ->get();
+                ->get()
+                ->filter(function ($log) {
+                    return $log->member !== null;
+                });
 
             // Merge with pricing-lookup logs at the end
             $logs = $logs->concat($pricingLookupLogs)->values();

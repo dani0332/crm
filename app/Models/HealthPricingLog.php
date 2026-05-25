@@ -15,7 +15,7 @@ class HealthPricingLog extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(CustomerMembers::class, 'customer_member_id')
-            ->select(['id', 'first_name', 'last_name']);
-
+            ->select(['id', 'first_name', 'last_name'])
+            ->whereNull('deleted_at');
     }
 }
