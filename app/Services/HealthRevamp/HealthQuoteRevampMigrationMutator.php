@@ -49,6 +49,7 @@ final class HealthQuoteRevampMigrationMutator
             ->get();
 
         DB::transaction(function () use ($hqr, $members) {
+            $this->insertDomesticWorkerInsuredMember($hqr, $members);
             $this->fillMissingPrincipals($hqr, $members);
             $this->updatePolicyHoldersFromNameMatch($hqr, $members);
             $this->insertIndividualPolicyHolderWhenNoNameMatch($hqr, $members);
@@ -95,7 +96,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function updatePolicyHoldersFromNameMatch(HealthQuote $hqr, Collection $members): void
     {
-        if ($members->isEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder)) {
+        if ($members->isEmpty() || $members->contains(fn (CustomerMembers $m) => $m->is_policy_holder) || $this->isDomesticWorker($hqr->member_category_id)) {
             return;
         }
 
@@ -156,9 +157,9 @@ final class HealthQuoteRevampMigrationMutator
         }
 
         $members->push($this->createIndividualMember($hqr, [
-            'is_insured' => true,
+            'is_insured' => ! $this->isDomesticWorker($hqr->member_category_id),
             'is_policy_holder' => true,
-            'is_principal' => true,
+            'is_principal' => ! $this->isDomesticWorker($hqr->member_category_id),
         ]));
     }
 
@@ -184,10 +185,33 @@ final class HealthQuoteRevampMigrationMutator
         }
 
         $members->push($this->createIndividualMember($hqr, [
-            'is_insured' => true,
+            'is_insured' => ! $this->isDomesticWorker($hqr->member_category_id),
             'is_policy_holder' => true,
+            'is_principal' => ! $this->isDomesticWorker($hqr->member_category_id),
+        ]));
+    }
+
+    /**
+     * Inserts a non-policy-holder insured member seeded from the quote holder's details
+     * for domestic worker quotes. The domestic worker is the insured party but not the policy holder.
+     * No-ops when the quote is not a domestic worker category or an insured member already exists.
+     */
+    private function insertDomesticWorkerInsuredMember(HealthQuote $hqr, Collection $members): void
+    {
+        if ($hqr->customer_id === null || ! $this->isDomesticWorker($hqr->member_category_id) || $members->isNotEmpty() || $hqr->isEntity()) {
+            return;
+        }
+
+        $members->push($this->createIndividualMember($hqr, [
+            'is_insured' => true,
+            'is_policy_holder' => false,
             'is_principal' => true,
         ]));
+    }
+
+    private function isDomesticWorker($memberCategoryId): bool
+    {
+        return (int) $memberCategoryId === MemberCategoryEnum::DOMESTIC_WORKER->value;
     }
 
     /**
@@ -217,11 +241,13 @@ final class HealthQuoteRevampMigrationMutator
                 'first_name' => $hqr->first_name,
                 'last_name' => $hqr->last_name,
                 'salary_band_id' => $hqr->salary_band_id,
-                'is_pec_marked' => false,
+                'is_pec_marked' => empty($hqr->pec_marked_at) ? false : true,
                 'visa_category_id' => $hqr->visa_category_id,
                 'dob' => $hqr->dob ? Carbon::parse($hqr->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
                 'nationality_id' => $hqr->nationality_id,
                 'is_third_party_payer' => false,
+                'emirate_of_your_visa_id' => $hqr->emirate_of_your_visa_id,
+                'gender' => $hqr->gender,
             ], $flags));
         });
     }
@@ -417,17 +443,18 @@ final class HealthQuoteRevampMigrationMutator
                 return;
             }
 
-            if ($hqr->member_category_id == MemberCategoryEnum::DOMESTIC_WORKER->value && $cm->is_principal) {
+            if ($cm->member_category_id == MemberCategoryEnum::DOMESTIC_WORKER->value) {
                 $cm->relation_code = RelationCodeEnum::DOMESTIC_WORKER->value;
-                $cm->salary_band_id = $hqr->salary_band_id;
-                $cm->visa_category_id = VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value;
+                $cm->salary_band_id = SalaryBandEnum::BELOW_OR_EQ_4000->value;
+                $cm->visa_category_id = in_array($cm->nationality_id, $this->uaeNationalityIds, true)
+                    ? VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_UAE_NATIONALS->value
+                    : VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_NON_UAE_NATIONALS->value;
                 $cm->save();
 
                 return;
             }
 
             $relation = match (true) {
-                $mc === MemberCategoryEnum::DOMESTIC_WORKER->value => RelationCodeEnum::DOMESTIC_WORKER->value,
                 in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value, MemberCategoryEnum::INVESTOR_PARTNER->value, MemberCategoryEnum::GOLDEN_VISA->value], true) => null,
                 $mc === MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value => RelationCodeEnum::RELATIVES->value,
                 $mc === MemberCategoryEnum::DEPENDENT_PARENT->value => RelationCodeEnum::PARENT->value,
@@ -437,7 +464,6 @@ final class HealthQuoteRevampMigrationMutator
             };
 
             $salary = match ($mc) {
-                MemberCategoryEnum::DOMESTIC_WORKER->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
                 MemberCategoryEnum::EMPLOYEE_2->value => SalaryBandEnum::BETWEEN_4001_AND_12000->value,
                 MemberCategoryEnum::EMPLOYEE_1->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
                 MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
@@ -451,7 +477,7 @@ final class HealthQuoteRevampMigrationMutator
             };
 
             $visa = match (true) {
-                in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+                in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
                 $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
                 $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
                 $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
