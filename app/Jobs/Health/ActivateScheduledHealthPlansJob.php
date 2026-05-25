@@ -121,6 +121,7 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
                 }
 
                 $plan->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
+                $plan->is_active = 1;
                 $plan->save();
 
                 LoggerService::info(self::class." - Activated health plan ID: {$plan->id}, rate control ID: {$rateControl->id}", [
