@@ -2731,7 +2731,7 @@ class AMLService
             $skipsApiIssuanceStatusCheck = AmlAutomatableLobRegistry::skipsApiIssuanceStatusCheckForAutomatedAml($quoteType, $quote);
 
             if ($skipsApiIssuanceStatusCheck) {
-                LoggerService::info('AML automate-by-uuid: skipping policy issuance API status check (Savings + OIC)', extra: array_merge($quoteContext, [
+                LoggerService::info('AML automate-by-uuid: skipping policy issuance API status check (Savings + OIC) OR (Device + NGI)', extra: array_merge($quoteContext, [
                     'outcome' => 'progress',
                     'step' => 'api_issuance_check_skipped',
                 ]));
