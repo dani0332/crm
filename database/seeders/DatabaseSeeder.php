@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             GroupMedicalQuoteCopyLinkPermissionSeeder::class,
             PqaLeadAllocationPermissionSeeder::class,
+            PqaGroupMedicalQuotesListPermissionSeeder::class,
             // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,

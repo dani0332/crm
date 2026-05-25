@@ -159,12 +159,38 @@ const numberOfCategoriesDisplay = computed(() => {
     return String(saved);
   }
 
+  if (props.gmCategoryIntakeDisplay.length > 0) {
+    return String(props.gmCategoryIntakeDisplay.length);
+  }
+
   const intake = props.quote?.gm_category_intake;
   if (Array.isArray(intake) && intake.length > 0) {
     return String(intake.length);
   }
 
   return '0';
+});
+
+const categoryRows = computed(() => {
+  if (props.gmCategoryIntakeDisplay.length > 0) {
+    return props.gmCategoryIntakeDisplay;
+  }
+
+  const n =
+    parseInt(props.quote?.number_of_categories) ||
+    (Array.isArray(props.quote?.gm_category_intake)
+      ? props.quote.gm_category_intake.length
+      : 0);
+
+  return Array.from({ length: n }, (_, i) => ({
+    serial: i + 1,
+    category_label: '—',
+    existing_insurance_provider: 'N/A',
+    existing_tpa: 'N/A',
+    existing_network: 'N/A',
+    existing_policy_renewal_date: 'N/A',
+    number_of_people: '—',
+  }));
 });
 
 const quotePlanTypeDisplay = computed(
@@ -1172,7 +1198,7 @@ function handleOcrNotification(event) {
                     >
                       <x-tooltip placement="bottom">
                         <span
-                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                          class="cursor-help text-sm underline decoration-dotted decoration-primary-700"
                         >
                           NATURE OF COMPANY'S ACTIVITY
                         </span>
@@ -1192,7 +1218,7 @@ function handleOcrNotification(event) {
                     >
                       <x-tooltip placement="bottom">
                         <span
-                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                          class="cursor-help text-sm underline decoration-dotted decoration-primary-700"
                         >
                           WITH EXISTING GROUP HEALTH INSURANCE POLICY
                         </span>
@@ -1210,7 +1236,7 @@ function handleOcrNotification(event) {
                     >
                       <x-tooltip placement="bottom">
                         <span
-                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                          class="cursor-help text-sm underline decoration-dotted decoration-primary-700"
                         >
                           NUMBER OF CATEGORIES
                         </span>
@@ -1230,7 +1256,7 @@ function handleOcrNotification(event) {
                     >
                       <x-tooltip placement="bottom">
                         <span
-                          class="cursor-pointer border-b-2 text-sm underline decoration-primary-700"
+                          class="cursor-help text-sm underline decoration-dotted decoration-primary-700"
                         >
                           PLAN TYPE
                         </span>
@@ -1261,27 +1287,81 @@ function handleOcrNotification(event) {
                         class="bg-primary-600 text-left text-xs font-semibold uppercase tracking-wide text-white"
                       >
                         <th class="whitespace-nowrap px-3 py-3">S/No</th>
-                        <th class="whitespace-nowrap px-3 py-3">Category</th>
                         <th class="whitespace-nowrap px-3 py-3">
-                          Existing insurance provider
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Category
+                            </span>
+                            <template #tooltip>
+                              Choose the specific employee category this record
+                              refers to. Each category may have different plan
+                              Benefits and limits.
+                            </template>
+                          </x-tooltip>
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
-                          Existing third party administrator
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Existing insurance provider
+                            </span>
+                            <template #tooltip>
+                              Select the current health insurance provider for
+                              this group.
+                            </template>
+                          </x-tooltip>
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
-                          Existing network
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Existing third party administrator
+                            </span>
+                            <template #tooltip>
+                              Select the current TPA (Third Party Administrator)
+                              managing claims and approvals for the existing
+                              policy.
+                            </template>
+                          </x-tooltip>
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
-                          Existing policy renewal date
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Existing network
+                            </span>
+                            <template #tooltip>
+                              Select the current medical provider network
+                              name/level under the existing policy.
+                            </template>
+                          </x-tooltip>
                         </th>
-                        <th class="whitespace-nowrap px-3 py-3 text-right">
-                          Number of people
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Existing policy renewal date
+                            </span>
+                            <template #tooltip>
+                              Enter the expiry date of the client's current
+                              group health insurance policy as shown on the
+                              policy schedule.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span class="cursor-help underline decoration-dotted decoration-white">
+                              Number of people
+                            </span>
+                            <template #tooltip>
+                              Enter the total number of insured members in this
+                              group/category (including employees and, if
+                              applicable, their dependents).
+                            </template>
+                          </x-tooltip>
                         </th>
                       </tr>
                     </thead>
                     <tbody class="bg-white text-gray-900">
                       <tr
-                        v-for="row in gmCategoryIntakeDisplay"
+                        v-for="row in categoryRows"
                         :key="row.serial"
                         class="border-b border-gray-100 last:border-0"
                       >
@@ -1305,7 +1385,7 @@ function handleOcrNotification(event) {
                           {{ row.number_of_people }}
                         </td>
                       </tr>
-                      <tr v-if="gmCategoryIntakeDisplay.length === 0">
+                      <tr v-if="categoryRows.length === 0">
                         <td
                           colspan="7"
                           class="px-3 py-6 text-center text-gray-500"

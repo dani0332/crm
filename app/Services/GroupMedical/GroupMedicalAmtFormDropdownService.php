@@ -182,4 +182,56 @@ final class GroupMedicalAmtFormDropdownService
 
         return $rows;
     }
+
+    /**
+     * Resolve gm_category_intake JSON rows (ECOM format) to display labels for the Show page.
+     * Handles keys from both the ECOM journey and the AMT camelCase format.
+     *
+     * @param  array<int, array<string, mixed>>  $categoryIntake
+     * @return array<int, array<string, mixed>>
+     */
+    public function enrichCategoryIntakeFromJson(array $categoryIntake): array
+    {
+        if (empty($categoryIntake)) {
+            return [];
+        }
+
+        $categories = $this->groupMedicalCategories()->keyBy('id');
+        $providers = $this->groupMedicalInsuranceProviders()->keyBy('id');
+        $tpas = $this->healthThirdPartyAdministrators()->keyBy('id');
+        $networks = $this->groupMedicalNetworks()->keyBy('id');
+
+        $rows = [];
+
+        foreach ($categoryIntake as $index => $row) {
+            $categoryId = $row['member_category_id'] ?? $row['groupMedicalCategoryId'] ?? null;
+            $providerId = $row['existing_insurance_provider_id'] ?? $row['insuranceProviderId'] ?? null;
+            $tpaId = $row['existing_tpa_id'] ?? $row['healthTpaId'] ?? null;
+            $networkId = $row['existing_network_id'] ?? $row['healthNetworkId'] ?? $row['groupMedicalNetworkId'] ?? null;
+            $renewalDate = $row['existing_policy_renewal_date'] ?? $row['renewalDate'] ?? null;
+            $numberOfPeople = $row['number_of_people'] ?? $row['numberOfPeople'] ?? null;
+
+            $rows[] = [
+                'serial' => $index + 1,
+                'category_label' => $categoryId
+                    ? ($categories->get((int) $categoryId)?->text ?? '—')
+                    : '—',
+                'existing_insurance_provider' => $providerId
+                    ? ($providers->get((int) $providerId)?->text ?? 'N/A')
+                    : 'N/A',
+                'existing_tpa' => $tpaId
+                    ? ($tpas->get((int) $tpaId)?->text ?? 'N/A')
+                    : 'N/A',
+                'existing_network' => $networkId
+                    ? ($networks->get((int) $networkId)?->text ?? 'N/A')
+                    : 'N/A',
+                'existing_policy_renewal_date' => is_string($renewalDate) && $renewalDate !== ''
+                    ? Carbon::parse($renewalDate)->format('d-m-Y')
+                    : 'N/A',
+                'number_of_people' => $numberOfPeople !== null ? (string) $numberOfPeople : '—',
+            ];
+        }
+
+        return $rows;
+    }
 }

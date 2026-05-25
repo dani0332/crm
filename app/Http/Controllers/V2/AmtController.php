@@ -157,11 +157,21 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
             );
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+        // PQA-only users see leads where they are the assigned pre-qualification advisor.
+        // We skip the generic whereBasedOnRole for these users because isAdvisor() would
+        // otherwise incorrectly restrict to advisor_id instead of pq_advisor_id.
+        $isPqaOnly = Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)
+            && ! Auth::user()->hasAnyRole([RolesEnum::GMAdvisor, RolesEnum::GMManager, RolesEnum::Admin, RolesEnum::Engineering]);
+
+        if ($isPqaOnly) {
+            $data->where('bqr.pq_advisor_id', Auth::user()->id);
+        } else {
+            if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+                // if user has advisor Role then fetch leads assigned to the user only
+                $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+            }
+            $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         }
-        $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
@@ -485,8 +495,10 @@ class AmtController extends Controller
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
-        $gmCategoryIntakeDisplay = app(GroupMedicalAmtFormDropdownService::class)
-            ->enrichCategoryIntakeForDisplay($record->groupMedicalCategories);
+        $gmDropdownService = app(GroupMedicalAmtFormDropdownService::class);
+        $gmCategoryIntakeDisplay = $record->groupMedicalCategories->isNotEmpty()
+            ? $gmDropdownService->enrichCategoryIntakeForDisplay($record->groupMedicalCategories)
+            : $gmDropdownService->enrichCategoryIntakeFromJson($record->gm_category_intake ?? []);
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasons::getAll();
