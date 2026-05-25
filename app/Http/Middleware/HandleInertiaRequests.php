@@ -43,6 +43,8 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Models\BusinessTypeOfInsurance;
+use App\Models\HealthPlanType;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -157,6 +159,8 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'healthPlanTypes' => Cache::remember('health_plan_types', now()->addHour(), fn () => HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get()),
+            'businessTypeOfInsurances' => Cache::remember('business_type_of_insurances', now()->addHour(), fn () => BusinessTypeOfInsurance::active()->select('id', 'text')->get()),
             'claimsEnum' => ClaimsEnum::asArray(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),

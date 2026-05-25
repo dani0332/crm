@@ -65,6 +65,28 @@ const isSubmittingEA = ref(false);
 
 const quoteTypes = computed(() => page.props.quoteTypes ?? []);
 
+const healthPlanTypeOptions = computed(() =>
+  (page.props.healthPlanTypes ?? []).map(t => ({ value: t.id, label: t.text })),
+);
+
+const businessTypeOfInsuranceOptions = computed(() =>
+  (page.props.businessTypeOfInsurances ?? []).map(t => ({ value: t.id, label: t.text })),
+);
+
+const collaborateExcludedLobs = [1, 3, 8];
+
+const allLobOptions = computed(() =>
+  quoteTypes.value.map(qt => ({ value: qt.id, label: qt.name })),
+);
+
+const lobOptions = computed(() => {
+  if (leadForm.ea_model !== 'collaborate') return allLobOptions.value;
+  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.includes(opt.value));
+});
+
+const isCorpline = computed(() => leadForm.quote_type_id == 101);
+const isHealthLob = computed(() => leadForm.quote_type_id == 3);
+
 const eaModelOptions = computed(() => {
   const options = [{ value: 'referral', label: 'Referral' }];
   if (canCollaborate.value && !isEAManager.value) {
@@ -374,7 +396,7 @@ watch(
               v-model="leadForm.business_type_of_insurance_id"
               label="BUSINESS TYPE OF INSURANCE"
               name="businessTypeOfInsuranceId"
-              :options="[]"
+              :options="businessTypeOfInsuranceOptions"
               placeholder="Select Business Type"
               class="w-full"
               :rules="[isRequired]"
@@ -387,7 +409,7 @@ watch(
               v-model="leadForm.health_plan_type_id"
               label="PLAN TYPE"
               name="healthPlanTypeId"
-              :options="[]"
+              :options="healthPlanTypeOptions"
               placeholder="Select Plan Type"
               class="w-full"
               :rules="[isRequired]"
