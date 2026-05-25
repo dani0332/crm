@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class HealthRateService extends BaseService
 {
-    public function __construct(private HealthPlanService $healthPlanService) {}
+    public function __construct(private HealthPlanService $healthPlanService, private HealthRateControlService $healthRateControlService) {}
     public function create(array $data)
     {
         // Fetch related plan ids (if exists)
@@ -275,7 +275,6 @@ class HealthRateService extends BaseService
                 ], 422)
             );
         }
-
         // Else (active/archive)
         // Get existing rate sheet against plan id and exclude current rate id
         $existingRates = HealthRate::where('health_plan_id', $rate->health_plan_id)
@@ -293,6 +292,19 @@ class HealthRateService extends BaseService
         } else {
             // Get active plan in case of active/archive
             $planId = $rate->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
+        }
+
+        // Check if scheduled exists
+        $scheduledSheet = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::SCHEDULED->value]);
+        if ($scheduledSheet) {
+            throw new HttpResponseException(
+                response()->json([
+                    'status' => false,
+                    'errors' => [
+                        'New rate cannot be added to a scheduled rate sheet',
+                    ],
+                ], 422)
+            );
         }
 
         // Get draft version of rate sheet
