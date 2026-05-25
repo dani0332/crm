@@ -107,6 +107,8 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
                 $rateControl->rates()->update([
                     'status' => HealthPlanRateSheetStatusEnum::ACTIVE->value,
                     'version' => $newVersion,
+                    'is_active' => 1,
+                    'health_rating_eligibility_id' => $plan->health_rating_eligibility_id,
                 ]);
 
                 $rateControl->status = HealthPlanRateSheetStatusEnum::ACTIVE->value;
