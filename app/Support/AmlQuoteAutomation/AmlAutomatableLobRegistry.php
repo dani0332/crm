@@ -22,6 +22,7 @@ final class AmlAutomatableLobRegistry
     {
         return [
             QuoteTypes::SAVINGS,
+            QuoteTypes::DEVICE,
         ];
     }
 
