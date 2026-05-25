@@ -9,18 +9,20 @@ use App\Services\CQF\NonMotor\NonMotorCQFRenewalExecutionService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class ProcessNonMotorCQFQuoteJob implements ShouldQueue
+class ProcessNonMotorCQFQuoteJob implements ShouldBeUnique, ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
     public int $timeout = 60;
+    public int $uniqueFor = 600;
 
     public function __construct(
         public int $quoteId,
@@ -30,6 +32,11 @@ class ProcessNonMotorCQFQuoteJob implements ShouldQueue
         public int $renewalDaysThreshold
     ) {
         $this->onQueue('default');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->quoteId.'-'.$this->quoteType->value;
     }
 
     public function backoff(): array

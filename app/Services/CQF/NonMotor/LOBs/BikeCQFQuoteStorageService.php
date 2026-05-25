@@ -17,6 +17,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,11 +25,19 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     private ?array $bikeQuoteColumns = null;
 
+    /** @var Collection<int, UAELicenseHeldFor>|null */
+    private ?Collection $uaeLicenseRows = null;
+
     public function __construct(
         BikeCQFQuoteMappingService $mappingService,
         EmbeddedProductRepository $embeddedProductRepository
     ) {
         parent::__construct($mappingService, $embeddedProductRepository);
+    }
+
+    private function getUaeLicenseRows(): Collection
+    {
+        return $this->uaeLicenseRows ??= UAELicenseHeldFor::orderBy('id')->get();
     }
 
     private function getBikeQuoteColumns(): array
@@ -173,19 +182,17 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return null;
         }
 
-        $current = UAELicenseHeldFor::find($currentId);
+        $rows = $this->getUaeLicenseRows();
 
-        if ($current === null) {
+        if ($rows->firstWhere('id', $currentId) === null) {
             return $currentId;
         }
 
-        $query = $backHome
-            ? UAELicenseHeldFor::isBackHomeActive()
-            : UAELicenseHeldFor::withActive();
-
-        $nextId = $query->where('id', '>', $currentId)
-            ->orderBy('id')
-            ->value('id');
+        $activeColumn = $backHome ? 'is_back_home_license_active' : 'is_active';
+        $nextId = $rows
+            ->where($activeColumn, 1)
+            ->where('id', '>', $currentId)
+            ->first()?->id;
 
         return $nextId ?? $currentId;
     }

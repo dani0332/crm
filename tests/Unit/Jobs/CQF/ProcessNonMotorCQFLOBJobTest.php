@@ -16,8 +16,8 @@ test('has correct job configuration', function () {
     );
 
     expect($job->tries)->toBe(1)
-        ->and($job->timeout)->toBe(80)
-        ->and($job->uniqueFor)->toBe(300)
+        ->and($job->timeout)->toBe(60)
+        ->and($job->uniqueFor)->toBe(600)
         ->and($job->queue)->toBe('default'); // set via onQueue('default') in constructor
 });
 
