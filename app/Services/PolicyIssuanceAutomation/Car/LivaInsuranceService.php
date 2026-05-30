@@ -1175,7 +1175,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 }
             }
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
+            LoggerService::warning('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);
