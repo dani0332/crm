@@ -39,7 +39,7 @@ class AutomateQuoteAmlScreeningRequest extends FormRequest
             'quoteType' => [
                 'required',
                 'string',
-                Rule::enum(QuoteTypes::class)->only(AmlAutomatableLobRegistry::allowed()),
+                Rule::enum(QuoteTypes::class)->only(AmlAutomatableLobRegistry::allowedLobsFromAPI()),
             ],
         ];
     }
