@@ -6,7 +6,6 @@ use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Events\AmlAutomationScreeningSucceeded;
 use App\Models\AmlAutomation;
@@ -19,6 +18,7 @@ use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\PersonalQuoteAmlAutomationCustomerService;
 use App\Services\TravelQuoteService;
 use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
+use App\Support\AmlQuoteAutomation\AmlAutomationEligibilityService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,24 +27,38 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Executes AML screening automation for a single quote.
+ *
+ * This job trusts that the caller (command or IMCRM API) already validated eligibility
+ * via {@see AmlAutomationEligibilityService} and set the
+ * {@see AmlAutomation} record to Queue status before dispatching.
+ *
+ * The only pre-condition re-checked here is:
+ *   1. The global AML automation CMS flag (can be toggled at any time).
+ *   2. The {@see AmlAutomation} row is still in Queue status (race-condition guard —
+ *      prevents duplicate execution if two dispatches race each other).
+ *
+ * All other eligibility checks (api_issuance_status, aml_status, LOB constraints,
+ * customer data completeness) are authorised by the Queue record itself; re-checking
+ * them here would be wasteful duplication for large user volumes.
+ */
 class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use GenericQueriesAllLobs;
 
-    public $timeout = 60;
-    public $tries = 1;
-    public $uniqueFor = 60 * 15; // 15 minutes
-    public $uniqueKey = ''; // 15 minutes
-    private $className = 'AmlScreeningAutomationJob';
+    public int $timeout = 60;
+    public int $tries = 1;
+    public int $uniqueFor = 60 * 15; // 15 minutes
+    public string $uniqueKey = '';
+    private string $className = 'AmlScreeningAutomationJob';
     private TravelQuote|PersonalQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(QuoteTypes $quoteType, TravelQuote|PersonalQuote $quoteRequest)
     {
         $this->quoteType = $quoteType;
@@ -55,10 +69,8 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * Refactored to reduce Cognitive Complexity as per SonarQube guidelines.
      */
-    public function handle()
+    public function handle(): void
     {
         $exitReason = $this->getExitReason();
         $loggerPrefix = $this->className.' - Ref-ID: '.$this->quoteRefId.' - ';
@@ -71,7 +83,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         $customerInfo = $this->getCustomerInfo();
         if (empty($customerInfo)) {
-            $this->logAndReturn($loggerPrefix, 'Customer info not found or incomplete');
+            LoggerService::info($loggerPrefix.' Exiting: Customer info not found or incomplete');
 
             return;
         }
@@ -79,7 +91,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $checkCustomerInfo = $this->checkCustomerInfoIsComplete($customerInfo);
         if (! $checkCustomerInfo['status']) {
             $msg = $checkCustomerInfo['message'] ?? 'Customer info incomplete';
-            $this->logAndReturn($loggerPrefix, $msg, $msg);
+            LoggerService::info($loggerPrefix.' Exiting: '.$msg);
 
             return;
         }
@@ -94,7 +106,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
-            LoggerService::info($loggerPrefix.' getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
+            LoggerService::info($loggerPrefix.' getInsuredPersonDetails - response: '.($insuredPersonData ? Response::HTTP_OK : Response::HTTP_NOT_FOUND));
 
             $customer = ! empty($insuredPersonData)
                 ? [...$customerInfo, ...(array) $insuredPersonData]
@@ -114,69 +126,39 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * Determines if early exit is needed and returns exit reason if so, otherwise null.
-     * Limits returns to a maximum of 3.
+     * Returns an exit reason string if the job should abort, otherwise null.
+     *
+     * Only two lightweight guards remain here (everything else was checked by
+     * the eligibility service before dispatch):
+     *
+     *   1. CMS flag — can be toggled between dispatch and execution.
+     *   2. Queue status — authoritative signal that the caller ran eligibility checks;
+     *      also prevents duplicate execution when two dispatches race.
      */
     private function getExitReason(): ?string
     {
-        $exitReason = null;
-
-        if (! $this->isAmlAutomationEnabled()) {
-            $exitReason = 'AML Automation is not enabled';
-        } elseif (! $this->quoteRequest) {
-            LoggerService::info($this->className.' Quote not found');
-            $exitReason = 'Quote not found';
-        } else {
-            $this->quoteRequest->refresh();
-            LoggerService::startQuoteLogging($this->quoteRequest);
-
-            if (! $this->preconditionsMet()) {
-                $exitReason = 'Preconditions not met';
-            }
+        if (! app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED)) {
+            return 'AML automation is not enabled';
         }
 
-        return $exitReason;
-    }
-
-    /**
-     * Helper to log customer info errors and exit.
-     */
-    private function logAndReturn(string $loggerPrefix, string $infoMessage, ?string $exitReason = null): void
-    {
-        LoggerService::info($loggerPrefix.' '.$infoMessage);
-        LoggerService::info($loggerPrefix.' Exiting job with reason: '.($exitReason ?? $infoMessage));
-    }
-
-    private function isAmlAutomationEnabled(): bool
-    {
-        $enabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
-        if (! $enabled) {
-            LoggerService::info($this->className.' is not enabled from cms. Ref-ID: '.$this->quoteRefId);
+        if (! $this->quoteRequest) {
+            return 'Quote not found';
         }
 
-        return (bool) $enabled;
-    }
+        $this->quoteRequest->refresh();
+        LoggerService::startQuoteLogging($this->quoteRequest);
 
-    private function preconditionsMet(): bool
-    {
-        $this->quoteRequest->loadMissing('insuranceProvider');
-
-        $skipApiIssuanceYes = AmlAutomatableLobRegistry::skipsApiIssuanceStatusCheckForAutomatedAml($this->quoteType, $this->quoteRequest);
-        $isApiIssuanceStatusYes = $skipApiIssuanceYes
-            || $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-        $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
-
-        $isAutomationInQueue = false;
-        if ($this->quoteType === QuoteTypes::TRAVEL) {
-            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::Queue->value;
-        } elseif ($this->quoteRequest instanceof PersonalQuote && in_array($this->quoteType, [QuoteTypes::CYBER, QuoteTypes::SAVINGS], true)) {
-            $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status === AmlAutomationStatus::Queue->value;
+        // The Queue status is the handshake from the eligibility service to the job:
+        // it proves the caller validated the quote before dispatch.
+        $amlAutomation = $this->quoteRequest->amlAutomation;
+        if ($amlAutomation?->status !== AmlAutomationStatus::Queue->value) {
+            return 'Automation not in Queue state (status: '.($amlAutomation?->status ?? 'null').')';
         }
 
-        return $isApiIssuanceStatusYes && $isAMLPending && $isAutomationInQueue;
+        return null;
     }
 
-    private function buildAmlRequestData($customer, $idType, $idNumber): array
+    private function buildAmlRequestData(array $customer, string $idType, ?string $idNumber): array
     {
         return [
             'customer_id' => $customer['customer_id'],
@@ -192,7 +174,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         ];
     }
 
-    private function processAmlResult($quoteAmlProcessCall, $amlAutomation, string $loggerPrefix): void
+    private function processAmlResult(object $quoteAmlProcessCall, AmlAutomation $amlAutomation, string $loggerPrefix): void
     {
         $this->quoteRequest->refresh();
 
@@ -205,6 +187,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         }
 
         $amlStatus = $this->quoteRequest->aml_status;
+
         if ($amlStatus === AMLStatusCode::AMLScreeningCleared) {
             $amlAutomation->update(['status' => AmlAutomationStatus::Complete->value, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
             LoggerService::info($loggerPrefix.' Completed - AML cleared');
@@ -216,7 +199,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         if ($amlStatus === AMLStatusCode::AMLScreeningFailed) {
             $msg = 'AML Screening Failed';
             $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $msg]);
-            LoggerService::info($loggerPrefix.' Completed - AML failed');
+            LoggerService::info($loggerPrefix.' Completed - '.$msg);
 
             return;
         }
@@ -228,85 +211,100 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     private function dispatchScreeningSucceededEventIfApplicable(): void
     {
-        if (! AmlAutomatableLobRegistry::allows($this->quoteType)) {
+
+        if (! AmlAutomatableLobRegistry::isLobAllowedForAmlAutomationScreeningSucceededEvent($this->quoteType)) {
             return;
         }
-        $uuid = $this->quoteRequest->uuid ?? '';
-        $id = (int) $this->quoteRequest->id;
+
         event(new AmlAutomationScreeningSucceeded(
-            $id,
-            $uuid,
+            (int) $this->quoteRequest->id,
+            $this->quoteRequest->uuid ?? '',
             $this->quoteRefId,
             $this->quoteType,
         ));
     }
 
     /**
-     * Get customer information based on quote type.
+     * Retrieve customer information for the LOB.
+     *
+     * Supported LOBs: Travel, Cyber, Savings, Device.
+     * Returns null (and exits the job early) when no customer record is found.
+     *
+     * @return array<string, mixed>|null
      */
     private function getCustomerInfo(): ?array
     {
-        $customerInfo = null;
-
         if ($this->quoteType === QuoteTypes::TRAVEL) {
-            $travelQuoteService = app(TravelQuoteService::class);
-            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
+            $info = (array) app(TravelQuoteService::class)->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
 
-            if (! empty($customerTravelInfo['id'])) {
-                $customerInfo = [
-                    'id' => $customerTravelInfo['id'],
-                    'code' => $customerTravelInfo['code'],
-                    'customer_id' => $customerTravelInfo['customer_id'],
-                    'first_name' => $customerTravelInfo['first_name'],
-                    'last_name' => $customerTravelInfo['last_name'],
-                    'dob' => $customerTravelInfo['dob'],
-                    'nationality_id' => $customerTravelInfo['nationality_id'],
-                    'gender' => $customerTravelInfo['gender'],
+            if (! empty($info['id'])) {
+                return [
+                    'id' => $info['id'],
+                    'code' => $info['code'],
+                    'customer_id' => $info['customer_id'],
+                    'first_name' => $info['first_name'],
+                    'last_name' => $info['last_name'],
+                    'dob' => $info['dob'],
+                    'nationality_id' => $info['nationality_id'],
+                    'gender' => $info['gender'],
                     'id_type' => 'passport',
-                    'id_number' => $customerTravelInfo['passport'] ?? null,
+                    'id_number' => $info['passport'] ?? null,
                 ];
             }
-        } elseif ($this->quoteType === QuoteTypes::CYBER) {
-            $cyberQuoteService = app(CyberQuoteService::class);
-            $customerCyberInfo = (array) $cyberQuoteService->getCustomerCyberInfo($this->quoteRequest->id, $this->quoteType->value);
 
-            if (! empty($customerCyberInfo['id'])) {
-                $customerInfo = $customerCyberInfo;
-            }
-        } elseif ($this->quoteType === QuoteTypes::SAVINGS && $this->quoteRequest instanceof PersonalQuote) {
+            return null;
+        }
+
+        if ($this->quoteType === QuoteTypes::CYBER) {
+            $info = (array) app(CyberQuoteService::class)->getCustomerCyberInfo($this->quoteRequest->id, $this->quoteType->value);
+
+            return ! empty($info['id']) ? $info : null;
+        }
+
+        // Savings and Device both use PersonalQuote; the shared service resolves both.
+        if (
+            in_array($this->quoteType, [QuoteTypes::SAVINGS, QuoteTypes::DEVICE], true) &&
+            $this->quoteRequest instanceof PersonalQuote
+        ) {
             $row = app(PersonalQuoteAmlAutomationCustomerService::class)
                 ->getCustomerPersonalQuoteAmlInfo((int) $this->quoteRequest->id, (int) $this->quoteRequest->quote_type_id);
+
             if ($row !== false && ! empty($row->id)) {
-                $customerInfo = array_merge((array) $row, [
+                return array_merge((array) $row, [
                     'id_type' => $row->id_type ?? 'passport',
                 ]);
             }
+
+            return null;
         }
 
-        return $customerInfo;
+        return null;
     }
 
     /**
-     * Check if customer information is complete.
+     * Verify that the customer record has all fields required for AML screening.
+     *
+     * @param  array<string, mixed>  $customerInfo
+     * @return array{status: bool, message: string}
      */
     private function checkCustomerInfoIsComplete(array $customerInfo): array
     {
         if ($this->quoteType === QuoteTypes::TRAVEL) {
-            $travelQuoteService = app(TravelQuoteService::class);
+            return app(TravelQuoteService::class)->checkCustomerTravelInfoIsComplete($customerInfo);
+        }
 
-            return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerInfo);
-        } elseif ($this->quoteType === QuoteTypes::CYBER) {
-            $cyberQuoteService = app(CyberQuoteService::class);
+        if ($this->quoteType === QuoteTypes::CYBER) {
+            return app(CyberQuoteService::class)->checkCustomerCyberInfoIsComplete($customerInfo);
+        }
 
-            return $cyberQuoteService->checkCustomerCyberInfoIsComplete($customerInfo);
-        } elseif ($this->quoteType === QuoteTypes::SAVINGS) {
+        if (in_array($this->quoteType, [QuoteTypes::SAVINGS, QuoteTypes::DEVICE], true)) {
             return app(PersonalQuoteAmlAutomationCustomerService::class)->checkCustomerPersonalQuoteAmlInfoIsComplete($customerInfo);
         }
 
         return ['status' => false, 'message' => 'Unknown quote type'];
     }
 
-    public function middleware()
+    public function middleware(): array
     {
         return [
             new WithoutOverlapping('aml-screening-automation-'.$this->uniqueKey),

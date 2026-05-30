@@ -19,7 +19,7 @@ class SendAmlAutomationOutcomeNotifications
 
     public function handle(AmlAutomationScreeningSucceeded $event): void
     {
-        if (! AmlAutomatableLobRegistry::allows($event->quoteType)) {
+        if (! AmlAutomatableLobRegistry::isLobAllowedForAmlAutomationScreeningSucceededEvent($event->quoteType)) {
             return;
         }
 
