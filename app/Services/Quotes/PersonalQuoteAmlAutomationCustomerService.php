@@ -28,9 +28,12 @@ final class PersonalQuoteAmlAutomationCustomerService
                 'pq.code',
                 'pq.customer_id',
                 'pq.gender',
-                'pq.first_name',
-                'pq.last_name',
-                'pq.dob',
+
+                // need to ask this from Bilal should we check this data fro pq or i for AML
+                'i.first_name',
+                'i.last_name',
+                'i.dob', // pq.dob is empty for device need to know who sync it to pq.dob ?
+
                 'pq.nationality_id',
                 'i.id_type',
                 'i.id_number'
