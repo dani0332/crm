@@ -72,26 +72,42 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
-        $exitReason = $this->getExitReason();
         $loggerPrefix = $this->className.' - Ref-ID: '.$this->quoteRefId.' - ';
+        $baseContext = ['quote_code' => $this->quoteRefId, 'quote_type' => $this->quoteType->value];
 
+        $exitReason = $this->getExitReason();
         if ($exitReason !== null) {
-            LoggerService::info($loggerPrefix.' Exiting job with reason: '.$exitReason);
+            // Persist the reason for observability; look up the record by code since quoteRequest
+            // may not have been refreshed yet (e.g. CMS-disabled exit happens before refresh).
+            $amlAutomation = AmlAutomation::where('code', $this->quoteRefId)->first();
+            LoggerService::info($loggerPrefix.'Exiting: '.$exitReason, extra: array_merge($baseContext, [
+                'aml_automation_id' => $amlAutomation?->id,
+                'aml_automation_status' => $amlAutomation?->status,
+                'exit_reason' => $exitReason,
+            ]));
+            $amlAutomation?->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $exitReason]);
 
             return;
         }
 
+        // After getExitReason() passes we know the Queue record exists on quoteRequest.
+        $queuedAutomation = $this->quoteRequest->amlAutomation;
+        $baseContext['aml_automation_id'] = $queuedAutomation?->id;
+
         $customerInfo = $this->getCustomerInfo();
         if (empty($customerInfo)) {
-            LoggerService::info($loggerPrefix.' Exiting: Customer info not found or incomplete');
+            $reason = 'Customer info not found or incomplete';
+            LoggerService::info($loggerPrefix.'Exiting: '.$reason, extra: $baseContext);
+            $queuedAutomation?->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $reason]);
 
             return;
         }
 
         $checkCustomerInfo = $this->checkCustomerInfoIsComplete($customerInfo);
         if (! $checkCustomerInfo['status']) {
-            $msg = $checkCustomerInfo['message'] ?? 'Customer info incomplete';
-            LoggerService::info($loggerPrefix.' Exiting: '.$msg);
+            $reason = $checkCustomerInfo['message'] ?? 'Customer info incomplete';
+            LoggerService::info($loggerPrefix.'Exiting: '.$reason, extra: $baseContext);
+            $queuedAutomation?->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $reason]);
 
             return;
         }
@@ -104,9 +120,16 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             ['status' => AmlAutomationStatus::Processing->value]
         );
 
+        LoggerService::info($loggerPrefix.'Processing started', extra: array_merge($baseContext, [
+            'aml_automation_id' => $amlAutomation->id,
+        ]));
+
         try {
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
-            LoggerService::info($loggerPrefix.' getInsuredPersonDetails - response: '.($insuredPersonData ? Response::HTTP_OK : Response::HTTP_NOT_FOUND));
+            LoggerService::info($loggerPrefix.'getInsuredPersonDetails response: '.($insuredPersonData ? Response::HTTP_OK : Response::HTTP_NOT_FOUND), extra: array_merge($baseContext, [
+                'aml_automation_id' => $amlAutomation->id,
+                'found' => (bool) $insuredPersonData,
+            ]));
 
             $customer = ! empty($insuredPersonData)
                 ? [...$customerInfo, ...(array) $insuredPersonData]
@@ -117,11 +140,13 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $quoteTypeId = (int) (QuoteTypes::getId($this->quoteType) ?? 0);
             $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $quoteTypeId, $this->quoteRequest->id);
 
-            $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix);
+            $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix, $baseContext);
 
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => 'Exception: '.$e->getMessage()]);
-            LoggerService::error($loggerPrefix.' Exception: '.$e->getMessage());
+            LoggerService::error($loggerPrefix.'Exception: '.$e->getMessage(), extra: array_merge($baseContext, [
+                'aml_automation_id' => $amlAutomation->id,
+            ]));
         }
     }
 
@@ -174,39 +199,46 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         ];
     }
 
-    private function processAmlResult(object $quoteAmlProcessCall, AmlAutomation $amlAutomation, string $loggerPrefix): void
+    /**
+     * @param  array<string, mixed>  $baseContext  Shared log context (quote_code, quote_type, aml_automation_id).
+     */
+    private function processAmlResult(object $quoteAmlProcessCall, AmlAutomation $amlAutomation, string $loggerPrefix, array $baseContext): void
     {
         $this->quoteRequest->refresh();
 
+        $ctx = array_merge($baseContext, ['aml_automation_id' => $amlAutomation->id]);
+
         if (! $quoteAmlProcessCall->status) {
-            $message = 'Failed: '.($quoteAmlProcessCall->message ?? 'Unknown');
-            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $message]);
-            LoggerService::info($loggerPrefix.' Completed - AmlProcessCall - failed: '.$message);
+            $result = 'AML process call failed: '.($quoteAmlProcessCall->message ?? 'Unknown');
+            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $result]);
+            LoggerService::info($loggerPrefix.'Completed - AML process call failed', extra: array_merge($ctx, ['result' => $result]));
 
             return;
         }
 
         $amlStatus = $this->quoteRequest->aml_status;
+        $ctx['aml_status'] = $amlStatus;
 
         if ($amlStatus === AMLStatusCode::AMLScreeningCleared) {
-            $amlAutomation->update(['status' => AmlAutomationStatus::Complete->value, 'result' => (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared')]);
-            LoggerService::info($loggerPrefix.' Completed - AML cleared');
+            $result = (string) ($quoteAmlProcessCall->message ?? 'AML Screening Cleared');
+            $amlAutomation->update(['status' => AmlAutomationStatus::Complete->value, 'result' => $result]);
+            LoggerService::info($loggerPrefix.'Completed - AML cleared', extra: array_merge($ctx, ['result' => $result]));
             $this->dispatchScreeningSucceededEventIfApplicable();
 
             return;
         }
 
         if ($amlStatus === AMLStatusCode::AMLScreeningFailed) {
-            $msg = 'AML Screening Failed';
-            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $msg]);
-            LoggerService::info($loggerPrefix.' Completed - '.$msg);
+            $result = 'AML Screening Failed';
+            $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $result]);
+            LoggerService::info($loggerPrefix.'Completed - AML failed', extra: array_merge($ctx, ['result' => $result]));
 
             return;
         }
 
-        $pendingMsg = 'AML still pending after screening';
-        $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $pendingMsg]);
-        LoggerService::info($loggerPrefix.' Completed - '.$pendingMsg);
+        $result = 'AML still pending after screening';
+        $amlAutomation->update(['status' => AmlAutomationStatus::Failed->value, 'result' => $result]);
+        LoggerService::info($loggerPrefix.'Completed - AML still pending after screening', extra: array_merge($ctx, ['result' => $result]));
     }
 
     private function dispatchScreeningSucceededEventIfApplicable(): void
@@ -249,6 +281,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
                     'gender' => $info['gender'],
                     'id_type' => 'passport',
                     'id_number' => $info['passport'] ?? null,
+                    'passport' => $info['passport'] ?? null,
                 ];
             }
 

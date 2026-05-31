@@ -6,6 +6,7 @@ use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
+// use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
@@ -108,8 +109,10 @@ class AMLScreeningCommand extends Command
         // Device/NGI: an extra DB-level pre-filter on booking date limits the working set
         // before the per-quote eligibility check applies the same rule precisely.
         if ($quoteType === QuoteTypes::DEVICE) {
-            $quoteRequestQuery->whereNotNull('policy_booking_date')
-                ->where('policy_booking_date', '>=', Carbon::now()->subDays(7)->startOfDay());
+            // $quoteRequestQuery->whereNotNull('policy_booking_date')
+            //     ->where('id', '=', 309258) // REMOVE IT AFTER TESTING
+            //     ->where('quote_status_id', '=', QuoteStatusEnum::PolicyBooked)
+            //     ->where('policy_booking_date', '>=', Carbon::now()->subDays(7)->startOfDay());
         }
 
         if (! $quoteRequestQuery->exists()) {
@@ -122,10 +125,19 @@ class AMLScreeningCommand extends Command
                 $fullQuote = $this->getQuoteObject($quoteType->value, $quoteRequestId);
 
                 if (! $fullQuote) {
-                    LoggerService::error($this->className.' - '.$quoteType->value.' Quote #'.$quoteRequestId.' not found');
+                    LoggerService::error($this->className.' - Quote not found', extra: [
+                        'quote_id' => $quoteRequestId,
+                        'quote_type' => $quoteType->value,
+                    ]);
 
                     continue;
                 }
+
+                $quoteContext = [
+                    'quote_id' => $fullQuote->id,
+                    'quote_code' => $fullQuote->code,
+                    'quote_type' => $quoteType->value,
+                ];
 
                 // Load insurance provider once — eligibility checks read it without extra queries.
                 $fullQuote->loadMissing('insuranceProvider');
@@ -133,15 +145,35 @@ class AMLScreeningCommand extends Command
                 $eligibility = $this->eligibilityService->check($quoteType, $fullQuote);
 
                 if (! $eligibility->isEligible()) {
-                    LoggerService::info($this->className.' - '.$quoteType->value.' Quote #'.$quoteRequestId.' ineligible: '.$eligibility->reasonCode.' — '.$eligibility->reason);
+                    LoggerService::info($this->className.' - Quote ineligible for AML automation', extra: array_merge($quoteContext, [
+                        'reason_code' => $eligibility->reasonCode,
+                        'reason' => $eligibility->reason,
+                    ]));
+
+                    // Persist the reason so operators can diagnose skipped entries.
+                    // Failed status allows re-dispatch via the IMCRM API once the issue is resolved,
+                    // while preventing the command from re-queuing the same quote on the next run.
+                    $automation = AmlAutomation::updateOrCreate(
+                        ['code' => $fullQuote->code],
+                        ['status' => AmlAutomationStatus::Failed->value, 'result' => $eligibility->reason]
+                    );
+
+                    LoggerService::info($this->className.' - AmlAutomation record updated with ineligibility reason', extra: array_merge($quoteContext, [
+                        'aml_automation_id' => $automation->id,
+                        'aml_automation_status' => $automation->status,
+                    ]));
 
                     continue;
                 }
 
-                AmlAutomation::updateOrCreate(
+                $automation = AmlAutomation::updateOrCreate(
                     ['code' => $fullQuote->code],
                     ['status' => AmlAutomationStatus::Queue->value]
                 );
+
+                LoggerService::info($this->className.' - Quote queued for AML automation', extra: array_merge($quoteContext, [
+                    'aml_automation_id' => $automation->id,
+                ]));
 
                 AmlScreeningAutomationJob::dispatch($quoteType, $fullQuote)->onQueue('renewals');
             }
