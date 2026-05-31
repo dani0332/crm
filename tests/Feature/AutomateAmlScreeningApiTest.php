@@ -106,13 +106,15 @@ test('returns 422 when quoteType is not in the automatable LOB registry', functi
 
 test('returns 422 when personal quote aml row is missing last name', function () {
     $uuid = '01900000-0000-7000-8000-000000000006';
+    $firstName = 'A';
+    $lastName = '';
     $personalQuote = PersonalQuote::create([
         'uuid' => $uuid,
         'code' => 'SAV-NOLAST',
         'quote_type_id' => QuoteTypeId::Savings,
         'customer_id' => 1,
-        'first_name' => 'A',
-        'last_name' => '',
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'email' => 'c@example.com',
         'dob' => '1990-01-01',
         'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
@@ -123,8 +125,8 @@ test('returns 422 when personal quote aml row is missing last name', function ()
 
     $insured = Insured::create([
         'customer_type' => 'Individual',
-        'first_name' => 'A',
-        'last_name' => 'B',
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'dob' => '1990-01-01',
         'nationality_id' => 1,
         'gender' => 'male',
