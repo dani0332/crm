@@ -104,6 +104,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # PHP
 
 - Always use curly braces for control structures, even for single-line bodies.
+- Prefer the array spread operator (`[...$a, ...$b]`) over `array_merge()` when combining arrays.
 - Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
 - Use explicit return type declarations and type hints for all method parameters: `function isAccessible(User $user, ?string $path = null): bool`
 - Follow existing application Enum naming conventions.
@@ -122,6 +123,12 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
 - Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
+
+## Test Quality Rules
+
+- **Always use factories** to create test data. Never use `Model::create([...])` or raw array construction inside tests.
+- **Never use `DB::` facades** inside test cases. Use model factories, Eloquent, or assertion helpers (`assertModelExists`, `assertDatabaseHas`) instead.
+- **Never resolve a service manually more than once** in the same test file. Resolve it once in a `beforeEach()` block and assign to a shared variable — do not call `app(ServiceClass::class)` or `new ServiceClass()` repeatedly across tests.
 
 === inertia-laravel/core rules ===
 
