@@ -6,7 +6,7 @@ use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
-// use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
@@ -14,7 +14,6 @@ use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Support\AmlQuoteAutomation\AmlAutomationEligibilityService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class AMLScreeningCommand extends Command
@@ -106,13 +105,9 @@ class AMLScreeningCommand extends Command
             $quoteRequestQuery->where('quote_type_id', $quoteType->id());
         }
 
-        // Device/NGI: an extra DB-level pre-filter on booking date limits the working set
-        // before the per-quote eligibility check applies the same rule precisely.
-        if ($quoteType === QuoteTypes::DEVICE) {
-            // $quoteRequestQuery->whereNotNull('policy_booking_date')
-            //     ->where('id', '=', 309258) // REMOVE IT AFTER TESTING
-            //     ->where('quote_status_id', '=', QuoteStatusEnum::PolicyBooked)
-            //     ->where('policy_booking_date', '>=', Carbon::now()->subDays(7)->startOfDay());
+        if ($quoteType === QuoteTypes::DEVICE) { // process Device AML after policy booking only as per FRD.
+            $quoteRequestQuery
+                ->where('quote_status_id', '=', QuoteStatusEnum::PolicyBooked);
         }
 
         if (! $quoteRequestQuery->exists()) {
