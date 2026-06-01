@@ -29,8 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  *   2. Policy issuance API status (unless LOB/provider skips it)
  *   3. AML status must be null or Pending
  *   4. Automation row must not already be Complete / Processing / Queue
- *   5. LOB-specific constraints (e.g. Device+NGI booking date window)
- *   6. Customer insured data completeness
+ *   5. Customer insured data completeness
  *
  * Callers must load the `insuranceProvider` relation on `$quote` before calling
  * {@see self::check()} so that LOB/provider-specific rules can read it without
@@ -80,13 +79,7 @@ final class AmlAutomationEligibilityService
             return $automationRowBlock;
         }
 
-        // 5. LOB-specific constraints (e.g. Device+NGI: booking date within 7 days)
-        $lobBlock = AmlAutomatableLobRegistry::checkLobSpecificEligibility($quoteType, $quote);
-        if ($lobBlock !== null) {
-            return $lobBlock;
-        }
-
-        // 6. Customer insured data must exist and be complete for screening
+        // 5. Customer insured data must exist and be complete for screening
         $customerBlock = $this->checkCustomerDataCompleteness($quoteType, $quote);
         if ($customerBlock !== null) {
             return $customerBlock;
