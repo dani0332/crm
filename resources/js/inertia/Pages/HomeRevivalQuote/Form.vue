@@ -169,7 +169,10 @@ function onSubmit(isValid) {
       },
     });
   } catch (error) {
-    console.error('An unexpected error occurred during form submission:', error);
+    console.error(
+      'An unexpected error occurred during form submission:',
+      error,
+    );
   }
 }
 
@@ -630,11 +633,7 @@ const gender = computed(() => {
           required
         />
 
-        <DatePicker
-          v-model="quoteForm.dob"
-          name="dob"
-          label="DATE OF BIRTH"
-        />
+        <DatePicker v-model="quoteForm.dob" name="dob" label="DATE OF BIRTH" />
 
         <x-select
           v-model="quoteForm.nationality_id"
