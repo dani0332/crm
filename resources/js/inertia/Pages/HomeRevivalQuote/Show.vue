@@ -1164,7 +1164,9 @@ function handleOcrNotification(event) {
         </x-button>
 
         <Link :href="route('home-revival-quotes-list')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Home Revival List </x-button>
+          <x-button size="sm" color="primary" tag="div">
+            Home Revival List
+          </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
