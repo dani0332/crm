@@ -44,7 +44,7 @@ final class GroupMedicalEcommerceJourneyLinkService
             return null;
         }
 
-        return rtrim($base, '/').'/'.$quote->uuid;
+        return rtrim($base, '/').'/'.$quote->uuid.'/plan-type';
     }
 
     public function recordAdvisorCopyLinkAudit(BusinessQuote $quote, User $user): void

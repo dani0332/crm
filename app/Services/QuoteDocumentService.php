@@ -18,6 +18,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\CensusListExcelExport;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
@@ -1431,7 +1432,7 @@ class QuoteDocumentService extends BaseService
                 ExcelWriter::XLSX
             );
 
-            $originalName = 'Census-List-'.$quoteUUID.'-'.now()->format('Y-m-d_His').'.xlsx';
+            $originalName = 'InsuranceMarket.ae™ Manually Added Members List.xlsx';
             $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
             $fileMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
             $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
