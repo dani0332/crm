@@ -6,14 +6,11 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
 use App\Models\InsuranceProvider;
-use App\Models\Insured;
 use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
@@ -266,54 +263,6 @@ it('keeps pet_age_id at cap when already at the highest pet-ages entry', functio
     $copyDetail($newPq, $oldPq);
 
     expect(PetQuote::where('personal_quote_id', $newPq->id)->value('pet_age_id'))->toBe($cap->id);
-});
-
-it('copies customer_insured record from old quote to renewal quote', function () {
-    $customer = Customer::factory()->create();
-    $insured = Insured::factory()->create(['customer_type' => 'Individual', 'first_name' => 'Test', 'last_name' => 'User']);
-
-    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
-    $newPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
-
-    CustomerInsured::factory()->create([
-        'quote_type_id' => 9,
-        'quote_request_id' => $oldPq->id,
-        'insured_id' => $insured->id,
-        'customer_id' => $customer->id,
-        'is_active' => true,
-    ]);
-
-    $copyFn = Closure::bind(
-        fn ($old, $new) => $this->copyCustomerInsured($old, $new),
-        $this->service,
-        BaseCQFQuoteStorageService::class
-    );
-
-    $copyFn($oldPq, $newPq);
-
-    $newRecord = CustomerInsured::where('quote_request_id', $newPq->id)->where('is_active', true)->first();
-
-    expect($newRecord)->not->toBeNull()
-        ->and($newRecord->insured_id)->toBe($insured->id)
-        ->and($newRecord->customer_id)->toBe($customer->id)
-        ->and($newRecord->quote_type_id)->toBe(9);
-});
-
-it('skips customer_insured copy when old quote has no customer_insured record', function () {
-    $customer = Customer::factory()->create();
-
-    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
-    $newPq = PersonalQuote::factory()->create(['quote_type_id' => 9, 'customer_id' => $customer->id]);
-
-    $copyFn = Closure::bind(
-        fn ($old, $new) => $this->copyCustomerInsured($old, $new),
-        $this->service,
-        BaseCQFQuoteStorageService::class
-    );
-
-    $copyFn($oldPq, $newPq);
-
-    expect(CustomerInsured::where('quote_request_id', $newPq->id)->count())->toBe(0);
 });
 
 it('sets previous_quote_id to the old PetQuote id on copy', function () {

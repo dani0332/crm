@@ -142,6 +142,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
+            'nationality',
             'renewalBatchModel',
             'subSource',
             'latestInsured' => function ($q) {
@@ -373,8 +374,9 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail', 'customer']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::PET)
+            ->filter()
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'quoteDetail', 'customer'])
+            ->orderBy('created_at', 'desc');
     }
 }

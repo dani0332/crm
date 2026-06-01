@@ -14,6 +14,7 @@ use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Models\UAELicenseHeldFor;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\CQF\CarCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +31,8 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
     public function __construct(
         BikeCQFQuoteMappingService $mappingService,
-        EmbeddedProductRepository $embeddedProductRepository
+        EmbeddedProductRepository $embeddedProductRepository,
+        private CarCQFQuoteMappingService $carCQFQuoteMappingService,
     ) {
         parent::__construct($mappingService, $embeddedProductRepository);
     }
@@ -159,6 +161,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
+        $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($carQuote);
         $data['bike_value'] = null;
         $data['bike_value_tier'] = null;
         $data['claim_history_id'] = null;
@@ -232,7 +235,11 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return;
         }
 
-        $newBikeQuote = BikeQuote::create($this->mapLobRenewalDetail($oldBikeQuote, $newQuote));
+        $oldQuote->loadMissing('carPlan');
+        $data = $this->mapLobRenewalDetail($oldBikeQuote, $newQuote);
+        $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($oldQuote)
+            ?? $data['insurance_type_id'];
+        $newBikeQuote = BikeQuote::create($data);
 
         if ($oldBikeQuote->bikeQuoteRequestDetail) {
             BikeQuoteRequestDetail::create(['bike_quote_request_id' => $newBikeQuote->id]);

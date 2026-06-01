@@ -160,7 +160,7 @@ it('leaves bike_value, claim_history_id, and premium null on copied BikeQuote', 
         ->and($created->premium)->toBeNull();
 });
 
-it('carries insurance_type_id from old BikeQuote on renewal copy', function () {
+it('falls back to old BikeQuote insurance_type_id when old PersonalQuote has no plan', function () {
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
 
     BikeQuote::factory()->create([
@@ -185,6 +185,7 @@ it('carries insurance_type_id from old BikeQuote on renewal copy', function () {
 
     $copyDetail($newPq, $oldPq);
 
+    // No carPlan on oldPq → getCarTypeInsuranceId returns null → falls back to oldLob->insurance_type_id
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('insurance_type_id'))->toBe(2);
 });
 

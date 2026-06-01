@@ -134,10 +134,7 @@ const tableHeader2 = [
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
-  {
-    text: 'Previous Total Price with VAT',
-    value: 'previous_quote_policy_premium',
-  },
+  { text: 'Previous Total Price with VAT',value: 'previous_quote_policy_premium' },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
@@ -150,9 +147,9 @@ const businessHeaders = [
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
-  { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
-  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'POLICY START DATE', value: 'previous_policy_start_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
+  { text: 'GROSS PREMIUM', value: 'previous_quote_policy_premium' },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
@@ -260,22 +257,20 @@ const permissionsEnum = page.props.permissionsEnum;
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="
-        filters.product == 1
-          ? tableHeader2
-          : filters.product == 5
-            ? businessHeaders
-            : tableHeader
+        filters.product == 5
+          ? businessHeaders
+          : tableHeader2
       "
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="{ code }">
         {{ code }}
       </template>
 
-      <template #item-advisor="item">
+      <template #item-advisor>
         {{ getProductName(filters.product) }}
       </template>
       <template #item-subtype="item">
@@ -297,11 +292,9 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
-      <template #item-currently_insured_with="{ currently_insured_with }">
+      <template #item-currently_insured_with="item">
         {{
-          currently_insured_with?.text
-            ? currently_insured_with.text
-            : currently_insured_with
+          (item.currently_insured_with ?? item.personal_quote?.currently_insured_with)?.text
         }}
       </template>
       <template #item-pc_qualified="{ pc_qualified }">

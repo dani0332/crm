@@ -160,7 +160,6 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         if ($oldLob->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
             $data['company_address'] = $oldLob->company_address;
             $data['premium'] = $oldLob->premium;
-            $data['policy_number'] = $oldLob->policy_number;
         }
 
         return $data;

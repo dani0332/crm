@@ -95,7 +95,7 @@ function resolvePreviousLeadUrl(modelType, uuid, label, pageProps) {
     return `/quotes/car/${uuid}`;
   }
 
-  if (mt === 'Bike' || (mt === 'bike' && String(label).includes('CAR'))) {
+  if ((mt === 'Bike' || mt === 'bike') && String(label).includes('CAR')) {
     return `/quotes/car/${uuid}`;
   }
 

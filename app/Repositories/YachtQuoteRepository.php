@@ -210,6 +210,7 @@ class YachtQuoteRepository extends BaseRepository
             'advisor.primaryBranch',
             'paymentStatus',
             'payments',
+            'nationality',
             'quoteDetail',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
@@ -329,7 +330,7 @@ class YachtQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'nationality', 'customer'])
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');

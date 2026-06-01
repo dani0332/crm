@@ -13,6 +13,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UAELicenseHeldForEnum;
 use App\Models\CarQuote;
+use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
 use App\Services\RenewalsAddonServices;
@@ -122,12 +123,14 @@ class CarCQFQuoteMappingService
         ];
     }
 
-    public function getCarTypeInsuranceId(CarQuote $quote)
+    public function getCarTypeInsuranceId(CarQuote|PersonalQuote $quote)
     {
+        $plan = $quote instanceof CarQuote ? $quote->plan : $quote->carPlan;
+
         // Collect possible fields to check for insurance type
         $fields = [
-            $quote?->plan?->insurance_type ?? '',
-            $quote?->plan?->text ?? '',
+            $plan?->insurance_type ?? '',
+            $plan?->text ?? '',
         ];
 
         // Normalize fields for case-insensitive comparison

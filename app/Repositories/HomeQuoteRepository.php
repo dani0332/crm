@@ -65,9 +65,10 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'customer', 'previousAdvisor']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+            ->filter()
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'customer', 'previousAdvisor'])
+            ->orderBy('created_at', 'desc');
     }
 
     public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
@@ -225,6 +226,7 @@ class HomeQuoteRepository extends BaseRepository
             'advisor',
             'advisor.primaryBranch.branch:id,name',
             'nationality',
+            'currentlyInsuredWith',
             'insuranceProviderPlan',
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
