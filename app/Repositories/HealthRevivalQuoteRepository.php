@@ -105,7 +105,7 @@ class HealthRevivalQuoteRepository extends BaseRepository
             'healthLeadType' => HealthLeadType::get(),
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
             'salaryBand' => app(LookupService::class)->getSalaryBands(),
-            'gender' => app(CRUDService::class)->getGenderOptions(),
+            'gender' => app(CRUDService::class)->getGenderOptions(QuoteTypeId::Health),
         ];
 
         return $result;
