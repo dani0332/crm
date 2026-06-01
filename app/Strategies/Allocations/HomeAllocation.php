@@ -5,7 +5,9 @@ namespace App\Strategies\Allocations;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\AllocationConfigurer;
+use App\Models\DttRevival;
 use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -19,10 +21,17 @@ class HomeAllocation extends BaseAllocation
 
     protected function fetchAdvisor(int $onlineStatus)
     {
+        $parentAdvisorId = $this->getParentLeadAdvisorId();
+        $revivalFlags = $this->getParentLeadRevivalFlags();
+
         LoggerService::info('HomeAllocation: fetchAdvisor started', extra: [
             'leadId' => $this->lead->id ?? null,
             'uuid' => $this->lead->uuid ?? null,
             'onlineStatus' => $onlineStatus,
+            'source' => $this->lead->source ?? null,
+            'parentAdvisorId' => $parentAdvisorId,
+            'isRevived' => $revivalFlags['is_revived'],
+            'isAnnualRevived' => $revivalFlags['is_annual_revived'],
         ]);
 
         // corp advisors logic needs to be implemented once its approved from business
@@ -38,9 +47,45 @@ class HomeAllocation extends BaseAllocation
             return null; // Corp advisors logic is not implemented yet so returning null and lead should be unassigned in this case
         }
 
+        // Annual revival: try to assign the same advisor as the original enquiry lead first.
+        // Determined by is_annual_revived on the parent lead (source is Revival_replied/paid at allocation time).
+        // Falls back to the standard pool if that advisor is unavailable.
+        if ($parentAdvisorId !== null && $revivalFlags['is_annual_revived']) {
+            LoggerService::info('HomeAllocation: Annual revival — attempting to assign original enquiry advisor', extra: [
+                'parentAdvisorId' => $parentAdvisorId,
+            ]);
+
+            $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])
+                ->where('users.id', $parentAdvisorId)
+                ->logRawSql()
+                ->first();
+
+            if ($advisor) {
+                LoggerService::info('HomeAllocation: Annual revival — original advisor available, assigning', extra: [
+                    'advisorId' => $advisor->user_id,
+                ]);
+
+                return $advisor;
+            }
+
+            LoggerService::info('HomeAllocation: Annual revival — original advisor unavailable, falling back to standard pool');
+        }
+
+        // Short revival: exclude the original enquiry advisor so a different advisor is assigned.
+        // Determined by is_revived on the parent lead (source is Revival_replied/paid at allocation time).
+        $excludedAdvisorId = ($parentAdvisorId !== null && $revivalFlags['is_revived'])
+            ? $parentAdvisorId
+            : null;
+
+        if ($excludedAdvisorId !== null) {
+            LoggerService::info('HomeAllocation: Short revival — excluding original enquiry advisor from pool', extra: [
+                'excludedAdvisorId' => $excludedAdvisorId,
+            ]);
+        }
+
         // Default behavior: Fetch value or volume advisors (Home Advisors)
         LoggerService::info('HomeAllocation: Fetching Home Advisor');
-        $advisor = $this->fetchHomeAdvisor($onlineStatus);
+        $advisor = $this->fetchHomeAdvisor($onlineStatus, $excludedAdvisorId);
         LoggerService::info('HomeAllocation: Home Advisor fetch result', extra: ['advisorFound' => ! empty($advisor), 'advisor' => $advisor]);
 
         return $advisor;
@@ -119,7 +164,7 @@ class HomeAllocation extends BaseAllocation
      *
      * @return mixed
      */
-    protected function fetchHomeAdvisor(int $onlineStatus)
+    protected function fetchHomeAdvisor(int $onlineStatus, ?int $excludedAdvisorId = null)
     {
         LoggerService::info('HomeAllocation: Fetching Home Advisor', extra: ['onlineStatus' => $onlineStatus, 'leadId' => $this->lead->id ?? null]);
 
@@ -133,6 +178,7 @@ class HomeAllocation extends BaseAllocation
         LoggerService::info('HomeAllocation: Getting advisor from base query', extra: ['emailsCount' => count($emails), 'roleId' => RolesEnum::HomeAdvisor]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])
             ->whereIn('users.email', $emails)
+            ->when($excludedAdvisorId !== null, fn ($q) => $q->where('users.id', '!=', $excludedAdvisorId))
             ->logRawSql()
             ->first();
 
@@ -205,5 +251,23 @@ class HomeAllocation extends BaseAllocation
         ]);
 
         return $result;
+    }
+
+    private function getParentLeadRevivalFlags(): array
+    {
+        $revivalLead = DttRevival::where('uuid', $this->lead->uuid)->select('previous_quote_id')->first();
+
+        if (! $revivalLead) {
+            return ['is_revived' => false, 'is_annual_revived' => false];
+        }
+
+        $parentLead = PersonalQuote::where('id', $revivalLead->previous_quote_id)
+            ->select('is_revived', 'is_annual_revived')
+            ->first();
+
+        return [
+            'is_revived' => (bool) ($parentLead?->is_revived ?? false),
+            'is_annual_revived' => (bool) ($parentLead?->is_annual_revived ?? false),
+        ];
     }
 }
