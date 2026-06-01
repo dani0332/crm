@@ -21,6 +21,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Exceptions\BookingValidationException;
 use App\Factories\SagePayloadFactory;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookEmbeddedProductOnSageJob;
@@ -731,6 +732,18 @@ class SageApiService
             ])->mainLeadPayment()->with('paymentSplits')->first();
         }
         $paymentSplits = $payment->paymentSplits;
+
+        try {
+            app(BookingValidationService::class)->validate($payment, $quoteTypeId);
+        } catch (BookingValidationException $e) {
+            LoggerService::warning(self::class.' fn: '.__FUNCTION__.' - Booking validation failed for '.$quote->code, extra: [
+                'quote_type_id' => $quoteTypeId,
+                'errors' => $e->errors,
+            ]);
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
+
+            return ['status' => false, 'message' => $e->getMessage()];
+        }
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
