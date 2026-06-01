@@ -6,7 +6,7 @@ use App\Enums\EmirateEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
-use App\Enums\MaritalStatusEnum;
+use App\Enums\MaritalStatusIdEnum;
 use App\Enums\MemberCategoryEnum;
 use App\Enums\PolicyHolderCategoryCodeEnum;
 use App\Enums\QuoteStatusEnum;
@@ -469,7 +469,7 @@ describe('marital status derivation from gender', function () {
 
         $mutator->applyAll($quote);
 
-        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusEnum::MARRIED->value);
+        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusIdEnum::MARRIED->value);
     });
 
     it('sets SINGLE when gender is M and marital_status_id is null', function () {
@@ -484,7 +484,7 @@ describe('marital status derivation from gender', function () {
 
         $mutator->applyAll($quote);
 
-        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusEnum::SINGLE->value);
+        expect($quote->fresh()->marital_status_id)->toBe(MaritalStatusIdEnum::SINGLE->value);
     });
 });
 

@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum MaritalStatusEnum: int
+enum MaritalStatusIdEnum: int
 {
     // Inactive statuses
     case UNMARRIED_PARTNER = 5;

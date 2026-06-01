@@ -8,7 +8,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthInsureEnum;
 use App\Enums\HealthPolicyHolderEnum;
-use App\Enums\MaritalStatusEnum;
+use App\Enums\MaritalStatusIdEnum;
 use App\Enums\MemberCategoryEnum;
 use App\Enums\PolicyHolderCategoryCodeEnum;
 use App\Enums\QuoteTypeId;
@@ -301,11 +301,11 @@ final class HealthQuoteRevampMigrationMutator
         $msId = $hqr->marital_status_id;
 
         if ($msId === null && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
-            $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
+            $hqr->marital_status_id = MaritalStatusIdEnum::SINGLE->value;
         } elseif ($msId === null && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
-            $hqr->marital_status_id = MaritalStatusEnum::MARRIED->value;
-        } elseif ($msId !== null && (int) $msId === MaritalStatusEnum::UNMARRIED_PARTNER->value) {
-            $hqr->marital_status_id = MaritalStatusEnum::SINGLE->value;
+            $hqr->marital_status_id = MaritalStatusIdEnum::MARRIED->value;
+        } elseif ($msId !== null && (int) $msId === MaritalStatusIdEnum::UNMARRIED_PARTNER->value) {
+            $hqr->marital_status_id = MaritalStatusIdEnum::SINGLE->value;
         }
 
         $hqr->save();
@@ -315,9 +315,9 @@ final class HealthQuoteRevampMigrationMutator
             if ($cm->is_principal) {
                 $cm->marital_status_id = $hqr->marital_status_id;
             } elseif (! $cm->is_principal && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
-                $cm->marital_status_id = MaritalStatusEnum::SINGLE->value;
+                $cm->marital_status_id = MaritalStatusIdEnum::SINGLE->value;
             } elseif (! $cm->is_principal && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
-                $cm->marital_status_id = MaritalStatusEnum::MARRIED->value;
+                $cm->marital_status_id = MaritalStatusIdEnum::MARRIED->value;
             }
             $cm->save();
         });
