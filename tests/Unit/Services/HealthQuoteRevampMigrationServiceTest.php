@@ -403,6 +403,7 @@ describe('domestic worker migration', function () {
             'quote_id' => $quote->id,
             'first_name' => 'Worker',
             'last_name' => 'Person',
+            'member_category_id' => MemberCategoryEnum::DOMESTIC_WORKER->value,
             'is_principal' => true,
             'is_policy_holder' => false,
         ]);
