@@ -248,6 +248,7 @@ final class HealthQuoteRevampMigrationMutator
                 'is_third_party_payer' => false,
                 'emirate_of_your_visa_id' => $hqr->emirate_of_your_visa_id,
                 'gender' => $hqr->gender,
+                'member_category_id' => $hqr->member_category_id,
             ], $flags));
         });
     }
