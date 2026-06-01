@@ -1142,7 +1142,7 @@ function handleOcrNotification(event) {
                     v-if="can(permissionsEnum.GMQuoteCopyLink)"
                     class="flex flex-wrap items-center gap-2"
                   >
-                    <template v-if="!isGmEcommerceCopyLinkDisabled">
+                    <x-tooltip v-if="!isGmEcommerceCopyLinkDisabled" placement="top">
                       <x-button
                         size="sm"
                         color="orange"
@@ -1150,38 +1150,22 @@ function handleOcrNotification(event) {
                         :loading="gmEcommerceCopyLinkLoading"
                         @click.prevent="onCopyGmEcommerceJourneyLink"
                       >
-                        Copy Link
+                        <span class="border-b border-dotted">Copy Link</span>
                       </x-button>
-                      <x-tooltip placement="top">
-                        <span
-                          class="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-dotted border-primary-600 text-xs font-semibold leading-none text-primary-700 underline decoration-dotted decoration-primary-700"
-                          aria-label="Help"
-                        >
-                          ?
-                        </span>
-                        <template #tooltip>
-                          Copy this link and send it to the customer so they
-                          can resume and complete their application.
-                        </template>
-                      </x-tooltip>
-                    </template>
+                      <template #tooltip>
+                        Copy this link and send it to the customer so they
+                        can resume and complete their application.
+                      </template>
+                    </x-tooltip>
                     <x-tooltip v-else placement="top">
-                      <div class="inline-flex items-center gap-2">
-                        <x-button
-                          size="sm"
-                          color="orange"
-                          class="shrink-0 rounded-lg"
-                          disabled
-                        >
-                          Copy Link
-                        </x-button>
-                        <span
-                          class="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-dotted border-gray-400 text-xs font-semibold leading-none text-gray-500 underline decoration-dotted decoration-gray-400"
-                          aria-label="Help"
-                        >
-                          ?
-                        </span>
-                      </div>
+                      <x-button
+                        size="sm"
+                        color="orange"
+                        class="shrink-0 rounded-lg"
+                        disabled
+                      >
+                        <span class="border-b border-dotted">Copy Link</span>
+                      </x-button>
                       <template #tooltip>
                         Copy Link is unavailable after the lead is Transaction
                         Approved.
