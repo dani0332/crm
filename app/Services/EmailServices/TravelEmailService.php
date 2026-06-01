@@ -395,19 +395,19 @@ class TravelEmailService extends BaseService
         }
     }
 
-    public function sendTravelAllianceFailedAllocationEmail($lead)
+    public function sendTravelQatarFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();
 
-        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION);
-        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION);
+        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
         if ($travelEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($travelEvent->value, $emailData);
-            info("sendTravelAllianceFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            info("sendTravelQatarFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
 
             return $response->status_code;
         } else {
-            info("sendTravelAllianceFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            info("sendTravelQatarFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
         }
 
         return null;

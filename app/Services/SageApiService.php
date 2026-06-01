@@ -29,6 +29,7 @@ use App\Jobs\PostPrepaymentToSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
+use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
@@ -47,6 +48,7 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SageApiService
 {
@@ -3230,6 +3232,21 @@ class SageApiService
         $returnMessage['error'] = $sageErrorMessage;
         if ($this->sageHasProcessingConflict($sageErrorMessage)) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+        } elseif ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
+
+            LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
+
+            $documentNumber = $this->extractDocumentNumberFromErrorMessage($sageErrorMessage);
+            $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($quote, $documentNumber);
+
+            if ($isDocumentNumberUpdated) {
+                $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
+            } else {
+                LoggerService::warning('EP Sage booking duplicate document number detected, but insurer request response document numbers were not updated', extra: [
+                    'ep_code' => $quote->code,
+                    'sage_error_message' => $sageErrorMessage,
+                ]);
+            }
         }
 
         if ($storeSageApiLog) {
@@ -3359,6 +3376,39 @@ class SageApiService
         $sageErrorMessage = strtolower($sageErrorMessage);
 
         return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists');
+    }
+
+    public function isEPDocumentNumberAlreadyExistsMessage(?string $message): bool
+    {
+        if (! $message) {
+            return false;
+        }
+
+        // Normalize the message string by replacing escaped double quotes, newlines, and carriage returns
+        $normalizedMessage = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
+
+        // Check if the normalized message starts with the pre-defined Sage error message constant,
+        // using a wildcard to match any additional text after the main error phrase.
+        // Str::is() performs this pattern match, e.g., checking if the message begins with
+        // SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR and has any suffix after.
+        // Example error message that this function should detect:
+        // "Document number cannot be blank. Document number \"I452030" already exists.\n\nEnter a unique number. If the duplicate number was assigned by Accounts Receivable, correct the prefix and sequence numbers for the document type in A/R Options."
+        return Str::is(SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR.'*', $normalizedMessage);
+    }
+
+    public function extractDocumentNumberFromErrorMessage(?string $message): ?string
+    {
+        if (! $message) {
+            return null;
+        }
+
+        $normalized = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
+
+        if (preg_match('/Document number\s+"?([^"\s]+)"?\s+already exists/i', $normalized, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     public function scheduleSageProcesses($insurerId = null): void

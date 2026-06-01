@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alliance Travel API Integration - Complete Documentation</title>
+    <title>Qatar Travel API Integration - Complete Documentation</title>
     <link rel="stylesheet" href="/docs/styles/styles.css" />
     <style>
       * {
@@ -297,18 +297,15 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
-          >Alliance</a
-        >
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
         <span>></span>
         <span>API Integration</span>
       </div>
 
       <div class="header">
-        <h1>🔌 Alliance Travel API Integration</h1>
+        <h1>🔌 Qatar Travel API Integration</h1>
         <p>
-          Complete API Documentation for Alliance Travel Insurance Policy
-          Issuance
+          Complete API Documentation for Qatar Travel Insurance Policy Issuance
         </p>
       </div>
 
@@ -317,7 +314,7 @@
         <h2>🔐 Authentication & Authorization</h2>
 
         <p>
-          All Alliance API requests require authentication using payload-based
+          All Qatar API requests require authentication using payload-based
           credentials. The API uses agency ID and agency code for
           authentication.
         </p>
@@ -343,12 +340,12 @@
           <tbody>
             <tr>
               <td><code>agency_id</code></td>
-              <td>Alliance agency identifier</td>
+              <td>Qatar agency identifier</td>
               <td><code>ALLIANCE_AGENCY_ID</code> config</td>
             </tr>
             <tr>
               <td><code>agency_code</code></td>
-              <td>Alliance agency code</td>
+              <td>Qatar agency code</td>
               <td><code>ALLIANCE_AGENCY_CODE</code> config</td>
             </tr>
           </tbody>
@@ -381,14 +378,14 @@
             <strong>Agency ID</strong>
             <code>ALLIANCE_AGENCY_ID</code>
             <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
-              Alliance agency identifier
+              Qatar agency identifier
             </p>
           </div>
           <div class="config-item">
             <strong>Agency Code</strong>
             <code>ALLIANCE_AGENCY_CODE</code>
             <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
-              Alliance agency code
+              Qatar agency code
             </p>
           </div>
         </div>
@@ -422,7 +419,7 @@
         <h3>HTTP Client Implementation</h3>
         <div class="code-block">
           <code
-            >private function allianceHttpCall($endPoint, $param) { $headers =
+            >private function qatarHttpCall($endPoint, $param) { $headers =
             ['Content-Type' => 'application/json']; $payload =
             array_merge($this->authParam, $param); $url = $this->baseUrl .
             $endPoint; return
@@ -437,8 +434,8 @@
         <h2>📡 API Endpoints</h2>
 
         <p>
-          The Alliance Travel Insurance API provides four main endpoints for
-          policy issuance automation:
+          The Qatar Travel Insurance API provides four main endpoints for policy
+          issuance automation:
         </p>
 
         <!-- Endpoint 1: Finalise Policy -->
@@ -450,7 +447,7 @@
 
           <h4>Purpose</h4>
           <p>
-            Finalizes a travel insurance policy with Alliance using quote
+            Finalizes a travel insurance policy with Qatar using quote
             information, customer details, and traveller information.
           </p>
 
@@ -462,12 +459,12 @@
           <ul style="margin-left: 30px; margin-top: 10px">
             <li>
               <code>inbound</code> - Default value
-              (<code>TravelQuoteEnum::ALLIANCE_IN_BOUND</code>)
+              (<code>TravelQuoteEnum::QATAR_IN_BOUND</code>)
             </li>
             <li>
               <code>outbound</code> - When
               <code>direction_code === TRAVEL_UAE_OUTBOUND</code>
-              (<code>TravelQuoteEnum::ALLIANCE_OUT_BOUND</code>)
+              (<code>TravelQuoteEnum::QATAR_OUT_BOUND</code>)
             </li>
           </ul>
 
@@ -834,7 +831,7 @@
         <h2>⚠️ Error Handling</h2>
 
         <h3>Error Response Structure</h3>
-        <p>All Alliance API endpoints return errors in a consistent format:</p>
+        <p>All Qatar API endpoints return errors in a consistent format:</p>
         <div class="code-block json">
           <pre>
 {
@@ -915,13 +912,12 @@
         <h2>📄 Document Type Mapping</h2>
 
         <p>
-          Alliance document names are automatically mapped to IMCRM document
-          codes:
+          Qatar document names are automatically mapped to IMCRM document codes:
         </p>
         <table>
           <thead>
             <tr>
-              <th>Alliance Document Name</th>
+              <th>Qatar Document Name</th>
               <th>IMCRM Document Code</th>
               <th>Description</th>
             </tr>
@@ -955,9 +951,7 @@
 
       <div class="footer">
         <p>
-          <strong
-            >Alliance Travel Insurance API Integration Documentation</strong
-          >
+          <strong>Qatar Travel Insurance API Integration Documentation</strong>
         </p>
         <p>Complete API Reference for Policy Issuance Automation</p>
         <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
