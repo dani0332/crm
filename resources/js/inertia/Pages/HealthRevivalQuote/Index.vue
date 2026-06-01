@@ -488,7 +488,7 @@ onMounted(() => {});
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="route('health-revival-quotes-show', uuid)"
+          :href="route('health.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

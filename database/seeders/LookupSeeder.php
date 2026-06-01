@@ -3,16 +3,20 @@
 namespace Database\Seeders;
 
 use App\Enums\ClaimsEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Traits\SeedsFirstOrCreateIfMissing;
 use Illuminate\Database\Seeder;
 
 class LookupSeeder extends Seeder
 {
+    use SeedsFirstOrCreateIfMissing;
+
     /**
      * Run the database seeds.
      *
@@ -39,6 +43,7 @@ class LookupSeeder extends Seeder
         $this->createClaimTPAOptions();
         $this->createRmCategories();
         $this->createReferralSources();
+        $this->healthRevampLookups();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -955,5 +960,192 @@ class LookupSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function healthRevampLookups(): void
+    {
+        $this->healthInsure();
+        $this->healthPolicyHolder();
+        $this->healthPolicyHolderCategory();
+        $this->gender();
+        $this->healthMemberRelation();
+        $this->domesticWorkerRelation();
+    }
+
+    private function healthInsure(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_INSURE_OPTIONS, [
+            [
+                'code' => 'ONLY_MYSELF',
+                'text' => 'Only Myself',
+                'is_active' => 1,
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'ONLY_MY_FAMILY_MEMBERS',
+                'text' => 'Only My Family Members',
+                'is_active' => 1,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
+                'text' => 'Myself & My Family Members',
+                'is_active' => 1,
+                'sort_order' => 3,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthPolicyHolder(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_OPTIONS, [
+            [
+                'code' => 'ME',
+                'text' => 'Me',
+                'is_active' => 1,
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'OTHER_ADULT_FAMILY_MEMBER',
+                'text' => 'Other Adult Family Member',
+                'is_active' => 1,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthPolicyHolderCategory(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_CATEGORY, [
+            [
+                'code' => 'RESIDENT',
+                'text' => 'Resident',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'UAE_CITIZEN',
+                'text' => 'UAE Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'INVESTOR_VISA',
+                'text' => 'Investor Visa',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'GCC_CITIZEN',
+                'text' => 'GCC Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function gender(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::GENDER, [
+            [
+                'code' => GenericRequestEnum::MALE_SINGLE_VALUE,
+                'text' => GenericRequestEnum::MALE_SINGLE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => GenericRequestEnum::FEMALE_SHORT_VALUE,
+                'text' => GenericRequestEnum::FEMALE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthMemberRelation(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_MEMBER_RELATION, [
+            [
+                'code' => 'relSpouse',
+                'text' => 'Spouse',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relParent',
+                'text' => 'Parent',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 2,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relChild',
+                'text' => 'Child',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 3,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relSibling',
+                'text' => 'Sibling',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 4,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relOtherRelatives',
+                'text' => 'Other Relatives',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 5,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+        ]);
+    }
+
+    private function domesticWorkerRelation(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::DOMESTIC_WORKER_RELATION, [
+            [
+                'code' => 'relDomesticWorker',
+                'text' => 'Domestic Worker',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+        ]);
     }
 }

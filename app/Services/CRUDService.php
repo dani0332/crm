@@ -386,6 +386,13 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
+                    $request->leadId,
+                    $request->leadStatus,
+                );
+            }
+
             return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }
@@ -584,8 +591,15 @@ class CRUDService extends BaseService
         return $this->applicationstorageService->getValueByKey($key);
     }
 
-    public function getGenderOptions()
+    public function getGenderOptions($quoteTypeId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return app(LookupService::class)
+                ->getGender()
+                ->pluck('text', 'code')
+                ->all();
+        }
+
         $genderOptions = [
             GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
             GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
