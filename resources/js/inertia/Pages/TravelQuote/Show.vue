@@ -67,7 +67,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-  isAllianceProvider: Boolean,
+  isQatarProvider: Boolean,
   customerAddressData: Object,
 });
 
@@ -3476,7 +3476,7 @@ const fullAddress = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
-      :isAllianceProvider="isAllianceProvider"
+      :isQatarProvider="isQatarProvider"
     />
 
     <PaymentTable
@@ -3805,7 +3805,7 @@ const fullAddress = computed(() => {
     />
 
     <PolicyIssuanceApiLogs
-      v-if="isAllianceProvider"
+      v-if="isQatarProvider"
       :type="modelClass"
       :quoteTypeId="$page.props.quoteTypeId"
       :id="$page.props.quote.id"
