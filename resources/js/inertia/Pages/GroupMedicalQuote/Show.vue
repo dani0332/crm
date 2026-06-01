@@ -995,15 +995,8 @@ function handleOcrNotification(event) {
                 <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
               </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN TYPE</dt>
-                <dd>{{ quote?.group_medical_type?.text ?? 'N/A' }}</dd>
-              </div>
+            
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN TYPE</dt>
-                <dd>{{ quote.health_plan_type_text ?? '—' }}</dd>
-              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
