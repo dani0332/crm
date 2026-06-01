@@ -134,7 +134,10 @@ const tableHeader2 = [
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
-  { text: 'Previous Total Price with VAT',value: 'previous_quote_policy_premium' },
+  {
+    text: 'Previous Total Price with VAT',
+    value: 'previous_quote_policy_premium',
+  },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
@@ -256,11 +259,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <DataTable
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="
-        filters.product == 5
-          ? businessHeaders
-          : tableHeader2
-      "
+      :headers="filters.product == 5 ? businessHeaders : tableHeader2"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
@@ -294,7 +293,10 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-currently_insured_with="item">
         {{
-          (item.currently_insured_with ?? item.personal_quote?.currently_insured_with)?.text
+          (
+            item.currently_insured_with ??
+            item.personal_quote?.currently_insured_with
+          )?.text
         }}
       </template>
       <template #item-pc_qualified="{ pc_qualified }">
