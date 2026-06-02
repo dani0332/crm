@@ -3,12 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\HealthCoverFor;
-use App\Traits\SeedsFirstOrCreateIfMissing;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class HealthCoverForSeeder extends Seeder
 {
-    use SeedsFirstOrCreateIfMissing;
+    use SeedsIfMissing;
 
     /**
      * Run the database seeds.
@@ -39,7 +39,7 @@ class HealthCoverForSeeder extends Seeder
             ]
         );
 
-        $this->seedFirstOrCreateIfMissing(HealthCoverFor::class, [
+        $this->seedUpsertIfMissing(HealthCoverFor::class, [
             [
                 'code' => 'INDIVIDUAL_AND_FAMILIES',
                 'text' => 'Individual & Families',

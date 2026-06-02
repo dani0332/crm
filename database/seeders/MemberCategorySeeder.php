@@ -3,12 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\MemberCategory;
-use App\Traits\SeedsFirstOrCreateIfMissing;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class MemberCategorySeeder extends Seeder
 {
-    use SeedsFirstOrCreateIfMissing;
+    use SeedsIfMissing;
 
     /**
      * Run the database seeds.
@@ -28,7 +28,7 @@ class MemberCategorySeeder extends Seeder
     private function createMemberCategory(): void
     {
         $now = now();
-        $this->seedFirstOrCreateIfMissing(MemberCategory::class, [
+        $this->seedUpsertIfMissing(MemberCategory::class, [
             [
                 'code' => 'DIPLOMAT_PASSPORT',
                 'text' => 'Diplomat-Passport',
