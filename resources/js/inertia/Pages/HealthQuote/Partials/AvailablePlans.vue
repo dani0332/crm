@@ -27,14 +27,11 @@ const showModal = computed({
   set: val => emit('update:modelValue', val),
 });
 
-const memberCategoryText = memberId => {
-  let memberCategoryId = null;
-  memberCategoryId = props.members.find(
-    member => member.id === memberId,
-  )?.member_category_id;
-  return props.memberCategories.find(
-    category => category.id === memberCategoryId,
-  )?.text;
+const memberRelationText = memberId => {
+  const member = props.members.find(member => member.id === memberId);
+  return member?.is_policy_holder == true
+    ? 'Self'
+    : (member?.relation?.text ?? '');
 };
 
 const memberDobText = memberId => {
@@ -1030,7 +1027,7 @@ const calculateFinalPrice = (data, memberId) => {
                 </template>
 
                 <template #item-membercategory="{ memberId }">
-                  {{ memberCategoryText(memberId) }}
+                  {{ memberRelationText(memberId) }}
                 </template>
 
                 <template #item-dobText="{ memberId }">

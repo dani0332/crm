@@ -639,15 +639,6 @@ class SageApiEmbeddedProductService
             }
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
 
-            // Execute AP Prepayment Receipt Post Call
-            /*$apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
-            if (! $apReceiptCreationResponse['status']) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-                return $apReceiptCreationResponse;
-            }
-            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];*/
-
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
@@ -671,14 +662,6 @@ class SageApiEmbeddedProductService
 
                 return $applyPaymentARInvoices;
             }
-
-            // Apply Prepayments AP Invoice
-            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
-            if (! $applyPaymentAPInvoices['status']) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-                return $applyPaymentAPInvoices;
-            }*/
 
             $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
