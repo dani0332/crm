@@ -832,6 +832,11 @@ class CoreSchema
                 $table->string('tax_invoice_no')->nullable();
                 $table->string('tax_invoice_buyer_no')->nullable();
                 $table->timestamp('sage_invoice_no_update_at')->nullable();
+                $table->decimal('collection_amount', 10, 2)->nullable();
+                $table->decimal('premium_without_tax', 10, 2)->nullable();
+                $table->decimal('premium_tax_amount', 10, 2)->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_end_date')->nullable();
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();

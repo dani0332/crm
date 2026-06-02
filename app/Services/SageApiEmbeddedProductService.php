@@ -149,13 +149,11 @@ class SageApiEmbeddedProductService
         LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - SendUpdate Code: '.$sendUpdateLog->code.' - Embedded Product Booking Reversal started for EP Code: '.$embeddedProductTransaction->code);
 
-        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
-
         $createARInvoiceForEPLog = $embeddedProductTransaction?->sageApiLogs?->where('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)->first();
         $createEPARPayload = json_decode($createARInvoiceForEPLog->sage_payload, true);
         $sageRequest->customerId = $createEPARPayload['Invoices'][0]['CustomerNumber'];
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode);
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $sendUpdateLog->sageApiLogs->keyBy('step')->toArray();
@@ -189,10 +187,8 @@ class SageApiEmbeddedProductService
         LoggerService::info('--------------------------------Embedded Product Sage booking process started-------------------------------');
 
         $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-        $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
-        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode);
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $embeddedProductTransaction->sageApiLogs->keyBy('step')->toArray();
@@ -1533,24 +1529,22 @@ class SageApiEmbeddedProductService
 
     }
 
-    public static function createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode = null)
+    public static function createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode = null)
     {
         return match ($epShortCode) {
-            EmbeddedProductEnum::ECB => self::createEmbeddedProductPayloadForECB($embeddedProductTransaction, $insurerRequestResponse),
-            default => self::createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction, $insurerRequestResponse),
+            EmbeddedProductEnum::ECB => self::createEmbeddedProductPayloadForECB($embeddedProductTransaction),
+            default => self::createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction),
         };
     }
-    private static function createEmbeddedProductPayloadForECB($embeddedProductTransaction, $insurerRequestResponse)
-    {
-        $insuranceProvider = $insurerRequestResponse->insuranceProvider;
-        $insurerRequestResponseObject = json_decode($insurerRequestResponse->response);
 
+    private static function createEmbeddedProductPayloadForECB($embeddedProductTransaction)
+    {
+        $insuranceProvider = $embeddedProductTransaction->product->embeddedProduct->insuranceProvider;
         $epRefCode = $embeddedProductTransaction->code;
-        $policyNumber = $insurerRequestResponseObject->policy_no;
+        $policyNumber = $embeddedProductTransaction->certificate_number;
 
         $originalInsurerTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_no;
         $originalCommissionTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_buyer_no;
-
         $insurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
         $commissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
 
@@ -1563,35 +1557,32 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->sageCustomerNumber = $insuranceProvider->sage_insurer_customer_id;
         $sageRequestEmbeddedProduct->sageInsurerGlLiabilityAccount = $insuranceProvider->gl_liaiblity_account;
         $sageRequestEmbeddedProduct->insurerName = $insuranceProvider->text;
-        $sageRequestEmbeddedProduct->collectionAmount = $insurerRequestResponseObject->policy_premium_with_tax;
+        $sageRequestEmbeddedProduct->collectionAmount = $embeddedProductTransaction->collection_amount;
         $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber = (string) mb_substr($commissionTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->policy_premium_tax;
-        $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->policy_premium_without_tax;
-        $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->policy_premium_with_tax;
-        $sageRequestEmbeddedProduct->paymentAmount = $insurerRequestResponseObject->policy_premium_with_tax;
-        $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->policy_commision_without_tax;
-        $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->policy_commision_tax;
-        $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->policy_commision_with_tax;
-        $sageRequestEmbeddedProduct->startDate = Carbon::parse($insurerRequestResponseObject->policy_start_dt)->format(config('constants.DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::parse($insurerRequestResponseObject->policy_end_dt)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->taxAmount = $embeddedProductTransaction->premium_tax_amount;
+        $sageRequestEmbeddedProduct->policyPrice = $embeddedProductTransaction->premium_without_tax;
+        $sageRequestEmbeddedProduct->totalPrice = $embeddedProductTransaction->collection_amount;
+        $sageRequestEmbeddedProduct->paymentAmount = $embeddedProductTransaction->collection_amount;
+        $sageRequestEmbeddedProduct->brokerCommissionAmount = $embeddedProductTransaction->commission_without_vat;
+        $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $embeddedProductTransaction->commission_with_vat - $embeddedProductTransaction->commission_without_vat;
+        $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $embeddedProductTransaction->commission_with_vat;
+        $sageRequestEmbeddedProduct->startDate = Carbon::parse($embeddedProductTransaction->policy_start_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::parse($embeddedProductTransaction->policy_end_date)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
     }
 
-    private static function createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction, $insurerRequestResponse)
+    private static function createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction)
     {
-        $insuranceProvider = $insurerRequestResponse->insuranceProvider;
-        $insurerRequestResponseObject = json_decode($insurerRequestResponse->response);
-
+        $insuranceProvider = $embeddedProductTransaction->product->embeddedProduct->insuranceProvider;
         $epRefCode = $embeddedProductTransaction->code;
-        $policyNumber = $insurerRequestResponseObject->policy_number;
+        $policyNumber = $embeddedProductTransaction->certificate_number;
 
         $originalInsurerTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_no;
         $originalCommissionTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_buyer_no;
-
         $insurerTaxInvoiceNumber = self::formatDocNumber($originalInsurerTaxInvoiceNumber);
         $commissionTaxInvoiceNumber = self::formatDocNumber($originalCommissionTaxInvoiceNumber);
 
@@ -1604,23 +1595,22 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->sageCustomerNumber = $insuranceProvider->sage_insurer_customer_id;
         $sageRequestEmbeddedProduct->sageInsurerGlLiabilityAccount = $insuranceProvider->gl_liaiblity_account;
         $sageRequestEmbeddedProduct->insurerName = $insuranceProvider->text;
-        $sageRequestEmbeddedProduct->collectionAmount = $insurerRequestResponseObject->payments[0]->amount;
+        $sageRequestEmbeddedProduct->collectionAmount = $embeddedProductTransaction->collection_amount;
         $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber = (string) mb_substr($commissionTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->pricing->tax_amount;
-        $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->pricing->policy_price;
-        $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->pricing->total_price;
-        $sageRequestEmbeddedProduct->paymentAmount = $insurerRequestResponseObject->payments[0]->amount;
-        $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->additional_data->broker_commission_amount;
-        $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->additional_data->broker_commission_vat_amount;
-        $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->additional_data->broker_commission_total_amount;
-        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(config('constants.DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->taxAmount = $embeddedProductTransaction->premium_tax_amount;
+        $sageRequestEmbeddedProduct->policyPrice = $embeddedProductTransaction->premium_without_tax;
+        $sageRequestEmbeddedProduct->totalPrice = $embeddedProductTransaction->collection_amount;
+        $sageRequestEmbeddedProduct->paymentAmount = $embeddedProductTransaction->collection_amount;
+        $sageRequestEmbeddedProduct->brokerCommissionAmount = $embeddedProductTransaction->commission_without_vat;
+        $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $embeddedProductTransaction->commission_with_vat - $embeddedProductTransaction->commission_without_vat;
+        $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $embeddedProductTransaction->commission_with_vat;
+        $sageRequestEmbeddedProduct->startDate = Carbon::parse($embeddedProductTransaction->policy_start_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::parse($embeddedProductTransaction->policy_end_date)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
-
     }
 
     private static function createARPaymentReceiptsPayload($sageRequest, $sageRequestEmbeddedProduct)
