@@ -86,18 +86,24 @@ const collaborateExcludedLobs = computed(() => {
 const allLobOptions = computed(() =>
   quoteTypes.value.map(qt => ({ value: qt.id, label: qt.name })),
 );
+const collaborateEligibleLobOptions = computed(() =>
+  allLobOptions.value.filter(
+    opt => !collaborateExcludedLobs.value.includes(Number(opt.value)),
+  ),
+);
 
 const lobOptions = computed(() => {
   if (leadForm.ea_model !== 'collaborate') return allLobOptions.value;
-  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.value.includes(opt.value));
+  return collaborateEligibleLobOptions.value;
 });
+const hasCollaborateEligibleLob = computed(() => collaborateEligibleLobOptions.value.length > 0);
 
 const isCorpline = computed(() => leadForm.quote_type_id == 101);
 const isHealthLob = computed(() => leadForm.quote_type_id == 3);
 
 const eaModelOptions = computed(() => {
   const options = [{ value: 'referral', label: 'Referral' }];
-  if (canCollaborate.value && !isEAManager.value) {
+  if (canCollaborate.value && !isEAManager.value && hasCollaborateEligibleLob.value) {
     options.push({ value: 'collaborate', label: 'Collaborate' });
   }
   return options;
@@ -248,7 +254,14 @@ watch(
 watch(
   () => leadForm.ea_model,
   () => {
-    leadForm.quote_type_id = null;
+    // Preserve selected LOB when EA model changes, unless it is invalid for collaborate.
+    if (
+      leadForm.ea_model === 'collaborate' &&
+      leadForm.quote_type_id &&
+      collaborateExcludedLobs.value.includes(Number(leadForm.quote_type_id))
+    ) {
+      leadForm.quote_type_id = null;
+    }
     leadForm.first_name = '';
     leadForm.last_name = '';
     leadForm.email = '';
@@ -368,6 +381,7 @@ watch(
           <!-- LOB selector -->
           <x-select
             v-if="leadForm.ea_model"
+            :key="`lob-${leadForm.ea_model}`"
             v-model="leadForm.quote_type_id"
             label="LINE OF BUSINESS"
             name="quoteTypeId"
