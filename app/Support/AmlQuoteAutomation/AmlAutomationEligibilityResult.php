@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support\AmlQuoteAutomation;
 
+use Symfony\Component\HttpFoundation\Response;
+
 /**
  * Immutable result from {@see AmlAutomationEligibilityService::check()}.
  *
@@ -25,7 +27,7 @@ final class AmlAutomationEligibilityResult
 
     public static function pass(): self
     {
-        return new self(true, '', '', 200);
+        return new self(true, '', '', Response::HTTP_OK);
     }
 
     /**

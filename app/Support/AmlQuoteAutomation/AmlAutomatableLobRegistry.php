@@ -18,9 +18,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class AmlAutomatableLobRegistry
 {
-    /** Number of days a Device/NGI booking remains eligible for AML automation. */
-    private const DEVICE_NGI_BOOKING_WINDOW_DAYS = 7;
-
     /**
      * Only these LOBS are allowed to trigger AML automation from API calls
      *
