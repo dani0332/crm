@@ -26,6 +26,8 @@ beforeEach(function () {
         ['id' => QuoteTypeId::Car, 'code' => 'Car', 'short_code' => 'CAR', 'text' => 'Car Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => QuoteTypeId::Health, 'code' => 'Health', 'short_code' => 'HLT', 'text' => 'Health Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => QuoteTypeId::Travel, 'code' => 'Travel', 'short_code' => 'TRV', 'text' => 'Travel Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ['id' => QuoteTypeId::Life, 'code' => 'Life', 'short_code' => 'LIF', 'text' => 'Life Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ['id' => QuoteTypeId::GroupMedical, 'code' => 'GroupMedical', 'short_code' => 'GMD', 'text' => 'Group Medical', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => 20, 'code' => 'Cyber', 'short_code' => 'CYB', 'text' => 'Cyber Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
     ]);
 });
@@ -195,6 +197,136 @@ it('returns 422 with duplicate info when lead already exists within 60 days', fu
 
     $response->assertStatus(422)
         ->assertJsonPath('duplicate', true);
+});
+
+it('blocks collaborate model for travel LOB', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::EAReferral, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::Travel,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.travel@example.com',
+        'mobile_no' => '0501234573',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrorFor('quote_type_id');
+});
+
+it('blocks collaborate model for group medical LOB', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::EAReferral, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::GroupMedical,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.gm@example.com',
+        'mobile_no' => '0501234574',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrorFor('quote_type_id');
+});
+
+it('allows collaborate model for group medical LOB with GM_ADVISOR role', function () {
+    Queue::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::GMAdvisor, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::GMAdvisor, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::GroupMedical,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.gm.advisor@example.com',
+        'mobile_no' => '0501234575',
+    ]);
+
+    $response->assertOk()->assertJsonPath('success', true);
+});
+
+it('allows collaborate model for health LOB with RM_ADVISOR role', function () {
+    Queue::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::RMAdvisor, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::RMAdvisor, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::Health,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.health.rm@example.com',
+        'mobile_no' => '0501234576',
+        'health_plan_type_id' => null,
+    ]);
+
+    $response->assertOk()->assertJsonPath('success', true);
+});
+
+it('blocks collaborate model for life LOB without LIFE_ADVISOR role', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::EAReferral, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::Life,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.life@example.com',
+        'mobile_no' => '0501234577',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrorFor('quote_type_id');
+});
+
+it('allows collaborate model for life LOB with LIFE_ADVISOR role', function () {
+    Queue::fake();
+
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::LifeAdvisor, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::LifeAdvisor, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::Life,
+        'first_name' => 'Test',
+        'last_name' => 'User',
+        'email' => 'test.life.advisor@example.com',
+        'mobile_no' => '0501234578',
+    ]);
+
+    $response->assertOk()->assertJsonPath('success', true);
 });
 
 it('blocks creation when active renewal-upload lead exists', function () {

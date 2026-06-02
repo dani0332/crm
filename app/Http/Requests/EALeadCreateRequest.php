@@ -11,6 +11,9 @@ use Illuminate\Validation\Rule;
 
 class EALeadCreateRequest extends FormRequest
 {
+    /** @var array<int> */
+    private array $collaborateForbiddenLobs = [];
+
     public function authorize(): bool
     {
         return $this->user()->hasAnyRole([RolesEnum::EAReferral, RolesEnum::EAManager, RolesEnum::Admin, RolesEnum::Engineering])
@@ -22,8 +25,7 @@ class EALeadCreateRequest extends FormRequest
     {
         $isCollaborate = $this->getEaModel() === EaModelEnum::Collaborate;
         $quoteTypeId = (int) $this->input('quote_type_id');
-
-        $collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health];
+        $collaborateForbiddenLobs = $this->collaborateForbiddenLobs;
 
         return [
             'ea_model' => ['required', Rule::enum(EaModelEnum::class)],
@@ -79,6 +81,14 @@ class EALeadCreateRequest extends FormRequest
 
         if ($this->getEaModel() === EaModelEnum::Collaborate && ! $hasCollaboratePermission) {
             $this->merge(['ea_model' => 'referral']);
+        }
+
+        // Car, Travel, Health, and GroupMedical are always excluded from collaborate (referral only).
+        // Life requires a specific advisor role to use collaborate.
+        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical];
+
+        if (! $this->user()->hasRole(RolesEnum::LifeAdvisor)) {
+            $this->collaborateForbiddenLobs[] = QuoteTypeId::Life;
         }
     }
 
