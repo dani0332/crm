@@ -40,6 +40,8 @@ const hasEAReferralAccess = computed(
     canCollaborate.value,
 );
 
+const hasLifeAdvisor = computed(() => authRoles.value.includes('LIFE_ADVISOR'));
+
 const leadForm = useForm({
   type: '',
   sub_source_id: null,
@@ -73,23 +75,35 @@ const businessTypeOfInsuranceOptions = computed(() =>
   (page.props.businessTypeOfInsurances ?? []).map(t => ({ value: t.id, label: t.text })),
 );
 
-const collaborateExcludedLobs = [1, 3, 8];
+// Car (1), Travel (8), Health (3), and GroupMedical (102) are always excluded from collaborate (referral only).
+// Life (4) requires a specific advisor role to use collaborate.
+const collaborateExcludedLobs = computed(() => {
+  const excluded = [1, 8, 3, 102];
+  if (!hasLifeAdvisor.value) excluded.push(4);
+  return excluded;
+});
 
 const allLobOptions = computed(() =>
   quoteTypes.value.map(qt => ({ value: qt.id, label: qt.name })),
 );
+const collaborateEligibleLobOptions = computed(() =>
+  allLobOptions.value.filter(
+    opt => !collaborateExcludedLobs.value.includes(Number(opt.value)),
+  ),
+);
 
 const lobOptions = computed(() => {
   if (leadForm.ea_model !== 'collaborate') return allLobOptions.value;
-  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.includes(opt.value));
+  return collaborateEligibleLobOptions.value;
 });
+const hasCollaborateEligibleLob = computed(() => collaborateEligibleLobOptions.value.length > 0);
 
 const isCorpline = computed(() => leadForm.quote_type_id == 101);
 const isHealthLob = computed(() => leadForm.quote_type_id == 3);
 
 const eaModelOptions = computed(() => {
   const options = [{ value: 'referral', label: 'Referral' }];
-  if (canCollaborate.value && !isEAManager.value) {
+  if (canCollaborate.value && !isEAManager.value && hasCollaborateEligibleLob.value) {
     options.push({ value: 'collaborate', label: 'Collaborate' });
   }
   return options;
@@ -99,7 +113,24 @@ const onConfirmCreateLead = async isValid => {
   if (!isValid) return;
 
   if (leadForm.type === 'expert_advisor_model') {
-    await submitEALead();
+    if (leadForm.ea_model === 'collaborate') {
+      const collaborateData = {
+        type: 'expert_advisor_model',
+        ea_model: leadForm.ea_model,
+        quote_type_id: leadForm.quote_type_id,
+        first_name: leadForm.first_name,
+        last_name: leadForm.last_name,
+        email: leadForm.email,
+        mobile_no: leadForm.mobile_no,
+        ...(leadForm.business_type_of_insurance_id && { business_type_of_insurance_id: leadForm.business_type_of_insurance_id }),
+        ...(leadForm.health_plan_type_id && { health_plan_type_id: leadForm.health_plan_type_id }),
+      };
+      router.get(route(props.routeName), collaborateData);
+      isModalOpen.value = false;
+      resetForm();
+    } else {
+      await submitEALead();
+    }
     return;
   }
 
@@ -223,7 +254,14 @@ watch(
 watch(
   () => leadForm.ea_model,
   () => {
-    leadForm.quote_type_id = null;
+    // Preserve selected LOB when EA model changes, unless it is invalid for collaborate.
+    if (
+      leadForm.ea_model === 'collaborate' &&
+      leadForm.quote_type_id &&
+      collaborateExcludedLobs.value.includes(Number(leadForm.quote_type_id))
+    ) {
+      leadForm.quote_type_id = null;
+    }
     leadForm.first_name = '';
     leadForm.last_name = '';
     leadForm.email = '';
@@ -269,7 +307,7 @@ watch(
           <x-radio value="early_renewal" label="Early Renewal" />
           <x-radio value="payment_status" label="Payment Status" />
           <x-radio
-            v-if="hasEAReferralAccess"
+
             value="expert_advisor_model"
             label="Expert Advisor Model"
           />
@@ -343,6 +381,7 @@ watch(
           <!-- LOB selector -->
           <x-select
             v-if="leadForm.ea_model"
+            :key="`lob-${leadForm.ea_model}`"
             v-model="leadForm.quote_type_id"
             label="LINE OF BUSINESS"
             name="quoteTypeId"

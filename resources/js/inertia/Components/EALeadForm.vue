@@ -1,4 +1,6 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
+
 const props = defineProps({
   modelValue: {
     type: Object,
@@ -22,7 +24,16 @@ const emit = defineEmits(['update:modelValue']);
 
 const { isRequired } = useRules();
 
-const collaborateExcludedLobs = [1, 3, 8];
+const page = usePage();
+const authRoles = computed(() => page.props.auth?.roles ?? []);
+
+// Car (1), Travel (8), Health (3), and GroupMedical (102) are always excluded from collaborate (referral only).
+// Life (4) requires a specific advisor role to use collaborate.
+const collaborateExcludedLobs = computed(() => {
+  const excluded = [1, 8, 3, 102];
+  if (!authRoles.value.includes('LIFE_ADVISOR')) excluded.push(4);
+  return excluded;
+});
 
 const form = reactive({ ...props.modelValue });
 
@@ -44,7 +55,7 @@ const allLobOptions = computed(() =>
 
 const lobOptions = computed(() => {
   if (form.ea_model !== 'collaborate') return allLobOptions.value;
-  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.includes(opt.value));
+  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.value.includes(opt.value));
 });
 
 const isCorpline = computed(() => form.quote_type_id === 101);
