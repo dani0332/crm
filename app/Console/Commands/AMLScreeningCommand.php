@@ -117,9 +117,9 @@ class AMLScreeningCommand extends Command
         $quoteRequestQuery->chunk(100, function ($quoteRequests) use ($quoteType) {
             foreach ($quoteRequests as $quoteRequest) {
                 $quoteRequestId = $quoteRequest->id;
-                $fullQuote = $this->getQuoteObject($quoteType->value, $quoteRequestId);
+                $quote = $this->getQuoteObject($quoteType->value, $quoteRequestId);
 
-                if (! $fullQuote) {
+                if (! $quote) {
                     LoggerService::error($this->className.' - Quote not found', extra: [
                         'quote_id' => $quoteRequestId,
                         'quote_type' => $quoteType->value,
@@ -129,15 +129,15 @@ class AMLScreeningCommand extends Command
                 }
 
                 $quoteContext = [
-                    'quote_id' => $fullQuote->id,
-                    'quote_code' => $fullQuote->code,
+                    'quote_id' => $quote->id,
+                    'quote_code' => $quote->code,
                     'quote_type' => $quoteType->value,
                 ];
 
                 // Load insurance provider once — eligibility checks read it without extra queries.
-                $fullQuote->loadMissing('insuranceProvider');
+                $quote->loadMissing('insuranceProvider');
 
-                $eligibility = $this->eligibilityService->check($quoteType, $fullQuote);
+                $eligibility = $this->eligibilityService->check($quoteType, $quote);
 
                 if (! $eligibility->isEligible()) {
                     LoggerService::info($this->className.' - Quote ineligible for AML automation', extra: array_merge($quoteContext, [
@@ -149,7 +149,7 @@ class AMLScreeningCommand extends Command
                     // Failed status allows re-dispatch via the IMCRM API once the issue is resolved,
                     // while preventing the command from re-queuing the same quote on the next run.
                     $automation = AmlAutomation::updateOrCreate(
-                        ['code' => $fullQuote->code],
+                        ['code' => $quote->code],
                         ['status' => AmlAutomationStatus::Failed->value, 'result' => $eligibility->reason]
                     );
 
@@ -162,7 +162,7 @@ class AMLScreeningCommand extends Command
                 }
 
                 $automation = AmlAutomation::updateOrCreate(
-                    ['code' => $fullQuote->code],
+                    ['code' => $quote->code],
                     ['status' => AmlAutomationStatus::Queue->value]
                 );
 
@@ -170,7 +170,7 @@ class AMLScreeningCommand extends Command
                     'aml_automation_id' => $automation->id,
                 ]));
 
-                AmlScreeningAutomationJob::dispatch($quoteType, $fullQuote)->onQueue('renewals');
+                AmlScreeningAutomationJob::dispatch($quoteType, $quote)->onQueue('renewals');
             }
         });
     }
