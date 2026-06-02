@@ -716,7 +716,7 @@ class SendEmailCustomerService extends BaseService
             // Send Automated Followup Email Job if Health Auto-Followups is enabled.
             if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                 $delayDays = isLeadSic($quoteUuid) ? 3 : 2;
-                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addDays($delayDays));
+                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes($delayDays));
                 LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
             }
         }
