@@ -4,13 +4,21 @@ namespace App\Repositories;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\CustomerMembers;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\User;
+use App\Traits\AuditTransformLookupCache;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
 class AuditRepository extends BaseRepository
 {
+    private const API_MODEL_MAP = [
+        'App\Models\HealthQuoteRequestMemberDetails' => CustomerMembers::class,
+        'App\Models\HealthQuoteRequest' => HealthQuote::class,
+    ];
+
     public function model()
     {
         return Audit::class;
@@ -109,7 +117,15 @@ class AuditRepository extends BaseRepository
                 if ($auditableId && isset($auditables['auditable_type'])) {
                     $q->where(function ($q) use ($auditables, $auditableId) {
                         $q->where('auditable_id', $auditableId)
-                            ->where('auditable_type', $auditables['auditable_type']);
+                            ->when(isset($auditables['api_auditable_type']), function ($q) use ($auditables) {
+                                $q->where(function ($q) use ($auditables) {
+                                    $q->where('auditable_type', $auditables['auditable_type'])
+                                        ->orWhere('auditable_type', $auditables['api_auditable_type']);
+                                });
+                            })
+                            ->when(! isset($auditables['api_auditable_type']), function ($q) use ($auditables) {
+                                $q->where('auditable_type', $auditables['auditable_type']);
+                            });
                     });
                 }
 
@@ -138,7 +154,16 @@ class AuditRepository extends BaseRepository
                 if ($childRecords) {
                     foreach ($childRecords as $record) {
                         $query->orWhere(function ($q) use ($relation, $record) {
-                            $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $record->id);
+                            $q->where('auditable_id', $record->id)
+                                ->when(isset($relation['api_auditable_type']), function ($q) use ($relation) {
+                                    $q->where(function ($q) use ($relation) {
+                                        $q->where('auditable_type', $relation['auditable_type'])
+                                            ->orWhere('auditable_type', $relation['api_auditable_type']);
+                                    });
+                                })
+                                ->when(! isset($relation['api_auditable_type']), function ($q) use ($relation) {
+                                    $q->where('auditable_type', $relation['auditable_type']);
+                                });
                         });
                     }
                 }
@@ -147,8 +172,9 @@ class AuditRepository extends BaseRepository
         $results = $query->orderBy('created_at', 'desc')->get();
 
         $userHiddenAttributeKeys = (new User)->getHidden();
+        $auditTransformCacheActive = false;
 
-        $results->transform(function ($audit) use ($quoteObject, $quoteType, $userHiddenAttributeKeys) {
+        $results->transform(function ($audit) use ($quoteObject, $userHiddenAttributeKeys, &$auditTransformCacheActive) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -225,13 +251,17 @@ class AuditRepository extends BaseRepository
                 unset($transformedNew[$key], $transformedOld[$key]);
             }
 
-            if ($quoteType === 'UserBranch') {
+            $modelClass = self::API_MODEL_MAP[$audit->auditable_type] ?? $audit->auditable_type;
+            $model = class_exists($modelClass) ? app($modelClass) : $quoteObject;
+            if (method_exists($model, 'transformAuditables')) {
+                $auditTransformCacheActive = true;
+
                 $data = [
                     'audit' => $audit,
                     'transformedOld' => $transformedOld,
                     'transformedNew' => $transformedNew,
                 ];
-                $data = $quoteObject->transformAuditables($data);
+                $data = $model->transformAuditables($data);
                 $audit = $data['audit'];
                 $transformedOld = $data['transformedOld'];
                 $transformedNew = $data['transformedNew'];
@@ -242,6 +272,10 @@ class AuditRepository extends BaseRepository
 
             return $audit;
         });
+
+        if ($auditTransformCacheActive) {
+            AuditTransformLookupCache::flush();
+        }
 
         return $results;
     }

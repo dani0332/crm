@@ -333,6 +333,7 @@ class CoreSchema
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('insurer_aml_status')->nullable();
+                $table->string('gender')->nullable();
                 $table->timestamps();
             },
             'personal_quote_details' => function (Blueprint $table) {
@@ -664,6 +665,14 @@ class CoreSchema
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->boolean('is_quote_locked')->default(0);
                 $table->text('reason_for_reset')->nullable();
+                $table->string('cover_for_id')->nullable();
+                $table->string('customer_type')->nullable();
+                $table->unsignedBigInteger('health_plan_type_id')->nullable();
+                $table->unsignedBigInteger('primary_member_id')->nullable();
+                $table->string('insure_code', 50)->nullable();
+                $table->string('policy_holder_code', 50)->nullable();
+                $table->unsignedBigInteger('visa_category_id')->nullable();
+                $table->string('policy_holder_category_code', 50)->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
@@ -1105,8 +1114,10 @@ class CoreSchema
             'lookups' => function (Blueprint $table) {
                 $table->id();
                 $table->string('key')->nullable();
+                $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
                 $table->timestamps();
             },
             'activities' => function (Blueprint $table) {
@@ -1230,6 +1241,7 @@ class CoreSchema
                 $table->id();
                 $table->string('quote_type'); // Polymorphic: model class name
                 $table->unsignedBigInteger('quote_id'); // Polymorphic: model ID
+                $table->string('code', 200)->nullable();
                 $table->string('customer_type')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
@@ -1240,8 +1252,25 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
                 $table->unsignedBigInteger('member_category_id')->nullable();
                 $table->unsignedBigInteger('salary_band_id')->nullable();
+                $table->boolean('is_policy_holder')->default(0);
+                $table->boolean('is_insured')->default(1);
+                $table->boolean('is_principal')->default(0);
+                $table->boolean('is_third_party_payer')->default(0);
+                $table->unsignedBigInteger('customer_entity_id')->nullable();
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('visa_category_id')->nullable();
+                $table->boolean('is_pec_marked')->default(0);
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'visa_categories' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code', 50);
+                $table->string('text', 50);
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->unsignedBigInteger('health_cover_for_id')->nullable();
+                $table->timestamps();
             },
         ]);
     }
