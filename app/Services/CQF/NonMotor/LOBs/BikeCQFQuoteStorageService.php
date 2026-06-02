@@ -134,12 +134,16 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
 
         $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        $quoteData['previous_quote_id'] = PersonalQuote::where('uuid', $quote->uuid)->value('id');
+        $oldPersonalQuote = PersonalQuote::with('latestInsured')->where('uuid', $quote->uuid)->first();
+        $quoteData['previous_quote_id'] = $oldPersonalQuote?->id;
 
-        return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
+        return DB::transaction(function () use ($quoteData, $quote, $oldPersonalQuote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
+            if ($this->shouldCopyInsured() && $oldPersonalQuote !== null) {
+                $this->copyInsuredToRenewalQuote($newQuote, $oldPersonalQuote);
+            }
             $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
@@ -158,22 +162,71 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
      */
     protected function copyCarQuoteToBikeQuoteDetail(PersonalQuote $newQuote, CarQuote $carQuote): void
     {
-        $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
-        $data = $this->remapCarColumnsToBike($data);
+        $data = $this->mapCarQuoteToBikeRenewalDetail($carQuote, $newQuote);
         $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($carQuote)
-            ?? $data['insurance_type_id'] ?? null;
-        $data['bike_value'] = null;
-        $data['bike_value_tier'] = null;
-        $data['claim_history_id'] = null;
-        $data['has_ncd_supporting_documents'] = null;
-        $data['uae_license_held_for_id'] = $this->incrementLicenseHeldForId($data['uae_license_held_for_id'] ?? null);
-        $data['back_home_license_held_for_id'] = $this->incrementLicenseHeldForId($data['back_home_license_held_for_id'] ?? null, backHome: true);
-        $data['chassis_number'] = $carQuote->carQuoteRequestDetail?->chassis_number;
+            ?? $data['insurance_type_id'];
         $data = array_intersect_key($data, array_flip($this->getBikeQuoteColumns()));
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function mapCarQuoteToBikeRenewalDetail(CarQuote $carQuote, PersonalQuote $newQuote): array
+    {
+        return [
+            // --- from new PersonalQuote ---
+            'personal_quote_id' => $newQuote->id,
+            'uuid' => $newQuote->uuid,
+            'code' => $newQuote->code,
+            'source' => $newQuote->source,
+            'quote_status_id' => $newQuote->quote_status_id,
+            'advisor_id' => null,
+            'assignment_type' => null,
+            'renewal_batch_id' => $newQuote->renewal_batch_id,
+            'previous_quote_policy_number' => $newQuote->previous_quote_policy_number,
+            'previous_quote_policy_premium' => $newQuote->previous_quote_policy_premium,
+            'previous_quote_policy_commission' => $newQuote->previous_quote_policy_commission,
+            'previous_advisor_id' => $newQuote->previous_advisor_id,
+            'previous_policy_start_date' => $this->formatPolicyDate($newQuote->previous_policy_start_date),
+            'previous_policy_expiry_date' => $this->formatPolicyDate($newQuote->previous_policy_expiry_date),
+            'transaction_approved_at' => null,
+            'currently_insured_with' => $newQuote->currentlyInsuredWith?->text,
+            // --- from old CarQuote ---
+            'previous_quote_id' => $carQuote->id,
+            'first_name' => $carQuote->first_name,
+            'last_name' => $carQuote->last_name,
+            'email' => $carQuote->email,
+            'mobile_no' => $carQuote->mobile_no,
+            'gender' => $carQuote->gender,
+            'dob' => $carQuote->dob,
+            // Columns below collide with same-named hasOne relationships on CarQuote; read raw to avoid attribute→relation recursion when the column isn't loaded.
+            'customer_id' => $carQuote->getRawOriginal('customer_id'),
+            'nationality_id' => $carQuote->getRawOriginal('nationality_id'),
+            'bike_company_to_insure' => null,
+            'year_of_manufacture' => $carQuote->year_of_manufacture,
+            'make_id' => $carQuote->getRawOriginal('car_make_id'),
+            'model_id' => $carQuote->getRawOriginal('car_model_id'),
+            'model_detail_id' => $carQuote->car_model_detail_id,
+            'cubic_capacity' => null,
+            'emirate_of_registration_id' => $carQuote->getRawOriginal('emirate_of_registration_id'),
+            'chassis_number' => $carQuote->carQuoteRequestDetail?->chassis_number,
+            'vehicle_type_id' => $carQuote->vehicle_type_id,
+            'seat_capacity' => $carQuote->seat_capacity,
+            'year_of_first_registration' => $carQuote->year_of_first_registration,
+            'bike_type_insurance_id' => null,
+            'uae_license_held_for_id' => $this->incrementLicenseHeldForId($carQuote->getRawOriginal('uae_license_held_for_id')),
+            'back_home_license_held_for_id' => $this->incrementLicenseHeldForId($carQuote->back_home_license_held_for_id, backHome: true),
+            // --- reset on renewal ---
+            'bike_value' => null,
+            'claim_history_id' => null,
+            'bike_value_tier' => null,
+            'has_ncd_supporting_documents' => null,
+            // insurance_type_id is resolved by the caller using the already-loaded CarQuote to avoid an N+1.
+            'insurance_type_id' => $carQuote->getRawOriginal('car_type_insurance_id'),
+        ];
     }
 
     /**
@@ -199,31 +252,6 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             ->first()?->id;
 
         return $nextId ?? $currentId;
-    }
-
-    /**
-     * Rename CarQuote-specific columns to their BikeQuote equivalents before mass-assigning.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    private function remapCarColumnsToBike(array $data): array
-    {
-        foreach ([
-            'car_make_id' => 'make_id',
-            'car_model_id' => 'model_id',
-            'car_model_detail_id' => 'model_detail_id',
-            'car_value' => 'bike_value',
-            'car_value_tier' => 'bike_value_tier',
-            'car_type_insurance_id' => 'insurance_type_id',
-        ] as $from => $to) {
-            if (array_key_exists($from, $data)) {
-                $data[$to] = $data[$from];
-                unset($data[$from]);
-            }
-        }
-
-        return $data;
     }
 
     protected function copyBikeQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void

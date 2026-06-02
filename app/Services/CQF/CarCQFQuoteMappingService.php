@@ -12,6 +12,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UAELicenseHeldForEnum;
+use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
@@ -125,7 +126,7 @@ class CarCQFQuoteMappingService
 
     public function getCarTypeInsuranceId(CarQuote|PersonalQuote $quote): ?int
     {
-        $plan = $quote instanceof CarQuote ? $quote->plan : $quote->carPlan;
+        $plan = $this->resolveQuotePlan($quote);
 
         // Collect possible fields to check for insurance type
         $fields = [
@@ -161,13 +162,33 @@ class CarCQFQuoteMappingService
 
         // Fallback: return the first non-empty original value
         foreach ($fields as $idx => $field) {
-            $original = $quote?->plan?->insurance_type ?? $quote?->plan?->text;
+            $original = $plan?->insurance_type ?? $plan?->text;
             if (! empty($original)) {
                 return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($original)->id ?? null;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Resolve the related CarPlan without touching CarQuote's column-named relationship
+     * methods (e.g. plan_id()), which recurse infinitely when the model is only partially
+     * hydrated and the plan_id attribute is not loaded.
+     */
+    private function resolveQuotePlan(CarQuote|PersonalQuote $quote): ?CarPlan
+    {
+        if ($quote instanceof PersonalQuote) {
+            return $quote->carPlan;
+        }
+
+        if ($quote->relationLoaded('plan')) {
+            return $quote->getRelation('plan');
+        }
+
+        $planId = $quote->getRawOriginal('plan_id');
+
+        return $planId !== null ? CarPlan::find($planId) : null;
     }
 
     public function getNextUAELicenseHeldForId(CarQuote $quote)

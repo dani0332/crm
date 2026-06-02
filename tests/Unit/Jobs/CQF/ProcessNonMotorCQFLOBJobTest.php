@@ -15,7 +15,7 @@ test('has correct job configuration', function () {
         renewalDaysThreshold: 30,
     );
 
-    expect($job->tries)->toBe(1)
+    expect($job->tries)->toBe(3)
         ->and($job->timeout)->toBe(60)
         ->and($job->uniqueFor)->toBe(600)
         ->and($job->queue)->toBe('default'); // set via onQueue('default') in constructor

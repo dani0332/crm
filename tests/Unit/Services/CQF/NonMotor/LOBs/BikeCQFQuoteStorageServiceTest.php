@@ -8,6 +8,9 @@ use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Customer;
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService;
@@ -401,4 +404,48 @@ it('sets assignment_type to null on copied BikeQuote', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('assignment_type'))->toBeNull();
+});
+
+it('copies insured first and last name when copyInsuredToRenewalQuote is called on a Bike renewal', function () {
+    $customer = Customer::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'customer_id' => $customer->id,
+    ]);
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'customer_id' => $customer->id,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $insured = Insured::factory()->create([
+        'first_name' => 'Hassan',
+        'last_name' => 'Ali',
+        'customer_type' => 'Individual',
+    ]);
+
+    CustomerInsured::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'quote_request_id' => $oldPq->id,
+        'insured_id' => $insured->id,
+        'customer_id' => $oldPq->customer_id,
+        'is_active' => true,
+    ]);
+
+    $oldPq->load('latestInsured');
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $oq) => $this->copyInsuredToRenewalQuote($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $oldPq);
+
+    $newCustomerInsured = CustomerInsured::where('quote_request_id', $newPq->id)->first();
+
+    expect($newCustomerInsured)->not->toBeNull()
+        ->and($newCustomerInsured->insured->first_name)->toBe('Hassan')
+        ->and($newCustomerInsured->insured->last_name)->toBe('Ali');
 });
