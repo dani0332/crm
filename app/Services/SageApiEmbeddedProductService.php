@@ -1548,8 +1548,8 @@ class SageApiEmbeddedProductService
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $insurerRequestResponseObject->policy_no;
 
-        $originalInsurerTaxInvoiceNumber = $insurerRequestResponseObject->premium_inv_no;
-        $originalCommissionTaxInvoiceNumber = $insurerRequestResponseObject->commision_inv_no;
+        $originalInsurerTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_no;
+        $originalCommissionTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_buyer_no;
 
         $insurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
         $commissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
@@ -1589,8 +1589,8 @@ class SageApiEmbeddedProductService
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $insurerRequestResponseObject->policy_number;
 
-        $originalInsurerTaxInvoiceNumber = $insurerRequestResponseObject->additional_data->tax_invoice_document_number;
-        $originalCommissionTaxInvoiceNumber = $insurerRequestResponseObject->additional_data->tax_invoice_buyer_document_number;
+        $originalInsurerTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_no;
+        $originalCommissionTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_buyer_no;
 
         $insurerTaxInvoiceNumber = self::formatDocNumber($originalInsurerTaxInvoiceNumber);
         $commissionTaxInvoiceNumber = self::formatDocNumber($originalCommissionTaxInvoiceNumber);

@@ -831,6 +831,7 @@ class CoreSchema
                 $table->string('certificate_number')->nullable();
                 $table->string('tax_invoice_no')->nullable();
                 $table->string('tax_invoice_buyer_no')->nullable();
+                $table->timestamp('sage_invoice_no_update_at')->nullable();
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();
