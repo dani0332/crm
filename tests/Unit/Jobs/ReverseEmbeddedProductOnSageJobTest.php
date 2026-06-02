@@ -32,5 +32,5 @@ test('middleware uses stable WithoutOverlapping key per embedded transaction', f
         ->and($secondLock)->toBeInstanceOf(WithoutOverlapping::class)
         ->and($firstLock->key)->toBe('EP-TEST-001-reverse')
         ->and($secondLock->key)->toBe('EP-TEST-001-reverse')
-        ->and($firstLock->releaseAfter)->toBeNull();
+        ->and($firstLock->releaseAfter)->toBe(60);
 });

@@ -218,6 +218,6 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [(new WithoutOverlapping($this->epTransaction->code.'-reverse'))->dontRelease()];
+        return [(new WithoutOverlapping($this->epTransaction->code.'-reverse'))->releaseAfter(60)];
     }
 }
