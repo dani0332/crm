@@ -1010,7 +1010,7 @@ class SplitPaymentService
 
             $totalApproved++;
 
-            LoggerService::info("Master payment code: {$quoteModel->code} Master payment approved with Payment Status: {$masterPaymentStatus} and total approved payments: {$totalApproved} and total payments count: {$totalPaymentsCount}");
+            LoggerService::info("Master payment code: {$quoteModel->code} Master payment approved with Payment Status: {$masterPaymentStatus} and total approved payments: {$totalApproved} and total payments count: {$totalPaymentsCount} insurance provider code: {$masterPayment->insuranceProvider->code} and isFromJob: ".($isFromJob ? 'true' : 'false'));
 
             $successMessage = 'Processing master payment approval completed';
 
@@ -1033,7 +1033,7 @@ class SplitPaymentService
                     }
                 }
                 $quoteModel->save();
-                LoggerService::info("Master payment code: {$quoteModel->code} - Old Quote Status: {$oldQuoteStatus} New Quote Status: {$quoteModel->quote_status_id}");
+                LoggerService::info("Master payment code: {$quoteModel->code} - Old Quote Status: {$oldQuoteStatus} New Quote Status: {$quoteModel->quote_status_id} quote type id: {$quoteTypeId} and total payment count: {$totalPaymentsCount}");
 
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
