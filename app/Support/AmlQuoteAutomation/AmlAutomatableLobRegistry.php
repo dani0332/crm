@@ -19,9 +19,9 @@ use Illuminate\Database\Eloquent\Model;
 final class AmlAutomatableLobRegistry
 {
     /**
-     * Only these LOBS are allowed to trigger AML automation from API calls
+     * Only these LOBs are allowed to trigger AML automation from API calls.
      *
-     * @return string[]
+     * @return list<QuoteTypes>
      */
     public static function allowedLobsFromAPI(): array
     {
@@ -32,7 +32,7 @@ final class AmlAutomatableLobRegistry
 
     public static function isLobAllowedForAmlAutomationScreeningSucceededEvent(QuoteTypes $quoteType): bool
     {
-        return in_array($quoteType->value, [QuoteTypes::SAVINGS->value], true);
+        return in_array($quoteType, [QuoteTypes::SAVINGS], true);
     }
 
     /**
