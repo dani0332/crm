@@ -293,10 +293,8 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-currently_insured_with="item">
         {{
-          (
-            item.currently_insured_with ??
-            item.personal_quote?.currently_insured_with
-          )?.text
+          (item.currently_insured_with?.text ?? item.currently_insured_with) ??
+          item.personal_quote?.currently_insured_with?.text
         }}
       </template>
       <template #item-pc_qualified="{ pc_qualified }">
