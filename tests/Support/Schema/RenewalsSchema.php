@@ -240,6 +240,7 @@ class RenewalsSchema
                 },
                 'uae_license_held_for_id' => fn (Blueprint $t) => $t->unsignedBigInteger('uae_license_held_for_id')->nullable(),
                 'back_home_license_held_for_id' => fn (Blueprint $t) => $t->unsignedBigInteger('back_home_license_held_for_id')->nullable(),
+                'car_type_insurance_id' => fn (Blueprint $t) => $t->unsignedBigInteger('car_type_insurance_id')->nullable(),
             ], $commonRenewalColumns),
             'cycle_quote_request' => [
                 'uuid' => fn (Blueprint $t) => $t->string('uuid')->nullable(),

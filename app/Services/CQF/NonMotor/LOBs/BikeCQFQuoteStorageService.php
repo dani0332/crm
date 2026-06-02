@@ -161,7 +161,8 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $data = $this->alignCopiedLobRowWithRenewalPersonalQuote($data, $newQuote); // no old BikeQuote to pass — migrating from CarQuote
         $data = $this->remapCarColumnsToBike($data);
-        $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($carQuote);
+        $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($carQuote)
+            ?? $data['insurance_type_id'] ?? null;
         $data['bike_value'] = null;
         $data['bike_value_tier'] = null;
         $data['claim_history_id'] = null;

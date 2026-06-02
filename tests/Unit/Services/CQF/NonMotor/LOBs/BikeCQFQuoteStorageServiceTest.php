@@ -297,6 +297,28 @@ it('increments uae_license_held_for_id on Car-to-Bike renewal', function () {
         ->toBe($next->id);
 });
 
+it('falls back to car_type_insurance_id when getCarTypeInsuranceId returns null on Car-to-Bike renewal', function () {
+    $carQuote = CarQuote::factory()->create(['car_type_insurance_id' => 3]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyCarToBike = Closure::bind(
+        fn ($nq, $cq) => $this->copyCarQuoteToBikeQuoteDetail($nq, $cq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyCarToBike($newPq, $carQuote);
+
+    // CarQuote has no plan → getCarTypeInsuranceId returns null → falls back to remapped car_type_insurance_id
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('insurance_type_id'))->toBe(3);
+});
+
 it('copies chassis_number from car_quote_request_detail on Car-to-Bike renewal', function () {
     $carQuote = CarQuote::factory()->create();
 
