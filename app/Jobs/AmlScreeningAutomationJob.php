@@ -299,12 +299,12 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             in_array($this->quoteType, [QuoteTypes::SAVINGS, QuoteTypes::DEVICE], true) &&
             $this->quoteRequest instanceof PersonalQuote
         ) {
-            $row = app(PersonalQuoteAmlAutomationCustomerService::class)
+            $personalQuoteCustomerInfo = app(PersonalQuoteAmlAutomationCustomerService::class)
                 ->getCustomerPersonalQuoteAmlInfo((int) $this->quoteRequest->id, (int) $this->quoteRequest->quote_type_id);
 
-            if ($row !== false && ! empty($row->id)) {
-                return array_merge((array) $row, [
-                    'id_type' => $row->id_type ?? 'passport',
+            if ($personalQuoteCustomerInfo !== false && ! empty($personalQuoteCustomerInfo->id)) {
+                return array_merge((array) $personalQuoteCustomerInfo, [
+                    'id_type' => $personalQuoteCustomerInfo->id_type ?? 'passport',
                 ]);
             }
 
