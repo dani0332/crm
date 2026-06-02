@@ -4304,6 +4304,12 @@ const { openTempUrl } = useDocumentTempUrl();
       :isDocTypeLoading="isDocTypeLoading"
     />
 
+    <EALeadInfo
+      :source="record.source"
+      :ea-model="record.ea_model"
+      :lead-generator="record.lead_generator"
+    />
+
     <EAApprovalActions
       quote-type="car"
       :quote-id="record.id"

@@ -8,9 +8,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Middleware\PreventRequestForgery;
+use App\Http\Requests\EALeadCreateRequest;
 use App\Jobs\SendEALeadSubmittedEmailJob;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
+use App\Services\EALeadCapiService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -30,6 +35,61 @@ beforeEach(function () {
         ['id' => QuoteTypeId::GroupMedical, 'code' => 'GroupMedical', 'short_code' => 'GMD', 'text' => 'Group Medical', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => 20, 'code' => 'Cyber', 'short_code' => 'CYB', 'text' => 'Cyber Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
     ]);
+
+    app()->bind(EALeadCapiService::class, function () {
+        return new class extends EALeadCapiService
+        {
+            public function createLead(EALeadCreateRequest $request, int $quoteTypeId, bool $isCollaborate): mixed
+            {
+                $uuid = Str::uuid()->toString();
+                $codePrefix = match ($quoteTypeId) {
+                    QuoteTypeId::Car => 'CAR',
+                    QuoteTypeId::Health => 'HEA',
+                    QuoteTypeId::Life => 'LIF',
+                    QuoteTypeId::Corpline, QuoteTypeId::GroupMedical => 'BUS',
+                    default => 'CYB',
+                };
+
+                $data = [
+                    'uuid' => $uuid,
+                    'code' => $codePrefix.'-'.$uuid,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'mobile_no' => $request->mobile_no,
+                    'source' => LeadSourceEnum::EA_IMCRM,
+                    'ea_model' => $request->ea_model,
+                    'lead_generator_id' => auth()->id(),
+                    'quote_status_id' => QuoteStatusEnum::NewLead,
+                    'created_by_id' => auth()->id(),
+                    'advisor_id' => $isCollaborate ? auth()->id() : null,
+                ];
+
+                if ($quoteTypeId === QuoteTypeId::Car) {
+                    CarQuote::create($data);
+                } elseif ($quoteTypeId === QuoteTypeId::Health) {
+                    HealthQuote::create(array_merge($data, [
+                        'health_plan_type_id' => $request->health_plan_type_id,
+                    ]));
+                } elseif ($quoteTypeId === QuoteTypeId::Life) {
+                    LifeQuote::create(array_merge($data, [
+                        'quote_type_id' => $quoteTypeId,
+                    ]));
+                } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical], true)) {
+                    BusinessQuote::create(array_merge($data, [
+                        'business_type_of_insurance_id' => $request->business_type_of_insurance_id,
+                    ]));
+                } else {
+                    PersonalQuote::create(array_merge($data, [
+                        'quote_type_id' => $quoteTypeId,
+                        'business_type_of_insurance_id' => $request->business_type_of_insurance_id,
+                    ]));
+                }
+
+                return (object) ['quoteUID' => $uuid];
+            }
+        };
+    });
 });
 
 it('returns 403 when user has no EA role or permission', function () {

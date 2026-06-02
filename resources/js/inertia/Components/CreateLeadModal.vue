@@ -24,6 +24,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
 const { isRequired } = useRules();
+const notification = useToast();
 const page = usePage();
 
 const authRoles = computed(() => page.props.auth?.roles ?? []);
@@ -154,7 +155,7 @@ const submitEALead = async () => {
   duplicateInfo.value = null;
 
   try {
-    await axios.post(route('ea-leads.store'), {
+    const response = await axios.post(route('ea-leads.store'), {
       ea_model: leadForm.ea_model,
       quote_type_id: leadForm.quote_type_id,
       first_name: leadForm.first_name,
@@ -165,6 +166,11 @@ const submitEALead = async () => {
       health_plan_type_id: leadForm.health_plan_type_id,
     });
 
+    notification.success({
+      title: response?.data?.message || 'EA lead created successfully.',
+      position: 'top',
+    });
+
     emit('confirmed', { type: 'expert_advisor_model' });
     isModalOpen.value = false;
     resetForm();
@@ -172,7 +178,17 @@ const submitEALead = async () => {
     const data = err?.response?.data;
     if (data?.duplicate) {
       duplicateInfo.value = data;
+      notification.error({
+        title: data?.message || 'Duplicate lead found.',
+        position: 'top',
+      });
+      return;
     }
+
+    notification.error({
+      title: data?.message || 'Failed to create EA lead.',
+      position: 'top',
+    });
   } finally {
     isSubmittingEA.value = false;
   }
