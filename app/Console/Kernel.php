@@ -174,6 +174,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
         $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
+        // 60-minute overlap lock (vs. default 24h) — the orchestrator dispatches async jobs and exits quickly, so a short lock is sufficient and avoids blocking a missed next-day run.
         $schedule->command('leads:process-non-motor-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('04:00')->onOneServer()->withoutOverlapping(60);
         $this->scheduleWithEnvironment(
             $schedule,

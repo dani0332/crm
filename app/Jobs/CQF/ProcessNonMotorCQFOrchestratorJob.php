@@ -29,8 +29,9 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
      */
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal Orchestrator';
 
+    // Single try is intentional — the orchestrator is idempotent and re-triggered manually if needed.
     public int $tries = 1;
-    public int $timeout = 60;
+    public int $timeout = 300;
     public int $uniqueFor = 360;
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void

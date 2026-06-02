@@ -154,6 +154,7 @@ class HealthRevivalQuoteController extends Controller
         }
         $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
         $record->previous_quote = $record->previous_quote_id
             ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
             : null;

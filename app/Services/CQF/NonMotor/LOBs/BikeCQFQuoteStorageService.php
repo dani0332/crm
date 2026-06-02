@@ -239,7 +239,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $oldQuote->loadMissing('carPlan');
         $data = $this->mapLobRenewalDetail($oldBikeQuote, $newQuote);
         $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($oldQuote)
-            ?? $data['insurance_type_id'];
+            ?? $oldBikeQuote->insurance_type_id;
         $newBikeQuote = BikeQuote::create($data);
 
         if ($oldBikeQuote->bikeQuoteRequestDetail) {
@@ -301,19 +301,8 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'claim_history_id' => null,
             'bike_value_tier' => null,
             'has_ncd_supporting_documents' => null,
-            'insurance_type_id' => $this->getBikeTypeInsuranceId($oldLob),
+            // insurance_type_id is resolved by the caller using the already-loaded PersonalQuote to avoid an N+1.
+            'insurance_type_id' => $oldLob->insurance_type_id,
         ];
-    }
-
-    private function getBikeTypeInsuranceId(BikeQuote $bikeQuote): ?int
-    {
-        $personalQuote = PersonalQuote::with('carPlan')->find($bikeQuote->personal_quote_id);
-
-        if ($personalQuote === null) {
-            return $bikeQuote->insurance_type_id;
-        }
-
-        return $this->carCQFQuoteMappingService->getCarTypeInsuranceId($personalQuote)
-            ?? $bikeQuote->insurance_type_id;
     }
 }

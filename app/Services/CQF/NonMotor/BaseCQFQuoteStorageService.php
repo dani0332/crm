@@ -106,6 +106,7 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             'last_name' => $oldInsured->last_name,
         ]);
 
+        // Fields are explicitly listed — intentionally not using toArray() to avoid mass-assigning unexpected attributes.
         CustomerInsured::create([
             'quote_type_id' => $this->getQuoteTypeId(),
             'quote_request_id' => $newQuote->id,

@@ -1912,6 +1912,7 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedNonMotorCQFRenewals(): void
     {
+        // Intentionally seeded as enabled (value=1) so the pipeline is active on fresh environments by default.
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
             [

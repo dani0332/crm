@@ -34,7 +34,14 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
      */
     public static function getRenewalBatchIdForDate(Carbon|string $date): ?int
     {
+        static $cache = [];
+
         $endDateObj = $date instanceof Carbon ? $date : Carbon::parse($date);
+        $cacheKey = $endDateObj->toDateString();
+
+        if (array_key_exists($cacheKey, $cache)) {
+            return $cache[$cacheKey];
+        }
 
         $isoWeek = $endDateObj->isoWeek;
         $isoYear = $endDateObj->isoWeekYear;
@@ -53,7 +60,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             ])->first();
         }
 
-        return $batch?->id;
+        return $cache[$cacheKey] = $batch?->id;
     }
 
     abstract protected function getQuoteType(): QuoteTypes;

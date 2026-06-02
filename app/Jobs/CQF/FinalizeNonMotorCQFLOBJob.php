@@ -23,7 +23,9 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 
     public int $tries = 3;
     public int $timeout = 60;
-    public int $uniqueFor = 300;
+
+    // 360s = tries × (timeout + max_backoff) = 3 × (60 + 60), ensuring retries aren't deduplicated.
+    public int $uniqueFor = 360;
 
     public function __construct(
         public int $renewalsUploadLeadsId

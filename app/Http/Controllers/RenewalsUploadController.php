@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
@@ -635,6 +636,8 @@ class RenewalsUploadController extends Controller
      */
     public function retriggerNonMotorCQFProcess(): RedirectResponse
     {
+        $this->authorize(PermissionsEnum::RENEWALS_RETRIGGER);
+
         if (! getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH)) {
             return redirect()->route('renewals-upload-create')->with('error', 'Non-motor CQF renewals feature is currently disabled.');
         }

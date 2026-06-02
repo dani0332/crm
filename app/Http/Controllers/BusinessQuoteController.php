@@ -319,6 +319,7 @@ class BusinessQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
 
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
         $record->previous_quote = $record->previous_quote_id
             ? BusinessQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
             : null;

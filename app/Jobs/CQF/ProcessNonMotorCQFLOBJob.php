@@ -25,9 +25,14 @@ class ProcessNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 1;
+    public int $tries = 3;
     public int $timeout = 60;
     public int $uniqueFor = 600;
+
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
 
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal';
 

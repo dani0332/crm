@@ -123,7 +123,7 @@ class CarCQFQuoteMappingService
         ];
     }
 
-    public function getCarTypeInsuranceId(CarQuote|PersonalQuote $quote)
+    public function getCarTypeInsuranceId(CarQuote|PersonalQuote $quote): ?int
     {
         $plan = $quote instanceof CarQuote ? $quote->plan : $quote->carPlan;
 
