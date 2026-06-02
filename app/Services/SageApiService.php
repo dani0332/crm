@@ -3213,11 +3213,12 @@ class SageApiService
         return $returnMessage;
     }
 
-    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
+    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true, $sectionData = null): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $logDataArray = array_pad($logDataArray, 9, null);
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status, $userId] = $logDataArray;
+        $section = $sectionData ?? $quote;
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $message");
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $errorMessage");
@@ -3234,7 +3235,7 @@ class SageApiService
         }
 
         if ($storeSageApiLog) {
-            $this->logSageApiCall($payload, $response, $quote, $quote, $currentStep, $totalSteps, $status, $userId);
+            $this->logSageApiCall($payload, $response, $section, $quote, $currentStep, $totalSteps, $status, $userId);
         }
 
         return $returnMessage;

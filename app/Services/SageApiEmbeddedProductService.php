@@ -1160,7 +1160,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     } else {
                         LoggerService::info('Error while making EP AR Invoice Premium and Commission ready to post to sage', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
@@ -1168,7 +1168,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     }
                 } else {
                     if ($isLiveApiCallStep2) {
@@ -1241,7 +1241,7 @@ class SageApiEmbeddedProductService
                 $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making Ar invoice & prem Posted to sage';
                 $message = ' EP code: '.$embeddedTransaction->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' failed';
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
             }
             LoggerService::info('EP AR Invoice Premium and Commission AR Post completed successfully', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
@@ -1253,7 +1253,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ar invoice & prem failed from sage';
             $message = ' EP code: '.$embeddedTransaction->code.' : createARInvoicePremAndComm  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         LoggerService::info('Completed EP AR Invoice Premium and Commission creation successfully');
@@ -1337,7 +1337,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     } else {
                         LoggerService::info('Error while making EP AP Invoice Premium ready to post to sage', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
@@ -1345,7 +1345,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     }
                 } else {
                     if ($isLiveApiCallStep6) {
@@ -1419,7 +1419,7 @@ class SageApiEmbeddedProductService
                 $errorMessage = 'Error while making EP AP invoices Posted to sage';
                 $message = 'aPPostInvoices failed';
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
             } else {
                 LoggerService::info('EP AP Invoice Premium AP Post completed successfully', extra : [
                     'BatchNumber' => $apBatchNumber,
@@ -1432,7 +1432,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ap invoice prem failed from sage';
             $message = ' EP code: '.$embeddedTransaction->code.' : createAPInvoicePrem  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         LoggerService::info('Completed EP AP Invoice Premium creation successfully');
@@ -1859,7 +1859,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createPaymentReceiptOneInvoice failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
@@ -1887,7 +1887,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply payment ready to post to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  : readyToPostReceiptAr failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         } else {
             LoggerService::info('EP Apply Payment Receipt ready to post completed successfully', extra: [
                 'BatchNumber' => $batchNumber,
@@ -1952,7 +1952,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply payment Posted to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  :aRPostReceipts failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
         LoggerService::info('EP Apply Payment AR Post completed successfully', extra: [
             'BatchNumber' => $batchNumber,
@@ -2796,7 +2796,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createAPPaymentReceiptOneInvoice failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
@@ -2819,7 +2819,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply AP payment ready to post to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  : readyToPostReceiptAP failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostReceiptAP, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAP, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         } else {
             LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.'  : '.$quote->code.' : readyToPostReceiptAP completed successfully');
             if ($isLiveApiCallStep14) {
@@ -2873,7 +2873,7 @@ class SageApiEmbeddedProductService
             $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply AP payment Posted to sage';
             $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$embeddedTransaction->code.'  :aPPostReceipts failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.'  : '.$quote->code.' : aPPostReceipts completed successfully');
         if ($isLiveApiCallStep15) {
