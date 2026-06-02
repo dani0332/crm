@@ -463,6 +463,13 @@ onMounted(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <div class="font-medium">Previous Policy Start Date</div>
+                <div>
+                  {{ dateFormat(props?.quote?.previous_policy_start_date) }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <div class="font-medium">Previous Policy Expiry Date</div>
                 <div>
                   {{ dateFormat(props?.quote?.previous_policy_expiry_date) }}
@@ -480,13 +487,6 @@ onMounted(() => {
                 <div class="font-medium">Previous Policy Commission</div>
                 <div>
                   {{ props?.quote?.previous_quote_policy_commission || 'N/A' }}
-                </div>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <div class="font-medium">Previous Policy Start Date</div>
-                <div>
-                  {{ dateFormat(props?.quote?.previous_policy_start_date) }}
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
