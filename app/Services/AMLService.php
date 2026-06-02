@@ -2637,13 +2637,6 @@ class AMLService
     }
 
     /**
-     * API entry-point: validate and queue AML screening automation for a quote UUID and LOB.
-     * HTTP callers must pass {@see QuoteTypes} resolved after Form Request validation against {@see AmlAutomatableLobRegistry::allowedLobsFromAPI()};
-     * the quote row is then loaded with {@see GenericQueriesAllLobs::getQuoteObject}.
-     *
-     * @return array{success: bool, http_status: int, message: string, data?: array<string, mixed>}
-     */
-    /**
      * IMCRM API entry point: validate eligibility then synchronously run AML automation
      * for a single quote identified by UUID and explicit LOB.
      *
@@ -2653,6 +2646,8 @@ class AMLService
      * The LOB-match guard (quote's stored type vs. the requested type) is the only check
      * kept here because it is specific to this API surface — the command already knows
      * the LOB from its own query loop.
+     *
+     * @return array{success: bool, http_status: int, message: string, data?: array<string, mixed>}
      */
     public function initiateAutomatedAmlByQuoteUuid(string $quoteUuid, QuoteTypes $quoteType): array
     {

@@ -294,8 +294,8 @@ test('returns 422 when aml automation row blocks re-dispatch', function (string 
 
     Bus::assertNothingDispatched();
 })->with([
-    [AmlAutomationStatus::Complete->value, 'AML automation already completed or in progress'],
-    [AmlAutomationStatus::Processing->value, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::Complete->value, 'AML automation already completed.'],
+    [AmlAutomationStatus::Processing->value, 'AML automation already in progress'],
     [AmlAutomationStatus::Queue->value, 'AML automation already queued'],
 ]);
 
