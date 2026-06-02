@@ -3,12 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\VisaCategory;
-use App\Traits\SeedsFirstOrCreateIfMissing;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class VisaCategorySeeder extends Seeder
 {
-    use SeedsFirstOrCreateIfMissing;
+    use SeedsIfMissing;
 
     /**
      * Run the database seeds.
@@ -16,7 +16,7 @@ class VisaCategorySeeder extends Seeder
     public function run(): void
     {
         $now = now();
-        $this->seedFirstOrCreateIfMissing(VisaCategory::class, [
+        $this->seedUpsertIfMissing(VisaCategory::class, [
             [
                 'code' => 'GOLDEN_VISA',
                 'text' => 'Golden Visa',

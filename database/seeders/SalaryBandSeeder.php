@@ -3,12 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\SalaryBand;
-use App\Traits\SeedsFirstOrCreateIfMissing;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class SalaryBandSeeder extends Seeder
 {
-    use SeedsFirstOrCreateIfMissing;
+    use SeedsIfMissing;
 
     /**
      * Run the database seeds.
@@ -37,7 +37,7 @@ class SalaryBandSeeder extends Seeder
             ]
         );
 
-        $this->seedFirstOrCreateIfMissing(SalaryBand::class, [
+        $this->seedUpsertIfMissing(SalaryBand::class, [
             [
                 'code' => 'BETWEEN_4001_AND_12000',
                 'text' => 'AED 4,001 to AED 12,000/month',
