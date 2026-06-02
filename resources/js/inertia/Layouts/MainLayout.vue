@@ -449,8 +449,8 @@ onUnmounted(() => {
               />
               <STPAdvisorNotification v-if="isReceiveNotificationsEnabled" />
 
-              <x-tooltip v-if="eaPendingRejectionsCount > 0">
-                <x-button class="w-full" size="sm" color="red">
+              <x-tooltip>
+                <x-button class="w-full" size="sm">
                   <div class="items-center">
                     <Link :href="route('ea-manager.index')" style="text-decoration: underline dotted">
                       EA Pending Rejections: {{ eaPendingRejectionsCount }}

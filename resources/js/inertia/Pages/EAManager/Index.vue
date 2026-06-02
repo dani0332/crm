@@ -88,9 +88,19 @@ const changeToReferral = async lead => {
 
 const hasRejection = lead =>
   lead.ea_assigned_advisor_rejected_at || lead.ea_expert_advisor_rejected_at;
+
+  const exportLeads = () => {
+  const params = new URLSearchParams(
+    Object.fromEntries(Object.entries(filterForm).filter(([, v]) => v !== null && v !== '')),
+  );
+  window.location.href =
+    route('ea-manager.export') + (params.toString() ? '?' + params.toString() : '');
+};
+
 </script>
 
 <template>
+  <Head title="EA Manager Dashboard" />
   <div class="p-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800">EA Manager Dashboard</h1>
@@ -145,6 +155,7 @@ const hasRejection = lead =>
         <div class="flex items-end gap-2">
           <x-button size="sm" color="primary" @click="applyFilters">Filter</x-button>
           <x-button size="sm" ghost @click="resetFilters">Reset</x-button>
+          <x-button size="sm" color="secondary" @click="exportLeads">Export</x-button>
         </div>
       </div>
     </div>
