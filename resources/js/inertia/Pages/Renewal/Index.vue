@@ -158,6 +158,15 @@ const businessHeaders = [
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
+const cqfProductIds = [1, 2, 6, 7, 9, 10, 18];
+
+const activeHeaders = computed(() => {
+  const product = Number(filters.product);
+  if (product === 5) return businessHeaders;
+  if (cqfProductIds.includes(product)) return tableHeader2;
+  return tableHeader;
+});
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 </script>
@@ -259,7 +268,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <DataTable
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="filters.product == 5 ? businessHeaders : tableHeader2"
+      :headers="activeHeaders"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
