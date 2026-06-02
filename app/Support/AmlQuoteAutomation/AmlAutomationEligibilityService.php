@@ -104,10 +104,17 @@ final class AmlAutomationEligibilityService
 
         $automationStatus = AmlAutomationStatus::tryFrom((string) $automation->status);
 
-        if (in_array($automationStatus, [AmlAutomationStatus::Complete, AmlAutomationStatus::Processing], true)) {
+        if ($automationStatus === AmlAutomationStatus::Complete) {
             return AmlAutomationEligibilityResult::block(
-                'AML automation already completed or in progress',
-                'automation_complete_or_processing'
+                'AML automation already completed.',
+                'automation_completed'
+            );
+        }
+
+        if ($automationStatus === AmlAutomationStatus::Processing) {
+            return AmlAutomationEligibilityResult::block(
+                'AML automation already in progress',
+                'automation_processing'
             );
         }
 
