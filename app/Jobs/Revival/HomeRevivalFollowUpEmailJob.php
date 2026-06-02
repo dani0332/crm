@@ -147,10 +147,6 @@ class HomeRevivalFollowUpEmailJob implements ShouldQueue
                 (int) QuoteTypes::HOME->id()
             );
 
-            DB::transaction(function () use ($lead): void {
-                $lead->update(['quote_status_id' => QuoteStatusEnum::FollowedUp]);
-            });
-
             LoggerService::info(self::class.': follow-up email sent and status updated to FollowedUp', [
                 'flow' => self::LOG_FLOW,
                 'dtt_revival_id' => $dttRevival->id,

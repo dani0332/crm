@@ -217,10 +217,6 @@ class HomeRevivalService
             return null;
         }
 
-        DB::transaction(function () use ($quote): void {
-            $quote->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
-        });
-
         app(BirdService::class)->createQuoteWorkFlowDetails(
             $quote,
             $response,
