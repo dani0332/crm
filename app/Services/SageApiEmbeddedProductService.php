@@ -533,11 +533,11 @@ class SageApiEmbeddedProductService
             $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
             $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
 
-            $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true);
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true, $quote);
             if (! $createARInvoicePremAndComm['status']) {
                 $result = $createARInvoicePremAndComm;
             } else {
-                $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true);
+                $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true, $quote);
                 if (! $createAPInvoicePrem['status']) {
                     $result = $createAPInvoicePrem;
                 }
@@ -1425,9 +1425,10 @@ class SageApiEmbeddedProductService
         return $returnMessage;
     }
 
-    private function createARInvoicePremAndCommReversal($sageRequestDataArray, $isReversal = false)
+    private function createARInvoicePremAndCommReversal($sageRequestDataArray, $isReversal = false, $quote = null)
     {
         [$sendUpdateLog, $embeddedTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
+        $model = $quote ?? $sendUpdateLog;
 
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
@@ -1452,7 +1453,7 @@ class SageApiEmbeddedProductService
         if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $model, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
 
             $isLiveApiCallStep2 = true;
@@ -1493,13 +1494,13 @@ class SageApiEmbeddedProductService
                         LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, '', $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
                         LoggerService::info('Failed to get Reversal EP AR Invoice Premium and Commission batch status', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of Reversal AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
 
                         return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
@@ -1507,7 +1508,7 @@ class SageApiEmbeddedProductService
                         LoggerService::info('Error while making Reversal EP AR Invoice Premium and Commission ready to post to sage', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post Reversal AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
 
                         return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
@@ -1517,7 +1518,7 @@ class SageApiEmbeddedProductService
                         LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
             } else {
@@ -1525,7 +1526,7 @@ class SageApiEmbeddedProductService
                     LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully with empty response', extra: [
                         'BatchNumber' => $sageResponse['BatchNumber'],
                     ]);
-                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
@@ -1589,7 +1590,7 @@ class SageApiEmbeddedProductService
                 'BatchNumber' => $sageResponse['BatchNumber'],
             ]);
             if ($isLiveApiCallStep3) {
-                $this->logSageApiCall($aRPostInvoices, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($aRPostInvoices, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
         } else {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ar invoice & prem failed from sage';
@@ -1606,9 +1607,10 @@ class SageApiEmbeddedProductService
 
     }
 
-    private function createAPPremInvoiceReversal($sageRequestDataArray, $isReversal = false)
+    private function createAPPremInvoiceReversal($sageRequestDataArray, $isReversal = false, $quote = null)
     {
         [$sendUpdateLog, $embeddedTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
+        $model = $quote ?? $sendUpdateLog;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
         $totalSteps = 30;
@@ -1640,7 +1642,7 @@ class SageApiEmbeddedProductService
                 'SendUpdateCode' => $sendUpdateLog->code,
             ]);
             if ($isLiveApiCallStep28) {
-                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
 
             $isLiveApiCallStep29 = true;
@@ -1682,14 +1684,14 @@ class SageApiEmbeddedProductService
                     ]);
 
                     if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        $this->logSageApiCall($readyToPostInvoiceAP, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, '', $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
                         LoggerService::info('Failed to get Reversal EP AP Invoice Premium batch status', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
 
                         return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
@@ -1698,7 +1700,7 @@ class SageApiEmbeddedProductService
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
 
                         return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
@@ -1709,7 +1711,7 @@ class SageApiEmbeddedProductService
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
             } else {
@@ -1718,7 +1720,7 @@ class SageApiEmbeddedProductService
                         'BatchNumber' => $postedResponse['BatchNumber'],
                         'SendUpdateCode' => $sendUpdateLog->code,
                     ]);
-                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
@@ -1792,7 +1794,7 @@ class SageApiEmbeddedProductService
                     'SendUpdateCode' => $sendUpdateLog->code,
                 ]);
                 if ($isLiveApiCallStep30) {
-                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
         } else {
