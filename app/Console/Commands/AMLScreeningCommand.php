@@ -185,16 +185,16 @@ class AMLScreeningCommand extends Command
      */
     private function resolveQuoteTypes(?string $quoteTypeOption): array
     {
-        $supported = [QuoteTypes::TRAVEL, QuoteTypes::CYBER, QuoteTypes::DEVICE];
+        $supportedQuoteTypes = [QuoteTypes::TRAVEL, QuoteTypes::CYBER, QuoteTypes::DEVICE];
 
         if (! $quoteTypeOption) {
-            return $supported;
+            return $supportedQuoteTypes;
         }
 
         $normalizedOption = ucfirst(strtolower($quoteTypeOption)); // Note:: when we add HomeAppliance we need to update this to support multiple word enums like HomeAppliance because without update it will converts to Homeappliance and it will not match with enum value and it will throw error. So we need to update this to support multiple word enums like HomeAppliance => HomeAppliance
         $quoteType = QuoteTypes::tryFrom($normalizedOption);
 
-        if (! $quoteType || ! in_array($quoteType, $supported, true)) {
+        if (! $quoteType || ! in_array($quoteType, $supportedQuoteTypes, true)) {
             $this->error("Invalid quote type. Must be 'Travel', 'Cyber', or 'Device'.");
 
             return [];
