@@ -170,9 +170,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/ea-leads', [EALeadController::class, 'store'])->name('ea-leads.store');
     Route::post('/ea-leads/{quoteType}/{quoteId}/approve', [EAApprovalController::class, 'approve'])->name('ea-leads.approve');
     Route::post('/ea-leads/{quoteType}/{quoteId}/reject', [EAApprovalController::class, 'reject'])->name('ea-leads.reject');
-    Route::get('/ea-manager', [EAManagerController::class, 'index'])->name('ea-manager.index');
+    Route::get('/reports/ea-manager', [EAManagerController::class, 'index'])->name('ea-manager.index');
+    Route::get('/ea-manager/export', [EAManagerController::class, 'export'])->name('ea-manager.export');
     Route::get('/ea-manager/pending-rejections', [EAManagerController::class, 'pendingRejectionsCount'])->name('ea-manager.pending-rejections');
-    Route::post('/ea-manager/{quoteType}/{quoteId}/approve', [EAManagerController::class, 'approve'])->name('ea-manager.approve');
+    Route::post('/ea-manager/{quoteType}/{quoteId}/decision', [EAManagerController::class, 'decision'])->name('ea-manager.decision');
     Route::patch('/ea-manager/{quoteType}/{quoteId}/change-model', [EAManagerController::class, 'changeModel'])->name('ea-manager.change-model');
 
     Route::get('docs', [DocsController::class, 'show'])->name('docs.index');
