@@ -17,205 +17,283 @@ const props = defineProps({
   },
 });
 
-const filterForm = reactive({
-  ref_id: props.filters.ref_id ?? '',
-  lob: props.filters.lob ?? null,
-  status: props.filters.status ?? null,
-  ea_model: props.filters.ea_model ?? null,
-  date_from: props.filters.date_from ?? '',
-  date_to: props.filters.date_to ?? '',
-});
-
 const page = usePage();
+
 const quoteTypes = computed(() =>
   (page.props.quoteTypes ?? []).map(qt => ({ value: qt.id, label: qt.name })),
 );
+
+const eaStatusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+];
+
+const eaActionOptions = [
+  { value: 'approve', label: 'Approve' },
+  { value: 'reject', label: 'Reject' },
+];
 
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
   { value: 'collaborate', label: 'Collaborate' },
 ];
 
-const applyFilters = () => {
-  router.get(route('ea-manager.index'), filterForm, { preserveState: true });
+const statusLabel = id => statusOptions.value.find(s => s.value === id)?.label ?? id ?? '—';
+
+const tableHeaders = [
+  { text: 'REF ID', value: 'code' },
+  { text: 'EA ADVISOR', value: 'expert_advisor' },
+  { text: 'LOB', value: 'quote_type' },
+  { text: 'MODEL', value: 'ea_model' },
+  { text: 'STATUS', value: 'quote_status_id' },
+  { text: 'ACTION', value: 'action' },
+];
+
+const loaders = reactive({ table: false });
+
+const rowKey = lead => `${lead.quote_type}-${lead.id}`;
+
+const buildRowState = leads =>
+  Object.fromEntries(
+    leads.map(lead => [
+      rowKey(lead),
+      {
+        model: lead.has_rejection && lead.ea_model === 'collaborate' ? null : lead.ea_model,
+        action: null,
+        loading: false,
+        error: null,
+      },
+    ]),
+  );
+
+// Initialize synchronously so the template never reads undefined
+const rowState = reactive(buildRowState(props.leads));
+
+watch(
+  () => props.leads,
+  leads => Object.assign(rowState, buildRowState(leads)),
+  { deep: true },
+);
+
+const filterForm = reactive({
+  ref_id: props.filters.ref_id ?? '',
+  lob: props.filters.lob ?? null,
+  ea_model: props.filters.ea_model ?? null,
+  status: props.filters.status ?? null,
+  date_from: props.filters.date_from ?? '',
+  date_to: props.filters.date_to ?? '',
+});
+
+const onSubmit = isValid => {
+  if (!isValid) return;
+  router.get(route('ea-manager.index'), filterForm, {
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loaders.table = true),
+    onFinish: () => (loaders.table = false),
+  });
 };
 
-const resetFilters = () => {
+const onReset = () => {
   Object.assign(filterForm, {
     ref_id: '',
     lob: null,
-    status: null,
     ea_model: null,
+    status: null,
     date_from: '',
     date_to: '',
   });
-  applyFilters();
+  router.get(route('ea-manager.index'), {}, {
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loaders.table = true),
+    onFinish: () => (loaders.table = false),
+  });
 };
 
-const isActionLoading = ref(null);
-const actionError = ref(null);
+const exportLeads = () => {
+  const params = new URLSearchParams(
+    Object.fromEntries(Object.entries(filterForm).filter(([, v]) => v !== null && v !== '')),
+  );
+  window.location.href =
+    route('ea-manager.export') + (params.toString() ? '?' + params.toString() : '');
+};
 
-const approveLead = async lead => {
-  isActionLoading.value = lead.id;
-  actionError.value = null;
+const updateRow = async lead => {
+  const key = rowKey(lead);
+  const state = rowState[key];
+
+  if (!state.action && !(lead.has_rejection && lead.ea_model === 'collaborate' && state.model)) {
+    state.error = 'Please select an action.';
+    return;
+  }
+
+  state.loading = true;
+  state.error = null;
+
   try {
-    await axios.post(
-      route('ea-manager.approve', { quoteType: lead.quote_type, quoteId: lead.id }),
-    );
+    const params = { quoteType: lead.quote_type, quoteId: lead.id };
+
+    // EA approve/reject decision
+    if (state.action) {
+      await axios.post(route('ea-manager.decision', params), { action: state.action });
+    }
+
+    // Handle model change for rejected collaborative leads
+    if (lead.has_rejection && lead.ea_model === 'collaborate' && state.model) {
+      if (state.model === 'referral') {
+        await axios.patch(route('ea-manager.change-model', params), { ea_model: 'referral' });
+      } else if (state.model === 'collaborate') {
+        await axios.post(route('ea-manager.decision', params), { action: 'approve' });
+      }
+    }
+
     router.reload({ only: ['leads', 'pendingRejectionsCount'] });
   } catch (err) {
-    actionError.value = err?.response?.data?.message ?? 'Error approving lead.';
+    state.error = err?.response?.data?.message ?? 'Update failed.';
   } finally {
-    isActionLoading.value = null;
+    state.loading = false;
   }
 };
-
-const changeToReferral = async lead => {
-  isActionLoading.value = lead.id;
-  actionError.value = null;
-  try {
-    await axios.patch(
-      route('ea-manager.change-model', { quoteType: lead.quote_type, quoteId: lead.id }),
-      { ea_model: 'referral' },
-    );
-    router.reload({ only: ['leads', 'pendingRejectionsCount'] });
-  } catch (err) {
-    actionError.value = err?.response?.data?.message ?? 'Error changing model.';
-  } finally {
-    isActionLoading.value = null;
-  }
-};
-
-const hasRejection = lead =>
-  lead.ea_assigned_advisor_rejected_at || lead.ea_expert_advisor_rejected_at;
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">EA Manager Dashboard</h1>
-      <x-badge v-if="pendingRejectionsCount > 0" color="red" size="lg">
-        {{ pendingRejectionsCount }} Pending Rejection{{ pendingRejectionsCount !== 1 ? 's' : '' }}
-      </x-badge>
+  <Head title="EA Manager" />
+
+  <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
+    EA Manager
+    <x-badge v-if="pendingRejectionsCount > 0" color="red" size="sm" class="ml-2">
+      {{ pendingRejectionsCount }} Pending Rejection{{ pendingRejectionsCount !== 1 ? 's' : '' }}
+    </x-badge>
+  </h1>
+
+  <x-divider class="my-4" />
+
+  <x-form @submit="onSubmit" :auto-focus="false">
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <x-input
+        v-model="filterForm.ref_id"
+        label="Ref ID"
+        placeholder="Search Ref ID"
+      />
+
+      <x-select
+        v-model="filterForm.lob"
+        label="Line of Business"
+        placeholder="Select Line of Business"
+        :options="quoteTypes"
+      />
+
+      <x-input
+        v-model="filterForm.date_from"
+        label="Date From"
+        type="date"
+      />
+
+      <x-input
+        v-model="filterForm.date_to"
+        label="Date To"
+        type="date"
+      />
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white rounded shadow p-4 mb-6">
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <x-input
-          v-model="filterForm.ref_id"
-          label="Ref ID"
-          name="ref_id"
-          placeholder="Search ref ID"
-          clearable
-        />
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+      <x-select
+        v-model="filterForm.status"
+        label="EA Status"
+        placeholder="Filter by EA Status"
+        :options="eaStatusOptions"
+      />
 
+      <x-select
+        v-model="filterForm.ea_model"
+        label="EA Model"
+        placeholder="All Models"
+        :options="eaModelOptions"
+      />
+    </div>
+
+    <div class="flex gap-3 justify-end">
+      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+      <x-button size="sm" color="primary" @click.prevent="onReset">Reset</x-button>
+      <x-button size="sm" color="secondary" @click.prevent="exportLeads">Export</x-button>
+    </div>
+  </x-form>
+
+  <DataTable
+    class="mt-4"
+    :loading="loaders.table"
+    :headers="tableHeaders"
+    :items="leads"
+    border-cell
+    :empty-message="'No EA leads found.'"
+    hide-footer
+  >
+    <template #item-code="item">
+      <span class="font-medium text-blue-600">{{ item.code }}</span>
+    </template>
+
+    <template #item-expert_advisor="item">
+      {{ item.expert_advisor?.name ?? '—' }}
+    </template>
+
+    <template #item-quote_type="item">
+      <span class="capitalize">{{ item.quote_type }}</span>
+    </template>
+
+    <!-- Model: blank dropdown for rejected collaborative leads, badge otherwise -->
+    <template #item-ea_model="item">
+      <x-select
+        v-if="item.has_rejection && item.ea_model === 'collaborate'"
+        v-model="rowState[rowKey(item)].model"
+        placeholder="Select model"
+        :options="eaModelOptions"
+        size="sm"
+        class="w-full"
+      />
+      <span v-else class="capitalize">{{ item.ea_model ?? '—' }}</span>
+    </template>
+
+    <!-- Status: EA action dropdown (Approve / Reject) -->
+    <template #item-quote_status_id="item">
+      <div class="flex flex-col gap-1">
+        <span
+          class="text-xs font-semibold capitalize"
+          :class="{
+            'text-green-600': item.ea_status === 'approved',
+            'text-red-600': item.ea_status === 'rejected',
+            'text-yellow-600': item.ea_status === 'pending',
+          }"
+        >{{ item.ea_status }}</span>
         <x-select
-          v-model="filterForm.lob"
-          label="LOB"
-          name="lob"
-          :options="quoteTypes"
-          placeholder="All LOBs"
-          clearable
+          v-model="rowState[rowKey(item)].action"
+          :options="eaActionOptions"
+          placeholder="Select action"
+          size="sm"
+          class="w-full"
         />
-
-        <x-select
-          v-model="filterForm.ea_model"
-          label="EA Model"
-          name="ea_model"
-          :options="eaModelOptions"
-          placeholder="All Models"
-          clearable
-        />
-
-        <x-input
-          v-model="filterForm.date_from"
-          label="Date From"
-          name="date_from"
-          type="date"
-        />
-
-        <x-input
-          v-model="filterForm.date_to"
-          label="Date To"
-          name="date_to"
-          type="date"
-        />
-
-        <div class="flex items-end gap-2">
-          <x-button size="sm" color="primary" @click="applyFilters">Filter</x-button>
-          <x-button size="sm" ghost @click="resetFilters">Reset</x-button>
-        </div>
       </div>
-    </div>
+    </template>
 
-    <div v-if="actionError" class="mb-4 p-3 bg-red-50 border border-red-300 text-red-700 rounded">
-      {{ actionError }}
-    </div>
-
-    <!-- Leads table -->
-    <div class="bg-white rounded shadow overflow-x-auto">
-      <table class="min-w-full text-sm text-left">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-          <tr>
-            <th class="px-4 py-3">Ref ID</th>
-            <th class="px-4 py-3">Created</th>
-            <th class="px-4 py-3">LOB</th>
-            <th class="px-4 py-3">EA Model</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Lead Generator</th>
-            <th class="px-4 py-3">Advisor</th>
-            <th class="px-4 py-3">Expert Advisor</th>
-            <th class="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr
-            v-for="lead in leads"
-            :key="`${lead.quote_type}-${lead.id}`"
-            :class="{ 'bg-red-50': hasRejection(lead) }"
-          >
-            <td class="px-4 py-3 font-medium text-blue-600">{{ lead.code }}</td>
-            <td class="px-4 py-3 whitespace-nowrap">
-              {{ new Date(lead.created_at).toLocaleDateString() }}
-            </td>
-            <td class="px-4 py-3 capitalize">{{ lead.quote_type }}</td>
-            <td class="px-4 py-3">
-              <x-badge :color="lead.ea_model === 'collaborate' ? 'blue' : 'gray'" size="sm">
-                {{ lead.ea_model ?? '—' }}
-              </x-badge>
-            </td>
-            <td class="px-4 py-3">{{ lead.quote_status_id }}</td>
-            <td class="px-4 py-3">{{ lead.lead_generator?.name ?? '—' }}</td>
-            <td class="px-4 py-3">{{ lead.advisor?.name ?? '—' }}</td>
-            <td class="px-4 py-3">{{ lead.expert_advisor?.name ?? '—' }}</td>
-            <td class="px-4 py-3">
-              <div v-if="lead.ea_model === 'collaborate'" class="flex gap-2">
-                <x-button
-                  size="xs"
-                  color="emerald"
-                  :loading="isActionLoading === lead.id"
-                  @click="approveLead(lead)"
-                >
-                  Approve
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="orange"
-                  :loading="isActionLoading === lead.id"
-                  @click="changeToReferral(lead)"
-                >
-                  → Referral
-                </x-button>
-              </div>
-            </td>
-          </tr>
-
-          <tr v-if="leads.length === 0">
-            <td colspan="9" class="text-center py-8 text-gray-400">No EA leads found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+    <!-- Update button + error per row -->
+    <template #item-action="item">
+      <div class="flex flex-col gap-1 items-start">
+        <x-button
+          size="xs"
+          color="#ff5e00"
+          :loading="rowState[rowKey(item)]?.loading"
+          @click="updateRow(item)"
+        >
+          Update
+        </x-button>
+        <span
+          v-if="rowState[rowKey(item)]?.error"
+          class="text-xs text-red-600"
+        >
+          {{ rowState[rowKey(item)].error }}
+        </span>
+      </div>
+    </template>
+  </DataTable>
 </template>
