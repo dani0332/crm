@@ -1003,10 +1003,6 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.index'));
         }
 
-        if (auth()->user()->hasRole(RolesEnum::EAManager)) {
-            $nav = $nav->add('EA Manager', route('ea-manager.index'), fn ($s) => $s->attributes(['icon' => 'box']));
-        }
-
         return $nav;
     }
 }
