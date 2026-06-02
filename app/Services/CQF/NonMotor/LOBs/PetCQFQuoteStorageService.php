@@ -71,7 +71,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'code' => $newQuote->code,
             'source' => $newQuote->source,
             'quote_status_id' => $newQuote->quote_status_id,
-            'advisor_id' => $newQuote->advisor_id,
+            'advisor_id' => null,
             'renewal_batch_id' => $newQuote->renewal_batch_id,
             'previous_quote_policy_number' => $newQuote->previous_quote_policy_number,
             'previous_quote_policy_premium' => $newQuote->previous_quote_policy_premium,

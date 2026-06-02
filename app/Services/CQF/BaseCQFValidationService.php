@@ -33,7 +33,9 @@ class BaseCQFValidationService implements CQFValidationInterface
         return [
             'policy_number' => ['required'],
             'policy_expiry_date' => ['required', 'date'],
+            'policy_start_date' => ['required'],
             'first_name' => ['required'],
+            'last_name' => ['required'],
             'email' => ['required', 'email'],
             'mobile_no' => ['required'],
         ];

@@ -388,6 +388,16 @@ it('skips QuoteRequestEntityMapping copy when old BusinessQuote has no entity ma
     expect(QuoteRequestEntityMapping::count())->toBe($countBefore);
 });
 
+it('returns false for shouldCopyInsured so insured names are not copied on Business renewal', function () {
+    $shouldCopy = Closure::bind(
+        fn () => $this->shouldCopyInsured(),
+        $this->service,
+        BusinessCQFQuoteStorageService::class
+    );
+
+    expect($shouldCopy())->toBeFalse();
+});
+
 afterEach(function () {
     Mockery::close();
 });

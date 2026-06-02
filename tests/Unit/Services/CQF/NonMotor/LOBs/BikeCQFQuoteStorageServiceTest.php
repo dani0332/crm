@@ -346,3 +346,59 @@ it('copies chassis_number from car_quote_request_detail on Car-to-Bike renewal',
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('chassis_number'))
         ->toBe('VIN123456789');
 });
+
+it('sets transaction_approved_at to null on copied BikeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'transaction_approved_at' => now()->subDays(10),
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('transaction_approved_at'))->toBeNull();
+});
+
+it('sets assignment_type to null on copied BikeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
+
+    BikeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'assignment_type' => 'SYSTEM_ASSIGNED',
+    ]);
+
+    $oldPq->load('bikeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyBikeQuoteDetail($nq, $oq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('assignment_type'))->toBeNull();
+});

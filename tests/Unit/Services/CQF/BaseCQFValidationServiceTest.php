@@ -20,7 +20,9 @@ it('validates quote successfully when all base fields are present', function () 
     $quote->shouldReceive('toArray')->andReturn([
         'policy_number' => 'POL-001',
         'policy_expiry_date' => now()->addDays(30)->format('Y-m-d'),
+        'policy_start_date' => now()->subYear()->format('Y-m-d'),
         'first_name' => 'John',
+        'last_name' => 'Doe',
         'email' => 'john@example.com',
         'mobile_no' => '+971501234567',
     ]);
@@ -30,6 +32,40 @@ it('validates quote successfully when all base fields are present', function () 
     expect($result)->toHaveKeys(['success', 'errors'])
         ->and($result['success'])->toBeTrue()
         ->and($result['errors'])->toBeEmpty();
+});
+
+it('fails validation when policy_start_date is missing', function () {
+    $quote = Mockery::mock(Model::class)->shouldIgnoreMissing();
+    $quote->shouldReceive('toArray')->andReturn([
+        'policy_number' => 'POL-001',
+        'policy_expiry_date' => now()->addDays(30)->format('Y-m-d'),
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'email' => 'john@example.com',
+        'mobile_no' => '+971501234567',
+    ]);
+
+    $result = $this->service->validateQuote($quote);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['errors'])->toHaveKey('policy_start_date');
+});
+
+it('fails validation when last_name is missing', function () {
+    $quote = Mockery::mock(Model::class)->shouldIgnoreMissing();
+    $quote->shouldReceive('toArray')->andReturn([
+        'policy_number' => 'POL-001',
+        'policy_expiry_date' => now()->addDays(30)->format('Y-m-d'),
+        'policy_start_date' => now()->subYear()->format('Y-m-d'),
+        'first_name' => 'John',
+        'email' => 'john@example.com',
+        'mobile_no' => '+971501234567',
+    ]);
+
+    $result = $this->service->validateQuote($quote);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['errors'])->toHaveKey('last_name');
 });
 
 it('fails validation when policy_number is missing', function () {

@@ -264,6 +264,7 @@ class RenewalsSchema
             ]),
             'home_quote_request' => array_merge($lobRenewalColumns, [
                 'transaction_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('transaction_type_id')->nullable(),
+                'has_claimed_losses' => fn (Blueprint $t) => $t->boolean('has_claimed_losses')->nullable(),
                 'ilivein_accommodation_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('ilivein_accommodation_type_id')->nullable(),
                 'accommodation_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('accommodation_type_id')->nullable(),
                 'iam_possesion_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('iam_possesion_type_id')->nullable(),

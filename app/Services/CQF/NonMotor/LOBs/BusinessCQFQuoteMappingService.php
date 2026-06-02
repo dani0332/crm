@@ -33,6 +33,7 @@ class BusinessCQFQuoteMappingService extends BaseCQFQuoteMappingService
     {
         $data = parent::mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
         if ($data && $quote instanceof PersonalQuote) {
+            $data['business_type_of_insurance_id'] = $quote->business_type_of_insurance_id;
             if ($quote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                 $data['premium'] = $quote->premium;
                 $data['company_address'] = $quote->company_address;

@@ -5,10 +5,14 @@ declare(strict_types=1);
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\Customer;
 use App\Models\CustomerAddress;
+use App\Models\CustomerInsured;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\Insured;
 use App\Models\PersonalQuote;
+use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteStorageService;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
@@ -388,4 +392,165 @@ it('skips CustomerAddress copy when old quote has no CustomerAddress', function 
     $copyDetail($newPq, $oldPq);
 
     expect(CustomerAddress::count())->toBe($countBefore);
+});
+
+it('sets transaction_approved_at to null on copied HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'transaction_approved_at' => now()->subDays(5),
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('transaction_approved_at'))->toBeNull();
+});
+
+it('sets assignment_type to null on copied HomeQuote', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'assignment_type' => 'SYSTEM_ASSIGNED',
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('assignment_type'))->toBeNull();
+});
+
+it('sets has_claimed_losses to null on copied HomeQuote regardless of old value', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    HomeQuote::factory()->create([
+        'personal_quote_id' => $oldPq->id,
+        'has_claimed_losses' => true,
+    ]);
+
+    $oldPq->load('homeQuote');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyDetail = Closure::bind(
+        fn ($nq, $oq) => $this->copyHomeQuoteDetail($nq, $oq),
+        $this->service,
+        HomeCQFQuoteStorageService::class
+    );
+
+    $copyDetail($newPq, $oldPq);
+
+    expect(HomeQuote::where('personal_quote_id', $newPq->id)->value('has_claimed_losses'))->toBeNull();
+});
+
+it('copies insured first and last name from old PersonalQuote to new renewal quote', function () {
+    $customer = Customer::factory()->create();
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'customer_id' => $customer->id,
+    ]);
+
+    $insured = Insured::factory()->create([
+        'customer_type' => 'Individual',
+        'first_name' => 'Sarah',
+        'last_name' => 'Connor',
+    ]);
+
+    CustomerInsured::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'quote_request_id' => $oldPq->id,
+        'insured_id' => $insured->id,
+        'customer_id' => $customer->id,
+        'is_active' => true,
+    ]);
+
+    $oldPq->load('latestInsured');
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'customer_id' => $customer->id,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $oq) => $this->copyInsuredToRenewalQuote($nq, $oq),
+        $this->service,
+        BaseCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $oldPq);
+
+    $newCustomerInsured = CustomerInsured::where('quote_request_id', $newPq->id)
+        ->where('quote_type_id', QuoteTypeId::Home)
+        ->where('is_active', true)
+        ->first();
+
+    expect($newCustomerInsured)->not->toBeNull();
+
+    $newInsured = Insured::find($newCustomerInsured->insured_id);
+
+    expect($newInsured->first_name)->toBe('Sarah')
+        ->and($newInsured->last_name)->toBe('Connor')
+        ->and($newInsured->customer_type)->toBe('Individual');
+});
+
+it('skips insured copy when old PersonalQuote has no active insured', function () {
+    $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Home]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Home,
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+        'code' => 'HOM-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $countBefore = CustomerInsured::count();
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $oq) => $this->copyInsuredToRenewalQuote($nq, $oq),
+        $this->service,
+        BaseCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $oldPq);
+
+    expect(CustomerInsured::count())->toBe($countBefore);
 });

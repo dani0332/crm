@@ -261,8 +261,8 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'code' => $newQuote->code,
             'source' => $newQuote->source,
             'quote_status_id' => $newQuote->quote_status_id,
-            'advisor_id' => $newQuote->advisor_id,
-            'assignment_type' => $newQuote->assignment_type,
+            'advisor_id' => null,
+            'assignment_type' => null,
             'renewal_batch_id' => $newQuote->renewal_batch_id,
             'previous_quote_policy_number' => $newQuote->previous_quote_policy_number,
             'previous_quote_policy_premium' => $newQuote->previous_quote_policy_premium,
@@ -270,7 +270,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'previous_advisor_id' => $newQuote->previous_advisor_id,
             'previous_policy_start_date' => $this->formatPolicyDate($newQuote->previous_policy_start_date),
             'previous_policy_expiry_date' => $this->formatPolicyDate($newQuote->previous_policy_expiry_date),
-            'transaction_approved_at' => $newQuote->transaction_approved_at,
+            'transaction_approved_at' => null,
             'currently_insured_with' => $newQuote->currentlyInsuredWith?->text,
             // --- from old BikeQuote ---
             'previous_quote_id' => $oldLob->id,
@@ -280,7 +280,6 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'mobile_no' => $oldLob->mobile_no,
             'gender' => $oldLob->gender,
             'dob' => $oldLob->dob,
-            'lang' => $oldLob->lang,
             'customer_id' => $oldLob->customer_id,
             'nationality_id' => $oldLob->nationality_id,
             'bike_company_to_insure' => $oldLob->bike_company_to_insure,
@@ -302,7 +301,19 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'claim_history_id' => null,
             'bike_value_tier' => null,
             'has_ncd_supporting_documents' => null,
-            'insurance_type_id' => $oldLob->insurance_type_id,
+            'insurance_type_id' => $this->getBikeTypeInsuranceId($oldLob),
         ];
+    }
+
+    private function getBikeTypeInsuranceId(BikeQuote $bikeQuote): ?int
+    {
+        $personalQuote = PersonalQuote::with('carPlan')->find($bikeQuote->personal_quote_id);
+
+        if ($personalQuote === null) {
+            return $bikeQuote->insurance_type_id;
+        }
+
+        return $this->carCQFQuoteMappingService->getCarTypeInsuranceId($personalQuote)
+            ?? $bikeQuote->insurance_type_id;
     }
 }

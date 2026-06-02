@@ -158,7 +158,7 @@ const businessHeaders = [
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
-const cqfProductIds = [1, 2, 6, 7, 9, 10, 18];
+const cqfProductIds = [1, 2, 6, 7, 9, 10];
 
 const activeHeaders = computed(() => {
   const product = Number(filters.product);

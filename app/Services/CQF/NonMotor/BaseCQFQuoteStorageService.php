@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor;
 
 use App\Enums\AMLStatusCode;
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
@@ -49,6 +51,9 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyLobQuoteDetail($newQuote, $quote);
+            if ($this->shouldCopyInsured() && $quote instanceof PersonalQuote) {
+                $this->copyInsuredToRenewalQuote($newQuote, $quote);
+            }
             $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
@@ -75,6 +80,40 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
      * Copy LOB-specific quote detail from old quote to new PersonalQuote (e.g. bikeQuote, homeQuote).
      */
     abstract protected function copyLobQuoteDetail(PersonalQuote $newQuote, Model $oldQuote): void;
+
+    /**
+     * Whether to copy the insured's first/last name to the renewal quote. Business overrides to false.
+     */
+    protected function shouldCopyInsured(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Copy only first_name and last_name (no KYC) from the old quote's active insured to the new renewal quote.
+     */
+    protected function copyInsuredToRenewalQuote(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
+    {
+        $oldInsured = $oldQuote->latestInsured;
+
+        if ($oldInsured === null) {
+            return;
+        }
+
+        $newInsured = Insured::create([
+            'customer_type' => $oldInsured->customer_type,
+            'first_name' => $oldInsured->first_name,
+            'last_name' => $oldInsured->last_name,
+        ]);
+
+        CustomerInsured::create([
+            'quote_type_id' => $this->getQuoteTypeId(),
+            'quote_request_id' => $newQuote->id,
+            'insured_id' => $newInsured->id,
+            'customer_id' => $newQuote->customer_id,
+            'is_active' => true,
+        ]);
+    }
 
     /**
      * Optional hook for LOBs that support embedded products (e.g. Bike RDX). Base does nothing; override to collect ep codes from old quote into $epCodes.
