@@ -173,7 +173,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/ea-manager', [EAManagerController::class, 'index'])->name('ea-manager.index');
     Route::get('/ea-manager/export', [EAManagerController::class, 'export'])->name('ea-manager.export');
     Route::get('/ea-manager/pending-rejections', [EAManagerController::class, 'pendingRejectionsCount'])->name('ea-manager.pending-rejections');
-    Route::post('/ea-manager/{quoteType}/{quoteId}/approve', [EAManagerController::class, 'approve'])->name('ea-manager.approve');
+    Route::post('/ea-manager/{quoteType}/{quoteId}/decision', [EAManagerController::class, 'decision'])->name('ea-manager.decision');
     Route::patch('/ea-manager/{quoteType}/{quoteId}/change-model', [EAManagerController::class, 'changeModel'])->name('ea-manager.change-model');
 
     Route::get('docs', [DocsController::class, 'show'])->name('docs.index');

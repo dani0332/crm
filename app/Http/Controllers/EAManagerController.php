@@ -41,15 +41,20 @@ class EAManagerController extends Controller
         ]);
     }
 
-    public function approve(Request $request, string $quoteType, int $quoteId): JsonResponse
+    public function decision(Request $request, string $quoteType, int $quoteId): JsonResponse
     {
+        $request->validate(['action' => 'required|in:approve,reject']);
+
+        $isApprove = $request->action === 'approve';
         $quote = $this->resolveQuote($quoteType, $quoteId);
 
-        $quote->ea_assigned_advisor_approved_at = now();
-        $quote->ea_expert_advisor_approved_at = now();
+        $quote->ea_assigned_advisor_approved_at = $isApprove ? now() : null;
+        $quote->ea_expert_advisor_approved_at = $isApprove ? now() : null;
+        $quote->ea_assigned_advisor_rejected_at = $isApprove ? null : now();
+        $quote->ea_expert_advisor_rejected_at = $isApprove ? null : now();
         $quote->save();
 
-        SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Approved');
+        SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, $isApprove ? 'Approved' : 'Rejected');
 
         return response()->json(['success' => true]);
     }
@@ -93,4 +98,5 @@ class EAManagerController extends Controller
     {
         return app(EAManagerExport::class)->download('EA-Manager-Leads');
     }
+
 }
