@@ -142,17 +142,19 @@ class CarCQFQuoteMappingService
         }
 
         // Check for partial match against enum values
+        // Maps enum values to their car_type_insurance codes (TPL is stored as "Third Party Only")
         $typeInsuranceCodes = [
-            carTypeInsuranceCode::Comprehensive,
-            carTypeInsuranceCode::ThirdPartyOnly,
+            carTypeInsuranceCode::Comprehensive => carTypeInsuranceCode::Comprehensive,
+            carTypeInsuranceCode::ThirdPartyOnly => carTypeInsuranceCode::ThirdPartyOnly,
+            carTypeInsuranceCode::TPL => carTypeInsuranceCode::ThirdPartyOnly,
         ];
 
-        foreach ($typeInsuranceCodes as $enumCase) {
+        foreach ($typeInsuranceCodes as $enumCase => $dbCode) {
             $enumValue = strtolower($enumCase);
 
             foreach ($fields as $field) {
                 if (str_contains($field, $enumValue)) {
-                    return app(RenewalsAddonServices::class)->getCarTypeOfInsurance(ucfirst($enumCase))->id ?? null;
+                    return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($dbCode)->id ?? null;
                 }
             }
         }
