@@ -61,6 +61,7 @@ class DttHome extends Command
                 LeadSourceEnum::REVIVAL_ANNUAL,
                 LeadSourceEnum::REVIVAL_REPLIED,
                 LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::RENEWAL_UPLOAD,
             ])
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyIssued,
@@ -97,6 +98,7 @@ class DttHome extends Command
                 LeadSourceEnum::REVIVAL_ANNUAL,
                 LeadSourceEnum::REVIVAL_REPLIED,
                 LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::RENEWAL_UPLOAD,
             ])
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyIssued,
