@@ -131,7 +131,7 @@ class DicApiService
             $payment = $quote->payments()->mainLeadPayment()->first();
             $policyExpiry = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
             if ($payment !== null) {
-                $vat = $payment->total_price - $payment->price_vat_applicable;
+                $vat = data_get($body, 'additionalDetails.vat_on_commission');
                 $paymentData = [
                     'commission_vat_applicable' => data_get($body, 'additionalDetails.commission_excluding_vat'),
                     'commission_vat' => $vat,
