@@ -66,6 +66,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  maxDate: {
+    type: Date,
+    default: null,
+  },
+  startDate: {
+    type: Date,
+    default: null,
+  },
 });
 
 const selectedData = computed({
@@ -96,6 +104,9 @@ const iconPosition = computed(() => {
     :range="range"
     :min-time="props.minTime"
     :max-time="props.maxTime"
+    :min-date="props.minDate"
+    :max-date="props.maxDate"
+    :start-date="props.startDate"
     text-input
     :teleport-center="false"
     teleport="body"

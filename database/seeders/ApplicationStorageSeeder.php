@@ -106,24 +106,24 @@ class ApplicationStorageSeeder extends Seeder
         //         'is_active' => 1,
         //     ],
         // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
         //     [
@@ -181,7 +181,9 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
         $this->seedMotorRevivalWorkflow();
+        $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedDttLifeEnabled();
+        $this->seedOcrPlanValidation();
     }
 
     private function livaCarAutomationSeed()
@@ -210,6 +212,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomationOutcomeWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dc950ff5-df11-4347-b486-2c2a43d2b81d/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -351,7 +366,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL],
+            ['key_name' => ApplicationStorageEnums::TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
                 'created_at' => now(),
@@ -1947,6 +1962,20 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+    }
+
+    private function seedOcrPlanValidation()
+    {
+        /** For sukoon purple API */
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
+            [
+                'value' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ],
         );
     }

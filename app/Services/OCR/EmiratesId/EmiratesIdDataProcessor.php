@@ -14,6 +14,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -41,7 +42,7 @@ class EmiratesIdDataProcessor
     {
         try {
             DB::beginTransaction();
-            $isPrincipal = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
+            $isPolicyHolder = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
 
             $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
@@ -55,12 +56,12 @@ class EmiratesIdDataProcessor
                 // Check if it's principal
                 $memberDetail = CustomerMembers::find($this->memberDetailId);
 
-                if ($memberDetail && $memberDetail->is_principal) {
-                    $isPrincipal = true;
+                if ($memberDetail && $memberDetail->is_policy_holder) {
+                    $isPolicyHolder = true;
                 }
             }
 
-            if ($this->memberDetailId == 0 || $isPrincipal) {
+            if ($this->memberDetailId == 0 || $isPolicyHolder) {
                 $insured = $this->getOrCreateInsuredRecord();
                 if (! $insured) {
                     throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');

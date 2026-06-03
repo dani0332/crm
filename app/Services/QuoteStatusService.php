@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
@@ -17,7 +18,7 @@ class QuoteStatusService
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $notes = null)
     {
         info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
-        $AMLService = new AMLService;
+        $AMLService = app(AMLService::class);
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
         $updateQuote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'uuid');
@@ -35,6 +36,7 @@ class QuoteStatusService
             'quote_request_id' => $quoteRequestId,
             'current_quote_status_id' => $currentStatusId,
             'previous_quote_status_id' => $previousStatusId,
+            'status_change_source' => LeadSourceEnum::IMCRM,
             'notes' => $notes ?? null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

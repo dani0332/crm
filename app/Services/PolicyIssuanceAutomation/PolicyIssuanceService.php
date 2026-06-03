@@ -28,8 +28,8 @@ use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
-use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\QatarInsuranceService;
 use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -52,8 +52,8 @@ class PolicyIssuanceService
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProviderEnum::ALNC->value => new AllianceInsuranceService,
                 InsuranceProviderEnum::DIC->value => app(DicInsuranceService::class),
+                InsuranceProviderEnum::QIC->value => new QatarInsuranceService,
                 default => null,
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
@@ -126,6 +126,7 @@ class PolicyIssuanceService
             LoggerService::info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule created PID : '.$policyIssuance->id);
         }
     }
+
     public function executePolicyIssuanceAutomationSteps()
     {
         info('cmd:'.$this->className.' fn:'.__FUNCTION__);

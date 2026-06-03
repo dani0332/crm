@@ -35,6 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -84,6 +85,10 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
+
+                if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
+                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead($childLeadResponse['id']);
+                }
             }
 
             DB::commit();
@@ -98,7 +103,9 @@ class SendUpdateLogController extends Controller
         if (! empty($childLeadResponse)) {
             if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
-                    return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                    $quoteTypeSlug = strtolower(quoteTypeCode::resolveQuoteType($quoteType->code));
+
+                    return redirect('/personal-quotes/'.$quoteTypeSlug.'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
                 } else {
                     $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
@@ -300,6 +307,7 @@ class SendUpdateLogController extends Controller
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
+            'hasEndorsementPayments' => $sendUpdateLog->payments()->exists(),
         ]);
     }
 

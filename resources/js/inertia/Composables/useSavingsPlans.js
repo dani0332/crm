@@ -1,7 +1,7 @@
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useFormatPrice } from '@/inertia/Composables/utilities';
 import axios from 'axios';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, toRaw } from 'vue';
 
 const modals = reactive({
   planDetails: false,
@@ -19,6 +19,17 @@ const planExchangeRate = ref(1);
 const sharedAvailablePlans = ref([]);
 const exchangeRates = ref({});
 const plansUpdateTrigger = ref(0);
+
+export function isSukoonPurpleInvestmentPlan(
+  planOrItem,
+  insuranceProviderCodeEnum,
+) {
+  return (
+    planOrItem?.providerCode === insuranceProviderCodeEnum?.OIC &&
+    planOrItem?.instantPolicy === true &&
+    planOrItem?.name?.trim() === 'Purple Investment'
+  );
+}
 
 export function useSavingsPlans(options = {}) {
   const {
@@ -264,6 +275,67 @@ export function useSavingsPlans(options = {}) {
     };
   };
 
+  const extractLumpSumFromProviderPlanResponse = data => {
+    if (data == null || typeof data !== 'object') {
+      return null;
+    }
+    const pick = v => {
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    if (data.lumpSumPayout != null) {
+      return pick(data.lumpSumPayout);
+    }
+    // KEN /fetch-savings-provider-plan returns { plan: { lumpSumPayout, ... } }
+    if (data.plan?.lumpSumPayout != null) {
+      return pick(data.plan.lumpSumPayout);
+    }
+    if (data.lumpSum != null) {
+      return pick(data.lumpSum);
+    }
+    if (data.planData?.lumpSumPayout != null) {
+      return pick(data.planData.lumpSumPayout);
+    }
+
+    return null;
+  };
+
+  const fetchSavingsProviderPlanLumpSum = async (planDetails, quoteUuid) => {
+    const investmentFrequencyOption = findInvestmentFrequencyOption(
+      planDetails.investmentFrequency,
+    );
+    const processedRiders = processRidersForAPI(ridersData.value);
+    const { data } = await axios.post(
+      `/quotes/savings/${quoteUuid}/fetch-savings-provider-plan`,
+      {
+        planId: planDetails.id || planDetails.planId,
+        providerCode: planDetails.providerCode,
+        isIndividualLoading: true,
+        lang: 'en',
+        planData: {
+          investmentAmount: parseFloat(planDetails.actualPremium) || 0,
+          currency: planDetails.currency || 'AED',
+          currencyId: planDetails.currencyId,
+          paymentTerm: parseInt(planDetails.paymentTerm, 10) || 0,
+          tenure:
+            planDetails.tenure != null && typeof planDetails.tenure === 'number'
+              ? String(planDetails.tenure)
+              : planDetails.tenure,
+          tenureId: planDetails.tenureId,
+          investmentFrequency:
+            investmentFrequencyOption?.label ||
+            planDetails.investmentFrequency ||
+            'Regular',
+          investmentFrequencyId:
+            investmentFrequencyOption?.id || planDetails.investmentFrequencyId,
+          riders: processedRiders,
+        },
+      },
+    );
+
+    return extractLumpSumFromProviderPlanResponse(data);
+  };
+
   const showRiders = computed(() => {
     return ridersData.value.length > 0;
   });
@@ -363,6 +435,7 @@ export function useSavingsPlans(options = {}) {
         actualPremium: plan.actualPremium || 0,
         insuranceProviderId: plan.providerId || plan.insuranceProviderId,
         providerCode: plan.providerCode,
+        instantPolicy: plan.instantPolicy ?? false,
       }));
 
       availablePlansTable.data = processedPlans;
@@ -381,7 +454,9 @@ export function useSavingsPlans(options = {}) {
         plan => plan.id === planId,
       );
       if (foundPlan) {
-        return foundPlan;
+        // Deep clone so PlanDetails edits (Calculate, v-models) do not mutate
+        // the row object in availablePlansTable by reference.
+        return structuredClone(toRaw(foundPlan));
       }
 
       const { data } = await axios.get(
@@ -911,6 +986,7 @@ export function useSavingsPlans(options = {}) {
     findCurrencyOption,
     findInvestmentFrequencyOption,
     calculatePlanPayout,
+    fetchSavingsProviderPlanLumpSum,
     showRiders,
     totalRiderPrice,
     getRiderDetails,

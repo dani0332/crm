@@ -6,7 +6,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -137,10 +136,10 @@ class SendUpdateToCustomerJob implements ShouldQueue
     private function isEmailResponseSuccessful($quoteTypeId, $response)
     {
         if ($quoteTypeId === QuoteTypeId::Device) {
-            return $response === Response::HTTP_OK || $response === Response::HTTP_CREATED;
+            return intval($response) === Response::HTTP_OK || intval($response) === Response::HTTP_CREATED;
         }
 
-        return $response === Response::HTTP_CREATED;
+        return intval($response) === Response::HTTP_CREATED;
     }
 
     private function updateEmailStatusToSent($sendUpdateLog, $response)
@@ -149,8 +148,6 @@ class SendUpdateToCustomerJob implements ShouldQueue
             'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             'status_code' => $response,
         ]);
-
-        app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
 
         $sendUpdateLog->update([
             'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,

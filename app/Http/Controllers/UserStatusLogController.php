@@ -10,12 +10,13 @@ use App\Models\User;
 use App\Models\UserStatusAuditLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class UserStatusLogController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:'.RolesEnum::Engineering);
+        $this->middleware('role:'.Arr::join([RolesEnum::Admin, RolesEnum::Engineering], '|'));
     }
 
     public function index(Request $request)

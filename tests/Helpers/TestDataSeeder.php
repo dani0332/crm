@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AuthGuardEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
@@ -595,5 +596,63 @@ class TestDataSeeder
             'emirate_of_registration_id' => (int) $emirateId,
             'business_type_of_insurance_id' => (int) $businessTypeId,
         ];
+    }
+
+    /**
+     * Seed a Savings DocumentType row on sqlite (e.g. `PP_SAV`).
+     *
+     * This is intentionally general-purpose for Savings. Add/override fields as new Savings OCR docs are introduced.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    public static function seedSavingsDocumentType(string $code, string $text, array $overrides = []): void
+    {
+        $db = DB::connection('sqlite');
+
+        $defaults = [
+            'code' => $code,
+            'text' => $text,
+            'description' => '',
+            'category' => 'QUOTE',
+            'is_active' => 1,
+            'quote_type_id' => QuoteTypes::SAVINGS->id(),
+            'registration_type' => null,
+            'vehicle_use' => null,
+            'sort_order' => null,
+            'receive_from_customer' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db->table('document_types')->updateOrInsert(
+            ['code' => $code],
+            array_merge($defaults, $overrides),
+        );
+    }
+
+    /**
+     * Seed a DocumentType row by code/text/category for OCR tests.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    public static function seedDocumentType(string $code, string $text, string $category = 'QUOTE', array $overrides = []): void
+    {
+        $db = DB::connection('sqlite');
+
+        $defaults = [
+            'code' => $code,
+            'text' => $text,
+            'description' => '',
+            'category' => $category,
+            'is_active' => 1,
+            'receive_from_customer' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db->table('document_types')->updateOrInsert(
+            ['code' => $code],
+            array_merge($defaults, $overrides),
+        );
     }
 }

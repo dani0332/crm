@@ -35,6 +35,7 @@ class ConversionOptimizationScheduledExportService
         'advisors',
         'teams',
         'sub_teams',
+        'department',
         'cap_percentage',
         'isCommercial',
         'isEmbeddedProducts',

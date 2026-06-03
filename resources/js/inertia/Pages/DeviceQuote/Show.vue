@@ -6,7 +6,7 @@ import { reactive } from 'vue';
 import OcrLogs from '../../Components/OcrLogs.vue';
 import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -1781,7 +1781,11 @@ const formatToDateTime = dateString => {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <CustomerChatLogs
       :customerName="quote?.first_name + ' ' + quote?.last_name"

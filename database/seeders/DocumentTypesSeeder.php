@@ -222,6 +222,7 @@ class DocumentTypesSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
+                'sort_order' => 10,
             ],
         ];
 
