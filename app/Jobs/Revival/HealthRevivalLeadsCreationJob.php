@@ -3,19 +3,26 @@
 namespace App\Jobs\Revival;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RelationCodeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
+use App\Services\HealthRevamp\HealthQuoteRevampMigrationMutator;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,6 +40,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
     public $timeout = 300;
     public $backoff = 320;
     private $lead = null;
+    private HealthQuoteRevampMigrationMutator $mutator;
 
     /**
      * Create a new job instance.
@@ -40,6 +48,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
     public function __construct($lead)
     {
         $this->lead = $lead;
+        $this->mutator = app(HealthQuoteRevampMigrationMutator::class);
         $this->onQueue('renewals');
     }
 
@@ -65,39 +74,96 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
         }
         try {
 
+            if ($this->lead->isMigrated()) {
+
+                $coverForId = $this->lead->cover_for_id;
+                $maritalStatusId = $this->lead->marital_status_id;
+                $insureCode = $this->lead->insure_code;
+                $policyHolderCode = $this->lead->policy_holder_code;
+                $policyHolderCategoryCode = $this->lead->policy_holder_category_code;
+
+                // create policyholder member data
+                $gender = $this->lead->gender;
+                $salaryBandId = $this->lead->salary_band_id;
+                $memberCategoryId = $this->lead->member_category_id;
+                $visaCategoryId = $this->lead->visa_category_id;
+
+            } else {
+
+                // update following data for non-migrated
+                $coverForId = $this->mutator->getCoverForId($this->lead);
+                $maritalStatusId = $this->mutator->getMartialStatusId($this->lead);
+                $insureCode = $coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value ? null : HealthInsureEnum::MYSELF_AND_MY_FAMILY_MEMBERS->value;
+                $policyHolderCode = $coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value ? null : HealthPolicyHolderEnum::ME->value;
+                $policyHolderCategoryCode = $this->mutator->getPolicyHolderCategoryCode($this->lead);
+
+                // create policyholder member data for non-migrated
+                $gender = $this->mutator->getGender($this->lead);
+                $salaryBandId = $this->mutator->getSalaryBandId($this->lead);
+                $visaCategoryId = $this->mutator->getVisaCategoryId($this->lead);
+                $memberCategoryId = $this->mutator->getMemberCategoryId($this->lead);
+            }
+
             $dataArr = [
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 'email' => $this->lead->email,
-                // 'email' => 'nouman.hussain@myalfred.com',
                 'details' => $this->lead->details,
                 'mobileNo' => $this->lead->mobile_no,
                 'preference' => $this->lead->preference,
                 'source' => LeadSourceEnum::REVIVAL,
-                'maritalStatusId' => $this->lead->marital_status_id,
                 'premium' => $this->lead->premium,
                 'leadTypeId' => $this->lead->lead_type_id,
                 'referenceUrl' => config('constants.APP_URL'),
-                'price_starting_from' => $this->lead->price_starting_from,
-                'is_ebp_renewal' => $this->lead->is_ebp_renewal == 'on' ? true : false,
-                'coverForId' => $this->lead->cover_for_id,
+                'isEbpRenewal' => $this->lead->is_ebp_renewal == 'on' ? true : false,
                 'hasDental' => $this->lead->has_dental == 'on' ? true : false,
                 'hasWorldwideCover' => $this->lead->has_worldwide_cover == 'on' ? true : false,
                 'hasHome' => $this->lead->has_home == 'on' ? true : false,
                 'currentlyInsuredWithId' => $this->lead->currently_insured_with_id,
-                'healthTeamType' => $this->lead->health_team_type,
                 'healthPlanTypeId' => $this->lead->health_plan_type_id,
-            ];
-            $dataArr['memberDetails'][] = [
+                'customerType' => CustomerTypeEnum::Individual,
+                'price_starting_from' => null,
+                'healthTeamType' => $this->lead->health_team_type,
+                'subSourceId' => $this->lead->sub_source_id ?? null,
+                'subSourceOptionsId' => $this->lead->sub_source_options_id ?? null,
+                'additionalNotes' => $this->lead->additional_notes ?? null,
+                'userId' => 1,
+                'policyNumber' => null,
+                'policyStartDate' => $this->lead->policy_start_date,
                 'firstName' => $this->lead->first_name,
                 'lastName' => $this->lead->last_name,
-                'dob' => $this->lead->dob,
-                'gender' => $this->lead->gender,
-                'nationalityId' => $this->lead->nationality_id,
-                'emirateOfYourVisaId' => $this->lead->emirate_of_your_visa_id,
-                'salaryBandId' => $this->lead->salary_band_id,
-                'memberCategoryId' => $this->lead->member_category_id,
+                'sendOcbEmail' => false,
+                'coverForId' => $coverForId,
+                'maritalStatusId' => $maritalStatusId,
+                'insureCode' => $insureCode, // WHO WOULD THE CUSTOMER LIKE TO INSURE?
+                'policyHolderCode' => $policyHolderCode, // WHO WILL BE THE POLICYHOLDER?
+                'policyHolderCategoryCode' => $policyHolderCategoryCode,
             ];
 
+            $dob = ! empty($this->lead->dob) ? Carbon::parse($this->lead->dob)->toDateString() : null;
+            $dataArr['memberDetails'][] = [
+                'id' => 'temp-1234',
+                'firstName' => $this->lead->first_name,
+                'lastName' => $this->lead->last_name,
+                'dob' => $dob,
+                'nationalityId' => $this->lead->nationality_id,
+                'emirateOfYourVisaId' => $this->lead->emirate_of_your_visa_id,
+                'gender' => $gender,
+                'salaryBandId' => $salaryBandId,
+                'memberCategoryId' => $memberCategoryId,
+                'visaCategoryId' => $visaCategoryId,
+                'relationCode' => RelationCodeEnum::SELF->value,
+                'maritalStatusId' => $maritalStatusId,
+                'isInsured' => $coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value ? false : true,
+                'isPolicyHolder' => true,
+                'isPrincipal' => $coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value ? false : true,
+                'isPecMarked' => $this->lead->pec_marked_at != null,
+            ];
+
+            LoggerService::info('Health saveHealthQuote - CAPI API request - Revival', extra: ['request' => $dataArr]);
+
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
+
+            LoggerService::info('Health saveHealthQuote - CAPI API response - Revival', extra: ['response' => $capiResponse]);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
                 $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
