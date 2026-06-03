@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
-use App\Repositories\LookupRepository;
 use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
 {
@@ -76,7 +73,6 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
      */
     protected function mapRenewalQuoteFromCarQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
-        $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', QuoteTypes::BIKE->shortCode());
 
         $quote->loadMissing('payments');
@@ -94,7 +90,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'advisor_id' => null,
             'assignment_type' => null,
             'renewal_batch' => null,
-            'renewal_batch_id' => $renewalBatchId,
+            'renewal_batch_id' => null,
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'renewal_import_code' => $renewalsUploadLeads->renewal_import_code,
             'previous_quote_policy_number' => $quote->policy_number,
@@ -110,16 +106,9 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'insurance_provider_id' => null,
         ];
 
-        $lookup = Cache::remember(
-            'cqf_transaction_type_renewal',
-            now()->addHour(),
-            fn () => LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
-                ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
-                ->first()
-        );
-
-        if ($lookup) {
-            $quoteData['transaction_type_id'] = $lookup->id;
+        $transactionTypeId = $this->resolveTransactionTypeId();
+        if ($transactionTypeId) {
+            $quoteData['transaction_type_id'] = $transactionTypeId;
         }
 
         return $quoteData;

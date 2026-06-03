@@ -158,16 +158,9 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'insurance_provider_id' => null,
         ];
 
-        $lookup = Cache::remember(
-            'cqf_transaction_type_renewal',
-            now()->addHour(),
-            fn () => LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
-                ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
-                ->first()
-        );
-
-        if ($lookup) {
-            $quoteData['transaction_type_id'] = $lookup->id;
+        $transactionTypeId = $this->resolveTransactionTypeId();
+        if ($transactionTypeId) {
+            $quoteData['transaction_type_id'] = $transactionTypeId;
         }
 
         return $quoteData;
@@ -208,6 +201,19 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
         ];
 
         return array_merge($base, $this->getFailedQuoteDataExtra($quote));
+    }
+
+    protected function resolveTransactionTypeId(): ?int
+    {
+        $lookup = Cache::remember(
+            'cqf_transaction_type_renewal',
+            now()->addHour(),
+            fn () => LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+                ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
+                ->first()
+        );
+
+        return $lookup?->id;
     }
 
     /**

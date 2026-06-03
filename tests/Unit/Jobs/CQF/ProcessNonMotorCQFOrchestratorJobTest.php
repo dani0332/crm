@@ -19,7 +19,7 @@ beforeEach(function () {
 
 test('has correct job configuration', function () {
     expect($this->job->tries)->toBe(1)
-        ->and($this->job->timeout)->toBe(300);
+        ->and($this->job->timeout)->toBe(60);
 });
 
 test('implements ShouldBeUnique', function () {

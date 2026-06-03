@@ -29,6 +29,8 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
      */
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal Orchestrator';
 
+    private const DEFAULT_RENEWAL_DAYS_THRESHOLD = 120;
+
     // Single try is intentional — the orchestrator is idempotent and re-triggered manually if needed.
     public int $tries = 1;
 
@@ -40,7 +42,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
     {
-        $renewalDaysThreshold = (int) (getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD) ?: 120);
+        $renewalDaysThreshold = (int) (getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD) ?: self::DEFAULT_RENEWAL_DAYS_THRESHOLD);
         $startDate = Carbon::now()->addDays($renewalDaysThreshold);
 
         LoggerService::info(self::class.' - Non-motor CQF renewal orchestrator started', [
