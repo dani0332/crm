@@ -1047,9 +1047,13 @@ class SplitPaymentService
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
                     $quoteStatusId = $quoteModel->quote_status_id;
                     LoggerService::info("Master payment code: {$quoteModel->code} Travel duplicate lead block entered - quoteStatusId: {$quoteStatusId}, insuranceProviderCode: {$masterPayment->insuranceProvider->code}, isFromJob: ".($isFromJob ? 'true' : 'false'));
-                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                    if (
+                        in_array($masterPayment->insuranceProvider->code, [InsuranceProviderEnum::QIC->value, InsuranceProviderEnum::DIC->value]) &&
+                        $isFromJob &&
+                        $totalApproved != $totalPaymentsCount
+                    ) {
                         $quoteStatusId = QuoteStatusEnum::PaymentPending;
-                        LoggerService::info("Master payment code: {$quoteModel->code} QIC partial approval - overriding quoteStatusId to PaymentPending, totalApproved: {$totalApproved}, totalPaymentsCount: {$totalPaymentsCount}");
+                        LoggerService::info("Master payment code: {$quoteModel->code} QIC, DIC partial approval - overriding quoteStatusId to PaymentPending, totalApproved: {$totalApproved}, totalPaymentsCount: {$totalPaymentsCount}");
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
                         $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
