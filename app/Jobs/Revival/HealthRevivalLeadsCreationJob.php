@@ -141,7 +141,6 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
 
             $dob = ! empty($this->lead->dob) ? Carbon::parse($this->lead->dob)->toDateString() : null;
             $dataArr['memberDetails'][] = [
-                'id' => 'temp-1234',
                 'firstName' => $this->lead->first_name,
                 'lastName' => $this->lead->last_name,
                 'dob' => $dob,
