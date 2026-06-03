@@ -318,3 +318,40 @@ it('getBrokerInvoice maps INTERNAL_ERROR from invoice download path', function (
         ->and($result['completed_step'])->toBe(PolicyIssuanceEnum::DIC_TRAVEL_GET_BROKER_INVOICE)
         ->and($result['message'])->toContain('server error');
 });
+
+it('issuePolicy skips quote update when required field is missing or null in successful response', function (array $responseBody) {
+    $httpClient = Mockery::mock(DicHttpClient::class);
+    $httpClient->shouldReceive('buildUrl')->andReturn('https://unit-dic.test/products/buy/client');
+    $httpClient->shouldReceive('authenticatedRequest')->andReturn(DicTestHelper::clientResponse($responseBody, 200));
+    app()->instance(DicHttpClient::class, $httpClient);
+
+    $builder = Mockery::mock(DicRequestBuilder::class);
+    $builder->shouldReceive('buildIssuePolicyPayload')->andReturn(['policy_id' => '00000000-0000-4000-8000-000000000099']);
+
+    $quote = TravelQuote::factory()->make([
+        'code' => 'UNIT-TQ-skip-update',
+        'insurer_quote_number' => '00000000-0000-4000-8000-000000000099',
+    ]);
+
+    $service = new DicApiService(new DicResponseHandler, $builder, app(PolicyIssuanceService::class));
+    $service->issuePolicy($quote, new PolicyIssuance);
+
+    expect($quote->policy_number)->toBeNull();
+})->with(function () {
+    $valid = [
+        'certificateNumber' => 'CERT-001',
+        'additionalDetails' => [
+            'vat_on_commission' => '15.00',
+            'commission_excluding_vat' => '100.00',
+            'commission_including_vat' => '115.00',
+            'premium_issuing_date' => '2025-01-01',
+        ],
+    ];
+
+    yield 'empty certificateNumber' => [array_merge($valid, ['certificateNumber' => ''])];
+    yield 'missing certificateNumber' => [array_diff_key($valid, ['certificateNumber' => ''])];
+    yield 'null vat_on_commission' => [array_merge($valid, ['additionalDetails' => array_merge($valid['additionalDetails'], ['vat_on_commission' => null])])];
+    yield 'null commission_excluding_vat' => [array_merge($valid, ['additionalDetails' => array_merge($valid['additionalDetails'], ['commission_excluding_vat' => null])])];
+    yield 'null commission_including_vat' => [array_merge($valid, ['additionalDetails' => array_merge($valid['additionalDetails'], ['commission_including_vat' => null])])];
+    yield 'null premium_issuing_date' => [array_merge($valid, ['additionalDetails' => array_merge($valid['additionalDetails'], ['premium_issuing_date' => null])])];
+});

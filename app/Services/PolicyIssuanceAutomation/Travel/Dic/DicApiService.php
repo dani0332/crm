@@ -103,9 +103,16 @@ class DicApiService
      */
     private function applyIssuePolicyResponseToQuote(TravelQuote $quote, array $body): void
     {
-        if (! isset($body['certificateNumber']) || ! is_string($body['certificateNumber']) || $body['certificateNumber'] === '') {
+        if (
+            ! isset($body['certificateNumber']) || ! is_string($body['certificateNumber']) || $body['certificateNumber'] === '' ||
+            data_get($body, 'additionalDetails.vat_on_commission') === null ||
+            data_get($body, 'additionalDetails.commission_excluding_vat') === null ||
+            data_get($body, 'additionalDetails.commission_including_vat') === null ||
+            data_get($body, 'additionalDetails.premium_issuing_date') === null
+        ) {
             return;
         }
+
         $startDate = $quote->policy_start_date ?: $quote->start_date;
 
         if (! $startDate) {
