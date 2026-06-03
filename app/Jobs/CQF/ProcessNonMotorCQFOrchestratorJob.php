@@ -31,7 +31,11 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
 
     // Single try is intentional — the orchestrator is idempotent and re-triggered manually if needed.
     public int $tries = 1;
-    public int $timeout = 300;
+
+    // Keep timeout under the queue connection's retry_after (90) so a slow run is never
+    // released and re-run concurrently. The orchestrator only counts eligible quotes and
+    // creates lead rows before dispatching the batch, so 60s is ample.
+    public int $timeout = 60;
     public int $uniqueFor = 360;
 
     public function handle(NonMotorCQFRenewalExecutionService $executionService): void
