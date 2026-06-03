@@ -8,6 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\UAELicenseHeldForEnum;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\CarQuote;
@@ -265,7 +266,12 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
     /**
      * Return the next license held-for ID (one step up the ordered list).
-     * UAE caps at ID 7 ("5 years and above"); back-home caps at ID 22 ("20 years+").
+     *
+     * UAE uses UAELicenseHeldForEnum (IDs 1–7, caps at FIVE_YEARS=7) — same approach as
+     * CarCQFQuoteMappingService::getNextUAELicenseHeldForId().
+     *
+     * Back-home IDs (8–22) always have is_active=0; any garbage/duplicate rows added beyond
+     * the valid range have is_active=1, so filtering on both columns naturally excludes them.
      */
     private function incrementLicenseHeldForId(?int $currentId, bool $backHome = false): ?int
     {
@@ -273,19 +279,28 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             return null;
         }
 
-        $rows = $this->getUaeLicenseRows();
+        if (! $backHome) {
+            $maxValue = UAELicenseHeldForEnum::FIVE_YEARS->value;
 
-        if ($rows->firstWhere('id', $currentId) === null) {
-            return $currentId;
+            if (UAELicenseHeldForEnum::fromId($currentId) === null) {
+                return null;
+            }
+
+            if ($currentId >= $maxValue) {
+                return $maxValue;
+            }
+
+            return UAELicenseHeldForEnum::fromId($currentId + 1)?->value ?? $maxValue;
         }
 
-        $activeColumn = $backHome ? 'is_back_home_license_active' : 'is_active';
-        $nextId = $rows
-            ->where($activeColumn, 1)
+        // Back-home: valid rows have is_back_home_license_active=1 AND is_active=0.
+        $next = $this->getUaeLicenseRows()
+            ->where('is_back_home_license_active', 1)
+            ->where('is_active', 0)
             ->where('id', '>', $currentId)
-            ->first()?->id;
+            ->first();
 
-        return $nextId ?? $currentId;
+        return $next?->id ?? $currentId;
     }
 
     protected function copyBikeQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void

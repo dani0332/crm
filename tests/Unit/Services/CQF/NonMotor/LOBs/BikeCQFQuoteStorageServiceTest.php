@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\UAELicenseHeldForEnum;
 use App\Models\BikeQuote;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -23,43 +24,34 @@ beforeEach(function () {
     $this->service = app(BikeCQFQuoteStorageService::class);
 });
 
-it('increments uae_license_held_for_id to the next active entry', function () {
-    $current = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
-    $next = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
-
+it('increments uae_license_held_for_id by one step using UAELicenseHeldForEnum', function () {
     $increment = Closure::bind(
         fn ($id) => $this->incrementLicenseHeldForId($id),
         $this->service,
         BikeCQFQuoteStorageService::class
     );
 
-    expect($increment($current->id))->toBe($next->id);
+    expect($increment(UAELicenseHeldForEnum::FOUR_YEARS->value))->toBe(UAELicenseHeldForEnum::FIVE_YEARS->value);
 });
 
-it('keeps uae_license_held_for_id at cap when already at the highest active entry', function () {
-    $cap = UAELicenseHeldFor::factory()->create(['text' => '5 years and above']);
-
+it('caps uae_license_held_for_id at FIVE_YEARS when already at max', function () {
     $increment = Closure::bind(
         fn ($id) => $this->incrementLicenseHeldForId($id),
         $this->service,
         BikeCQFQuoteStorageService::class
     );
 
-    expect($increment($cap->id))->toBe($cap->id);
+    expect($increment(UAELicenseHeldForEnum::FIVE_YEARS->value))->toBe(UAELicenseHeldForEnum::FIVE_YEARS->value);
 });
 
-it('skips inactive entries when incrementing uae_license_held_for_id', function () {
-    $current = UAELicenseHeldFor::factory()->create(['text' => '4 years']);
-    UAELicenseHeldFor::factory()->inactive()->create(['text' => 'deleted entry']);
-    $active = UAELicenseHeldFor::factory()->create(['text' => '5 years and above']);
-
+it('returns null for uae_license_held_for_id when ID is not a valid UAELicenseHeldForEnum value', function () {
     $increment = Closure::bind(
         fn ($id) => $this->incrementLicenseHeldForId($id),
         $this->service,
         BikeCQFQuoteStorageService::class
     );
 
-    expect($increment($current->id))->toBe($active->id);
+    expect($increment(99))->toBeNull();
 });
 
 it('returns null when incrementing a null uae_license_held_for_id', function () {
@@ -70,6 +62,45 @@ it('returns null when incrementing a null uae_license_held_for_id', function () 
     );
 
     expect($increment(null))->toBeNull();
+});
+
+it('increments back_home_license_held_for_id to the next valid entry', function () {
+    $current = UAELicenseHeldFor::factory()->inactive()->create();
+    $next = UAELicenseHeldFor::factory()->inactive()->create();
+
+    $increment = Closure::bind(
+        fn ($id) => $this->incrementLicenseHeldForId($id, backHome: true),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($increment($current->id))->toBe($next->id);
+});
+
+it('caps back_home_license_held_for_id at current when no higher valid entry exists', function () {
+    $cap = UAELicenseHeldFor::factory()->inactive()->create();
+
+    $increment = Closure::bind(
+        fn ($id) => $this->incrementLicenseHeldForId($id, backHome: true),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($increment($cap->id))->toBe($cap->id);
+});
+
+it('excludes garbage rows with is_active=1 when incrementing back_home_license_held_for_id', function () {
+    $current = UAELicenseHeldFor::factory()->inactive()->create();
+    // Garbage row: is_active=1 and is_back_home_license_active=1 — must be excluded.
+    UAELicenseHeldFor::factory()->create();
+
+    $increment = Closure::bind(
+        fn ($id) => $this->incrementLicenseHeldForId($id, backHome: true),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    expect($increment($current->id))->toBe($current->id);
 });
 
 it('stores copied BikeQuote with renewal source and new lead status from PersonalQuote', function () {
@@ -243,14 +274,11 @@ it('skips copying when old PersonalQuote has no BikeQuote', function () {
 });
 
 it('increments uae_license_held_for_id on Bike-to-Bike renewal', function () {
-    $current = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
-    $next = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
-
     $oldPq = PersonalQuote::factory()->create(['quote_type_id' => QuoteTypeId::Bike]);
 
     BikeQuote::factory()->create([
         'personal_quote_id' => $oldPq->id,
-        'uae_license_held_for_id' => $current->id,
+        'uae_license_held_for_id' => UAELicenseHeldForEnum::FOUR_YEARS->value,
     ]);
 
     $oldPq->load('bikeQuote');
@@ -271,15 +299,12 @@ it('increments uae_license_held_for_id on Bike-to-Bike renewal', function () {
     $copyDetail($newPq, $oldPq);
 
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('uae_license_held_for_id'))
-        ->toBe($next->id);
+        ->toBe(UAELicenseHeldForEnum::FIVE_YEARS->value);
 });
 
 it('increments uae_license_held_for_id on Car-to-Bike renewal', function () {
-    $current = UAELicenseHeldFor::factory()->create(['text' => '1 year']);
-    $next = UAELicenseHeldFor::factory()->create(['text' => '2 years']);
-
     $carQuote = CarQuote::factory()->create([
-        'uae_license_held_for_id' => $current->id,
+        'uae_license_held_for_id' => UAELicenseHeldForEnum::FOUR_YEARS->value,
     ]);
 
     $newPq = PersonalQuote::factory()->create([
@@ -298,7 +323,7 @@ it('increments uae_license_held_for_id on Car-to-Bike renewal', function () {
     $copyCarToBike($newPq, $carQuote);
 
     expect(BikeQuote::where('personal_quote_id', $newPq->id)->value('uae_license_held_for_id'))
-        ->toBe($next->id);
+        ->toBe(UAELicenseHeldForEnum::FIVE_YEARS->value);
 });
 
 it('falls back to car_type_insurance_id when getCarTypeInsuranceId returns null on Car-to-Bike renewal', function () {
