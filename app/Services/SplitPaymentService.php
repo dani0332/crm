@@ -1014,7 +1014,14 @@ class SplitPaymentService
 
             $successMessage = 'Processing master payment approval completed';
 
-            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
+            if (
+                (
+                    in_array($masterPayment->insuranceProvider->code, [InsuranceProviderEnum::QIC->value, InsuranceProviderEnum::DIC->value]) &&
+                    $isFromJob &&
+                    $totalApproved > 0
+                ) ||
+                ($totalApproved == $totalPaymentsCount)
+            ) {
                 if ($sendUpdateId) {
                     if (in_array($quoteModel->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
