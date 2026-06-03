@@ -422,6 +422,12 @@ class RetryAllocationService
                         ->orWhereNull('source');
                 });
             })
+            ->when(in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::HOME_REVIVAL]), function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->whereNotIn('source', [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])
+                        ->orWhereNull('source');
+                });
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();
