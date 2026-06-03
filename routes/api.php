@@ -67,6 +67,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [ApiController::class, 'getGenericDocuments']);
 
+    Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
+
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
 
@@ -123,7 +125,6 @@ Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::cla
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 Route::post('/imcrm/eligible-for-revival-followups', [ApiController::class, 'eligibleForRevivalFollowups'])->name('eligibleForRevivalFollowups');
-Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
 
 Route::prefix('v1')->group(function () {
     Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');

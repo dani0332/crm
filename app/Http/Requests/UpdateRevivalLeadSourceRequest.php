@@ -18,6 +18,7 @@ class UpdateRevivalLeadSourceRequest extends FormRequest
             'quoteTypeId' => 'required|integer',
             'channel' => 'required|string',
             'cta' => 'required|string',
+            'medium' => 'optional|string',
         ];
     }
 }

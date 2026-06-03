@@ -1111,6 +1111,7 @@ class ApiController extends Controller
             'quoteTypeId' => $request->quoteTypeId,
             'channel' => $request->channel,
             'CTA' => $request->cta,
+            'medium' => $request->medium,
         ]);
 
         $quoteType = QuoteTypes::getName($request->quoteTypeId);
