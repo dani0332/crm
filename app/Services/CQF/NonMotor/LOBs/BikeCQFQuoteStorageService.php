@@ -216,7 +216,6 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'vehicle_type_id' => $carQuote->vehicle_type_id,
             'seat_capacity' => $carQuote->seat_capacity,
             'year_of_first_registration' => $carQuote->year_of_first_registration,
-            'bike_type_insurance_id' => null,
             'uae_license_held_for_id' => $this->incrementLicenseHeldForId($carQuote->getRawOriginal('uae_license_held_for_id')),
             'back_home_license_held_for_id' => $this->incrementLicenseHeldForId($carQuote->back_home_license_held_for_id, backHome: true),
             // --- reset on renewal ---
@@ -321,7 +320,6 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'vehicle_type_id' => $oldLob->vehicle_type_id,
             'seat_capacity' => $oldLob->seat_capacity,
             'year_of_first_registration' => $oldLob->year_of_first_registration,
-            'bike_type_insurance_id' => $oldLob->bike_type_insurance_id,
             'uae_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->uae_license_held_for_id),
             'back_home_license_held_for_id' => $this->incrementLicenseHeldForId($oldLob->back_home_license_held_for_id, backHome: true),
             // --- reset on renewal ---

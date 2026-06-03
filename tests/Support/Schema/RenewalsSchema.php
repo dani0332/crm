@@ -54,7 +54,7 @@ class RenewalsSchema
                 $table->unsignedBigInteger('vehicle_type_id')->nullable();
                 $table->integer('seat_capacity')->nullable();
                 $table->string('year_of_first_registration')->nullable();
-                $table->unsignedBigInteger('bike_type_insurance_id')->nullable();
+                $table->unsignedBigInteger('bike_type_insurance_id')->default(1);
                 $table->unsignedBigInteger('uae_license_held_for_id')->nullable();
                 $table->unsignedBigInteger('back_home_license_held_for_id')->nullable();
                 $table->decimal('bike_value', 15, 2)->nullable();
