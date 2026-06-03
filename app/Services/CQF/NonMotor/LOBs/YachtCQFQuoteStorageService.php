@@ -86,7 +86,6 @@ class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
             'mobile_no' => $oldLob->mobile_no,
             'gender' => $oldLob->gender,
             'dob' => $oldLob->dob,
-            'lang' => $oldLob->lang,
             'customer_id' => $oldLob->customer_id,
             'nationality_id' => $oldLob->nationality_id,
             'boat_details' => $oldLob->boat_details,

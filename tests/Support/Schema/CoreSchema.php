@@ -1226,6 +1226,7 @@ class CoreSchema
                 $table->string('gender')->nullable();
                 $table->string('id_type')->nullable();
                 $table->string('id_number')->nullable();
+                $table->string('trade_license_no')->nullable();
                 $table->string('code')->nullable();
                 $table->unsignedBigInteger('customer_details_id')->nullable();
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();

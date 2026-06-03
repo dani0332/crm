@@ -19,4 +19,13 @@ class InsuredFactory extends Factory
             'last_name' => $this->faker->lastName(),
         ];
     }
+
+    public function tradeLicense(): static
+    {
+        return $this->state([
+            'id_type' => 'tradeLicense',
+            'id_number' => $this->faker->numerify('####################'),
+            'trade_license_no' => $this->faker->numerify('####################'),
+        ]);
+    }
 }

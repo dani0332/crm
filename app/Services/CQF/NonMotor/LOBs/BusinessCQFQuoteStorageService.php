@@ -9,7 +9,9 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
+use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\EmbeddedProductRepository;
@@ -68,6 +70,7 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         }
         $this->copyEntityMapping($oldBusinessQuote, $businessQuote);
         $this->copyCustomerMembers($oldBusinessQuote, $businessQuote);
+        $this->copyInsured($oldBusinessQuote, $businessQuote);
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
     }
@@ -94,6 +97,28 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
             $attrs['quote_id'] = $newQuote->id;
             CustomerMembers::create($attrs);
         });
+    }
+
+    private function copyInsured(BusinessQuote $oldQuote, BusinessQuote $newQuote): void
+    {
+        $oldInsured = $oldQuote->latestInsured;
+        if ($oldInsured === null) {
+            return;
+        }
+
+        $attrs = $oldInsured->getAttributes();
+        unset($attrs['id'], $attrs['created_at'], $attrs['updated_at'], $attrs['deleted_at'], $attrs['laravel_through_key']);
+        $newInsured = Insured::create($attrs);
+
+        CustomerInsured::create([
+            'quote_type_id' => QuoteTypeId::Business,
+            'quote_request_id' => $newQuote->id,
+            'insured_id' => $newInsured->id,
+            'customer_id' => $newQuote->customer_id,
+            'is_active' => true,
+        ]);
+
+        LoggerService::info(self::class.' - Insured copied for business renewal');
     }
 
     /**
