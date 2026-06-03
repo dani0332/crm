@@ -31,8 +31,10 @@ class HealthQuoteController extends Controller
     protected $healthQuoteService;
     protected $slaService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, SLAService $slaService)
-    {
+    public function __construct(
+        HealthQuoteService $healthQuoteService,
+        SLAService $slaService,
+    ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->slaService = $slaService;
     }
@@ -178,8 +180,6 @@ class HealthQuoteController extends Controller
 
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
-        $request->validated();
-
         $quote = HealthQuote::where('uuid', $request->quoteId)->first();
         if ($quote?->is_quote_locked) {
             return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
@@ -187,16 +187,8 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Added.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
+            return redirect()->back()->with('error', 'Request not processed.');
         }
 
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
@@ -206,8 +198,6 @@ class HealthQuoteController extends Controller
 
     public function healthQuoteUpdateMember(MemberDetailRequest $request)
     {
-        $request->validated();
-
         $quote = HealthQuote::where('uuid', $request->quoteId)->first();
         if ($quote?->is_quote_locked) {
             return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
@@ -215,16 +205,8 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Updated.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
+            return redirect()->back()->with('error', 'Request not processed.');
         }
 
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
@@ -236,16 +218,8 @@ class HealthQuoteController extends Controller
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Member Updated.';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Request not processed. '.json_encode($responseMessage);
+        if (($response['status'] ?? true) === false || (isset($response['code']) && ! in_array($response['code'], [200, 201]))) {
+            return redirect()->back()->with('error', 'Request not processed.');
         }
 
         $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);

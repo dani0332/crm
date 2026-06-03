@@ -55,14 +55,14 @@ const isPlanSelectionDisable = computed(() => {
   const quoteType = props.quoteType?.toLowerCase();
   const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
   const isSourceIMCRM = page.props.quote?.source == leadSourceEnum?.IMCRM;
-  const isALNCProvider =
-    props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
+  const isQICProvider =
+    props.plan?.providerCode == insuranceProviderCodeEnum?.QIC;
 
   if (
     quoteType == quoteTypeCodeEnum?.Travel?.toLowerCase() &&
     isSourceIMCRM &&
     isNormalPlan &&
-    isALNCProvider
+    isQICProvider
   ) {
     const travelers = page.props.travelers ?? [];
     return (
