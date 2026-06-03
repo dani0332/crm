@@ -133,6 +133,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                         ->orWhereNull('source');
                 });
             })
+            ->when(in_array($this->quoteType, [QuoteTypes::HOME, QuoteTypes::HOME_REVIVAL]), function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->whereNotIn('source', [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])
+                        ->orWhereNull('source');
+                });
+            })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
 
