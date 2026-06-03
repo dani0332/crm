@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\LOBs;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\CarQuote;
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Models\UAELicenseHeldFor;
@@ -141,8 +144,8 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
-            if ($this->shouldCopyInsured() && $oldPersonalQuote !== null) {
-                $this->copyInsuredToRenewalQuote($newQuote, $oldPersonalQuote);
+            if ($this->shouldCopyInsured()) {
+                $this->copyCarQuoteInsuredToRenewalQuote($newQuote, $quote, $oldPersonalQuote);
             }
             $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
@@ -155,6 +158,38 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 
             return $newQuote;
         });
+    }
+
+    /**
+     * Copy insured name to the new renewal quote.
+     * Prefers the latestInsured from the linked PersonalQuote (when it exists); falls back to
+     * first_name/last_name on the CarQuote itself for quotes that were never stored with an insured record.
+     */
+    private function copyCarQuoteInsuredToRenewalQuote(PersonalQuote $newQuote, CarQuote $carQuote, ?PersonalQuote $oldPersonalQuote): void
+    {
+        if ($oldPersonalQuote?->latestInsured !== null) {
+            $this->copyInsuredToRenewalQuote($newQuote, $oldPersonalQuote);
+
+            return;
+        }
+
+        if (blank($carQuote->first_name) && blank($carQuote->last_name)) {
+            return;
+        }
+
+        $newInsured = Insured::create([
+            'customer_type' => CustomerTypeEnum::Individual,
+            'first_name' => $carQuote->first_name,
+            'last_name' => $carQuote->last_name,
+        ]);
+
+        CustomerInsured::create([
+            'quote_type_id' => $this->getQuoteTypeId(),
+            'quote_request_id' => $newQuote->id,
+            'insured_id' => $newInsured->id,
+            'customer_id' => $newQuote->customer_id,
+            'is_active' => true,
+        ]);
     }
 
     /**

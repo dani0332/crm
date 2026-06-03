@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -469,4 +470,125 @@ it('copies insured first and last name when copyInsuredToRenewalQuote is called 
     expect($newCustomerInsured)->not->toBeNull()
         ->and($newCustomerInsured->insured->first_name)->toBe('Hassan')
         ->and($newCustomerInsured->insured->last_name)->toBe('Ali');
+});
+
+it('falls back to CarQuote first/last name when old PersonalQuote has no insured record on Car-to-Bike renewal', function () {
+    $customer = Customer::factory()->create();
+
+    $carQuote = CarQuote::factory()->create([
+        'first_name' => 'Ahmed',
+        'last_name' => 'Khan',
+        'customer_id' => $customer->id,
+    ]);
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'uuid' => $carQuote->uuid,
+        'customer_id' => $customer->id,
+    ]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'customer_id' => $customer->id,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $oldPq->load('latestInsured'); // latestInsured is null — no customer_insured record
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $cq, $opq) => $this->copyCarQuoteInsuredToRenewalQuote($nq, $cq, $opq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $carQuote, $oldPq);
+
+    $newCustomerInsured = CustomerInsured::where('quote_request_id', $newPq->id)->first();
+
+    expect($newCustomerInsured)->not->toBeNull()
+        ->and($newCustomerInsured->insured->first_name)->toBe('Ahmed')
+        ->and($newCustomerInsured->insured->last_name)->toBe('Khan')
+        ->and($newCustomerInsured->insured->customer_type)->toBe(CustomerTypeEnum::Individual);
+});
+
+it('falls back to CarQuote first/last name when old PersonalQuote is null on Car-to-Bike renewal', function () {
+    $customer = Customer::factory()->create();
+
+    $carQuote = CarQuote::factory()->create([
+        'first_name' => 'Sara',
+        'last_name' => 'Lee',
+        'customer_id' => $customer->id,
+    ]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'customer_id' => $customer->id,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $cq, $opq) => $this->copyCarQuoteInsuredToRenewalQuote($nq, $cq, $opq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $carQuote, null);
+
+    $newCustomerInsured = CustomerInsured::where('quote_request_id', $newPq->id)->first();
+
+    expect($newCustomerInsured)->not->toBeNull()
+        ->and($newCustomerInsured->insured->first_name)->toBe('Sara')
+        ->and($newCustomerInsured->insured->last_name)->toBe('Lee');
+});
+
+it('prefers PersonalQuote latestInsured over CarQuote names on Car-to-Bike renewal', function () {
+    $customer = Customer::factory()->create();
+
+    $carQuote = CarQuote::factory()->create([
+        'first_name' => 'CarFirst',
+        'last_name' => 'CarLast',
+        'customer_id' => $customer->id,
+    ]);
+
+    $oldPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'uuid' => $carQuote->uuid,
+        'customer_id' => $customer->id,
+    ]);
+
+    $insured = Insured::factory()->create([
+        'first_name' => 'PqFirst',
+        'last_name' => 'PqLast',
+        'customer_type' => CustomerTypeEnum::Individual,
+    ]);
+
+    CustomerInsured::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'quote_request_id' => $oldPq->id,
+        'insured_id' => $insured->id,
+        'customer_id' => $customer->id,
+        'is_active' => true,
+    ]);
+
+    $newPq = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Bike,
+        'customer_id' => $customer->id,
+        'code' => 'BIK-NEW-'.Str::upper(Str::random(4)),
+    ]);
+
+    $oldPq->load('latestInsured');
+
+    $copyInsured = Closure::bind(
+        fn ($nq, $cq, $opq) => $this->copyCarQuoteInsuredToRenewalQuote($nq, $cq, $opq),
+        $this->service,
+        BikeCQFQuoteStorageService::class
+    );
+
+    $copyInsured($newPq, $carQuote, $oldPq);
+
+    $newCustomerInsured = CustomerInsured::where('quote_request_id', $newPq->id)->first();
+
+    expect($newCustomerInsured)->not->toBeNull()
+        ->and($newCustomerInsured->insured->first_name)->toBe('PqFirst')
+        ->and($newCustomerInsured->insured->last_name)->toBe('PqLast');
 });
