@@ -152,8 +152,14 @@ class SageApiEmbeddedProductService
         $createARInvoiceForEPLog = $embeddedProductTransaction?->sageApiLogs?->where('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)->first();
         $createEPARPayload = json_decode($createARInvoiceForEPLog->sage_payload, true);
         $sageRequest->customerId = $createEPARPayload['Invoices'][0]['CustomerNumber'];
+        $insurerRequestResponse = null;
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode);
+        if ($embeddedProductTransaction->collection_amount === null) {
+            $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
+            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
+        }
+
+        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode, $insurerRequestResponse);
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $sendUpdateLog->sageApiLogs->keyBy('step')->toArray();
@@ -188,7 +194,14 @@ class SageApiEmbeddedProductService
 
         $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode);
+        $insurerRequestResponse = null;
+
+        if ($embeddedProductTransaction->collection_amount === null) {
+            $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
+            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
+        }
+
+        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode, $insurerRequestResponse);
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $embeddedProductTransaction->sageApiLogs->keyBy('step')->toArray();
@@ -1529,17 +1542,25 @@ class SageApiEmbeddedProductService
 
     }
 
-    public static function createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode = null)
+    public static function createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode = null, $insurerRequestResponse = null)
     {
         return match ($epShortCode) {
-            EmbeddedProductEnum::ECB => self::createEmbeddedProductPayloadForECB($embeddedProductTransaction),
-            default => self::createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction),
+            EmbeddedProductEnum::ECB => self::createEmbeddedProductPayloadForECB($embeddedProductTransaction, $insurerRequestResponse),
+            default => self::createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction, $insurerRequestResponse),
         };
     }
 
-    private static function createEmbeddedProductPayloadForECB($embeddedProductTransaction)
+    private static function createEmbeddedProductPayloadForECB($embeddedProductTransaction, $insurerRequestResponse = null)
     {
         $insuranceProvider = $embeddedProductTransaction->product->embeddedProduct->insuranceProvider;
+        if ($insurerRequestResponse) {
+            $insurerRequestResponseObject = json_decode($insurerRequestResponse->response);
+            $embeddedProductTransaction->collection_amount = $insurerRequestResponseObject->policy_premium_with_tax;
+            $embeddedProductTransaction->premium_tax_amount = $insurerRequestResponseObject->policy_premium_tax;
+            $embeddedProductTransaction->premium_without_tax = $insurerRequestResponseObject->policy_premium_without_tax;
+            $embeddedProductTransaction->policy_start_date = $insurerRequestResponseObject->policy_start_dt;
+            $embeddedProductTransaction->policy_end_date = $insurerRequestResponseObject->policy_end_dt;
+        }
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $embeddedProductTransaction->certificate_number;
 
@@ -1575,9 +1596,17 @@ class SageApiEmbeddedProductService
         return $sageRequestEmbeddedProduct;
     }
 
-    private static function createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction)
+    private static function createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction, $insurerRequestResponse = null)
     {
         $insuranceProvider = $embeddedProductTransaction->product->embeddedProduct->insuranceProvider;
+        if ($insurerRequestResponse) {
+            $insurerRequestResponseObject = json_decode($insurerRequestResponse->response);
+            $embeddedProductTransaction->collection_amount = $insurerRequestResponseObject->payments[0]->amount;
+            $embeddedProductTransaction->premium_tax_amount = $insurerRequestResponseObject->pricing->tax_amount;
+            $embeddedProductTransaction->premium_without_tax = $insurerRequestResponseObject->pricing->policy_price;
+            $embeddedProductTransaction->policy_start_date = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(config('constants.DATE_FORMAT_ONLY'));
+            $embeddedProductTransaction->policy_end_date = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        }
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $embeddedProductTransaction->certificate_number;
 
