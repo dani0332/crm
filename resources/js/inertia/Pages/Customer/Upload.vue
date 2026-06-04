@@ -1,9 +1,59 @@
 <script setup>
+const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
 });
 const notification = useToast();
+const isProcessing = ref(false);
+let uploadWorker = null;
+
+const channelName = `public.${page.props.appEnv}.customer.upload`;
+const eventName = 'customer.upload.completed';
+
+const subscribeToUpload = () => {
+  uploadWorker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  uploadWorker.port.addEventListener('message', e => {
+    if (e.data.userId === page.props.auth.user.id) {
+      isProcessing.value = false;
+      unsubscribeFromUpload();
+      if (e.data.status === 'success') {
+        notification.success({
+          title: `Upload complete. ${e.data.uploadedCount} records processed.`,
+          position: 'top',
+        });
+      } else {
+        notification.error({ title: 'Upload failed. Please try again.', position: 'top' });
+      }
+    }
+  });
+
+  uploadWorker.onerror = error => {
+    console.error('Upload worker error:', error.message);
+    uploadWorker.port.close();
+  };
+
+  uploadWorker.port.start();
+  uploadWorker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
+  });
+};
+
+const unsubscribeFromUpload = () => {
+  if (uploadWorker) {
+    uploadWorker.port.postMessage({ action: 'unsubscribe', channel: channelName, event: eventName });
+    uploadWorker.port.close();
+    uploadWorker = null;
+  }
+};
+
+onUnmounted(() => unsubscribeFromUpload());
+
 const tableHeader = [
   { text: 'SR NO.', value: 'iterator' },
   { text: 'FIELD NAME', value: 'field_name' },
@@ -38,14 +88,13 @@ const uploadCustomer = useForm({
 
 function onSubmit() {
   uploadCustomer.post('/customer-process', {
+    preserveState: true,
     onError: errors => {
       console.log(uploadCustomer.setError(errors));
     },
     onSuccess: () => {
-      notification.success({
-        title: 'Upload customers records has been stored',
-        position: 'top',
-      });
+      isProcessing.value = true;
+      subscribeToUpload();
     },
   });
 }
@@ -113,7 +162,7 @@ function onSubmit() {
           size="md"
           color="emerald"
           type="submit"
-          :loading="uploadCustomer.processing"
+          :loading="uploadCustomer.processing || isProcessing"
         >
           Create
         </x-button>

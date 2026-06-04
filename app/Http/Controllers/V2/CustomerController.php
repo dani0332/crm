@@ -8,10 +8,9 @@ use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\CustomerUploadRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\ProcessCustomerUploadJob;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
-use App\Services\BerlinService;
-use App\Services\SendEmailCustomerService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -102,13 +101,21 @@ class CustomerController extends Controller
         return inertia('Customer/Upload');
     }
 
-    public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService)
+    public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest): RedirectResponse
     {
-        if ($customerUploadRequest->validated()) {
-            CustomerRepository::customerUploadRecordsCreate($customerUploadRequest, $sendEmailCustomerService, $berlinService);
-        }
+        $customerUploadRequest->validated();
 
-        return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
+        $path = $customerUploadRequest->file('file_name')->store('customer-uploads');
+
+        ProcessCustomerUploadJob::dispatch(
+            $path,
+            $customerUploadRequest->myalfred_expiry_date,
+            $customerUploadRequest->cdb_id,
+            (bool) $customerUploadRequest->inviatation_email,
+            auth()->id(),
+        );
+
+        return redirect('customer-upload');
     }
 
     public function listByEmail(Request $request)

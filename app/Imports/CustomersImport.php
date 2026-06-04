@@ -20,6 +20,7 @@ class CustomersImport implements OnEachRow
     public $inviatationEmail;
     public $sendEmailCustomerService;
     public $berlinService;
+    public int $rowCount = 0;
 
     public function __construct(
         $myalfredExpiryDate,
@@ -50,6 +51,7 @@ class CustomersImport implements OnEachRow
         $email = $row[1];
 
         if ($email != null && isValidEmail($email)) {
+            $this->rowCount++;
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
             $customerName = explode(' ', $row[0], 2);
