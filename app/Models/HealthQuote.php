@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthQuoteDigitalSignatory;
 use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -18,10 +21,12 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use App\Traits\TransformsAuditables;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -36,11 +41,11 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog, TransformsAuditables;
 
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
-        'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text',
+        'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text', 'is_migrated',
     ];
     protected $table = 'health_quote_request';
     protected $fillable = [];
@@ -59,6 +64,37 @@ class HealthQuote extends Model implements AuditableContract
     protected $guarded = [];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
+    ];
+    protected array $auditRelationMap = [
+        'marital_status_id' => ['relation' => 'maritalStatus', 'field' => 'text'],
+        'cover_for_id' => ['relation' => 'healthCoverFor', 'field' => 'text'],
+        'emirate_of_your_visa_id' => ['relation' => 'emirate', 'field' => 'text'],
+        'customer_id' => ['relation' => 'customer', 'field' => 'email'],
+        'nationality_id' => ['relation' => 'nationality', 'field' => 'text'],
+        'payment_status_id' => ['relation' => 'paymentStatus', 'field' => 'text'],
+        'quote_status_id' => ['relation' => 'quoteStatus', 'field' => 'text'],
+        'advisor_id' => ['relation' => 'advisor', 'field' => 'email'],
+        'wcu_id' => ['relation' => 'wcAdvisor', 'field' => 'email'],
+        'lead_type_id' => ['relation' => 'healthLeadType', 'field' => 'text'],
+        'salary_band_id' => ['relation' => 'salaryBand', 'field' => 'text'],
+        'member_category_id' => ['relation' => 'memberCategory', 'field' => 'text'],
+        'plan_id' => ['relation' => 'plan', 'field' => 'text'],
+        'currently_insured_with_id' => ['relation' => 'currentlyInsured', 'field' => 'text'],
+        'previous_advisor_id' => ['relation' => 'previousAdvisor', 'field' => 'email'],
+        'renewal_batch_id' => ['relation' => 'renewalBatchModel', 'field' => 'name'],
+        'insurance_provider_id' => ['relation' => 'insuranceProvider', 'field' => 'text'],
+        'sub_source_id' => ['relation' => 'subSource', 'field' => 'text'],
+        'sub_source_options_id' => ['relation' => 'subSourceOption', 'field' => 'text'],
+        'support_user_id' => ['relation' => 'supportUser', 'field' => 'email'],
+        'branch_id' => ['relation' => 'branch', 'field' => 'name'],
+        'visa_category_id' => ['relation' => 'visaCategory', 'field' => 'text'],
+        'pa_id' => ['relation' => 'pa', 'field' => 'email'],
+        'health_plan_type_id' => ['relation' => 'healthPlanType', 'field' => 'text'],
+        'health_plan_co_payment_id' => ['relation' => 'healthPlanCoPayment', 'field' => 'text'],
+        'policy_issuance_status_id' => ['relation' => 'policyIssuanceStatus', 'field' => 'text'],
+        'prefill_plan_id' => ['relation' => 'prefillPlan', 'field' => 'text'],
+        'transaction_type_id' => ['relation' => 'transactionType', 'field' => 'text'],
+        'quote_batch_id' => ['relation' => 'quoteBatch', 'field' => 'name'],
     ];
 
     protected static function booted()
@@ -95,6 +131,15 @@ class HealthQuote extends Model implements AuditableContract
     {
         return [
             'auditable_type' => self::class,
+            'api_auditable_type' => 'App\Models\HealthQuoteRequest',
+            'relations' => [
+                [
+                    'auditable_type' => CustomerMembers::class,
+                    'api_auditable_type' => 'App\Models\HealthQuoteRequestMemberDetails',
+                    'key' => 'quote_id',
+                    'relation' => 'many',
+                ],
+            ],
         ];
     }
     public function emirate()
@@ -701,5 +746,110 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         return $umaf?->isADNIC() ? true : false;
+    }
+
+    public function visaCategory()
+    {
+        return $this->belongsTo(VisaCategory::class, 'visa_category_id');
+    }
+
+    public function policyHolderCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'policy_holder_category_code', 'code')
+            ->where('key', LookupsEnum::POLICY_HOLDER_CATEGORY->value);
+    }
+
+    public function genderLookup()
+    {
+        return $this->belongsTo(Lookup::class, 'gender', 'code')
+            ->where('key', LookupsEnum::GENDER->value);
+    }
+
+    public function pa()
+    {
+        return $this->hasOne(User::class, 'id', 'pa_id');
+    }
+
+    public function healthPlanType()
+    {
+        return $this->belongsTo(HealthPlanType::class, 'health_plan_type_id');
+    }
+
+    public function healthPlanCoPayment()
+    {
+        return $this->belongsTo(HealthPlanCoPayment::class, 'health_plan_co_payment_id');
+    }
+
+    public function policyIssuanceStatus()
+    {
+        return $this->belongsTo(PolicyIssuanceStatus::class, 'policy_issuance_status_id');
+    }
+
+    public function prefillPlan()
+    {
+        return $this->belongsTo(HealthQuotePlan::class, 'prefill_plan_id');
+    }
+
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function quoteBatch()
+    {
+        return $this->belongsTo(QuoteBatches::class, 'quote_batch_id');
+    }
+
+    public function isEntity(): bool
+    {
+        if ($this->customer_id === null) {
+            return false;
+        }
+
+        $insured = $this->latestInsured;
+
+        return $insured !== null && $insured->customer_type === CustomerTypeEnum::Entity;
+    }
+
+    public static function customizeAuditTransformation($data): array
+    {
+        $lookupService = app(LookupService::class);
+
+        $leadSource = $data['model']?->source;
+
+        $insureCodeMapping = $lookupService->getHealthInsureOptions($leadSource)->pluck('text', 'code')->all();
+        $policyHolderCodeMapping = $lookupService->getPolicyHolder($leadSource)->pluck('text', 'code')->all();
+
+        $resolveText = function (array &$transformed, string $field, array $map): void {
+            $code = $transformed[$field] ?? null;
+            if ($code !== null) {
+                $transformed[$field.'_text'] = $map[$code] ?? null;
+            }
+        };
+
+        foreach (['transformedOld', 'transformedNew'] as $key) {
+            $resolveText($data[$key], 'insure_code', $insureCodeMapping);
+            $resolveText($data[$key], 'policy_holder_code', $policyHolderCodeMapping);
+        }
+
+        return $data;
+    }
+
+    public function isMigrated(): bool
+    {
+        return in_array($this->cover_for_id, [HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value, HealthCoverForEnum::DOMESTIC_HELPER->value]);
+    }
+
+    public function getIsMigratedAttribute(): bool
+    {
+        return $this->isMigrated();
+    }
+
+    public function isPolicyholderIncluded(): bool
+    {
+        return $this->activeMembers
+            ->where('is_policy_holder', true)
+            ->where('is_insured', true)
+            ->isNotEmpty();
     }
 }
