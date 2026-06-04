@@ -820,7 +820,7 @@
                     @foreach ($planIds as $planId)
                         <th>
                             <p class="text-center" style="font-size: 14px">
-                                AED {{ number_format($plans[$planId]->actualPremium ?? 0, 2) }}
+                                AED {{ number_format($plans[$planId]->discountPremium ?? 0, 2) }}
                             </p>
                         </th>
                     @endforeach
@@ -860,10 +860,10 @@
                                         }
 
                                         $totalPrice =
-                                            ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
+                                            ($plans[$planId]->discountPremium ?? 0) + ($plans[$planId]->vat ?? 0);
                                         $totalPriceFormatted = number_format($totalPrice, 2);
 
-                                        if ($plans[$planId]->actualPremium) {
+                                        if ($plans[$planId]->discountPremium) {
                                             echo '<a target="_blank" class="btn-buy" href="' .
                                                 $buyNowFullLink .
                                                 '">' .

@@ -109,7 +109,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isAllianceProvider: {
+  isQatarProvider: {
+    type: Boolean,
+    default: false,
+  },
+  canBypassPlanLock: {
     type: Boolean,
     default: false,
   },
@@ -193,7 +197,10 @@ const showLackingPayment = () => {
 const getInitalAmountForLifeLOB = () => {
   if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
-      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+      props.quoteRequest.premium *
+      (props.quoteRequest?.life_quote?.payment_term < 0
+        ? 1
+        : props.quoteRequest?.life_quote?.payment_term)
     );
   }
 
@@ -1169,6 +1176,7 @@ watch(
           :quoteDocuments="quoteDocuments"
           :totalPrice="totalPrice"
           :planDetail="planDetail"
+          :canBypassPlanLock="canBypassPlanLock"
           @add-payment-modal="addPaymentModal"
         />
 
@@ -1208,7 +1216,7 @@ watch(
                     :sendUpdate="sendUpdate"
                     :quoteType="quoteType"
                     :isCapBtnEnabled="isCapBtnEnabled"
-                    :isAllianceProvider="isAllianceProvider"
+                    :isQatarProvider="isQatarProvider"
                     :isEditPaymentEnabled="isEditPaymentEnabled"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"

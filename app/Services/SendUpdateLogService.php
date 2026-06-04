@@ -31,6 +31,7 @@ use App\Models\CarAddOn;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -41,7 +42,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SavingsQuote;
@@ -52,6 +52,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\DeviceQuoteService;
@@ -308,6 +309,13 @@ class SendUpdateLogService
                             ],
                         ];
                         break;
+                    case quoteTypeCode::Device:
+                        $personalQuoteRelation = [
+                            'deviceQuote' => [
+                                'parentClass' => DeviceQuote::class,
+                            ],
+                        ];
+                        break;
                 }
 
                 $quoteRelations = [
@@ -392,6 +400,9 @@ class SendUpdateLogService
                 }
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                if ($relation === 'deviceQuote') {
+                    $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
+                }
                 // Check if relationObject is a Collection
                 if ($relationObject instanceof Collection) {
                     // For collections like travelDestinations, we need to iterate through each item
@@ -1019,6 +1030,11 @@ class SendUpdateLogService
 
         $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quoteDetails)) {
+            return ['status' => false, 'message' => PlaceholderPrimaryEmail::message()];
+        }
+
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
         if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
@@ -1217,31 +1233,17 @@ class SendUpdateLogService
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelledReissued;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
                         'quote_batch_id' => null,
                     ]);
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $sendUpdateLog->quote_type_id,
-                        'quote_request_id' => $quote->id,
-                        'current_quote_status_id' => $newLeadStatus,
-                        'previous_quote_status_id' => $oldLeadStatus,
-                    ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-                    $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
                     $quote->update([
                         'quote_status_id' => $newLeadStatus,
-                    ]);
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $sendUpdateLog->quote_type_id,
-                        'quote_request_id' => $quote->id,
-                        'current_quote_status_id' => $newLeadStatus,
-                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 }

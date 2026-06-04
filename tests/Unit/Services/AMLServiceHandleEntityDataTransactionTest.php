@@ -50,7 +50,7 @@ it('manages handleEntityData transactions: no nesting when an outer transaction 
 
     $method = new ReflectionMethod(AMLService::class, 'handleEntityData');
     $method->setAccessible(true);
-    $service = new AMLService;
+    $service = app(AMLService::class);
 
     $baseRequest = fn (string $tl) => (object) [
         'screening_id_number' => $tl,

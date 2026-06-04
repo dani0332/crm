@@ -5,6 +5,7 @@ namespace App\Services\OCR\Passport;
 use App\Models\PassportVisaDetail;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,14 @@ class PassportDataProcessor
                 'document_type_code' => $this->documentTypeCode,
             ]);
 
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validatePassportFields($this->documentTypeCode, $this->memberDetailId);
+            LoggerService::info('Passport data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
+
             DB::commit();
 
             return true;
@@ -59,10 +68,12 @@ class PassportDataProcessor
             [
                 'quoteable_type' => get_class($this->quote),
                 'quoteable_id' => $this->quote->id,
-                'customer_member_id' => $this->memberDetailId,
+                'customer_member_id' => $this->memberDetailId > 0 ? $this->memberDetailId : null,
             ],
             [
                 'passport_number' => $this->extractedData['passport_number'] ?? null,
+                'passport_country' => $this->extractedData['passport_country'] ?? null,
+                'passport_expiry_date' => $this->extractedData['passport_expiry_date'] ?? null,
             ]
         );
     }

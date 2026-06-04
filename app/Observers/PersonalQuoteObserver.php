@@ -9,6 +9,7 @@ use App\Jobs\Audit\LogAllocation;
 use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
 use App\Observers\Traits\PersonalQuoteObservable;
+use App\Services\QuoteStatusLogService;
 use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteObserver
@@ -17,10 +18,16 @@ class PersonalQuoteObserver
 
     public function updating(PersonalQuote $quote): void
     {
-        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid}");
+        if ($quote->isDirty('quote_status_id')) {
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                (int) $quote->quote_type_id,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
 
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 

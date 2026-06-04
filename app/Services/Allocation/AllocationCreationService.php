@@ -2,30 +2,36 @@
 
 namespace App\Services\Allocation;
 
-use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
-use Carbon\Carbon;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Collection;
 
 class AllocationCreationService
 {
-    private const LIFE_REVIVAL_START_DATE = '2026-05-08'; // this is the start date of the life revival campaign only for staging environment
-
     public function executeLifeRevivalAllocation(): Collection
     {
-        $lifeRevivalStartDate = Carbon::parse(self::LIFE_REVIVAL_START_DATE)->startOfDay();
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::LIFE_REVIVAL);
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - fetching leads to revive');
 
         // Step 1: Get all LIFE quotes eligible for revival
-        $leadsToRevive = PersonalQuote::with('lifeQuote')->whereHas('lifeQuote')
+        $leadsToRevive = PersonalQuote::query()
+            ->select([
+                'id',
+                'uuid',
+                'dob',
+                'gender',
+                'email',
+                'mobile_no',
+                'quote_status_id',
+            ])
+            ->whereHas('lifeQuote')
             ->where('quote_type_id', QuoteTypeId::Life)->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])
-            ->when(config('constants.APP_ENV') == EnvEnum::STAGING, function ($query) use ($lifeRevivalStartDate) {
-                $query->where('created_at', '>=', $lifeRevivalStartDate);
-            })
-            ->where('created_at', '<=', now()->subMinutes(20))
+            ->whereDate('created_at', now()->subDays(90)->toDateString())
             ->where('is_revived', false)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where(function ($query) {
@@ -33,6 +39,10 @@ class AllocationCreationService
                     ->orWhereNull('payment_status_id');
             })
             ->get();
+
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - leads to revive before filtering with count', [
+            'count' => count($leadsToRevive),
+        ]);
 
         // Step 2: Filter duplicate insured
         $filteredLeads = $this->filterDuplicateInsured($leadsToRevive);
@@ -44,6 +54,10 @@ class AllocationCreationService
         $filteredLeads = $differentInsuredWithSameContact->filter(function ($lead) {
             return $lead->quote_status_id != QuoteStatusEnum::PolicyBooked;
         });
+
+        LoggerService::info(self::class.' - executeLifeRevivalAllocation - leads to revive after filtering with count', [
+            'count' => count($filteredLeads),
+        ]);
 
         return $filteredLeads;
     }

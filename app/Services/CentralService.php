@@ -556,9 +556,9 @@ class CentralService extends BaseService
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
         $isNormalPlan = $data['planType'] == 'normalPlans';
         $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
-        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+        $isQICProvider = $data['provider_code'] == InsuranceProviderEnum::QIC->value;
 
-        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isQICProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
             $customerMembers = CustomerMembers::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
@@ -1245,25 +1245,6 @@ class CentralService extends BaseService
         return $quoteStatuses;
     }
 
-    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
-    {
-        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
-
-        SendUpdateStatusLog::updateOrCreate([
-            'send_update_log_id' => $sendUpdateLogId,
-            'previous_status' => $previousStatus,
-            'current_status' => $currentStatus,
-        ], [
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        LoggerService::info('SendUpdateLog status changed', extra: [
-            'previousStatus' => $previousStatus,
-            'current_status' => $currentStatus,
-        ]);
-    }
-
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
         LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
@@ -1388,7 +1369,6 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {
@@ -1750,11 +1730,16 @@ class CentralService extends BaseService
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
+        $emailData->cc_emails = [];
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
             $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
                 $emailData->companyName = $quote->company_name ?? '';
+            }
+
+            if ($emailData->advisorEmail) {
+                $emailData->cc_emails[] = $emailData->advisorEmail;
             }
         }
 
@@ -1871,7 +1856,7 @@ class CentralService extends BaseService
                     ? $policyHandBook->watermarked_doc_url
                     : ($policyHandBook?->doc_url ?? '');
 
-                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Device])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
@@ -1898,7 +1883,7 @@ class CentralService extends BaseService
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
                         DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
-                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
+                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE, DocumentTypeCode::TCOMP_PC,
                     ]);
                 })->first();
 
@@ -2001,7 +1986,8 @@ class CentralService extends BaseService
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
                 $scheduleDocumentTypeCodes = [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic,
+                    DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS, DocumentTypeCode::TCOMP_PS,
                 ];
 
                 return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
@@ -2198,7 +2184,6 @@ class CentralService extends BaseService
             InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
             InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
             InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
-            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
             InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 

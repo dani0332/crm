@@ -12,9 +12,11 @@ enum LoggerFeatureEnum: string
     case OCR = 'ocr';
     case PCP_CLIENT = 'private-client';
     case AML_SCREENING = 'aml-screening';
+    case AML_AUTOMATION_BY_QUOTE_UUID = 'aml-automation-by-quote-uuid';
     case CREATE_PAYMENT = 'create-payment';
     case UPDATE_PAYMENT = 'update-payment';
     case DELETE_PARENT_PAYMENT = 'delete-parent-payment';
+    case RESET_MANAGE_PAYMENTS = 'reset-manage-payments';
     case DELETE_SPLIT_PAYMENT = 'delete-split-payment';
     case APPROVE_DECLINE_CHILD_PAYMENT = 'approve-decline-child-payment';
     case APPROVE_PARENT_PAYMENT = 'approve-parent-payment';
@@ -91,4 +93,10 @@ enum LoggerFeatureEnum: string
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
     case CSV_EXPORT = 'csv-export';
     case CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT = 'conversion-optimization-scheduled-export';
+
+    // Life Revival
+    case LIFE_REVIVAL = 'life-revival';
+    case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
+
+    case HEALTH_QUOTE_REVAMP = 'health-quote-revamp';
 }

@@ -6,6 +6,7 @@ import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import SendUpdateHistorySection from '@/inertia/Components/SendUpdateHistorySection.vue';
 import { XInput } from '@indielayer/ui';
 import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -52,6 +53,7 @@ const props = defineProps({
   cancelOptions: Array,
   isEndorsementBookingActionDisabled: Boolean,
   ocrDocumentTypeEnum: Object,
+  hasEndorsementPayments: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -109,6 +111,8 @@ const isUpdateBooked = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   );
 });
+
+const isSubtypeLocked = computed(() => props.hasEndorsementPayments);
 
 const changeReasonOptions = computed(() => {
   return [];
@@ -481,6 +485,8 @@ const cancelOptionsList = computed(() => {
     }));
   }
 });
+
+const sectionExpanded = computed(() => true);
 </script>
 
 <template>
@@ -670,7 +676,9 @@ const cancelOptionsList = computed(() => {
                     <dd>
                       <x-select
                         size="xs"
-                        :disabled="!state.edit || isUpdateBooked"
+                        :disabled="
+                          !state.edit || isUpdateBooked || isSubtypeLocked
+                        "
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
                         class="w-3/4"
@@ -919,6 +927,11 @@ const cancelOptionsList = computed(() => {
       :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
       :ocrLoadingDocTypes="ocrLoadingDocTypes"
       :isDocTypeLoading="isDocTypeLoading"
+    />
+
+    <SendUpdateHistorySection
+      :expanded="sectionExpanded"
+      :send-update-log-id="props.sendUpdateLog.id"
     />
 
     <AuditLogs

@@ -46,6 +46,7 @@ use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\QuoteExportLogController;
+use App\Http\Controllers\QuoteStatusLogController;
 use App\Http\Controllers\RateCoverageUploadController;
 use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
@@ -54,6 +55,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
+use App\Http\Controllers\SendUpdateStatusLogController;
 use App\Http\Controllers\SICConfigurableController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\TeamController;
@@ -234,6 +236,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
     Route::post('quotes/savings/{quoteUuId}/send-oca', [SavingsQuoteController::class, 'sendOCAEmail'])->name('savingsSendOCAEmail');
     Route::post('quotes/savings/{quoteUuId}/savings-plan-manual-process', [SavingsQuoteController::class, 'savingsPlanManualProcess'])->name('savingsPlanManualProcess');
+    Route::post('quotes/savings/{quoteUuId}/fetch-savings-provider-plan', [SavingsQuoteController::class, 'fetchSavingsProviderPlan'])->name('savingsFetchProviderPlan');
     Route::get('personal-quotes/savings/provider-plans/{providerId}', [SavingsQuoteController::class, 'getProviderPlans'])->name('savings-provider-plans');
     Route::get('personal-quotes/savings/riders/{planId}', [SavingsQuoteController::class, 'riders'])->name('savings-plan-riders');
     Route::post('personal-quotes/savings/toggle-savings-plan-visibility', [SavingsQuoteController::class, 'toggleSavingsPlanVisibility'])->name('savings-plan-toggle-visibility');
@@ -467,6 +470,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/remove-insurer-payment-link', [CentralController::class, 'removeInsurerPaymentLink'])->name('payments-remove-insurer-payment-link');
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
+    Route::post('/payments/{quoteType}/reset-manage-payments', [CentralController::class, 'resetManagePayments'])->name('edit-plan-after-transaction-approval')->middleware('check_route_access');
 
     Route::post('/payments/{quoteType}/check-insurer-receipt-number', [CentralController::class, 'checkInsurerReceiptNumber'])->name('check-insurer-receipt-number');
 
@@ -742,7 +746,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
-        Route::get('lead-history', [CRUDController::class, 'getLeadHistoryLogs'])->name('list-lead-history');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
@@ -769,6 +772,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+        Route::get('status-logs', [QuoteStatusLogController::class, 'index']);
+        Route::get('send-update-status-logs', [SendUpdateStatusLogController::class, 'index']);
     });
 
     Route::group(['prefix' => 'ftc'], function () {
@@ -779,7 +784,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('customers/{id}/additional-contacts', [V2CustomerController::class, 'storeAdditionalContact']);
 
     Route::group(['prefix' => 'personal-quotes'], function () {
-        Route::get('{quoteId}/audit-history', [PersonalQuoteController::class, 'getAuditHistory']);
         Route::patch('{quoteId}/update-policy-details', [PersonalQuoteController::class, 'updatePolicyDetails']);
         Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
@@ -902,6 +906,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('health-routing-logs', [AuditableController::class, 'loadHealthRoutingLogs']);
     Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
+    Route::post('uae-signing-pass-logs', [AuditableController::class, 'loadUaeSigningPassLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);
@@ -1134,7 +1139,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 
-    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
-    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
-    Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE, 'check_route_access')->name('re-trigger-policy-automation');
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER);
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER)->name('trigger-policy-issuance');
+    Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE.'|'.PermissionsEnum::RE_TRIGGER_POLICY_ISSUANCE)->name('re-trigger-policy-automation');
 });
