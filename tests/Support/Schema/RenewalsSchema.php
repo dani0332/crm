@@ -323,6 +323,8 @@ class RenewalsSchema
                 'asset_value' => fn (Blueprint $t) => $t->decimal('asset_value', 15, 2)->nullable(),
                 'company_name' => fn (Blueprint $t) => $t->string('company_name')->nullable(),
                 'company_address' => fn (Blueprint $t) => $t->string('company_address')->nullable(),
+                'previous_quote_id' => fn (Blueprint $t) => $t->unsignedBigInteger('previous_quote_id')->nullable(),
+                'quote_id' => fn (Blueprint $t) => $t->unsignedBigInteger('quote_id')->nullable(),
             ],
             'car_quote_request_detail' => [
                 'chassis_number' => fn (Blueprint $t) => $t->string('chassis_number')->nullable(),
