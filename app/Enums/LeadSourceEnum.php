@@ -77,6 +77,6 @@ final class LeadSourceEnum extends Enum
     const REVIVAL_REINSTATED = 'REVIVAL_REINSTATED';
 
     // Home Revivals
-    const REVIVAL_SHORT = 'Revival_Short';
-    const REVIVAL_ANNUAL = 'Revival_Annual';
+    const REVIVAL_SHORT = 'REVIVAL_SHORT';
+    const REVIVAL_ANNUAL = 'REVIVAL_ANNUAL';
 }
