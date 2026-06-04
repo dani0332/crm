@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AutomationFailedJob;
-use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\SendTravelQatarFailedAllocationEmailJob;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -38,7 +38,7 @@ it('dispatches travel alliance failed allocation job for DIC failure instead of 
         );
     });
 
-    Queue::assertPushed(SendTravelAllianceFailedAllocationEmailJob::class);
+    Queue::assertPushed(SendTravelQatarFailedAllocationEmailJob::class);
     Queue::assertNotPushed(AutomationFailedJob::class);
 });
 
@@ -64,7 +64,7 @@ it('does not dispatch travel alliance failed allocation job when insurer API was
         );
     });
 
-    Queue::assertNotPushed(SendTravelAllianceFailedAllocationEmailJob::class);
+    Queue::assertNotPushed(SendTravelQatarFailedAllocationEmailJob::class);
     Queue::assertNotPushed(AutomationFailedJob::class);
 });
 
@@ -89,7 +89,7 @@ it('sets api_issuance_status to YES and does not write insurer_api_status or not
     expect($fresh->api_issuance_status_id)->toBe(PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
         ->and($fresh->insurer_api_status_id)->toBeNull();
 
-    Queue::assertNotPushed(SendTravelAllianceFailedAllocationEmailJob::class);
+    Queue::assertNotPushed(SendTravelQatarFailedAllocationEmailJob::class);
     Queue::assertNotPushed(AutomationFailedJob::class);
 });
 

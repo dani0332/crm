@@ -16,7 +16,7 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\SendTravelQatarFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
@@ -792,7 +792,7 @@ class PolicyIssuanceService
 
     /**
      * Travel DIC: apply automation result on the quote. On failure, allocates the lead and
-     * notifies via {@see SendTravelAllianceFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
+     * notifies via {@see SendTravelQatarFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
      * matching {@see AllianceInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
      */
     public function applyTravelDicAutomationResult(
@@ -860,9 +860,9 @@ class PolicyIssuanceService
             return;
         }
 
-        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to dispatch SendTravelQatarFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
         if (! $isInsurerApiStatusAlreadyFailed && $quote->insurer_api_status != null) {
-            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+            SendTravelQatarFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
         }
     }
 
