@@ -315,7 +315,7 @@ const permissionsEnum = page.props.permissionsEnum;
     </DataTable>
 
     <Pagination
-      v-if="quotes.total > 0"
+      v-if="quotes.data?.length > 0"
       :links="{
         next: quotes.next_page_url,
         prev: quotes.prev_page_url,
