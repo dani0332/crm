@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -81,7 +82,7 @@ class EAManagerService
             'id' => $lead->id,
             'code' => $lead->code,
             'quote_type' => $quoteType,
-            'ea_model' => $lead->ea_model?->value,
+            'ea_model' => EaModelEnum::tryFrom($lead->getRawOriginal('ea_model'))?->value,
             'quote_status_id' => $lead->quote_status_id,
             'created_at' => $lead->created_at,
             'advisor' => optional($lead->advisor)->only(['id', 'name', 'email']),
