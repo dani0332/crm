@@ -4,6 +4,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseConnectionEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
@@ -1956,5 +1957,22 @@ if (! function_exists('getManagerRoles')) {
             RolesEnum::JetskiManager,
             RolesEnum::BusinessManager,
         ];
+    }
+}
+
+if (! function_exists('isPolicyUpdateAllowed')) {
+    function isPolicyUpdateAllowed(mixed $quote): bool
+    {
+        $isSourceEAIMCRM = isset($quote->source) && $quote->source == LeadSourceEnum::EA_IMCRM;
+        $isEaModelCollaborative = isset($quote->ea_model) && $quote->ea_model == EaModelEnum::Collaborative->value;
+        $isEaManagerApproved = isset($quote->ea_manager_approved_at) && ! empty($quote->ea_manager_approved_at);
+        $isEaAssignedAdvisorApproved = isset($quote->ea_assigned_advisor_approved_at) && ! empty($quote->ea_assigned_advisor_approved_at);
+        $isEaExpertAdvisorApproved = isset($quote->ea_expert_advisor_approved_at) && ! empty($quote->ea_expert_advisor_approved_at);
+
+        if ($isSourceEAIMCRM && $isEaModelCollaborative) {
+            return $isEaManagerApproved || ($isEaAssignedAdvisorApproved && $isEaExpertAdvisorApproved);
+        }
+
+        return true;
     }
 }
