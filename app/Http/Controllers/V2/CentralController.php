@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EaQuoteStatusEligibleEnum;
 use App\Enums\EmirateUpdateSourceEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -330,11 +331,10 @@ class CentralController extends Controller
         LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if (! isEAQuoteStatusUpdateAllowed($quote)) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote status is not eligible for booking! Quote Code: '.$quote->code);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - '.EaQuoteStatusEligibleEnum::NotEligible->value.' Quote Code: '.$quote->code);
 
-            return ['status' => false, 'message' => 'Quote status is not eligible for booking!'];
+            return ['status' => false, 'message' => EaQuoteStatusEligibleEnum::NotEligible->value];
         }
-        // return response()->json($quote);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);

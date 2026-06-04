@@ -1968,7 +1968,8 @@ if (! function_exists('isEAQuoteStatusUpdateAllowed')) {
     function isEAQuoteStatusUpdateAllowed(mixed $quote): bool
     {
         $isSourceEAIMCRM = isset($quote->source) && strtoupper(trim($quote->source)) === LeadSourceEnum::EA_IMCRM;
-        $isEaModelCollaborate = isset($quote->ea_model) && strtolower(trim($quote->ea_model)) === EaModelEnum::Collaborate->value;
+        $eaModelValue = $quote->ea_model instanceof EaModelEnum ? $quote->ea_model->value : strtolower(trim((string) $quote->ea_model));
+        $isEaModelCollaborate = isset($quote->ea_model) && $eaModelValue === EaModelEnum::Collaborate->value;
         $isEaManagerApproved = isset($quote->ea_manager_approved_at) && ! empty($quote->ea_manager_approved_at);
         $isEaAssignedAdvisorApproved = isset($quote->ea_assigned_advisor_approved_at) && ! empty($quote->ea_assigned_advisor_approved_at);
         $isEaExpertAdvisorApproved = isset($quote->ea_expert_advisor_approved_at) && ! empty($quote->ea_expert_advisor_approved_at);
