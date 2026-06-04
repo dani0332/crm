@@ -138,10 +138,9 @@ class DicApiService
             $payment = $quote->payments()->mainLeadPayment()->first();
             $policyExpiry = Carbon::parse($startDate)->addDays($quote->days_cover_for)->subDay();
             if ($payment !== null) {
-                $vat = data_get($body, 'additionalDetails.vat_on_commission');
                 $paymentData = [
                     'commission_vat_applicable' => data_get($body, 'additionalDetails.commission_excluding_vat'),
-                    'commission_vat' => $vat,
+                    'commission_vat' => data_get($body, 'additionalDetails.vat_on_commission'),
                     'commmission_percentage' => $dicPercentage,
                     'commission' => data_get($body, 'additionalDetails.commission_including_vat'),
                     'policy_expiry_date' => $policyExpiry,
@@ -159,7 +158,7 @@ class DicApiService
                 // Last cover day is the expiry date (business requirement, same as QatarInsuranceService)
                 $quote->policy_expiry_date = $policyExpiry;
                 $quote->price_with_vat = $payment->total_price;
-                $quote->vat = $vat;
+                $quote->vat = $payment->price_vat;
 
                 $payment->update($paymentData);
                 $quote->save();
