@@ -32,6 +32,51 @@ class CoreSchema
         $this->ensureCustomerAdditionalContactTables();
         $this->ensureEPLogsTables();
         $this->ensureEmailStatusTables();
+        $this->ensureEaColumnsForAllLobs();
+    }
+
+    /**
+     * Add EA columns to LOB tables that don't have them in their base definition.
+     * Uses ensureColumns so columns are only added when missing — safe to call repeatedly.
+     */
+    private function ensureEaColumnsForAllLobs(): void
+    {
+        $eaColumns = [
+            'ea_model' => fn (Blueprint $t) => $t->string('ea_model')->nullable(),
+            'ea_manager_id' => fn (Blueprint $t) => $t->unsignedBigInteger('ea_manager_id')->nullable(),
+            'ea_manager_approved_at' => fn (Blueprint $t) => $t->timestamp('ea_manager_approved_at')->nullable(),
+            'ea_manager_rejected_at' => fn (Blueprint $t) => $t->timestamp('ea_manager_rejected_at')->nullable(),
+            'ea_assigned_advisor_approved_at' => fn (Blueprint $t) => $t->timestamp('ea_assigned_advisor_approved_at')->nullable(),
+            'ea_expert_advisor_approved_at' => fn (Blueprint $t) => $t->timestamp('ea_expert_advisor_approved_at')->nullable(),
+            'ea_assigned_advisor_rejected_at' => fn (Blueprint $t) => $t->timestamp('ea_assigned_advisor_rejected_at')->nullable(),
+            'ea_expert_advisor_rejected_at' => fn (Blueprint $t) => $t->timestamp('ea_expert_advisor_rejected_at')->nullable(),
+        ];
+
+        SchemaUtils::ensureTables([
+            'travel_quote_request_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('travel_quote_request_id')->nullable();
+                $table->timestamps();
+            },
+            'business_quote_request_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('business_quote_request_id')->nullable();
+                $table->timestamps();
+            },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'travel_quote_request' => [
+                ...$eaColumns,
+                'email' => fn (Blueprint $t) => $t->string('email')->nullable(),
+                'mobile_no' => fn (Blueprint $t) => $t->string('mobile_no')->nullable(),
+            ],
+            'business_quote_request' => [
+                ...$eaColumns,
+                'quote_status_date' => fn (Blueprint $t) => $t->timestamp('quote_status_date')->nullable(),
+                'stale_at' => fn (Blueprint $t) => $t->timestamp('stale_at')->nullable(),
+            ],
+        ]);
     }
 
     private function ensureAuditTables(): void
@@ -342,6 +387,10 @@ class CoreSchema
                 $table->timestamp('ea_expert_advisor_approved_at')->nullable();
                 $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
                 $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
+                $table->timestamp('stale_at')->nullable();
+                $table->unsignedBigInteger('ea_manager_id')->nullable();
+                $table->timestamp('ea_manager_approved_at')->nullable();
+                $table->timestamp('ea_manager_rejected_at')->nullable();
                 $table->timestamps();
             },
             'personal_quote_details' => function (Blueprint $table) {
@@ -458,6 +507,9 @@ class CoreSchema
                 $table->timestamp('ea_expert_advisor_approved_at')->nullable();
                 $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
                 $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
+                $table->unsignedBigInteger('ea_manager_id')->nullable();
+                $table->timestamp('ea_manager_approved_at')->nullable();
+                $table->timestamp('ea_manager_rejected_at')->nullable();
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
             },
@@ -687,6 +739,9 @@ class CoreSchema
                 $table->timestamp('ea_expert_advisor_approved_at')->nullable();
                 $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
                 $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
+                $table->unsignedBigInteger('ea_manager_id')->nullable();
+                $table->timestamp('ea_manager_approved_at')->nullable();
+                $table->timestamp('ea_manager_rejected_at')->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
