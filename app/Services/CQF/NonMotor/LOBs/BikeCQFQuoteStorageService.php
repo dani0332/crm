@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\LOBs;
 
+use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
@@ -200,6 +201,10 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->mapCarQuoteToBikeRenewalDetail($carQuote, $newQuote);
         $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($carQuote)
             ?? $data['insurance_type_id'];
+        $data['current_insurance_status'] = $this->resolveCurrentInsuranceStatus(
+            $data['insurance_type_id'],
+            $carQuote->current_insurance_status
+        );
         $data = array_intersect_key($data, array_flip($this->getBikeQuoteColumns()));
         BikeQuote::create($data);
 
@@ -288,6 +293,15 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return $nextId ?? $currentId;
     }
 
+    private function resolveCurrentInsuranceStatus(?int $insuranceTypeId, ?string $fallback = null): ?string
+    {
+        return match ((int) $insuranceTypeId) {
+            CarTypeOfInsuranceIdEnum::Comprehensive => 'ACTIVE_COMP',
+            CarTypeOfInsuranceIdEnum::ThirdPartyOnly => 'ACTIVE_TPL',
+            default => $fallback,
+        };
+    }
+
     protected function copyBikeQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
     {
         $oldBikeQuote = $oldQuote->bikeQuote;
@@ -302,6 +316,10 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->mapLobRenewalDetail($oldBikeQuote, $newQuote);
         $data['insurance_type_id'] = $this->carCQFQuoteMappingService->getCarTypeInsuranceId($oldQuote)
             ?? $oldBikeQuote->insurance_type_id;
+        $data['current_insurance_status'] = $this->resolveCurrentInsuranceStatus(
+            $data['insurance_type_id'],
+            $oldBikeQuote->current_insurance_status
+        );
         $newBikeQuote = BikeQuote::create($data);
 
         if ($oldBikeQuote->bikeQuoteRequestDetail) {

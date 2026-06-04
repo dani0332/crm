@@ -147,6 +147,12 @@ class NonMotorCQFRenewalExecutionService
                 return;
             }
 
+            LoggerService::info(self::class.' - Pipeline result', [
+                'newQuote' => $context->newQuote?->id,
+                'epCodes' => $context->epCodes,
+                'epCodesCount' => count($context->epCodes),
+            ]);
+
             if ($context->newQuote !== null) {
                 $this->updateEmbeddedTransactionIsSelectedForEpCodes($context->epCodes);
                 $this->markQuoteAsCompleted($quote, $renewalsUploadLeads);
@@ -233,7 +239,11 @@ class NonMotorCQFRenewalExecutionService
      */
     protected function updateEmbeddedTransactionIsSelectedForEpCodes(array $epCodes): void
     {
+        LoggerService::info(self::class.' - updateEmbeddedTransactionIsSelectedForEpCodes called', ['epCodes' => $epCodes]);
+
         if (empty($epCodes)) {
+            LoggerService::info(self::class.' - epCodes is empty, skipping EmbeddedTransaction update');
+
             return;
         }
 

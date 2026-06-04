@@ -61,6 +61,7 @@ class RenewalsSchema
                 $table->unsignedBigInteger('claim_history_id')->nullable();
                 $table->boolean('has_ncd_supporting_documents')->nullable();
                 $table->unsignedBigInteger('insurance_type_id')->nullable();
+                $table->string('current_insurance_status')->nullable();
                 $table->decimal('premium', 15, 2)->nullable();
                 $table->string('policy_number')->nullable();
                 $table->unsignedBigInteger('insurance_provider_id')->nullable();
