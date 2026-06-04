@@ -1271,7 +1271,7 @@ class AMLService
 
                 AutomationFailedJob::dispatch(
                     $quoteDetails->id,
-                    QuoteTypeId::Car,
+                    $quoteTypeId,
                     $actionRequired,
                     $statusAPIFailed,
                     PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
