@@ -11,6 +11,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RelationCodeEnum;
+use App\Enums\SalaryBandEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
@@ -157,6 +158,26 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
                 'isPrincipal' => $coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value ? false : true,
                 'isPecMarked' => $this->lead->pec_marked_at != null,
             ];
+
+            if ($coverForId == HealthCoverForEnum::DOMESTIC_HELPER->value) {
+                $dataArr['memberDetails'][] = [
+                    'firstName' => $this->lead->first_name,
+                    'lastName' => $this->lead->last_name,
+                    'dob' => $dob,
+                    'nationalityId' => $this->lead->nationality_id,
+                    'emirateOfYourVisaId' => $this->lead->emirate_of_your_visa_id,
+                    'gender' => $gender,
+                    'salaryBandId' => SalaryBandEnum::BELOW_OR_EQ_4000->value,
+                    'memberCategoryId' => $memberCategoryId,
+                    'visaCategoryId' => $this->mutator->getVisaCategoryIdForDomesticWorkerMember($this->lead->nationality_id),
+                    'relationCode' => RelationCodeEnum::DOMESTIC_WORKER->value,
+                    'maritalStatusId' => $maritalStatusId,
+                    'isInsured' => true,
+                    'isPolicyHolder' => false,
+                    'isPrincipal' => true,
+                    'isPecMarked' => $this->lead->pec_marked_at != null,
+                ];
+            }
 
             LoggerService::info('Health saveHealthQuote - CAPI API request - Revival', extra: ['request' => $dataArr]);
 
