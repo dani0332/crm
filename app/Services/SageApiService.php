@@ -643,7 +643,14 @@ class SageApiService
 
     public function postBookPolicyToSage($request, $quote)
     {
+
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+        if (! isEAQuoteStatusUpdateAllowed($quote)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote status is not eligible for booking! Quote Code: '.$quote->code);
+
+            return ['status' => false, 'message' => 'Quote status is not eligible for booking!'];
+        }
 
         // Condition moved to Up to so that system alert user right away instead checking status after date processing
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
