@@ -43,9 +43,19 @@ const uboRelationOptions = computed(() => {
 const computedMembers = computed(() => {
   if (props.customerType == page.props.customerTypeEnum.Individual) {
     if (props.isPayerDetails) {
-      return page.props.membersDetails.filter(x => x.is_third_party_payer);
+      const thirdPartyPayerMembers = page.props.membersDetails.filter(
+        x => x.is_third_party_payer,
+      );
+      const policyholderMembers = page.props.membersDetails.filter(
+        x => x.is_policy_holder == 1,
+      );
+      return thirdPartyPayerMembers.length > 0
+        ? thirdPartyPayerMembers
+        : policyholderMembers;
     }
-    return page.props.membersDetails.filter(x => !x.is_third_party_payer);
+    return page.props.membersDetails.filter(
+      x => !x.is_third_party_payer && x.is_insured == 1,
+    );
   } else {
     if (props.isPayerDetails) {
       return page.props.uboDetails.filter(x => x.is_third_party_payer);
@@ -76,20 +86,39 @@ const membersTableHeader = reactive({
             : 'Position',
         value: 'relation',
       },
-      {
+    ];
+
+    if (
+      !(
+        page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+        props.customerType == page.props.customerTypeEnum.Individual
+      )
+    ) {
+      baseColumns.push({
         text: 'Is this member is payer?',
         value: 'is_payer',
-      },
-      {
+      });
+    }
+
+    if (
+      !(
+        page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+        props.customerType == page.props.customerTypeEnum.Individual &&
+        !props.isPayerDetails
+      )
+    ) {
+      baseColumns.push({
         text: 'Action',
         value: 'action',
-      },
-    ];
+      });
+    }
+
     if (props.isPayerDetails) {
       return baseColumns.filter(
         column => column.value !== 'relation' && column.value !== 'is_payer',
       );
     }
+
     return baseColumns;
   }),
 });
@@ -118,6 +147,7 @@ const memberForm = useForm({
       : '',
     is_third_party_payer: true,
   }),
+  is_insured: 1,
 });
 
 // Computed property to determine whether to use full name or first name only
@@ -230,6 +260,25 @@ function onEditMember(member) {
   memberForm.clearErrors();
   isMemberFormEnabled.value = true;
   isMemberEditEnabled.value = true;
+
+  if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health &&
+    props.customerType == page.props.customerTypeEnum.Individual
+  ) {
+    // if edit member is policyholder then this will trigger add thirdparty payer api
+    if (
+      memberForm.is_third_party_payer == 1 &&
+      member?.is_third_party_payer == 0
+    ) {
+      isMemberEditEnabled.value = false;
+    }
+
+    // thirdparty payer will not be insured
+    if (memberForm.is_third_party_payer == 1) {
+      memberForm.is_insured = 0;
+    }
+  }
+
   memberForm.quote_type = page.props.quoteType.code;
   memberForm.quote_request_id = page.props.quoteRequest.id;
   memberForm.id = member.id;
@@ -421,9 +470,10 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
       <x-button
         v-else
         v-if="
-          props.customerType == page.props.customerTypeEnum.Individual ||
-          isPayerDetails ||
-          props.customerType == page.props.customerTypeEnum.Entity
+          !(
+            page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+            props.customerType == page.props.customerTypeEnum.Individual
+          )
         "
         size="sm"
         @click.prevent="memberFormEnableToggle"
@@ -497,13 +547,13 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
       </div>
     </template>
     <template #item-dob="{ dob }">
-      {{ dateFormat(dob) }}
+      {{ dob ? dateFormat(dob) : 'N/A' }}
     </template>
-    <template #item-relation="{ relation }">
-      {{ relation?.text }}
+    <template #item-relation="{ relation, is_policy_holder }">
+      {{ is_policy_holder == 1 ? 'Self' : relation?.text }}
     </template>
     <template #item-nationality="{ nationality }">
-      {{ nationality?.text }}
+      {{ nationality?.text ?? 'N/A' }}
     </template>
     <template #item-is_payer="{ is_payer }">
       <div class="flex gap-2">
