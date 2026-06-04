@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\AllocationConfigurer;
@@ -269,5 +270,40 @@ class HomeAllocation extends BaseAllocation
             'is_revived' => (bool) ($parentLead?->is_revived ?? false),
             'is_annual_revived' => (bool) ($parentLead?->is_annual_revived ?? false),
         ];
+    }
+
+    /**
+     * Revival leads from Short, Annual, Replied, or Revival Paid sources bypass the duplicate
+     * lead check entirely and are allocated directly via the standard Short/Annual advisor pool.
+     * This prevents the system from re-assigning them to the original duplicate's advisor.
+     */
+    protected function shouldHandleDuplicateLead(): bool
+    {
+        if ($this->isRevivalLeadWithBypassSource()) {
+            LoggerService::info('HomeAllocation: Bypassing duplicate lead check — revival lead with bypass source', extra: [
+                'source' => $this->lead->source,
+                'uuid' => $this->lead->uuid,
+            ]);
+
+            return false;
+        }
+
+        return parent::shouldHandleDuplicateLead();
+    }
+
+    protected function isRevivalLeadWithBypassSource(): bool
+    {
+        $bypassSources = [
+            LeadSourceEnum::REVIVAL_SHORT,
+            LeadSourceEnum::REVIVAL_ANNUAL,
+            LeadSourceEnum::REVIVAL_REPLIED,
+            LeadSourceEnum::REVIVAL_PAID,
+        ];
+
+        if (! in_array($this->lead->source, $bypassSources)) {
+            return false;
+        }
+
+        return DttRevival::where('uuid', $this->lead->uuid)->exists();
     }
 }
