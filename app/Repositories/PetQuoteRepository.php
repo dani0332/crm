@@ -375,7 +375,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->byQuoteTypeCode(QuoteTypes::PET)
-            ->filter()
+            ->filter(paginate: false)
             ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'quoteDetail', 'customer'])
             ->orderBy('created_at', 'desc');
     }

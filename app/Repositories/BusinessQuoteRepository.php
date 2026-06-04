@@ -41,7 +41,7 @@ class BusinessQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
+        return $this->filter(paginate: false)->with(
             ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'subSource', 'previousAdvisor']
         )->orderBy('created_at', 'desc');
     }

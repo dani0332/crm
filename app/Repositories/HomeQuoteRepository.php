@@ -66,7 +66,7 @@ class HomeQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
-            ->filter()
+            ->filter(paginate: false)
             ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'customer', 'previousAdvisor'])
             ->orderBy('created_at', 'desc');
     }

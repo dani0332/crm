@@ -226,7 +226,7 @@ class CycleQuoteRepository extends BaseRepository
                     $query->where('advisor_id', \auth()->user()->id);
                 });
             })
-            ->filter()
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }
