@@ -792,8 +792,8 @@ class PolicyIssuanceService
 
     /**
      * Travel DIC: apply automation result on the quote. On failure, allocates the lead and
-     * notifies via {@see SendTravelQatarFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION}),
-     * matching {@see AllianceInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
+     * notifies via {@see SendTravelQatarFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION}),
+     * matching {@see QatarInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
      */
     public function applyTravelDicAutomationResult(
         TravelQuote $quote,
