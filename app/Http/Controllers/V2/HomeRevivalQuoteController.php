@@ -22,9 +22,12 @@ class HomeRevivalQuoteController extends Controller
 
     public function index(): Response
     {
+        $user = auth()->user();
+
         return inertia('HomeRevivalQuote/Index', [
             'quotes' => $this->homeRevivalService->getPaginatedRevivalQuotes(),
             'formOptions' => $this->homeRevivalService->getIndexFormOptions(),
+            'isManualAllocationAllowed' => $user->isAdmin() || $user->isManagerOrDeputy(),
         ]);
     }
 

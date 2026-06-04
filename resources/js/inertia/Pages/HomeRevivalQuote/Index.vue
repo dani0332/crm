@@ -2,6 +2,7 @@
 const props = defineProps({
   quotes: Object,
   formOptions: Object,
+  isManualAllocationAllowed: Boolean,
 });
 
 const page = usePage();
@@ -29,6 +30,12 @@ const tableHeader = [
 
 const loader = reactive({
   table: false,
+});
+
+const quotesSelected = ref([]);
+
+const readOnlyMode = reactive({
+  isDisable: true,
 });
 
 const filters = reactive({
@@ -114,6 +121,7 @@ function setQueryFilters() {
 
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const advisorOptions = computed(() => {
@@ -153,7 +161,33 @@ const leadSourceOptions = computed(() => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
+const { isRequired } = useRules();
 const canExport = ref(false);
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  modelType: 'Home',
+  selectTmLeadId: '',
+  isManualAllocationAllowed: props.isManualAllocationAllowed,
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post(route('manualLeadAssign', { quoteType: 'home' }), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          quotesSelected.value = [];
+        },
+      });
+  }
+}
 const exportLoader = ref(false);
 
 watch(
@@ -589,7 +623,45 @@ const fixedValue = numberString => {
       </div>
     </x-form>
 
+    <section
+      v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+      class="mb-4"
+    >
+      <div
+        class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+        v-if="isManualAllocationAllowed == true"
+      >
+        <h3 class="font-semibold text-primary-800">Assign Leads</h3>
+        <x-divider class="mb-4 mt-1" />
+        <x-form @submit="onAssignLead" :auto-focus="false">
+          <div class="w-full flex flex-col md:flex-row gap-4">
+            <x-select
+              v-model="assignForm.assigned_to_id_new"
+              :options="advisorOptions"
+              placeholder="Select Advisor"
+              class="flex-1 w-full"
+              :rules="[isRequired]"
+              label="Assign Advisor"
+              filterable
+              v-if="readOnlyMode.isDisable === true"
+            />
+            <div class="mb-3 md:pt-6">
+              <x-button
+                color="orange"
+                size="sm"
+                type="submit"
+                :loading="assignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Assign
+              </x-button>
+            </div>
+          </div>
+        </x-form>
+      </div>
+    </section>
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
