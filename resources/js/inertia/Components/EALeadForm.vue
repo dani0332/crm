@@ -55,7 +55,9 @@ const allLobOptions = computed(() =>
 
 const lobOptions = computed(() => {
   if (form.ea_model !== 'collaborate') return allLobOptions.value;
-  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.value.includes(opt.value));
+  return allLobOptions.value.filter(
+    opt => !collaborateExcludedLobs.value.includes(opt.value),
+  );
 });
 
 const isCorpline = computed(() => form.quote_type_id === 101);
@@ -158,7 +160,9 @@ const updateField = (field, value) => {
         class="w-full"
         :rules="[isRequired]"
         :required="true"
-        @update:model-value="updateField('business_type_of_insurance_id', $event)"
+        @update:model-value="
+          updateField('business_type_of_insurance_id', $event)
+        "
       />
 
       <x-select

@@ -55,7 +55,9 @@ const copyUploadDocumentLink = async () => {
   }
 };
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
-const eaPendingRejectionsCount = computed(() => page.props.eaPendingRejectionsCount ?? 0);
+const eaPendingRejectionsCount = computed(
+  () => page.props.eaPendingRejectionsCount ?? 0,
+);
 const authorisePaymentCountProp = computed(
   () => page.props.authorisePaymentCount,
 );
@@ -452,14 +454,18 @@ onUnmounted(() => {
               <x-tooltip>
                 <x-button class="w-full" size="sm">
                   <div class="items-center">
-                    <Link :href="route('ea-manager.index')" style="text-decoration: underline dotted">
+                    <Link
+                      :href="route('ea-manager.index')"
+                      style="text-decoration: underline dotted"
+                    >
                       EA Pending Rejections: {{ eaPendingRejectionsCount }}
                     </Link>
                   </div>
                 </x-button>
                 <template #tooltip>
                   <div class="font-bold">
-                    {{ eaPendingRejectionsCount }} EA collaborate lead(s) have been rejected and need your attention.
+                    {{ eaPendingRejectionsCount }} EA collaborate lead(s) have
+                    been rejected and need your attention.
                   </div>
                 </template>
               </x-tooltip>

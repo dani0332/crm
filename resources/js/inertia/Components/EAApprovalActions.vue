@@ -61,7 +61,8 @@ const isVisible = computed(
     props.source === 'EA_IMCRM' &&
     props.eaModel === 'collaborate' &&
     props.quoteStatusId === POLICY_ISSUED &&
-    (props.advisorId === currentUserId || props.expertAdvisorId === currentUserId),
+    (props.advisorId === currentUserId ||
+      props.expertAdvisorId === currentUserId),
 );
 
 const isAssignedAdvisor = computed(() => props.advisorId === currentUserId);
@@ -78,7 +79,9 @@ const myRejectedAt = computed(() =>
     : props.eaExpertAdvisorRejectedAt,
 );
 
-const alreadyActed = computed(() => !!myApprovedAt.value || !!myRejectedAt.value);
+const alreadyActed = computed(
+  () => !!myApprovedAt.value || !!myRejectedAt.value,
+);
 
 const isLoading = ref(false);
 const actionError = ref(null);
@@ -104,12 +107,21 @@ const takeAction = async action => {
 </script>
 
 <template>
-  <div v-if="isVisible" class="p-4 rounded shadow mb-6 bg-white border-l-4 border-blue-500">
-    <h3 class="font-semibold text-primary-800 text-lg mb-3">EA Collaborate Approval</h3>
+  <div
+    v-if="isVisible"
+    class="p-4 rounded shadow mb-6 bg-white border-l-4 border-blue-500"
+  >
+    <h3 class="font-semibold text-primary-800 text-lg mb-3">
+      EA Collaborate Approval
+    </h3>
 
     <p v-if="alreadyActed" class="text-sm text-gray-600">
-      <span v-if="myApprovedAt" class="text-green-600 font-medium">✓ You have approved this lead.</span>
-      <span v-if="myRejectedAt" class="text-red-600 font-medium">✗ You have rejected this lead.</span>
+      <span v-if="myApprovedAt" class="text-green-600 font-medium"
+        >✓ You have approved this lead.</span
+      >
+      <span v-if="myRejectedAt" class="text-red-600 font-medium"
+        >✗ You have rejected this lead.</span
+      >
     </p>
 
     <div v-else class="flex gap-3">
@@ -131,6 +143,8 @@ const takeAction = async action => {
       </x-button>
     </div>
 
-    <p v-if="actionError" class="mt-2 text-sm text-red-600">{{ actionError }}</p>
+    <p v-if="actionError" class="mt-2 text-sm text-red-600">
+      {{ actionError }}
+    </p>
   </div>
 </template>
