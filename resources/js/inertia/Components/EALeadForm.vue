@@ -40,7 +40,7 @@ const authRoles = computed(() => page.props.auth?.roles ?? []);
 // (mirrors EALeadCreateRequest::prepareForValidation — FRD §D).
 const collaborateExcludedLobs = computed(() => {
   const excluded = [1, 8]; // Car, Travel always excluded
-  if (!authRoles.value.includes('RM_ADVISOR')) excluded.push(3);   // Health
+  if (!authRoles.value.includes('RM_ADVISOR')) excluded.push(3); // Health
   if (!authRoles.value.includes('GM_ADVISOR')) excluded.push(102); // GroupMedical
   if (!authRoles.value.includes('LIFE_ADVISOR')) excluded.push(4); // Life
   return excluded;
