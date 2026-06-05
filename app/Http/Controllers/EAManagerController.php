@@ -25,7 +25,7 @@ class EAManagerController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['ref_id', 'lob', 'status', 'ea_model', 'date_from', 'date_to']);
+        $filters = $request->only(['ref_id', 'lob', 'status', 'ea_model', 'date_from', 'date_to', 'lead_generator']);
 
         return inertia('EAManager/Index', [
             'leads' => $this->service->getLeads($filters),

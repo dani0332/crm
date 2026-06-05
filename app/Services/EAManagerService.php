@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
@@ -15,9 +16,20 @@ class EAManagerService
 {
     public function getLeads(array $filters = []): Collection
     {
-        $carLeads = $this->queryModel(CarQuote::class, $filters, 'car');
-        $healthLeads = $this->queryModel(HealthQuote::class, $filters, 'health');
-        $personalLeads = $this->queryPersonalLeads($filters);
+        $lob = isset($filters['lob']) && $filters['lob'] !== '' ? (int) $filters['lob'] : null;
+
+        // Only query the model that owns this LOB; when no LOB filter is set, query all three.
+        $carLeads = ($lob === null || $lob === QuoteTypeId::Car)
+            ? $this->queryModel(CarQuote::class, $filters, 'car')
+            : collect();
+
+        $healthLeads = ($lob === null || $lob === QuoteTypeId::Health)
+            ? $this->queryModel(HealthQuote::class, $filters, 'health')
+            : collect();
+
+        $personalLeads = ($lob === null || ! in_array($lob, [QuoteTypeId::Car, QuoteTypeId::Health], true))
+            ? $this->queryPersonalLeads($filters)
+            : collect();
 
         return $carLeads->concat($healthLeads)->concat($personalLeads)
             ->sortByDesc('created_at')
@@ -34,6 +46,7 @@ class EAManagerService
             ->when($filters['date_from'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
             ->when($filters['date_to'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))
             ->when($filters['status'] ?? null, fn ($q, $v) => $this->applyEaStatusFilter($q, $v))
+            ->when($filters['lead_generator'] ?? null, fn ($q, $v) => $q->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', "%{$v}%")))
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($lead) => $this->formatLead($lead, $quoteType));
@@ -49,6 +62,7 @@ class EAManagerService
             ->when($filters['date_from'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
             ->when($filters['date_to'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))
             ->when($filters['status'] ?? null, fn ($q, $v) => $this->applyEaStatusFilter($q, $v))
+            ->when($filters['lead_generator'] ?? null, fn ($q, $v) => $q->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', "%{$v}%")))
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($lead) => $this->formatLead($lead, QuoteTypes::getName($lead->quote_type_id)?->value ?? 'personal'));
@@ -56,7 +70,8 @@ class EAManagerService
 
     private function computeEaStatus(CarQuote|HealthQuote|PersonalQuote $lead): string
     {
-        if ($lead->ea_assigned_advisor_approved_at || $lead->ea_expert_advisor_approved_at) {
+        // Approved only when BOTH advisors have approved (FRD §D: lead progresses only if both approve)
+        if ($lead->ea_assigned_advisor_approved_at && $lead->ea_expert_advisor_approved_at) {
             return 'approved';
         }
         if ($lead->ea_assigned_advisor_rejected_at || $lead->ea_expert_advisor_rejected_at) {
@@ -69,9 +84,15 @@ class EAManagerService
     private function applyEaStatusFilter(Builder $query, string $status): void
     {
         match ($status) {
-            'approved' => $query->whereNotNull('ea_assigned_advisor_approved_at'),
+            // Both timestamps required — consistent with dual-approval FRD requirement
+            'approved' => $query->whereNotNull('ea_assigned_advisor_approved_at')->whereNotNull('ea_expert_advisor_approved_at'),
             'rejected' => $query->where(fn ($q) => $q->whereNotNull('ea_assigned_advisor_rejected_at')->orWhereNotNull('ea_expert_advisor_rejected_at')),
-            'pending' => $query->whereNull('ea_assigned_advisor_approved_at')->whereNull('ea_assigned_advisor_rejected_at')->whereNull('ea_expert_advisor_rejected_at'),
+            // Pending = not fully approved and not rejected (includes partial-approval intermediary state)
+            'pending' => $query->where(fn ($q) => $q
+                ->where(fn ($inner) => $inner->whereNull('ea_assigned_advisor_approved_at')->orWhereNull('ea_expert_advisor_approved_at'))
+                ->whereNull('ea_assigned_advisor_rejected_at')
+                ->whereNull('ea_expert_advisor_rejected_at')
+            ),
             default => null,
         };
     }

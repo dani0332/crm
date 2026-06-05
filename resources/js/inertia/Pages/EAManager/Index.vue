@@ -44,6 +44,7 @@ const statusLabel = id =>
 
 const tableHeaders = [
   { text: 'REF ID', value: 'code' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
   { text: 'EA ADVISOR', value: 'expert_advisor' },
   { text: 'LOB', value: 'quote_type' },
   { text: 'MODEL', value: 'ea_model' },
@@ -87,6 +88,7 @@ const filterForm = reactive({
   status: props.filters.status ?? null,
   date_from: props.filters.date_from ?? '',
   date_to: props.filters.date_to ?? '',
+  lead_generator: props.filters.lead_generator ?? '',
 });
 
 const onSubmit = isValid => {
@@ -107,6 +109,7 @@ const onReset = () => {
     status: null,
     date_from: '',
     date_to: '',
+    lead_generator: '',
   });
   router.get(
     route('ea-manager.index'),
@@ -231,6 +234,12 @@ const updateRow = async lead => {
         placeholder="All Models"
         :options="eaModelOptions"
       />
+
+      <x-input
+        v-model="filterForm.lead_generator"
+        label="Lead Generator"
+        placeholder="Search by name"
+      />
     </div>
 
     <div class="flex gap-3 justify-end">
@@ -255,6 +264,10 @@ const updateRow = async lead => {
   >
     <template #item-code="item">
       <span class="font-medium text-blue-600">{{ item.code }}</span>
+    </template>
+
+    <template #item-lead_generator="item">
+      {{ item.lead_generator?.name ?? '—' }}
     </template>
 
     <template #item-expert_advisor="item">

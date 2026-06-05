@@ -389,11 +389,25 @@ class CoreSchema
             },
             'life_quote_request' => function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('personal_quote_id');
+                $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
                 $table->string('email')->nullable();
                 $table->string('mobile_no')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('ea_model')->nullable();
+                $table->unsignedBigInteger('lead_generator_id')->nullable();
+                $table->unsignedBigInteger('expert_advisor_id')->nullable();
+                $table->timestamp('ea_assigned_advisor_approved_at')->nullable();
+                $table->timestamp('ea_expert_advisor_approved_at')->nullable();
+                $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
+                $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
                 $table->decimal('height', 8, 2)->nullable();
                 $table->decimal('weight', 8, 2)->nullable();
                 $table->decimal('bmi', 8, 2)->nullable();
@@ -407,7 +421,6 @@ class CoreSchema
                 $table->boolean('is_smoker')->default(0);
                 $table->string('gender')->nullable();
                 $table->text('others_info')->nullable();
-                $table->string('uuid')->nullable();
                 $table->string('lang')->nullable();
                 $table->timestamps();
             },
@@ -689,6 +702,7 @@ class CoreSchema
                 $table->string('policy_holder_code', 50)->nullable();
                 $table->unsignedBigInteger('visa_category_id')->nullable();
                 $table->string('policy_holder_category_code', 50)->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->string('ea_model')->nullable();
                 $table->unsignedBigInteger('lead_generator_id')->nullable();
                 $table->unsignedBigInteger('expert_advisor_id')->nullable();
@@ -812,6 +826,14 @@ class CoreSchema
                 $table->unsignedBigInteger('sub_source_id')->nullable();
                 $table->unsignedBigInteger('sub_source_options_id')->nullable();
                 $table->unsignedBigInteger('transaction_type_id')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->string('ea_model')->nullable();
+                $table->unsignedBigInteger('lead_generator_id')->nullable();
+                $table->unsignedBigInteger('expert_advisor_id')->nullable();
+                $table->timestamp('ea_assigned_advisor_approved_at')->nullable();
+                $table->timestamp('ea_expert_advisor_approved_at')->nullable();
+                $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
+                $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             },

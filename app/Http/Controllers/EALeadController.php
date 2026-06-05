@@ -66,7 +66,8 @@ class EALeadController extends Controller
             dispatch(fn () => $quoteTypeEnum->allocate($capiResponse->quoteUID));
         }
 
-        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteTypeId);
+        $quoteTypeName = strtolower($quoteTypeEnum?->value ?? (string) $quoteTypeId);
+        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteTypeName);
 
         return response()->json([
             'success' => true,
