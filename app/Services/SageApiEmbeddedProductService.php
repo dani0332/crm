@@ -1989,6 +1989,7 @@ class SageApiEmbeddedProductService
             $embeddedProductTransaction->premium_without_tax = $insurerRequestResponseObject->policy_premium_without_tax;
             $embeddedProductTransaction->policy_start_date = $insurerRequestResponseObject->policy_start_dt;
             $embeddedProductTransaction->policy_end_date = $insurerRequestResponseObject->policy_end_dt;
+            $embeddedProductTransaction->save();
         }
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $embeddedProductTransaction->certificate_number;
@@ -2035,6 +2036,7 @@ class SageApiEmbeddedProductService
             $embeddedProductTransaction->premium_without_tax = $insurerRequestResponseObject->pricing->policy_price;
             $embeddedProductTransaction->policy_start_date = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(config('constants.DATE_FORMAT_ONLY'));
             $embeddedProductTransaction->policy_end_date = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(config('constants.DATE_FORMAT_ONLY'));
+            $embeddedProductTransaction->save();
         }
         $epRefCode = $embeddedProductTransaction->code;
         $policyNumber = $embeddedProductTransaction->certificate_number;
