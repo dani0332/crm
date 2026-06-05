@@ -16,7 +16,7 @@ use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::createEaSchema();
 });
 
 it('SendEALeadSubmittedEmailJob sends Bird webhook with advisor and lead generator payload', function () {

@@ -17,7 +17,7 @@ use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::createEaSchema();
     $this->withoutMiddleware(PreventRequestForgery::class);
 });
 

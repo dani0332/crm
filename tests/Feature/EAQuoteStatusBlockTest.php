@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\EaModelEnum;
 use App\Enums\EaQuoteStatusEligibleEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -23,7 +24,7 @@ use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
+    TestSchemaCreator::createEaSchema();
     $this->withoutMiddleware();
 });
 
@@ -137,7 +138,7 @@ function eaCollaborateBlocked(): array
 {
     return [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => null,
         'ea_assigned_advisor_approved_at' => null,
         'ea_expert_advisor_approved_at' => null,
@@ -148,7 +149,7 @@ function eaCollaborateManagerApproved(): array
 {
     return [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => now(),
         'ea_assigned_advisor_approved_at' => null,
         'ea_expert_advisor_approved_at' => null,
@@ -159,7 +160,7 @@ function eaCollaborateBothAdvisorsApproved(): array
 {
     return [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => null,
         'ea_assigned_advisor_approved_at' => now(),
         'ea_expert_advisor_approved_at' => now(),
@@ -196,7 +197,7 @@ it('allows EA_IMCRM quote when ea_model is not collaborate', function () {
 it('blocks EA_IMCRM collaborate quote with no approvals', function () {
     $quote = (object) [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => null,
         'ea_assigned_advisor_approved_at' => null,
         'ea_expert_advisor_approved_at' => null,
@@ -209,7 +210,7 @@ it('blocks EA_IMCRM collaborate quote with no approvals', function () {
 it('allows EA_IMCRM collaborate quote when manager has approved', function () {
     $quote = (object) [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => now()->toDateTimeString(),
         'ea_assigned_advisor_approved_at' => null,
         'ea_expert_advisor_approved_at' => null,
@@ -222,7 +223,7 @@ it('allows EA_IMCRM collaborate quote when manager has approved', function () {
 it('allows EA_IMCRM collaborate quote when both advisors have approved', function () {
     $quote = (object) [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => null,
         'ea_assigned_advisor_approved_at' => now()->toDateTimeString(),
         'ea_expert_advisor_approved_at' => now()->toDateTimeString(),
@@ -235,7 +236,7 @@ it('allows EA_IMCRM collaborate quote when both advisors have approved', functio
 it('blocks EA_IMCRM collaborate quote when only assigned advisor has approved', function () {
     $quote = (object) [
         'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
+        'ea_model' => EaModelEnum::Collaborate->value,
         'ea_manager_approved_at' => null,
         'ea_assigned_advisor_approved_at' => now()->toDateTimeString(),
         'ea_expert_advisor_approved_at' => null,
