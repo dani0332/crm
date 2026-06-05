@@ -156,6 +156,32 @@ test('sets BOOKING_REVERSAL_FAILED when terminal failure update is requested for
     expect($result['message'])->toContain('No Sage AR premium booking log found');
 });
 
+test('skips getInsurerRequestResponse when collection_amount is set on the embedded transaction', function (): void {
+    $context = imcrmReversalTestContext();
+    $context['ep']->update(['collection_amount' => 100.00]);
+
+    $sageApiService = Mockery::mock(SageApiService::class)->makePartial();
+    $sageApiService->shouldReceive('postToSage300')
+        ->andReturn(json_encode(['error' => ['message' => ['value' => 'processing conflict']]]));
+    $sageApiService->shouldReceive('logSageApiCall')->zeroOrMoreTimes();
+
+    $service = Mockery::mock(SageApiEmbeddedProductService::class)->makePartial();
+    $service->shouldReceive('getInsurerRequestResponse')->never();
+    $service->shouldReceive('updateAndLogEPBookingStatus')->never();
+    injectSageApiService($service, $sageApiService);
+
+    $result = $service->bookReversalOfEmbeddedProductOnSageAfterImcrmRefund(
+        [$context['quote'], $context['ep'], $context['sageRequest'], $context['ep']],
+        'MDX',
+        true,
+    );
+
+    expect($result)->toMatchArray([
+        'status' => false,
+        'message' => SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE,
+    ]);
+});
+
 test('does not set BOOKING_REVERSAL_FAILED on non-terminal failure when update flag is false', function (): void {
     $data = RetargetingEpReminderTestDataHelper::setupTestData();
     $ep = $data['epMDXTransaction'];

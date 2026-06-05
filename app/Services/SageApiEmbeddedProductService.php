@@ -534,8 +534,13 @@ class SageApiEmbeddedProductService
         if (! $this->embeddedProductHasSageArPremiumBookingLog($reversalSageLogOwner)) {
             $result = ['status' => false, 'message' => 'No Sage AR premium booking log found for EP Code: '.$embeddedProductTransaction->code];
         } else {
-            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
-            $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+            $insurerRequestResponse = null;
+
+            if ($embeddedProductTransaction->collection_amount === null) {
+                $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
+                $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
+            }
+            $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $epShortCode, $insurerRequestResponse);
             $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
 
             $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true, $quote);
