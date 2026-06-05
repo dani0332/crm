@@ -31,7 +31,9 @@ const authRoles = computed(() => page.props.auth?.roles ?? []);
 const authPermissions = computed(() => page.props.auth?.permissions ?? []);
 
 const isEAManager = computed(() => authRoles.value.includes('EA_MANAGER'));
-const canCollaborate = computed(() => authPermissions.value.includes('ea-collaborate'));
+const canCollaborate = computed(() =>
+  authPermissions.value.includes('ea-collaborate'),
+);
 const hasEAReferralAccess = computed(
   () =>
     authRoles.value.includes('EA_REFERRAL') ||
@@ -73,7 +75,10 @@ const healthPlanTypeOptions = computed(() =>
 );
 
 const businessTypeOfInsuranceOptions = computed(() =>
-  (page.props.businessTypeOfInsurances ?? []).map(t => ({ value: t.id, label: t.text })),
+  (page.props.businessTypeOfInsurances ?? []).map(t => ({
+    value: t.id,
+    label: t.text,
+  })),
 );
 
 // Car (1), Travel (8), Health (3), and GroupMedical (102) are always excluded from collaborate (referral only).
@@ -97,14 +102,20 @@ const lobOptions = computed(() => {
   if (leadForm.ea_model !== 'collaborate') return allLobOptions.value;
   return collaborateEligibleLobOptions.value;
 });
-const hasCollaborateEligibleLob = computed(() => collaborateEligibleLobOptions.value.length > 0);
+const hasCollaborateEligibleLob = computed(
+  () => collaborateEligibleLobOptions.value.length > 0,
+);
 
 const isCorpline = computed(() => leadForm.quote_type_id == 101);
 const isHealthLob = computed(() => leadForm.quote_type_id == 3);
 
 const eaModelOptions = computed(() => {
   const options = [{ value: 'referral', label: 'Referral' }];
-  if (canCollaborate.value && !isEAManager.value && hasCollaborateEligibleLob.value) {
+  if (
+    canCollaborate.value &&
+    !isEAManager.value &&
+    hasCollaborateEligibleLob.value
+  ) {
     options.push({ value: 'collaborate', label: 'Collaborate' });
   }
   return options;
@@ -123,8 +134,12 @@ const onConfirmCreateLead = async isValid => {
         last_name: leadForm.last_name,
         email: leadForm.email,
         mobile_no: leadForm.mobile_no,
-        ...(leadForm.business_type_of_insurance_id && { business_type_of_insurance_id: leadForm.business_type_of_insurance_id }),
-        ...(leadForm.health_plan_type_id && { health_plan_type_id: leadForm.health_plan_type_id }),
+        ...(leadForm.business_type_of_insurance_id && {
+          business_type_of_insurance_id: leadForm.business_type_of_insurance_id,
+        }),
+        ...(leadForm.health_plan_type_id && {
+          health_plan_type_id: leadForm.health_plan_type_id,
+        }),
       };
       router.get(route(props.routeName), collaborateData);
       isModalOpen.value = false;
@@ -322,11 +337,7 @@ watch(
           <x-radio value="referral" label="Referral" />
           <x-radio value="early_renewal" label="Early Renewal" />
           <x-radio value="payment_status" label="Payment Status" />
-          <x-radio
-
-            value="expert_advisor_model"
-            label="Expert Advisor Model"
-          />
+          <x-radio value="expert_advisor_model" label="Expert Advisor Model" />
         </x-form-group>
 
         <!-- Conditional dropdowns for referral option -->
@@ -480,7 +491,8 @@ watch(
             <p class="font-semibold">Duplicate Lead Found</p>
             <p class="text-sm mt-1">{{ duplicateInfo.message }}</p>
             <p v-if="duplicateInfo.existing_advisor" class="text-sm mt-1">
-              Existing Advisor: <strong>{{ duplicateInfo.existing_advisor }}</strong>
+              Existing Advisor:
+              <strong>{{ duplicateInfo.existing_advisor }}</strong>
             </p>
           </div>
         </div>
