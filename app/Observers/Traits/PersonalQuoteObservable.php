@@ -331,7 +331,7 @@ trait PersonalQuoteObservable
         LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Request Received', [
             'uuid' => $personalQuote->uuid,
         ]);
-        if (in_array($personalQuote->quote_type_id, [ (int) QuoteTypes::LIFE->id(), (int) QuoteTypes::HOME->id()]) && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])) {
+        if (in_array($personalQuote->quote_type_id, [ (int) QuoteTypes::LIFE->id(), (int) QuoteTypes::HOME->id()]) && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])) {
             $this->updatePersonalQuote($personalQuote, ['source' => LeadSourceEnum::REVIVAL_PAID], withEvents: true);
             LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Updated to Revival Paid', [
                 'quote_type_id' => $personalQuote->quote_type_id,
