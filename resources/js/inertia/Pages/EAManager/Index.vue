@@ -152,15 +152,11 @@ const updateRow = async lead => {
   try {
     const params = { quoteType: lead.quote_type, quoteId: lead.id };
 
-    // EA approve/reject decision
     if (state.action) {
       await axios.post(route('ea-manager.decision', params), {
         action: state.action,
       });
-    }
-
-    // Handle model change for rejected collaborative leads
-    if (lead.has_rejection && lead.ea_model === 'collaborate' && state.model) {
+    } else if (lead.has_rejection && lead.ea_model === 'collaborate' && state.model) {
       if (state.model === 'referral') {
         await axios.patch(route('ea-manager.change-model', params), {
           ea_model: 'referral',

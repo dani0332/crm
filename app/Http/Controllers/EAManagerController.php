@@ -48,13 +48,19 @@ class EAManagerController extends Controller
         $isApprove = $request->action === 'approve';
         $quote = $this->resolveQuote($quoteType, $quoteId);
 
-        $quote->ea_assigned_advisor_approved_at = $isApprove ? now() : null;
-        $quote->ea_expert_advisor_approved_at = $isApprove ? now() : null;
-        $quote->ea_assigned_advisor_rejected_at = $isApprove ? null : now();
-        $quote->ea_expert_advisor_rejected_at = $isApprove ? null : now();
-        $quote->save();
+        if ($isApprove) {
+            $quote->ea_assigned_advisor_approved_at = now();
+            $quote->ea_expert_advisor_approved_at = now();
+            $quote->ea_assigned_advisor_rejected_at = null;
+            $quote->ea_expert_advisor_rejected_at = null;
+            $quote->save();
 
-        SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, $isApprove ? 'Approved' : 'Rejected');
+            SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Approved');
+        } else {
+            $this->demoteToReferral($quote);
+
+            SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Rejected');
+        }
 
         return response()->json(['success' => true]);
     }
@@ -66,23 +72,28 @@ class EAManagerController extends Controller
         $quote = $this->resolveQuote($quoteType, $quoteId);
         $esModel = EaModelEnum::from($request->ea_model);
 
-        if ($esModel === EaModelEnum::Referral && $quote->ea_model === EaModelEnum::Collaborate) {
-            // Convert collaborate → referral:
-            // expert advisor becomes assigned advisor; old assigned becomes lead generator
-            $quote->lead_generator_id = $quote->advisor_id;
-            $quote->advisor_id = $quote->expert_advisor_id;
-            $quote->expert_advisor_id = null;
-            $quote->ea_model = EaModelEnum::Referral;
-            $quote->ea_assigned_advisor_approved_at = null;
-            $quote->ea_expert_advisor_approved_at = null;
-            $quote->ea_assigned_advisor_rejected_at = null;
-            $quote->ea_expert_advisor_rejected_at = null;
-            $quote->save();
+        if ($esModel !== EaModelEnum::Referral || $quote->ea_model !== EaModelEnum::Collaborate) {
+            return response()->json(['success' => true]);
         }
+
+        $this->demoteToReferral($quote);
 
         SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Model Changed to Referral');
 
         return response()->json(['success' => true]);
+    }
+
+    private function demoteToReferral(CarQuote|HealthQuote|PersonalQuote $quote): void
+    {
+        $quote->lead_generator_id = $quote->advisor_id;
+        $quote->advisor_id = $quote->expert_advisor_id;
+        $quote->expert_advisor_id = null;
+        $quote->ea_model = EaModelEnum::Referral;
+        $quote->ea_assigned_advisor_approved_at = null;
+        $quote->ea_expert_advisor_approved_at = null;
+        $quote->ea_assigned_advisor_rejected_at = null;
+        $quote->ea_expert_advisor_rejected_at = null;
+        $quote->save();
     }
 
     private function resolveQuote(string $quoteType, int $quoteId): CarQuote|HealthQuote|PersonalQuote
