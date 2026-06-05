@@ -8,16 +8,27 @@ const notification = useToast();
 const isProcessing = ref(false);
 let uploadWorker = null;
 
-const channelName = `public.${page.props.appEnv}.customer.upload`;
+const channelName = `public.${page.props.appEnv}.customer.upload.${page.props.auth.user.id}`;
 const eventName = 'customer.upload.completed';
 
 const subscribeToUpload = () => {
+  console.log('[CustomerUpload] Subscribing to channel:', channelName, eventName);
+
   uploadWorker = new SharedWorker('/build/workers/pusher.worker.js');
 
   uploadWorker.port.addEventListener('message', e => {
+    console.log('[CustomerUpload] Broadcast received:', {
+      event: e.data,
+      currentUserId: page.props.auth.user.id,
+      matches: e.data.userId === page.props.auth.user.id,
+    });
+
+    if (!isProcessing.value) {
+      return;
+    }
+
     if (e.data.userId === page.props.auth.user.id) {
       isProcessing.value = false;
-      unsubscribeFromUpload();
       if (e.data.status === 'success') {
         notification.success({
           title: `Upload complete. ${e.data.uploadedCount} records processed.`,
@@ -30,7 +41,7 @@ const subscribeToUpload = () => {
   });
 
   uploadWorker.onerror = error => {
-    console.error('Upload worker error:', error.message);
+    console.error('[CustomerUpload] Worker error:', error.message);
     uploadWorker.port.close();
   };
 
@@ -52,6 +63,7 @@ const unsubscribeFromUpload = () => {
   }
 };
 
+onMounted(() => subscribeToUpload());
 onUnmounted(() => unsubscribeFromUpload());
 
 const tableHeader = [
@@ -89,12 +101,12 @@ const uploadCustomer = useForm({
 function onSubmit() {
   uploadCustomer.post('/customer-process', {
     preserveState: true,
-    onError: errors => {
-      console.log(uploadCustomer.setError(errors));
-    },
-    onSuccess: () => {
+    onBefore: () => {
       isProcessing.value = true;
-      subscribeToUpload();
+    },
+    onError: errors => {
+      isProcessing.value = false;
+      console.log(uploadCustomer.setError(errors));
     },
   });
 }

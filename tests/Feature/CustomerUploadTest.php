@@ -7,8 +7,9 @@ use App\Http\Controllers\V2\CustomerController;
 use App\Http\Middleware\CheckRouteAccess;
 use App\Http\Middleware\PreventRequestForgery;
 use App\Http\Requests\CustomerUploadRequest;
-use App\Imports\CustomersImport;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\ProcessCustomerUploadJob;
+use App\Models\Customer;
 use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Http\RedirectResponse;
@@ -69,17 +70,21 @@ test('processCustomerUpload stores file and dispatches ProcessCustomerUploadJob 
     });
 });
 
-test('ProcessCustomerUploadJob handle imports file and fires CustomerUploadCompleted with success', function (): void {
+test('ProcessCustomerUploadJob handle imports file, dispatches SQS jobs, and fires CustomerUploadCompleted', function (): void {
     Event::fake([CustomerUploadCompleted::class]);
+    Bus::fake([ExtendCustomerSubscriptionViaSQS::class]);
     Storage::fake();
 
     $filePath = 'customer-uploads/test.xlsx';
     Storage::put($filePath, 'fake xlsx content');
 
-    $import = Mockery::mock(CustomersImport::class)->makePartial();
-    $import->rowCount = 42;
-
-    Excel::shouldReceive('import')->once()->andReturn(null);
+    Excel::shouldReceive('import')->once()->andReturnUsing(function ($import): void {
+        $import->rowCount = 42;
+        $import->customersToExtend = [
+            new Customer(['id' => 1, 'email' => 'a@test.com']),
+            new Customer(['id' => 2, 'email' => 'b@test.com']),
+        ];
+    });
 
     $sendEmailService = Mockery::mock(SendEmailCustomerService::class);
     $berlinService = Mockery::mock(BerlinService::class);
@@ -95,11 +100,11 @@ test('ProcessCustomerUploadJob handle imports file and fires CustomerUploadCompl
     $job->handle($sendEmailService, $berlinService);
 
     Storage::assertMissing($filePath);
-
+    Bus::assertDispatched(ExtendCustomerSubscriptionViaSQS::class);
     Event::assertDispatched(CustomerUploadCompleted::class, function (CustomerUploadCompleted $event): bool {
         $data = $event->broadcastWith();
 
-        return $data['status'] === 'success' && $data['userId'] === 99;
+        return $data['status'] === 'success' && $data['userId'] === 99 && $data['uploadedCount'] === 42;
     });
 });
 

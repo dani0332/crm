@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
@@ -21,6 +20,9 @@ class CustomersImport implements OnEachRow
     public $sendEmailCustomerService;
     public $berlinService;
     public int $rowCount = 0;
+
+    /** @var array<int, Customer> */
+    public array $customersToExtend = [];
 
     public function __construct(
         $myalfredExpiryDate,
@@ -85,7 +87,7 @@ class CustomersImport implements OnEachRow
                 ]);
                 $updateCustomer->save();
             }
-            ExtendCustomerSubscriptionViaSQS::dispatch($updateCustomer, 'CORPORATE', 'corporate-myalfred-we');
+            $this->customersToExtend[] = $updateCustomer;
 
             $newQuoteCustomer = new QuoteCustomer;
             $newQuoteCustomer->cdb_id = $this->CDBId;

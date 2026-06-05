@@ -30,7 +30,7 @@ class CustomerUploadCompleted implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        return ['public.'.config('constants.APP_ENV').'.customer.upload'];
+        return ['public.'.config('constants.APP_ENV').'.customer.upload.'.$this->userId];
     }
 
     public function broadcastAs(): string
