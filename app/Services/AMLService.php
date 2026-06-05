@@ -1271,7 +1271,7 @@ class AMLService
 
                 AutomationFailedJob::dispatch(
                     $quoteDetails->id,
-                    QuoteTypeId::Car,
+                    $quoteTypeId,
                     $actionRequired,
                     $statusAPIFailed,
                     PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
@@ -1650,6 +1650,15 @@ class AMLService
         }
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            app(HealthQuoteService::class)->updateHealthData($quote, $request, $isEntity);
+            app(HealthQuoteRevampMigrationService::class)->dispatchForNonEntityLead(
+                $quote->id,
+                $quote->quote_status_id,
+                $isEntity,
+            );
+        }
 
         return [$shouldApplicableForScreening, $insured, $entityId];
     }

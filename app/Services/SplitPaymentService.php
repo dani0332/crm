@@ -1014,7 +1014,7 @@ class SplitPaymentService
 
             $successMessage = 'Processing master payment approval completed';
 
-            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
+            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     if (in_array($quoteModel->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
@@ -1038,7 +1038,7 @@ class SplitPaymentService
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
                     $quoteStatusId = $quoteModel->quote_status_id;
-                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
                         $quoteStatusId = QuoteStatusEnum::PaymentPending;
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
@@ -1554,7 +1554,7 @@ class SplitPaymentService
         $paymentCode = $paymentSplit->code;
         $payment = $paymentSplit->payment;
         $insuranceProvider = $payment->insuranceProvider->code ?? null;
-        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::ALNC) ? ! $payment->is_approved : true;
+        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::QIC) ? ! $payment->is_approved : true;
 
         LoggerService::info(
             "Evaluating shouldProcessPayment for split payment Code: {$paymentCode}", [
@@ -1577,14 +1577,14 @@ class SplitPaymentService
             ['travelCarHealthModelTypes' => $travelCarHealthModelTypes]
         );
 
-        // Split CC job: insurer codes that gate processing with TCH (ALNC, AXA, RSA, ADNIC)
-        $alncAxaRsaAdnicProviderCodes = [
-            InsuranceProvidersEnum::ALNC,
+        // Split CC job: insurer codes that gate processing with TCH (QIC, AXA, RSA, ADNIC)
+        $qicAxaRsaAdnicProviderCodes = [
+            InsuranceProvidersEnum::QIC,
             InsuranceProvidersEnum::AXA,
             InsuranceProvidersEnum::RSA,
             InsuranceProvidersEnum::ADNIC,
         ];
-        $isAlncAxaRsaAdnicProvider = in_array($insuranceProvider, $alncAxaRsaAdnicProviderCodes);
+        $isQicAxaRsaAdnicProvider = in_array($insuranceProvider, $qicAxaRsaAdnicProviderCodes);
 
         // check if cyber quote
         $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
@@ -1597,11 +1597,11 @@ class SplitPaymentService
 
         // Only process if payment is not approved and:
         // - not from job, or
-        // - from job AND is Travel/Car/Health AND provider is ALNC/AXA/RSA/ADNIC
+        // - from job AND is Travel/Car/Health AND provider is QIC/AXA/RSA/ADNIC
         // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTchQuote && $isAlncAxaRsaAdnicProvider) ||
+            ($isTchQuote && $isQicAxaRsaAdnicProvider) ||
             ($isDeviceQuote && $isNgi) ||
             ($isCyberQuote && $isAwni)
         );

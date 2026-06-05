@@ -75,7 +75,17 @@ class DttHealth extends Command
             'member_category_id',
             'customer_id',
             'health_team_type',
-            'health_plan_type_id'
+            'health_plan_type_id',
+            'sub_source_id',
+            'sub_source_options_id',
+            'additional_notes',
+            'policy_number',
+            'policy_start_date',
+            'insure_code',
+            'policy_holder_code',
+            'policy_holder_category_code',
+            'visa_category_id',
+            'pec_marked_at',
         )
             ->where('is_revived', '=', false)
             ->where('created_at', '>=', $dateOne)

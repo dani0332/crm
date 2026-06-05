@@ -1,137 +1,172 @@
-FROM ubuntu:22.04 AS dependencies
-RUN apt-get update && apt-get install -y \
-    curl wget gpg apt-transport-https ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-ARG IMCRM_TOKEN
-#RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
-RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list 
-RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg
-RUN apt-get update && apt-get install doppler -y
-RUN doppler configure set token ${IMCRM_TOKEN}
+# syntax=docker/dockerfile:1
 
+# -----------------------------------------------------------------------------
+# Doppler CLI + token (www) — keep IMCRM_TOKEN only on the last layer here.
+# -----------------------------------------------------------------------------
+FROM ubuntu:22.04 AS dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl wget gpg apt-transport-https ca-certificates gnupg \
+    && rm -rf /var/lib/apt/lists/*
+RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" > /etc/apt/sources.list.d/doppler-cli.list \
+    && curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg \
+    && apt-get update && apt-get install -y --no-install-recommends doppler \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 1000 www && useradd -u 1000 -g www -m -s /bin/bash www
+ARG IMCRM_TOKEN
+RUN runuser -u www -- doppler configure set token "${IMCRM_TOKEN}"
+
+# -----------------------------------------------------------------------------
+# JS deps (cached when package.json / yarn.lock unchanged)
+# -----------------------------------------------------------------------------
 FROM node:22.12.0 AS frontend
 WORKDIR /var/www
-COPY package*.json yarn.lock /var/www/
-RUN yarn install --pure-lockfile
+COPY package.json yarn.lock ./
+RUN --mount=type=cache,target=/root/.cache/yarn \
+    yarn install --frozen-lockfile
 
+# -----------------------------------------------------------------------------
+# PHP extensions + Composer vendor (cached layers independent of app PHP edits)
+# -----------------------------------------------------------------------------
 FROM php:8.4-fpm AS build
 WORKDIR /app
-# Add docker php ext repo
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Install php extensions
-RUN chmod +x /usr/local/bin/install-php-extensions && sync
-RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/install-php-extensions
+RUN chmod +x /usr/local/bin/install-php-extensions
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential libssl-dev pkg-config \
-    libpng-dev \
-    libjpeg-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    locales \
-    libicu-dev \
-    zip \
-    jpegoptim optipng pngquant gifsicle \
-    unzip \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
-    lua-zlib-dev \
-    libmemcached-dev \
-    wget \
-    gnupg \
-    libwebp-dev \
-    qpdf
+    zip \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
-RUN docker-php-ext-install -j$(nproc) gd
-RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
-RUN pecl install mongodb-2.1.0 && docker-php-ext-enable mongodb
+RUN install-php-extensions \
+    mbstring \
+    pdo_mysql \
+    zip \
+    exif \
+    pcntl \
+    memcached \
+    redis \
+    gd \
+    mongodb-2.1.0
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-COPY . /app
-COPY composer.json composer.json
-COPY composer.lock composer.lock
-RUN composer install --optimize-autoloader --no-dev
 
+COPY composer.json composer.lock ./
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
+
+COPY . .
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+
+# -----------------------------------------------------------------------------
+# Runtime image
+# -----------------------------------------------------------------------------
 FROM php:8.4-fpm
-COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
+
+COPY --from=dependencies --chown=1000:1000 /home/www/.doppler/ /home/www/.doppler/
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
-COPY --from=build /app/vendor/ /var/www/vendor
-COPY --from=frontend /var/www/ /var/www
-COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-COPY --from=build /usr/bin/ /usr/bin/
-COPY --from=build /app /var/www/
-#COPY --from=build /usr/local/etc/php/conf.d/newrelic.ini /usr/local/etc/php/conf.d/newrelic.ini
-#COPY --from=build /var/log/newrelic/newrelic-daemon.log /var/log/newrelic/newrelic-daemon.log
 
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    supervisor \
+    sudo \
+    libcap2-bin \
+    curl \
+    wget \
+    ca-certificates \
+    libfreetype6 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libzip-dev \
+    zlib1g \
+    libicu-dev \
+    libmemcached11 \
+    libwebp-dev \
+    libavif16 \
+    libsnappy1v5 \
+    libxpm4 \
+    qpdf \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y \
-nginx \
-supervisor \
-curl \
-wget \
-libfreetype6 \
-libjpeg62-turbo \
-libpng16-16 \
-libzip-dev \
-zlib1g \
-libicu-dev \
-libmemcached11 \
-libwebp-dev \
-qpdf
-
-# Set working directory
 WORKDIR /var/www
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Add user for laravel application
 RUN groupadd -g 1000 www && \
-useradd -u 1000 -ms /bin/bash -g www www
+    useradd -u 1000 -ms /bin/bash -g www www && \
+    usermod -aG www-data www && \
+    usermod -aG www www-data
 
-# PHP Error Log Files
 RUN mkdir /var/log/php && \
-touch /var/log/php/errors.log && \
-touch /var/log/php/www-access.log && \
-touch /var/log/php/www-error.log && \
-touch /var/log/php/www-slow.log && \
-chmod -R 777 /var/log/php
+    touch /var/log/php/errors.log && \
+    touch /var/log/php/www-access.log && \
+    touch /var/log/php/www-error.log && \
+    touch /var/log/php/www-slow.log && \
+    touch /var/log/php/supervisord.log && \
+    chmod -R 777 /var/log/php
 
 EXPOSE 80
 EXPOSE 443
 
-# add root to www group
+COPY --from=build /app /var/www/
+COPY --from=frontend /var/www/node_modules /var/www/node_modules
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
 RUN chmod -R ugo+w /var/www/storage
 
-# Copy nginx/php/supervisor configs
 RUN cp docker/supervisor.conf /etc/supervisord.conf && \
-cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
-cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
-cp -r docker/*.pem /etc/nginx/conf.d/ && \
-cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+    cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
+    cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
+    cp -r docker/*.pem /etc/nginx/conf.d/ && \
+    cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /var/www/docker/run.sh
-RUN usermod -aG root www-data
-RUN usermod -aG root www
 
 RUN \
-  wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
-  cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
-  export NR_INSTALL_USE_CP_NOT_LN=1 && \
-  export NR_INSTALL_SILENT=1 && \
-  /tmp/newrelic-php5-*/newrelic-install install && \
-  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
-  sed -i \
-      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
-      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
-      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
-      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
-      /usr/local/etc/php/conf.d/newrelic.ini
+    wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
+    cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
+    export NR_INSTALL_USE_CP_NOT_LN=1 && \
+    export NR_INSTALL_SILENT=1 && \
+    /tmp/newrelic-php5-*/newrelic-install install && \
+    rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+    sed -i \
+        -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
+        -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
+        -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
+        -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+        -e 's|^;\?newrelic\.daemon\.logfile = .*|newrelic.daemon.logfile = "/var/log/php/newrelic-daemon.log"|' \
+        -e 's|^;\?newrelic\.logfile = .*|newrelic.logfile = "/var/log/php/newrelic-php_agent.log"|' \
+        /usr/local/etc/php/conf.d/newrelic.ini && \
+    touch /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log && \
+    chmod 666 /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log
+
+RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
+    && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/log/php/supervisord.log|' /etc/supervisord.conf \
+    && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi \
+    && sed -i \
+        -e 's|pid /run/nginx.pid;|pid /tmp/nginx.pid;|' \
+        -e 's|pid /var/run/nginx.pid;|pid /tmp/nginx.pid;|' \
+        -e '/^[[:space:]]*user[[:space:]]/d' \
+        /etc/nginx/nginx.conf \
+    && printf '%s\n' 'www ALL=(root) NOPASSWD: /bin/chown, /bin/chmod, /bin/mkdir' > /etc/sudoers.d/www \
+    && chmod 0440 /etc/sudoers.d/www \
+    && visudo -cf /etc/sudoers.d/www \
+    && mkdir -p /var/log/newrelic \
+    && chown -R www:www /var/www \
+    && chown -R www:www-data /var/www/storage /var/www/bootstrap/cache \
+    && find /var/www/storage /var/www/bootstrap/cache -type d -exec chmod 2775 {} + \
+    && find /var/www/storage /var/www/bootstrap/cache -type f -exec chmod 664 {} + \
+    && chown -R www:www /var/log/nginx /var/log/php /var/log/newrelic /home/www/.doppler /var/lib/nginx
+
+ENV HOME=/home/www
+ENV USER=www
+
+USER www
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

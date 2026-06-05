@@ -10,15 +10,20 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\ClaimsEnum;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MemberCategoryEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
@@ -38,11 +43,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RelationCodeEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SalaryBandEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\VisaCategoryEnum;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\HealthPlanType;
 use App\Models\PolicyIssuanceStatus;
@@ -177,6 +185,14 @@ class HandleInertiaRequests extends Middleware
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'healthInsureEnum' => array_column(HealthInsureEnum::cases(), 'value', 'name'),
+            'healthPolicyHolderEnum' => array_column(HealthPolicyHolderEnum::cases(), 'value', 'name'),
+            'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
+            'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
+            'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
+            'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
         ];
     }
 

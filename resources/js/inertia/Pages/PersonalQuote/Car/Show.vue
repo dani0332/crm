@@ -3731,27 +3731,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   >
                     SDP
                   </x-tag>
-                  <x-tag
-                    v-if="puaType"
-                    size="xs"
-                    class="mt-0.5 text-[10px] text-white"
-                    style="background-color: #e00000"
-                  >
-                    <x-tooltip placement="right">
-                      <template #tooltip>
-                        <span
-                          class="font-medium"
-                          v-if="puaType == puaTypeEnum.PPUA"
-                        >
-                          {{ puaTypeEnum.PPUA_TOOLTIP }}
-                        </span>
-                        <span class="font-medium" v-else>
-                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                        </span>
-                      </template>
-                      {{ puaType }}
-                    </x-tooltip>
-                  </x-tag>
+                  <x-tooltip placement="right">
+                    <x-tag
+                      v-if="puaType"
+                      size="xs"
+                      class="mt-0.5 text-[10px] text-white"
+                      style="background-color: #e00000"
+                    >
+                      <span>{{ puaType }}</span>
+                    </x-tag>
+
+                    <template #tooltip>
+                      <span
+                        class="font-medium"
+                        v-if="puaType == puaTypeEnum.PPUA"
+                      >
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
+                      <span class="font-medium" v-else>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+
                   <x-tag
                     v-for="tag in tags
                       ? tags.split(',').filter(t => t.trim())
