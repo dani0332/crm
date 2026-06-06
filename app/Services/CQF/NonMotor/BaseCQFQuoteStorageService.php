@@ -47,23 +47,28 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
 
         $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
 
-        return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
+        $newQuote = DB::transaction(function () use ($quoteData, $quote) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyLobQuoteDetail($newQuote, $quote);
             if ($this->shouldCopyInsured() && $quote instanceof PersonalQuote) {
                 $this->copyInsuredToRenewalQuote($newQuote, $quote);
             }
-            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
-            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
-
-            LoggerService::info(self::class.' - '.ucfirst($this->getLobName()).' CQF renewal quote created successfully', [
-                'previous_quote_uuid' => $quote->uuid,
-                'new_quote_uuid' => $newQuote->uuid,
-            ]);
 
             return $newQuote;
         });
+
+        if ($newQuote) {
+            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
+            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
+        }
+
+        LoggerService::info(self::class.' - '.ucfirst($this->getLobName()).' CQF renewal quote created successfully', [
+            'previous_quote_uuid' => $quote->uuid,
+            'new_quote_uuid' => $newQuote->uuid,
+        ]);
+
+        return $newQuote;
     }
 
     /**

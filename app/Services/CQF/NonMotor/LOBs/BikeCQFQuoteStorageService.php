@@ -141,24 +141,29 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $oldPersonalQuote = PersonalQuote::with('latestInsured')->where('uuid', $quote->uuid)->first();
         $quoteData['previous_quote_id'] = $oldPersonalQuote?->id;
 
-        return DB::transaction(function () use ($quoteData, $quote, $oldPersonalQuote, &$epCodes) {
+        $newQuote = DB::transaction(function () use ($quoteData, $quote, $oldPersonalQuote) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
             if ($this->shouldCopyInsured()) {
                 $this->copyCarQuoteInsuredToRenewalQuote($newQuote, $quote, $oldPersonalQuote);
             }
-            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
-            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
-
-            LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [
-                'previous_car_quote_id' => $quote->id,
-                'new_quote_uuid' => $newQuote->uuid,
-                'new_quote_id' => $newQuote->id,
-            ]);
 
             return $newQuote;
         });
+
+        if ($newQuote) {
+            $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
+            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
+        }
+
+        LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [
+            'previous_car_quote_id' => $quote->id,
+            'new_quote_uuid' => $newQuote->uuid,
+            'new_quote_id' => $newQuote->id,
+        ]);
+
+        return $newQuote;
     }
 
     /**
