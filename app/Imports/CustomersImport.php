@@ -50,7 +50,7 @@ class CustomersImport implements OnEachRow
 
         $row = $row->toArray();
 
-        $email = $row[1];
+        $email = trim($row[1]);
 
         if ($email != null && isValidEmail($email)) {
             $this->rowCount++;
@@ -94,6 +94,8 @@ class CustomersImport implements OnEachRow
             $newQuoteCustomer->customer_id = $customerId;
             $newQuoteCustomer->save();
             Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
+        } else {
+            Log::warning('CustomerImport: skipping row due to invalid or missing email', ['row_index' => $rowIndex, 'row' => $rowData]);
         }
     }
 }

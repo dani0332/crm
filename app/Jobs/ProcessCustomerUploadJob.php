@@ -8,7 +8,6 @@ use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -42,17 +41,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
             $sendEmailCustomerService,
             $berlinService,
         );
-
-        try {
-            Excel::import($import, Storage::path($this->filePath));
-        } catch (QueryException|\PDOException $e) {
-            if (str_contains($e->getMessage(), 'Lock wait timeout')) {
-                $this->release($this->backoff);
-
-                return;
-            }
-            throw $e;
-        }
+        Excel::import($import, Storage::path($this->filePath));
 
         collect($import->customersToExtend)
             ->chunk(50)
