@@ -418,7 +418,7 @@ class CustomerRepository extends BaseRepository
             return Excel::import(new CustomersImport(
                 $customerUploadRequest->myalfred_expiry_date,
                 $customerUploadRequest->cdb_id,
-                $customerUploadRequest->inviatation_email,
+                (bool) $customerUploadRequest->inviatation_email,
                 $sendEmailCustomerService,
                 $berlinService
             ), $customerUploadRequest->file('file_name'));

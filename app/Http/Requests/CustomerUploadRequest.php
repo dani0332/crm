@@ -26,7 +26,7 @@ class CustomerUploadRequest extends FormRequest
         return [
             'file_name' => 'required|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'cdb_id' => 'required|exists:business_quote_request,code',
-            'myalfred_expiry_date' => 'required',
+            'myalfred_expiry_date' => ['required', 'date'],
             'inviatation_email' => 'boolean',
         ];
     }
