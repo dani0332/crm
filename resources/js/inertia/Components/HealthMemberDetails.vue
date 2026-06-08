@@ -1370,7 +1370,16 @@ defineExpose({
             <x-select
               v-model="memberForm.salary_band_id"
               label="Salary"
-              :options="salaryBands"
+              :options="
+                salaryBands.filter(
+                  item =>
+                    !(
+                      memberForm.is_policy_holder == 1 &&
+                      memberForm.is_insured == 1 &&
+                      item.value === salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
+                    ),
+                )
+              "
               placeholder="Select Salary Band"
               class="w-full"
               :rules="[isRequired]"
@@ -1387,6 +1396,11 @@ defineExpose({
                     !(
                       memberForm.is_policy_holder == 1 &&
                       item.value === visaCategoryEnum.NEWBORN_BORN_IN_UAE
+                    ) &&
+                    !(
+                      memberForm.is_policy_holder == 1 &&
+                      memberForm.is_insured == 1 &&
+                      item.value === visaCategoryEnum.DEPENDENT_FAMILY
                     ),
                 )
               "
