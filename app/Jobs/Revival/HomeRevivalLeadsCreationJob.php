@@ -106,25 +106,27 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
         $existingDttRevival = null;
 
         if ($existingRevivalQuote) {
-            $homeRevivalQuoteUUID = $existingRevivalQuote->uuid;
-            LoggerService::info(self::class.' - '.$lead->uuid.' - childLeadFound - '.$homeRevivalQuoteUUID);
-
             $existingDttRevival = DttRevival::where([
                 'quote_type_id' => QuoteTypes::HOME->id(),
-                'uuid' => $homeRevivalQuoteUUID,
+                'uuid' => $existingRevivalQuote->uuid,
+                'previous_quote_id' => $lead->id,
             ])->first();
 
             if ($existingDttRevival) {
                 LoggerService::info(self::class.' - DTT revival already exists for quote, marking parent as revived and skipping', [
                     'lead_uuid' => $lead->uuid,
-                    'existing_revival_quote_uuid' => $homeRevivalQuoteUUID,
+                    'existing_revival_quote_uuid' => $existingRevivalQuote->uuid,
                     'dtt_revival_id' => $existingDttRevival->id,
                 ]);
                 $lead->update([$this->revivedFlagKey() => true]);
 
                 return;
             }
-        } else {
+
+            LoggerService::info(self::class.' - '.$lead->uuid.' - existing revival quote belongs to a different lead, creating fresh revival');
+        }
+
+        if (! $existingDttRevival) {
             LoggerService::info(self::class.' - Creating Home Revival Lead', [
                 'lead_uuid' => $lead->uuid,
                 'revival_source' => $this->revivalSource,
