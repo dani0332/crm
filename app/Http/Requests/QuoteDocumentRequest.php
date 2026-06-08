@@ -143,7 +143,14 @@ class QuoteDocumentRequest extends FormRequest
                     }
                 } else {
                     // validate if payment is authorized
-                    if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
+                    if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)
+                        && ! (
+                            // Exempt validation only for Life + ALNC; all other LOBs still run the checks above when those clauses pass.
+                            request()->quoteType == strtolower(quoteTypeCode::Life)
+                            && $quote->insuranceProvider?->code === InsuranceProviderEnum::ALNC->value
+                        )
+                    ) {
+
                         if (! $this->isPlanBProviderSelected($quote)) {
                             if (empty($quote->payment) ||
                                 ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&

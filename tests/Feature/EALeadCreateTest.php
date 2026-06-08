@@ -33,7 +33,7 @@ beforeEach(function () {
         ['id' => QuoteTypeId::Travel, 'code' => 'Travel', 'short_code' => 'TRV', 'text' => 'Travel Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => QuoteTypeId::Life, 'code' => 'Life', 'short_code' => 'LIF', 'text' => 'Life Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ['id' => QuoteTypeId::GroupMedical, 'code' => 'GroupMedical', 'short_code' => 'GMD', 'text' => 'Group Medical', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ['id' => 20, 'code' => 'Cyber', 'short_code' => 'CYB', 'text' => 'Cyber Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ['id' => 19, 'code' => 'Cyber', 'short_code' => 'CYB', 'text' => 'Cyber Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
     ]);
 
     app()->bind(EALeadCapiService::class, function () {
@@ -82,7 +82,6 @@ beforeEach(function () {
                 } else {
                     PersonalQuote::create(array_merge($data, [
                         'quote_type_id' => $quoteTypeId,
-                        'business_type_of_insurance_id' => $request->business_type_of_insurance_id,
                     ]));
                 }
 
@@ -147,7 +146,7 @@ it('creates a collaborate lead with advisor_id set to creating user', function (
 
     $response = $this->postJson(route('ea-leads.store'), [
         'ea_model' => 'collaborate',
-        'quote_type_id' => 20,
+        'quote_type_id' => 19,
         'first_name' => 'Bob',
         'last_name' => 'Builder',
         'email' => 'bob@example.com',
@@ -216,7 +215,7 @@ it('forces referral model for EA manager role even if collaborate submitted', fu
 
     $response = $this->postJson(route('ea-leads.store'), [
         'ea_model' => 'collaborate',
-        'quote_type_id' => 20,
+        'quote_type_id' => 19,
         'first_name' => 'Manager',
         'last_name' => 'Lead',
         'email' => 'manager.lead@example.com',
@@ -236,7 +235,7 @@ it('returns 422 with duplicate info when lead already exists within 60 days', fu
     PersonalQuote::create([
         'uuid' => Str::uuid()->toString(),
         'code' => 'CYB-test-001',
-        'quote_type_id' => 20,
+        'quote_type_id' => 19,
         'email' => 'dup@example.com',
         'mobile_no' => '0509999999',
         'source' => LeadSourceEnum::EA_IMCRM,
@@ -248,7 +247,7 @@ it('returns 422 with duplicate info when lead already exists within 60 days', fu
 
     $response = $this->postJson(route('ea-leads.store'), [
         'ea_model' => 'referral',
-        'quote_type_id' => 20,
+        'quote_type_id' => 19,
         'first_name' => 'Dup',
         'last_name' => 'Test',
         'email' => 'dup@example.com',

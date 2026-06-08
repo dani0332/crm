@@ -50,7 +50,6 @@ class EALeadCreateRequest extends FormRequest
                 'exists:business_type_of_insurance,id',
             ],
             'health_plan_type_id' => [
-                Rule::requiredIf($quoteTypeId === QuoteTypeId::Health),
                 'nullable',
                 'integer',
                 'exists:health_plan_type,id',
@@ -76,16 +75,24 @@ class EALeadCreateRequest extends FormRequest
             $this->merge(['ea_model' => 'referral']);
         }
 
-        // Collaborate requires ea-collaborate permission
-        $hasCollaboratePermission = $this->user()->hasAnyPermission([PermissionsEnum::EaCollaborate]);
+        $user = $this->user();
+        $hasCollaboratePermission = $user->roles()->with('permissions')->get()
+            ->flatMap(fn ($role) => $role->permissions)
+            ->contains('name', PermissionsEnum::EaCollaborate);
 
         if ($this->getEaModel() === EaModelEnum::Collaborate && ! $hasCollaboratePermission) {
             $this->merge(['ea_model' => 'referral']);
         }
 
-        // Car, Travel, Health, and GroupMedical are always excluded from collaborate (referral only).
-        // Life requires a specific advisor role to use collaborate.
-        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical];
+        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel];
+
+        if (! $this->user()->hasRole(RolesEnum::RMAdvisor)) {
+            $this->collaborateForbiddenLobs[] = QuoteTypeId::Health;
+        }
+
+        if (! $this->user()->hasRole(RolesEnum::GMAdvisor)) {
+            $this->collaborateForbiddenLobs[] = QuoteTypeId::GroupMedical;
+        }
 
         if (! $this->user()->hasRole(RolesEnum::LifeAdvisor)) {
             $this->collaborateForbiddenLobs[] = QuoteTypeId::Life;
@@ -94,6 +101,6 @@ class EALeadCreateRequest extends FormRequest
 
     public function getEaModel()
     {
-        return $this->enum($this->input('ea_model'), EaModelEnum::class);
+        return $this->enum('ea_model', EaModelEnum::class);
     }
 }

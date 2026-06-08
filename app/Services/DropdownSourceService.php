@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessActivity;
@@ -39,6 +41,7 @@ use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DropdownSourceService extends BaseService
@@ -97,7 +100,12 @@ class DropdownSourceService extends BaseService
         return $data;
     }
 
-    public function getDropdownSource($type, $quoteTypeId = false)
+    /**
+     * @param  mixed  $type
+     * @param  mixed  $quoteTypeId
+     * @return mixed
+     */
+    public function getDropdownSource($type, $quoteTypeId = false, ?string $leadSource = null)
     {
         $data = '';
         $lookUpService = new LookupService;
@@ -106,7 +114,11 @@ class DropdownSourceService extends BaseService
                 $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
                 break;
             case 'marital_status_id':
-                $data = MartialStatus::select('id', 'text')->where('is_active', true)->get();
+                $data = Cache::remember(
+                    CacheKeyEnum::MARITAL_STATUS_KEY->value,
+                    CacheKeyEnum::MARITAL_STATUS_KEY->expiry(),
+                    fn () => MartialStatus::select('id', 'text')->where('is_active', true)->get()
+                );
                 break;
             case 'nationality_id':
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
@@ -121,7 +133,7 @@ class DropdownSourceService extends BaseService
                 $data = HealthCoverFor::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'emirate_of_your_visa_id':
-                $data = Emirate::select('id', 'text')->where('is_active', true)->get();
+                $data = Emirate::select('id', 'text')->where('is_active', true)->orderBy('sort_order')->get();
                 break;
             case 'tier_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();
@@ -338,6 +350,27 @@ class DropdownSourceService extends BaseService
                 break;
             case 'insurance_provider_active_list':
                 $data = InsuranceProvider::select('id', 'text')->withActive()->orderBy('text')->get();
+                break;
+            case 'gender':
+                $data = $lookUpService->getGender();
+                break;
+            case LookupsEnum::HEALTH_INSURE_OPTIONS->value:
+                $data = $lookUpService->getHealthInsureOptions($leadSource);
+                break;
+            case LookupsEnum::POLICY_HOLDER_OPTIONS->value:
+                $data = $lookUpService->getPolicyHolder($leadSource);
+                break;
+            case LookupsEnum::POLICY_HOLDER_CATEGORY->value:
+                $data = $lookUpService->getPolicyHolderCategory();
+                break;
+            case 'visa_category':
+                $data = $lookUpService->getVisaCategory();
+                break;
+            case LookupsEnum::HEALTH_MEMBER_RELATION->value:
+                $data = $lookUpService->getHealthMemberRelations();
+                break;
+            case LookupsEnum::DOMESTIC_WORKER_RELATION->value:
+                $data = $lookUpService->getDomesticWorkerRelations();
                 break;
             default:
                 break;

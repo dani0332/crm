@@ -14,6 +14,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  businessTypeOfInsuranceOptions: {
+    type: Array,
+    default: () => [],
+  },
+  healthPlanTypeOptions: {
+    type: Array,
+    default: () => [],
+  },
   duplicateInfo: {
     type: Object,
     default: null,
@@ -27,11 +35,14 @@ const { isRequired } = useRules();
 const page = usePage();
 const authRoles = computed(() => page.props.auth?.roles ?? []);
 
-// Car (1), Travel (8), Health (3), and GroupMedical (102) are always excluded from collaborate (referral only).
-// Life (4) requires a specific advisor role to use collaborate.
+// Car (1) and Travel (8) are always excluded from collaborate.
+// Health (3), GroupMedical (102), and Life (4) are excluded unless the user holds the matching advisor role
+// (mirrors EALeadCreateRequest::prepareForValidation — FRD §D).
 const collaborateExcludedLobs = computed(() => {
-  const excluded = [1, 8, 3, 102];
-  if (!authRoles.value.includes('LIFE_ADVISOR')) excluded.push(4);
+  const excluded = [1, 8]; // Car, Travel always excluded
+  if (!authRoles.value.includes('RM_ADVISOR')) excluded.push(3); // Health
+  if (!authRoles.value.includes('GM_ADVISOR')) excluded.push(102); // GroupMedical
+  if (!authRoles.value.includes('LIFE_ADVISOR')) excluded.push(4); // Life
   return excluded;
 });
 
@@ -55,7 +66,9 @@ const allLobOptions = computed(() =>
 
 const lobOptions = computed(() => {
   if (form.ea_model !== 'collaborate') return allLobOptions.value;
-  return allLobOptions.value.filter(opt => !collaborateExcludedLobs.value.includes(opt.value));
+  return allLobOptions.value.filter(
+    opt => !collaborateExcludedLobs.value.includes(opt.value),
+  );
 });
 
 const isCorpline = computed(() => form.quote_type_id === 101);
@@ -153,12 +166,14 @@ const updateField = (field, value) => {
         :model-value="form.business_type_of_insurance_id"
         label="BUSINESS TYPE OF INSURANCE"
         name="businessTypeOfInsuranceId"
-        :options="[]"
+        :options="businessTypeOfInsuranceOptions"
         placeholder="Select Business Type"
         class="w-full"
         :rules="[isRequired]"
         :required="true"
-        @update:model-value="updateField('business_type_of_insurance_id', $event)"
+        @update:model-value="
+          updateField('business_type_of_insurance_id', $event)
+        "
       />
 
       <x-select
@@ -166,7 +181,7 @@ const updateField = (field, value) => {
         :model-value="form.health_plan_type_id"
         label="PLAN TYPE"
         name="healthPlanTypeId"
-        :options="[]"
+        :options="healthPlanTypeOptions"
         placeholder="Select Plan Type"
         class="w-full"
         :rules="[isRequired]"

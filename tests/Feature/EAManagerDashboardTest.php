@@ -125,7 +125,7 @@ it('manager approve force-approves both advisor timestamps', function () {
     ]);
 
     $this->actingAs($manager);
-    $response = $this->postJson(route('ea-manager.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]));
+    $response = $this->postJson(route('ea-manager.decision', ['quoteType' => 'personal', 'quoteId' => $lead->id]), ['action' => 'approve']);
 
     $response->assertOk()->assertJsonPath('success', true);
     $lead->refresh();

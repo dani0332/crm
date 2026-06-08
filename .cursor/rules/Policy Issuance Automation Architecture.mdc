@@ -32,7 +32,7 @@ PolicyIssuanceInterface
 
 **Purpose**: Defines the contract that all insurance provider services must implement.
 
-**Implementation**: Each insurance provider (Adnic, GIG, Liva, Alliance) implements this interface.
+**Implementation**: Each insurance provider (Adnic, GIG, Liva, Qatar) implements this interface.
 
 ### 2. Service Layer Architecture
 
@@ -55,7 +55,7 @@ PolicyIssuanceAutomation/
 │   ├── GIGInsuranceService
 │   └── LivaInsuranceService
 └── Travel/
-    └── AllianceInsuranceService
+    └── QatarInsuranceService
 ```
 
 ---
@@ -1049,7 +1049,7 @@ public const {PROVIDER}_{LOB}_AUTOMATION_API_TIMEOUT = '{provider}_{lob}_automat
 
 ### 1. Review Current Patterns
 **Before making changes:**
-- Review existing service implementations (Adnic, GIG, Liva, Alliance)
+- Review existing service implementations (Adnic, GIG, Liva, Qatar)
 - Identify patterns used in current implementations
 - Ensure new code follows established architectural patterns
 - Check consistency with Single Responsibility Principle

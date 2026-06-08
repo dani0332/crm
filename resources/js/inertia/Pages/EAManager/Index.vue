@@ -24,7 +24,6 @@ const quoteTypes = computed(() =>
 );
 
 const eaStatusOptions = [
-  { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -39,10 +38,12 @@ const eaModelOptions = [
   { value: 'collaborate', label: 'Collaborate' },
 ];
 
-const statusLabel = id => statusOptions.value.find(s => s.value === id)?.label ?? id ?? '—';
+const statusLabel = id =>
+  statusOptions.value.find(s => s.value === id)?.label ?? id ?? '—';
 
 const tableHeaders = [
   { text: 'REF ID', value: 'code' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
   { text: 'EA ADVISOR', value: 'expert_advisor' },
   { text: 'LOB', value: 'quote_type' },
   { text: 'MODEL', value: 'ea_model' },
@@ -59,7 +60,10 @@ const buildRowState = leads =>
     leads.map(lead => [
       rowKey(lead),
       {
-        model: lead.has_rejection && lead.ea_model === 'collaborate' ? null : lead.ea_model,
+        model:
+          lead.has_rejection && lead.ea_model === 'collaborate'
+            ? null
+            : lead.ea_model,
         action: null,
         loading: false,
         error: null,
@@ -80,9 +84,9 @@ const filterForm = reactive({
   ref_id: props.filters.ref_id ?? '',
   lob: props.filters.lob ?? null,
   ea_model: props.filters.ea_model ?? null,
-  status: props.filters.status ?? null,
   date_from: props.filters.date_from ?? '',
   date_to: props.filters.date_to ?? '',
+  lead_generator: props.filters.lead_generator ?? '',
 });
 
 const onSubmit = isValid => {
@@ -100,31 +104,41 @@ const onReset = () => {
     ref_id: '',
     lob: null,
     ea_model: null,
-    status: null,
     date_from: '',
     date_to: '',
+    lead_generator: '',
   });
-  router.get(route('ea-manager.index'), {}, {
-    preserveState: true,
-    preserveScroll: true,
-    onBefore: () => (loaders.table = true),
-    onFinish: () => (loaders.table = false),
-  });
+  router.get(
+    route('ea-manager.index'),
+    {},
+    {
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loaders.table = true),
+      onFinish: () => (loaders.table = false),
+    },
+  );
 };
 
 const exportLeads = () => {
   const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(filterForm).filter(([, v]) => v !== null && v !== '')),
+    Object.fromEntries(
+      Object.entries(filterForm).filter(([, v]) => v !== null && v !== ''),
+    ),
   );
   window.location.href =
-    route('ea-manager.export') + (params.toString() ? '?' + params.toString() : '');
+    route('ea-manager.export') +
+    (params.toString() ? '?' + params.toString() : '');
 };
 
 const updateRow = async lead => {
   const key = rowKey(lead);
   const state = rowState[key];
 
-  if (!state.action && !(lead.has_rejection && lead.ea_model === 'collaborate' && state.model)) {
+  if (
+    !state.action &&
+    !(lead.has_rejection && lead.ea_model === 'collaborate' && state.model)
+  ) {
     state.error = 'Please select an action.';
     return;
   }
@@ -135,21 +149,27 @@ const updateRow = async lead => {
   try {
     const params = { quoteType: lead.quote_type, quoteId: lead.id };
 
-    // EA approve/reject decision
     if (state.action) {
-      await axios.post(route('ea-manager.decision', params), { action: state.action });
-    }
-
-    // Handle model change for rejected collaborative leads
-    if (lead.has_rejection && lead.ea_model === 'collaborate' && state.model) {
+      await axios.post(route('ea-manager.decision', params), {
+        action: state.action,
+      });
+    } else if (
+      lead.has_rejection &&
+      lead.ea_model === 'collaborate' &&
+      state.model
+    ) {
       if (state.model === 'referral') {
-        await axios.patch(route('ea-manager.change-model', params), { ea_model: 'referral' });
+        await axios.patch(route('ea-manager.change-model', params), {
+          ea_model: 'referral',
+        });
       } else if (state.model === 'collaborate') {
-        await axios.post(route('ea-manager.decision', params), { action: 'approve' });
+        await axios.post(route('ea-manager.decision', params), {
+          action: 'approve',
+        });
       }
     }
 
-    router.reload({ only: ['leads', 'pendingRejectionsCount'] });
+    router.reload({ only: ['leads', 'pendingRejectionsCount', 'eaPendingRejectionsCount'] });
   } catch (err) {
     state.error = err?.response?.data?.message ?? 'Update failed.';
   } finally {
@@ -163,9 +183,12 @@ const updateRow = async lead => {
 
   <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
     EA Manager
-    <x-badge v-if="pendingRejectionsCount > 0" color="red" size="sm" class="ml-2">
-      {{ pendingRejectionsCount }} Pending Rejection{{ pendingRejectionsCount !== 1 ? 's' : '' }}
-    </x-badge>
+    <span
+      v-if="pendingRejectionsCount > 0"
+      class="ml-2 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-sm font-semibold px-2 py-0.5 min-w-[1.5rem]"
+    >
+      {{ pendingRejectionsCount }}
+    </span>
   </h1>
 
   <x-divider class="my-4" />
@@ -185,39 +208,34 @@ const updateRow = async lead => {
         :options="quoteTypes"
       />
 
-      <x-input
-        v-model="filterForm.date_from"
-        label="Date From"
-        type="date"
-      />
+      <x-input v-model="filterForm.date_from" label="Date From" type="date" />
 
-      <x-input
-        v-model="filterForm.date_to"
-        label="Date To"
-        type="date"
-      />
+      <x-input v-model="filterForm.date_to" label="Date To" type="date" />
     </div>
 
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-      <x-select
-        v-model="filterForm.status"
-        label="EA Status"
-        placeholder="Filter by EA Status"
-        :options="eaStatusOptions"
-      />
-
       <x-select
         v-model="filterForm.ea_model"
         label="EA Model"
         placeholder="All Models"
         :options="eaModelOptions"
       />
+
+      <x-input
+        v-model="filterForm.lead_generator"
+        label="Lead Generator"
+        placeholder="Search by name"
+      />
     </div>
 
     <div class="flex gap-3 justify-end">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">Reset</x-button>
-      <x-button size="sm" color="secondary" @click.prevent="exportLeads">Export</x-button>
+      <x-button size="sm" color="primary" @click.prevent="onReset"
+        >Reset</x-button
+      >
+      <x-button size="sm" color="secondary" @click.prevent="exportLeads"
+        >Export</x-button
+      >
     </div>
   </x-form>
 
@@ -232,6 +250,10 @@ const updateRow = async lead => {
   >
     <template #item-code="item">
       <span class="font-medium text-blue-600">{{ item.code }}</span>
+    </template>
+
+    <template #item-lead_generator="item">
+      {{ item.lead_generator?.name ?? '—' }}
     </template>
 
     <template #item-expert_advisor="item">
@@ -263,9 +285,9 @@ const updateRow = async lead => {
           :class="{
             'text-green-600': item.ea_status === 'approved',
             'text-red-600': item.ea_status === 'rejected',
-            'text-yellow-600': item.ea_status === 'pending',
           }"
-        >{{ item.ea_status }}</span>
+          >{{ item.ea_status }}</span
+        >
         <x-select
           v-model="rowState[rowKey(item)].action"
           :options="eaActionOptions"
@@ -287,10 +309,7 @@ const updateRow = async lead => {
         >
           Update
         </x-button>
-        <span
-          v-if="rowState[rowKey(item)]?.error"
-          class="text-xs text-red-600"
-        >
+        <span v-if="rowState[rowKey(item)]?.error" class="text-xs text-red-600">
           {{ rowState[rowKey(item)].error }}
         </span>
       </div>

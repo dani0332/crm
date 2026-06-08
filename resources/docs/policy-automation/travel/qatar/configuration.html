@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alliance Travel - Configuration Management Documentation</title>
+    <title>Qatar Travel - Configuration Management Documentation</title>
     <link rel="stylesheet" href="/docs/styles/styles.css" />
     <style>
       * {
@@ -297,9 +297,7 @@
         <span>></span>
         <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
         <span>></span>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
-          >Alliance</a
-        >
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
         <span>></span>
         <span>Configuration</span>
       </div>
@@ -307,23 +305,23 @@
       <div class="header">
         <h1>🔧 Configuration Management</h1>
         <p>
-          Complete Configuration Guide for Alliance Travel Policy Issuance
+          Complete Configuration Guide for Qatar Travel Policy Issuance
           Automation
         </p>
       </div>
 
       <div class="nav-links">
         <h3>📚 Navigation</h3>
-        <a href="/docs/policy-automation/travel/alliance/index.html"
+        <a href="/docs/policy-automation/travel/qatar/index.html"
           >← Back to Overview</a
         >
-        <a href="/docs/policy-automation/travel/alliance/architecture.html"
+        <a href="/docs/policy-automation/travel/qatar/architecture.html"
           >Architecture →</a
         >
-        <a href="/docs/policy-automation/travel/alliance/automation-flow.html"
+        <a href="/docs/policy-automation/travel/qatar/automation-flow.html"
           >Automation Flow →</a
         >
-        <a href="/docs/policy-automation/travel/alliance/api-integration.html"
+        <a href="/docs/policy-automation/travel/qatar/api-integration.html"
           >API Integration →</a
         >
       </div>
@@ -332,8 +330,8 @@
       <div class="section">
         <h2>🌍 Environment Configuration</h2>
         <p>
-          Alliance Travel automation requires several environment variables to
-          be configured. These are typically stored in your
+          Qatar Travel automation requires several environment variables to be
+          configured. These are typically stored in your
           <code class="code-inline">.env</code> file and accessed via Laravel's
           configuration system.
         </p>
@@ -351,19 +349,19 @@
           <tbody>
             <tr>
               <td><code>ALLIANCE_API_BASE_URL</code></td>
-              <td>Base URL for Alliance API endpoints</td>
+              <td>Base URL for Qatar API endpoints</td>
               <td><code>https://api.alliance.ae</code></td>
               <td>✅ Yes</td>
             </tr>
             <tr>
               <td><code>ALLIANCE_AGENCY_ID</code></td>
-              <td>Alliance agency identifier for authentication</td>
+              <td>Qatar agency identifier for authentication</td>
               <td><code>AGENCY123</code></td>
               <td>✅ Yes</td>
             </tr>
             <tr>
               <td><code>ALLIANCE_AGENCY_CODE</code></td>
-              <td>Alliance agency code for authentication</td>
+              <td>Qatar agency code for authentication</td>
               <td><code>CODE456</code></td>
               <td>✅ Yes</td>
             </tr>
@@ -398,8 +396,8 @@
       <div class="section">
         <h2>🎛️ Feature Toggles</h2>
         <p>
-          Feature toggles allow you to enable or disable Alliance Travel
-          automation at runtime without code changes. These are stored in the
+          Feature toggles allow you to enable or disable Qatar Travel automation
+          at runtime without code changes. These are stored in the
           <code class="code-inline">application_storage</code> table and
           accessed via
           <code class="code-inline">ApplicationStorageService</code>.
@@ -417,18 +415,14 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE</code></td>
-              <td>
-                Master toggle to enable/disable Alliance Travel automation
-              </td>
+              <td><code>ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE</code></td>
+              <td>Master toggle to enable/disable Qatar Travel automation</td>
               <td><code>false</code></td>
               <td>boolean</td>
             </tr>
             <tr>
               <td>
-                <code
-                  >ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE</code
-                >
+                <code>ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE</code>
               </td>
               <td>Enable retry mechanism for timeout errors</td>
               <td><code>false</code></td>
@@ -443,11 +437,11 @@
             >// Check if automation is enabled public function
             isPolicyIssuanceAutomationEnabled(): bool { return
             app(ApplicationStorageService::class)
-            ->getValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
+            ->getValueByKey(ApplicationStorageEnums::ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE);
             } // Check if retry is enabled public function
             isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool { return
             app(ApplicationStorageService::class)
-            ->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
+            ->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE);
             }</code
           >
         </div>
@@ -455,9 +449,7 @@
         <div class="warning-box">
           <strong>⚠️ Important</strong>
           When
-          <code class="code-inline"
-            >ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE</code
-          >
+          <code class="code-inline">ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE</code>
           is disabled, the automation will not execute, but it will log that
           automation is disabled. This allows you to safely disable automation
           without breaking the system.
@@ -528,7 +520,7 @@
             $this->authParam = [ 'agency_id' =>
             config('constants.ALLIANCE_AGENCY_ID'), 'agency_code' =>
             config('constants.ALLIANCE_AGENCY_CODE'), ]; } private function
-            allianceHttpCall($endPoint, $param) { $payload =
+            qatarHttpCall($endPoint, $param) { $payload =
             array_merge($this->authParam, $param); // ... rest of HTTP call
             }</code
           >
@@ -549,7 +541,7 @@
             >public function fetchAndUploadDocument($quote, $travelType): array
             { $maxRetries = 5; $retryDelay = 10; // seconds $retryCount = 0; do
             { sleep($retryDelay); $policyDocuments =
-            $this->allianceHttpCall($endPoint, $payload); if
+            $this->qatarHttpCall($endPoint, $payload); if
             ($policyDocuments->failed() && str_contains($response->errors[0],
             'Policy documents are still generating')) { $retryCount++; } else {
             break; } } while ($retryCount < $maxRetries); }</code
@@ -603,10 +595,10 @@
         <div class="code-block">
           <code
             >// Default to Inbound $travelType =
-            TravelQuoteEnum::ALLIANCE_IN_BOUND; $directionCode =
+            TravelQuoteEnum::QATAR_IN_BOUND; $directionCode =
             $quote->direction_code; // Check if Outbound if ($directionCode ===
             TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) { $travelType =
-            TravelQuoteEnum::ALLIANCE_OUT_BOUND; }</code
+            TravelQuoteEnum::QATAR_OUT_BOUND; }</code
           >
         </div>
 
@@ -638,7 +630,7 @@
           <code
             >public function calculateCoverDaysForExpiryDate($quote,
             $travelType): mixed { $coverDays = $quote->days_cover_for;
-            $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;
+            $isInboundLead = $travelType === TravelQuoteEnum::QATAR_IN_BOUND;
             $isMultiTripLead = $quote->coverage_code ===
             TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP; if ($isInboundLead &&
             $isMultiTripLead) { $coverDays = 180; // Fixed 180 days for
@@ -661,11 +653,11 @@
         <h2>📄 Document Configuration</h2>
 
         <h3>Document Type Mapping</h3>
-        <p>Alliance document names are mapped to IMCRM document codes:</p>
+        <p>Qatar document names are mapped to IMCRM document codes:</p>
         <table class="config-table">
           <thead>
             <tr>
-              <th>Alliance Document Name</th>
+              <th>Qatar Document Name</th>
               <th>IMCRM Document Code</th>
               <th>Quote Type ID</th>
             </tr>
@@ -731,7 +723,7 @@
 
         <div class="warning-box">
           <strong>Privacy Protection</strong>
-          Customer contact details are not shared with Alliance. Static contact
+          Customer contact details are not shared with Qatar. Static contact
           information is used to protect customer privacy while maintaining API
           compatibility.
         </div>
@@ -752,7 +744,7 @@
           <div class="config-item">
             <strong>✅ Configuration Files</strong>
             <p style="margin-top: 8px; color: #7f8c8d; font-size: 0.9em">
-              config/constants.php includes Alliance variables
+              config/constants.php includes Qatar variables
             </p>
           </div>
           <div class="config-item">
@@ -809,7 +801,7 @@
             <tr>
               <td>Authentication failures</td>
               <td>Invalid agency_id or agency_code</td>
-              <td>Verify environment variables match Alliance credentials</td>
+              <td>Verify environment variables match Qatar credentials</td>
             </tr>
             <tr>
               <td>API timeout errors</td>
@@ -827,8 +819,7 @@
               <td>Automation not running</td>
               <td>Feature toggle disabled</td>
               <td>
-                Check ApplicationStorage for
-                ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE
+                Check ApplicationStorage for ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE
               </td>
             </tr>
             <tr>
@@ -846,7 +837,7 @@
       <div class="footer">
         <p>
           <strong
-            >Alliance Travel Insurance Automation - Configuration Management
+            >Qatar Travel Insurance Automation - Configuration Management
             Documentation</strong
           >
         </p>

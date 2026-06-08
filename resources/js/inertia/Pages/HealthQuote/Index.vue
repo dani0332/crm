@@ -27,11 +27,42 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  healthSignatoryFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
+  healthUaePassApiStatusFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
+  genderDisplayMap: Object,
 });
 
 const page = usePage();
 const teamNamesEnum = page.props.teamNamesEnum;
+
+const signatoryFilterOptions = computed(() => {
+  const fromServer = page.props.healthSignatoryFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [
+    { value: 'All', label: 'All' },
+    { value: 'policyholder', label: 'Policyholder' },
+    { value: 'insured_member', label: 'Insured Member' },
+    { value: 'someone_else', label: 'Someone Else' },
+  ];
+});
+
+const uaePassApiStatusFilterOptions = computed(() => {
+  const fromServer = page.props.healthUaePassApiStatusFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [{ value: 'All', label: 'All' }];
+});
 const notification = useToast();
+const healthCoverForEnum = page.props.healthCoverForEnum;
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
@@ -81,7 +112,7 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirates', is_active: true },
   { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
@@ -143,12 +174,20 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LEAD TYPE', value: 'health_lead_type.text', is_active: true },
-  { text: 'SALARY BAND', value: 'salary_band.text', is_active: true },
   {
     text: 'MEMBER CATEGORY',
     value: 'member_category.text',
     is_active: true,
   },
+  {
+    text: 'PolicyHolder Category',
+    value: 'policy_holder_category.text',
+    is_active: true,
+  },
+  { text: 'Visa Category', value: 'visa_category.text', is_active: true },
+  { text: 'Gender', value: 'gender_lookup.text', is_active: true },
+  { text: 'Marital Status', value: 'marital_status.text', is_active: true },
+  { text: 'SALARY', value: 'salary_band.text', is_active: true },
   {
     text: 'CURRENTLY INSURED WITH',
     value: 'insurance_provider.text',
@@ -177,6 +216,12 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
+  { text: 'SIGNATORY', value: 'signatory_text', is_active: true },
+  {
+    text: 'UAE PASS API STATUS',
+    value: 'uae_pass_api_status_text',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -227,6 +272,8 @@ const filters = reactive({
   private_client: 'all',
   emirate_of_your_visa_id: [],
   pec_flag: 'all',
+  signatory: 'ALL',
+  uae_pass_api_status: 'ALL',
   authorize_date: '',
   captured_date: '',
   payment_status_id: [],
@@ -1237,6 +1284,22 @@ const paymentStatusOptions = computed(() => {
           :single="true"
         />
         <ComboBox
+          v-model="filters.signatory"
+          label="Signatory"
+          placeholder="UAE PASS signature match"
+          :options="signatoryFilterOptions"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.uae_pass_api_status"
+          label="UAE PASS API Status"
+          placeholder="Latest UAE PASS API status"
+          :options="uaePassApiStatusFilterOptions"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
           v-model="filters.emirate_of_your_visa_id"
           label="Emirate of Visa"
           placeholder="Search by Emirate of Visa"
@@ -1419,8 +1482,72 @@ const paymentStatusOptions = computed(() => {
           {{ item.renewal_batch_text }}
         </p>
       </template>
+      <template #item-emirates="item">
+        <span v-if="item.is_migrated && !item.is_policyholder_included">
+          -
+        </span>
+        <span v-else>{{ item?.emirate?.text ?? 'N/A' }}</span>
+      </template>
       <template #item-health_team_type="item">
         {{ item.health_team_type ?? item.notional_team }}
+      </template>
+      <template #item-member_category.text="item">
+        <p>
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.member_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-policy_holder_category.text="item">
+        <p>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
+          <span v-else>{{ item.policy_holder_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-visa_category.text="item">
+        <p>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
+          <span v-else>{{ item.visa_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-gender_lookup.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
+          <span v-else>{{
+            item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A'
+          }}</span>
+        </p>
+      </template>
+      <template #item-marital_status.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
+          <span v-else>{{ item.marital_status?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-salary_band.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              item.cover_for_id == healthCoverForEnum.DOMESTIC_HELPER
+            "
+            >N/A</span
+          >
+          <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
+        </p>
       </template>
     </DataTable>
 

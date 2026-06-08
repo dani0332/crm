@@ -3,11 +3,14 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\HealthCoverForEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
-use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
+use App\Services\LookupService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,13 +20,12 @@ class HealthQuotesExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
 
-    private $genderOptions;
-
+    private $genderDisplayMap;
     public function __construct(
         private HealthQuoteService $healthQuoteService,
-        private CRUDService $crudService
+        private LookupService $lookupService,
     ) {
-        $this->genderOptions = $this->crudService->getGenderOptions();
+        $this->genderDisplayMap = $this->lookupService->getHealthGenderDisplayMap();
     }
 
     public function collection(array $requestParams = []): Collection
@@ -65,12 +67,15 @@ class HealthQuotesExport implements CsvExportableInterface
             'POLICY NUMBER',
             'SOURCE',
             'LEAD TYPE',
-            'SALARY BAND',
             'MEMBER CATEGORY',
+            'POLICYHOLDER CATEGORY',
+            'VISA CATEGORY',
+            'GENDER',
+            'MARITAL STATUS',
+            'SALARY',
             'CURRENTLY INSURED WITH',
             'IS ECOMMERCE',
             'Device',
-            'Gender',
             'Nationality',
             'Age Bands',
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
@@ -87,6 +92,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
             'IMCRM SUB-SOURCE',
+            'Signatory',
+            'UAE PASS API Status',
             'EA MODEL',
             'LEAD GENERATOR',
         ];
@@ -100,7 +107,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->code,
             $quote->first_name,
             $quote->last_name,
-            $quote->emirate?->text,
+            $quote->is_migrated && ! $quote->is_policyholder_included ? 'N/A' : $quote->emirate?->text,
             $quote->has_pec_tag ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
@@ -119,12 +126,15 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->policy_number,
             $quote->source,
             $quote->healthLeadType?->text,
-            $quote->salaryBand?->text,
-            $quote->memberCategory?->text,
+            $quote->is_entity ? 'N/A' : $quote->memberCategory?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated) ? 'N/A' : $quote->policyHolderCategory?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated) ? 'N/A' : $quote->visaCategory?->text ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated || ! $quote->is_policyholder_included) ? 'N/A' : $this->genderDisplayMap[$quote->gender] ?? 'N/A',
+            ($quote->is_entity || ! $quote->is_migrated || ! $quote->is_policyholder_included) ? 'N/A' : $quote->maritalStatus?->text ?? 'N/A',
+            ($quote->is_entity || $quote->cover_for_id === HealthCoverForEnum::DOMESTIC_HELPER->value) ? 'N/A' : $quote->salaryBand?->text ?? 'N/A',
             $quote->currentProvider?->text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->device,
-            $this->genderOptions[$quote->gender] ?? '',
             $quote->nationality?->text,
             Carbon::parse($quote->dob)->age,
             $quote->customer_type,
@@ -141,6 +151,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
+            HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
+            HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
             $quote->ea_model ?? '',
             $quote->leadGenerator?->name ?? '',
         ];

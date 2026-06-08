@@ -35,6 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -84,6 +85,10 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
+
+                if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
+                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead($childLeadResponse['id']);
+                }
             }
 
             DB::commit();
