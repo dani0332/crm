@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\EaModelEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -37,9 +36,6 @@ class PersonalQuote extends Model implements AuditableContract
     use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait, SpatieActivityLog;
 
     protected $guarded = [];
-    protected $casts = [
-        'ea_model' => EaModelEnum::class,
-    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,
@@ -128,16 +124,6 @@ class PersonalQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
-    }
-
-    public function leadGenerator()
-    {
-        return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'email', 'name']);
-    }
-
-    public function expertAdvisor()
-    {
-        return $this->belongsTo(User::class, 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
     }
 
     /**

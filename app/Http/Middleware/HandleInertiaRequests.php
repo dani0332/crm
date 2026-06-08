@@ -51,13 +51,10 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\VisaCategoryEnum;
-use App\Models\BusinessTypeOfInsurance;
-use App\Models\HealthPlanType;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
-use App\Services\EAManagerService;
 use App\Services\LeadsCountService;
 use App\Services\OCR\OCRService;
 use App\Services\SplitPaymentService;
@@ -149,9 +146,6 @@ class HandleInertiaRequests extends Middleware
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
-            'eaPendingRejectionsCount' => fn () => auth()->user()?->hasRole(RolesEnum::EAManager)
-                ? app(EAManagerService::class)->pendingRejectionsCount()
-                : 0,
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),
@@ -167,8 +161,6 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
-            'healthPlanTypes' => Cache::remember('health_plan_types', now()->addHour(), fn () => HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get()),
-            'businessTypeOfInsurances' => Cache::remember('business_type_of_insurances', now()->addHour(), fn () => BusinessTypeOfInsurance::active()->select('id', 'text')->get()),
             'claimsEnum' => ClaimsEnum::asArray(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),

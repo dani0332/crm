@@ -94,8 +94,6 @@ class HealthQuotesExport implements CsvExportableInterface
             'IMCRM SUB-SOURCE',
             'Signatory',
             'UAE PASS API Status',
-            'EA MODEL',
-            'LEAD GENERATOR',
         ];
     }
 
@@ -153,8 +151,6 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->subSource?->text,
             HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
             HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
-            $quote->ea_model ?? '',
-            $quote->leadGenerator?->name ?? '',
         ];
     }
 

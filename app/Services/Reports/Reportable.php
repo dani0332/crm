@@ -39,7 +39,7 @@ trait Reportable
 
     public function getExcludedSources()
     {
-        return [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::EA_IMCRM];
+        return [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY];
     }
 
     public function getNotInterestedStatuses()
