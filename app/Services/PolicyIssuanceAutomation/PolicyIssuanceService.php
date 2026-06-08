@@ -818,6 +818,9 @@ class PolicyIssuanceService
         $updateData = ['api_issuance_status_id' => $apiIssuanceStatusId];
         if (! $success && $insurerApiStatusId !== null) {
             $updateData['insurer_api_status_id'] = $insurerApiStatusId;
+        } elseif ($success) {
+            // Clear any prior failure status so a future failure correctly triggers the Bird notification email.
+            $updateData['insurer_api_status_id'] = null;
         }
 
         $quote->update($updateData);
