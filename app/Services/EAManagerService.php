@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
 
 class EAManagerService
 {
+    public function getPendingRejections(array $filters = []): Collection
+    {
+        return $this->getLeads([...$filters, 'status' => 'rejected']);
+    }
+
     public function getLeads(array $filters = []): Collection
     {
         $lob = isset($filters['lob']) && $filters['lob'] !== '' ? (int) $filters['lob'] : null;
@@ -70,7 +75,12 @@ class EAManagerService
 
     private function computeEaStatus(CarQuote|HealthQuote|PersonalQuote $lead): string
     {
-        // Approved only when BOTH advisors have approved (FRD §D: lead progresses only if both approve)
+        if ($lead->ea_manager_approved_at) {
+            return 'approved';
+        }
+        if ($lead->ea_manager_rejected_at) {
+            return 'rejected';
+        }
         if ($lead->ea_assigned_advisor_approved_at && $lead->ea_expert_advisor_approved_at) {
             return 'approved';
         }
@@ -78,21 +88,23 @@ class EAManagerService
             return 'rejected';
         }
 
-        return 'pending';
+        return 'rejected';
     }
 
     private function applyEaStatusFilter(Builder $query, string $status): void
     {
         match ($status) {
-            // Both timestamps required — consistent with dual-approval FRD requirement
-            'approved' => $query->whereNotNull('ea_assigned_advisor_approved_at')->whereNotNull('ea_expert_advisor_approved_at'),
-            'rejected' => $query->where(fn ($q) => $q->whereNotNull('ea_assigned_advisor_rejected_at')->orWhereNotNull('ea_expert_advisor_rejected_at')),
-            // Pending = not fully approved and not rejected (includes partial-approval intermediary state)
-            'pending' => $query->where(fn ($q) => $q
-                ->where(fn ($inner) => $inner->whereNull('ea_assigned_advisor_approved_at')->orWhereNull('ea_expert_advisor_approved_at'))
-                ->whereNull('ea_assigned_advisor_rejected_at')
-                ->whereNull('ea_expert_advisor_rejected_at')
+            'approved' => $query->where(fn ($q) => $q
+                ->whereNotNull('ea_manager_approved_at')
+                ->orWhere(fn ($inner) => $inner
+                    ->whereNotNull('ea_assigned_advisor_approved_at')
+                    ->whereNotNull('ea_expert_advisor_approved_at')
+                )
             ),
+            'rejected' => $query->where(fn ($q) => $q
+                ->whereNotNull('ea_assigned_advisor_rejected_at')
+                ->orWhereNotNull('ea_expert_advisor_rejected_at')
+            )->whereNull('ea_manager_approved_at')->whereNull('ea_manager_rejected_at'),
             default => null,
         };
     }
@@ -112,17 +124,26 @@ class EAManagerService
             'ea_assigned_advisor_rejected_at' => $lead->ea_assigned_advisor_rejected_at,
             'ea_expert_advisor_rejected_at' => $lead->ea_expert_advisor_rejected_at,
             'has_rejection' => (bool) ($lead->ea_assigned_advisor_rejected_at || $lead->ea_expert_advisor_rejected_at),
+            'ea_manager_id' => $lead->ea_manager_id,
+            'ea_manager_approved_at' => $lead->ea_manager_approved_at,
+            'ea_manager_rejected_at' => $lead->ea_manager_rejected_at,
             'ea_status' => $this->computeEaStatus($lead),
         ];
     }
 
     public function pendingRejectionsCount(): int
     {
-        $rejected = fn ($q) => $q->whereNotNull('ea_assigned_advisor_rejected_at')
-            ->orWhereNotNull('ea_expert_advisor_rejected_at');
+        // Exact condition per lead: advisor rejected AND manager has not yet approved or rejected
+        $pending = fn ($q) => $q
+            ->where(fn ($inner) => $inner
+                ->whereNotNull('ea_assigned_advisor_rejected_at')
+                ->orWhereNotNull('ea_expert_advisor_rejected_at')
+            )
+            ->whereNull('ea_manager_approved_at')
+            ->whereNull('ea_manager_rejected_at');
 
-        return CarQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($rejected)->count()
-            + HealthQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($rejected)->count()
-            + PersonalQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($rejected)->count();
+        return CarQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
+            + HealthQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
+            + PersonalQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count();
     }
 }

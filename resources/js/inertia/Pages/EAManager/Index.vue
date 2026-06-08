@@ -24,7 +24,6 @@ const quoteTypes = computed(() =>
 );
 
 const eaStatusOptions = [
-  { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
 ];
@@ -85,7 +84,6 @@ const filterForm = reactive({
   ref_id: props.filters.ref_id ?? '',
   lob: props.filters.lob ?? null,
   ea_model: props.filters.ea_model ?? null,
-  status: props.filters.status ?? null,
   date_from: props.filters.date_from ?? '',
   date_to: props.filters.date_to ?? '',
   lead_generator: props.filters.lead_generator ?? '',
@@ -106,7 +104,6 @@ const onReset = () => {
     ref_id: '',
     lob: null,
     ea_model: null,
-    status: null,
     date_from: '',
     date_to: '',
     lead_generator: '',
@@ -172,7 +169,7 @@ const updateRow = async lead => {
       }
     }
 
-    router.reload({ only: ['leads', 'pendingRejectionsCount'] });
+    router.reload({ only: ['leads', 'pendingRejectionsCount', 'eaPendingRejectionsCount'] });
   } catch (err) {
     state.error = err?.response?.data?.message ?? 'Update failed.';
   } finally {
@@ -186,16 +183,12 @@ const updateRow = async lead => {
 
   <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
     EA Manager
-    <x-badge
+    <span
       v-if="pendingRejectionsCount > 0"
-      color="red"
-      size="sm"
-      class="ml-2"
+      class="ml-2 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-sm font-semibold px-2 py-0.5 min-w-[1.5rem]"
     >
-      {{ pendingRejectionsCount }} Pending Rejection{{
-        pendingRejectionsCount !== 1 ? 's' : ''
-      }}
-    </x-badge>
+      {{ pendingRejectionsCount }}
+    </span>
   </h1>
 
   <x-divider class="my-4" />
@@ -221,13 +214,6 @@ const updateRow = async lead => {
     </div>
 
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-      <x-select
-        v-model="filterForm.status"
-        label="EA Status"
-        placeholder="Filter by EA Status"
-        :options="eaStatusOptions"
-      />
-
       <x-select
         v-model="filterForm.ea_model"
         label="EA Model"
@@ -299,7 +285,6 @@ const updateRow = async lead => {
           :class="{
             'text-green-600': item.ea_status === 'approved',
             'text-red-600': item.ea_status === 'rejected',
-            'text-yellow-600': item.ea_status === 'pending',
           }"
           >{{ item.ea_status }}</span
         >

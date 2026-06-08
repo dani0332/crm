@@ -25,10 +25,10 @@ class EAManagerController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['ref_id', 'lob', 'status', 'ea_model', 'date_from', 'date_to', 'lead_generator']);
+        $filters = $request->only(['ref_id', 'lob', 'ea_model', 'date_from', 'date_to', 'lead_generator']);
 
         return inertia('EAManager/Index', [
-            'leads' => $this->service->getLeads($filters),
+            'leads' => $this->service->getPendingRejections($filters),
             'filters' => $filters,
             'pendingRejectionsCount' => $this->service->pendingRejectionsCount(),
         ]);
@@ -49,6 +49,9 @@ class EAManagerController extends Controller
         $quote = $this->resolveQuote($quoteType, $quoteId);
 
         if ($isApprove) {
+            $quote->ea_manager_id = auth()->id();
+            $quote->ea_manager_approved_at = now();
+            $quote->ea_manager_rejected_at = null;
             $quote->ea_assigned_advisor_approved_at = now();
             $quote->ea_expert_advisor_approved_at = now();
             $quote->ea_assigned_advisor_rejected_at = null;
@@ -89,6 +92,9 @@ class EAManagerController extends Controller
         $quote->advisor_id = $quote->expert_advisor_id;
         $quote->expert_advisor_id = null;
         $quote->ea_model = EaModelEnum::Referral;
+        $quote->ea_manager_id = auth()->id();
+        $quote->ea_manager_rejected_at = now();
+        $quote->ea_manager_approved_at = null;
         $quote->ea_assigned_advisor_approved_at = null;
         $quote->ea_expert_advisor_approved_at = null;
         $quote->ea_assigned_advisor_rejected_at = null;
