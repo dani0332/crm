@@ -126,6 +126,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             LoggerService::info(self::class.' - Creating Home Revival Lead', [
                 'lead_uuid' => $lead->uuid,
                 'revival_source' => $this->revivalSource,
+                'payload' => $payload,
             ]);
 
             $capiResponse = Capi::request('/api/v2-save-home-quote', 'post', $payload);

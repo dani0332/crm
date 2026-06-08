@@ -148,7 +148,7 @@ class HomeRevivalService
     private function optionalHomeQuoteCapiFields(PersonalQuote $lead, HomeQuote $homeQuote): array
     {
         return [
-            'buildingValue' => $homeQuote->building_value,
+            'buildingValue' => (float) $homeQuote->building_value,
             'hasBuilding' => $homeQuote->has_building !== null ? (bool) $homeQuote->has_building : null,
             'hasContents' => $homeQuote->has_contents !== null ? (bool) $homeQuote->has_contents : null,
             'hasClaimedLosses' => $homeQuote->has_claimed_losses !== null ? (bool) $homeQuote->has_claimed_losses : null,
