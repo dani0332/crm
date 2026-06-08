@@ -54,7 +54,11 @@ class DttHome extends Command
             ->select(['id', 'uuid', 'quote_type_id', 'email', 'mobile_no'])
             ->where('quote_type_id', QuoteTypeId::Home)
             ->whereHas('homeQuote')
-            ->whereDate('created_at', now()->subDays(90)->toDateString())
+            // for prod
+            // ->whereDate('created_at', now()->subDays(90)->toDateString())
+
+            //for stage
+            ->whereBetween('created_at', [now()->subMinutes(15), now()->subMinutes(10)])
             ->where('is_revived', false)
             ->whereNotIn('source', [
                 LeadSourceEnum::REVIVAL_SHORT,
@@ -91,7 +95,11 @@ class DttHome extends Command
             ->select(['id', 'uuid', 'quote_type_id', 'email', 'mobile_no'])
             ->where('quote_type_id', QuoteTypeId::Home)
             ->whereHas('homeQuote')
-            ->whereDate('created_at', now()->subMonths(10)->toDateString())
+            // for prod
+            // ->whereDate('created_at', now()->subMonths(10)->toDateString())
+
+            // for stage
+            ->whereBetween('created_at', [now()->subMinutes(35), now()->subMinutes(25)])
             ->where('is_annual_revived', false)
             ->whereNotIn('source', [
                 LeadSourceEnum::REVIVAL_SHORT,
