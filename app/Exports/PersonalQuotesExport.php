@@ -362,8 +362,6 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::CREATED_DATE,
                 self::LAST_MODIFIED_DATE,
                 self::PREVIOUS_POLICY_EXPIRY_DATE,
-                'EA MODEL',
-                'LEAD GENERATOR',
             ],
             QuoteTypes::DEVICE->value => [
                 self::REF_ID,
@@ -379,8 +377,6 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::CREATED_DATE,
                 self::LAST_MODIFIED_DATE,
                 self::PREVIOUS_POLICY_EXPIRY_DATE,
-                'EA MODEL',
-                'LEAD GENERATOR',
             ],
         ];
 
@@ -639,8 +635,6 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['created_date'],
                 $baseFields['last_modified_date'],
                 $baseFields['previous_policy_expiry_date'],
-                $quote->ea_model ?? '',
-                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::DEVICE->value => [
                 $baseFields['code'],
@@ -656,8 +650,6 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['created_date'],
                 $baseFields['last_modified_date'],
                 $baseFields['previous_policy_expiry_date'],
-                $quote->ea_model ?? '',
-                $quote->leadGenerator?->name ?? '',
             ],
             default => [],
         };

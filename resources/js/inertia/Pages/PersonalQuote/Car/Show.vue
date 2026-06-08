@@ -4306,27 +4306,6 @@ const { openTempUrl } = useDocumentTempUrl();
       :isDocTypeLoading="isDocTypeLoading"
     />
 
-    <EALeadInfo
-      :source="record.source"
-      :ea-model="record.ea_model"
-      :lead-generator="record.lead_generator"
-    />
-
-    <EAApprovalActions
-      quote-type="car"
-      :quote-id="record.id"
-      :source="record.source"
-      :ea-model="record.ea_model"
-      :quote-status-id="record.quote_status_id"
-      :advisor-id="record.advisor_id"
-      :expert-advisor-id="record.expert_advisor_id"
-      :ea-assigned-advisor-approved-at="record.ea_assigned_advisor_approved_at"
-      :ea-expert-advisor-approved-at="record.ea_expert_advisor_approved_at"
-      :ea-assigned-advisor-rejected-at="record.ea_assigned_advisor_rejected_at"
-      :ea-expert-advisor-rejected-at="record.ea_expert_advisor_rejected_at"
-      @updated="$inertia.reload({ only: ['record'] })"
-    />
-
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="record"
