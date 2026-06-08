@@ -114,7 +114,10 @@ class HealthQuoteObserver
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                        $delay = app()->isProduction()
+                            ? Carbon::now()->addDays($delayDays)
+                            : Carbon::now()->addMinutes($delayDays);
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay($delay);
                         LoggerService::info('OCAHealthFollowupEmailJob dispatched ');
                     }
 

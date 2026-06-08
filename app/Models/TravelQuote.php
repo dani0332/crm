@@ -190,11 +190,15 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(Customer::class);
     }
 
-    public function getPreviousPolicyExpiryDateAttribute($table)
+    public function getPreviousPolicyExpiryDateAttribute($value)
     {
+        if (! $value) {
+            return null;
+        }
+
         $date_time_format = Config::get('constants.datetime_format');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function insuranceProvider()

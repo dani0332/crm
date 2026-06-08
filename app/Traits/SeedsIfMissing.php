@@ -6,14 +6,38 @@ use App\Enums\LookupsEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Eloquent\Model;
 
-trait SeedsFirstOrCreateIfMissing
+trait SeedsIfMissing
 {
     /**
-     * Loads existing rows by `code` (and optional scope) once, then runs `firstOrCreate` only for missing codes.
+     * Bulk upsert seed data. Requires a unique index on `code` (plus scope columns) on the target table.
      *
      * @param  class-string<Model>  $modelClass
-     * @param  array<int, array<string, mixed>>  $definitions  Each row must include `code` and all attributes for the create payload (except `code` is also used in the match array).
-     * @param  array<string, mixed>  $scopeWhere  Extra match attributes (e.g. `['key' => LookupsEnum::…]` for lookups).
+     * @param  array<int, array<string, mixed>>  $definitions  Each row must include `code`.
+     * @param  array<string, mixed>  $scopeWhere  Extra match columns merged into every row (e.g. `['key' => LookupsEnum::…]`).
+     */
+    protected function seedUpsertIfMissing(string $modelClass, array $definitions, array $scopeWhere = []): void
+    {
+        if ($definitions === []) {
+            return;
+        }
+
+        $rows = array_map(fn (array $row) => [...$scopeWhere, ...$row], $definitions);
+
+        $uniqueBy = ['code', ...array_keys($scopeWhere)];
+
+        $updateColumns = array_keys(array_diff_key($rows[0], array_flip([...$uniqueBy, 'created_at'])));
+
+        Model::unguarded(function () use ($modelClass, $rows, $uniqueBy, $updateColumns): void {
+            $modelClass::upsert($rows, $uniqueBy, $updateColumns);
+        });
+    }
+
+    /**
+     * Row-by-row seed using `firstOrCreate`. Use for tables without a unique index on `code`.
+     *
+     * @param  class-string<Model>  $modelClass
+     * @param  array<int, array<string, mixed>>  $definitions  Each row must include `code`.
+     * @param  array<string, mixed>  $scopeWhere  Extra match columns (e.g. `['key' => LookupsEnum::…]`).
      */
     protected function seedFirstOrCreateIfMissing(string $modelClass, array $definitions, array $scopeWhere = []): void
     {
@@ -39,7 +63,7 @@ trait SeedsFirstOrCreateIfMissing
             $attributes = $row;
             unset($attributes['code']);
 
-            $first = array_merge($scopeWhere, ['code' => $code]);
+            $first = [...$scopeWhere, 'code' => $code];
 
             Model::unguarded(function () use ($modelClass, $first, $attributes): void {
                 $modelClass::firstOrCreate($first, $attributes);
