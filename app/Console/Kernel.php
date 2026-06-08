@@ -169,7 +169,7 @@ class Kernel extends ConsoleKernel
         // for prod
         // $schedule->command('DttHome')->timezone('Asia/Dubai')->dailyAt('09:06')->onOneServer()->withoutOverlapping();
 
-        //for stage
+        // for stage
         $schedule->command('DttHome')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
 
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
