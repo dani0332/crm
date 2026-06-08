@@ -1137,6 +1137,36 @@ class ApiController extends Controller
             'CTA' => $request->cta,
         ]);
 
+        if ($quoteType === QuoteTypes::LIFE) {
+            try {
+                QuoteTypes::LIFE->allocate(uuid: $request->quote_uuid);
+
+                LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
+                    ['quote_uuid' => $request->quote_uuid]);
+            } catch (\Throwable $exception) {
+                LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                    'quote_uuid' => $request->quote_uuid,
+                    'quote_type_id' => $request->quote_type_id,
+                    'error' => $exception->getMessage(),
+                ], $exception);
+            }
+        }
+
+        if ($quoteType === QuoteTypes::HOME) {
+            try {
+                QuoteTypes::HOME->allocate(uuid: $request->quote_uuid);
+
+                LoggerService::info(self::class.' - triggered allocation for home revival lead - Quote UUID: ',
+                    ['quote_uuid' => $request->quote_uuid]);
+            } catch (\Throwable $exception) {
+                LoggerService::warning(self::class.' - failed to trigger allocation for home revival lead', [
+                    'quote_uuid' => $request->quote_uuid,
+                    'quote_type_id' => $request->quote_type_id,
+                    'error' => $exception->getMessage(),
+                ], $exception);
+            }
+        }
+
         return apiResponse(null, Response::HTTP_OK, 'Lead source updated successfully');
     }
 
