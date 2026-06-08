@@ -190,7 +190,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     })->name('dashboard.home');
 
     Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
-    Route::post('get-utm-details', [RawQueryController::class, 'getUtmDetails'])->name('get-utm-details')->middleware('permission:'.PermissionsEnum::VIEW_UTM_SECTION);
 
     Route::get('instant-alfred/index', [AlfredChatController::class, 'index'])->name('instant-alfred.index');
 

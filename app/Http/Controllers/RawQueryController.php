@@ -11,7 +11,6 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class RawQueryController extends Controller
 {
@@ -162,38 +161,5 @@ class RawQueryController extends Controller
         }
 
         return $query->first();
-    }
-
-    public function getUtmDetails(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'uuid' => ['required', 'string'],
-            'quote_type_id' => ['required', 'integer'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 422);
-        }
-
-        $quote = PersonalQuote::where('uuid', $request->uuid)
-            ->where('quote_type_id', $request->quote_type_id)
-            ->with(['quoteDetail' => function ($query) {
-                $query->select([
-                    'personal_quote_id',
-                    'utm_source',
-                    'utm_medium',
-                    'utm_campaign',
-                    'utm_content',
-                    'utm_term',
-                ]);
-            }])
-            ->select(['id', 'uuid', 'quote_type_id'])
-            ->first();
-
-        if (! $quote) {
-            return response()->json(['error' => 'Quote not found'], 404);
-        }
-
-        return response()->json(['record' => $quote]);
     }
 }

@@ -1643,11 +1643,5 @@ function handleOcrNotification(event) {
       :modelType="'Business'"
       :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
-
-    <personal-quote-utm-details
-      v-if="can(permissionEnum.VIEW_UTM_SECTION)"
-      :uuid="$page.props.quote.uuid"
-      :quoteTypeId="$page.props.quoteTypeId"
-    />
   </div>
 </template>
