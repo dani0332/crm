@@ -42,6 +42,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Http\Requests\UpdateRevivalLeadSourceRequest;
 use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
@@ -1119,6 +1120,72 @@ class ApiController extends Controller
         ]);
 
         return apiResponse($isEligible, Response::HTTP_OK, 'Eligible for revival followups');
+    }
+
+    public function updateRevivalLeadSource(UpdateRevivalLeadSourceRequest $request): JsonResponse
+    {
+        LoggerService::info(self::class.': Update revival lead source request received', extra: [
+            'quote_uuid' => $request->quote_uuid,
+            'quoteTypeId' => $request->quoteTypeId,
+            'channel' => $request->channel,
+            'CTA' => $request->cta,
+            'medium' => $request->medium,
+        ]);
+
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+
+        $quote = $this->getQuoteObject($quoteType->value, $request->quote_uuid);
+
+        if (! $quote) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
+        }
+
+        if ($quote->source !== LeadSourceEnum::REVIVAL) {
+            return apiResponse(null, Response::HTTP_UNPROCESSABLE_ENTITY, 'Lead source is not revival');
+        }
+
+        $quote->update([
+            'source' => LeadSourceEnum::REVIVAL_REPLIED,
+        ]);
+
+        LoggerService::info(self::class.': Revival lead source updated successfully', extra: [
+            'quote_uuid' => $request->quote_uuid,
+            'quoteTypeId' => $request->quoteTypeId,
+            'channel' => $request->channel,
+            'CTA' => $request->cta,
+        ]);
+
+        if ($quoteType === QuoteTypes::LIFE) {
+            try {
+                QuoteTypes::LIFE->allocate(uuid: $request->quote_uuid);
+
+                LoggerService::info(self::class.' - triggered allocation for life revival lead - Quote UUID: ',
+                    ['quote_uuid' => $request->quote_uuid]);
+            } catch (\Throwable $exception) {
+                LoggerService::warning(self::class.' - failed to trigger allocation for life revival lead', [
+                    'quote_uuid' => $request->quote_uuid,
+                    'quote_type_id' => $request->quote_type_id,
+                    'error' => $exception->getMessage(),
+                ], $exception);
+            }
+        }
+
+        if ($quoteType === QuoteTypes::HOME) {
+            try {
+                QuoteTypes::HOME->allocate(uuid: $request->quote_uuid);
+
+                LoggerService::info(self::class.' - triggered allocation for home revival lead - Quote UUID: ',
+                    ['quote_uuid' => $request->quote_uuid]);
+            } catch (\Throwable $exception) {
+                LoggerService::warning(self::class.' - failed to trigger allocation for home revival lead', [
+                    'quote_uuid' => $request->quote_uuid,
+                    'quote_type_id' => $request->quote_type_id,
+                    'error' => $exception->getMessage(),
+                ], $exception);
+            }
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Lead source updated successfully');
     }
 
     public function reTriggerRevivalFollowups(Request $request)
