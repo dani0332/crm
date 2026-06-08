@@ -62,6 +62,7 @@ use App\Jobs\SendCarCommercialOCBEmail;
 use App\Jobs\SendPCPCarOCBEmailJob;
 use App\Jobs\SendPCPFollowupsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BikeQuote;
 use App\Models\BusinessActivity;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -934,10 +935,11 @@ class RenewalsUploadService
                 'previous_quote_policy_premium' => $data['premium'],
                 'previous_quote_policy_commission' => $data['previous_commission'] ?? null,
                 'previous_quote_id' => (! empty($data['previous_ref_id']) && $quoteObject)
-                    ? (clone $quoteObject)
-                        ->when($isQuotePersonal, fn ($q) => $q->where('quote_type_id', $quoteType->id))
-                        ->where('code', $data['previous_ref_id'])
-                        ->value('id')
+                    ? ($isQuotePersonal
+                        ? PersonalQuote::where('quote_type_id', QuoteTypeShortCode::getId(strtoupper(explode('-', $data['previous_ref_id'])[0])))
+                            ->where('code', $data['previous_ref_id'])
+                            ->value('id')
+                        : (clone $quoteObject)->where('code', $data['previous_ref_id'])->value('id'))
                     : null,
             ];
 
@@ -1034,7 +1036,10 @@ class RenewalsUploadService
             if (! $isQuotePersonal && in_array($quoteType->id, $allowedQuoteTypes)) {
                 $personalQuoteSyncData = ['quote_id' => $quote->id];
                 if (! empty($data['previous_ref_id'])) {
-                    $personalQuoteSyncData['previous_quote_id'] = PersonalQuote::where('code', $data['previous_ref_id'])->value('id');
+                    $previousRefPrefix = strtoupper(explode('-', $data['previous_ref_id'])[0]);
+                    $personalQuoteSyncData['previous_quote_id'] = PersonalQuote::where('quote_type_id', QuoteTypeShortCode::getId($previousRefPrefix))
+                        ->where('code', $data['previous_ref_id'])
+                        ->value('id');
                 }
                 $this->updatePersonalQuote($quote->uuid, $quoteType->id, $personalQuoteSyncData);
             }
@@ -1067,6 +1072,12 @@ class RenewalsUploadService
 
                 // unsetting fields as homeQuote table doesn't have them
                 unset($quoteData['quote_type_id'], $quoteData['currently_insured_with'], $quoteData['currently_insured_with_id']);
+
+                // home_quote_request.previous_quote_id references home_quote_request.id, not personal_quotes.id
+                if (! empty($data['previous_ref_id'])) {
+                    $quoteData['previous_quote_id'] = HomeQuote::where('code', $data['previous_ref_id'])->value('id');
+                }
+
                 $homeQuote = $quote->homeQuote()->create($quoteData);
 
                 unset($detailData['additional_notes'], $detailData['previous_advisor_id']);
@@ -1078,6 +1089,16 @@ class RenewalsUploadService
 
                 // unsetting fields as bike_quote_request table doesn't have them
                 unset($quoteData['quote_type_id'], $quoteData['currently_insured_with_id'], $quoteData['transaction_type_id'], $quoteData['insurance_provider_id']);
+
+                // bike_quote_request.previous_quote_id references bike_quote_request.id or car_quotes.id,
+                // not personal_quotes.id — override with the correct LOB table ID
+                if (! empty($data['previous_ref_id'])) {
+                    $prevPrefix = strtoupper(explode('-', $data['previous_ref_id'])[0]);
+                    $quoteData['previous_quote_id'] = $prevPrefix === QuoteTypeShortCode::CAR
+                        ? CarQuote::where('code', $data['previous_ref_id'])->value('id')
+                        : BikeQuote::where('code', $data['previous_ref_id'])->value('id');
+                }
+
                 $bikeQuote = $quote->bikeQuote()->create($quoteData);
 
                 unset($detailData['additional_notes'], $detailData['previous_advisor_id']);
@@ -2373,7 +2394,7 @@ class RenewalsUploadService
                     }
                 }
 
-                $this->validatePreviousRefId($leadData, $quoteTypeObject, $leadValidationErrors);
+                $this->validatePreviousRefId($leadData, $quoteTypeObject, $leadValidationErrors, $isQuotePersonal, $quoteType);
 
                 switch (strtoupper($lead->quote_type)) {
                     case QuoteTypeShortCode::CAR:
@@ -3273,7 +3294,7 @@ class RenewalsUploadService
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
                 $result = $repository::getData();
                 $quotes = ($result instanceof Builder)
-                    ? $result->simplePaginate()->withQueryString()
+                    ? $result->paginate()->withQueryString()
                     : $result->withQueryString();
                 $quotes->load('customer');
             }
@@ -4157,9 +4178,27 @@ class RenewalsUploadService
     /**
      * Validate previous reference ID against the correct quote model.
      */
-    private function validatePreviousRefId(object $leadData, Builder|false|null $quoteTypeObject, Collection $leadValidationErrors): void
+    private function validatePreviousRefId(object $leadData, Builder|false|null $quoteTypeObject, Collection $leadValidationErrors, bool $isQuotePersonal = false, ?object $quoteType = null): void
     {
-        if (! empty($leadData->previous_ref_id) && $quoteTypeObject && ! (clone $quoteTypeObject)->where('code', $leadData->previous_ref_id)->exists()) {
+        if (empty($leadData->previous_ref_id) || ! $quoteTypeObject) {
+            return;
+        }
+
+        if ($isQuotePersonal) {
+            $prefix = strtoupper(explode('-', $leadData->previous_ref_id)[0]);
+            $previousQuoteTypeId = QuoteTypeShortCode::getId($prefix);
+            $isBikeToCarRef = $quoteType?->short_code === QuoteTypeShortCode::BIK && $prefix === QuoteTypeShortCode::CAR;
+            $isSameType = $quoteType && $previousQuoteTypeId === $quoteType->id;
+
+            $exists = ($isSameType || $isBikeToCarRef)
+                && PersonalQuote::where('quote_type_id', $previousQuoteTypeId)
+                    ->where('code', $leadData->previous_ref_id)
+                    ->exists();
+        } else {
+            $exists = (clone $quoteTypeObject)->where('code', $leadData->previous_ref_id)->exists();
+        }
+
+        if (! $exists) {
             $leadValidationErrors->push("Previous Ref-ID '{$leadData->previous_ref_id}' does not exist in the system.");
         }
     }

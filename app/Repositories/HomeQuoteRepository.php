@@ -142,7 +142,7 @@ class HomeQuoteRepository extends BaseRepository
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
                 fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
-                    return $query->simplePaginate()->withQueryString();
+                    return $query->paginate()->withQueryString();
                 })
             );
 

@@ -18,7 +18,7 @@ const advisorOptions = computed(() => {
 });
 
 const dateFormat = date => {
-  return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+  return date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 };
 
 const page = usePage();
@@ -311,6 +311,12 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-customer_pcp_tag="{ customer }">
         {{ customer?.pcp_tag == 1 ? 'Yes' : 'No' }}
+      </template>
+      <template #item-previous_policy_start_date="{ previous_policy_start_date }">
+        {{ dateFormat(previous_policy_start_date) }}
+      </template>
+      <template #item-previous_policy_expiry_date="{ previous_policy_expiry_date }">
+        {{ dateFormat(previous_policy_expiry_date) }}
       </template>
     </DataTable>
 

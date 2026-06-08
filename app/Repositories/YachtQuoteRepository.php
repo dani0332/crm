@@ -281,7 +281,7 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessYachtQuotes($result);
         }

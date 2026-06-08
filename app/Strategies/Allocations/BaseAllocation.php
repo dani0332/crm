@@ -380,7 +380,10 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected function verifyLeadPreChecks(): bool
     {
         // Block CQF-generated renewal leads from normal advisor allocation — the CQF pipeline manages their assignment.
-        if (in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) && $this->lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+        // CORPLINE and GROUP_MEDICAL are not in NonMotorCQFRegistry::supportedLOBs() (they're registered as BUSINESS),
+        // but the BusinessCQF creates new quotes that carry business_type_of_insurance_id, causing allocation to
+        // resolve them as CORPLINE/GROUP_MEDICAL and route here — so they must be explicitly covered.
+        if ((in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) || in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL])) && $this->lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
             return false;
         }
 

@@ -171,7 +171,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessCycleQuote($result);
         }
