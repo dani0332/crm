@@ -147,15 +147,18 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
             $homeRevivalQuoteUUID = $capiResponse->quoteUID;
             LoggerService::info(self::class.' - '.$lead->uuid.' - childLeadCreated - '.$homeRevivalQuoteUUID);
-            try {
-                app(HomeQuoteService::class)->getQuotePlans($homeRevivalQuoteUUID, ['getLatestRating' => true]);
-            } catch (Exception $e) {
-                LoggerService::warning(self::class.' - Error fetching home revival quote plans after creation', [
-                    'quote_uuid' => $homeRevivalQuoteUUID,
-                    'lead_uuid' => $lead->uuid,
-                    'personal_quote_id' => $this->personalQuoteId,
-                ], $e);
-            }
+            
+            // we might need when we this when we shift from Bird to other service
+            
+            // try {
+            //     app(HomeQuoteService::class)->getQuotePlans($homeRevivalQuoteUUID, ['getLatestRating' => true]);
+            // } catch (Exception $e) {
+            //     LoggerService::warning(self::class.' - Error fetching home revival quote plans after creation', [
+            //         'quote_uuid' => $homeRevivalQuoteUUID,
+            //         'lead_uuid' => $lead->uuid,
+            //         'personal_quote_id' => $this->personalQuoteId,
+            //     ], $e);
+            // }
         }
 
         $lead->refresh();
