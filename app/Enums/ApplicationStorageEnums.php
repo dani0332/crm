@@ -474,9 +474,4 @@ final class ApplicationStorageEnums extends Enum
      * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
      */
     public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
-
-    // EA (Expert Advisor) Bird Workflow URLs
-    public const BIRD_EA_LEAD_SUBMITTED_WORKFLOW_URL = 'BIRD_EA_LEAD_SUBMITTED_WORKFLOW_URL';
-    public const BIRD_EA_COLLABORATE_REJECTED_WORKFLOW_URL = 'BIRD_EA_COLLABORATE_REJECTED_WORKFLOW_URL';
-    public const BIRD_EA_MANAGER_DECISION_WORKFLOW_URL = 'BIRD_EA_MANAGER_DECISION_WORKFLOW_URL';
 }
