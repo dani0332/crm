@@ -74,7 +74,7 @@ class DatabaseSeeder extends Seeder
             VisaCategorySeeder::class,
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
-            EAModelRolePermissionSeeder::class
+            EAModelRolePermissionSeeder::class,
         ]);
     }
 }

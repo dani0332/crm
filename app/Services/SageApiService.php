@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EaQuoteStatusEligibleEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -646,7 +647,14 @@ class SageApiService
 
     public function postBookPolicyToSage($request, $quote)
     {
+
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+        if (! isEAQuoteStatusUpdateAllowed($quote)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - '.EaQuoteStatusEligibleEnum::NotEligible->value.' Quote Code: '.$quote->code);
+
+            return ['status' => false, 'message' => EaQuoteStatusEligibleEnum::NotEligible->value];
+        }
 
         // Condition moved to Up to so that system alert user right away instead checking status after date processing
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {

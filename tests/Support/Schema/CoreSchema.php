@@ -336,16 +336,7 @@ class CoreSchema
                 $table->string('insurer_aml_status')->nullable();
                 $table->string('gender')->nullable();
                 $table->timestamp('lead_allocation_started_at')->nullable();
-                $table->string('ea_model')->nullable();
-                $table->unsignedBigInteger('lead_generator_id')->nullable();
-                $table->unsignedBigInteger('expert_advisor_id')->nullable();
-                $table->timestamp('ea_assigned_advisor_approved_at')->nullable();
-                $table->timestamp('ea_expert_advisor_approved_at')->nullable();
-                $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
-                $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
-                $table->unsignedBigInteger('ea_manager_id')->nullable();
-                $table->timestamp('ea_manager_approved_at')->nullable();
-                $table->timestamp('ea_manager_rejected_at')->nullable();
+                $table->timestamp('stale_at')->nullable();
                 $table->timestamps();
             },
             'personal_quote_details' => function (Blueprint $table) {
@@ -471,16 +462,6 @@ class CoreSchema
                 $table->integer('insurer_api_status_id')->nullable();
                 $table->integer('api_issuance_status_id')->nullable();
                 $table->boolean('policy_issuance_automation_enabled')->default(false);
-                $table->string('ea_model')->nullable();
-                $table->unsignedBigInteger('lead_generator_id')->nullable();
-                $table->unsignedBigInteger('expert_advisor_id')->nullable();
-                $table->timestamp('ea_assigned_advisor_approved_at')->nullable();
-                $table->timestamp('ea_expert_advisor_approved_at')->nullable();
-                $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
-                $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
-                $table->unsignedBigInteger('ea_manager_id')->nullable();
-                $table->timestamp('ea_manager_approved_at')->nullable();
-                $table->timestamp('ea_manager_rejected_at')->nullable();
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
             },
@@ -712,16 +693,6 @@ class CoreSchema
                 $table->unsignedBigInteger('visa_category_id')->nullable();
                 $table->string('policy_holder_category_code', 50)->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
-                $table->string('ea_model')->nullable();
-                $table->unsignedBigInteger('lead_generator_id')->nullable();
-                $table->unsignedBigInteger('expert_advisor_id')->nullable();
-                $table->timestamp('ea_assigned_advisor_approved_at')->nullable();
-                $table->timestamp('ea_expert_advisor_approved_at')->nullable();
-                $table->timestamp('ea_assigned_advisor_rejected_at')->nullable();
-                $table->timestamp('ea_expert_advisor_rejected_at')->nullable();
-                $table->unsignedBigInteger('ea_manager_id')->nullable();
-                $table->timestamp('ea_manager_approved_at')->nullable();
-                $table->timestamp('ea_manager_rejected_at')->nullable();
                 $table->timestamps();
             },
             'health_quote_request_detail' => function (Blueprint $table) {
