@@ -147,9 +147,9 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
 
             $homeRevivalQuoteUUID = $capiResponse->quoteUID;
             LoggerService::info(self::class.' - '.$lead->uuid.' - childLeadCreated - '.$homeRevivalQuoteUUID);
-            
+
             // we might need when we this when we shift from Bird to other service
-            
+
             // try {
             //     app(HomeQuoteService::class)->getQuotePlans($homeRevivalQuoteUUID, ['getLatestRating' => true]);
             // } catch (Exception $e) {

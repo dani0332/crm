@@ -75,6 +75,7 @@ final class LeadSourceEnum extends Enum
     const ECOM_SOURCE = 'https://ecom.alfred.ae/health-insurance/';
     const INSURANCE_WALLET = 'INSURANCE_WALLET';
     const REVIVAL_REINSTATED = 'REVIVAL_REINSTATED';
+
     // Home Revivals
     const REVIVAL_SHORT = 'REVIVAL_SHORT';
     const REVIVAL_ANNUAL = 'REVIVAL_ANNUAL';
