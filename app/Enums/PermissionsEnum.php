@@ -554,6 +554,7 @@ final class PermissionsEnum extends Enum
     // Expert Advisory Model Permissions
     public const EaCollaborate = 'ea-collaborate';
     public const AssignedExpertAdvisor = 'assigned-expert-advisor';
+    public const VIEW_UTM_SECTION = 'view-utm-section';
 
     public static function getAdvisorConversionReportPermissions()
     {

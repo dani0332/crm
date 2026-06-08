@@ -50,6 +50,7 @@ class RolePermissionSeeder extends Seeder
         $this->addReTriggerPolicyIssuancePermission();
         $this->addRuleConfigWritePermissions();
         $this->addLifeRevivalPermissions();
+        $this->addViewUtmSectionPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -743,5 +744,19 @@ class RolePermissionSeeder extends Seeder
                 $adminRole->givePermissionTo($permissionRevivalQuoteEdit);
             }
         }
+    }
+
+    private function addViewUtmSectionPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::VIEW_UTM_SECTION,
+                'guard_name' => 'web',
+            ],
+        );
+
+        $roleIds = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->pluck('id');
+
+        $permission->roles()->syncWithoutDetaching($roleIds);
     }
 }

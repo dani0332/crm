@@ -1761,6 +1761,12 @@ const formatDob = dob => {
       :modelType="'Cyber'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
+
+    <personal-quote-utm-details
+      v-if="can(permissionEnum.VIEW_UTM_SECTION)"
+      :uuid="$page.props.quote.uuid"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
   </div>
 </template>
 
