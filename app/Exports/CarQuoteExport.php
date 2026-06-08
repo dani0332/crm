@@ -120,6 +120,8 @@ class CarQuoteExport implements CsvExportableInterface
             'IMCRM SUB-SOURCE',
             'REPAIR TYPE',
             'ENGAGEMENT LEVEL',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -189,6 +191,8 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->subSource?->text ?? '',
             $quote->plan?->repair_type ?? '',
             $quote->carQuoteRequestDetail?->engagement_level ?? '',
+            $quote->ea_model ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

@@ -51,6 +51,7 @@ class CyberQuoteService extends BaseQuoteService
             'cyberQuote',
             'cyberQuote.coverage',
             'branch:id,name',
+            'leadGenerator:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -66,6 +67,8 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterBy('source')
+            ->filterBy('ea_model')
             ->when(request()->filled('api_issuance_status_id'), function ($q) {
                 $values = is_array(request('api_issuance_status_id'))
                     ? request('api_issuance_status_id')
