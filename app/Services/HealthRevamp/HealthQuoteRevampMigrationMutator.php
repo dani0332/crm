@@ -595,4 +595,9 @@ final class HealthQuoteRevampMigrationMutator
 
         return $newMc;
     }
+
+    public function getVisaCategoryIdForDomesticWorkerMember($nationalityId)
+    {
+        return (in_array($nationalityId, $this->uaeNationalityIds, true)) ? VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_UAE_NATIONALS->value : VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_NON_UAE_NATIONALS->value;
+    }
 }

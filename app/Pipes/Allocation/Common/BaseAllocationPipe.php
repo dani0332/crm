@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Common;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -133,6 +134,9 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function getLeadBaseQuery()
     {
+        $isEACollaborate = $this->lead?->source === LeadSourceEnum::EA_IMCRM
+            && $this->lead?->ea_model === EaModelEnum::Collaborate;
+
         return $this->allocationRequest->model()
             ->where('uuid', $this->lead->uuid)
             ->whereNotIn('quote_status_id', [
@@ -140,7 +144,11 @@ abstract class BaseAllocationPipe extends AllocationService
                 QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Lost,
             ])
-            ->when(! $this->allocationRequest->isOverrideAdvisorRequest(), fn ($q) => $q->whereNull('advisor_id'));
+            ->when(
+                ! $this->allocationRequest->isOverrideAdvisorRequest() && ! $isEACollaborate,
+                fn ($q) => $q->whereNull('advisor_id')
+            )
+            ->when($isEACollaborate, fn ($q) => $q->whereNull('expert_advisor_id'));
     }
 
     protected function throw(string $message, int $code = 500)
@@ -205,7 +213,11 @@ abstract class BaseAllocationPipe extends AllocationService
                 fn ($q) => $q->orderBy('la.buy_lead_last_allocated', 'asc'),
                 fn ($q) => $q->orderBy('la.last_allocated', 'asc'),
             )
-            ->when($this->allocationRequest->isReassignmentJob() && $this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('users.id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
+            ->when($this->allocationRequest->isReassignmentJob() && $this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('users.id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()))
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Collaborate,
+                fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
+            );
     }
 
     protected function getOnlineStatusesInOrder()
@@ -290,8 +302,15 @@ abstract class BaseAllocationPipe extends AllocationService
         $previousAdvisorId = $this->lead->advisor_id;
         $isReAssignment = ! empty($previousAdvisorId);
 
-        $this->lead->advisor_id = $advisor->id;
-        $this->lead->assignment_type = $assignmentType;
+        $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
+            && $this->lead->ea_model === EaModelEnum::Collaborate;
+
+        if ($isEACollaborate) {
+            $this->lead->expert_advisor_id = $advisor->id;
+        } else {
+            $this->lead->advisor_id = $advisor->id;
+            $this->lead->assignment_type = $assignmentType;
+        }
 
         if ($advisor->isAi()) {
             $this->lead->ai_advisor_assigned_at = now();
@@ -357,7 +376,10 @@ abstract class BaseAllocationPipe extends AllocationService
 
             $previousAdvisorAssignedDate = $this->updateQuoteDetail();
 
-            if ($this->lead->source != LeadSourceEnum::REFERRAL) {
+            $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
+                && $this->lead->ea_model === EaModelEnum::Collaborate;
+
+            if ($this->lead->source != LeadSourceEnum::REFERRAL && ! $isEACollaborate) {
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
                 $quoteTypeId = $this->allocationRequest->getQuoteType()->id();

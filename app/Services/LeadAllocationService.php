@@ -639,7 +639,7 @@ class LeadAllocationService extends BaseService
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
             ->whereBetween('created_at', [$from, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]) // excluding all Fake leads
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]) // leads created from IMCRM are excluded because they get assigned to the creator right away
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::EA_IMCRM]) // leads created from IMCRM/EA are excluded because they get assigned to the creator right away
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc') // pickup order
             ->skip(0)->take($carLeadPickupLimit)->get();
     }
@@ -1055,6 +1055,7 @@ class LeadAllocationService extends BaseService
                 LeadSourceEnum::IMCRM,
                 LeadSourceEnum::INSLY,
                 LeadSourceEnum::RENEWAL_UPLOAD,
+                LeadSourceEnum::EA_IMCRM,
             ];
 
             $count = HealthQuote::whereNull('advisor_id')

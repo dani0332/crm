@@ -551,6 +551,10 @@ final class PermissionsEnum extends Enum
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
     public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
+    // Expert Advisory Model Permissions
+    public const EaCollaborate = 'ea-collaborate';
+    public const AssignedExpertAdvisor = 'assigned-expert-advisor';
+
     // Home Revivals Permissions
     public const HOME_REVIVAL_QUOTES_LIST = 'home-revival-quotes-list';
     public const HOME_REVIVAL_QUOTES_EDIT = 'home-revival-quotes-edit';
