@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\EaModelEnum;
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -37,7 +37,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     protected $guarded = [];
     protected $casts = [
-        'ea_model' => EaModelEnum::class,
+        'ea_model' => EaModelCast::class,
     ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,

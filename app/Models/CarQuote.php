@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
-use App\Enums\EaModelEnum;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\MotorRevivalEnum;
@@ -36,7 +36,7 @@ class CarQuote extends BaseModel
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
-        'ea_model' => EaModelEnum::class,
+        'ea_model' => EaModelCast::class,
     ];
     protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
     protected $guarded = [];
