@@ -99,4 +99,7 @@ enum LoggerFeatureEnum: string
     case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 
     case HEALTH_QUOTE_REVAMP = 'health-quote-revamp';
+
+    // Home Revival
+    case HOME_REVIVAL = 'home-revival';
 }

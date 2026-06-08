@@ -50,6 +50,7 @@ class RolePermissionSeeder extends Seeder
         $this->addReTriggerPolicyIssuancePermission();
         $this->addRuleConfigWritePermissions();
         $this->addLifeRevivalPermissions();
+        $this->addHomeRevivalPermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -724,6 +725,47 @@ class RolePermissionSeeder extends Seeder
 
         $permissionRevivalQuoteEdit = Permission::firstOrCreate([
             'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole) {
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteList)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteList);
+            }
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteShow)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteShow);
+            }
+            if (! $adminRole->hasPermissionTo($permissionRevivalQuoteEdit)) {
+                $adminRole->givePermissionTo($permissionRevivalQuoteEdit);
+            }
+        }
+    }
+
+    private function addHomeRevivalPermissions(): void
+    {
+        $permissionRevivalQuoteList = Permission::firstOrCreate([
+            'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_LIST,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $permissionRevivalQuoteShow = Permission::firstOrCreate([
+            'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_SHOW,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $permissionRevivalQuoteEdit = Permission::firstOrCreate([
+            'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_EDIT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
