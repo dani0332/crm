@@ -203,9 +203,9 @@ class ReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
-        if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
-            $value = $filters->teams;
+        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
+            info('teamsFilter are : '.json_encode($filters->teamsFilter));
+            $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
                     ->select('users.id')
@@ -258,6 +258,7 @@ class ReportService extends BaseService
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
             QuoteTypes::CYBER,
+            QuoteTypes::DEVICE,
         ];
 
         $allowedLOBs = [];

@@ -10,15 +10,20 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\ClaimsEnum;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MemberCategoryEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
@@ -38,11 +43,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RelationCodeEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SalaryBandEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\VisaCategoryEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -169,6 +177,14 @@ class HandleInertiaRequests extends Middleware
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'healthInsureEnum' => array_column(HealthInsureEnum::cases(), 'value', 'name'),
+            'healthPolicyHolderEnum' => array_column(HealthPolicyHolderEnum::cases(), 'value', 'name'),
+            'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
+            'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
+            'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
+            'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
         ];
     }
 
@@ -428,6 +444,12 @@ class HandleInertiaRequests extends Middleware
                         'Cyber',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
                         fn ($s) => $s->attributes(['icon' => 'cyber'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD),
+                        'Device',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::DEVICE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -546,11 +568,26 @@ class HandleInertiaRequests extends Middleware
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::LifeQuotesList)
+                    (auth()->user()->hasAnyPermission(
+                        PermissionsEnum::LifeQuotesList,
+                        PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST)
                         || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
-                    fn ($s) => $s->attributes(['icon' => 'life'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'life'])
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                            'Life Quotes',
+                            route('life-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST),
+                            'Life Revival Quotes',
+                            route('life-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'life'])
+                        ),
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
@@ -560,6 +597,7 @@ class HandleInertiaRequests extends Middleware
                     route('home-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'home'])
                 )
+                ->addIf((auth()->user()->can(PermissionsEnum::DEVICE_QUOTES_LIST) || (userHasProduct(quoteTypeCode::Device) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Smartphone Quotes', route('device-quotes-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                 ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList) || (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
@@ -780,7 +818,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::QUOTE_SYNC_LOGS,
             PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ];
-        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -796,7 +834,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])

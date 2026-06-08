@@ -86,9 +86,10 @@ class EmbeddedProductRepository extends BaseRepository
         QuoteTypeId::Bike,
         QuoteTypeId::Home,
         QuoteTypeId::Travel,
+        QuoteTypeId::Device,
     ];
     public const ALLOWED_LOBS_FOR_EPS = [
-        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER],
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER, quoteTypeCode::Device],
     ];
 
     /**
@@ -731,7 +732,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction, isSendEmail: true);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -1171,6 +1172,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'doc_mime_type' => 'application/pdf',
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_type_id' => $documentType->id,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => null,
             ];

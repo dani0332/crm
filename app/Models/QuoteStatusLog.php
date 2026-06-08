@@ -15,7 +15,18 @@ class QuoteStatusLog extends Model
     use HasFactory;
 
     protected $table = 'quote_status_log';
-    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id', 'notes', 'created_by'];
+    protected $fillable = [
+        'quote_type_id',
+        'quote_request_id',
+        'previous_quote_status_id',
+        'current_quote_status_id',
+        'created_at',
+        'updated_at',
+        'notes',
+        'created_by',
+        'personal_quote_id',
+        'status_change_source',
+    ];
 
     /**
      * @return void

@@ -1,8 +1,8 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import AvailablePlans from '@/inertia/Pages/BikeQuote/AvailablePlans.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -1508,7 +1508,11 @@ function capitalizeString(str) {
 
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <lead-raw-data
       :modelType="'Bike'"

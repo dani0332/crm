@@ -106,24 +106,24 @@ class ApplicationStorageSeeder extends Seeder
         //         'is_active' => 1,
         //     ],
         // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
         //     [
@@ -166,6 +166,9 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEnableMetLife();
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
+        $this->seedDeviceSmartphonePolicyIssuanceSettings();
+        $this->seedPolicyIssuanceChiefDeputyOfficerContactDetails();
+        $this->seedDeviceFailureEmailSettings();
         $this->seedLegacyPolicyKeys();
         $this->seedCyberConfigurations();
         $this->seedBranchData();
@@ -178,6 +181,9 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDisableClaimsModule();
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
+        $this->seedAmlAutomationOutcomeWorkflowUrl();
+        $this->seedDttLifeEnabled();
+        $this->seedOcrPlanValidation();
     }
 
     private function livaCarAutomationSeed()
@@ -206,6 +212,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomationOutcomeWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dc950ff5-df11-4347-b486-2c2a43d2b81d/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -347,7 +366,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL],
+            ['key_name' => ApplicationStorageEnums::TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
                 'created_at' => now(),
@@ -1445,6 +1464,167 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedDeviceSmartphonePolicyIssuanceSettings()
+    {
+
+        // Smartphone - Book Policy Template ID (same as New Policy for consistency)
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_BOOK_POLICY_TEMPLATE],
+            [
+                'value' => 'db6caa9d-d274-41b8-8950-a6fb4b56ae41', // Smartphone - New Policy template
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        // Smartphone - Update Policy Template ID (Send Update Email)
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_UPDATE_POLICY_TEMPLATE],
+            [
+                'value' => 'cd3ef8ad-f6ad-4e73-89ca-2af81d0eb385', // Smartphone - Update Policy template
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        // Smartphone - Payment Authorized Template Alias (FTC Email)
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_PAYMENT_AUTHORIZED_TEMPLATE],
+            [
+                'value' => 'smartphone-payment-authorized', // Smartphone - Payment Authorized template alias
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedPolicyIssuanceChiefDeputyOfficerContactDetails(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO],
+            [
+                'value' => '9710502732524',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_EMAIL_ID],
+            [
+                'value' => 'hitesh.motwani@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedDeviceFailureEmailSettings()
+    {
+
+        $deviceFailureEmailsTo = config('app.env') === 'production' ? 'production.approval.team@insurancemarket.ae' : 'production.approval.team@yopmail.com,device-smartphone-ngi-failure-email@yopmail.com';
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO,
+                'value' => $deviceFailureEmailsTo,
+                'is_active' => 1,
+            ],
+        );
+
+        $deviceFailureEmailsCc = config('app.env') === 'production' ? 'dt.system.notifications@insurancemarket.ae,sandeep.sharma@insurancemarket.ae,rucha.keluskar@myalfred.com,digital.transformation.support@myalfred.com' : 'production.approval.team@yopmail.com,device-smartphone-ngi-failure-email@yopmail.com';
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC,
+                'value' => $deviceFailureEmailsCc,
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK,
+                'value' => 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL,
+                'value' => 'imcrm-policy-issue-fake@yopmail.com,ngi-policy-issue-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL,
+                'value' => 'imcrm-doc-download-fake@yopmail.com,ngi-doc-download-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_DOC_UPLOAD_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_DOC_UPLOAD_FAILURE_EMAIL,
+                'value' => 'imcrm-doc-upload-fake@yopmail.com,ngi-doc-upload-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_BOOK_POLICY_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_BOOK_POLICY_FAILURE_EMAIL,
+                'value' => 'imcrm-book-policy-fake@yopmail.com,ngi-book-policy-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+    }
+
     private function seedLegacyPolicyKeys()
     {
         ApplicationStorage::firstOrCreate(
@@ -1726,6 +1906,33 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dd811e82-a945-4ed1-a1bb-2e1be15fda12/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttLifeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_LIFE_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+    }
+
+    private function seedOcrPlanValidation()
+    {
+        /** For sukoon purple API */
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
+            [
+                'value' => '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

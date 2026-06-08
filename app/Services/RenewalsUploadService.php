@@ -1015,6 +1015,10 @@ class RenewalsUploadService
 
             $quote = $quoteObject->create($quoteData);
 
+            if ($quoteType->id == QuoteTypeId::Health) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForRenewalLead($quote->id);
+            }
+
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
             }
@@ -3617,8 +3621,11 @@ class RenewalsUploadService
     {
         $sourceProvider = $this->resolveSourceProviderByCode($leadData->insurer ?? null);
         $targetProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+        $transition = $sourceProvider && $targetProvider
+            ? $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id)
+            : null;
 
-        if (! $sourceProvider || ! $targetProvider) {
+        if (! $sourceProvider || ! $targetProvider || ! $transition) {
             return [
                 'status' => false,
                 'transition' => null,
@@ -3628,8 +3635,7 @@ class RenewalsUploadService
             ];
         }
 
-        $transition = $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id);
-        if (! $transition) {
+        if (! $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
             return [
                 'status' => false,
                 'transition' => null,
@@ -3685,6 +3691,19 @@ class RenewalsUploadService
     }
 
     /**
+     * Phoenix (TM-sourced) transitions are only valid for GCC vehicles.
+     * Genesis and all other transition sources are not subject to this constraint.
+     */
+    private function isPhoenixGccCompliant(string $sourceCode, object $leadData): bool
+    {
+        if ($sourceCode !== InsuranceProvidersEnum::TM) {
+            return true;
+        }
+
+        return strtolower($leadData->is_gcc ?? '') === 'yes';
+    }
+
+    /**
      * Resolve transitionable provider config: check if lead's insurer can transition to provider_name and resolve plan.
      *
      * @param  RenewalQuoteProcess  $lead  Must have insurer (code), provider_name (text), plan_name, plan_type
@@ -3718,7 +3737,7 @@ class RenewalsUploadService
             $transition = $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id);
 
             LoggerService::info('isTransitionableLead inside function - transition', ['transition_id' => $transition?->id]);
-            if ($transition) {
+            if ($transition && $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
                 LoggerService::info('isTransitionableLead inside function - transition found');
                 $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
 
@@ -3729,9 +3748,9 @@ class RenewalsUploadService
 
                 if (! $carPlan) {
                     $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
-                } else {
-                    $status = true;
                 }
+
+                $status = (bool) $carPlan;
             }
         }
 
@@ -3759,7 +3778,7 @@ class RenewalsUploadService
             ];
         }
 
-        LoggerService::info('isTransitionableLead - status: '.($status ? 'true' : 'false'));
+        LoggerService::info('isTransitionableLead - status', ['status' => $status]);
 
         return $status;
     }
@@ -3856,15 +3875,17 @@ class RenewalsUploadService
             && $transition->sourceProvider;
 
         if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
-            $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
-            $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
+            if ($this->isPhoenixGccCompliant($transition->sourceProvider->code, $leadData)) {
+                $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+                $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
 
-            if ($matchesCurrentTarget) {
-                $planName = $leadData->plan_name ?? null;
-                $planType = $leadData->plan_type ?? null;
-                $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
-                $isTransitionable = ! $isPlanValidationRequired
-                    || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
+                if ($matchesCurrentTarget) {
+                    $planName = $leadData->plan_name ?? null;
+                    $planType = $leadData->plan_type ?? null;
+                    $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+                    $isTransitionable = ! $isPlanValidationRequired
+                        || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
+                }
             }
         }
 
@@ -3934,6 +3955,7 @@ class RenewalsUploadService
         }
 
         if ($transition && $target && $source) {
+
             $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $target->id);
 
             LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan_id' => $carPlan?->id]);

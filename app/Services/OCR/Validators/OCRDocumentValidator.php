@@ -7,6 +7,7 @@ use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
+use App\Models\PassportVisaDetail;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;
 use App\Models\VehicleDriverDetail;
@@ -68,6 +69,11 @@ class OCRDocumentValidator
             'vehicle_type',
             'origin',
             'traffic_code_number',
+        ],
+        'PASSPORT_FIELDS' => [
+            'passport_number',
+            'passport_country',
+            'passport_expiry_date',
         ],
     ];
 
@@ -181,6 +187,32 @@ class OCRDocumentValidator
             fn ($field) => empty($registrationCertificate->$field)));
 
         // Update ocr flag in quote document
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
+
+        return $result;
+    }
+
+    public function validatePassportFields(string $documentTypeCode, int $customerMemberId = 0): bool
+    {
+        $fieldsToVerify = self::FIELDS_TO_VERIFY['PASSPORT_FIELDS'];
+
+        $query = PassportVisaDetail::query()
+            ->where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType);
+
+        if ($customerMemberId > 0) {
+            $query->where('customer_member_id', $customerMemberId);
+        } else {
+            $query->whereNull('customer_member_id');
+        }
+
+        $passportVisaDetail = $query->select($fieldsToVerify)->first();
+
+        $result = $passportVisaDetail && empty(array_filter(
+            $fieldsToVerify,
+            fn (string $field) => empty($passportVisaDetail->$field)
+        ));
+
         $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;

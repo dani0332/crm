@@ -86,27 +86,12 @@ if (! function_exists('createMockLead')) {
 }
 
 test('returns transitionable lead details when transition exists and plan exists', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Smart Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -128,21 +113,10 @@ test('returns transitionable lead details when transition exists and plan exists
 });
 
 test('adds validation error when transitionable lead plan is missing', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
-
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -165,16 +139,9 @@ test('adds validation error when transitionable lead plan is missing', function 
 });
 
 test('returns non-transitionable details when no transition exists while plan exists', function () {
-    $provider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    $provider = InsuranceProvider::factory()->axa()->create();
 
-    $plan = CarPlan::create([
-        'text' => 'Comprehensive',
-        'repair_type' => 'COMP',
-        'provider_id' => $provider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($provider->id)->create(['repair_type' => 'COMP']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -196,35 +163,20 @@ test('returns non-transitionable details when no transition exists while plan ex
 });
 
 test('isTransitionableLead completes within 100 milliseconds', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    CarPlan::create([
-        'text' => 'Quick Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
         'provider_name' => $targetProvider->text,
-        'plan_name' => 'Quick Plan',
-        'plan_type' => 'TPL',
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ]);
 
     $start = microtime(true);
@@ -235,27 +187,12 @@ test('isTransitionableLead completes within 100 milliseconds', function () {
 });
 
 test('resolveCarPlan is memoized across isTransitionableLead and isTransitionableLeadForProcess', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Memoized Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -289,27 +226,12 @@ test('isTransitionableLeadForProcess does not re-query transition or providers w
     // loop runs both functions sequentially per lead and incurs 3 redundant
     // queries (transition row + target provider + source provider) via
     // RenewalQuoteProcess::checkIsTransitionableLead()'s lazy-loaded relations.
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Cached Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -347,27 +269,12 @@ test('isTransitionableLeadForProcess does not re-query transition or providers w
 });
 
 test('isTransitionableLeadForProcess cache is bypassed safely when transition_id changes between calls', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Stale Cache Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -401,15 +308,12 @@ test('getNonTransitionableLeadConfig keeps text-matched provider with null carPl
     // uploadedLeadsValidation stay on the plan-validation branch and
     // surface "Invalid Insurer Plan Name or Repair Type" instead of the
     // blanket "Invalid Insurance Provider & Provider Name Combination".
-    $provider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    $provider = InsuranceProvider::factory()->axa()->create();
 
     $service = createRenewalsUploadServiceWithMocks();
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA, // Code mismatch: RSA vs AXA
-        'provider_name' => 'AXA',
+        'provider_name' => $provider->text,
     ]);
 
     $result = $service->isTransitionableLeadForProcess($lead);
@@ -428,16 +332,9 @@ test('resolveInsuranceProviderByText is memoized across isTransitionableLead and
     // — duplicating the provider-by-text query already issued inside
     // isTransitionableLead. A text-keyed memo on resolveInsuranceProviderByText
     // collapses this to a single query per unique provider_name per instance.
-    $provider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    $provider = InsuranceProvider::factory()->axa()->create();
 
-    $plan = CarPlan::create([
-        'text' => 'Comprehensive',
-        'repair_type' => 'COMP',
-        'provider_id' => $provider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($provider->id)->create(['repair_type' => 'COMP']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $leadValidationErrors = collect();
@@ -471,41 +368,26 @@ test('resolveInsuranceProviderByText is memoized across isTransitionableLead and
 });
 
 test('source provider and transition lookups are memoized across repeated lead validations', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    CarPlan::create([
-        'text' => 'Memoized Transition Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
 
     $firstLead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
         'provider_name' => $targetProvider->text,
-        'plan_name' => 'Memoized Transition Plan',
-        'plan_type' => 'TPL',
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ]);
     $secondLead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
         'provider_name' => $targetProvider->text,
-        'plan_name' => 'Memoized Transition Plan',
-        'plan_type' => 'TPL',
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
     ]);
 
     $connection = DB::connection('sqlite');
@@ -547,27 +429,12 @@ test('getNonTransitionableLeadConfig returns null provider when provider_name do
 });
 
 test('isTransitionableLeadWithCurrentData returns true for fresh transitionable lead', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Current Data Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
@@ -586,21 +453,10 @@ test('isTransitionableLeadWithCurrentData returns false when provider_name is cl
     // which trusts the stored transition_id without re-validating against
     // current data — leading to currentInsurer being wrongly cleared when
     // provider_name had been mutated after the original validation pass.
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
-
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::RSA,
@@ -614,21 +470,10 @@ test('isTransitionableLeadWithCurrentData returns false when provider_name is cl
 });
 
 test('isTransitionableLeadWithCurrentData returns false when insurer code no longer matches transition source', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
-
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $lead = createMockLead([
         'insurer' => InsuranceProvidersEnum::AXA, // swapped away from source
@@ -649,27 +494,12 @@ test('isTransitionableLeadWithCurrentData short-circuits when caller passes fals
 });
 
 test('isTransitionableLeadWithCurrentData uses current-data fallback when caller passes true hint without stored transition id', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
-
-    $plan = CarPlan::create([
-        'text' => 'Fallback Plan',
-        'repair_type' => 'TPL',
-        'provider_id' => $targetProvider->id,
-    ]);
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'TPL']);
 
     $service = createRenewalsUploadServiceWithMocks();
     $lead = createMockLead([
@@ -682,22 +512,104 @@ test('isTransitionableLeadWithCurrentData uses current-data fallback when caller
     expect($service->isTransitionableLeadWithCurrentData($lead, isTransitionableLead: true))->toBeTrue();
 });
 
+test('isTransitionableLead returns true for Phoenix lead when is_gcc is Yes', function () {
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
+
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
+
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'COMP']);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+        'is_gcc' => 'Yes',
+    ]);
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    expect($status)->toBeTrue()
+        ->and($leadValidationErrors)->toBeEmpty()
+        ->and($lead->insurance_provider_transition_id)->not->toBeNull();
+});
+
+test('isTransitionableLead returns false for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
+
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
+
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'COMP']);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+        'is_gcc' => 'No',
+    ]);
+
+    $status = $service->isTransitionableLead($lead, $leadValidationErrors);
+
+    expect($status)->toBeFalse()
+        ->and($leadValidationErrors)->toBeEmpty()
+        ->and($lead->insurance_provider_transition_id)->toBeNull();
+});
+
+test('isTransitionableLeadForProcess returns non-transitionable config for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
+
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
+
+    $plan = CarPlan::factory()->forInsuranceProvider($targetProvider->id)->create(['repair_type' => 'COMP']);
+
+    $service = createRenewalsUploadServiceWithMocks();
+    $leadValidationErrors = collect();
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'plan_name' => $plan->text,
+        'plan_type' => $plan->repair_type,
+        'is_gcc' => 'No',
+    ]);
+
+    $service->isTransitionableLead($lead, $leadValidationErrors);
+    $result = $service->isTransitionableLeadForProcess($lead);
+
+    expect($result['status'])->toBeFalse()
+        ->and($result['transitionId'])->toBeNull()
+        ->and($result['tags'])->toBe('');
+});
+
+test('isTransitionableLeadWithCurrentData returns false for Phoenix lead when is_gcc is not Yes', function () {
+    $sourceProvider = InsuranceProvider::factory()->tm()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
+
+    $transition = InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
+
+    $lead = createMockLead([
+        'insurer' => InsuranceProvidersEnum::TM,
+        'provider_name' => $targetProvider->text,
+        'is_gcc' => 'No',
+    ], transitionId: $transition->id);
+
+    $service = createRenewalsUploadServiceWithMocks();
+
+    expect($service->isTransitionableLeadWithCurrentData($lead))->toBeFalse();
+});
+
 test('isTransitionableLeadWithCurrentData fallback does not require plan when plan fields are empty', function () {
-    $sourceProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA',
-    ]);
+    $sourceProvider = InsuranceProvider::factory()->rsa()->create();
+    $targetProvider = InsuranceProvider::factory()->axa()->create();
 
-    $targetProvider = InsuranceProvider::create([
-        'code' => InsuranceProvidersEnum::AXA,
-        'text' => 'AXA',
-    ]);
-
-    InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $sourceProvider->id,
-        'target_insurance_provider_id' => $targetProvider->id,
-        'is_active' => true,
-    ]);
+    InsuranceProviderTransition::factory()->between($sourceProvider->id, $targetProvider->id)->create();
 
     $service = createRenewalsUploadServiceWithMocks();
     $lead = createMockLead([
