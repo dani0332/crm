@@ -179,28 +179,28 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->isChsAdvisor = true;
             }
         }
-        if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-            $insuranceProvider = $quote->plan->insuranceProvider ?? null;
+        if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
             $quotePlan = $quote->plan ?? null;
-            if (isset($quotePlan) && isset($insuranceProvider)) {
+            $insuranceProvider = $quotePlan?->insuranceProvider ?? null;
+            if ($quotePlan && $insuranceProvider) {
                 $emailData->currentInsurer = $insuranceProvider->text;
                 $roadsideAssistance = $insuranceProvider->roadside_phone_number;
 
                 $planCode = $quotePlan->code;
                 $insuranceProviderCode = $insuranceProvider->code;
-                $isCarQuote = $modelType == quoteTypeCode::Car;
-                $isQICPlan = in_array($planCode, [CarPlanCode::COMP_QIC_PRESTIGE->value, CarPlanCode::AGEN_QIC_PRESTIGE->value]) && $insuranceProviderCode == 'QIC';
+                $isCarQuote = $modelType === quoteTypeCode::Car;
+                $isQICPlan = in_array($planCode, [CarPlanCode::COMP_QIC_PRESTIGE->value, CarPlanCode::AGEN_QIC_PRESTIGE->value]) && $insuranceProviderCode === 'QIC';
 
                 if ($isCarQuote && $isQICPlan) {
-                    $addsOn = CarQuotePlanDetail::where('plan_code', $planCode)
-                        ->where('provider_code', $insuranceProviderCode)
-                        ->where('quote_uuid', $quote->uuid)
-                        ->first(['addons']);
-
                     $warAddonCodes = [
                         CarAddsOnEnum::MotorWARAndTerrorismExtensionOD->value,
                         CarAddsOnEnum::MotorWARAndTerrorismExtensionODPAB->value,
                     ];
+
+                    $addsOn = CarQuotePlanDetail::where('plan_code', $planCode)
+                        ->where('provider_code', $insuranceProviderCode)
+                        ->where('quote_uuid', $quote->uuid)
+                        ->first(['addons']);
 
                     $addons = json_decode($addsOn?->addons ?? '[]', true);
 
@@ -232,7 +232,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // For Bird
             $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
 
-            dd($emailData);
             if (! empty($emailData)) {
                 $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
             }
