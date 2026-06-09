@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\CarAddsOnEnum;
+use App\Enums\CarAddOnEnum;
 use App\Enums\CarPlanCode;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -193,8 +193,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
                 if ($isCarQuote && $isQICPlan) {
                     $warAddonCodes = [
-                        CarAddsOnEnum::MotorWARAndTerrorismExtensionOD->value,
-                        CarAddsOnEnum::MotorWARAndTerrorismExtensionODPAB->value,
+                        CarAddOnEnum::MotorWARAndTerrorismExtensionOD->value,
+                        CarAddOnEnum::MotorWARAndTerrorismExtensionODPAB->value,
                     ];
 
                     $addsOn = CarQuotePlanDetail::where('plan_code', $planCode)
