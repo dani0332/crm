@@ -10,18 +10,17 @@ use App\Jobs\SendEACollaborateRejectedEmailJob;
 use App\Jobs\SendEALeadSubmittedEmailJob;
 use App\Jobs\SendEAManagerDecisionEmailJob;
 use App\Models\PersonalQuote;
-use App\Services\BirdService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createEaSchema();
+    Http::fake(['*' => Http::response(null, 201)]);
 });
 
-it('SendEALeadSubmittedEmailJob sends Bird webhook with advisor and lead generator payload', function () {
-    $birdService = $this->mock(BirdService::class);
-
+it('SendEALeadSubmittedEmailJob sends Brevo email with advisor as recipient and lead generator + managers in CC', function () {
     $advisor = TestDataSeeder::createUser(['email' => 'advisor@example.com', 'name' => 'Advisor One']);
     $leadGen = TestDataSeeder::createUser(['email' => 'leadgen@example.com', 'name' => 'Lead Gen']);
     TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => 'manager@example.com', 'name' => 'Manager']);
@@ -39,21 +38,20 @@ it('SendEALeadSubmittedEmailJob sends Bird webhook with advisor and lead generat
         'quote_status_id' => QuoteStatusEnum::NewLead,
     ]);
 
-    $birdService->shouldReceive('triggerWebHookRequest')
-        ->once()
-        ->with('https://test-ea-lead-submitted', Mockery::on(function ($payload) use ($advisor, $leadGen) {
-            return $payload['advisor_email'] === $advisor->email
-                && $payload['lead_generator_email'] === $leadGen->email
-                && in_array('manager@example.com', $payload['manager_emails']);
-        }));
+    (new SendEALeadSubmittedEmailJob($lead, 'personal', 999))->handle();
 
-    (new SendEALeadSubmittedEmailJob($lead, 'personal', 'https://test-ea-lead-submitted'))->handle();
+    Http::assertSent(function ($request) use ($advisor, $leadGen) {
+        $body = $request->data();
+        $ccEmails = array_column($body['cc'], 'email');
+
+        return $body['to'][0]['email'] === $advisor->email
+            && in_array($leadGen->email, $ccEmails)
+            && in_array('manager@example.com', $ccEmails)
+            && $body['templateId'] === 999;
+    });
 });
 
 it('SendEALeadSubmittedEmailJob does not send if advisor has no email', function () {
-    $birdService = $this->mock(BirdService::class);
-    $birdService->shouldReceive('triggerWebHookRequest')->never();
-
     $lead = PersonalQuote::create([
         'uuid' => Str::uuid()->toString(),
         'code' => 'CYB-email-002',
@@ -66,12 +64,12 @@ it('SendEALeadSubmittedEmailJob does not send if advisor has no email', function
         'quote_status_id' => QuoteStatusEnum::NewLead,
     ]);
 
-    (new SendEALeadSubmittedEmailJob($lead, 'personal', 'https://test-ea-lead-submitted'))->handle();
+    (new SendEALeadSubmittedEmailJob($lead, 'personal', 999))->handle();
+
+    Http::assertNothingSent();
 });
 
-it('SendEACollaborateRejectedEmailJob sends Bird webhook to EA managers with advisor details', function () {
-    $birdService = $this->mock(BirdService::class);
-
+it('SendEACollaborateRejectedEmailJob sends Brevo email to EA managers with advisor details in params', function () {
     $advisor = TestDataSeeder::createUser(['email' => 'adv@example.com', 'name' => 'Advisor']);
     $expertAdvisor = TestDataSeeder::createUser(['email' => 'expert@example.com', 'name' => 'Expert']);
     TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => 'manager@example.com', 'name' => 'Manager']);
@@ -90,21 +88,20 @@ it('SendEACollaborateRejectedEmailJob sends Bird webhook to EA managers with adv
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
-    $birdService->shouldReceive('triggerWebHookRequest')
-        ->once()
-        ->with('https://test-ea-collaborate-rejected', Mockery::on(function ($payload) {
-            return in_array('manager@example.com', $payload['manager_emails'])
-                && $payload['advisor_email'] === 'adv@example.com'
-                && $payload['expert_advisor_email'] === 'expert@example.com';
-        }));
+    (new SendEACollaborateRejectedEmailJob($lead, 'personal', 999))->handle();
 
-    (new SendEACollaborateRejectedEmailJob($lead, 'personal', 'https://test-ea-collaborate-rejected'))->handle();
+    Http::assertSent(function ($request) {
+        $body = $request->data();
+        $toEmails = array_column($body['to'], 'email');
+
+        return in_array('manager@example.com', $toEmails)
+            && $body['params']['advisor_email'] === 'adv@example.com'
+            && $body['params']['expert_advisor_email'] === 'expert@example.com'
+            && $body['templateId'] === 999;
+    });
 });
 
 it('SendEACollaborateRejectedEmailJob skips sending when no EA managers exist', function () {
-    $birdService = $this->mock(BirdService::class);
-    $birdService->shouldReceive('triggerWebHookRequest')->never();
-
     $advisor = TestDataSeeder::createUser(['email' => 'adv2@example.com', 'name' => 'Advisor 2']);
 
     $lead = PersonalQuote::create([
@@ -120,12 +117,12 @@ it('SendEACollaborateRejectedEmailJob skips sending when no EA managers exist', 
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
-    (new SendEACollaborateRejectedEmailJob($lead, 'personal', 'https://test-ea-collaborate-rejected'))->handle();
+    (new SendEACollaborateRejectedEmailJob($lead, 'personal', 999))->handle();
+
+    Http::assertNothingSent();
 });
 
-it('SendEAManagerDecisionEmailJob sends Bird webhook to both advisors with decision', function () {
-    $birdService = $this->mock(BirdService::class);
-
+it('SendEAManagerDecisionEmailJob sends Brevo email to both advisors with decision in params', function () {
     $advisor = TestDataSeeder::createUser(['email' => 'advisor3@example.com', 'name' => 'Advisor 3']);
     $expertAdvisor = TestDataSeeder::createUser(['email' => 'expert3@example.com', 'name' => 'Expert 3']);
 
@@ -142,20 +139,20 @@ it('SendEAManagerDecisionEmailJob sends Bird webhook to both advisors with decis
         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
     ]);
 
-    $birdService->shouldReceive('triggerWebHookRequest')
-        ->once()
-        ->with('https://test-ea-manager-decision', Mockery::on(function ($payload) {
-            return $payload['decision'] === 'Approved'
-                && in_array('advisor3@example.com', $payload['recipient_emails'])
-                && in_array('expert3@example.com', $payload['recipient_emails']);
-        }));
+    (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Approved', 999))->handle();
 
-    (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Approved', 'https://test-ea-manager-decision'))->handle();
+    Http::assertSent(function ($request) {
+        $body = $request->data();
+        $toEmails = array_column($body['to'], 'email');
+
+        return $body['params']['decision'] === 'Approved'
+            && in_array('advisor3@example.com', $toEmails)
+            && in_array('expert3@example.com', $toEmails)
+            && $body['templateId'] === 999;
+    });
 });
 
 it('SendEAManagerDecisionEmailJob sends with model-change decision', function () {
-    $birdService = $this->mock(BirdService::class);
-
     $advisor = TestDataSeeder::createUser(['email' => 'advisor4@example.com', 'name' => 'Advisor 4']);
 
     $lead = PersonalQuote::create([
@@ -171,11 +168,9 @@ it('SendEAManagerDecisionEmailJob sends with model-change decision', function ()
         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
     ]);
 
-    $birdService->shouldReceive('triggerWebHookRequest')
-        ->once()
-        ->with('https://test-ea-manager-decision', Mockery::on(function ($payload) {
-            return $payload['decision'] === 'Model Changed to Referral';
-        }));
+    (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Model Changed to Referral', 999))->handle();
 
-    (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Model Changed to Referral', 'https://test-ea-manager-decision'))->handle();
+    Http::assertSent(function ($request) {
+        return $request->data()['params']['decision'] === 'Model Changed to Referral';
+    });
 });

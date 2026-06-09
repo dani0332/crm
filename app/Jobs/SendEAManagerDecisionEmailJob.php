@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EaModelEnum;
-use App\Services\BirdService;
+use App\Enums\EnvEnum;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 
 class SendEAManagerDecisionEmailJob implements ShouldQueue
 {
@@ -24,14 +25,15 @@ class SendEAManagerDecisionEmailJob implements ShouldQueue
         private readonly Model $quote,
         private readonly string $quoteType,
         private readonly string $decision,
-        private readonly ?string $birdUrl = null,
+        private readonly ?int $templateId = null,
     ) {}
 
     public function handle(): void
     {
-        $url = $this->birdUrl ?? (getAppStorageValueByKey(ApplicationStorageEnums::BIRD_EA_MANAGER_DECISION_WORKFLOW_URL, false, true) ?? '');
-        if (! $url) {
-            LoggerService::warning('SendEAManagerDecisionEmailJob: Bird URL not configured');
+        $templateId = $this->templateId ?? (int) getAppStorageValueByKey(ApplicationStorageEnums::EA_MANAGER_DECISION_TEMPLATE_ID, false, true);
+
+        if (! $templateId) {
+            LoggerService::warning('SendEAManagerDecisionEmailJob: Brevo template not configured');
 
             return;
         }
@@ -50,23 +52,32 @@ class SendEAManagerDecisionEmailJob implements ShouldQueue
             return;
         }
 
-        $payload = [
-            'uuid' => $this->quote->uuid,
-            'ref_id' => $this->quote->code,
-            'quote_type' => $this->quoteType,
-            'ea_model' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
-            'decision' => $this->decision,
-            'customer_name' => trim($this->quote->first_name.' '.$this->quote->last_name),
-            'advisor_name' => $this->quote->advisor?->name ?? '',
-            'advisor_email' => $this->quote->advisor?->email ?? '',
-            'expert_advisor_name' => $this->quote->expertAdvisor?->name ?? '',
-            'expert_advisor_email' => $this->quote->expertAdvisor?->email ?? '',
-            'recipient_emails' => $recipientEmails,
+        $appEnv = config('constants.APP_ENV');
+        $tag = $appEnv === EnvEnum::PRODUCTION ? 'ea-manager-decision' : "{$appEnv}-ea-manager-decision";
+
+        $body = [
+            'to' => array_map(fn ($email) => ['email' => $email], $recipientEmails),
+            'templateId' => $templateId,
+            'params' => [
+                'refID' => $this->quote->code,
+                'eaManager' => $this->quote->expertAdvisor?->name ?? '',
+                'advisorName' => $this->quote->advisor?->name ?? '',
+                'status' => $this->decision,
+                'eaAdvisor' => $this->quote->expertAdvisor?->name ?? '',
+                'lob' => $this->quoteType,
+                'eaModel' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
+                'leadSource' => $this->quote->source,
+            ],
+            'tags' => [$tag],
         ];
 
-        app(BirdService::class)->triggerWebHookRequest($url, $payload);
+        Http::withHeaders([
+            'Accept' => 'application/json',
+            'api-key' => config('constants.SENDINBLUE_KEY'),
+            'Content-Type' => 'application/json',
+        ])->post(config('constants.SIB_URL'), $body);
 
-        LoggerService::info('SendEAManagerDecisionEmailJob: Sent via Bird', [
+        LoggerService::info('SendEAManagerDecisionEmailJob: Sent via Brevo', [
             'ref_id' => $this->quote->code,
             'decision' => $this->decision,
         ]);

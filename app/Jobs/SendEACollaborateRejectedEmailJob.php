@@ -4,9 +4,9 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EaModelEnum;
+use App\Enums\EnvEnum;
 use App\Enums\RolesEnum;
 use App\Models\User;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 
 class SendEACollaborateRejectedEmailJob implements ShouldQueue
 {
@@ -25,14 +26,15 @@ class SendEACollaborateRejectedEmailJob implements ShouldQueue
     public function __construct(
         private readonly Model $quote,
         private readonly string $quoteType,
-        private readonly ?string $birdUrl = null,
+        private readonly ?int $templateId = null,
     ) {}
 
     public function handle(): void
     {
-        $url = $this->birdUrl ?? (getAppStorageValueByKey(ApplicationStorageEnums::BIRD_EA_COLLABORATE_REJECTED_WORKFLOW_URL, false, true) ?? '');
-        if (! $url) {
-            LoggerService::warning('SendEACollaborateRejectedEmailJob: Bird URL not configured');
+        $templateId = $this->templateId ?? (int) getAppStorageValueByKey(ApplicationStorageEnums::EA_COLLABORATE_REJECTED_TEMPLATE_ID, false, true);
+
+        if (! $templateId) {
+            LoggerService::warning('SendEACollaborateRejectedEmailJob: Brevo template not configured');
 
             return;
         }
@@ -51,24 +53,30 @@ class SendEACollaborateRejectedEmailJob implements ShouldQueue
 
         $this->quote->loadMissing(['advisor', 'expertAdvisor']);
 
-        $payload = [
-            'uuid' => $this->quote->uuid,
-            'ref_id' => $this->quote->code,
-            'quote_type' => $this->quoteType,
-            'ea_model' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
-            'customer_name' => trim($this->quote->first_name.' '.$this->quote->last_name),
-            'manager_emails' => $managerEmails,
-            'advisor_name' => $this->quote->advisor?->name ?? '',
-            'advisor_email' => $this->quote->advisor?->email ?? '',
-            'expert_advisor_name' => $this->quote->expertAdvisor?->name ?? '',
-            'expert_advisor_email' => $this->quote->expertAdvisor?->email ?? '',
-            'assigned_advisor_rejected_at' => $this->quote->ea_assigned_advisor_rejected_at?->toISOString(),
-            'expert_advisor_rejected_at' => $this->quote->ea_expert_advisor_rejected_at?->toISOString(),
+        $appEnv = config('constants.APP_ENV');
+        $tag = $appEnv === EnvEnum::PRODUCTION ? 'ea-collaborate-rejected' : "{$appEnv}-ea-collaborate-rejected";
+
+        $body = [
+            'to' => array_map(fn ($email) => ['email' => $email], $managerEmails),
+            'templateId' => $templateId,
+            'params' => [
+                'eaManager' => '',
+                'eaAdvisor' => $this->quote->expertAdvisor?->name ?? '',
+                'advisorName' => $this->quote->advisor?->name ?? '',
+                'lob' => $this->quoteType,
+                'eaModel' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
+                'leadSource' => $this->quote->source,
+            ],
+            'tags' => [$tag],
         ];
 
-        app(BirdService::class)->triggerWebHookRequest($url, $payload);
+        Http::withHeaders([
+            'Accept' => 'application/json',
+            'api-key' => config('constants.SENDINBLUE_KEY'),
+            'Content-Type' => 'application/json',
+        ])->post(config('constants.SIB_URL'), $body);
 
-        LoggerService::info('SendEACollaborateRejectedEmailJob: Sent via Bird', ['ref_id' => $this->quote->code]);
+        LoggerService::info('SendEACollaborateRejectedEmailJob: Sent via Brevo', ['ref_id' => $this->quote->code]);
     }
 
     public function failed(\Throwable $exception): void

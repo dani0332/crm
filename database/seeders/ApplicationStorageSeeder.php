@@ -185,6 +185,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
+        $this->seedEAEmailTemplates();
     }
 
     private function livaCarAutomationSeed()
@@ -1952,5 +1953,26 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
+    }
+
+    private function seedEAEmailTemplates(): void
+    {
+        $templates = [
+            ApplicationStorageEnums::EA_LEAD_SUBMITTED_TEMPLATE_ID => 887,
+            ApplicationStorageEnums::EA_COLLABORATE_REJECTED_TEMPLATE_ID => 889,
+            ApplicationStorageEnums::EA_MANAGER_DECISION_TEMPLATE_ID => 888,
+        ];
+
+        foreach ($templates as $key => $value) {
+            ApplicationStorage::firstOrCreate(
+                ['key_name' => $key],
+                [
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_active' => ApplicationStorageEnums::ACTIVE,
+                ],
+            );
+        }
     }
 }
