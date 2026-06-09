@@ -58,7 +58,7 @@ class DttHome extends Command
             // ->whereDate('created_at', now()->subDays(90)->toDateString())
 
             // for stage
-            ->whereBetween('created_at', [now()->subMinutes(25), now()->subMinutes(5)])
+            ->whereBetween('created_at', [now()->subMinutes(25), now()->subMinutes(15)])
             ->where('is_revived', false)
             ->whereNotIn('source', [
                 LeadSourceEnum::REVIVAL_SHORT,
@@ -99,7 +99,7 @@ class DttHome extends Command
             // ->whereDate('created_at', now()->subMonths(10)->toDateString())
 
             // for stage
-            ->whereBetween('created_at', [now()->subMinutes(45), now()->subMinutes(25)])
+            ->whereBetween('created_at', [now()->subMinutes(180), now()->subMinutes(120)])
             ->where('is_annual_revived', false)
             ->whereNotIn('source', [
                 LeadSourceEnum::REVIVAL_SHORT,
