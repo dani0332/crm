@@ -123,6 +123,8 @@ class ManagementReport
             ->active()
             ->get();
 
+        $corplineRenewalStatuses = app(LookupService::class)->getCorplineRenewalStatuses();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -133,6 +135,7 @@ class ManagementReport
             'lobs' => $lobs,
             'subSources' => $subSources,
             'branches' => $branches,
+            'corplineRenewalStatuses' => $corplineRenewalStatuses,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -236,6 +239,16 @@ class ManagementReport
             $query->where(function ($query) {
                 $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
                     ->orWhereNull('personal_quotes.business_type_of_insurance_id');
+            });
+        }
+
+        if (in_array(quoteTypeCode::CORPLINE, $lobs) && ! empty($request['corpLineLeadType'])) {
+            $renewalStatuses = is_array($request['corpLineLeadType']) ? $request['corpLineLeadType'] : [$request['corpLineLeadType']];
+            $query->whereExists(function ($subQuery) use ($renewalStatuses) {
+                $subQuery->select(DB::raw(1))
+                    ->from('business_quote_request')
+                    ->whereColumn('business_quote_request.id', 'personal_quotes.quote_id')
+                    ->whereIn('business_quote_request.renewal_status', $renewalStatuses);
             });
         }
 
