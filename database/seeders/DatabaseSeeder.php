@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            ManagerLeadAllocationRoleSeeder::class,
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
@@ -52,6 +53,7 @@ class DatabaseSeeder extends Seeder
             UpdateTooltipCarDocuments::class,
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
+            DeviceQuoteSeeder::class,
             DocRequiredForPolicySendSeeder::class,
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
@@ -67,6 +69,14 @@ class DatabaseSeeder extends Seeder
             MakeGenderMaritalStatusUppercase::class,
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            InsuranceProviderTransitionsSeeder::class,
+            BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
+            ConverILAGroupMedicalConfigurationBranchWise::class,
+            HealthCoverForSeeder::class,
+            MemberCategorySeeder::class,
+            VisaCategorySeeder::class,
+            SalaryBandSeeder::class,
+            MaritalStatusSeeder::class,
         ]);
     }
 }

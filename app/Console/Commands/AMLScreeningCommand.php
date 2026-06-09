@@ -112,7 +112,7 @@ class AMLScreeningCommand extends Command
                         continue;
                     }
 
-                    AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::QUEUE_STATUS]);
+                    AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::Queue->value]);
                     AmlScreeningAutomationJob::dispatch($quoteType, $quoteRequest)->onQueue('renewals');
                 }
             });

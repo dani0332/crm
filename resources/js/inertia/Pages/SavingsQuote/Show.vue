@@ -1,10 +1,10 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 import { onMounted, reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -66,12 +66,12 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassSavings = 'App\\Models\\SavingsQuote';
 const genericRequestEnum = page.props.genericRequestEnum;
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const hasRole = role => useHasRole(role);
@@ -161,6 +161,35 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const selectedInsuranceProviderPlan = computed(() => {
+  const plan = props.quote?.insurance_provider_plan;
+
+  if (Array.isArray(plan)) {
+    return plan[0] ?? null;
+  }
+
+  return plan ?? null;
+});
+
+const selectedInsuranceProviderPlanCode = computed(() => {
+  return selectedInsuranceProviderPlan.value?.code ?? null;
+});
+
+const passportOcrEligiblePlanCodes = computed(() => {
+  return page.props.ocrEligiblePlanCodes?.PP ?? []; //PP = passport
+});
+
+// Show passport fields only when an eligible plan (by code) is selected on quote
+const shouldShowPassportFields = computed(() => {
+  if (!selectedInsuranceProviderPlanCode.value) {
+    return false;
+  }
+
+  return passportOcrEligiblePlanCodes.value.includes(
+    selectedInsuranceProviderPlanCode.value,
+  );
+});
+
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -175,6 +204,13 @@ const customerProfileForm = useForm({
     applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
   emirates_id_expiry_date:
     page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
+
+  passport_number:
+    page.props.quote.passport_visa_details?.passport_number ?? null,
+  passport_country:
+    page.props.quote.passport_visa_details?.passport_country ?? null,
+  passport_expiry_date:
+    page.props.quote.passport_visa_details?.passport_expiry_date ?? null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -759,6 +795,45 @@ const handlePlanSelected = plan => {
                     />
                   </dd>
                 </div>
+
+                <template v-if="shouldShowPassportFields">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT NUMBER</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_number"
+                        placeholder="PASSPORT NUMBER"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT COUNTRY</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_country"
+                        placeholder="PASSPORT COUNTRY"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT EXPIRY DATE</dt>
+                    <dd>
+                      <DatePicker
+                        v-model="customerProfileForm.passport_expiry_date"
+                        placeholder="PASSPORT EXPIRY DATE"
+                        :disabled="!isProfileUpdateAllow"
+                        :min-date="new Date()"
+                      />
+                    </dd>
+                  </div>
+                </template>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender_label }}</dd>
@@ -1239,9 +1314,16 @@ const handlePlanSelected = plan => {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+    <ApiLogs
+      :type="modelClassSavings"
+      :id="$page.props.quote.savings_quote?.id"
+    />
 
     <AuditLogs
       :quote-type="quoteType"

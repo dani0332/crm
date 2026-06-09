@@ -29,4 +29,9 @@ class Entity extends Model
     {
         return $this->belongsTo(Nationality::class, 'country_of_corporation', 'id');
     }
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
 }

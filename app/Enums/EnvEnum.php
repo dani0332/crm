@@ -11,10 +11,17 @@ use BenSampo\Enum\Enum;
  */
 final class EnvEnum extends Enum
 {
-    public const LOCAL = 'local';
-    public const DEVELOPMENT = 'development';
-    public const STAGING = 'staging';
-    public const UAT = 'uat';
+    // For Production Environment
     public const PRODUCTION = 'production';
+
+    // For Pre Prod Environment
+    public const STAGING = 'staging';
+
+    // For Server Development & Testing Environment
     public const TEST = 'test';
+    public const UAT = 'uat';
+    public const DEVELOPMENT = 'development';
+
+    // For Local Development & Testing Environment
+    public const LOCAL = 'local';
 }

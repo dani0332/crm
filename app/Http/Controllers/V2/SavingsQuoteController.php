@@ -7,6 +7,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FetchSavingsProviderPlanRequest;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Jobs\SendSavingsOCAEmailJob;
@@ -227,6 +228,40 @@ class SavingsQuoteController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to send OCA email: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy to KEN /fetch-savings-provider-plan (lump sum etc.). Validated body is forwarded; quote UID comes from the route.
+     */
+    public function fetchSavingsProviderPlan(FetchSavingsProviderPlanRequest $request, string $quoteUuId)
+    {
+        try {
+            LoggerService::info('SavingsQuoteController - fetchSavingsProviderPlan', [
+                'quote_uuid' => $quoteUuId,
+            ]);
+
+            $payload = $request->validated();
+            $payload['quoteUID'] = $quoteUuId;
+
+            $result = $this->savingsQuoteService->fetchSavingsProviderPlan($payload);
+
+            if (! $result['success']) {
+                $status = $result['status'] ?? 422;
+
+                return response()->json(
+                    ['message' => $result['message'] ?? 'Request failed'],
+                    is_int($status) && $status >= 400 && $status < 600 ? $status : 422
+                );
+            }
+
+            return response()->json($result['data'], 200);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - fetchSavingsProviderPlan failed', exception: $e);
+
+            return response()->json([
+                'message' => 'Failed to fetch savings provider plan: '.$e->getMessage(),
             ], 500);
         }
     }

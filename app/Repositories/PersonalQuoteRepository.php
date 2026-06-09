@@ -15,7 +15,6 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -25,9 +24,7 @@ use App\Services\OCR\OcrUtils;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -75,16 +72,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
 
-            $activityCreated = (new CentralService)->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
-
-            QuoteStatusLog::create([
-                'quote_type_id' => $quote->quote_type_id,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => $quote->quote_status_id,
-                'previous_quote_status_id' => $previousStatusId,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $activityCreated = app(CentralService::class)->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
 
             return ['quote' => $quote, 'activity_created' => $activityCreated];
         });
@@ -168,6 +156,8 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'created_by_id' => Auth::id(),
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
             ];
             // info('Document array prepared for creation', $document);
 
@@ -187,7 +177,6 @@ class PersonalQuoteRepository extends BaseRepository
                             if ($checkTransactionApprovedInSUStatusLogs) {
                                 app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
                             } else {
-                                app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                                 $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
                                 LoggerService::info('Send Update status updated to UPDATE_ISSUED');
                             }
@@ -325,33 +314,6 @@ class PersonalQuoteRepository extends BaseRepository
         $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'policy_expiry_date', 'premium']));
 
         return $quote;
-    }
-
-    /**
-     * @return Collection
-     */
-    public function fetchGetAuditHistory($leadId)
-    {
-        $audits = DB::table('audits as a')
-            ->select(
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
-                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-            )
-            ->where(function ($query) {
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-            })
-            ->where(function ($query) use ($leadId) {
-                $query->where('a.auditable_type', 'App\Models\\PersonalQuote')
-                    ->where('a.auditable_id', $leadId);
-            })
-            ->orderBy('a.created_at', 'DESC')->get();
-
-        return $audits;
     }
 
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object

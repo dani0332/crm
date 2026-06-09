@@ -20,6 +20,11 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
+
+const quoteSegmentsHome = [
+  { value: 'all', label: 'All' },
+  { value: 'revival', label: 'Revivals' },
+];
 const isPcpSubSourceOptionAllowed = ref(
   useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
@@ -139,6 +144,7 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   private_client: 'all',
+  segment_filter: '',
 });
 
 // PUA Export Modal state
@@ -927,6 +933,13 @@ const formatDate = dateString =>
             { value: 0, label: 'Ex-Pc' },
           ]"
           class="w-full"
+          :single="true"
+        />
+        <x-select
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegmentsHome"
           :single="true"
         />
       </div>

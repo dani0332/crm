@@ -1,5 +1,8 @@
 <script setup>
-import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import {
+  isSukoonPurpleInvestmentPlan,
+  useSavingsPlans,
+} from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 
 const emit = defineEmits(['update', 'close']);
@@ -20,6 +23,9 @@ const props = defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MMM-YYYY hh:mma').value : '-';
+
 // Initialize useSavingsPlans composable
 const {
   // Lookup Options
@@ -31,6 +37,7 @@ const {
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
   calculatePlanPayout,
+  fetchSavingsProviderPlanLumpSum,
   // Riders
   ridersData,
   showRiders,
@@ -146,8 +153,51 @@ const isLumpsumFrequency = computed(() => {
   return checkIsLumpsumFrequency(freq);
 });
 
-// Calculate functionality using composable helper
-const calculatePlan = () => {
+// Sukoon Purple Investment — lump sum from KEN instead of local calculator
+const isSukoonPurpleInvestment = computed(() =>
+  isSukoonPurpleInvestmentPlan(
+    props.planDetails,
+    page.props.insuranceProviderCodeEnum,
+  ),
+);
+
+const calculatePlanLoading = ref(false);
+
+// Calculate functionality using composable helper (or KEN for Purple Investment)
+const calculatePlan = async () => {
+  if (isSukoonPurpleInvestment.value) {
+    calculatePlanLoading.value = true;
+    try {
+      const lumpSum = await fetchSavingsProviderPlanLumpSum(
+        props.planDetails,
+        props.quote.uuid,
+      );
+      if (lumpSum != null) {
+        props.planDetails.lumpSumPayout = lumpSum;
+        notification.success({
+          title: `Lumpsum Payout: ${formatPrice(lumpSum)}`,
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Could not read lump sum from the response',
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        title:
+          error.response?.data?.message ||
+          'Failed to calculate lump sum payout',
+        position: 'top',
+      });
+    } finally {
+      calculatePlanLoading.value = false;
+    }
+
+    return;
+  }
+
   const result = calculatePlanPayout(props.planDetails);
   if (result) {
     props.planDetails.lumpSumPayout = result.payout;
@@ -610,13 +660,16 @@ watch(
                     </div>
                     <div class="text-sm text-gray-600 mb-4">
                       <span class="font-medium">Updated At:</span>
-                      <span class="ml-1">{{ quote.updated_at }}</span>
+                      <span class="ml-1">{{
+                        dateFormat(planDetails.updatedAt)
+                      }}</span>
                     </div>
                     <div class="space-x-3">
                       <x-button
                         color="orange"
                         size="sm"
                         type="button"
+                        :loading="calculatePlanLoading"
                         @click="calculatePlan"
                       >
                         Calculate
@@ -1065,6 +1118,7 @@ watch(
                   planDetails.policyWordings &&
                   planDetails.policyWordings.length > 0
                 "
+                class="mb-6"
               >
                 <h4 class="text-sm font-semibold text-gray-700 mb-3">
                   Policy Wordings
@@ -1124,13 +1178,80 @@ watch(
                 </div>
               </div>
 
+              <!-- Fund Details Section -->
+              <div
+                v-if="
+                  planDetails.fundDetails && planDetails.fundDetails.length > 0
+                "
+              >
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">
+                  Fund Details
+                </h4>
+                <div class="flex flex-col space-y-3 w-fit">
+                  <div
+                    v-for="doc in planDetails.fundDetails"
+                    :key="doc.id"
+                    class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                  >
+                    <div class="flex-shrink-0">
+                      <svg
+                        class="w-6 h-6 text-red-500"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                          clip-rule="evenodd"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div class="flex-shrink-0">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700"
+                          >{{ doc.text }}</span
+                        >
+                        <template #tooltip
+                          >Fund details and underlying fund
+                          information</template
+                        >
+                      </x-tooltip>
+                    </div>
+                    <div class="flex-shrink-0">
+                      <a
+                        :href="doc.link || doc.value"
+                        target="_blank"
+                        class="text-blue-600 hover:text-blue-800"
+                      >
+                        <svg
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          ></path>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- No documents message -->
               <div
                 v-if="
                   (!planDetails.keyFeatureDocument ||
                     planDetails.keyFeatureDocument.length === 0) &&
                   (!planDetails.policyWordings ||
-                    planDetails.policyWordings.length === 0)
+                    planDetails.policyWordings.length === 0) &&
+                  (!planDetails.fundDetails ||
+                    planDetails.fundDetails.length === 0)
                 "
                 class="text-center py-8 text-gray-500"
               >

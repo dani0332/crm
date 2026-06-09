@@ -3,6 +3,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
@@ -121,6 +122,10 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
+  communicationEventLogs: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -404,20 +409,6 @@ const emailStatusTable = reactive({
   ],
 });
 
-// history data
-const historyData = ref(null);
-const historyLoading = ref(false);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/lead-history?modelType=car&recordId=${page.props.paymentEntityModel.id}&quoteTypeId=${page.props.quoteTypeId}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
 const onLoadAvailablePlansData = async () => {
   isLoadingAvailablePlans.value = true;
   let data = {
@@ -463,14 +454,6 @@ const loadEmbeddedProducts = async () => {
       console.log(err);
     });
 };
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'created_at' },
-  { text: 'Modified By', value: 'created_by.email' },
-  { text: 'Lead Status From', value: 'previous_quote_status.text' },
-  { text: 'Lead Status To', value: 'current_quote_status.text' },
-  { text: 'Notes', value: 'notes' },
-];
 
 const availablePlansItems = computed(() => {
   if (!Array.isArray(availablePlansTable.data)) {
@@ -3748,27 +3731,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   >
                     SDP
                   </x-tag>
-                  <x-tag
-                    v-if="puaType"
-                    size="xs"
-                    class="mt-0.5 text-[10px] text-white"
-                    style="background-color: #e00000"
-                  >
-                    <x-tooltip placement="right">
-                      <template #tooltip>
-                        <span
-                          class="font-medium"
-                          v-if="puaType == puaTypeEnum.PPUA"
-                        >
-                          {{ puaTypeEnum.PPUA_TOOLTIP }}
-                        </span>
-                        <span class="font-medium" v-else>
-                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                        </span>
-                      </template>
-                      {{ puaType }}
-                    </x-tooltip>
-                  </x-tag>
+                  <x-tooltip placement="right">
+                    <x-tag
+                      v-if="puaType"
+                      size="xs"
+                      class="mt-0.5 text-[10px] text-white"
+                      style="background-color: #e00000"
+                    >
+                      <span>{{ puaType }}</span>
+                    </x-tag>
+
+                    <template #tooltip>
+                      <span
+                        class="font-medium"
+                        v-if="puaType == puaTypeEnum.PPUA"
+                      >
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
+                      <span class="font-medium" v-else>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+
                   <x-tag
                     v-for="tag in tags
                       ? tags.split(',').filter(t => t.trim())
@@ -4399,6 +4384,11 @@ const { openTempUrl } = useDocumentTempUrl();
       </Collapsible>
     </div>
 
+    <CommunicationEventLog
+      :communication-event-logs="communicationEventLogs"
+      :expanded="sectionExpanded"
+    />
+
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
@@ -4653,39 +4643,11 @@ const { openTempUrl } = useDocumentTempUrl();
       :quoteStatusId="quote?.quote_status_id"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="record.id"
+      :quoteTypeId="page.props.quoteTypeId"
+    />
 
     <CustomerChatLogs
       :customerName="record?.first_name + ' ' + record?.last_name"

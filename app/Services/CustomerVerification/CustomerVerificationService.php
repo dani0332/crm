@@ -28,6 +28,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CustomerVerificationService
@@ -47,7 +48,7 @@ class CustomerVerificationService
 
     public function __construct(
         private CapiService $capiService,
-        private CarQuoteService $carQuoteService
+        private CarQuoteService $carQuoteService,
     ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -396,6 +397,7 @@ class CustomerVerificationService
     private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
             $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
@@ -433,7 +435,9 @@ class CustomerVerificationService
         }
 
         try {
+            DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
@@ -442,12 +446,19 @@ class CustomerVerificationService
                 'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
+
+            return;
         }
+
+        $this->updateCustomerVerificationStatus($quote);
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
             $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
@@ -486,7 +497,9 @@ class CustomerVerificationService
         }
 
         try {
+            DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
                 'document_type' => $documentType,
@@ -495,11 +508,16 @@ class CustomerVerificationService
                 'quote_type' => QuoteTypes::CAR->value,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
+
+            return;
         }
 
+        $this->updateCustomerVerificationStatus($quote);
     }
 
-    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
+    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): bool
     {
         $quotableType = get_class($quote);
         $quoteTypeId = $this->getQuoteTypeId($quote);
@@ -532,8 +550,7 @@ class CustomerVerificationService
             'updated_fields' => array_keys($verificationData),
         ]);
 
-        // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
+        return true;
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
@@ -628,6 +645,12 @@ class CustomerVerificationService
                     $this->processMulkiyaVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
                     break;
                 default:
+                    LoggerService::warning('Customer verification no supported document type', extra: [
+                        'quote_type_id' => $this->getQuoteTypeId($quote),
+                        'quote_uuid' => $quote->uuid,
+                        'quote_class' => get_class($quote),
+                        'document_type' => $this->documentTypeCode,
+                    ]);
                     break;
             }
         } else {

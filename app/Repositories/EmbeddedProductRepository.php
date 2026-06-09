@@ -73,15 +73,23 @@ class EmbeddedProductRepository extends BaseRepository
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
     public const SALAMA_POLICY_WORDINGS_URL = 'https://insurancemarket.blob.core.windows.net/imcrm/'.self::SALAMA_POLICY_WORDINGS_PATH;
+
+    /**
+     * Root segment for quote documents on Azure blob disks (prepended to document type folder_path).
+     */
+    public const DOCUMENTS_STORAGE_PREFIX = 'documents/';
+
+    public const ERROR_UPLOADING_DOCUMENT = 'Error uploading document';
     public const ALLOWED_LOBS = [
         QuoteTypeId::Cyber,
         QuoteTypeId::Car,
         QuoteTypeId::Bike,
         QuoteTypeId::Home,
         QuoteTypeId::Travel,
+        QuoteTypeId::Device,
     ];
     public const ALLOWED_LOBS_FOR_EPS = [
-        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER],
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER, quoteTypeCode::Device],
     ];
 
     /**
@@ -319,7 +327,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $type = 'embedded_product';
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
@@ -724,7 +732,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction, isSendEmail: true);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -809,6 +817,13 @@ class EmbeddedProductRepository extends BaseRepository
         } elseif ($isECB) {
             return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
+
+        LoggerService::info('fetchSendDocument - Unsupported embedded product type for customer document send', extra: [
+            'ep_id' => $epId,
+            'short_code' => $short_code,
+        ], context: ['ref_id' => $quoteObject->code]);
+
+        return ['success' => false, 'message' => 'Unsupported embedded product for document send'];
     }
 
     private function fetchAttachments($ep, $isAlfredProtect, $isSalama)
@@ -888,7 +903,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $phoneNumber;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
+    public function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -1035,6 +1050,15 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
         $subject = "Thank you for your purchase of {$ep->product_name} with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}";
 
+        $resolvedQuoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $postmarkMetadata = [
+            'quote_id' => (string) $quoteObject->id,
+            'subject' => $subject,
+        ];
+        if ($resolvedQuoteTypeId !== false) {
+            $postmarkMetadata['quote_type_id'] = (string) $resolvedQuoteTypeId;
+        }
+
         $body = json_encode([
             'From' => config('constants.IM_FROM_EMAIL'),
             'ReplyTo' => $advisorData['email'] ?? null,
@@ -1053,6 +1077,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => $subject,
             ],
+            'Metadata' => $postmarkMetadata,
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
@@ -1134,10 +1159,10 @@ class EmbeddedProductRepository extends BaseRepository
             $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
-            $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
+            $filePathAzure = self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path.'/'.$title;
             Storage::disk('azureIMPrivate')->put($filePathAzure, $pdfContent);
             if (! Storage::disk('azureIMPrivate')->exists($filePathAzure)) {
-                throw new Exception('Error uploading document');
+                throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
             }
 
             $documentData = [
@@ -1147,6 +1172,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'doc_mime_type' => 'application/pdf',
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_type_id' => $documentType->id,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => null,
             ];
@@ -1501,17 +1527,25 @@ class EmbeddedProductRepository extends BaseRepository
         return true;
     }
 
+    /**
+     * Unique filename segment for blob storage: removes whitespace from uniqid + original basename.
+     */
+    public function uniqueBlobNameFromOriginalName(string $originalName): string
+    {
+        return (string) preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+    }
+
     private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
     {
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = $this->uniqueBlobNameFromOriginalName($originalName);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
         $fileNameAzure = $quoteObject->uuid.'_'.$docName;
         $docUuid = uniqid();
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
+        $filePathAzure = $file->storeAs(self::DOCUMENTS_STORAGE_PREFIX.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
         if ($filePathAzure == false) {
-            throw new Exception('Error uploading document');
+            throw new Exception(self::ERROR_UPLOADING_DOCUMENT);
         }
 
         return [
@@ -1523,6 +1557,7 @@ class EmbeddedProductRepository extends BaseRepository
             'document_type_text' => $type,
             'doc_uuid' => $docUuid,
             'created_by_id' => null,
+            'document_type_id' => $documentType->id,
         ];
     }
 

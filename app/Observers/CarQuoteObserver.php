@@ -29,6 +29,7 @@ use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteStatusLogService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -43,14 +44,22 @@ class CarQuoteObserver
 
     public function updating(CarQuote $quote): void
     {
-        LoggerService::info('CarQuoteObserver - updating event', [
-            'uuid' => $quote->uuid,
-            'old_quote_status_id' => $quote->getOriginal('quote_status_id'),
-            'new_quote_status_id' => $quote->quote_status_id,
-        ]);
+        if ($quote->isDirty('quote_status_id')) {
+            LoggerService::info('CarQuoteObserver - updating event', [
+                'uuid' => $quote->uuid,
+                'old_quote_status_id' => $quote->getOriginal('quote_status_id'),
+                'new_quote_status_id' => $quote->quote_status_id,
+            ]);
 
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                QuoteTypeId::Car,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
+
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 
@@ -224,6 +233,13 @@ class CarQuoteObserver
                 }
             }
         }
+
+        // For debugging
+        LoggerService::info('CarQuoteObserver - reached inside policy booked check', [
+            'uuid' => $lead->uuid,
+            'dirty' => isset($dirty['quote_status_id']),
+            'is_policy_booked' => $lead->quote_status_id === QuoteStatusEnum::PolicyBooked,
+        ]);
 
         if (
             isset($dirty['quote_status_id']) &&

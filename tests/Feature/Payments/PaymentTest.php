@@ -11,10 +11,8 @@ use Tests\Helpers\Payments\PaymentTestCreationHelper;
 use Tests\Helpers\Payments\PaymentTestDataHelper;
 use Tests\Helpers\Payments\PaymentTestPayloadHelper;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     ApplicationStorageFactory::createVatValueForSqlite('5');
 
     $this->user = TestDataSeeder::createAdminUser();

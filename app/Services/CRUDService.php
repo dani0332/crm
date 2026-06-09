@@ -37,10 +37,8 @@ use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -202,7 +200,8 @@ class CRUDService extends BaseService
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes"),
+                DB::raw("(SELECT NAME FROM users WHERE id = NULLIF(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), IF(JSON_EXTRACT(a.new_values, '$.advisor_id') IS NULL, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.advisor_id')), 'null'), NULL))) AS OldAdvisor"),
             )
             ->where(function ($query) {
                 $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
@@ -223,15 +222,6 @@ class CRUDService extends BaseService
             ->orderBy('a.created_at', 'DESC')->get();
 
         return $audits;
-    }
-
-    public function getLeadHistoryLogs($quoteTypeId, $recordId)
-    {
-        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-            ->where('quote_request_id', $recordId)
-            ->orderBy('created_at', 'DESC')
-            ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
-            ->get();
     }
 
     public function updateQuoteStatus(Request $request)
@@ -396,16 +386,12 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
-            QuoteStatusLog::create([
-                'quote_type_id' => collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType)),
-                'quote_request_id' => $entity->id,
-                'current_quote_status_id' => $request->leadStatus,
-                'previous_quote_status_id' => $previousQuoteStatus,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-                'notes' => $request->notes,
-                'created_by' => Auth::user()->id,
-            ]);
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
+                    $request->leadId,
+                    $request->leadStatus,
+                );
+            }
 
             return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
@@ -413,10 +399,17 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
+        // For unit test since concact does not work in sqllite
+        $driver = DB::connection()->getDriverName();
+
+        $nameExpression = $driver === 'sqlite'
+            ? "users.name || ' - ' || r.name"
+            : "CONCAT(users.name,' - ',r.name)";
+
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->select('users.id', DB::raw("$nameExpression AS name"))
             ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
@@ -598,8 +591,15 @@ class CRUDService extends BaseService
         return $this->applicationstorageService->getValueByKey($key);
     }
 
-    public function getGenderOptions()
+    public function getGenderOptions($quoteTypeId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return app(LookupService::class)
+                ->getGender()
+                ->pluck('text', 'code')
+                ->all();
+        }
+
         $genderOptions = [
             GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
             GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
@@ -1199,7 +1199,22 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $uploadResult = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $quoteModel->refresh();
+
+            if ($quoteModel->risk_score >= GenericRequestEnum::HIGH_RISK_SCORE) {
+                LoggerService::info('fn:calculateScore - High risk score detected', context: [
+                    'quote_uuid' => $quoteModel->uuid,
+                    'risk_score' => $quoteModel->risk_score,
+                ]);
+
+                app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification(
+                    $quoteModel,
+                    $type,
+                    $uploadResult,
+                    (int) $results['total'],
+                );
+            }
         }
         LoggerService::info('fn:calculateScore - End');
     }

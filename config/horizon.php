@@ -2,6 +2,92 @@
 
 use Illuminate\Support\Str;
 
+$devSupervisors = [
+    'supervisor-dev' => [
+        'connection' => 'redis',
+        'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+        'tries' => 3,
+        'timeout' => 60,
+    ],
+    'supervisor-dev-shared' => [
+        'connection' => 'redis',
+        'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+    ],
+    'supervisor-dev-ocr-dedicated' => [
+        'connection' => 'redis',
+        'queue' => ['ocr_dedicated'],
+        'balance' => 'simple',
+        'processes' => 2,
+        'tries' => 3,
+        'timeout' => 120,
+        'memory' => 512,
+    ],
+];
+
+$uatSupervisors = [
+    'supervisor-uat' => [
+        'connection' => 'redis',
+        'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+        'tries' => 3,
+        'timeout' => 60,
+    ],
+    'supervisor-uat-shared' => [
+        'connection' => 'redis',
+        'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+        'tries' => 3,
+        'timeout' => 60,
+    ],
+    'supervisor-uat-ocr-dedicated' => [
+        'connection' => 'redis',
+        'queue' => ['ocr_dedicated'],
+        'balance' => 'simple',
+        'processes' => 2,
+        'tries' => 3,
+        'timeout' => 120,
+        'memory' => 512,
+    ],
+];
+
+$testSupervisors = [
+    'supervisor-test' => [
+        'connection' => 'redis',
+        'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+        'tries' => 3,
+        'timeout' => 60,
+    ],
+    'supervisor-test-shared' => [
+        'connection' => 'redis',
+        'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
+        'balance' => 'auto',
+        'minProcesses' => 1,
+        'maxProcesses' => 3,
+    ],
+    'supervisor-test-ocr-dedicated' => [
+        'connection' => 'redis',
+        'queue' => ['ocr_dedicated'],
+        'balance' => 'simple',
+        'processes' => 2,
+        'tries' => 3,
+        'timeout' => 120,
+        'memory' => 512,
+    ],
+];
+
 return [
 
     /*
@@ -193,134 +279,24 @@ return [
                 'memory' => 512,
             ],
         ],
-        'uat' => [
-            'supervisor-uat' => [
-                'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-                'tries' => 3,
-                'timeout' => 60,
-            ],
-            'supervisor-uat-shared' => [
-                'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-                'tries' => 3,
-                'timeout' => 60,
-            ],
-            'supervisor-uat-ocr-dedicated' => [
-                'connection' => 'redis',
-                'queue' => ['ocr_dedicated'],
-                'balance' => 'simple',
-                'processes' => 2,
-                'tries' => 3,
-                'timeout' => 120,
-                'memory' => 512,
-            ],
-        ],
-        // 'uat2' => [
-        //     'supervisor-uat2' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //         'tries' => 3,
-        //         'timeout' => 60,
-        //     ],
-        //     'supervisor-uat2-shared' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['shared'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //     ],
-        // ],
+        'uat' => $uatSupervisors,
+        'uat2' => $uatSupervisors,
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
-                'maxProcesses' => 3,
+                'maxProcesses' => 2,
                 'tries' => 3,
                 'timeout' => 60,
             ],
-            'supervisor-stg-shared' => [
-                'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-            ],
-            'supervisor-stg-ocr-dedicated' => [
-                'connection' => 'redis',
-                'queue' => ['ocr_dedicated'],
-                'balance' => 'simple',
-                'processes' => 2,
-                'tries' => 3,
-                'timeout' => 120,
-                'memory' => 512,
-            ],
         ],
-        'dev01' => [
-            'supervisor-dev' => [
-                'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-                'tries' => 3,
-                'timeout' => 60,
-            ],
-            'supervisor-dev-shared' => [
-                'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-            ],
-            'supervisor-dev-ocr-dedicated' => [
-                'connection' => 'redis',
-                'queue' => ['ocr_dedicated'],
-                'balance' => 'simple',
-                'processes' => 2,
-                'tries' => 3,
-                'timeout' => 120,
-                'memory' => 512,
-            ],
-        ],
-        'test' => [
-            'supervisor-test' => [
-                'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-                'tries' => 3,
-                'timeout' => 60,
-            ],
-            'supervisor-test-shared' => [
-                'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-            ],
-            'supervisor-test-ocr-dedicated' => [
-                'connection' => 'redis',
-                'queue' => ['ocr_dedicated'],
-                'balance' => 'simple',
-                'processes' => 2,
-                'tries' => 3,
-                'timeout' => 120,
-                'memory' => 512,
-            ],
-        ],
+        'dev01' => $devSupervisors,
+        'development' => $devSupervisors,
+        'dev02' => $devSupervisors,
+        'test' => $testSupervisors,
+        'testing' => $testSupervisors,
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',

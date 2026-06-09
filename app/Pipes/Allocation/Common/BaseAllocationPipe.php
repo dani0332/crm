@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\CarQuote;
@@ -62,7 +63,17 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function resolveLead()
     {
-        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
+        $leadQuery = $this->allocationRequest->model()
+            ->where('uuid', $this->allocationRequest->getQuoteUUID())
+            ->when(
+                $this->allocationRequest->getQuoteType() === QuoteTypes::CAR
+                    && ! $this->allocationRequest->getQuoteType()->isPersonalQuote(),
+                fn ($query) => $query->with([
+                    'carQuoteRequestDetail:id,car_quote_request_id,engagement_level,engagement_level_updated_at,utm_campaign',
+                ])
+            );
+
+        $lead = $leadQuery->first();
 
         if (! $lead) {
             LoggerService::info('Lead not found');
@@ -225,7 +236,6 @@ abstract class BaseAllocationPipe extends AllocationService
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
-
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
