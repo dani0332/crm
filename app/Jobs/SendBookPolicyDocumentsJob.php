@@ -186,7 +186,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->currentInsurer = $insuranceProvider->text;
                 $roadsideAssistance = $insuranceProvider->roadside_phone_number;
 
-                // Handle Implementation of QIC War Cover Add-Ons and Premium Mapping from API Response
                 $planCode = $quotePlan->code;
                 $insuranceProviderCode = $insuranceProvider->code;
                 $isCarQuote = $modelType == quoteTypeCode::Car;
