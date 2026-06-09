@@ -169,7 +169,9 @@ const updateRow = async lead => {
       }
     }
 
-    router.reload({ only: ['leads', 'pendingRejectionsCount', 'eaPendingRejectionsCount'] });
+    router.reload({
+      only: ['leads', 'pendingRejectionsCount', 'eaPendingRejectionsCount'],
+    });
   } catch (err) {
     state.error = err?.response?.data?.message ?? 'Update failed.';
   } finally {
