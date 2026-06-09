@@ -44,6 +44,27 @@ class LookupSeeder extends Seeder
         $this->createRmCategories();
         $this->createReferralSources();
         $this->healthRevampLookups();
+        $this->createCorplineRenewalStatuses();
+    }
+
+    private function createCorplineRenewalStatuses(): void
+    {
+        $types = [
+            ['code' => 'renewal', 'text' => 'Renewal'],
+            ['code' => 'non-renewal', 'text' => 'Non-Renewal'],
+            ['code' => 'extendable', 'text' => 'Extendable'],
+        ];
+
+        foreach ($types as $type) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::CORPLINE_RENEWAL_STATUS->value,
+                'code' => $type['code'],
+            ], [
+                'text' => $type['text'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function sendUpdateCancelOptions(): void

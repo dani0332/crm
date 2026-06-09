@@ -562,4 +562,12 @@ class LookupService extends BaseService
             }
         );
     }
+
+    public function getCorplineRenewalStatuses(): Collection
+    {
+        return Lookup::where('key', LookupsEnum::CORPLINE_RENEWAL_STATUS->value)
+            ->select('code', 'text')
+            ->get()
+            ->map(fn ($lookup) => ['value' => $lookup->code, 'label' => $lookup->text]);
+    }
 }
