@@ -159,11 +159,13 @@ const defaultDateTo = formatLocalYmd(
 
 // Available filters
 const availableFilters = reactive({
+  lead_status_filter: props.filters?.lead_status_filter || 'Policy Booking Failed',
+  date_filter_type: props.filters?.date_filter_type || ['Lead Created Date'],
+  date_from: props.filters?.date_from || defaultDateFrom,
+  date_to: props.filters?.date_to || defaultDateTo,
   insurance_provider_id: props.filters?.insurance_provider_id || [],
   quote_type_id: props.filters?.quote_type_id || [],
   option: props.filters?.option || '',
-  date_from: props.filters?.date_from || defaultDateFrom,
-  date_to: props.filters?.date_to || defaultDateTo,
   page: props.failedProcesses?.current_page || 1,
 });
 
@@ -208,6 +210,20 @@ const optionsOptions = computed(() => {
   );
 });
 
+const leadStatusFilterOptions = computed(() => {
+  return (
+    props.dropdowns?.leadStatusOptions?.map(opt => ({
+      value: opt.id,
+      label: opt.text,
+    })) || []
+  );
+});
+
+const dateFilterTypeOptions = [
+  { value: 'Lead Created Date', label: 'Lead Created Date' },
+  { value: 'Sage API Failure Date', label: 'Sage API Failure Date' },
+];
+
 // Filters count
 const filtersCount = ref(0);
 
@@ -251,11 +267,13 @@ function onSubmit() {
 
 // Clear filters
 function clearFilters() {
+  availableFilters.lead_status_filter = '';
+  availableFilters.date_filter_type = [];
+  availableFilters.date_from = null;
+  availableFilters.date_to = null;
   availableFilters.insurance_provider_id = [];
   availableFilters.quote_type_id = [];
   availableFilters.option = '';
-  availableFilters.date_from = null;
-  availableFilters.date_to = null;
   filtersCount.value = 0;
   router.visit(route('sage-failed-processes.index'));
 }
@@ -319,7 +337,40 @@ async function exportExcel() {
     </Head>
     <div class="flex justify-between items-center">
       <x-form @submit="onSubmit" :auto-focus="false" class="w-full mt-4 py-4">
-        <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <x-select
+            v-model="availableFilters.lead_status_filter"
+            label="Lead Status & Sage Failure"
+            placeholder="Select Lead Status & Sage Failure"
+            :options="leadStatusFilterOptions"
+            filterable
+            filterPlaceholder="Filter Lead Status...."
+            clearable
+          />
+
+          <x-select
+            v-model="availableFilters.date_filter_type"
+            label="Filter Date By"
+            placeholder="Select Date Filter Type"
+            :options="dateFilterTypeOptions"
+            filterable
+            filterPlaceholder="Filter Date Type...."
+            clearable
+            multiple
+          />
+
+          <DatePicker
+            v-model="availableFilters.date_from"
+            name="date_from"
+            label="Start Date"
+          />
+
+          <DatePicker
+            v-model="availableFilters.date_to"
+            name="date_to"
+            label="End Date"
+          />
+
           <x-select
             v-model="availableFilters.insurance_provider_id"
             label="Insurance Provider"
@@ -330,6 +381,7 @@ async function exportExcel() {
             clearable
             multiple
           />
+
           <x-select
             v-model="availableFilters.quote_type_id"
             label="Line of Business"
@@ -349,18 +401,6 @@ async function exportExcel() {
             filterable
             filterPlaceholder="Filter Option...."
             clearable
-          />
-
-          <DatePicker
-            v-model="availableFilters.date_from"
-            name="created_at_start"
-            label="Created Date Start"
-          />
-
-          <DatePicker
-            v-model="availableFilters.date_to"
-            name="created_at_end"
-            label="Created Date End"
           />
         </div>
 
