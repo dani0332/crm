@@ -13,7 +13,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyAvailablePlan from '../HomeQuote/Partials/AvailablePlans.vue';
 
 const props = defineProps({
   quote: Object,
@@ -556,10 +556,6 @@ const availablePlansTable = reactive({
     {
       text: 'Price',
       value: 'actualPremium',
-    },
-    {
-      text: 'Discounted Price',
-      value: 'discountPremiumPrice',
     },
     {
       text: 'Total Price',
@@ -1128,10 +1124,10 @@ function handleOcrNotification(event) {
 <template>
   <div>
     <OcrNotification />
-    <Head title="Home Detail" />
+    <Head title="Home Revival Detail" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <h2 class="text-xl font-semibold">Home Revival Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -1167,14 +1163,16 @@ function handleOcrNotification(event) {
           Duplicate Lead
         </x-button>
 
-        <Link :href="route('home-quotes-list')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        <Link :href="route('home-revival-quotes-list')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Home Revival List
+          </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
           <Link
             v-if="!isDisabled"
-            :href="route('home-quotes-edit', quote.uuid)"
+            :href="route('home-revival-quotes-edit', quote.uuid)"
           >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
@@ -2259,15 +2257,6 @@ function handleOcrNotification(event) {
                   {{
                     item.actualPremium
                       ? parseFloat(item.actualPremium).toFixed(2)
-                      : '0.00'
-                  }}
-                </span>
-              </template>
-              <template #item-discountPremiumPrice="item">
-                <span class="text-primary-600" v-if="item.isDiscountApplied">
-                  {{
-                    item.discountPremium
-                      ? parseFloat(item.discountPremium).toFixed(2)
                       : '0.00'
                   }}
                 </span>

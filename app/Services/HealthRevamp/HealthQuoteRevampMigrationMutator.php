@@ -260,14 +260,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyCoverForIdUpdates(HealthQuote $hqr): void
     {
-        if (in_array((int) $hqr->cover_for_id, [HealthCoverForEnum::INDIVIDUAL->value, HealthCoverForEnum::FAMILY->value], true)) {
-            $hqr->cover_for_id = HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value;
-        }
-
-        if ((int) $hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value) {
-            $hqr->cover_for_id = HealthCoverForEnum::DOMESTIC_HELPER->value;
-        }
-
+        $hqr->cover_for_id = $this->getCoverForId($hqr);
         $hqr->save();
     }
 
@@ -298,17 +291,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyMaritalStatusUpdates(HealthQuote $hqr, Collection $members): void
     {
-        $g = $hqr->gender;
-        $msId = $hqr->marital_status_id;
-
-        if ($msId === null && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
-            $hqr->marital_status_id = MaritalStatusIdEnum::SINGLE->value;
-        } elseif ($msId === null && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
-            $hqr->marital_status_id = MaritalStatusIdEnum::MARRIED->value;
-        } elseif ($msId !== null && (int) $msId === MaritalStatusIdEnum::UNMARRIED_PARTNER->value) {
-            $hqr->marital_status_id = MaritalStatusIdEnum::SINGLE->value;
-        }
-
+        $hqr->marital_status_id = $this->getMartialStatusId($hqr);
         $hqr->save();
 
         $members->each(function (CustomerMembers $cm) use ($hqr) {
@@ -330,12 +313,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function normalizeGenderValues(HealthQuote $hqr, Collection $members): void
     {
-        $g = $hqr->gender;
-        if (in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE], true)) {
-            $hqr->gender = GenericRequestEnum::MALE_SINGLE_VALUE;
-        } elseif (in_array($g, [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE], true)) {
-            $hqr->gender = GenericRequestEnum::FEMALE_SHORT_VALUE;
-        }
+        $hqr->gender = $this->getGender($hqr);
         $hqr->save();
 
         PersonalQuote::query()
@@ -370,15 +348,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyPolicyHolderCategoryCode(HealthQuote $hqr): void
     {
-        $nid = (int) $hqr->nationality_id;
-        if (in_array($nid, $this->uaeNationalityIds, true)) {
-            $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::UAE_CITIZEN->value;
-        } elseif (in_array($nid, $this->gccNationalityIds, true)) {
-            $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::GCC_CITIZEN->value;
-        } else {
-            $hqr->policy_holder_category_code = PolicyHolderCategoryCodeEnum::RESIDENT->value;
-        }
-
+        $hqr->policy_holder_category_code = $this->getPolicyHolderCategoryCode($hqr);
         $hqr->save();
     }
 
@@ -389,38 +359,8 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyHealthQuoteSalaryBandAndVisaFromMemberCategory(HealthQuote $hqr): void
     {
-        $mc = (int) $hqr->member_category_id;
-
-        $salaryBand = match ($mc) {
-            MemberCategoryEnum::DOMESTIC_WORKER->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
-            MemberCategoryEnum::EMPLOYEE_2->value => SalaryBandEnum::BETWEEN_4001_AND_12000->value,
-            MemberCategoryEnum::EMPLOYEE_1->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
-
-            MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
-            MemberCategoryEnum::INVESTOR_PARTNER->value,
-            MemberCategoryEnum::GOLDEN_VISA->value => SalaryBandEnum::ABOVE_12000->value,
-
-            MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
-            MemberCategoryEnum::DEPENDENT_PARENT->value,
-            MemberCategoryEnum::DEPENDENT_CHILD->value,
-            MemberCategoryEnum::DEPENDENT_SPOUSE->value => SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value,
-
-            default => $hqr->salary_band_id,
-        };
-
-        $months = $this->context->monthsSinceDob($this->context->dobToDateString($hqr->dob));
-        $visa = match (true) {
-            in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
-            $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
-            $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
-            $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
-            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 18 * 12 => null,
-            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
-            default => $hqr->visa_category_id,
-        };
-
-        $hqr->salary_band_id = $salaryBand;
-        $hqr->visa_category_id = $visa;
+        $hqr->salary_band_id = $this->getSalaryBandId($hqr);
+        $hqr->visa_category_id = $this->getVisaCategoryId($hqr);
         $hqr->save();
     }
 
@@ -501,20 +441,7 @@ final class HealthQuoteRevampMigrationMutator
      */
     private function applyHealthQuoteMemberCategoryRemap(HealthQuote $hqr): void
     {
-        $dobStr = $this->context->dobToDateString($hqr->dob);
-        $months = $this->context->monthsSinceDob($dobStr);
-        $nid = (int) $hqr->nationality_id;
-        $eid = $hqr->emirate_of_your_visa_id;
-        $newMc = match (true) {
-            $dobStr && $months !== null && $months <= 12 => MemberCategoryEnum::NEWBORN->value,
-            in_array($nid, $this->uaeNationalityIds, true) => MemberCategoryEnum::UAE_NATIONAL->value,
-            in_array($nid, $this->gccNationalityIds, true) => MemberCategoryEnum::GCC_NATIONAL->value,
-            $eid !== null && (int) $eid === EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_DUBAI_VISA->value,
-            $eid !== null && (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
-            default => $hqr->member_category_id,
-        };
-
-        $hqr->member_category_id = $newMc;
+        $hqr->member_category_id = $this->getMemberCategoryId($hqr);
         $hqr->save();
     }
 
@@ -550,5 +477,127 @@ final class HealthQuoteRevampMigrationMutator
             $cm->member_category_id = $newMc;
             $cm->save();
         });
+    }
+
+    public function getCoverForId($hqr)
+    {
+
+        $coverForId = (int) $hqr->cover_for_id;
+
+        if (in_array((int) $hqr->cover_for_id, [HealthCoverForEnum::INDIVIDUAL->value, HealthCoverForEnum::FAMILY->value], true)) {
+            $coverForId = HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value;
+        }
+
+        if ((int) $hqr->member_category_id === MemberCategoryEnum::DOMESTIC_WORKER->value) {
+            $coverForId = HealthCoverForEnum::DOMESTIC_HELPER->value;
+        }
+
+        return $coverForId;
+    }
+
+    public function getMartialStatusId($hqr)
+    {
+        $g = $hqr->gender;
+        $msId = $hqr->marital_status_id;
+
+        if ($msId === null && in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::MALE_SINGLE], true)) {
+            $msId = MaritalStatusIdEnum::SINGLE->value;
+        } elseif ($msId === null && $g === GenericRequestEnum::FEMALE_MARRIED_VALUE) {
+            $msId = MaritalStatusIdEnum::MARRIED->value;
+        } elseif ($msId !== null && (int) $msId === MaritalStatusIdEnum::UNMARRIED_PARTNER->value) {
+            $msId = MaritalStatusIdEnum::SINGLE->value;
+        }
+
+        return $msId;
+    }
+
+    public function getPolicyHolderCategoryCode($hqr)
+    {
+        $nid = (int) $hqr->nationality_id;
+        if (in_array($nid, $this->uaeNationalityIds, true)) {
+            $code = PolicyHolderCategoryCodeEnum::UAE_CITIZEN->value;
+        } elseif (in_array($nid, $this->gccNationalityIds, true)) {
+            $code = PolicyHolderCategoryCodeEnum::GCC_CITIZEN->value;
+        } else {
+            $code = PolicyHolderCategoryCodeEnum::RESIDENT->value;
+        }
+
+        return $code;
+    }
+
+    public function getGender($hqr)
+    {
+        $g = $hqr->gender;
+        if (in_array($g, [GenericRequestEnum::MALE_SINGLE_VALUE, GenericRequestEnum::MALE_SINGLE], true)) {
+            $g = GenericRequestEnum::MALE_SINGLE_VALUE;
+        } elseif (in_array($g, [GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE_VALUE, GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_MARRIED_VALUE], true)) {
+            $g = GenericRequestEnum::FEMALE_SHORT_VALUE;
+        }
+
+        return $g;
+    }
+
+    public function getSalaryBandId($hqr)
+    {
+        $mc = (int) $hqr->member_category_id;
+
+        $salaryBand = match ($mc) {
+            MemberCategoryEnum::DOMESTIC_WORKER->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
+            MemberCategoryEnum::EMPLOYEE_2->value => SalaryBandEnum::BETWEEN_4001_AND_12000->value,
+            MemberCategoryEnum::EMPLOYEE_1->value => SalaryBandEnum::BELOW_OR_EQ_4000->value,
+
+            MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
+            MemberCategoryEnum::INVESTOR_PARTNER->value,
+            MemberCategoryEnum::GOLDEN_VISA->value => SalaryBandEnum::ABOVE_12000->value,
+
+            MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
+            MemberCategoryEnum::DEPENDENT_PARENT->value,
+            MemberCategoryEnum::DEPENDENT_CHILD->value,
+            MemberCategoryEnum::DEPENDENT_SPOUSE->value => SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value,
+
+            default => $hqr->salary_band_id,
+        };
+
+        return $salaryBand;
+    }
+
+    public function getVisaCategoryId($hqr)
+    {
+        $mc = (int) $hqr->member_category_id;
+        $months = $this->context->monthsSinceDob($this->context->dobToDateString($hqr->dob));
+        $visa = match (true) {
+            in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+            $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
+            $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
+            $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
+            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 18 * 12 => null,
+            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
+            default => $hqr->visa_category_id,
+        };
+
+        return $visa;
+    }
+
+    public function getMemberCategoryId($hqr)
+    {
+        $dobStr = $this->context->dobToDateString($hqr->dob);
+        $months = $this->context->monthsSinceDob($dobStr);
+        $nid = (int) $hqr->nationality_id;
+        $eid = $hqr->emirate_of_your_visa_id;
+        $newMc = match (true) {
+            $dobStr && $months !== null && $months <= 12 => MemberCategoryEnum::NEWBORN->value,
+            in_array($nid, $this->uaeNationalityIds, true) => MemberCategoryEnum::UAE_NATIONAL->value,
+            in_array($nid, $this->gccNationalityIds, true) => MemberCategoryEnum::GCC_NATIONAL->value,
+            $eid !== null && (int) $eid === EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_DUBAI_VISA->value,
+            $eid !== null && (int) $eid !== EmirateEnum::DUBAI => MemberCategoryEnum::EXPAT_NON_DUBAI_VISA->value,
+            default => $hqr->member_category_id,
+        };
+
+        return $newMc;
+    }
+
+    public function getVisaCategoryIdForDomesticWorkerMember($nationalityId)
+    {
+        return (in_array($nationalityId, $this->uaeNationalityIds, true)) ? VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_UAE_NATIONALS->value : VisaCategoryEnum::DOMESTIC_WORKER_VISA_FOR_NON_UAE_NATIONALS->value;
     }
 }

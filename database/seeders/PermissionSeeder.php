@@ -57,6 +57,7 @@ class PermissionSeeder extends Seeder
         $this->addComplianceDocumentUploadPermission();
         $this->seedEditPlanAfterTransactionApprovalPermission();
         $this->addLifeRevivalPermissions();
+        $this->addHomeRevivalPermissions();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -246,6 +247,37 @@ class PermissionSeeder extends Seeder
             ],
             [
                 'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+                'guard_name' => 'web',
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            Permission::firstOrCreate(
+                [
+                    'name' => $permissionData['name'],
+                    'guard_name' => $permissionData['guard_name'],
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    private function addHomeRevivalPermissions(): void
+    {
+        $permissions = [
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_LIST,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_SHOW,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_EDIT,
                 'guard_name' => 'web',
             ],
         ];

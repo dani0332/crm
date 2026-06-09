@@ -126,7 +126,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process = PolicyIssuance::find($this->processId);
         }
 
-        LoggerService::error('Policy issuance job failed callback triggered', [
+        LoggerService::warning('Policy issuance job failed callback triggered', [
             'process_id' => $this->processId,
             'quote_code' => $this->process?->model?->code ?? 'unknown',
             'exception' => $exception->getMessage(),
