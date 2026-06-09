@@ -599,11 +599,24 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::HomeQuotesList)
+                    (auth()->user()->hasAnyPermission([PermissionsEnum::HomeQuotesList, PermissionsEnum::HOME_REVIVAL_QUOTES_LIST])
                         || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Home Quotes',
                     route('home-quotes-list'),
-                    fn ($s) => $s->attributes(['icon' => 'home'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'home'])
+                        ->addIf(
+                            (auth()->user()->can(PermissionsEnum::HomeQuotesList) || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
+                            'Home Quotes',
+                            route('home-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'home'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HOME_REVIVAL_QUOTES_LIST),
+                            'Home Revival Quotes',
+                            route('home-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'home'])
+                        ),
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::DEVICE_QUOTES_LIST) || (userHasProduct(quoteTypeCode::Device) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Smartphone Quotes', route('device-quotes-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                 ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList) || (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))

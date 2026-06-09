@@ -180,9 +180,11 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
         $this->seedMotorRevivalWorkflow();
+        $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
+        $this->seedDttHomeEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -1899,6 +1901,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedHighRiskScoreBirdNotificationWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dd811e82-a945-4ed1-a1bb-2e1be15fda12/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedDttLifeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -1922,6 +1937,19 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttHomeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_HOME_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
     }
