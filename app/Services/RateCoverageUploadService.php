@@ -311,7 +311,7 @@ class RateCoverageUploadService
                     // Validate premium as integers
                     if (! preg_match('/^\d+(\.\d{1,2})?$/', strval($premium))) {
 
-                        throw new \Exception('All premiums can be a decimal upto 2 digits.');
+                        throw new \Exception('All premiums can be a decimal upto 2 digits. Please check row '.($i + 1).'.');
                     }
 
                     // Validate gender based on plan gender enabled

@@ -288,10 +288,10 @@ class AuditableController extends Controller
             // First, get logs without 'pricing-lookup'
             $logs = HealthPricingLog::with('member')
                 ->where('health_quote_request_id', $request->quote_request_id)
-                ->where('stage', '!=', 'pricing-lookup')
+                // ->where('stage', '!=', 'pricing-lookup')
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
                 ->orderByDesc('customer_member_id')
-                ->orderBy('created_at')
+                ->orderBy('id')
                 ->get()
                 ->filter(function ($log) {
                     // Exclude if related member is null (i.e., deleted)
@@ -300,18 +300,18 @@ class AuditableController extends Controller
                 ->values();
 
             // Then, get 'pricing-lookup' logs only
-            $pricingLookupLogs = HealthPricingLog::with('member')
+            /*$pricingLookupLogs = HealthPricingLog::with('member')
                 ->where('health_quote_request_id', $request->quote_request_id)
                 ->where('stage', 'pricing-lookup')
-                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
-                ->orderByDesc('customer_member_id')
+                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'request_id', 'created_at')
+                ->orderBy('customer_member_id')
                 ->get()
                 ->filter(function ($log) {
                     return $log->member !== null;
                 });
 
             // Merge with pricing-lookup logs at the end
-            $logs = $logs->concat($pricingLookupLogs)->values();
+            $logs = $logs->concat($pricingLookupLogs)->values();*/
 
             return response()->json([
                 'success' => true,
