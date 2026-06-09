@@ -1689,7 +1689,7 @@ class CentralService extends BaseService
             'refID' => $quote->code,
             'code' => $quote->code,
             'reason' => $existingEmailData->reason ?? '',
-            'isWarTerrorismAddonSelected' => $existingEmailData->isWarTerrorismAddonSelected ?? null,
+            'isWarTerrorismAddonSelected' => (string) $existingEmailData->isWarTerrorismAddonSelected ?? null,
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
@@ -1837,9 +1837,15 @@ class CentralService extends BaseService
             )
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
-            if (! empty($handBookDocuments)) {
-                $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
-                $emailData->handBookDocuments = $latestDocument['url'] ?? null;
+            if (! empty($handBookDocuments) && count($handBookDocuments) > 1) {
+                if ($existingEmailData->isWarTerrorismAddonSelected) {
+                    $emailData->handBookDocuments = $handBookDocuments[0]['url'] ?? null;
+                    $emailData->handBookWarDocuments = $handBookDocuments[1]['url'] ?? null;
+                    $emailData->handBookWarExt = ! empty($emailData->handBookDocuments) ? pathinfo(parse_url($handBookDocuments[1]['url'], PHP_URL_PATH), PATHINFO_EXTENSION) : '';
+                } else {
+                    $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
+                    $emailData->handBookDocuments = $latestDocument['url'] ?? null;
+                }
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
