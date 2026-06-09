@@ -86,6 +86,7 @@ return [
     'waits' => [
         'redis:default' => 60,
         'redis:ocr_dedicated' => 180,
+        'redis_policy_issuance:policy-issuance-automation' => 60,
     ],
 
     /*
@@ -169,12 +170,25 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-prod' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-prod-shared' => [
                 'connection' => 'redis',
@@ -182,6 +196,10 @@ return [
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+                'tries' => 3,    // explicit — previously missing, relied on undocumented framework default
+                'timeout' => 60, // explicit — previously missing, relied on undocumented framework default
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-prod-ocr-dedicated' => [
                 'connection' => 'redis',
@@ -196,12 +214,25 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-uat' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-uat-shared' => [
                 'connection' => 'redis',
@@ -211,6 +242,8 @@ return [
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-uat-ocr-dedicated' => [
                 'connection' => 'redis',
@@ -225,23 +258,49 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 2,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-stg' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 2,
+                'tries' => 1,
+                'timeout' => 200,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
         ],
         'dev01' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-dev' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-dev-shared' => [
                 'connection' => 'redis',
@@ -249,6 +308,10 @@ return [
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+                'tries' => 3,    // explicit — previously missing, relied on undocumented framework default
+                'timeout' => 60, // explicit — previously missing, relied on undocumented framework default
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-dev-ocr-dedicated' => [
                 'connection' => 'redis',
@@ -263,12 +326,25 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-test' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 200,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-test-shared' => [
                 'connection' => 'redis',
@@ -276,6 +352,10 @@ return [
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+                'tries' => 3,    // explicit — previously missing, relied on undocumented framework default
+                'timeout' => 60, // explicit — previously missing, relied on undocumented framework default
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-test-ocr-dedicated' => [
                 'connection' => 'redis',
@@ -290,13 +370,15 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
+                'queue' => ['default', 'renewals', 'insly', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 5000,  // Increased from 60 to 5000 seconds (83 minutes) for heavy jobs
                 'memory' => 3072,   // Set memory limit to 3GB for job workers
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-local-shared' => [
                 'connection' => 'redis',
@@ -305,6 +387,20 @@ return [
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'memory' => 512,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
+            ],
+            'supervisor-policy-issuance-local' => [
+                'connection' => 'redis_policy_issuance',
+                'queue' => ['policy-issuance-automation'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 1,
+                'timeout' => 5000,
+                'memory' => 3072,
+                'balanceCooldown' => 3, // wait 3s between rebalance checks to prevent worker thrashing during cron-triggered queue bursts
+                'balanceMaxShift' => 1, // add/remove max 1 worker per cycle to smooth scaling and prevent CPU spikes
             ],
             'supervisor-local-ocr-dedicated' => [
                 'connection' => 'redis',
