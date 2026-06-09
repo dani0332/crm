@@ -702,6 +702,28 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const leadTypeOptions = [
+  { value: 'Renewal', label: 'Renewal' },
+  { value: 'Non-Renewal', label: 'Non-Renewal' },
+  { value: 'Extendable', label: 'Extendable' },
+];
+
+const leadTypeForm = useForm({
+  lead_type: props.quote.lead_type ?? null,
+});
+
+const onLeadTypeUpdate = () => {
+  leadTypeForm.patch(route('business.updateLeadType', props.quote.uuid), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({ title: 'Lead type updated successfully.', position: 'top' });
+    },
+    onError: () => {
+      notification.error({ title: 'Failed to update lead type.', position: 'top' });
+    },
+  });
+};
 </script>
 
 <template>
@@ -1081,6 +1103,28 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <dd>{{ quote.utm_term }}</dd>
                 </div>
               </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
             </dl>
           </div>
         </template>
