@@ -561,6 +561,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>

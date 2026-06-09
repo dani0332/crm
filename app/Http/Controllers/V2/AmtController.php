@@ -454,6 +454,7 @@ class AmtController extends Controller
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $record->currently_insured_with = $record->personalQuote?->currentlyInsuredWith;
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;

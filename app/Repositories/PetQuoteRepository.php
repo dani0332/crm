@@ -315,6 +315,7 @@ class PetQuoteRepository extends BaseRepository
                 'updatedBy',
                 'customer.additionalContactInfo',
                 'insuranceProvider',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },

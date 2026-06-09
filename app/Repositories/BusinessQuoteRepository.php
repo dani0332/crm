@@ -176,6 +176,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'nationality',
                 'branch:id,name',
                 'emirate:id,text',
+                'personalQuote.currentlyInsuredWith:id,text',
             ])
             ->select([
                 $this->getTable().'.*',

@@ -326,6 +326,7 @@ class CycleQuoteRepository extends BaseRepository
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },

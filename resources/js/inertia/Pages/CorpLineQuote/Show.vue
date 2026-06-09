@@ -971,6 +971,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with_text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>

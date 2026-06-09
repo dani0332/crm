@@ -153,6 +153,8 @@ class BusinessQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'ciw.id as currently_insured_with_id',
+                'ciw.text as currently_insured_with_text',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -187,7 +189,9 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('personal_quotes as pq_ciw', 'pq_ciw.id', '=', 'bqr.personal_quote_id')
+            ->leftJoin('insurance_provider as ciw', 'ciw.id', '=', 'pq_ciw.currently_insured_with_id');
     }
 
     public function postProcessBusinessQuotes($quotes)
