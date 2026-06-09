@@ -1689,6 +1689,7 @@ class CentralService extends BaseService
             'refID' => $quote->code,
             'code' => $quote->code,
             'reason' => $existingEmailData->reason ?? '',
+            'isWarTerrorismAddonSelected' => $existingEmailData->isWarTerrorismAddonSelected ?? null,
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
