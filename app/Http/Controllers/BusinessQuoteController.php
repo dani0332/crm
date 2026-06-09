@@ -52,6 +52,7 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
@@ -432,6 +433,17 @@ class BusinessQuoteController extends Controller
         $this->businessQuoteService->updateBusinessQuote($request, $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
+    }
+
+    public function updateLeadType(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'lead_type' => ['required', 'in:Renewal,Non-Renewal,Extendable'],
+        ]);
+
+        BusinessQuote::where('uuid', $id)->update(['lead_type' => $request->lead_type]);
+
+        return back()->with('success', 'Lead type updated successfully.');
     }
 
     public function cardsView(Request $request)
