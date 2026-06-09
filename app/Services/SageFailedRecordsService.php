@@ -177,15 +177,19 @@ class SageFailedRecordsService extends BaseService
             $model = $pdo->quote($source['model']);
             $quoteTypeFilterSql = $this->buildPersonalQuoteTypeIdFilterSql($source);
 
+            $clauses = array_filter([
+                "WHERE {$source['status_column']} {$statusOperator} ({$source['statuses']})",
+                $leadDateFilterSql,
+                $quoteTypeFilterSql,
+            ]);
+
             $queries[] = "
                 SELECT
                     {$model} AS section_type,
                     id AS section_id
                 FROM {$source['table']}
-                WHERE {$source['status_column']} {$statusOperator} ({$source['statuses']})
-                {$leadDateFilterSql}
-                {$quoteTypeFilterSql}
-            ";
+                ".implode("\n                ", $clauses).'
+            ';
         }
 
         if ($queries === []) {
@@ -553,8 +557,10 @@ class SageFailedRecordsService extends BaseService
                 $q->whereBetween('sage_api_logs.created_at', [$startDate, $endDate]);
             });
     }
-    // endregion
 
+    // When lead_status_filter = Other Status AND date_filter_type = Sage API Failure Date only,
+    // the leads subquery has no date bound on the lead tables — it scans all non-booking-failed
+    // leads. The sage_api_logs date filter still applies on the outer query.
     private function shouldFilterByLeadCreatedDate(ValidatedInput|array $request): bool
     {
         $types = (array) ($request['date_filter_type'] ?? []);
@@ -568,4 +574,5 @@ class SageFailedRecordsService extends BaseService
 
         return in_array(self::DATE_FILTER_TYPE_SAGE_API_FAILURE, $types, true);
     }
+    // endregion
 }
