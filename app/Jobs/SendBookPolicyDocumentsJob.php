@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\CarAddsOnEnum;
+use App\Enums\CarPlanCode;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
@@ -9,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
+use App\Models\CarQuotePlanDetail;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Models\User;
@@ -66,6 +69,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
         $insuranceType = '';
         $planName = '';
+        $isWarTerrorismAddonSelected = false;
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
@@ -176,9 +180,37 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             }
         }
         if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-            if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
-                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+            $insuranceProvider = $quote->plan->insuranceProvider ?? null;
+            $quotePlan = $quote->plan ?? null;
+            if (isset($quotePlan) && isset($insuranceProvider)) {
+                $emailData->currentInsurer = $insuranceProvider->text;
+                $roadsideAssistance = $insuranceProvider->roadside_phone_number;
+
+                // Handle Implementation of QIC War Cover Add-Ons and Premium Mapping from API Response
+                $planCode = $quotePlan->code;
+                $insuranceProviderCode = $insuranceProvider->code;
+                $isCarQuote = $modelType == quoteTypeCode::Car;
+                $isQICPlan = in_array($planCode, [CarPlanCode::COMP_QIC_PRESTIGE->value, CarPlanCode::AGEN_QIC_PRESTIGE->value]) && $insuranceProviderCode == 'QIC';
+
+                if ($isCarQuote && $isQICPlan) {
+                    $addsOn = CarQuotePlanDetail::where('plan_code', $planCode)
+                        ->where('provider_code', $insuranceProviderCode)
+                        ->where('quote_uuid', $quote->uuid)
+                        ->first(['addons']);
+
+                    $warAddonCodes = [
+                        CarAddsOnEnum::MotorWARAndTerrorismExtensionOD->value,
+                        CarAddsOnEnum::MotorWARAndTerrorismExtensionODPAB->value,
+                    ];
+
+                    $addons = json_decode($addsOn?->addons ?? '[]', true);
+
+                    $isWarTerrorismAddonSelected = collect($addons)
+                        ->whereIn('code', $warAddonCodes)
+                        ->contains(fn ($addon) => collect($addon['carAddonOption'] ?? [])
+                            ->contains('isSelected', true)
+                        );
+                }
             }
         } else {
             if (isset($quote->insuranceProvider)) {
@@ -196,9 +228,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $emailData->policyWordingHandbook = $policyWordingDoc;
         $emailData->isHealthAUH = $isAUHHealthLead;
         $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
+        $emailData->isWarTerrorismAddonSelected = $isWarTerrorismAddonSelected;
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
             // For Bird
             $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
+
+            dd($emailData);
             if (! empty($emailData)) {
                 $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
             }
