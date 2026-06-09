@@ -94,17 +94,17 @@ function validateForm() {
 }
 
 function onSubmit() {
-  const isValid = validateForm(); 
+  const isValid = validateForm();
 
   if (isValid) {
     // Format dates for laravel validation
     const formattedFromDate = new Date(dates.value.effective_from)
-    .toISOString()
-    .split('T')[0];
+      .toISOString()
+      .split('T')[0];
 
     const formattedToDate = new Date(dates.value.effective_to)
-    .toISOString()
-    .split('T')[0];
+      .toISOString()
+      .split('T')[0];
 
     // Prepare form data
     let formData = new FormData();
@@ -279,7 +279,7 @@ const showFailedRates = (id, badCount) => {
             format="dd/MM/yyyy"
             :min-date="new Date(new Date().setDate(new Date().getDate() + 1))"
           />
-    
+
           <DatePicker
             v-model="dates.effective_to"
             name="effective_to"
@@ -289,13 +289,13 @@ const showFailedRates = (id, badCount) => {
         </div>
       </div>
       <div class="flex justify-end gap-2">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            :loading="contactLoader"
-            >Upload</x-button
-          >
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          :loading="contactLoader"
+          >Upload</x-button
+        >
       </div>
       <div class="flex items-center">
         <x-button
@@ -354,7 +354,7 @@ const showFailedRates = (id, badCount) => {
         </Button>
       </template>
       <template #item-source="item">
-        {{ item.file_name ? 'IMCRM' : 'CMS'}}
+        {{ item.file_name ? 'IMCRM' : 'CMS' }}
       </template>
     </DataTable>
 
