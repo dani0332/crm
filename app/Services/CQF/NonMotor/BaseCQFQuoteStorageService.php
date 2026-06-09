@@ -59,6 +59,8 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         });
 
         if ($newQuote) {
+            // Must run after the transaction commits: Ken requires the PersonalQuote row to exist
+            // before an embedded transaction can be created against it.
             $this->embeddedProductRepository->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
             $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
         }

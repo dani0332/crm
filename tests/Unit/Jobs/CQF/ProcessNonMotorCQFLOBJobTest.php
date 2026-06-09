@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Enums\QuoteTypes;
 use App\Jobs\CQF\ProcessNonMotorCQFLOBJob;
+use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 
 test('has correct job configuration', function () {
@@ -48,4 +50,24 @@ test('failed() logs error with expected context', function () {
     Log::shouldHaveReceived('error')
         ->once()
         ->withArgs(fn (string $message): bool => str_contains($message, 'Job failed'));
+});
+
+test('handle() dispatches nothing when LOB is not registered', function () {
+    Bus::fake();
+
+    $registry = Mockery::mock(NonMotorCQFRegistry::class);
+    $registry->shouldReceive('hasLOB')
+        ->with(QuoteTypes::BIKE)
+        ->andReturn(false);
+
+    $job = new ProcessNonMotorCQFLOBJob(
+        renewalsUploadLeadsId: 1,
+        quoteType: QuoteTypes::BIKE,
+        startDate: '2026-01-01',
+        renewalDaysThreshold: 30,
+    );
+
+    $job->handle($registry);
+
+    Bus::assertNothingDispatched();
 });

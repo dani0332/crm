@@ -6,6 +6,7 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Imports\UploadAndCreateImport;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -13,12 +14,9 @@ beforeEach(function () {
 });
 
 it('builds CREATE_LEADS export header from UploadAndCreateImport columns and adds errors column', function () {
-    $uploadLead = RenewalsUploadLeads::create([
-        'file_name' => 'test.xlsx',
-        'file_path' => null,
+    $uploadLead = RenewalsUploadLeads::factory()->create([
         'quote_type' => 'LIF',
-        'status' => '1',
-        'renewal_import_code' => 'test-'.uniqid(),
+        'renewal_import_code' => 'test-'.Str::uuid(),
         'renewal_import_type' => RenewalsUploadType::CREATE_LEADS,
     ]);
 
@@ -36,16 +34,13 @@ it('builds CREATE_LEADS export header from UploadAndCreateImport columns and add
 });
 
 it('maps failed lead data with previous_quote_policy_premium to premium for createQuote re-upload format', function () {
-    $uploadLead = RenewalsUploadLeads::create([
-        'file_name' => 'test.xlsx',
-        'file_path' => null,
+    $uploadLead = RenewalsUploadLeads::factory()->create([
         'quote_type' => 'LIF',
-        'status' => '1',
-        'renewal_import_code' => 'test-'.uniqid(),
+        'renewal_import_code' => 'test-'.Str::uuid(),
         'renewal_import_type' => RenewalsUploadType::CREATE_LEADS,
     ]);
 
-    RenewalQuoteProcess::create([
+    RenewalQuoteProcess::factory()->create([
         'renewals_upload_lead_id' => $uploadLead->id,
         'quote_id' => 0,
         'quote_type' => 'LIF',
@@ -77,16 +72,13 @@ it('maps failed lead data with previous_quote_policy_premium to premium for crea
 });
 
 it('uses premium when present and ignores previous_quote_policy_premium for export row', function () {
-    $uploadLead = RenewalsUploadLeads::create([
-        'file_name' => 'test.xlsx',
-        'file_path' => null,
+    $uploadLead = RenewalsUploadLeads::factory()->create([
         'quote_type' => 'BIK',
-        'status' => '1',
-        'renewal_import_code' => 'test-'.uniqid(),
+        'renewal_import_code' => 'test-'.Str::uuid(),
         'renewal_import_type' => RenewalsUploadType::CREATE_LEADS,
     ]);
 
-    RenewalQuoteProcess::create([
+    RenewalQuoteProcess::factory()->create([
         'renewals_upload_lead_id' => $uploadLead->id,
         'quote_id' => 0,
         'quote_type' => 'BIK',

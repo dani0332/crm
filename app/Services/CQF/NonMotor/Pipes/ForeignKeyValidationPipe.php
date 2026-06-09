@@ -49,7 +49,7 @@ class ForeignKeyValidationPipe
         $errors = [];
 
         // Helper for checking existence
-        $checkExists = function ($model, $id) {
+        $checkExists = function (string $model, int $id): bool {
             return $model::where('id', $id)->exists();
         };
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\CQF;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\CQF\NonMotor\NonMotorCQFRenewalExecutionService;
 use App\Services\Logger\LoggerService;
@@ -25,7 +26,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
     /**
      * Shared prefix for all batch names in the Non-motor CQF renewal pipeline.
      * The orchestrator batch is suffixed with "- Orchestrator"; each per-LOB batch with "- {LOB}".
-     * See: ProcessNonMotorCQFLOBJob::lobBatchName()
+     * See: ProcessNonMotorCQFLOBJob::lobBatchName() (protected)
      */
     public const BATCH_NAME_PREFIX = 'Non Motor CQF Renewal Orchestrator';
 
@@ -51,6 +52,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
         ]);
 
         $lobJobs = [];
+        $createdLeadIds = [];
         foreach (NonMotorCQFRegistry::supportedLOBs() as $quoteType) {
             $totalRecords = $executionService->getEligibleQuoteCountForLOB($quoteType, $startDate);
 
@@ -61,6 +63,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
             }
 
             $renewalUploadLeads = $executionService->createRenewalUploadLeadsForLOB($quoteType, $totalRecords);
+            $createdLeadIds[] = $renewalUploadLeads->id;
             $lobJobs[] = new ProcessNonMotorCQFLOBJob(
                 $renewalUploadLeads->id,
                 $quoteType,
@@ -76,11 +79,16 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldBeUnique, ShouldQueue
 
         if (! empty($lobJobs)) {
             $batchName = self::BATCH_NAME_PREFIX.' - '.now()->format(config('constants.DATE_FORMAT_ONLY'));
-            Bus::batch($lobJobs)
-                ->name($batchName)
-                ->allowFailures()
-                ->onQueue('default')
-                ->dispatch();
+            try {
+                Bus::batch($lobJobs)
+                    ->name($batchName)
+                    ->allowFailures()
+                    ->onQueue('default')
+                    ->dispatch();
+            } catch (Throwable $e) {
+                RenewalsUploadLeads::whereIn('id', $createdLeadIds)->delete();
+                throw $e;
+            }
 
             LoggerService::info(self::class.' - Dispatched batch', [
                 'batchName' => $batchName,

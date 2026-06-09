@@ -26,6 +26,7 @@ use App\Services\RenewalsUploadService;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class NonMotorCQFRenewalExecutionService
 {
@@ -177,7 +178,7 @@ class NonMotorCQFRenewalExecutionService
         $uploadLeadData = [
             'renewal_import_code' => $this->renewalsUploadService->generateRandomString(),
             'quote_type' => $quoteTypeShortCode,
-            'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.uniqid().'_'.now()->format(self::FILE_DATETIME_FORMAT).'.xlsx',
+            'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.Str::uuid().'_'.now()->format(self::FILE_DATETIME_FORMAT).'.xlsx',
             'file_path' => null,
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
