@@ -159,7 +159,8 @@ const defaultDateTo = formatLocalYmd(
 
 // Available filters
 const availableFilters = reactive({
-  lead_status_filter: props.filters?.lead_status_filter || 'Policy Booking Failed',
+  lead_status_filter:
+    props.filters?.lead_status_filter || 'Policy Booking Failed',
   date_filter_type: props.filters?.date_filter_type || ['Lead Created Date'],
   date_from: props.filters?.date_from || defaultDateFrom,
   date_to: props.filters?.date_to || defaultDateTo,
