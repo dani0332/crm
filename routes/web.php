@@ -119,13 +119,10 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\CheckHandbookDocumentsJob;
-use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\UniversalSearchDataMigration;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -1153,22 +1150,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER);
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER)->name('trigger-policy-issuance');
     Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE.'|'.PermissionsEnum::RE_TRIGGER_POLICY_ISSUANCE)->name('re-trigger-policy-automation');
+
     Route::get('re-trigger-myalfred-coins/{list}', [AlfredCoinsWebhookController::class, 'reTrigger'])->middleware('role:ADMIN');
-});
-
-Route::get('book-policy-email', function () {
-    $data = [
-        'model_type' => 'car',
-        'quote_id' => 244106,
-        'send_policy_type' => 'customer',
-        'is_send_policy' => false,
-        'transaction_payment_status' => null,
-        'modelType' => null,
-    ];
-    $quoteCode = 'CAR-GPNSJRX2';
-
-    $bookPolicyEmailJob = new SendBookPolicyDocumentsJob((object) $data, $quoteCode, true);
-    $bookPolicyEmailJob->handle(app(SendEmailCustomerService::class), app(QuoteDocumentService::class));
-
-    return 'Book policy email job executed successfully.';
 });
