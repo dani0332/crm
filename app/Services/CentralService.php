@@ -1689,7 +1689,7 @@ class CentralService extends BaseService
             'refID' => $quote->code,
             'code' => $quote->code,
             'reason' => $existingEmailData->reason ?? '',
-            'isWarTerrorismAddonSelected' => (int) $existingEmailData->isWarTerrorismAddonSelected ?? null,
+            'isWarTerrorismAddonSelected' => (int) ($existingEmailData->isWarTerrorismAddonSelected ?? 0),
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
@@ -1841,7 +1841,7 @@ class CentralService extends BaseService
                 if ($existingEmailData->isWarTerrorismAddonSelected) {
                     $emailData->handBookDocuments = $handBookDocuments[0]['url'] ?? null;
                     $emailData->handBookWarDocuments = $handBookDocuments[1]['url'] ?? null;
-                    $emailData->handBookWarExt = ! empty($emailData->handBookDocuments) ? pathinfo(parse_url($handBookDocuments[1]['url'], PHP_URL_PATH), PATHINFO_EXTENSION) : '';
+                    $emailData->handBookWarExt = pathinfo(parse_url($handBookDocuments[1]['url'], PHP_URL_PATH), PATHINFO_EXTENSION) ?? '';
                 } else {
                     $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
                     $emailData->handBookDocuments = $latestDocument['url'] ?? null;

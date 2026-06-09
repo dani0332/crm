@@ -81,6 +81,7 @@ use App\Http\Controllers\V2\Admin\RulesController;
 use App\Http\Controllers\V2\Admin\SystemHealthController;
 use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
+use App\Http\Controllers\V2\AlfredCoinsWebhookController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
@@ -1152,6 +1153,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER);
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER)->name('trigger-policy-issuance');
     Route::post('re-trigger-policy-automation', [PolicyIssuanceController::class, 'reTriggerPolicyAutomation'])->middleware('permission:'.PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE.'|'.PermissionsEnum::RE_TRIGGER_POLICY_ISSUANCE)->name('re-trigger-policy-automation');
+    Route::get('re-trigger-myalfred-coins/{list}', [AlfredCoinsWebhookController::class, 'reTrigger'])->middleware('role:ADMIN');
 });
 
 Route::get('book-policy-email', function () {
