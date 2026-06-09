@@ -57,7 +57,7 @@ class DttHome extends Command
             // for prod
             // ->whereDate('created_at', now()->subDays(90)->toDateString())
 
-            //for stage
+            // for stage
             ->whereBetween('created_at', [now()->subMinutes(25), now()->subMinutes(5)])
             ->where('is_revived', false)
             ->whereNotIn('source', [
