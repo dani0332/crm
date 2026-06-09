@@ -268,8 +268,8 @@ function onSubmit() {
 
 // Clear filters
 function clearFilters() {
-  availableFilters.lead_status_filter = '';
-  availableFilters.date_filter_type = [];
+  availableFilters.lead_status_filter = 'Policy Booking Failed';
+  availableFilters.date_filter_type = ['Lead Created Date'];
   availableFilters.date_from = null;
   availableFilters.date_to = null;
   availableFilters.insurance_provider_id = [];
