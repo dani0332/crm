@@ -19,7 +19,6 @@ const routingLogs = reactive({
   data: null,
   table: [
     { text: 'Stage', value: 'stage' },
-    {text: 'Request Id',  value: 'request_id'},
     { text: 'Criteria', value: 'criteria' },
     { text: 'Result', value: 'result' },
     { text: 'Member', value: 'member.name' },
@@ -186,10 +185,6 @@ const onLoadLogData = async () => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Stage:</dt>
             <dd>{{ selectedLog.stage }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Request Id:</dt>
-            <dd>{{ selectedLog.request_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Status:</dt>
