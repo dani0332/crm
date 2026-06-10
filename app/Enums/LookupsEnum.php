@@ -72,5 +72,5 @@ enum LookupsEnum: string
     case GENDER = 'gender';
     case HEALTH_MEMBER_RELATION = 'health-member-relation';
     case DOMESTIC_WORKER_RELATION = 'domestic-worker-relation';
-    case CORPLINE_RENEWAL_STATUS = 'corpline-renewal-status';
+    case CORPLINE_LEAD_TYPE = 'corpline-lead-type';
 }
