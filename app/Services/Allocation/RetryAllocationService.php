@@ -413,6 +413,21 @@ class RetryAllocationService
             }, function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to]);
             })
+            ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
+                $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
+            })
+            ->when($quoteType === QuoteTypes::LIFE, function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
+            })
+            ->when(in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::HOME_REVIVAL]), function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->whereNotIn('source', [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])
+                        ->orWhereNull('source');
+                });
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();

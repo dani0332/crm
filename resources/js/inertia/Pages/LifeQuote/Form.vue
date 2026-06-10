@@ -142,6 +142,11 @@ const validateWeight = value => {
 const validateSumAssured = value => {
   if (!value) return true;
   const sumAssured = parseFloat(value);
+
+  if (!Number.isInteger(sumAssured)) {
+    return 'Sum Assured must be an integer (no decimal allowed)';
+  }
+
   if (sumAssured < 1 || sumAssured > 100000000) {
     return 'Sum Assured must be between 1 and 100,000,000';
   }

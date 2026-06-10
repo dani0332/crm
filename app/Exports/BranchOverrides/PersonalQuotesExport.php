@@ -14,6 +14,7 @@ use App\Repositories\YachtQuoteRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ExcelExportable;
 use Illuminate\Database\Eloquent\Builder;
@@ -92,6 +93,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::CYBER->value,
+            QuoteTypes::DEVICE->value,
         ];
     }
 
@@ -105,12 +107,12 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 now()->subDays(1)->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
             ],
         ];
-        if (in_array(ucfirst($this->quoteType), [QuoteTypes::SAVINGS->value, QuoteTypes::LIFE->value, QuoteTypes::CYBER->value])) {
+        if (in_array(ucfirst($this->quoteType), [QuoteTypes::SAVINGS->value, QuoteTypes::LIFE->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value])) {
             foreach ($requestParams as $key => $value) {
                 request()->merge([$key => $value]);
             }
 
-            if (in_array(ucfirst($this->quoteType), [QuoteTypes::LIFE->value, QuoteTypes::CYBER->value]) && ! Auth::check()) {
+            if (in_array(ucfirst($this->quoteType), [QuoteTypes::LIFE->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && ! Auth::check()) {
                 Auth::login($user);
             }
         }
@@ -124,6 +126,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuoteQuery(isExportRequest: true),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(getQuery: true),
             QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(getQuery: true),
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->getData(false, false, false),
             default => abort(404),
         };
 
@@ -352,6 +355,21 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 self::SOURCE,
                 self::PLAN_NAME,
                 self::COVERAGE_UP_TO,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::ADVISOR,
+                self::BRANCH,
+                self::CREATED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+            ],
+            QuoteTypes::DEVICE->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::SOURCE,
+                self::PLAN_NAME,
                 self::PREMIUM,
                 self::POLICY_NUMBER,
                 self::ADVISOR,
@@ -624,6 +642,22 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 $baseFields['previous_policy_expiry_date'],
                 ...$branchFields,
             ],
+            QuoteTypes::DEVICE->value => [
+                $baseFields['code'],
+                $baseFields['first_name'],
+                $baseFields['last_name'],
+                $baseFields['lead_status'],
+                $baseFields['source'],
+                $quote?->insuranceProviderPlan?->text ?? '',
+                $baseFields['premium'],
+                $baseFields['policy_number'],
+                $baseFields['advisor'],
+                $baseFields['branch'],
+                $baseFields['created_date'],
+                $baseFields['last_modified_date'],
+                $baseFields['previous_policy_expiry_date'],
+                ...$branchFields,
+            ],
             default => [],
         };
     }
@@ -637,6 +671,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
             QuoteTypes::HOME->value => QuoteTypeId::Home,
             QuoteTypes::CYBER->value => QuoteTypeId::Cyber,
+            QuoteTypes::DEVICE->value => QuoteTypeId::Device,
         ];
 
         return [

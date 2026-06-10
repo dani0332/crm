@@ -115,11 +115,15 @@ class MembersDetailController extends Controller
                 $quoteMemberDetails['last_name'] = (++$quoteMemberCount);
             }
 
+            $isThirdPartyPayer = $request->is_third_party_payer ?? false;
+            $isInsured = $isThirdPartyPayer ? false : ($request->is_insured ?? true);
+
             $quoteMemberDetails = CustomerMembers::updateOrCreate(array_merge($quoteMemberDetails), [
                 'quote_type' => ltrim($quoteModel, "'\'"),
                 'code' => generateQuoteMemberCode($request->customer_type, $customerEntityId),
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
-                'is_third_party_payer' => $request->is_third_party_payer ?? false,
+                'is_third_party_payer' => $isThirdPartyPayer,
+                'is_insured' => $isInsured,
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);

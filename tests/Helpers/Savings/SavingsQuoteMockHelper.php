@@ -71,6 +71,7 @@ class SavingsQuoteMockHelper
             'keyFeatureDocument' => [],
             'description' => 'Test plan description',
             'policyWordings' => [],
+            'fundDetails' => [],
         ];
 
         return (object) array_merge($defaults, $overrides);

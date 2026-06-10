@@ -16,7 +16,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
-use Mockery;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 

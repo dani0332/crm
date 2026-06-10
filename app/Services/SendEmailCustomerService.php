@@ -26,7 +26,6 @@ use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -717,7 +716,10 @@ class SendEmailCustomerService extends BaseService
             // Send Automated Followup Email Job if Health Auto-Followups is enabled.
             if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                 $delayDays = isLeadSic($quoteUuid) ? 3 : 2;
-                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addDays($delayDays));
+                $delay = app()->isProduction()
+                    ? Carbon::now()->addDays($delayDays)
+                    : Carbon::now()->addMinutes($delayDays);
+                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay($delay);
                 LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
             }
         }

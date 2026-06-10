@@ -36,6 +36,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
 use App\Services\HomeQuoteService;
+use App\Services\HomeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -91,7 +92,9 @@ class HomeQuoteRepository extends BaseRepository
         }
 
         // Check if any of the exclude filters are active
-        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
+        $segmentFilter = $this->getFilterValue('segment_filter', $requestParams);
+        $isRevivalSegment = $segmentFilter === 'revival';
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams) || $isRevivalSegment;
 
         $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
@@ -121,6 +124,16 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->when($this->hasFilterValue('is_renewal', $requestParams), fn ($query) => $this->applyRenewalFilter($query, $requestParams))
             ->tap(fn ($query) => $this->applyFilters($query, $requestParams))
+            ->when(
+                ! in_array($segmentFilter, ['all', 'revival'], true),
+                function ($query): void {
+                    $query->where(function ($inner): void {
+                        $inner->whereNotIn('personal_quotes.source', HomeRevivalService::REVIVAL_SOURCES)
+                            ->orWhereNull('personal_quotes.source');
+                    });
+                }
+            )
+            ->when($isRevivalSegment, fn ($query) => $query->whereIn('personal_quotes.source', HomeRevivalService::REVIVAL_SOURCES))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
                 if ($this->hasFilterValue('created_at_start', $requestParams) && $this->hasFilterValue('created_at_end', $requestParams)) {
                     $adjustedDates = $this->getDateRange(

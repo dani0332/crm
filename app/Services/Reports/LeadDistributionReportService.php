@@ -15,10 +15,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamsEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
-use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -169,11 +169,8 @@ class LeadDistributionReportService extends BaseService
 
     private function getPersonalQuoteQuery($lob)
     {
-        // For Cyber only: convert product name to quote type code; others use product name directly
-        $quoteTypeCode = ($lob === TeamNameEnum::CYBER) ? quoteTypeCode::getQuoteTypeCodeFromProductName($lob) : $lob;
-        $lobId = $this->getLobId($quoteTypeCode);
-        /* Doing a 2nd step because $quoteType uses methods from \App\Enums\QuoteTypes after few lines. */
-        $quoteType = QuoteTypes::from($quoteTypeCode);
+        $quoteType = $this->getLOBFromTeamName($lob);
+        $lobId = QuoteTypes::getId($quoteType);
 
         $parentTeam = $this->getProductByName($lob);
 
@@ -218,13 +215,20 @@ class LeadDistributionReportService extends BaseService
         return $personalQuoteQuery;
     }
 
-    private function getLobId($lob)
+    private function getLOBFromTeamName($lob)
     {
-        $mappedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])
-            ? quoteTypeCode::Business
-            : $lob;
+        $quoteType = QuoteTypes::tryFrom($lob);
 
-        return QuoteTypeRepository::where('code', $mappedLob)->value('id');
+        /** We're doing this because $lob has ProductName which can directly be plugged-in as QuoteType but in some cases like DEVICE,
+         *  we need to find its quoteType through "Product & QuoteType" mapping (TeamsEnum::tryFrom($lob)->getQuoteTypes)
+         */
+        if ($quoteType !== null) {
+            return $quoteType;
+        } else {
+            /** It is expected to map product name to quote types if product names can't be directly plug into the quoteType.
+             * So in case of missing mapping getQuoteTypes would throw an exception */
+            return TeamsEnum::tryFrom($lob)->getQuoteTypes()[0];
+        }
     }
 
     public function getFilterOptions()

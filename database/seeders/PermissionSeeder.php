@@ -11,6 +11,7 @@ use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
 {
+    private const WEB_GUARD = 'web';
     /**
      * Run the database seeds.
      */
@@ -50,11 +51,15 @@ class PermissionSeeder extends Seeder
 
         $this->addBuyLeadsAdminPermission();
         $this->addTransAppSearchPermission();
+        $this->addReTriggerPolicyAutomationDevicePermission();
         $this->addEpDocumentManualOverridePermission();
         $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
         $this->addTeamAllocationThresholdEditPermission();
         $this->addNationalityPoolConfigEditPermission();
+        $this->seedEditPlanAfterTransactionApprovalPermission();
+        $this->addLifeRevivalPermissions();
+        $this->addHomeRevivalPermissions();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -137,6 +142,40 @@ class PermissionSeeder extends Seeder
         }
     }
 
+    /**
+     * IMCRM: device policy issuance document re-trigger. Runs before DeviceQuoteSeeder; device quote roles
+     * may not exist yet, so DeviceQuoteSeeder must assign this permission when it creates those roles.
+     */
+    private function addReTriggerPolicyAutomationDevicePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RE_TRIGGER_POLICY_AUTOMATION_DEVICE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+
+                RolesEnum::SmartPhoneAdvisor,
+                RolesEnum::SmartPhoneManager,
+
+            ])
+            ->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                LoggerService::info("Permission {$permission->name} assigned to role {$role->name}");
+            }
+        }
+    }
+
     private function addConversionOptimizationEngineReportPermission(): void
     {
         $permission = Permission::firstOrCreate([
@@ -211,5 +250,77 @@ class PermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function seedEditPlanAfterTransactionApprovalPermission(): void
+    {
+        Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::EDIT_PLAN_AFTER_TRANSACTION_APPROVAL,
+                'guard_name' => self::WEB_GUARD,
+            ],
+        );
+    }
+
+    private function addLifeRevivalPermissions(): void
+    {
+        $permissions = [
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_LIST,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_SHOW,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::LIFE_REVIVAL_QUOTES_EDIT,
+                'guard_name' => 'web',
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            Permission::firstOrCreate(
+                [
+                    'name' => $permissionData['name'],
+                    'guard_name' => $permissionData['guard_name'],
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    private function addHomeRevivalPermissions(): void
+    {
+        $permissions = [
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_LIST,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_SHOW,
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => PermissionsEnum::HOME_REVIVAL_QUOTES_EDIT,
+                'guard_name' => 'web',
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            Permission::firstOrCreate(
+                [
+                    'name' => $permissionData['name'],
+                    'guard_name' => $permissionData['guard_name'],
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

@@ -43,15 +43,19 @@ class NationalityPoolConfigurationService
 
     public function saveData(array $data): void
     {
-        $codes = collect($data['canonical_nationality_codes'])->implode(',');
-        $groupIds = collect($data['health_nationality_group_ids'])->implode(',');
+        $codes = collect($data['canonical_nationality_codes'] ?? [])
+            ->filter(fn (mixed $code) => filled($code));
+
+        $groupIds = collect($data['health_nationality_group_ids'] ?? [])
+            ->filter(fn (mixed $id) => filled($id));
+
         $effectiveFrom = Carbon::parse($data['effective_from'])->startOfDay();
 
         NationalityPool::updateOrCreate([
             'effective_from' => $effectiveFrom,
         ], [
-            'health_nationality_group_ids' => $groupIds,
-            'canonical_nationality_codes' => $codes,
+            'health_nationality_group_ids' => $groupIds->isNotEmpty() ? $groupIds->implode(',') : null,
+            'canonical_nationality_codes' => $codes->isNotEmpty() ? $codes->implode(',') : null,
             'is_active' => true,
             'logged_by' => Auth::id(),
         ]);

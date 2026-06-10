@@ -38,5 +38,14 @@ class ActivityLog extends SpatieActivity
         'feature',
         'ip_address',
         'user_agent',
+        'attribute_changes',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'properties' => 'collection',
+        'attribute_changes' => 'collection',
     ];
 }
