@@ -1218,10 +1218,7 @@ function handleOcrNotification(event) {
                           NUMBER OF CATEGORIES
                         </span>
                         <template #tooltip
-                          >Enter how many employee categories the group has.
-                          Categories usually differ by Benefitss or salary band.
-                          Indicate if the company currently has a group health
-                          insurance policy in place with any provider
+                          >Enter how many employee categories the group has. Categories usually differ by Benefits or salary band.
                         </template>
                       </x-tooltip>
                     </dt>
