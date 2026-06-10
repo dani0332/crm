@@ -133,8 +133,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_issuance_status_id',
                 'bqr.policy_issuance_status_other',
                 'bqr.policy_booking_date',
-                'policy_start_date',
-                'policy_issuance_date',
+                'bqr.policy_start_date',
+                'bqr.policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
                 'py.payment_status_id',
@@ -142,11 +142,11 @@ class BusinessQuoteService extends BaseService
                 'bqr.aml_status',
                 DB::raw('
                     CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN bqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE bqr.insurer_aml_status
                     END AS insurer_aml_status_display
                 '),
                 'ub.branch_id as advisor_primary_branch_id',

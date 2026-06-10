@@ -1041,6 +1041,9 @@ class RenewalsUploadService
                         ->where('code', $data['previous_ref_id'])
                         ->value('id');
                 }
+                if ($quoteType->code == quoteTypeCode::Business) {
+                    $personalQuoteSyncData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
+                }
                 $this->updatePersonalQuote($quote->uuid, $quoteType->id, $personalQuoteSyncData);
             }
 
