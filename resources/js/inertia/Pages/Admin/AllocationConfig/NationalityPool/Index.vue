@@ -42,7 +42,7 @@ function getData(id = null) {
     .then(response => {
       nationalityPoolConfigurations.value =
         response.data.nationalityPoolConfigurations;
-   
+
       effectiveFromDates.value = response.data.effectiveFromDates;
 
       // Assign only forst time, avoid reassigning on edit
@@ -68,9 +68,10 @@ function getData(id = null) {
         nationalityPoolConfigurations.value?.health_nationality_group_ids
           ?.split(',')
           .map(Number) || [];
-      const codes = nationalityPoolConfigurations.value?.canonical_nationality_codes;
-      selectedNationalities.value = codes === '' ? null : codes?.split(',') || [];
-   
+      const codes =
+        nationalityPoolConfigurations.value?.canonical_nationality_codes;
+      selectedNationalities.value =
+        codes === '' ? null : codes?.split(',') || [];
     })
     .catch(error => {
       notification.error({
@@ -197,8 +198,11 @@ watch(selectedNationalityGroups, newVal => {
     >
   </div>
   <x-divider class="my-4" />
-  <x-form @submit="onSubmit" :auto-focus="false" :disabled="!canEditNationalityPool">
-
+  <x-form
+    @submit="onSubmit"
+    :auto-focus="false"
+    :disabled="!canEditNationalityPool"
+  >
     <!-- Loader -->
     <div
       v-if="loading"
@@ -209,7 +213,10 @@ watch(selectedNationalityGroups, newVal => {
       ></div>
     </div>
 
-    <div class="mb-4" :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }">
+    <div
+      class="mb-4"
+      :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }"
+    >
       <x-field label="Effective Date">
         <div class="grid sm:grid-cols-2 gap-4">
           <DatePicker
@@ -243,7 +250,10 @@ watch(selectedNationalityGroups, newVal => {
         </div>
       </x-field>
     </div>
-    <div class="" :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }">
+    <div
+      class=""
+      :class="{ 'pointer-events-none opacity-60': !canEditNationalityPool }"
+    >
       <x-field label="GBP Nationality">
         <x-select
           :options="gbpNationalities"
@@ -268,7 +278,6 @@ watch(selectedNationalityGroups, newVal => {
         {{ buttonLabel }}
       </x-button>
     </div>
-
   </x-form>
 
   <NationalityPoolScheduledConfigurations

@@ -106,7 +106,6 @@ const canEditNationalityPool = computed(() =>
   useCan(page.props.permissionsEnum?.NATIONALITY_POOL_CONFIG_EDIT ?? ''),
 );
 
-
 defineExpose({
   loadData,
 });
