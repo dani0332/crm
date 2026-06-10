@@ -193,7 +193,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  renewalStatusOptions: {
+  leadTypeOptions: {
     type: Array,
     required: true,
   },
@@ -685,9 +685,9 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  if (!props.quote.renewal_status) {
+  if (!props.quote.lead_type) {
     notification.error({
-      title: 'Please select Renewal or Non-Renewal before adding a plan.',
+      title: 'Please select a Lead Type before adding a plan.',
       position: 'top',
     });
   }
@@ -714,23 +714,23 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
 
-const renewalStatusForm = useForm({
-  renewal_status: props.quote.renewal_status ?? null,
+const leadTypeForm = useForm({
+  lead_type: props.quote.lead_type ?? null,
 });
 
-const onRenewalStatusUpdate = () => {
-  if (!renewalStatusForm.renewal_status) {
-    notification.error({ title: 'Please select a renewal status before saving.', position: 'top' });
+const onLeadTypeUpdate = () => {
+  if (!leadTypeForm.lead_type) {
+    notification.error({ title: 'Please select a lead type before saving.', position: 'top' });
     return;
   }
 
-  renewalStatusForm.patch(route('business.updateRenewalStatus', props.quote.uuid), {
+  leadTypeForm.patch(route('business.updateLeadType', props.quote.uuid), {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success({ title: 'Renewal status updated successfully.', position: 'top' });
+      notification.success({ title: 'Lead type updated successfully.', position: 'top' });
     },
     onError: () => {
-      notification.error({ title: 'Failed to update renewal status.', position: 'top' });
+      notification.error({ title: 'Failed to update lead type.', position: 'top' });
     },
   });
 };
@@ -1093,20 +1093,20 @@ const onRenewalStatusUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL STATUS</dt>
+                <dt class="font-medium">LEAD TYPE</dt>
                 <dd>
                   <div class="flex items-center gap-2">
                     <x-select
-                      v-model="renewalStatusForm.renewal_status"
-                      :options="renewalStatusOptions"
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
                       class="w-full"
-                      placeholder="Select Renewal Status"
+                      placeholder="Select Lead Type"
                     />
                     <x-button
                       size="xs"
                       color="emerald"
-                      :loading="renewalStatusForm.processing"
-                      @click.prevent="onRenewalStatusUpdate"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
                       v-if="readOnlyMode.isDisable === true"
                     >
                       Save
@@ -1596,7 +1596,7 @@ const onRenewalStatusUpdate = () => {
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-      :isSaveDisabled="!quote.renewal_status"
+      :isSaveDisabled="!quote.lead_type"
     />
 
     <!-- Payments -->

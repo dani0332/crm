@@ -44,10 +44,10 @@ class LookupSeeder extends Seeder
         $this->createRmCategories();
         $this->createReferralSources();
         $this->healthRevampLookups();
-        $this->createCorplineRenewalStatuses();
+        $this->createCorplineLeadTypes();
     }
 
-    private function createCorplineRenewalStatuses(): void
+    private function createCorplineLeadTypes(): void
     {
         $types = [
             ['code' => 'renewal', 'text' => 'Renewal'],
@@ -57,7 +57,7 @@ class LookupSeeder extends Seeder
 
         foreach ($types as $type) {
             Lookup::firstOrCreate([
-                'key' => LookupsEnum::CORPLINE_RENEWAL_STATUS->value,
+                'key' => LookupsEnum::CORPLINE_LEAD_TYPE->value,
                 'code' => $type['code'],
             ], [
                 'text' => $type['text'],

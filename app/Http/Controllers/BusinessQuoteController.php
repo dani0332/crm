@@ -387,7 +387,7 @@ class BusinessQuoteController extends Controller
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'renewalStatusOptions' => $this->lookupService->getCorplineRenewalStatuses(),
+            'leadTypeOptions' => $this->lookupService->getCorplineLeadTypes(),
         ]);
     }
 
@@ -438,15 +438,15 @@ class BusinessQuoteController extends Controller
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }
 
-    public function updateRenewalStatus(Request $request, $uuid): RedirectResponse
+    public function updateLeadType(Request $request, $uuid): RedirectResponse
     {
-        $validValues = Lookup::where('key', LookupsEnum::CORPLINE_RENEWAL_STATUS->value)->pluck('code');
+        $validValues = Lookup::where('key', LookupsEnum::CORPLINE_LEAD_TYPE->value)->pluck('code');
 
         $request->validate([
-            'renewal_status' => ['required', Rule::in($validValues)],
+            'lead_type' => ['required', Rule::in($validValues)],
         ]);
 
-        BusinessQuote::where('uuid', $uuid)->update(['renewal_status' => $request->renewal_status]);
+        BusinessQuote::where('uuid', $uuid)->update(['lead_type' => $request->lead_type]);
 
         return back();
     }
