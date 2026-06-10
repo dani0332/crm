@@ -278,7 +278,9 @@ const isIssuingDocumentsTabDisabled = key => {
     key === documentTypeEnum.ISSUING_DOCUMENTS &&
     isPolicyLocked(quoteStatusId)
   ) {
-    if (props.bookPolicyDetails?.isEnableDocumentUploadOrDelete?.upload === true) {
+    if (
+      props.bookPolicyDetails?.isEnableDocumentUploadOrDelete?.upload === true
+    ) {
       return false;
     }
 
@@ -432,7 +434,10 @@ const openDocumentInNewTab = async item => {
             <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
-                v-if="bookPolicyDetails?.isEnableDocumentUploadOrDelete?.delete === false"
+                v-if="
+                  bookPolicyDetails?.isEnableDocumentUploadOrDelete?.delete ===
+                  false
+                "
               >
                 <x-button size="xs" color="error" outlined disabled="true">
                   Delete
