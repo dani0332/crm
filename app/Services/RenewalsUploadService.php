@@ -1044,7 +1044,11 @@ class RenewalsUploadService
                 if ($quoteType->code == quoteTypeCode::Business) {
                     $personalQuoteSyncData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
                 }
-                $this->updatePersonalQuote($quote->uuid, $quoteType->id, $personalQuoteSyncData);
+                $syncedPersonalQuote = $this->updatePersonalQuote($quote->uuid, $quoteType->id, $personalQuoteSyncData);
+                if ($syncedPersonalQuote && $quoteType->code == quoteTypeCode::Business) {
+                    $quote->personal_quote_id = $syncedPersonalQuote->id;
+                    $quote->saveQuietly();
+                }
             }
 
             // Create Entry in Personal Quote Details Table

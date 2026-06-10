@@ -56,6 +56,12 @@ class BusinessCQFQuoteMappingService extends BaseCQFQuoteMappingService
      */
     protected function getFailedQuoteDataExtra(PersonalQuote $quote): array
     {
-        return [];
+        $quote->loadMissing('businessQuote.businessTypeOfInsurance');
+
+        $businessQuote = $quote->getRelationValue('businessQuote');
+
+        return [
+            'product_type' => $businessQuote?->businessTypeOfInsurance?->text ?? null,
+        ];
     }
 }

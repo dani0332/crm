@@ -73,6 +73,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
      */
     protected function mapRenewalQuoteFromCarQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
+        $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
         $shortCode = str_replace('-', '', QuoteTypes::BIKE->shortCode());
 
         $quote->loadMissing('payments');
@@ -90,7 +91,7 @@ class BikeCQFQuoteMappingService extends BaseCQFQuoteMappingService
             'advisor_id' => null,
             'assignment_type' => null,
             'renewal_batch' => null,
-            'renewal_batch_id' => null,
+            'renewal_batch_id' => $renewalBatchId,
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'renewal_import_code' => $renewalsUploadLeads->renewal_import_code,
             'previous_quote_policy_number' => $quote->policy_number,

@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Traits\ExcelExportable;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -74,8 +75,8 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->currentlyInsuredWith != null ? ($quote->currentlyInsuredWith->text ? $quote->currentlyInsuredWith->text : $quote->currentlyInsuredWith) : ($quote->currently_insured_with != null ? $quote->currently_insured_with : ''),
             $this->exportType,
             $quote->previous_quote_policy_number,
-            $quote->previous_policy_start_date,
-            $quote->previous_policy_expiry_date,
+            $quote->previous_policy_start_date ? Carbon::parse($quote->previous_policy_start_date)->format(config('constants.DATE_FORMAT_ONLY')) : null,
+            $quote->previous_policy_expiry_date ? Carbon::parse($quote->previous_policy_expiry_date)->format(config('constants.DATE_FORMAT_ONLY')) : null,
             $quote->previous_quote_policy_premium,
             $quote->previous_quote_policy_commission ?? ($payment != null ? $payment->commission : 'N/A'),
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',

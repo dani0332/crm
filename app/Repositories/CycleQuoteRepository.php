@@ -103,6 +103,7 @@ class CycleQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },
             'customer',
+            'nationality',
             'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
