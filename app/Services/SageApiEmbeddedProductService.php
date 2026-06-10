@@ -422,6 +422,7 @@ class SageApiEmbeddedProductService
         }
 
         $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: scheduleReversalOfEmbeddedProduct');
+        $epTransaction->update(['is_selected' => false]);
         $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
 
         return [
