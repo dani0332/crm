@@ -90,6 +90,7 @@ test('scheduleReversalOfEmbeddedProduct can replace completed book sage process 
     $data['epMDXTransaction']->update([
         'payment_status_id' => PaymentStatusEnum::REFUNDED,
         'sage_status_id' => SageEmbeddedProductEnum::BOOKING_COMPLETED->id(),
+        'is_selected' => true,
     ]);
 
     PaymentTestCreationHelper::createPaymentWithSplit($data['carQuote']);
@@ -137,4 +138,7 @@ test('scheduleReversalOfEmbeddedProduct can replace completed book sage process 
     expect($decoded['sagePayload']['sageProcessRequestType'] ?? null)
         ->toBe(SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST);
     expect($sageProcess->status)->toBe(SageEnum::SAGE_PROCESS_PENDING_STATUS);
+
+    $data['epMDXTransaction']->refresh();
+    expect((bool) $data['epMDXTransaction']->is_selected)->toBeFalse();
 });
