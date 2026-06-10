@@ -123,7 +123,7 @@ class ManagementReport
             ->active()
             ->get();
 
-        $corplineRenewalStatuses = app(LookupService::class)->getCorplineRenewalStatuses();
+        $corplineLeadTypes = app(LookupService::class)->getCorplineLeadTypes();
 
         return [
             'maxDays' => $maxDays,
@@ -135,7 +135,7 @@ class ManagementReport
             'lobs' => $lobs,
             'subSources' => $subSources,
             'branches' => $branches,
-            'corplineRenewalStatuses' => $corplineRenewalStatuses,
+            'corplineLeadTypes' => $corplineLeadTypes,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -243,12 +243,12 @@ class ManagementReport
         }
 
         if (in_array(quoteTypeCode::CORPLINE, $lobs) && ! empty($request['corpLineLeadType'])) {
-            $renewalStatuses = is_array($request['corpLineLeadType']) ? $request['corpLineLeadType'] : [$request['corpLineLeadType']];
-            $query->whereExists(function ($subQuery) use ($renewalStatuses) {
+            $corplineLeadType = is_array($request['corpLineLeadType']) ? $request['corpLineLeadType'] : [$request['corpLineLeadType']];
+            $query->whereExists(function ($subQuery) use ($corplineLeadType) {
                 $subQuery->select(DB::raw(1))
                     ->from('business_quote_request')
                     ->whereColumn('business_quote_request.id', 'personal_quotes.quote_id')
-                    ->whereIn('business_quote_request.renewal_status', $renewalStatuses);
+                    ->whereIn('business_quote_request.lead_type', $corplineLeadType);
             });
         }
 

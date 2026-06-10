@@ -139,7 +139,7 @@ class BusinessQuoteService extends BaseService
                 'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
-                'bqr.renewal_status',
+                'bqr.lead_type',
                 DB::raw('
                     CASE
                         WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"

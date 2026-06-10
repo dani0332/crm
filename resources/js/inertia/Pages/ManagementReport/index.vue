@@ -155,8 +155,8 @@ const isCorpLineSelected = computed(() => {
   return Array.isArray(filters.lob) && filters.lob.includes('CorpLine');
 });
 
-const corplineRenewalStatuses = computed(() => {
-  return props.filterOptions?.corplineRenewalStatuses ?? [];
+const corplineLeadTypes = computed(() => {
+  return props.filterOptions?.corplineLeadTypes ?? [];
 });
 
 const branchOptions = computed(() => {
@@ -970,7 +970,7 @@ watch(
         <x-select
           v-model="filters.corpLineLeadType"
           placeholder="Filter by Lead Type"
-          :options="corplineRenewalStatuses"
+          :options="corplineLeadTypes"
           deselect-all
           filterable
           filterPlaceholder="Filter Lead Type...."
@@ -981,7 +981,7 @@ watch(
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.corpLineLeadType = corplineRenewalStatuses.map(
+                filters.corpLineLeadType = corplineLeadTypes.map(
                   item => item.value,
                 )
               "
