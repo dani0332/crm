@@ -619,7 +619,7 @@ function onSubmit(isValid) {
           class="w-full"
           label="WITH EXISTING GROUP HEALTH INSURANCE POLICY"
           placeholder="Select"
-          :rules="[isRequired]"
+          :rules="[v => v !== null && v !== undefined && v !== '' || 'This field is required']"
           required
           :error="quoteForm.errors.has_existing_group_health_insurance"
         />

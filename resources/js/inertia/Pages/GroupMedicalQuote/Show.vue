@@ -1355,7 +1355,7 @@ function handleOcrNotification(event) {
                         <td class="px-3 py-3 align-top text-gray-700">
                           {{ row.existing_policy_renewal_date }}
                         </td>
-                        <td class="px-3 py-3 align-top text-right tabular-nums">
+                        <td class="px-3 py-3 align-top tabular-nums">
                           {{ row.number_of_people }}
                         </td>
                       </tr>
