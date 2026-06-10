@@ -74,6 +74,7 @@ enum QuoteTypes: string
     case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
     case LIFE_REVIVAL = 'LifeRevival';
+    case HOME_REVIVAL = 'HomeRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case DEVICE = 'Device';
@@ -232,7 +233,7 @@ enum QuoteTypes: string
     {
         return match ($this) {
             self::CAR, self::CAR_REVIVAL, self::CAR_BIKE => 'CAR-',
-            self::HOME => 'HOM-',
+            self::HOME, self::HOME_REVIVAL => 'HOM-',
             self::HEALTH => 'HEA-',
             self::LIFE, self::LIFE_REVIVAL => 'LIF-',
             self::BUSINESS, self::GROUP_MEDICAL, self::CORPLINE, self::AMT => 'BUS-',
