@@ -1,6 +1,7 @@
 ---
 name: health-module
 description: Health webform revamp — migration service, seeder patterns, revival/renewal integration, and related enums/models introduced in the 0-base, 2-seeder_updates, and 3-revival-renewal branches.
+command: true
 ---
 
 # Health Module — Revamp Reference

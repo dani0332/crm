@@ -59,6 +59,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  allVisaCategoryOptions: {
+    type: Array,
+    default: () => [],
+  },
   includePolicyHolder: {
     type: Boolean,
     default: false,
@@ -224,9 +228,11 @@ const memberCategoryText = memberCategoryId =>
 
 const visaCategoryText = visaCategoryId =>
   computed(() => {
-    return props.visaCategoryOptions.find(
-      option => option.value === visaCategoryId,
-    )?.label;
+    const options = props.allVisaCategoryOptions.length
+      ? props.allVisaCategoryOptions
+      : props.visaCategoryOptions;
+
+    return options.find(option => option.value === visaCategoryId)?.label;
   });
 
 const maritalStatusText = maritalStatusId =>

@@ -61,7 +61,7 @@ final class HealthQuoteRevampMigrationMutator
             $this->applyMaritalStatusUpdates($hqr, $members);
             $this->normalizeGenderValues($hqr, $members);
             $this->applyPolicyHolderCategoryCode($hqr);
-            $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr);
+            $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr, $members);
             $this->applyMemberRelationSalaryAndVisa($hqr, $members);
             $this->applyHealthQuoteMemberCategoryRemap($hqr);
             $this->applyCustomerMemberCategoryRemap($hqr, $members);
@@ -357,10 +357,13 @@ final class HealthQuoteRevampMigrationMutator
      * Newborns (≤ 12 months) get NEWBORN_BORN_IN_UAE visa; all other categories map via fixed rules.
      * Falls back to the existing value when the category has no explicit mapping.
      */
-    private function applyHealthQuoteSalaryBandAndVisaFromMemberCategory(HealthQuote $hqr): void
+    private function applyHealthQuoteSalaryBandAndVisaFromMemberCategory(HealthQuote $hqr, Collection $members): void
     {
-        $hqr->salary_band_id = $this->getSalaryBandId($hqr);
-        $hqr->visa_category_id = $this->getVisaCategoryId($hqr);
+        $policyHolder = $members->first(fn (CustomerMembers $m) => $m->is_policy_holder);
+        $isPolicyHolderInsured = $policyHolder ? (bool) $policyHolder->is_insured : false;
+
+        $hqr->salary_band_id = $this->getSalaryBandId($hqr, $isPolicyHolderInsured);
+        $hqr->visa_category_id = $this->getVisaCategoryId($hqr, $isPolicyHolderInsured);
         $hqr->save();
     }
 
@@ -545,7 +548,7 @@ final class HealthQuoteRevampMigrationMutator
         return $g;
     }
 
-    public function getSalaryBandId($hqr)
+    public function getSalaryBandId($hqr, bool $isPolicyHolderInsured = false)
     {
         $mc = (int) $hqr->member_category_id;
 
@@ -566,10 +569,14 @@ final class HealthQuoteRevampMigrationMutator
             default => $hqr->salary_band_id,
         };
 
+        if ($isPolicyHolderInsured && $salaryBand === SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value) {
+            $salaryBand = null;
+        }
+
         return $salaryBand;
     }
 
-    public function getVisaCategoryId($hqr)
+    public function getVisaCategoryId($hqr, bool $isPolicyHolderInsured = false)
     {
         $mc = (int) $hqr->member_category_id;
         $months = $this->context->monthsSinceDob($this->context->dobToDateString($hqr->dob));
@@ -591,6 +598,10 @@ final class HealthQuoteRevampMigrationMutator
             $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::DEPENDENT_FAMILY->value,
             default => $hqr->visa_category_id,
         };
+
+        if ($isPolicyHolderInsured && $visa === VisaCategoryEnum::DEPENDENT_FAMILY->value) {
+            $visa = VisaCategoryEnum::EMPLOYMENT->value;
+        }
 
         return $visa;
     }
