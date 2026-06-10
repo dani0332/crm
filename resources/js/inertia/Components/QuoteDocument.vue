@@ -278,6 +278,10 @@ const isIssuingDocumentsTabDisabled = key => {
     key === documentTypeEnum.ISSUING_DOCUMENTS &&
     isPolicyLocked(quoteStatusId)
   ) {
+    if (props.bookPolicyDetails?.isEnableUploadDocument === true) {
+      return false;
+    }
+
     let status = '';
     if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
       status = 'booked';
