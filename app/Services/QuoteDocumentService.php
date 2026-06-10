@@ -1018,9 +1018,17 @@ class QuoteDocumentService extends BaseService
         return $result;
     }
 
-    public function isEnableUploadDocument($quoteStatusId)
+    public function isEnableUploadDocument($quoteStatusId, ?int $quoteTypeId = null): bool
     {
         if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            if (
+                $quoteStatusId === QuoteStatusEnum::PolicyBooked
+                && in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])
+                && auth()->user()?->hasRole(RolesEnum::NRA)
+            ) {
+                return true;
+            }
+
             return false;
         }
 
