@@ -55,6 +55,8 @@ class PermissionSeeder extends Seeder
         $this->addEpDocumentManualOverridePermission();
         $this->addConversionOptimizationEngineReportPermission();
         $this->addComplianceDocumentUploadPermission();
+        $this->addTeamAllocationThresholdEditPermission();
+        $this->addNationalityPoolConfigEditPermission();
         $this->seedEditPlanAfterTransactionApprovalPermission();
         $this->addLifeRevivalPermissions();
         $this->addHomeRevivalPermissions();
@@ -224,6 +226,32 @@ class PermissionSeeder extends Seeder
             LoggerService::info("Role {$role->name} already has permission {$permission->name}");
         }
     }
+
+    /**
+     * Creates team-allocation-threshold-edit. Not granted to any role by default.
+     */
+    private function addTeamAllocationThresholdEditPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addNationalityPoolConfigEditPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_POOL_CONFIG_EDIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function seedEditPlanAfterTransactionApprovalPermission(): void
     {
         Permission::firstOrCreate(
