@@ -1018,21 +1018,17 @@ class QuoteDocumentService extends BaseService
         return $result;
     }
 
-    public function isEnableUploadDocument($quoteStatusId, ?int $quoteTypeId = null): bool
+    public function isEnableDocumentUploadOrDelete($quoteStatusId, ?string $quoteType = null): array
     {
         if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
-            if (
-                $quoteStatusId === QuoteStatusEnum::PolicyBooked
-                && in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])
-                && auth()->user()?->hasRole(RolesEnum::NRA)
-            ) {
-                return true;
+            if (in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])) {
+                return ['upload' => true, 'delete' => false];
             }
 
-            return false;
+            return ['upload' => false, 'delete' => false];
         }
 
-        return true;
+        return ['upload' => true, 'delete' => true];
     }
 
     public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
