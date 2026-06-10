@@ -124,7 +124,8 @@ RUN cp docker/supervisor.conf /etc/supervisord.conf && \
     cp -r docker/*.pem /etc/nginx/conf.d/ && \
     cp docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 
-RUN chmod +x /var/www/docker/run.sh
+RUN chmod +x /var/www/docker/run.sh \
+    && rm -f /etc/init.d/supervisor
 
 RUN \
     wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
@@ -144,9 +145,7 @@ RUN \
     touch /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log && \
     chmod 666 /var/log/php/newrelic-daemon.log /var/log/php/newrelic-php_agent.log
 
-RUN sed -i 's|pidfile=/var/run/supervisord.pid|pidfile=/tmp/supervisord.pid|' /etc/supervisord.conf \
-    && sed -i 's|logfile=/var/log/supervisord.log|logfile=/var/log/php/supervisord.log|' /etc/supervisord.conf \
-    && sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
+RUN sed -i '/^\[program:fix_permissions\]/,$s/^autostart=true$/autostart=false/' /etc/supervisord.conf \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
     && mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi \
     && sed -i \
