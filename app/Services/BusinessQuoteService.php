@@ -526,6 +526,10 @@ class BusinessQuoteService extends BaseService
             $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
+        if (! empty($request->lead_type) && is_array($request->lead_type)) {
+            $this->query->whereIn('bqr.lead_type', $request->lead_type);
+        }
+
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
