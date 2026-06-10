@@ -216,7 +216,7 @@ class RetargetingEpReminderTestDataHelper
         $quote->id = $overrides['quote_id'] ?? $quoteId;
         $quote->uuid = $overrides['quote_uuid'] ?? $quoteUuid;
         $quote->quote_status_id = $overrides['quote_status_id'] ?? QuoteStatusEnum::PolicyBooked;
-        $quote->policy_booking_date = $overrides['quote_policy_booking_date'] ?? '2025-01-01';
+        $quote->policy_booking_date = $overrides['quote_policy_booking_date'] ?? now()->toDateString();
         $quote->customer_id = array_key_exists('quote_customer_id', $overrides) ? $overrides['quote_customer_id'] : 10;
         $quote->email = $overrides['quote_email'] ?? 'customer@example.com';
         $quote->first_name = $overrides['quote_first_name'] ?? 'John';

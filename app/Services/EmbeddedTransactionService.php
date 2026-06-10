@@ -18,6 +18,7 @@ use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
@@ -40,7 +41,8 @@ class EmbeddedTransactionService extends BaseService
     public function __construct(
         protected EmbeddedTransactionRepository $embeddedTransactionRepo,
         protected EmbeddedProductRepository $embeddedProductRepo,
-        protected BirdService $birdService
+        protected BirdService $birdService,
+        protected SendEmailCustomerService $sendEmailCustomerService,
     ) {
         parent::__construct();
     }
@@ -50,7 +52,7 @@ class EmbeddedTransactionService extends BaseService
         return (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER);
     }
 
-    public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
+    public function retargetEpReminder(CarQuote|PersonalQuote $quote, int $quoteTypeId)
     {
         $epTransactions = $this->embeddedTransactionRepo
             ->fetchFilterEpTransactions(
@@ -71,7 +73,11 @@ class EmbeddedTransactionService extends BaseService
         $response = [];
         foreach ($epTransactions as $epTransaction) {
             try {
-                $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
+                if ($epTransaction->quote_type_id === QuoteTypeId::Bike) {
+                    $result = $this->triggerRetargetingEpReminderForBike($quote, $quoteTypeId, $epTransaction);
+                } else {
+                    $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
+                }
                 $response[] = ['embeddedTransactionCode' => $epTransaction->code, 'status_code' => $result->status_code, 'message' => $result->message ?? ''];
             } catch (\Throwable $e) {
                 LoggerService::error('retargetEpReminder: Bird workflow request failed for transaction', extra: [
@@ -126,6 +132,60 @@ class EmbeddedTransactionService extends BaseService
         return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
+    protected function triggerRetargetingEpReminderForBike(PersonalQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
+    {
+        // For Bike EPs, we will trigger the reminder email directly without going through Bird workflow
+        $emailData = [
+            'quoteId' => $quote->id,
+            'quoteTypeId' => $quoteTypeId,
+            'refId' => $quote->code,
+            'uuid' => $quote->uuid,
+            'embeddedTransactionCode' => $epTransaction->code,
+            'customerEmail' => $quote->email,
+            'customerName' => $quote->full_name,
+            'advisor' => [
+                'email' => $quote->advisor?->email ?? null,
+                'name' => $quote->advisor?->full_name ?? null,
+            ],
+            'reminderNumber' => 1,
+        ];
+
+        LoggerService::info('triggerRetargetingEpReminderForBike: ', extra: ['data' => $emailData]);
+
+        // Assuming there's a dedicated method to send bike EP reminder emails
+        return $this->sendBikeEpRetargetingEmail($emailData);
+    }
+
+    protected function sendBikeEpRetargetingEmail(array $emailData): object
+    {
+        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE);
+
+        if (empty($templateId)) {
+            LoggerService::info('sendBikeEpRetargetingEmail: Template ID not configured');
+
+            return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bike EP retargeting template not configured'];
+        }
+
+        $responseCode = $this->sendEmailCustomerService->sendBikeEpRetargetingEmail(
+            (int) $templateId,
+            $emailData,
+            'bike-ep-retargeting',
+        );
+
+        $isSuccess = $responseCode === Response::HTTP_CREATED || $responseCode === Response::HTTP_OK;
+
+        LoggerService::info('sendBikeEpRetargetingEmail: completed', extra: [
+            'customerEmail' => $emailData['customerEmail'],
+            'refId' => $emailData['refId'],
+            'responseCode' => $responseCode,
+        ]);
+
+        return (object) [
+            'status_code' => $isSuccess ? Response::HTTP_OK : Response::HTTP_INTERNAL_SERVER_ERROR,
+            'message' => $isSuccess ? 'Bike EP retargeting email sent' : 'Failed to send bike EP retargeting email',
+        ];
+    }
+
     public function getEpRetargetingReminderData(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode): JsonResponse
     {
         $embeddedTransaction = $this->embeddedTransactionRepo
@@ -142,9 +202,10 @@ class EmbeddedTransactionService extends BaseService
         if (empty($embeddedTransaction) || empty($quote)) {
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Record not found');
         }
+        $isBike = $quoteTypeId === QuoteTypeId::Bike;
 
-        $carMake = $quote->carMake?->text ?? null;
-        $carModel = $quote->carModel?->text ?? null;
+        $carMake = $quote->carMake?->text ?? $quote->bikeMake?->text ?? null;
+        $carModel = $quote->carModel?->text ?? $quote->bikeModel?->text ?? null;
         $epShortCode = $embeddedTransaction->product?->embeddedProduct?->short_code ?? null;
         $planId = $quote->plan?->id ?? null;
         $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
@@ -175,7 +236,9 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Not eligible for reminder');
         }
 
-        $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
+        $ecomBaseUrl = $isBike ? config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL') : config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+
+        $buyNowUrl = $ecomBaseUrl.$quote->uuid
             .'/payment/?'.http_build_query([
                 'planId' => $planId,
                 'providerCode' => $providerCode,

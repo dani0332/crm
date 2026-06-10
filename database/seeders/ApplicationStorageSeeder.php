@@ -161,6 +161,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedRdxRetargetingEmailConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
@@ -1409,6 +1410,46 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::AWNI_CYBER_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedRdxRetargetingEmailConfigurations()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
+            [
+                'value' => 'alfred@notify.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL],
+            [
+                'value' => 'embeddedproducts@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT],
+            [
+                'value' => 'Add Rider Medical Cover to Your Motor Policy in Just Seconds (REF-ID)',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
+            [
+                'value' => 892,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
