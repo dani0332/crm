@@ -423,7 +423,7 @@ const signedMedicalApplicationDocs = computed(() => {
             <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
-                v-if="bookPolicyDetails?.isEnableUploadDocument === false"
+                v-if="bookPolicyDetails?.isEnableDocumentUploadOrDelete?.delete === false"
               >
                 <x-button size="xs" color="error" outlined disabled="true">
                   Delete
