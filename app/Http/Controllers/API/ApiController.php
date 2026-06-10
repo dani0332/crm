@@ -1140,8 +1140,16 @@ class ApiController extends Controller
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
         }
 
-        if ($quote->source !== LeadSourceEnum::REVIVAL) {
-            return apiResponse(null, Response::HTTP_UNPROCESSABLE_ENTITY, 'Lead source is not revival');
+        if (! in_array($quote->source, [
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_SHORT,
+            LeadSourceEnum::REVIVAL_ANNUAL,
+        ], true)) {
+            return apiResponse(
+                null,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Lead source is not revival || revival short || revival annual, cannot update lead source to revival replied'
+            );
         }
 
         $quote->update([
