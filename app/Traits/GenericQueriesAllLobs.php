@@ -320,7 +320,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
-        $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id, $record->quote_type_id ?? null);
+        $bookPolicyDetails['isEnableDocumentUploadOrDelete'] = app(QuoteDocumentService::class)->isEnableDocumentUploadOrDelete($record->quote_status_id, $quoteType ?? null);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
         if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel || $bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Device) {
             $payments = $payments->map(function ($payment) use ($quoteType, $record) {
