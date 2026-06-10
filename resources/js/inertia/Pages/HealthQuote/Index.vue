@@ -1483,10 +1483,7 @@ const paymentStatusOptions = computed(() => {
         </p>
       </template>
       <template #item-emirates="item">
-        <span v-if="item.is_migrated && !item.is_policyholder_included">
-          -
-        </span>
-        <span v-else>{{ item?.emirate?.text ?? 'N/A' }}</span>
+        <span>{{ item?.emirate?.text ?? 'N/A' }}</span>
       </template>
       <template #item-health_team_type="item">
         {{ item.health_team_type ?? item.notional_team }}
