@@ -133,6 +133,7 @@ class BusinessQuoteController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         $subSources = app(LookupService::class)->getSubSource();
+        $leadTypeOptions = $this->lookupService->getCorplineLeadTypes();
 
         return inertia('CorpLineQuote/Index', compact(
             'quotes',
@@ -145,7 +146,8 @@ class BusinessQuoteController extends Controller
             'totalCount',
             'authorizedDays',
             'insurerAMLStatus',
-            'subSources'
+            'subSources',
+            'leadTypeOptions'
         ));
     }
 
