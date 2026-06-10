@@ -63,7 +63,7 @@ class AssignLeadPipe extends BaseAllocationPipe
                 ]
             )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [
+                    if (in_array($lead->health_team_type ?? $lead->notional_team, [
                         HealthTeamType::EBP,
                         HealthTeamType::RM_NB,
                         HealthTeamType::RM_SPEED,
