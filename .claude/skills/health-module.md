@@ -1,16 +1,17 @@
 ---
 name: health-module
-description: Health webform revamp — migration service, seeder patterns, revival/renewal integration, and related enums/models introduced in the 0-base, 2-seeder_updates, and 3-revival-renewal branches.
+description: Health webform revamp — migration service, seeder patterns, revival/renewal integration, pricing engine updates, and related enums/models.
 command: true
 ---
 
 # Health Module — Revamp Reference
 
-This skill covers the health webform revamp delivered across three merged PRs:
+This skill covers the health webform revamp delivered across four merged PRs:
 
 - **#11273** — `feat/health-webform-revamp/0-base`: core migration engine, enums, models, Vue form revamp, tests
 - **#11975** — `feat/health-webform-revamp/2-seeder_updates`: `SeedsIfMissing` trait refactor + seeder cleanup
 - **#12013** — `feat/health-webform-revamp/3-revival-renewal`: revival/renewal integration with the mutator
+- **WIP** — `feat/health-webform-revamp/6-pricing-engine-updates`: pricing corrections for insured policy holders, visa/salary band null-out logic, UI display of inactive visa categories
 
 ---
 
@@ -91,7 +92,30 @@ public function isMigrated(HealthQuote $healthQuote): bool
 }
 ```
 
-`migrateLead()` skips entity leads and already-migrated leads. Do not add extra guard conditions without checking this.
+`migrateLead()` skips entity leads. For **already-migrated** leads it now calls `applyPricingCorrectionsForMigratedLead()` instead of returning early — see the Pricing Corrections section below.
+
+---
+
+## Pricing Corrections for Migrated Leads (PR #6)
+
+When `migrateLead()` is called on an **already-migrated** lead, it calls `applyPricingCorrectionsForMigratedLead()` instead of returning early. This method:
+
+1. Loads members via `$this->queries->healthMembersQuery($healthQuote)`
+2. Finds the insured policy holder (`is_policy_holder && is_insured`)
+3. If no insured policy holder → returns immediately (no changes)
+4. If `hqr.visa_category_id === SPONSORED_EMPLOYER_FAMILY (4)` → sets to `EMPLOYMENT (9)`
+5. If `hqr.salary_band_id === NO_SALARY_DEPENDENTS_OR_CHILDREN (5)` → sets to `null`
+6. Saves the quote, then applies the same corrections to the policy holder member record only
+
+### `getSalaryBandId` — `isPolicyHolderInsured` parameter
+
+`getSalaryBandId($hqr, bool $isPolicyHolderInsured = false)` now accepts a second parameter. When `true` and the computed band is `NO_SALARY_DEPENDENTS_OR_CHILDREN`, it returns `null` instead. This mirrors the `getVisaCategoryId` pattern where insured policy holders are treated as employment rather than dependent.
+
+### `LookupService::getVisaCategoryAll()`
+
+New method cached under `VISA_CATEGORY_KEY . '_all'`. Returns all visa categories regardless of `is_active`. Used by the Show page controller to ensure inactive categories (e.g. id=4 `SPONSORED_EMPLOYER_FAMILY`) still resolve to their label for display. The active-only `getVisaCategory()` is still used for form dropdowns.
+
+The controller passes both `visaCategoryOptions` (active, for dropdowns) and `allVisaCategoryOptions` (all, for display) to the Inertia Show response. `HealthMemberDetails.vue` uses `allVisaCategoryOptions` for the display-text lookup with fallback to `visaCategoryOptions`.
 
 ---
 
