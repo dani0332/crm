@@ -2,17 +2,17 @@
 
 use App\Exports\HealthQuotesExport;
 use App\Models\HealthQuote;
-use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
+use App\Services\LookupService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 it('includes unassigned and age sixty columns in export and maps values correctly', function () {
     $healthQuoteService = Mockery::mock(HealthQuoteService::class);
-    $crudService = Mockery::mock(CRUDService::class);
-    $crudService->shouldReceive('getGenderOptions')->andReturn([]);
+    $lookupService = Mockery::mock(LookupService::class);
+    $lookupService->shouldReceive('getHealthGenderDisplayMap')->andReturn([]);
 
-    $export = new HealthQuotesExport($healthQuoteService, $crudService);
+    $export = new HealthQuotesExport($healthQuoteService, $lookupService);
     $headings = $export->headings();
 
     expect($headings)->toContain('UNASSIGNED')
