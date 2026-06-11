@@ -134,7 +134,7 @@ class EmbeddedTransactionService extends BaseService
 
     protected function triggerEpRetargetingWorkflowForBike(PersonalQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction): object
     {
-        $eventName = getAppStorageValueByKey(ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME, 'ep_rdx_retargeting_enable');
+        $eventName = getAppStorageValueByKey(ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME);
 
         if (empty($eventName)) {
             LoggerService::info('triggerEpRetargetingWorkflowForBike: Brevo configuration missing', extra: [
@@ -155,7 +155,7 @@ class EmbeddedTransactionService extends BaseService
         return (object) ['status_code' => $apiResponse, 'message' => $apiResponse == Response::HTTP_OK ? 'Bike EP retargeting workflow triggered' : 'Failed to trigger bike EP retargeting workflow'];
     }
 
-    public function triggerRetargetingEpReminderForBike(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode)
+    public function triggerRetargetingEpReminderForBike(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode): object
     {
         $quote = PersonalQuote::with('bikeQuote', 'advisor')->find($quoteId);
         if (empty($quote)) {
@@ -182,7 +182,6 @@ class EmbeddedTransactionService extends BaseService
             return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bike EP retargeting template not configured'];
         }
 
-        // For Bike EPs, we will trigger the reminder email directly without going through Bird workflow
         $emailData = [
             'templateId' => $templateId,
             'quoteId' => $quote->id,
@@ -207,13 +206,24 @@ class EmbeddedTransactionService extends BaseService
 
         LoggerService::info('triggerRetargetingEpReminderForBike: ', extra: ['data' => $emailData]);
 
-        // Assuming there's a dedicated method to send bike EP reminder emails
         return $this->sendBikeEpRetargetingEmail($emailData, (int) $templateId);
+    }
+
+    public function handleTriggerEpRetargetingEmail(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode): object
+    {
+        $isTriggerAllowed = $this->getEpRetargetingReminderData($quoteId, $quoteTypeId, $embeddedTransactionCode)?->getStatusCode() === Response::HTTP_OK;
+
+        if (! $isTriggerAllowed) {
+            return (object) ['status_code' => Response::HTTP_OK, 'message' => 'Criteria not met for triggering the email.'];
+        }
+
+        LoggerService::info("Trigger EP Retargeting Reminder Email - Quote ID: {$quoteId}, Quote Type ID: {$quoteTypeId}, Embedded Transaction Code: {$embeddedTransactionCode}");
+
+        return $this->triggerRetargetingEpReminderForBike($quoteId, $quoteTypeId, $embeddedTransactionCode);
     }
 
     protected function sendBikeEpRetargetingEmail(array $emailData, int $templateId): object
     {
-
         $responseCode = $this->sendEmailCustomerService->sendBikeEpRetargetingEmail(
             $templateId,
             $emailData,

@@ -6,16 +6,15 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\GetEpWorkflowDataRequest;
+use App\Http\Requests\Api\TriggerEpRetargetingEmailRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
 use App\Services\EmbeddedTransactionService;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class EmbeddedProductController extends Controller
@@ -58,33 +57,14 @@ class EmbeddedProductController extends Controller
         );
     }
 
-    public function triggerEpRetargetingEmail(Request $request): JsonResponse
+    public function triggerEpRetargetingEmail(TriggerEpRetargetingEmailRequest $request): JsonResponse
     {
-        $data = null;
-        if ($request->has('attributes')) {
-            $data = isset($request['attributes']['data']) ? $request['attributes']['data'] : [];
-            if (! isset($data['quoteId']) || ! isset($data['quoteTypeId']) || ! isset($data['embeddedTransactionCode'])) {
-                LoggerService::info('Trigger EP Retargeting - Required attributes are missing', extra: ['request' => $request]);
+        $quoteId = $request->integer('attributes.data.quoteId');
+        $quoteTypeId = $request->integer('attributes.data.quoteTypeId');
+        $embeddedTransactionCode = $request->str('attributes.data.embeddedTransactionCode')->value();
 
-                return response()->json(['message' => 'Required attributes are missing.'], Response::HTTP_BAD_REQUEST);
-            }
-        }
-        $quoteId = (int) $data['quoteId'];
-        $quoteTypeId = (int) $data['quoteTypeId'];
-        $embeddedTransactionCode = $data['embeddedTransactionCode'];
-
-        $isTriggerAllowed = $this->embeddedTransactionService->getEpRetargetingReminderData($quoteId, $quoteTypeId, $embeddedTransactionCode)?->getStatusCode() === Response::HTTP_OK;
-
-        if (! $isTriggerAllowed) {
-            return response()->json(['message' => 'Criteria not met for triggering the email.']);
-        }
-
-        // If criteria is matched, proceed to trigger the email
-
-        LoggerService::info("Trigger EP Retargeting Reminder Email - Quote ID: {$quoteId}, Quote Type ID: {$quoteTypeId}, Embedded Transaction Code: {$embeddedTransactionCode}, Is Trigger Allowed: ".json_encode($isTriggerAllowed));
-
-        $response = $this->embeddedTransactionService->triggerRetargetingEpReminderForBike($quoteId, $quoteTypeId, $embeddedTransactionCode);
-
-        return response()->json($response);
+        return response()->json(
+            $this->embeddedTransactionService->handleTriggerEpRetargetingEmail($quoteId, $quoteTypeId, $embeddedTransactionCode)
+        );
     }
 }

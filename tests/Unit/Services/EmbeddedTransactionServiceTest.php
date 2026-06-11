@@ -484,6 +484,22 @@ describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
     });
 });
 
+describe('handleTriggerEpRetargetingEmail', function () {
+    test('returns criteria not met when eligibility check fails', function () {
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $repoMock->shouldReceive('fetchFindEmbededTransactionWithDetails')
+            ->once()
+            ->andReturn(null);
+
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
+        $result = $service->handleTriggerEpRetargetingEmail($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
+
+        expect($result)->toBeObject();
+        expect($result->status_code)->toBe(Response::HTTP_OK);
+        expect($result->message)->toBe('Criteria not met for triggering the email.');
+    });
+});
+
 describe('isRetargetingEpReminderEnabled', function () {
     test('return a boolean', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
