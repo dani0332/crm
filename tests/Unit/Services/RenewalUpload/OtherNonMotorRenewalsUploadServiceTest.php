@@ -14,20 +14,16 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Services\OtherNonMotorRenewalsUploadService;
-use App\Services\QuoteDocumentService;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
 });
 
-afterEach(function () {
-    Mockery::close();
-});
 
 function makeOtherNonMotorService(): OtherNonMotorRenewalsUploadService
 {
-    return new OtherNonMotorRenewalsUploadService(\Mockery::mock(QuoteDocumentService::class));
+    return new OtherNonMotorRenewalsUploadService();
 }
 
 function makeOtherNonMotorQuote(array $overrides = []): PersonalQuote
@@ -114,4 +110,69 @@ test('skips lead when advisor record is missing at processing time', function ()
         ->and($lead->cannot_upload)->toBe(1)
         ->and($lead->good)->toBe(0)
         ->and($quote->advisor_id)->toBeNull();
+});
+
+test('skips lead when ref-id resolves to a disallowed quote type', function () {
+    // Business (quote_type_id=5) is not in the allowed list
+    $advisor = User::factory()->create(['email' => 'advisor@example.com']);
+    $quote = makeOtherNonMotorQuote(['quote_type_id' => QuoteTypes::BUSINESS->id()]);
+    $lead = makeUploadLead();
+    $process = makePendingProcess($lead, [
+        'ref_id' => $quote->code,
+        'advisor_email' => $advisor->email,
+    ]);
+
+    $service = makeOtherNonMotorService();
+    $service->processSingle($lead->id, $process->id);
+
+    $process->refresh();
+    $lead->refresh();
+    $quote->refresh();
+
+    expect($process->status)->toBe(RenewalProcessStatuses::BAD_DATA)
+        ->and($lead->cannot_upload)->toBe(1)
+        ->and($lead->good)->toBe(0)
+        ->and($quote->advisor_id)->toBeNull();
+});
+
+test('assigns advisor for corpline renewal lead', function () {
+    $advisor = User::factory()->create(['email' => 'advisor@example.com']);
+    $quote = makeOtherNonMotorQuote(['quote_type_id' => QuoteTypes::CORPLINE->id()]);
+    $lead = makeUploadLead();
+    $process = makePendingProcess($lead, [
+        'ref_id' => $quote->code,
+        'advisor_email' => $advisor->email,
+    ]);
+
+    $service = makeOtherNonMotorService();
+    $service->processSingle($lead->id, $process->id);
+
+    $process->refresh();
+    $lead->refresh();
+    $quote->refresh();
+
+    expect($process->status)->toBe(RenewalProcessStatuses::PROCESSED)
+        ->and($lead->good)->toBe(1)
+        ->and($quote->advisor_id)->toBe($advisor->id);
+});
+
+test('assigns advisor for group medical renewal lead', function () {
+    $advisor = User::factory()->create(['email' => 'advisor@example.com']);
+    $quote = makeOtherNonMotorQuote(['quote_type_id' => QuoteTypes::GROUP_MEDICAL->id()]);
+    $lead = makeUploadLead();
+    $process = makePendingProcess($lead, [
+        'ref_id' => $quote->code,
+        'advisor_email' => $advisor->email,
+    ]);
+
+    $service = makeOtherNonMotorService();
+    $service->processSingle($lead->id, $process->id);
+
+    $process->refresh();
+    $lead->refresh();
+    $quote->refresh();
+
+    expect($process->status)->toBe(RenewalProcessStatuses::PROCESSED)
+        ->and($lead->good)->toBe(1)
+        ->and($quote->advisor_id)->toBe($advisor->id);
 });

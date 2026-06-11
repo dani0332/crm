@@ -31,7 +31,8 @@ class OtherNonMotorRenewalsUploadService
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
-            QuoteTypes::BUSINESS->id(),
+            QuoteTypes::CORPLINE->id(),
+            QuoteTypes::GROUP_MEDICAL->id(),
         ];
     }
 
