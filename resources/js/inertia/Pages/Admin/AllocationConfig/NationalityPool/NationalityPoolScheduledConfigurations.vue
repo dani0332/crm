@@ -102,6 +102,10 @@ const hideTooltip = () => {
   tooltip.value.visible = false;
 };
 
+const canEditNationalityPool = computed(() =>
+  useCan(page.props.permissionsEnum?.NATIONALITY_POOL_CONFIG_EDIT ?? ''),
+);
+
 defineExpose({
   loadData,
 });
@@ -200,6 +204,7 @@ defineExpose({
                   outlined
                   style="flex: 1"
                   @click.prevent="editLog(item)"
+                  :disabled="!canEditNationalityPool"
                 >
                   Edit
                 </x-button>
@@ -209,6 +214,7 @@ defineExpose({
                   outlined
                   style="flex: 1"
                   @click.prevent="deleteLog(item)"
+                  :disabled="!canEditNationalityPool"
                 >
                   Delete
                 </x-button>
