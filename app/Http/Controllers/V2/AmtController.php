@@ -47,6 +47,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
 use App\Services\GroupMedicalEcommerceJourneyLinkService;
+use App\Services\GroupMedicalQuoteCategoryService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -713,6 +714,7 @@ class AmtController extends Controller
             'emirates' => $emirates,
             'isEmirateDisabled' => true,
             'leadSourceParams' => [],
+            'categoryCount' => app(GroupMedicalQuoteCategoryService::class)->getCategoryCountByQuoteId($record->id),
             ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
         ]);
     }

@@ -15,6 +15,7 @@ const props = defineProps({
   healthThirdPartyAdministrators: { type: Array, default: () => [] },
   groupMedicalNetworks: { type: Array, default: () => [] },
   groupMedicalCategories: { type: Array, default: () => [] },
+  categoryCount: { type: Number }
 });
 
 const notification = useToast();
@@ -190,7 +191,7 @@ const quoteForm = useForm({
         ? 1
         : 0,
   health_plan_type_id: props.quote?.health_plan_type_id ?? null,
-  number_of_categories: initialGmRows.length,
+  number_of_categories: props.categoryCount, //initialGmRows.length,
   categories: initialGmRows,
 });
 
@@ -641,6 +642,15 @@ function onSubmit(isValid) {
           :required="!isHealthPlanTypeSelectDisabled"
           :error="quoteForm.errors.health_plan_type_id"
           tooltip="Plan types are filtered by the selected emirate of registration."
+      />
+
+      <x-input
+          v-model="quoteForm.number_of_categories"
+          type="number"
+          class="w-full"
+          :rules="[isNumber]"
+          :error="quoteForm.errors.number_of_categories"
+          label="Number of categories"
         />
 
         <div
