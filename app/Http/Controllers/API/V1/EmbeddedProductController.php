@@ -12,8 +12,10 @@ use App\Jobs\EP\SendEPJob;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
 use App\Services\EmbeddedTransactionService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class EmbeddedProductController extends Controller
@@ -54,5 +56,35 @@ class EmbeddedProductController extends Controller
             (int) $request->quoteTypeId,
             $request->embeddedTransactionCode,
         );
+    }
+
+    public function triggerEpRetargetingEmail(Request $request): JsonResponse
+    {
+        $data = null;
+        if ($request->has('attributes')) {
+            $data = isset($request['attributes']['data']) ? $request['attributes']['data'] : [];
+            if (! isset($data['quoteId']) || ! isset($data['quoteTypeId']) || ! isset($data['embeddedTransactionCode'])) {
+                LoggerService::info('Trigger EP Retargeting - Required attributes are missing', extra: ['request' => $request]);
+
+                return response()->json(['message' => 'Required attributes are missing.'], Response::HTTP_BAD_REQUEST);
+            }
+        }
+        $quoteId = (int) $data['quoteId'];
+        $quoteTypeId = (int) $data['quoteTypeId'];
+        $embeddedTransactionCode = $data['embeddedTransactionCode'];
+
+        $isTriggerAllowed = $this->embeddedTransactionService->getEpRetargetingReminderData($quoteId, $quoteTypeId, $embeddedTransactionCode)?->getStatusCode() === Response::HTTP_OK;
+
+        if (! $isTriggerAllowed) {
+            return response()->json(['message' => 'Criteria not met for triggering the email.']);
+        }
+
+        // If criteria is matched, proceed to trigger the email
+
+        LoggerService::info("Trigger EP Retargeting Reminder Email - Quote ID: {$quoteId}, Quote Type ID: {$quoteTypeId}, Embedded Transaction Code: {$embeddedTransactionCode}, Is Trigger Allowed: ".json_encode($isTriggerAllowed));
+
+        $response = $this->embeddedTransactionService->triggerRetargetingEpReminderForBike($quoteId, $quoteTypeId, $embeddedTransactionCode);
+
+        return response()->json($response);
     }
 }

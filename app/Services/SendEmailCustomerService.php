@@ -2206,7 +2206,7 @@ class SendEmailCustomerService extends BaseService
         $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData['customerEmail']);
-        $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status, 'Send Update to Customer');
+        $this->emailStatusService->addEmailStatus((object) $emailData, $messageId, $subject, $status, 'RDX Retargeting Email to Customer');
 
         return $responseCode;
     }

@@ -2,8 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Enums\QuoteStatusEnum;
-use App\Models\EmbeddedTransaction;
 use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
@@ -46,24 +44,5 @@ class MDX extends EmbeddedProduct
         $data['contribution_amount'] = $data['plan_currency']." {$premium}  (Including VAT) Per Annum";
 
         return $data;
-    }
-
-    public function isDisabled(EmbeddedTransaction $epTransaction): bool
-    {
-        if ($this->preCheckEpTransactionIsDisabled($epTransaction)) {
-            return true;
-        }
-
-        $quote = $epTransaction->quoteRequest;
-        if ($quote === null) {
-            return true;
-        }
-
-        $isCriteriaUnmatched = ! $this->isCriteriaMatched($quote);
-        $isPolicyBookedDateValid = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked
-            ? isValidDate($quote->policy_booking_date) && Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) <= 30
-            : true;
-
-        return $isCriteriaUnmatched || ! $isPolicyBookedDateValid;
     }
 }

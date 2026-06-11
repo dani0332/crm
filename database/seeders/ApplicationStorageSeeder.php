@@ -1420,6 +1420,15 @@ class ApplicationStorageSeeder extends Seeder
     private function seedRdxRetargetingEmailConfigurations()
     {
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME],
+            [
+                'value' => 'ep_rdx_retargeting_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
             [
                 'value' => 'alfred@notify.insurancemarket.ae',

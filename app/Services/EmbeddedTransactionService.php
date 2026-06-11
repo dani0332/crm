@@ -74,7 +74,7 @@ class EmbeddedTransactionService extends BaseService
         foreach ($epTransactions as $epTransaction) {
             try {
                 if ($epTransaction->quote_type_id === QuoteTypeId::Bike) {
-                    $result = $this->triggerRetargetingEpReminderForBike($quote, $quoteTypeId, $epTransaction);
+                    $result = $this->triggerEpRetargetingWorkflowForBike($quote, $quoteTypeId, $epTransaction);
                 } else {
                     $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
                 }
@@ -132,33 +132,49 @@ class EmbeddedTransactionService extends BaseService
         return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
-    protected function triggerRetargetingEpReminderForBike(PersonalQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
+    protected function triggerEpRetargetingWorkflowForBike(PersonalQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction): object
     {
-        // For Bike EPs, we will trigger the reminder email directly without going through Bird workflow
+        $eventName = getAppStorageValueByKey(ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME, 'ep_rdx_retargeting_enable');
+
+        if (empty($eventName)) {
+            LoggerService::info('triggerEpRetargetingWorkflowForBike: Brevo configuration missing', extra: [
+                'hasEventName' => ! empty($eventName),
+            ]);
+
+            return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Brevo Bike EP retargeting workflow not configured'];
+        }
+
         $emailData = [
             'quoteId' => $quote->id,
             'quoteTypeId' => $quoteTypeId,
-            'refId' => $quote->code,
-            'uuid' => $quote->uuid,
             'embeddedTransactionCode' => $epTransaction->code,
-            'customerEmail' => $quote->email,
-            'customerName' => $quote->full_name,
-            'advisor' => [
-                'email' => $quote->advisor?->email ?? null,
-                'name' => $quote->advisor?->full_name ?? null,
-            ],
-            'reminderNumber' => 1,
         ];
 
-        LoggerService::info('triggerRetargetingEpReminderForBike: ', extra: ['data' => $emailData]);
+        $apiResponse = SIBService::createWorkflowEvent($eventName, $quote, [], $emailData);
 
-        // Assuming there's a dedicated method to send bike EP reminder emails
-        return $this->sendBikeEpRetargetingEmail($emailData);
+        return (object) ['status_code' => $apiResponse, 'message' => $apiResponse == Response::HTTP_OK ? 'Bike EP retargeting workflow triggered' : 'Failed to trigger bike EP retargeting workflow'];
     }
 
-    protected function sendBikeEpRetargetingEmail(array $emailData): object
+    public function triggerRetargetingEpReminderForBike(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode)
     {
-        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE);
+        $quote = PersonalQuote::with('bikeQuote', 'advisor')->find($quoteId);
+        if (empty($quote)) {
+            return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Quote not found'];
+        }
+        $bikeQuote = $quote->bikeQuote;
+        if (empty($bikeQuote)) {
+            return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bike quote not found'];
+        }
+        $epTransaction = $this->embeddedTransactionRepo->fetchFindEmbededTransactionWithDetails(
+            $quoteId,
+            $quoteTypeId,
+            $embeddedTransactionCode,
+            isActive: true,
+            paymentStatusId: PaymentStatusEnum::DRAFT,
+            quoteStatusId: QuoteStatusEnum::PolicyBooked,
+        );
+
+        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE, 892);
 
         if (empty($templateId)) {
             LoggerService::info('sendBikeEpRetargetingEmail: Template ID not configured');
@@ -166,8 +182,40 @@ class EmbeddedTransactionService extends BaseService
             return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bike EP retargeting template not configured'];
         }
 
+        // For Bike EPs, we will trigger the reminder email directly without going through Bird workflow
+        $emailData = [
+            'templateId' => $templateId,
+            'quoteId' => $quote->id,
+            'quoteTypeId' => $quoteTypeId,
+            'refId' => $quote->code,
+            'uuid' => $quote->uuid,
+            'embeddedTransactionCode' => $epTransaction->code,
+            'customerId' => $quote->customer_id,
+            'customerEmail' => $quote->email,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'vehicleName' => $bikeQuote->bikeMake?->text.' '.$bikeQuote->bikeModel?->text,
+            'buyNowUrl' => config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$quote->uuid.'/payment/?'.http_build_query([
+                'planId' => $bikeQuote->plans?->id,
+                'providerCode' => $bikeQuote->plans?->insuranceProvider?->code,
+                'selectEpShortCode' => $epTransaction->product?->embeddedProduct?->short_code,
+            ]),
+            'advisor' => [
+                'email' => $quote->advisor?->email ?? null,
+                'name' => $quote->advisor?->name ?? null,
+            ],
+        ];
+
+        LoggerService::info('triggerRetargetingEpReminderForBike: ', extra: ['data' => $emailData]);
+
+        // Assuming there's a dedicated method to send bike EP reminder emails
+        return $this->sendBikeEpRetargetingEmail($emailData, (int) $templateId);
+    }
+
+    protected function sendBikeEpRetargetingEmail(array $emailData, int $templateId): object
+    {
+
         $responseCode = $this->sendEmailCustomerService->sendBikeEpRetargetingEmail(
-            (int) $templateId,
+            $templateId,
             $emailData,
             'bike-ep-retargeting',
         );
