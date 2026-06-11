@@ -59,5 +59,15 @@ yes | doppler run -- php artisan horizon:terminate #terminates so its restarted 
 
 yes | doppler run -- php artisan db:seed
 
-doppler run -- /usr/bin/supervisord -c /etc/supervisord.conf
-tail -f /dev/null
+# Single app supervisord (/etc/supervisord.conf). Do not use "service supervisor"
+# (that is the Debian package and uses /var/log/supervisor/ as root).
+if [ -f /tmp/supervisord.pid ]; then
+    pid=$(cat /tmp/supervisord.pid 2>/dev/null)
+    if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+        echo "supervisord already running (pid ${pid})"
+        exit 0
+    fi
+    rm -f /tmp/supervisord.pid /tmp/supervisor.sock
+fi
+
+exec doppler run -- /usr/bin/supervisord -c /etc/supervisord.conf
