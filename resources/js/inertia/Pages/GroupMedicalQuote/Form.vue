@@ -678,26 +678,6 @@ function onSubmit(isValid) {
                     : 'category rows'
                 }}
               </span>
-              <x-tooltip placement="left">
-                <x-button
-                  type="button"
-                  size="sm"
-                  color="primary"
-                  class="whitespace-nowrap"
-                  :disabled="
-                    quoteForm.categories.length >= gmCategoryRowMax
-                  "
-                  @click.prevent="addCategoryRow"
-                >
-                  + Add row
-                </x-button>
-                <template #tooltip>
-                  <span
-                    >Add another category row (up to
-                    {{ gmCategoryRowMax }}).</span
-                  >
-                </template>
-              </x-tooltip>
             </div>
           </div>
 
@@ -750,15 +730,9 @@ function onSubmit(isValid) {
                   </th>
                   <th
                     scope="col"
-                    class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5 text-right"
+                    class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     NUMBER OF PEOPLE
-                  </th>
-                  <th
-                    scope="col"
-                    class="w-[4.5rem] whitespace-nowrap px-2 py-3.5 text-center"
-                  >
-                    <span class="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
@@ -774,20 +748,13 @@ function onSubmit(isValid) {
                     {{ idx + 1 }}
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
-                    <x-select
-                      v-model="row.groupMedicalCategoryId"
-                      :options="memberCategoryOptionsForRow(idx)"
-                      class="w-full min-w-[11rem]"
-                      placeholder="Select category"
-                      filterable
-                      :rules="[isRequired]"
-                      required
-                      :error="
-                        quoteForm.errors[
-                          `categories.${idx}.groupMedicalCategoryId`
-                        ]
-                      "
-                    />
+                    <span class="block text-sm text-gray-800">
+                      {{
+                        memberCategoryOptionsForRow(idx).find(
+                          o => o.value == row.groupMedicalCategoryId,
+                        )?.label ?? '-'
+                      }}
+                    </span>
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
@@ -867,24 +834,6 @@ function onSubmit(isValid) {
                       "
                       :min="1"
                     />
-                  </td>
-                  <td class="px-2 py-3 text-center align-middle">
-                    <x-tooltip placement="left">
-                      <x-button
-                        type="button"
-                        size="sm"
-                        color="error"
-                        class="!min-h-[2.25rem] !min-w-[2.25rem] !px-2"
-                        :disabled="quoteForm.categories.length <= 1"
-                        :aria-label="`Remove category row ${idx + 1}`"
-                        @click.prevent="removeCategoryRow(idx)"
-                      >
-                        <x-icon icon="xmark" class="h-4 w-4" />
-                      </x-button>
-                      <template #tooltip>
-                        <span>Remove this row</span>
-                      </template>
-                    </x-tooltip>
                   </td>
                 </tr>
               </tbody>

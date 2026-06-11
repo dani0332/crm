@@ -480,6 +480,7 @@ class AmtController extends Controller
             'groupMedicalType:id,text,description',
             'natureOfCompanyActivity:id,text',
             'groupMedicalCategories',
+            'businessActivity:id,name',
         ]);
         abort_if(! $record, 404);
         /* Start - Temporarily adding for correcting historic data */

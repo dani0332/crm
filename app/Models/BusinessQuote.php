@@ -275,6 +275,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
 
+    public function businessActivity(): BelongsTo
+    {
+        return $this->belongsTo(BusinessActivity::class);
+    }
+
     /**
      * Check if quote can be updated to transaction approved status
      * Only allowed if quote has both payment link sent and initiated status in history

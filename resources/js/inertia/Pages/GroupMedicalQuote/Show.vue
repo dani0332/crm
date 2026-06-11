@@ -136,11 +136,11 @@ const onCopyGmEcommerceJourneyLink = () => {
 };
 
 const natureOfCompanyActivityText = computed(
-  () => props.quote?.nature_of_company_activity?.text ?? '—',
+  () => props.quote?.business_activity?.name ?? '—',
 );
 
 const hasExistingGroupHealthInsurancePolicyText = computed(() => {
-  const value = props.quote?.has_existing_group_health_insurance;
+  const value = props.quote?.has_existing_group_policy;
 
   if (value === true || value === 1 || value === '1') {
     return 'Yes';
@@ -1171,7 +1171,7 @@ function handleOcrNotification(event) {
                 >
                   <div class="grid grid-cols-2">
                     <dt
-                      class="font-medium uppercase tracking-wide text-gray-600 pb-1 flex items-center gap-1"
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1 flex gap-1"
                     >
                       <x-tooltip placement="bottom">
                         <span
