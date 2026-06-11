@@ -12,8 +12,10 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $db = DB::connection('sqlite');
 
-    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()]);
-    TestDataSeeder::seedRolePermissions('Admin', [PermissionsEnum::TeamThresholdView]);
+    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()], [
+        PermissionsEnum::TeamThresholdView,
+        PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+    ]);
 
     $this->actingAs($this->admin);
     $this->withoutMiddleware(PreventRequestForgery::class);

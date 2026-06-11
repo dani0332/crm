@@ -448,6 +448,12 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
     public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
 
+    /**
+     * Bird workflow URL for notifying compliance when a quote AML risk score is in the High Risk band (>= 35).
+     * Shape of POST body is defined by the Bird flow; see {@see NotifyHighRiskScoreBirdJob}.
+     */
+    public const BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL = 'BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL';
+
     // Health Team Routing
     public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';

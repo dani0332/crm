@@ -154,6 +154,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterIn('quote_status_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
             ->filterIn('tier_id', requestParams: $requestParams)
+            ->filterIn('nationality_id', requestParams: $requestParams)
             ->filterBy('vehicle_type_id', requestParams: $requestParams)
             ->filterBy('car_type_insurance_id', requestParams: $requestParams)
             ->filterBy('renewal_batch', requestParams: $requestParams)

@@ -59,6 +59,12 @@ class HomeEmailService extends BaseService
             return false;
         }
 
+        if (in_array($homeQuote->source, [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED])) {
+            LoggerService::info('sendHomeOCBIntroEmail - Suppressing OCB Email because lead source is '.$homeQuote->source);
+
+            return;
+        }
+
         // Build email data
         $emailData = $this->buildEmailData(
             $lead,
