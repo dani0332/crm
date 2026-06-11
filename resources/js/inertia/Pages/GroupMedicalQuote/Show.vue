@@ -950,8 +950,6 @@ function handleOcrNotification(event) {
                 <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
               </div>
 
-            
-
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -1090,7 +1088,10 @@ function handleOcrNotification(event) {
                     v-if="can(permissionsEnum.GMQuoteCopyLink)"
                     class="flex flex-wrap items-center gap-2"
                   >
-                    <x-tooltip v-if="!isGmEcommerceCopyLinkDisabled" placement="top">
+                    <x-tooltip
+                      v-if="!isGmEcommerceCopyLinkDisabled"
+                      placement="top"
+                    >
                       <x-button
                         size="sm"
                         color="orange"
@@ -1101,8 +1102,8 @@ function handleOcrNotification(event) {
                         <span class="border-b border-dotted">Copy Link</span>
                       </x-button>
                       <template #tooltip>
-                        Copy this link and send it to the customer so they
-                        can resume and complete their application.
+                        Copy this link and send it to the customer so they can
+                        resume and complete their application.
                       </template>
                     </x-tooltip>
                     <x-tooltip v-else placement="top">
@@ -1221,7 +1222,9 @@ function handleOcrNotification(event) {
                         <th class="whitespace-nowrap px-3 py-3">S/No</th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Category
                             </span>
                             <template #tooltip>
@@ -1233,7 +1236,9 @@ function handleOcrNotification(event) {
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Existing insurance provider
                             </span>
                             <template #tooltip>
@@ -1244,7 +1249,9 @@ function handleOcrNotification(event) {
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Existing third party administrator
                             </span>
                             <template #tooltip>
@@ -1256,7 +1263,9 @@ function handleOcrNotification(event) {
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Existing network
                             </span>
                             <template #tooltip>
@@ -1267,7 +1276,9 @@ function handleOcrNotification(event) {
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Existing policy renewal date
                             </span>
                             <template #tooltip>
@@ -1279,7 +1290,9 @@ function handleOcrNotification(event) {
                         </th>
                         <th class="whitespace-nowrap px-3 py-3">
                           <x-tooltip placement="bottom">
-                            <span class="cursor-help underline decoration-dotted decoration-white">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
                               Number of people
                             </span>
                             <template #tooltip>
