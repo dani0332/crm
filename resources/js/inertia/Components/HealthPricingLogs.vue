@@ -198,7 +198,10 @@ const onLoadLogData = async () => {
             <dt class="font-medium">Created At:</dt>
             <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2" v-if="selectedLog.status === 'failed'">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="selectedLog.status === 'failed'"
+          >
             <dt class="font-medium">Reason:</dt>
             <dd>{{ selectedLog.reason }}</dd>
           </div>
