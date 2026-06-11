@@ -1211,6 +1211,7 @@ class CRUDController extends Controller
                 $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
                 $maritalStatusOptions = $this->dropdownSourceService->getDropdownSource('marital_status_id');
                 $visaCategoryOptions = $this->dropdownSourceService->getDropdownSource('visa_category');
+                $allVisaCategoryOptions = app(LookupService::class)->getVisaCategoryAll();
                 $policyHolderCategoryOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_CATEGORY->value);
                 $insureCodeOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::HEALTH_INSURE_OPTIONS->value, leadSource: $record->source);
                 $policyHolderOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_OPTIONS->value, leadSource: $record->source);
@@ -1376,6 +1377,7 @@ class CRUDController extends Controller
                     'archivedDocuments' => $archivedDocuments,
                     'maritalStatusOptions' => $maritalStatusOptions,
                     'visaCategoryOptions' => $visaCategoryOptions,
+                    'allVisaCategoryOptions' => $allVisaCategoryOptions,
                     'policyHolderCategoryOptions' => $policyHolderCategoryOptions,
                     'insureCodeOptions' => $insureCodeOptions,
                     'policyHolderOptions' => $policyHolderOptions,
