@@ -68,7 +68,9 @@ function buildInitialCategoryRows(quote) {
   const rowMax = getGmCategoryRowMax();
   const intake = quote?.categories;
   if (Array.isArray(intake) && intake.length > 0) {
-    return intake.slice(0, rowMax).map(row => ({ ...emptyCategoryRow(), ...row }));
+    return intake
+      .slice(0, rowMax)
+      .map(row => ({ ...emptyCategoryRow(), ...row }));
   }
   const savedN = parseInt(quote?.number_of_categories, 10);
   const n = Math.min(rowMax, Math.max(1, savedN || 1));
@@ -130,8 +132,13 @@ async function fetchNetworksForTpa(tpaId) {
   if (!tpaId || networksCache.value[tpaId] !== undefined) return;
   networksFetching.value[tpaId] = true;
   try {
-    const { data } = await axios.get(route('amt.networks'), { params: { tpa_id: tpaId } });
-    networksCache.value[tpaId] = data.map(n => ({ value: n.id, label: n.text }));
+    const { data } = await axios.get(route('amt.networks'), {
+      params: { tpa_id: tpaId },
+    });
+    networksCache.value[tpaId] = data.map(n => ({
+      value: n.id,
+      label: n.text,
+    }));
   } catch {
     networksCache.value[tpaId] = [];
   } finally {
@@ -213,9 +220,13 @@ const totalPeopleToBeInsured = computed(() =>
   }, 0),
 );
 
-watch(totalPeopleToBeInsured, val => {
-  quoteForm.number_of_employees = val > 0 ? val : null;
-}, { immediate: true });
+watch(
+  totalPeopleToBeInsured,
+  val => {
+    quoteForm.number_of_employees = val > 0 ? val : null;
+  },
+  { immediate: true },
+);
 
 /**
  * Group medical category options for one row; disables categories already picked elsewhere.
@@ -369,9 +380,7 @@ watch(
 onMounted(() => {
   const uniqueTpaIds = [
     ...new Set(
-      quoteForm.categories
-        .map(row => row.healthTpaId)
-        .filter(id => !!id),
+      quoteForm.categories.map(row => row.healthTpaId).filter(id => !!id),
     ),
   ];
   uniqueTpaIds.forEach(fetchNetworksForTpa);
@@ -684,9 +693,7 @@ function onSubmit(isValid) {
                   size="sm"
                   color="primary"
                   class="whitespace-nowrap"
-                  :disabled="
-                    quoteForm.categories.length >= gmCategoryRowMax
-                  "
+                  :disabled="quoteForm.categories.length >= gmCategoryRowMax"
                   @click.prevent="addCategoryRow"
                 >
                   + Add row
@@ -810,18 +817,16 @@ function onSubmit(isValid) {
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
                       filterable
-                      :error="
-                        quoteForm.errors[
-                          `categories.${idx}.healthTpaId`
-                        ]
-                      "
+                      :error="quoteForm.errors[`categories.${idx}.healthTpaId`]"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.groupMedicalNetworkId"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="!row.healthTpaId || isNetworkLoadingForRow(idx)"
+                      :disabled="
+                        !row.healthTpaId || isNetworkLoadingForRow(idx)
+                      "
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
@@ -844,11 +849,7 @@ function onSubmit(isValid) {
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
-                      :error="
-                        quoteForm.errors[
-                          `categories.${idx}.renewalDate`
-                        ]
-                      "
+                      :error="quoteForm.errors[`categories.${idx}.renewalDate`]"
                     />
                   </td>
                   <td
@@ -861,9 +862,7 @@ function onSubmit(isValid) {
                       size="sm"
                       :rules="[isRequired, isNumber, maxValidation(2147483645)]"
                       :error="
-                        quoteForm.errors[
-                          `categories.${idx}.numberOfPeople`
-                        ]
+                        quoteForm.errors[`categories.${idx}.numberOfPeople`]
                       "
                       :min="1"
                     />
@@ -894,9 +893,7 @@ function onSubmit(isValid) {
             v-if="duplicateCategoryMessage || quoteForm.errors.categories"
             class="mt-3 text-sm text-error"
           >
-            {{
-              duplicateCategoryMessage || quoteForm.errors.categories
-            }}
+            {{ duplicateCategoryMessage || quoteForm.errors.categories }}
           </p>
         </div>
 
