@@ -720,17 +720,26 @@ const leadTypeForm = useForm({
 
 const onLeadTypeUpdate = () => {
   if (!leadTypeForm.lead_type) {
-    notification.error({ title: 'Please select a lead type before saving.', position: 'top' });
+    notification.error({
+      title: 'Please select a lead type before saving.',
+      position: 'top',
+    });
     return;
   }
 
   leadTypeForm.patch(route('business.updateLeadType', props.quote.uuid), {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success({ title: 'Lead type updated successfully.', position: 'top' });
+      notification.success({
+        title: 'Lead type updated successfully.',
+        position: 'top',
+      });
     },
     onError: () => {
-      notification.error({ title: 'Failed to update lead type.', position: 'top' });
+      notification.error({
+        title: 'Failed to update lead type.',
+        position: 'top',
+      });
     },
   });
 };
