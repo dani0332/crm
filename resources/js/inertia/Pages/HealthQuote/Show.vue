@@ -2532,11 +2532,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATE OF VISA</dt>
                   <dd>
-                    {{
-                      !isMigrated || (isMigrated && showAdditionalFields)
-                        ? quote.emirate_of_your_visa_id_text
-                        : '-'
-                    }}
+                    {{ quote.emirate_of_your_visa_id_text }}
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
