@@ -126,12 +126,17 @@ const editForm = reactive({
   isManualPlan: props.selectedPlan.isManualPlan,
   version: props.selectedPlan.version,
   isApi: props.selectedPlan.isApi,
+  isRateCalculator: props.selectedPlan.isRateCalculator,
   isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi,
   overallLoading: props?.selectedPlan?.overallLoading ?? 0,
   discountPremium: props?.selectedPlan?.discountPremium ?? 0,
   isInstantPolicy: props?.selectedPlan?.instantPolicy ?? false,
   ridersPrice: props?.selectedPlan?.ridersPrice ?? 0,
 });
+
+const isPlanGeneralInfoEditable = computed(
+  () => !editForm.isApi && !editForm.isRateCalculator,
+);
 
 // Make actualPremium a computed value to ensure reactivity
 const actualPremium = computed(() => {
@@ -172,6 +177,11 @@ const totalPrice = computed(() => {
 
   // manual plan
   return actualPremium.value;
+});
+
+/** computes is the plan is API or rate calculator*/
+const isApiOrRC = computed(() => {
+  return props.selectedPlan.isApi || props.selectedPlan.isRateCalculator;
 });
 
 const toggleVisiblity = () => {
@@ -523,7 +533,8 @@ const hidePlan = () => {
   toggleVisiblity();
 };
 
-const submitType = props.selectedPlan.isApi ? ref('getQuote') : ref('onSubmit');
+const submitType = isApiOrRC.value ? ref('getQuote') : ref('onSubmit');
+
 const riderOptions = ref([]);
 
 // get rider details
@@ -736,6 +747,14 @@ const getDisplayPrice = computed({
                   >
                     Manual
                   </x-tag>
+                  <x-tag
+                    v-else-if="props.selectedPlan.isRateCalculator"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-md"
+                  >
+                    Rate Calculator
+                  </x-tag>
                 </dd>
               </div>
 
@@ -743,7 +762,7 @@ const getDisplayPrice = computed({
                 <dt class="mt-2">Insurer Quote No.:</dt>
                 <x-input
                   v-model="editForm.insurerQuoteNo"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :error="showInsurerError ? 'This field is required' : ''"
                   maxlength="50"
                   size="sm"
@@ -754,7 +773,7 @@ const getDisplayPrice = computed({
                 <dt class="mt-2">Price:</dt>
                 <x-input
                   v-model="getDisplayPrice"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="text"
@@ -768,7 +787,7 @@ const getDisplayPrice = computed({
                   v-model="editForm.currency"
                   placeholder="AED"
                   class="w-full"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :options="
                     props.currencies?.map(currency => ({
                       value: currency.text,
@@ -783,7 +802,7 @@ const getDisplayPrice = computed({
                 <dt class="mt-2">Sum Assured:</dt>
                 <x-input
                   v-model="formattedSumAssured"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="text"
@@ -795,7 +814,7 @@ const getDisplayPrice = computed({
                 <dt class="mt-2">Policy Term:</dt>
                 <x-input
                   v-model="editForm.policyTerm"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :rules="[isRequired, validatePolicyTerm, isNonNegative]"
                   size="sm"
                   type="number"
@@ -811,7 +830,7 @@ const getDisplayPrice = computed({
                   placeholder="Select Payment Frequency"
                   class="w-full"
                   :options="filteredPaymentTerms"
-                  :disabled="editForm.isApi"
+                  :disabled="!isPlanGeneralInfoEditable"
                   :rules="[isRequired]"
                 />
               </div>
@@ -1072,7 +1091,7 @@ const getDisplayPrice = computed({
 
         <!-- Buttons section aligned to the right -->
         <div class="flex justify-end gap-4 mt-4">
-          <div v-if="!editForm.isApi">
+          <div v-if="isPlanGeneralInfoEditable">
             <x-button type="submit" color="blue" :loading="extraAttr.loading">
               Save
             </x-button>
@@ -1080,7 +1099,7 @@ const getDisplayPrice = computed({
         </div>
       </template>
 
-      <template v-else-if="selectedTabIndex == 1 && editForm.isApi">
+      <template v-else-if="selectedTabIndex == 1 && isApiOrRC">
         <x-divider></x-divider>
         <div class="flex justify-between gap-4 mt-4">
           <!-- Price section aligned to the left -->

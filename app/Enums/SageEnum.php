@@ -234,6 +234,8 @@ final class SageEnum extends Enum
     const SAGE_TIMEOUT_REQUEST_MESSAGE = 'cURL error 28';
     const SAGE_EMPTY_RESPONSE_MESSAGE = 'empty reply from server';
     const SAGE_ERROR_OCCURRED_MESSAGE = 'error has occurred';
+    const SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE = 'EP Document number already exists';
+    const SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR = 'Document number * already exists.';
 
     // Sage Payload
     const BANK_CODE_INS = 'INSBANK';

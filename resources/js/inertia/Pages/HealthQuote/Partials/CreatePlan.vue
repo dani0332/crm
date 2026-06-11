@@ -17,8 +17,12 @@ const emit = defineEmits(['success', 'error']);
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
+const insuredMembers = computed(() => {
+  return props.members.filter(member => member.is_insured == true);
+});
+
 const membersPrice = reactive(
-  props.members.map(member => ({
+  insuredMembers.value.map(member => ({
     member_id: member.id,
     base_price: null,
     loading_price: 0.0,
@@ -369,12 +373,16 @@ watch(
           </thead>
           <tbody>
             <tr
-              v-for="(member, index) in props.members"
+              v-for="(member, index) in insuredMembers"
               :key="index"
               class="border-b border-gray-200 align-top"
             >
               <td class="x-table-cell px-3 py-4 align-middle">
-                {{ memberCategoryText(member.member_category_id) }}
+                {{
+                  member.is_policy_holder == true
+                    ? 'Self'
+                    : (member?.relation?.text ?? '')
+                }}
               </td>
               <td class="x-table-cell px-3 py-4 align-middle">
                 {{ dateFormat(member.dob) }}

@@ -9,6 +9,19 @@ use Illuminate\Support\Facades\Storage;
 use League\Flysystem\UnableToCheckExistence;
 use Tests\Helpers\TestSchemaCreator;
 
+class EpBookingServiceTestDouble extends EpBookingService
+{
+    public function __construct()
+    {
+        // Tests set only the service state they need and intentionally bypass the protected parent constructor.
+    }
+
+    public function withSagePostfix(mixed $documentNumber): mixed
+    {
+        return self::withSageDocumentNumberPostfix($documentNumber);
+    }
+}
+
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 });
@@ -36,13 +49,37 @@ test('watermark document rethrows transient existence failures so the job can re
         ->times(3)
         ->andReturn($storageDisk);
 
-    $service = new class extends EpBookingService
-    {
-        public function __construct() {}
-    };
+    $service = new EpBookingServiceTestDouble;
 
     $service->quote = (object) ['uuid' => 'TEST-UUID'];
 
     expect(fn () => $service->watermarkDocument($quoteDocument, $documentType))
         ->toThrow(RuntimeException::class, "Unable to check existence for: {$quoteDocument->doc_url}");
 });
+
+test('sage document number postfix increments between duplicate retries', function (mixed $documentNumber, mixed $expected): void {
+    $service = new EpBookingServiceTestDouble;
+
+    expect($service->withSagePostfix($documentNumber))->toBe($expected);
+})->with([
+    'first duplicate retry' => [
+        '108-32',
+        '108-32/1',
+    ],
+    'second duplicate retry' => [
+        '108-32/1',
+        '108-32/1',
+    ],
+    'later duplicate retry' => [
+        '108-32/9',
+        '108-32/9',
+    ],
+    'empty document number' => [
+        '',
+        '',
+    ],
+    'non-string document number' => [
+        null,
+        null,
+    ],
+]);
