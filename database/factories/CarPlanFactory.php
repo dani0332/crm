@@ -36,6 +36,7 @@ class CarPlanFactory extends Factory
             'is_active' => 1,
             'code' => $this->faker->unique()->regexify('[A-Z0-9]{5,10}'),
             'text' => $this->faker->words(2, true),
+            'repair_type' => $this->faker->randomElement(['TPL', 'COMP']),
             'created_at' => now(),
             'updated_at' => now(),
         ];

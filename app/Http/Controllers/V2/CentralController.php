@@ -23,7 +23,9 @@ use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
+use App\Exports\HomeRevivalQuotesExport;
 use App\Exports\LifeQuotesExport;
+use App\Exports\LifeRevivalQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
@@ -45,6 +47,7 @@ use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\ResetManagePaymentsRequest;
 use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -122,6 +125,7 @@ class CentralController extends Controller
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::CYBER->value,
+            QuoteTypes::DEVICE->value,
         ])) {
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
@@ -191,6 +195,20 @@ class CentralController extends Controller
                 }
 
                 return app(HealthQuotesExport::class)->download('Health-List');
+
+            case QuoteTypes::LIFE_REVIVAL->value:
+                if ($request['exportType'] == 'email') {
+                    return app(LifeRevivalQuotesExport::class)->emailCSV('Life-List', $request->all());
+                }
+
+                return app(LifeRevivalQuotesExport::class)->download('life_revival_leads');
+
+            case QuoteTypes::HOME_REVIVAL->value:
+                if ($request['exportType'] == 'email') {
+                    return app(HomeRevivalQuotesExport::class)->emailCSV('Home-Revival-List', $request->all());
+                }
+
+                return app(HomeRevivalQuotesExport::class)->download('home_revival_leads');
 
             case RetentionReportEnum::RETENTION:
                 return app(RetentionReportExport::class)->download('Retention-Report-List');
@@ -398,7 +416,6 @@ class CentralController extends Controller
                 app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
             }
         }
-
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
         app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 
@@ -914,6 +931,61 @@ class CentralController extends Controller
         $response = app(CentralService::class)->deletePayment($validatedRequest);
 
         return response()->json($response);
+    }
+
+    /**
+     * Reset all payments for a lead and revert status (per-LOB implementation).
+     * Currently supported: Health. Other quote types return 404 until implemented.
+     */
+    public function resetManagePayments(ResetManagePaymentsRequest $request, string $quoteType): JsonResponse
+    {
+        $data = $request->validated();
+
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RESET_MANAGE_PAYMENTS, $data['quote_code']);
+        LoggerService::info('Reset payment process started');
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_request_id']);
+
+        $payload = [
+            'success' => true,
+            'message' => 'Payments have been reset. You can add new payment records.',
+        ];
+        $status = 200;
+
+        if ($quote === false) {
+            LoggerService::warning('Reset payment process: quote not found');
+            $payload = [
+                'success' => false,
+                'message' => 'Quote not found.',
+            ];
+            $status = 404;
+        } else {
+            $quote->load(['payments.paymentSplits']);
+            $payments = $quote->payments;
+
+            if (! app(HealthQuoteService::class)->canBypassPlanLock($quote, $payments)) {
+                LoggerService::warning('Reset payment process: not allowed (canBypassPlanLock)');
+                $payload = [
+                    'success' => false,
+                    'message' => 'You are not allowed to reset payments for this lead.',
+                ];
+                $status = 403;
+            } else {
+                try {
+                    app(PaymentService::class)->resetHealthManagePayments($quote, $data['reason']);
+                    LoggerService::info('Reset payment process completed successfully');
+                } catch (\Throwable $th) {
+                    LoggerService::error('Reset payment process failed', [], $th);
+                    $payload = [
+                        'success' => false,
+                        'message' => 'Failed to reset payments. Please try again.',
+                    ];
+                    $status = 500;
+                }
+            }
+        }
+
+        return response()->json($payload, $status);
     }
 
     public function checkInsurerReceiptNumber($quoteType, Request $request)

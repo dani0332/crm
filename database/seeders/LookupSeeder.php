@@ -3,16 +3,20 @@
 namespace Database\Seeders;
 
 use App\Enums\ClaimsEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class LookupSeeder extends Seeder
 {
+    use SeedsIfMissing;
+
     /**
      * Run the database seeds.
      *
@@ -25,6 +29,12 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+
+        $this->createEndorsementFinancialDevice();
+        $this->createEndorsementNonFinancialDevice();
+        $this->createCIRDevice();
+        $this->createCIDevice();
+
         $this->createClaimTypes();
         $this->createClaimRequestTypes();
         $this->createClaimServiceTypes();
@@ -33,6 +43,7 @@ class LookupSeeder extends Seeder
         $this->createClaimTPAOptions();
         $this->createRmCategories();
         $this->createReferralSources();
+        $this->healthRevampLookups();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -310,6 +321,115 @@ class LookupSeeder extends Seeder
         ]);
     }
 
+    private function createEndorsementFinancialDevice(): void
+    {
+        $ef = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'midterm-policy-cancellation',
+            'code' => 'MPC',
+            'text' => 'Midterm policy cancellation',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'correction-and-amendments-with-financial-effect',
+            'code' => 'CAAFE',
+            'text' => 'Correction and Amendments (with Financial Effect)',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-invoice-booking',
+            'code' => 'ATIB',
+            'text' => 'Additional tax invoice booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-booking',
+            'code' => 'ATCRNB',
+            'text' => 'Additional tax credit note booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-commission-booking',
+            'code' => 'ACB',
+            'text' => 'Additional tax invoice raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-raised-by-buyer-booking',
+            'code' => 'ATCRNB_RBB',
+            'text' => 'Additional tax credit note raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-invoice-commission-booking',
+            'code' => 'ATICB',
+            'text' => 'Additional tax invoice and tax invoice raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'additional-tax-credit-note-and-tax-credit-note-raised-by-buyer-booking',
+            'code' => 'ATCRN_CRNRBB',
+            'text' => 'Additional tax credit note and tax credit note raised by buyer booking',
+        ], [
+            'parent_id' => $ef->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function createClaimTypes(): void
     {
         Lookup::firstOrCreate([
@@ -391,6 +511,112 @@ class LookupSeeder extends Seeder
             'description' => 'Claims specifically for windscreen damage or replacement.',
             'is_active' => 1,
             'sort_order' => 6,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createEndorsementNonFinancialDevice(): void
+    {
+        $en = Lookup::where('code', SendUpdateLogStatusEnum::EN)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'correction-amendments',
+            'code' => 'CAA',
+            'text' => 'Correction and amendments',
+        ], [
+            'parent_id' => $en->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createCIRDevice(): void
+    {
+        $cir = Lookup::where('code', SendUpdateLogStatusEnum::CIR)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-inception-date',
+            'code' => 'CIID',
+            'text' => 'Change in inception date',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-expiry-extension',
+            'code' => 'CIED_EOP',
+            'text' => 'Change in expiry date / Extension of policy',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-insurer',
+            'code' => 'CII',
+            'text' => 'Change in insurer',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'change-cover',
+            'code' => 'CIC',
+            'text' => 'Change in cover',
+        ], [
+            'parent_id' => $cir->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createCIDevice(): void
+    {
+        $ci = Lookup::where('code', SendUpdateLogStatusEnum::CI)->first();
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'delays-unhappy-insurer',
+            'code' => 'DWI',
+            'text' => 'Delays/Unhappy with insurer',
+        ], [
+            'parent_id' => $ci->id,
+            'description' => '',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Device,
+            'key' => 'unhappy-our-service',
+            'code' => 'UWOS',
+            'text' => 'Unhappy with our service',
+        ], [
+            'parent_id' => $ci->id,
+            'description' => '',
+            'is_active' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -503,6 +729,7 @@ class LookupSeeder extends Seeder
             ]);
         }
     }
+
     private function createClaimRequestAccessTypes(): void
     {
         $claimRequestType = [
@@ -593,6 +820,7 @@ class LookupSeeder extends Seeder
                 ]);
             }
         }
+
     }
 
     private function createRmCategories(): void
@@ -732,5 +960,192 @@ class LookupSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function healthRevampLookups(): void
+    {
+        $this->healthInsure();
+        $this->healthPolicyHolder();
+        $this->healthPolicyHolderCategory();
+        $this->gender();
+        $this->healthMemberRelation();
+        $this->domesticWorkerRelation();
+    }
+
+    private function healthInsure(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_INSURE_OPTIONS, [
+            [
+                'code' => 'ONLY_MYSELF',
+                'text' => 'Only Myself',
+                'is_active' => 1,
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'ONLY_MY_FAMILY_MEMBERS',
+                'text' => 'Only My Family Members',
+                'is_active' => 1,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'MYSELF_AND_MY_FAMILY_MEMBERS',
+                'text' => 'Myself & My Family Members',
+                'is_active' => 1,
+                'sort_order' => 3,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthPolicyHolder(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_OPTIONS, [
+            [
+                'code' => 'ME',
+                'text' => 'Me',
+                'is_active' => 1,
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'OTHER_ADULT_FAMILY_MEMBER',
+                'text' => 'Other Adult Family Member',
+                'is_active' => 1,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthPolicyHolderCategory(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::POLICY_HOLDER_CATEGORY, [
+            [
+                'code' => 'RESIDENT',
+                'text' => 'Resident',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'UAE_CITIZEN',
+                'text' => 'UAE Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'INVESTOR_VISA',
+                'text' => 'Investor Visa',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'GCC_CITIZEN',
+                'text' => 'GCC Citizen',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function gender(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::GENDER, [
+            [
+                'code' => GenericRequestEnum::MALE_SINGLE_VALUE,
+                'text' => GenericRequestEnum::MALE_SINGLE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => GenericRequestEnum::FEMALE_SHORT_VALUE,
+                'text' => GenericRequestEnum::FEMALE,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
+    private function healthMemberRelation(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::HEALTH_MEMBER_RELATION, [
+            [
+                'code' => 'relSpouse',
+                'text' => 'Spouse',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relParent',
+                'text' => 'Parent',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 2,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relChild',
+                'text' => 'Child',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 3,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relSibling',
+                'text' => 'Sibling',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 4,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+            [
+                'code' => 'relOtherRelatives',
+                'text' => 'Other Relatives',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'sort_order' => 5,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+        ]);
+    }
+
+    private function domesticWorkerRelation(): void
+    {
+        $now = now();
+        $this->seedLookupsIfMissing(LookupsEnum::DOMESTIC_WORKER_RELATION, [
+            [
+                'code' => 'relDomesticWorker',
+                'text' => 'Domestic Worker',
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+                'quote_type_id' => QuoteTypeId::Health,
+            ],
+        ]);
     }
 }

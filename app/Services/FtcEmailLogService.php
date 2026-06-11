@@ -37,7 +37,7 @@ class FtcEmailLogService
             return null;
         }
         $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
-        if ($payload['status'] == FTCEmailLogEnum::CLICKED && ! in_array($trackEmail->quoteTrackable->quote_status_id, $statuses)) {
+        if ($payload['status'] == FTCEmailLogEnum::CLICKED && $trackEmail->quoteTrackable && ! in_array($trackEmail->quoteTrackable->quote_status_id, $statuses)) {
             LoggerService::info('FtcEmailLogService: updateTrackEmail: updating quote status to PaymentInitiated', ['quote_status_id' => $trackEmail->quoteTrackable->quote_status_id]);
             $trackEmail->quoteTrackable->update(['quote_status_id' => QuoteStatusEnum::PaymentInitiated]);
         }

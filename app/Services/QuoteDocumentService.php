@@ -194,11 +194,11 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
+
             // LoggerService::info('Document deleted', [
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']
             // ]);
-
             return response()->json(['message' => 'document deleted successfully']);
         }
 
@@ -350,8 +350,19 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$quoteUUID);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
+            $this->updateQuoteJourney($quote);
+
+            // Dispatch OCR job
+            if (empty($data['source'])) {
+                LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+                $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
+            } else {
+                LoggerService::info(self::class.' - Skipping OCR job - Quote UUID: '.$data['quote_uuid'].' because source is '.$data['source'], [
+                    'source' => ! empty($data['source']) ? $data['source'] : null,
+                    'document_type_code' => $documentType->code,
+                    'doc_uuid' => $docUuid,
+                ]);
+            }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 LoggerService::info('Dispatching WatermarkDocumentsJob');
@@ -575,6 +586,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
+            QuoteTypeId::Device => [DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF],
             QuoteTypeId::Cyber => ['CYDPDR', 'CYPD', 'CYPDR'],
         ];
 
@@ -1407,6 +1419,89 @@ class QuoteDocumentService extends BaseService
         }
 
         return $grouped;
+    }
+
+    public function updateQuoteJourney($quote): void
+    {
+        try {
+            $quoteType = QuoteTypes::getName($quote->quote_type_id);
+            if ($quoteType === null || ! in_array($quoteType, QuoteTypes::quoteJourneyOnCustomerDocumentUploadTypes(), true)) {
+                return;
+            }
+
+            $requiredDocumentTypes = $this->getQuoteDocumentsToReceive(
+                $quote->quote_type_id,
+                $quote->registration_type ?? null,
+                $quote->vehicle_use ?? null
+            );
+
+            $requiredCodes = $requiredDocumentTypes->pluck('code')->unique()->values()->all();
+            if ($requiredCodes === []) {
+                return;
+            }
+
+            $distinctPresent = (int) $quote->documents()
+                ->whereIn('document_type_code', $requiredCodes)
+                ->selectRaw('COUNT(DISTINCT document_type_code) as journey_distinct_types')
+                ->value('journey_distinct_types');
+
+            LoggerService::info('Updating Quote Journey', [
+                'required_documents' => $distinctPresent !== count($requiredCodes) ? 'not completed' : 'completed',
+            ]);
+
+            if ($distinctPresent !== count($requiredCodes)) {
+                return;
+            }
+
+            app(QuoteJourneyService::class)->advanceAfterRequiredCustomerDocuments($quote->uuid, (int) $quote->quote_type_id);
+        } catch (Throwable $e) {
+            LoggerService::error('QuoteDocumentService - updateQuoteJourney failed', [
+                'quote_uuid' => $quote->uuid ?? null,
+                'quote_type_id' => $quote->quote_type_id ?? null,
+            ], exception: $e);
+
+            // swallow exception to avoid blocking main upload flow (OCR, watermark dispatch)
+            return;
+        }
+    }
+
+    public function getArchivedDocuments($quoteType, $quoteId): array
+    {
+        LoggerService::info('fn:getArchivedDocuments - Start - QuoteDocumentService', [], [
+            'quote_type' => $quoteType,
+            'quote_id' => $quoteId,
+        ]);
+
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        if (! $quote) {
+            return [];
+        }
+
+        $quote->loadMissing(['insuranceProvider', 'plan']);
+
+        $providerCode = $quote->insuranceProvider?->code;
+        $planCode = $quote->plan?->code;
+
+        return $quote->documents()
+            ->onlyTrashed()
+            ->with(self::CREATED_BY_RELATION)
+            ->latest()
+            ->get()
+            ->map(function (QuoteDocument $document) use ($providerCode, $planCode) {
+                return [
+                    'id' => $document->id,
+                    'document_id' => $document->id,
+                    'provider_code' => $providerCode,
+                    'plan_code' => $planCode,
+                    'maf_label' => $document->original_name,
+                    'doc_url' => $document->doc_url,
+                    'watermarked_doc_url' => $document->watermarked_doc_url,
+                    'submitted_by' => $document->createdBy?->email ?? $document->createdBy?->name,
+                    'submitted_on' => $document->created_at,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**

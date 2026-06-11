@@ -3,6 +3,7 @@ import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScore
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import {
@@ -77,9 +78,6 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\BusinessQuote';
-
-const historyData = ref(null),
-  historyLoading = ref(false);
 
 const isDuplicateAllowed = computed(() => {
   return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
@@ -299,49 +297,6 @@ const onLeadStatus = () => {
     },
   );
 };
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'business',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = (Array.isArray(finalRes) ? finalRes : []).map(row => {
-    const hasNewAdvisor =
-      row.NewAdvisor != null && String(row.NewAdvisor).trim() !== '';
-
-    const hasOldAdvisor =
-      row.OldAdvisor != null && String(row.OldAdvisor).trim() !== '';
-
-    const prefix = hasOldAdvisor ? 'Advisor Re-assigned' : 'Advisor Assigned';
-
-    const advisorText = hasNewAdvisor
-      ? hasOldAdvisor
-        ? `${prefix}: ${row.OldAdvisor} → ${row.NewAdvisor}`
-        : `${prefix}: ${row.NewAdvisor}`
-      : '';
-
-    return {
-      ...row,
-      NewNotes: advisorText
-        ? row.NewNotes && String(row.NewNotes).trim() !== ''
-          ? `${row.NewNotes} | ${advisorText}`
-          : advisorText
-        : (row.NewNotes ?? ''),
-    };
-  });
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 
 const companyConcernOptions = [
   { label: 'Parent', value: 'Parent' },
@@ -2008,39 +1963,11 @@ function handleOcrNotification(event) {
       :readOnlyMode="readOnlyMode"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

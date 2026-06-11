@@ -283,11 +283,7 @@
                              {{ $quote->advisor->email }}</a><br>
                                  <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
                                  style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
-                                <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}"  target="_blank">
-                                  <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png"
-                                  width="10"
-                                  style="vertical-align:middle; margin-left:4px;  margin-top: 5px !important;">
-                                </a><br>
+                                <br>
                                 <img src="{{ public_path('images/quote_plans_pages/icons/call.svg') }}"
                                 style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;">  <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none; ">{{ $quote->advisor->landline_no }}</a>
                             </p>
