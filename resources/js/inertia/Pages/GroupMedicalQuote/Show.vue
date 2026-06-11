@@ -1167,7 +1167,7 @@ function handleOcrNotification(event) {
                   </div>
                 </div>
                 <div
-                  class="grid gap-x-16 gap-y-2 sm:grid-cols-2 text-xs text-gray-900"
+                  class="grid gap-x-15 gap-y-2 sm:grid-cols-2 text-xs text-gray-900"
                 >
                   <div class="grid grid-cols-2">
                     <dt
@@ -1191,7 +1191,7 @@ function handleOcrNotification(event) {
 
                   <div class="grid grid-cols-2">
                     <dt
-                      class="font-medium uppercase tracking-wide text-gray-600 pb-1"
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1 ml-2"
                     >
                       <x-tooltip placement="bottom">
                         <span
@@ -1205,7 +1205,7 @@ function handleOcrNotification(event) {
                         </template>
                       </x-tooltip>
                     </dt>
-                    <dd>{{ hasExistingGroupHealthInsurancePolicyText }}</dd>
+                    <dd class="ml-2">{{ hasExistingGroupHealthInsurancePolicyText }}</dd>
                   </div>
                   <div class="grid grid-cols-2">
                     <dt
@@ -1226,7 +1226,7 @@ function handleOcrNotification(event) {
                   </div>
                   <div class="grid grid-cols-2">
                     <dt
-                      class="font-medium uppercase tracking-wide text-gray-600 pb-1"
+                      class="font-medium uppercase tracking-wide text-gray-600 pb-1 ml-2"
                     >
                       <x-tooltip placement="bottom">
                         <span
@@ -1240,7 +1240,7 @@ function handleOcrNotification(event) {
                         </template>
                       </x-tooltip>
                     </dt>
-                    <dd>{{ quotePlanTypeDisplay }}</dd>
+                    <dd class="ml-2">{{ quotePlanTypeDisplay }}</dd>
                   </div>
                 </div>
               </section>
