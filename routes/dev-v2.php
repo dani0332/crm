@@ -69,10 +69,12 @@ Route::group(['prefix' => 'policy-issuance'], function () {
 /**
  * Test non motor CQF renewal orchestrator job
  */
-Route::get('/test-non-motor-cqf-renewal-orchestrator-job', function () {
-    ProcessNonMotorCQFOrchestratorJob::dispatch();
+Route::middleware(['auth'])->group(function () {
+    Route::get('/test-non-motor-cqf-renewal-orchestrator-job', function () {
+        ProcessNonMotorCQFOrchestratorJob::dispatch();
 
-    return response()->json([
-        'message' => 'Non motor CQF renewal orchestrator job dispatched',
-    ]);
+        return response()->json([
+            'message' => 'Non motor CQF renewal orchestrator job dispatched',
+        ]);
+    });
 });
