@@ -180,6 +180,26 @@ const dateFormat = date =>
 
 const daysSinceStale = date => useDaysSinceStale(date);
 
+const hasAgeSixtyAndAbove = computed(() => {
+  const members = Array.isArray(props.membersDetail) ? props.membersDetail : [];
+  const cutoffDate = new Date();
+  cutoffDate.setHours(0, 0, 0, 0);
+  cutoffDate.setFullYear(cutoffDate.getFullYear() - 60);
+
+  return members.some(member => {
+    if (!member?.dob) {
+      return false;
+    }
+
+    const memberDob = new Date(member.dob);
+    if (Number.isNaN(memberDob.getTime())) {
+      return false;
+    }
+
+    return memberDob <= cutoffDate;
+  });
+});
+
 const fixedValue = number => {
   if (number == Math.floor(number)) {
     return number.toLocaleString();
@@ -1836,6 +1856,14 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
         <x-button v-if="hasPecTag" size="sm" color="#DC2626" tag="div">
           PEC
         </x-button>
+        <x-button
+          v-if="hasAgeSixtyAndAbove"
+          size="sm"
+          color="#DC2626"
+          tag="div"
+        >
+          Age 60 and Above
+        </x-button>
       </template>
 
       <template #default v-if="readOnlyMode.isDisable === true">
@@ -2078,8 +2106,27 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <dd>{{ quote.created_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUBTEAM</dt>
+                <dt class="font-medium">TEAM</dt>
                 <dd>{{ quote.health_team_type ?? quote.notional_team }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">POLICY PEC FLAG</dt>
+                <dd>
+                  <x-tag size="sm" :color="hasPecTag ? 'error' : 'success'">
+                    {{ hasPecTag ? 'Yes' : 'No' }}
+                  </x-tag>
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS AGE 60 AND ABOVE</dt>
+                <dd>
+                  <x-tag
+                    size="sm"
+                    :color="hasAgeSixtyAndAbove ? 'error' : 'success'"
+                  >
+                    {{ hasAgeSixtyAndAbove ? 'Yes' : 'No' }}
+                  </x-tag>
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>

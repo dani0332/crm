@@ -115,6 +115,11 @@ const tableHeader = ref([
   { text: 'EMIRATE OF VISA', value: 'emirates', is_active: true },
   { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
+    text: 'IS AGE 60 AND ABOVE',
+    value: 'is_age_sixty_and_above',
+    is_active: true,
+  },
+  {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
     is_active: true,
@@ -127,6 +132,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
   { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -248,6 +254,8 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  unassigned: '',
+  age_sixty_and_above: 'all',
   support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -535,6 +543,25 @@ const fixedValue = numberString => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const hasMemberAgeSixtyOrAbove = quote => {
+  const members = quote?.active_members ?? [];
+  const cutoffDate = new Date();
+  cutoffDate.setHours(0, 0, 0, 0);
+  cutoffDate.setFullYear(cutoffDate.getFullYear() - 60);
+
+  return members.some(member => {
+    if (!member?.dob) {
+      return false;
+    }
+    const memberDob = new Date(member.dob);
+    if (Number.isNaN(memberDob.getTime())) {
+      return false;
+    }
+
+    return memberDob <= cutoffDate;
+  });
 };
 
 const can = permission => useCan(permission);
@@ -1088,6 +1115,18 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
         />
         <x-select
+          v-model="filters.unassigned"
+          label="Unassigned"
+          placeholder="Search by Unassigned"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
+        />
+
+        <x-select
           v-model="filters.is_renewal"
           label="Renewal"
           placeholder="Search by Renewal"
@@ -1283,6 +1322,17 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
           :single="true"
         />
+        <x-select
+          v-model="filters.age_sixty_and_above"
+          label="Is Age 60 and above"
+          placeholder="Search by Age 60 and above"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
+        />
         <ComboBox
           v-model="filters.signatory"
           label="Signatory"
@@ -1436,6 +1486,23 @@ const paymentStatusOptions = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="has_pec_tag ? 'error' : 'success'">
             {{ has_pec_tag ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-is_age_sixty_and_above="item">
+        <div class="text-center">
+          <x-tag
+            size="sm"
+            :color="hasMemberAgeSixtyOrAbove(item) ? 'success' : 'error'"
+          >
+            {{ hasMemberAgeSixtyOrAbove(item) ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-unassigned="{ advisor_id }">
+        <div class="text-center">
+          <x-tag size="sm" :color="advisor_id ? 'error' : 'success'">
+            {{ advisor_id ? 'No' : 'Yes' }}
           </x-tag>
         </div>
       </template>
