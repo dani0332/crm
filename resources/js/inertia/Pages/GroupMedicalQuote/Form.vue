@@ -251,6 +251,23 @@ function syncNumberOfCategoriesFromIntake() {
   quoteForm.number_of_categories = quoteForm.categories.length;
 }
 
+watch(
+  () => quoteForm.number_of_categories,
+  count => {
+    const n = parseInt(count) || 0;
+    if (n <= 0) return;
+    const current = quoteForm.categories.length;
+    if (n > current) {
+      for (let i = current; i < n; i++) {
+        quoteForm.categories.push(emptyCategoryRow());
+      }
+    } else if (n < current) {
+      quoteForm.categories.splice(n);
+    }
+  },
+  { immediate: true },
+);
+
 function addCategoryRow() {
   if (quoteForm.categories.length >= gmCategoryRowMax.value) {
     notification.warning({
@@ -644,11 +661,10 @@ function onSubmit(isValid) {
           tooltip="Plan types are filtered by the selected emirate of registration."
       />
 
-      <x-input
+      <x-select
           v-model="quoteForm.number_of_categories"
-          type="number"
+          :options="[1, 2, 3, 4, 5].map(n => ({ value: n, label: String(n) }))"
           class="w-full"
-          :rules="[isNumber]"
           :error="quoteForm.errors.number_of_categories"
           label="Number of categories"
         />
