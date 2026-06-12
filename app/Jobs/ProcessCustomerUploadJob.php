@@ -20,9 +20,13 @@ class ProcessCustomerUploadJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const SUBSCRIPTION_TYPE = 'CORPORATE';
+    private const SUBSCRIPTION_QUEUE = 'corporate-myalfred-we';
+
     public int $tries = 2;
     public int $timeout = 600;
     public int $backoff = 60;
+    public int $retryAfter = 660;
 
     public function __construct(
         private readonly string $filePath,
@@ -47,7 +51,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
             ->chunk(50)
             ->each(function ($chunk, int $chunkIndex) {
                 $delay = $chunkIndex * 10;
-                $chunk->each(fn ($customer) => ExtendCustomerSubscriptionViaSQS::dispatch($customer, 'CORPORATE', 'corporate-myalfred-we')
+                $chunk->each(fn ($customer) => ExtendCustomerSubscriptionViaSQS::dispatch($customer, self::SUBSCRIPTION_TYPE, self::SUBSCRIPTION_QUEUE)
                     ->delay($delay));
             });
 

@@ -12,25 +12,19 @@ class CustomerUploadCompleted implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    private int $userId;
-    private string $status;
-    private int $uploadedCount;
-    private string $cdbId;
-
-    public function __construct(int $userId, string $status, int $uploadedCount, string $cdbId)
-    {
-        $this->userId = $userId;
-        $this->status = $status;
-        $this->uploadedCount = $uploadedCount;
-        $this->cdbId = $cdbId;
-    }
+    public function __construct(
+        private readonly int $userId,
+        private readonly string $status,
+        private readonly int $uploadedCount,
+        private readonly string $cdbId,
+    ) {}
 
     /**
      * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
-        return ['public.'.config('constants.APP_ENV').'.customer.upload.'.$this->userId];
+        return [new Channel('public.'.config('constants.APP_ENV').'.customer.upload.'.$this->userId)];
     }
 
     public function broadcastAs(): string

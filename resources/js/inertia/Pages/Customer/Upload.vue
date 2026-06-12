@@ -34,6 +34,7 @@ const subscribeToUpload = () => {
           title: `Upload complete. ${e.data.uploadedCount} records processed.`,
           position: 'top',
         });
+        uploadCustomer.reset();
       } else {
         notification.error({ title: 'Upload failed. Please try again.', position: 'top' });
       }
@@ -95,10 +96,14 @@ const uploadCustomer = useForm({
   file_name: '',
   cdb_id: '',
   myalfred_expiry_date: '',
-  inviatation_email: '',
+  invitation_email: '',
 });
 
 function onSubmit() {
+  if (uploadCustomer.processing || isProcessing.value) {
+    return;
+  }
+
   uploadCustomer.post('/customer-process', {
     preserveState: true,
     onBefore: () => {
@@ -150,7 +155,7 @@ function onSubmit() {
       />
       <div class="grid grid-cols-2 gap-2">
         <x-checkbox
-          v-model="uploadCustomer.inviatation_email"
+          v-model="uploadCustomer.invitation_email"
           label="Send Invitation Email"
           color="primary"
         />
@@ -175,6 +180,7 @@ function onSubmit() {
           color="emerald"
           type="submit"
           :loading="uploadCustomer.processing || isProcessing"
+          :disabled="uploadCustomer.processing || isProcessing"
         >
           Create
         </x-button>

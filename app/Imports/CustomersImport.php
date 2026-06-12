@@ -79,14 +79,24 @@ class CustomersImport implements ToCollection, WithChunkReading, WithHeadingRow
 
         $this->rowCount += $customers->count();
 
-        QuoteCustomer::insert(
-            $customers->map(fn ($c) => [
+        $existingCustomerIds = QuoteCustomer::where('cdb_id', $this->cdbId)
+            ->whereIn('customer_id', $customers->pluck('id')->all())
+            ->pluck('customer_id')
+            ->all();
+
+        $newRows = $customers
+            ->filter(fn ($c) => ! in_array($c->id, $existingCustomerIds))
+            ->map(fn ($c) => [
                 'cdb_id' => $this->cdbId,
                 'customer_id' => $c->id,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ])->all()
-        );
+            ])
+            ->all();
+
+        if (! empty($newRows)) {
+            QuoteCustomer::insert($newRows);
+        }
 
         $newCustomers = $customers->filter(fn ($c) => ! $existingByEmail->has($c->email));
         foreach ($newCustomers as $customer) {

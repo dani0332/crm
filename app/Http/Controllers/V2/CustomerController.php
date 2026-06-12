@@ -96,22 +96,22 @@ class CustomerController extends Controller
         return back();
     }
 
-    public function uploadCustomers()
+    public function uploadCustomers(): Response|ResponseFactory
     {
         return inertia('Customer/Upload');
     }
 
     public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest): RedirectResponse
     {
-        $customerUploadRequest->validated();
+        $validated = $customerUploadRequest->validated();
 
         $path = $customerUploadRequest->file('file_name')->store('customer-uploads');
 
         ProcessCustomerUploadJob::dispatch(
             $path,
-            $customerUploadRequest->myalfred_expiry_date,
-            $customerUploadRequest->cdb_id,
-            (bool) $customerUploadRequest->inviatation_email,
+            $validated['myalfred_expiry_date'],
+            $validated['cdb_id'],
+            (bool) $validated['invitation_email'],
             auth()->id(),
         );
 
