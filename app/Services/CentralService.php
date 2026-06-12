@@ -2734,11 +2734,10 @@ class CentralService extends BaseService
 
         // Auto-update renewal batch for non-motor LOBs based on expiry date using the same
         // ISO-week name lookup used at CQF creation time (BaseCQFQuoteMappingService::getRenewalBatchIdForDate).
+        // Always write the result (including null) so a stale batch is cleared when no batch
+        // exists for the new expiry date yet.
         if ($request->filled('previous_policy_expiry_date') && $this->isNonMotorQuoteType($request->model_type)) {
-            $renewalBatchId = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($request->previous_policy_expiry_date);
-            if ($renewalBatchId) {
-                $updateData['renewal_batch_id'] = $renewalBatchId;
-            }
+            $updateData['renewal_batch_id'] = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($request->previous_policy_expiry_date);
         }
 
         // Update the quote with all provided fields
