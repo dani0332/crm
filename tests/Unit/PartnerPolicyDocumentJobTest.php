@@ -1,17 +1,19 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Jobs\PartnerPolicyDocumentJob;
 use App\Services\BirdService;
 use App\Services\QuoteDocumentService;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
+use Tests\Support\Schema\PartnerSchema;
 
 use function Pest\Laravel\mock;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    (new Tests\Support\Schema\PartnerSchema)->register();
+    (new PartnerSchema)->register();
 });
 
 afterEach(function () {
@@ -38,7 +40,7 @@ describe('handle - buildDocumentPayload', function () {
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
-            \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+            ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
         ]);
 
         $job = new PartnerPolicyDocumentJob(
@@ -73,7 +75,7 @@ describe('handle - buildDocumentPayload', function () {
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
-            \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+            ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
         ]);
 
         $job = new PartnerPolicyDocumentJob(
@@ -105,7 +107,7 @@ describe('handle - buildDocumentPayload', function () {
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
-            \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+            ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
         ]);
 
         $job = new PartnerPolicyDocumentJob(
@@ -137,7 +139,7 @@ describe('handle - buildDocumentPayload', function () {
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
-            \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+            ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
         ]);
 
         $job = new PartnerPolicyDocumentJob(

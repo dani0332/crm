@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -12,10 +13,11 @@ use App\Services\PartnerService;
 use Illuminate\Support\Facades\Auth;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
+use Tests\Support\Schema\PartnerSchema;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    (new Tests\Support\Schema\PartnerSchema)->register();
+    (new PartnerSchema)->register();
 
     $adminUser = TestDataSeeder::createAdminUser([
         'email' => 'admin@example.com',
@@ -44,8 +46,8 @@ beforeEach(function () {
     ]);
 
     TestDataSeeder::seedApplicationStorage([
-        \App\Enums\ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
-        \App\Enums\ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
+        ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
+        ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
     ]);
 });
 
