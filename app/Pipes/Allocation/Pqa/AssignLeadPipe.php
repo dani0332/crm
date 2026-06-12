@@ -35,6 +35,7 @@ class AssignLeadPipe extends BasePqaAllocationPipe
             }
 
             $this->lead->pq_advisor_id = $advisor->id;
+            $this->lead->pq_assigned_at = now();
             $this->lead->save();
 
             if ($previousPqaId !== null) {

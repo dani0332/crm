@@ -59,8 +59,6 @@ test('pqa allocation assigns pre qualification advisor to group medical lead', f
 
     $response->assertSuccessful();
 
-    dump($response->json()); // DEBUG: remove after
-
     expect($quote->fresh()->pq_advisor_id)->toBe($pqaUser->id);
 
     $config = PqaLeadAllocationConfig::query()

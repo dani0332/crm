@@ -27,6 +27,14 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   healthSignatoryFilterOptions: {
     type: Array,
     default: () => [],
@@ -129,6 +137,11 @@ const tableHeader = ref([
   {
     text: 'INSURER AML STATUS',
     value: 'insurer_aml_status_text',
+    is_active: true,
+  },
+  {
+    text: 'PRE‑QUALIFICATION ADVISOR',
+    value: 'preQualificationAdvisor.name',
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
@@ -254,6 +267,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  pq_advisor_id: [],
   unassigned: '',
   age_sixty_and_above: 'all',
   support_user_id: [],
@@ -330,6 +344,15 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  options.push({ value: '-1', label: 'UnAssigned' });
+  return options;
 });
 
 const supportUserOptions = computed(() => {
@@ -472,6 +495,7 @@ function setQueryStringFilters() {
     'quote_status',
     'insurer_aml_status',
     'advisors',
+    'pq_advisor_id',
     'renewal_batches',
     'payment_status_id',
     'emirate_of_your_visa_id',
@@ -1104,6 +1128,28 @@ const paymentStatusOptions = computed(() => {
           </template>
         </x-select>
         <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by PQA"
+          :options="pqaAdvisorOptions"
+          class="w-full"
+          filterable
+          label="Pre-Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaAdvisorOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
           placeholder="Search by Ecommerce"
@@ -1449,6 +1495,8 @@ const paymentStatusOptions = computed(() => {
             "
             :canAssignClientSupport="$page.props.canAssignClientSupport"
             :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
+            :pqaAdvisors="pqaAdvisorOptions"
+            :canAssignPqa="$page.props.canAssignPreQualificationAdvisor"
             quoteType="health"
             @success="manualAssignmentSuccess"
           />
