@@ -260,7 +260,7 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             isset($updateQuoteRequest['data']['options']) &&
             ! empty($updateQuoteRequest['data']['options'])
         ) {
-            $selectedOptionIds = array_values(array_map('strval', array_keys($updateQuoteRequest['data']['options'])));
+            $selectedOptionIds = (object) array_fill_keys(array_map('strval', array_keys($updateQuoteRequest['data']['options'])), 1);
 
             $payload = [...$payload, 'options' => $selectedOptionIds];
         }
